@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   FormControlLabel,
@@ -136,27 +136,6 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
     setGoogleAnalytics(result.sites.google_analytics ?? '');
     setGoogleSearch(result.sites.google_search ?? '');
   }
-
-  useEffect(() => {
-    if (initialInfo && initialSites) return;
-
-    async function init() {
-      try {
-        setErrorMessage('');
-        await Promise.all([loadSites(), loadInfo()]);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || 'sites 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('sites 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void init();
-  }, [siteName]);
 
   function handleVisibilityMemberChange(event: InputChangeEvent) {
     const nextValue = event.currentTarget.value;

@@ -58,7 +58,7 @@ type PrefixRow = {
   site_id: string;
 };
 
-type PrefixListResponse = {
+export type PrefixListResponse = {
   board?: BoardRow;
   prefixes?: PrefixRow[];
   error?: string;
@@ -77,7 +77,9 @@ type PrefixDeleteResponse = {
 
 type DialogMode = 'new' | 'edit' | 'delete' | null;
 
-export default function Opt() {
+type OptProps = { initialData: PrefixListResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName).toLowerCase();
@@ -85,57 +87,21 @@ export default function Opt() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [board, setBoard] = useState<BoardRow | null>(null);
-  const [prefixes, setPrefixes] = useState<PrefixRow[]>([]);
+  const [board, setBoard] = useState<BoardRow | null>(initialData?.board ?? null);
+  const [prefixes, setPrefixes] = useState<PrefixRow[]>(initialData?.prefixes ?? []);
   const [selectedPrefix, setSelectedPrefix] = useState<PrefixRow | null>(null);
   const [prefixLabel, setPrefixLabel] = useState('');
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const sortedPrefixes = useMemo(() => {
     return [...prefixes].sort((a, b) => a.prefix_key - b.prefix_key);
   }, [prefixes]);
-
-  useEffect(() => {
-    async function loadPrefixes() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as PrefixListResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '말머리 목록을 불러오지 못했습니다.');
-        }
-
-        if (!result.board) {
-          throw new Error('말머리 목록을 불러오지 못했습니다.');
-        }
-
-        setBoard(result.board);
-        setPrefixes(Array.isArray(result.prefixes) ? result.prefixes : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '말머리 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('말머리 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPrefixes();
-  }, [boardName, siteName]);
 
   function resetDialog() {
     setSelectedPrefix(null);

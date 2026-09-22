@@ -67,7 +67,7 @@ type ContentRow = {
   is_pin?: boolean;
 };
 
-type BoardResponse = {
+export type BoardResponse = {
   board?: {
     id: string;
     board_key: string;
@@ -122,7 +122,9 @@ function parseSize(value: string | null) {
   return Math.floor(parsedValue);
 }
 
-export default function Opt() {
+type OptProps = { initialData: BoardResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -133,21 +135,21 @@ export default function Opt() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [board, setBoard] = useState<BoardResponse['board'] | null>(null);
-  const [canManageBoardSettings, setCanManageBoardSettings] = useState(false);
-  const [contents, setContents] = useState<ContentRow[]>([]);
+  const [board, setBoard] = useState<BoardResponse['board'] | null>(initialData?.board ?? null);
+  const [canManageBoardSettings, setCanManageBoardSettings] = useState(initialData?.actions?.canManageBoardSettings === true);
+  const [contents, setContents] = useState<ContentRow[]>(initialData?.contents ?? []);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContentRow | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isFetching, setIsFetching] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(Boolean(initialData || initialError));
   const [isDeleting, setIsDeleting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
-  const [totalPage, setTotalPage] = useState(1);
-  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>('all');
+  const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
+  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>(initialData?.filter === 'deleted' ? 'deleted' : 'all');
   const [closedMessage, setClosedMessage] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -172,6 +174,7 @@ export default function Opt() {
   }, [currentPageIds, selectedIds]);
 
   useEffect(() => {
+    if (initialData && reloadKey === 0) return;
     async function loadBoard() {
       try {
         if (hasLoaded) {

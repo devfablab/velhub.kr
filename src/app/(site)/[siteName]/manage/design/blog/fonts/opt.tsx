@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -38,6 +38,8 @@ type BlogFontRow = {
   description_font_size: number | null;
   description_margin: number | null;
 };
+
+export type BlogFontResponse = { blog?: BlogFontRow; error?: string };
 
 const SUBJECT_FONT_OPTIONS: Array<{ label: string; value: FontFamily | '' }> = [
   { label: '나눔 스퀘어 네오 (기본 서체)', value: 'neo' },
@@ -79,101 +81,31 @@ const MARGIN_OPTIONS: Array<{ label: string; value: number | '' }> = [
   { label: '크게', value: 18 },
 ];
 
-export default function Opt() {
+type OptProps = { initialData: BlogFontResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [applyScope, setApplyScope] = useState<ApplyScope>('subject');
-  const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>('neo');
-  const [subjectLetterSpacing, setSubjectLetterSpacing] = useState<number | ''>(-0.005);
-  const [subjectLineHeight, setSubjectLineHeight] = useState<number | ''>(1.5);
-  const [descriptionFontFamily, setDescriptionFontFamily] = useState<FontFamily | ''>('pre');
-  const [descriptionLetterSpacing, setDescriptionLetterSpacing] = useState<number | ''>(-0.005);
-  const [descriptionLineHeight, setDescriptionLineHeight] = useState<number | ''>(1.5);
-  const [descriptionFontSize, setDescriptionFontSize] = useState<number | ''>(16);
-  const [descriptionMargin, setDescriptionMargin] = useState<number | ''>(16);
-  const [errorMessage, setErrorMessage] = useState('');
+  const blog = initialData?.blog;
+  const hasSubject = blog?.subject_font_family !== null || blog?.subject_letter_spacing !== null || blog?.subject_line_height !== null;
+  const hasDescription = blog?.description_font_family !== null || blog?.description_letter_spacing !== null || blog?.description_line_height !== null || blog?.description_font_size !== null || blog?.description_margin !== null;
+  const [isLoading, setIsLoading] = useState(false);
+  const [applyScope, setApplyScope] = useState<ApplyScope>(hasSubject ? (hasDescription ? 'both' : 'subject') : hasDescription ? 'description' : 'subject');
+  const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>((blog?.subject_font_family ?? 'neo') as FontFamily);
+  const [subjectLetterSpacing, setSubjectLetterSpacing] = useState<number | ''>(blog?.subject_letter_spacing ?? -0.005);
+  const [subjectLineHeight, setSubjectLineHeight] = useState<number | ''>(blog?.subject_line_height ?? 1.5);
+  const [descriptionFontFamily, setDescriptionFontFamily] = useState<FontFamily | ''>((blog?.description_font_family ?? 'pre') as FontFamily);
+  const [descriptionLetterSpacing, setDescriptionLetterSpacing] = useState<number | ''>(blog?.description_letter_spacing ?? -0.005);
+  const [descriptionLineHeight, setDescriptionLineHeight] = useState<number | ''>(blog?.description_line_height ?? 1.5);
+  const [descriptionFontSize, setDescriptionFontSize] = useState<number | ''>(blog?.description_font_size ?? 16);
+  const [descriptionMargin, setDescriptionMargin] = useState<number | ''>(blog?.description_margin ?? 16);
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-
-  useEffect(() => {
-    async function loadFonts() {
-      try {
-        const response = await fetch(`/api/manage/design/blog/fonts?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '기본 서체 설정을 불러오지 못했습니다.');
-        }
-
-        const blog = (result.blog ?? {}) as BlogFontRow;
-
-        const nextSubjectFontFamily = (blog.subject_font_family ?? 'neo') as FontFamily;
-        const nextSubjectLetterSpacing = blog.subject_letter_spacing ?? -0.005;
-        const nextSubjectLineHeight = blog.subject_line_height ?? 1.5;
-        const nextDescriptionFontFamily = (blog.description_font_family ?? 'pre') as FontFamily;
-        const nextDescriptionLetterSpacing = blog.description_letter_spacing ?? -0.005;
-        const nextDescriptionLineHeight = blog.description_line_height ?? 1.5;
-        const nextDescriptionFontSize = blog.description_font_size ?? 16;
-        const nextDescriptionMargin = blog.description_margin ?? 16;
-
-        setSubjectFontFamily(nextSubjectFontFamily);
-        setSubjectLetterSpacing(nextSubjectLetterSpacing);
-        setSubjectLineHeight(nextSubjectLineHeight);
-        setDescriptionFontFamily(nextDescriptionFontFamily);
-        setDescriptionLetterSpacing(nextDescriptionLetterSpacing);
-        setDescriptionLineHeight(nextDescriptionLineHeight);
-        setDescriptionFontSize(nextDescriptionFontSize);
-        setDescriptionMargin(nextDescriptionMargin);
-
-        if (
-          blog.subject_font_family !== null ||
-          blog.subject_letter_spacing !== null ||
-          blog.subject_line_height !== null
-        ) {
-          if (
-            blog.description_font_family !== null ||
-            blog.description_letter_spacing !== null ||
-            blog.description_line_height !== null ||
-            blog.description_font_size !== null ||
-            blog.description_margin !== null
-          ) {
-            setApplyScope('both');
-          } else {
-            setApplyScope('subject');
-          }
-        } else if (
-          blog.description_font_family !== null ||
-          blog.description_letter_spacing !== null ||
-          blog.description_line_height !== null ||
-          blog.description_font_size !== null ||
-          blog.description_margin !== null
-        ) {
-          setApplyScope('description');
-        } else {
-          setApplyScope('subject');
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '기본 서체 설정을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('기본 서체 설정을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadFonts();
-  }, [siteName]);
 
   const subjectPayload = useMemo(() => {
     if (applyScope === 'description') {

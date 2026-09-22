@@ -51,16 +51,21 @@ type ContentRow = {
   closed_by_name: string;
 };
 
-type ContentResponse = {
+export type InitialPageDetail = {
+  boardName?: string;
   content?: ContentRow | null;
 };
+
+type ContentResponse = InitialPageDetail;
 
 type ActionResponse = {
   ok?: boolean;
   error?: string;
 };
 
-export default function Opt() {
+type OptProps = { initialData: InitialPageDetail | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -69,72 +74,15 @@ export default function Opt() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [content, setContent] = useState<ContentRow | null>(null);
-  const [boardName, setBoardName] = useState<string | null>(null);
-  const [profileImageUrl, setProfileImageUrl] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [content, setContent] = useState<ContentRow | null>(initialData?.content ?? null);
+  const [boardName, setBoardName] = useState<string | null>(initialData?.boardName ?? null);
+  const [profileImageUrl, setProfileImageUrl] = useState(initialData?.content?.og_image_url ?? '');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function loadContent() {
-      try {
-        setErrorMessage('');
-
-        const statusResponse = await fetch(`/api/manage/contents/pages/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = await statusResponse.json();
-
-        if (!statusResponse.ok) {
-          throw new Error(statusResult.error ?? '페이지 상태를 확인하지 못했습니다.');
-        }
-
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          throw new Error('페이지 게시판을 찾을 수 없습니다.');
-        }
-
-        setBoardName(statusResult.boardName);
-
-        const contentResponse = await fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const contentResult = (await contentResponse.json()) as ContentResponse | { error?: string };
-
-        if (!contentResponse.ok) {
-          throw new Error(
-            'error' in contentResult
-              ? (contentResult.error ?? '페이지 정보를 불러오지 못했습니다.')
-              : '페이지 정보를 불러오지 못했습니다.',
-          );
-        }
-
-        if (!('content' in contentResult)) {
-          throw new Error('페이지 정보를 불러오지 못했습니다.');
-        }
-
-        setContent(contentResult.content ?? null);
-        setProfileImageUrl(contentResult.content?.og_image_url ?? '');
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '페이지 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('페이지 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadContent();
-  }, [contentId, siteName]);
 
   function handleMoveToEdit() {
     router.push(`/${siteName}/manage/contents/pages/${contentId}/edit`);

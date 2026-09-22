@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { type JSX, useEffect, useMemo, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
@@ -43,7 +43,7 @@ type InviteRow = {
   cancelled_at: string | null;
 };
 
-type InviteResponse = {
+export type InviteResponse = {
   invites: InviteRow[];
 };
 
@@ -77,18 +77,20 @@ function getInviteStatusLabel(status: string) {
   return status;
 }
 
-export default function Opt() {
+type OptProps = { initialData: InviteResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
-  const [invites, setInvites] = useState<InviteRow[]>([]);
+  const [invites, setInvites] = useState<InviteRow[]>(Array.isArray(initialData?.invites) ? initialData.invites : []);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarKind, setSnackbarKind] = useState<'info' | 'error'>('info');
 
@@ -126,10 +128,6 @@ export default function Opt() {
       setIsLoading(false);
     }
   }
-
-  useEffect(() => {
-    void loadAll();
-  }, [siteName]);
 
   const sortedInvites = useMemo(() => {
     return [...invites].sort((a, b) => {

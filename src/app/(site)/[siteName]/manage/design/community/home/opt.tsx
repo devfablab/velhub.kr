@@ -41,7 +41,7 @@ type HomeOrderItem = {
   hasHomeOrder: boolean;
 };
 
-type HomeOrderResponse = {
+export type HomeOrderResponse = {
   ok?: boolean;
   hasHomeOrders?: boolean;
   items?: HomeOrderItem[];
@@ -131,7 +131,9 @@ function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProp
   );
 }
 
-export default function Opt() {
+type OptProps = { initialData: HomeOrderResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -139,12 +141,12 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const [items, setItems] = useState<HomeOrderItem[]>([]);
-  const [hasHomeOrders, setHasHomeOrders] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<HomeOrderItem[]>(Array.isArray(initialData?.items) ? initialData.items : []);
+  const [hasHomeOrders, setHasHomeOrders] = useState(Boolean(initialData?.hasHomeOrders));
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const sensors = useSensors(
@@ -294,6 +296,7 @@ export default function Opt() {
   }
 
   useEffect(() => {
+    if (initialData || initialError) return;
     void (async () => {
       try {
         setErrorMessage('');
@@ -308,7 +311,7 @@ export default function Opt() {
         setIsLoading(false);
       }
     })();
-  }, [siteName]);
+  }, [initialData, initialError, siteName]);
 
   if (isLoading) {
     return (

@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import Opt, { type BoardResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -10,8 +11,10 @@ type RouteContext = {
   }>;
 };
 
-export default async function Page(context: RouteContext) {
-  const { siteName } = await context.params;
+type SearchContext = RouteContext & { searchParams: Promise<{ page?: string; size?: string; filter?: string }> };
+
+export default async function Page(context: SearchContext) {
+  const { siteName, boardName } = await context.params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -26,5 +29,10 @@ export default async function Page(context: RouteContext) {
     redirect(`/${normalizedSiteName}/manage/contents/posts`);
   }
 
-  return <Opt />;
+  const searchParams = await context.searchParams;
+  const page = Number(searchParams.page) > 0 ? Number(searchParams.page) : 1;
+  const size = Number(searchParams.size) > 0 ? `&size=${Number(searchParams.size)}` : '';
+  const filter = searchParams.filter === 'deleted' ? '&filter=deleted' : '';
+  const initial = await getSiteApiData<BoardResponse>(`/api/boards/${boardName}?siteName=${normalizedSiteName}&manageContents=true&page=${page}${size}${filter}`, '게시판을 불러오지 못했습니다.');
+  return <Opt initialData={initial.data} initialError={initial.error} />;
 }

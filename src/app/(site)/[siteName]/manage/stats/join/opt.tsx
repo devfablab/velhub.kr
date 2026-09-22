@@ -259,13 +259,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('week');
-  const [appliedRequest, setAppliedRequest] = useState<AppliedRequest>({ range: 'week' });
+  const [appliedRequest, setAppliedRequest] = useState<AppliedRequest | null>(null);
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
   const [joinStats, setJoinStats] = useState<JoinStatsResponse | null>(initialData);
 
   useEffect(() => {
-    if (initialData || initialError) return;
+    if (!appliedRequest) return;
+    const request = appliedRequest;
 
     async function loadJoinStats() {
       try {
@@ -281,12 +282,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
         const query = new URLSearchParams({
           siteName,
-          range: appliedRequest.range,
+          range: request.range,
         });
 
-        if (appliedRequest.range === 'custom' && appliedRequest.startDate && appliedRequest.endDate) {
-          query.set('startDate', appliedRequest.startDate);
-          query.set('endDate', appliedRequest.endDate);
+        if (request.range === 'custom' && request.startDate && request.endDate) {
+          query.set('startDate', request.startDate);
+          query.set('endDate', request.endDate);
         }
 
         const response = await fetch(`/api/manage/stats/join?${query.toString()}`, {

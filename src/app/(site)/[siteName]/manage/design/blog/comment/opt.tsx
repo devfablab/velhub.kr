@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -43,7 +43,7 @@ type BlogCommentRow = {
   giscusSettings: GiscusSettings;
 };
 
-type BlogCommentResponse = {
+export type BlogCommentResponse = {
   ok?: boolean;
   blog?: BlogCommentRow;
   error?: string;
@@ -93,15 +93,17 @@ const DEFAULT_GISCUS_SETTINGS: GiscusSettings = {
   inputPosition: 'bottom',
 };
 
-export default function Opt() {
+type OptProps = { initialData: BlogCommentResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
-  const [commentProvider, setCommentProvider] = useState<CommentProvider>('none');
-  const [giscusSettings, setGiscusSettings] = useState<GiscusSettings>(DEFAULT_GISCUS_SETTINGS);
-  const [isLoading, setIsLoading] = useState(true);
+  const [commentProvider, setCommentProvider] = useState<CommentProvider>(initialData?.blog?.commentProvider ?? 'none');
+  const [giscusSettings, setGiscusSettings] = useState<GiscusSettings>(initialData?.blog?.giscusSettings ?? DEFAULT_GISCUS_SETTINGS);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
 
   const theme = useTheme();
@@ -119,38 +121,6 @@ export default function Opt() {
 
     return !giscusSettings.repo.trim() || !giscusSettings.repoId.trim() || !giscusSettings.inputPosition;
   }, [commentProvider, giscusSettings, isSubmitting]);
-
-  useEffect(() => {
-    async function loadComments() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/manage/design/blog/comments?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as BlogCommentResponse;
-
-        if (!response.ok || !result.blog) {
-          throw new Error(result.error ?? '댓글 설정을 불러오지 못했습니다.');
-        }
-
-        setCommentProvider(result.blog.commentProvider);
-        setGiscusSettings(result.blog.giscusSettings);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '댓글 설정을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('댓글 설정을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadComments();
-  }, [siteName]);
 
   function handleChangeGiscusTextField(key: 'repo' | 'repoId', value: string) {
     setGiscusSettings((previousValue) => ({

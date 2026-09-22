@@ -82,6 +82,18 @@ type SitesInfo = {
   log: string;
 };
 
+export type GeneralSiteResponse = {
+  siteInfo: SiteInfoInfo;
+  sites: SitesInfo;
+  blogType?: string | null;
+  hasOwnerDomainFeature?: boolean;
+  profilePictureUrl?: string | null;
+  profileLogoUrl?: string | null;
+  siteOgImageUrl?: string | null;
+  promotionImageUrl?: string | null;
+  error?: string;
+};
+
 type SiteKeyCheckResponse = {
   ok?: boolean;
   normalizedSiteKey?: string;
@@ -145,7 +157,9 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export default function Opt() {
+type OptProps = { initialData: GeneralSiteResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const logoInputReference = useRef<HTMLInputElement | null>(null);
   const siteOgInputReference = useRef<HTMLInputElement | null>(null);
@@ -153,18 +167,18 @@ export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(null);
-  const [sites, setSites] = useState<SitesInfo | null>(null);
-  const [blogType, setBlogType] = useState<string | null>(null);
-  const [hasOwnerDomainFeature, setHasOwnerDomainFeature] = useState(false);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
+  const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(initialData?.siteInfo ?? null);
+  const [sites, setSites] = useState<SitesInfo | null>(initialData?.sites ?? null);
+  const [blogType, setBlogType] = useState<string | null>(initialData?.blogType ?? null);
+  const [hasOwnerDomainFeature, setHasOwnerDomainFeature] = useState(Boolean(initialData?.hasOwnerDomainFeature));
   const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [draftValue, setDraftValue] = useState<string | boolean>('');
-  const [profilePictureUrl, setProfilePictureUrl] = useState('');
-  const [profileLogoUrl, setProfileLogoUrl] = useState('');
-  const [siteOgImageUrl, setSiteOgImageUrl] = useState('');
-  const [promotionImageUrl, setPromotionImageUrl] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [profilePictureUrl, setProfilePictureUrl] = useState(initialData?.profilePictureUrl ?? '');
+  const [profileLogoUrl, setProfileLogoUrl] = useState(initialData?.profileLogoUrl ?? '');
+  const [siteOgImageUrl, setSiteOgImageUrl] = useState(initialData?.siteOgImageUrl ?? '');
+  const [promotionImageUrl, setPromotionImageUrl] = useState(initialData?.promotionImageUrl ?? '');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [isTeamMemberBlogTypeDialogOpen, setIsTeamMemberBlogTypeDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -195,6 +209,12 @@ export default function Opt() {
   const isMobile = !isNotMobile;
 
   useEffect(() => {
+    if (initialData || initialError) {
+      if (initialData?.siteInfo) {
+        applyColorSet(initialData.siteInfo.theme_type);
+      }
+      return;
+    }
     async function loadInfo() {
       try {
         const response = await fetch(`/api/info/general/site/${siteName}`, {
@@ -229,7 +249,7 @@ export default function Opt() {
     }
 
     void loadInfo();
-  }, [siteName]);
+  }, [initialData, initialError, siteName]);
 
   function resetSiteKeyCheck() {
     setCheckedSiteKey('');

@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import Opt, { type SeriesListResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -11,7 +12,7 @@ type RouteContext = {
 };
 
 export default async function Page(context: RouteContext) {
-  const { siteName } = await context.params;
+  const { siteName, boardName } = await context.params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -26,5 +27,6 @@ export default async function Page(context: RouteContext) {
     redirect(`/${normalizedSiteName}/manage/contents/posts`);
   }
 
-  return <Opt />;
+  const initial = await getSiteApiData<SeriesListResponse>(`/api/boards/${boardName}/series?siteName=${normalizedSiteName}`, '연재 목록을 불러오지 못했습니다.');
+  return <Opt initialData={initial.data} initialError={initial.error} />;
 }

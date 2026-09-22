@@ -54,7 +54,7 @@ type InviteRow = {
   cancelled_at: string | null;
 };
 
-type TeamResponse = {
+export type TeamResponse = {
   teams: TeamRow[];
   ownerTransfer: {
     canRequest: boolean;
@@ -63,7 +63,7 @@ type TeamResponse = {
   };
 };
 
-type InviteResponse = {
+export type InviteResponse = {
   invites: InviteRow[];
 };
 
@@ -140,11 +140,13 @@ function getNextRole(role: TeamRole) {
   return null;
 }
 
-export default function Opt() {
+type OptProps = { initialTeams: TeamResponse | null; initialInvites: InviteResponse | null; initialError: string };
+
+export default function Opt({ initialTeams, initialInvites, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const [teams, setTeams] = useState<TeamRow[]>([]);
-  const [invites, setInvites] = useState<InviteRow[]>([]);
+  const [teams, setTeams] = useState<TeamRow[]>(initialTeams?.teams ?? []);
+  const [invites, setInvites] = useState<InviteRow[]>(initialInvites?.invites ?? []);
   const [selectedTeam, setSelectedTeam] = useState<TeamRow | null>(null);
   const [targetTeam, setTargetTeam] = useState<TeamRow | null>(null);
   const [nextBlockState, setNextBlockState] = useState<boolean | null>(null);
@@ -152,20 +154,20 @@ export default function Opt() {
   const [nextRole, setNextRole] = useState<'manager' | 'member' | 'observer' | null>(null);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
   const [ownerTransferTargetId, setOwnerTransferTargetId] = useState('');
-  const [canRequestOwnerTransfer, setCanRequestOwnerTransfer] = useState(false);
-  const [hasPendingOwnerTransfer, setHasPendingOwnerTransfer] = useState(false);
+  const [canRequestOwnerTransfer, setCanRequestOwnerTransfer] = useState(initialTeams?.ownerTransfer?.canRequest ?? false);
+  const [hasPendingOwnerTransfer, setHasPendingOwnerTransfer] = useState(initialTeams?.ownerTransfer?.hasPendingRequest ?? false);
   const [isOwnerTransferOpen, setIsOwnerTransferOpen] = useState(false);
   const [isOwnerTransferSubmitting, setIsOwnerTransferSubmitting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'manager' | 'member'>('manager');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRoleSubmitting, setIsRoleSubmitting] = useState(false);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isInviteListDialogOpen, setIsInviteListDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -228,10 +230,6 @@ export default function Opt() {
       setIsLoading(false);
     }
   }
-
-  useEffect(() => {
-    void loadAll();
-  }, [siteName]);
 
   const sortedTeams = useMemo(() => {
     return [...teams].sort((a, b) => {

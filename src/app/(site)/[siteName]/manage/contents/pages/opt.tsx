@@ -53,7 +53,11 @@ function SortableItem({ page, onClick }: SortableItemProps) {
   );
 }
 
-export default function Opt() {
+export type InitialPagesData = { boardName: string; pages: PageRow[] };
+
+type OptProps = { initialData: InitialPagesData | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const router = useRouter();
 
   const sensors = useSensors(
@@ -71,61 +75,13 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const [pages, setPages] = useState<PageRow[]>([]);
-  const [boardName, setBoardName] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [pages, setPages] = useState<PageRow[]>(initialData?.pages ?? []);
+  const [boardName, setBoardName] = useState<string | null>(initialData?.boardName ?? null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
 
   const items = useMemo(() => pages.map((page: PageRow) => page.slug), [pages]);
-
-  useEffect(() => {
-    async function loadPages() {
-      try {
-        const statusResponse = await fetch(`/api/manage/contents/pages/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = await statusResponse.json();
-
-        if (!statusResponse.ok) {
-          throw new Error(statusResult.error ?? '페이지 상태를 확인하지 못했습니다.');
-        }
-
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          setBoardName(null);
-          setPages([]);
-          return;
-        }
-
-        setBoardName(statusResult.boardName);
-
-        const boardResponse = await fetch(`/api/boards/${statusResult.boardName}?siteName=${siteName}&page=1`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const boardResult = await boardResponse.json();
-
-        if (!boardResponse.ok) {
-          throw new Error(boardResult.error ?? '페이지 목록을 불러오지 못했습니다.');
-        }
-
-        setPages(Array.isArray(boardResult.pages) ? (boardResult.pages as PageRow[]) : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '페이지 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('페이지 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPages();
-  }, [siteName]);
 
   function handleMoveToDetail(slug: string) {
     router.push(`/${siteName}/manage/contents/pages/${slug}`);

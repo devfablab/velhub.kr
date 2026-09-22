@@ -42,7 +42,7 @@ type LinkItem = {
   previewUrl: string;
 };
 
-type LinkResponse = {
+export type LinkResponse = {
   links?: {
     id: string;
     service: ServiceValue;
@@ -218,13 +218,28 @@ function SortableItem({
   );
 }
 
-export default function Opt() {
+type OptProps = { initialData: LinkResponse | null; initialError: string };
+
+function toLinkItems(links: NonNullable<LinkResponse['links']>): LinkItem[] {
+  return links.map((link) => ({
+    localId: createLocalId(),
+    id: link.id,
+    service: link.service,
+    account: link.account,
+    image: link.image,
+    imageUrl: link.image_url,
+    pendingFile: null,
+    previewUrl: '',
+  }));
+}
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const [items, setItems] = useState<LinkItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<LinkItem[]>(Array.isArray(initialData?.links) ? toLinkItems(initialData.links) : []);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const previewUrlsRef = useRef(new Set<string>());
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -253,6 +268,11 @@ export default function Opt() {
   }
 
   useEffect(() => {
+    if (initialData || initialError) {
+      return () => {
+        clearPreviewUrls();
+      };
+    }
     async function loadLinks() {
       try {
         const response = await fetch(`/api/manage/design/community/links?siteName=${siteName}`, {
@@ -265,18 +285,7 @@ export default function Opt() {
           throw new Error(result.error ?? '커뮤니티 링크를 불러오지 못했습니다.');
         }
 
-        setItems(
-          (result.links ?? []).map((link) => ({
-            localId: createLocalId(),
-            id: link.id,
-            service: link.service,
-            account: link.account,
-            image: link.image,
-            imageUrl: link.image_url,
-            pendingFile: null,
-            previewUrl: '',
-          })),
-        );
+        setItems(toLinkItems(result.links ?? []));
       } catch (unknownError) {
         const error = unknownError instanceof Error ? unknownError.message : '';
         setErrorMessage(error || '커뮤니티 링크를 불러오지 못했습니다.');
@@ -290,7 +299,7 @@ export default function Opt() {
     return () => {
       clearPreviewUrls();
     };
-  }, [siteName]);
+  }, [initialData, initialError, siteName]);
 
   function handleAdd() {
     setItems((previousItems) => [

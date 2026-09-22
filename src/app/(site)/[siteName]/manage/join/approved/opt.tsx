@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useMemo, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchIcon from '@mui/icons-material/Search';
@@ -56,7 +56,7 @@ type JoinApplicantRow = {
   answeredQuestions: AnsweredQuestionRow[];
 };
 
-type JoinApprovedResponse = {
+export type JoinApprovedResponse = {
   ok?: boolean;
   users?: JoinApplicantRow[];
   error?: string;
@@ -82,20 +82,22 @@ function formatDateKorean(value: string | null | undefined) {
   }).format(date);
 }
 
-export default function Opt() {
+type OptProps = { initialData: JoinApprovedResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [users, setUsers] = useState<JoinApplicantRow[]>([]);
+  const [users, setUsers] = useState<JoinApplicantRow[]>(Array.isArray(initialData?.users) ? initialData.users : []);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [appliedKeyword, setAppliedKeyword] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<JoinApplicantRow | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [confirmActionType, setConfirmActionType] = useState<ActionType>(null);
 
@@ -116,25 +118,6 @@ export default function Opt() {
 
     setUsers(Array.isArray(result.users) ? result.users : []);
   }
-
-  useEffect(() => {
-    async function init() {
-      try {
-        setErrorMessage('');
-        await loadUsers();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '가입 신청 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('가입 신청 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void init();
-  }, [siteName]);
 
   const filteredUsers = useMemo(() => {
     const keyword = normalizeText(appliedKeyword).toLowerCase();

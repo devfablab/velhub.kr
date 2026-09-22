@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
@@ -108,37 +108,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const boardCount = menus.filter((menu) => menu.board_type !== 'page').length;
   const hasPage = menus.some((menu) => menu.board_type === 'page');
   const canReorderMenus = boardCount >= 2 || (boardCount >= 1 && hasPage);
-
-  useEffect(() => {
-    if (initialData || initialError) return;
-
-    async function loadMenus() {
-      try {
-        const response = await fetch(`/api/manage/design/shared/menu?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '메뉴 설정을 불러오지 못했습니다.');
-        }
-
-        setMenus(Array.isArray(result.menus) ? (result.menus as MenuRow[]) : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '메뉴 설정을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('메뉴 설정을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadMenus();
-  }, [siteName]);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;

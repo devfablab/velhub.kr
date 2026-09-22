@@ -1,8 +1,9 @@
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { detectAdult } from '@/lib/service/detectAdult';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import Container from '../../menu';
-import Opt from './opt';
+import Opt, { type DonationManageResponse } from './opt';
 import styles from '@/app/manage.module.sass';
 
 type RouteContext = {
@@ -16,13 +17,16 @@ export default async function Page(context: RouteContext) {
   const isAdult = await detectAdult(siteName);
   const supabaseAdmin = getSupabaseAdmin();
   const siteInfo = await supabaseAdmin.from('rhizomes').select('site_type').eq('site_key', siteName).maybeSingle();
+  const initial = isAdult
+    ? await getSiteApiData<DonationManageResponse>(`/api/manage/payments/donation?siteName=${siteName}`, '후원 내역을 불러오지 못했습니다.')
+    : null;
 
   return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isAdult ? (
-            <Opt />
+            <Opt initialData={initial?.data ?? null} initialError={initial?.error ?? ''} />
           ) : (
             <div className="paper">
               <p className="alert warning">

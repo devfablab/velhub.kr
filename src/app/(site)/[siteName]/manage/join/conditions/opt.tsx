@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -43,7 +43,7 @@ type JoinQuestionRow = {
   options: string[];
 };
 
-type JoinResponse = {
+export type JoinResponse = {
   ok?: boolean;
   siteType?: string | null;
   join?: {
@@ -112,7 +112,9 @@ function formatDayValue(value: Date | null) {
   return `${year}-${month}-${day}`;
 }
 
-export default function Opt() {
+type OptProps = { initialData: JoinResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
@@ -121,22 +123,23 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const [isLoading, setIsLoading] = useState(true);
+  const initialJoin = initialData?.join;
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [joinNotice, setJoinNotice] = useState('');
-  const [joinQuestionStatus, setJoinQuestionStatus] = useState<'enabled' | 'disabled'>('disabled');
-  const [joinQuestions, setJoinQuestions] = useState<JoinQuestionRow[]>([]);
-  const [joinAcceptStatus, setJoinAcceptStatus] = useState<'enabled' | 'disabled' | 'period'>('enabled');
-  const [joinAcceptStartDay, setJoinAcceptStartDay] = useState('');
-  const [joinAcceptEndDay, setJoinAcceptEndDay] = useState('');
-  const [joinType, setJoinType] = useState<'open' | 'invite'>('open');
+  const [joinNotice, setJoinNotice] = useState(initialJoin?.join_notice ?? '');
+  const [joinQuestionStatus, setJoinQuestionStatus] = useState<'enabled' | 'disabled'>(initialJoin?.join_question_status === 'enabled' ? 'enabled' : 'disabled');
+  const [joinQuestions, setJoinQuestions] = useState<JoinQuestionRow[]>(initialJoin?.join_questions ?? []);
+  const [joinAcceptStatus, setJoinAcceptStatus] = useState<'enabled' | 'disabled' | 'period'>(initialJoin?.join_accept_status === 'disabled' || initialJoin?.join_accept_status === 'period' ? initialJoin.join_accept_status : 'enabled');
+  const [joinAcceptStartDay, setJoinAcceptStartDay] = useState(initialJoin?.join_accept_start_day ?? '');
+  const [joinAcceptEndDay, setJoinAcceptEndDay] = useState(initialJoin?.join_accept_end_day ?? '');
+  const [joinType, setJoinType] = useState<'open' | 'invite'>(initialJoin?.join_type === 'invite' ? 'invite' : 'open');
   const [policyPost, setPolicyPost] = useState<'comment_0' | 'comment_1' | 'comment_3' | 'comment_5'>('comment_1');
   const [policyComment, setPolicyComment] = useState<'estimate_0' | 'estimate_1' | 'estimate_3' | 'estimate_5'>(
     'estimate_0',
   );
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   async function loadJoinConditions() {
@@ -193,25 +196,6 @@ export default function Opt() {
         : 'estimate_0',
     );
   }
-
-  useEffect(() => {
-    async function init() {
-      try {
-        setErrorMessage('');
-        await loadJoinConditions();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '가입 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('가입 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void init();
-  }, [siteName]);
 
   function handleJoinNoticeChange(event: InputChangeEvent) {
     setJoinNotice(event.currentTarget.value);

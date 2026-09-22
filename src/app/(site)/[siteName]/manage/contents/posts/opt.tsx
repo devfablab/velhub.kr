@@ -46,9 +46,9 @@ import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-type SiteType = 'blog' | 'community';
+export type SiteType = 'blog' | 'community';
 
-type BoardRow = {
+export type BoardRow = {
   id: string;
   board_key: string;
   board_label: string;
@@ -61,7 +61,7 @@ type BoardRow = {
   post_per_page?: number | null;
 };
 
-type PostRow = {
+export type PostRow = {
   id: string;
   slug: string;
   published_status: string;
@@ -97,7 +97,7 @@ type HeaderSiteResponse = {
   siteRole: string | null;
 };
 
-type BoardsResponse = {
+export type BoardsResponse = {
   boards: BoardRow[];
   manageContents?: {
     canCreateBoard: boolean;
@@ -112,7 +112,7 @@ type StatusResponse = {
   boardName: string | null;
 };
 
-type BoardContentsResponse = {
+export type BoardContentsResponse = {
   board: BoardRow;
   contents: PostRow[];
   page: number;
@@ -129,6 +129,18 @@ type BoardOrderResponse = {
 
 type ErrorResponse = {
   error?: string;
+};
+
+export type InitialPostsData = {
+  siteType: SiteType;
+  isStaff: boolean;
+  boards: BoardRow[];
+  manageContents: BoardsResponse['manageContents'];
+  board: BoardRow | null;
+  boardName: string | null;
+  posts: PostRow[];
+  totalPage: number;
+  filter: 'all' | 'deleted';
 };
 
 type DeleteMode = 'single' | 'bulk' | null;
@@ -239,7 +251,9 @@ function SortableBoardRow({
   );
 }
 
-export default function Opt() {
+type OptProps = { initialData: InitialPostsData | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -251,29 +265,27 @@ export default function Opt() {
   const isTablet = !isNotTablet;
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [siteType, setSiteType] = useState<SiteType | null>(null);
-  const [isStaff, setIsStaff] = useState(false);
-  const [boards, setBoards] = useState<BoardRow[]>([]);
-  const [communityManageContents, setCommunityManageContents] = useState<NonNullable<
-    BoardsResponse['manageContents']
-  > | null>(null);
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [board, setBoard] = useState<BoardRow | null>(null);
-  const [boardName, setBoardName] = useState<string | null>(null);
+  const [siteType, setSiteType] = useState<SiteType | null>(initialData?.siteType ?? null);
+  const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? false);
+  const [boards, setBoards] = useState<BoardRow[]>(initialData?.boards ?? []);
+  const [communityManageContents, setCommunityManageContents] = useState<NonNullable<BoardsResponse['manageContents']> | null>(initialData?.manageContents ?? null);
+  const [posts, setPosts] = useState<PostRow[]>(initialData?.posts ?? []);
+  const [board, setBoard] = useState<BoardRow | null>(initialData?.board ?? null);
+  const [boardName, setBoardName] = useState<string | null>(initialData?.boardName ?? null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<PostRow | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOrderingBoards, setIsOrderingBoards] = useState(false);
   const [isBoardOrderChanged, setIsBoardOrderChanged] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
-  const [totalPage, setTotalPage] = useState(1);
-  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>('all');
+  const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
+  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>(initialData?.filter ?? 'all');
   const [isFetching, setIsFetching] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(Boolean(initialData || initialError));
   const [reloadKey, setReloadKey] = useState(0);
   const [closedMessage, setClosedMessage] = useState('');
 
@@ -306,6 +318,7 @@ export default function Opt() {
   }, [currentPageIds, selectedIds]);
 
   useEffect(() => {
+    if (reloadKey === 0 && initialData) return;
     async function loadData() {
       try {
         if (hasLoaded) {

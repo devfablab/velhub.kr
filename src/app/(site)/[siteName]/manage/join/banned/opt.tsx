@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useMemo, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -42,28 +42,30 @@ type BannedUserRow = {
   type: string;
 };
 
-type BannedUsersResponse = {
+export type BannedUsersResponse = {
   ok?: boolean;
   users?: BannedUserRow[];
   error?: string;
 };
 
-export default function Opt() {
+type OptProps = { initialData: BannedUsersResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [users, setUsers] = useState<BannedUserRow[]>([]);
+  const [users, setUsers] = useState<BannedUserRow[]>(Array.isArray(initialData?.users) ? initialData.users : []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [nicknameKeyword, setNicknameKeyword] = useState('');
   const [appliedKeyword, setAppliedKeyword] = useState('');
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [clearReason, setClearReason] = useState('');
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -84,25 +86,6 @@ export default function Opt() {
 
     setUsers(Array.isArray(result.users) ? result.users : []);
   }
-
-  useEffect(() => {
-    async function init() {
-      try {
-        setErrorMessage('');
-        await loadUsers();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '가입불가 멤버 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('가입불가 멤버 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void init();
-  }, [siteName]);
 
   const filteredUsers = useMemo(() => {
     const keyword = normalizeText(appliedKeyword).toLowerCase();

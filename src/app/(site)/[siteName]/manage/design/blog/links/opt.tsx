@@ -40,7 +40,7 @@ type LinkItem = {
   account: string;
 };
 
-type LinkResponse = {
+export type LinkResponse = {
   links: {
     id: string;
     service: ServiceValue;
@@ -166,14 +166,25 @@ function SortableItem({
   );
 }
 
-export default function Opt() {
+type OptProps = { initialData: LinkResponse | null; initialError: string };
+
+function toLinkItems(links: LinkResponse['links']) {
+  return links.map((link) => ({
+    localId: createLocalId(),
+    id: link.id,
+    service: link.service,
+    account: link.account ?? '',
+  }));
+}
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
-  const [items, setItems] = useState<LinkItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<LinkItem[]>(Array.isArray(initialData?.links) ? toLinkItems(initialData.links) : []);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -187,6 +198,7 @@ export default function Opt() {
   );
 
   useEffect(() => {
+    if (initialData || initialError) return;
     async function loadLinks() {
       try {
         const response = await fetch(`/api/manage/design/blog/links?siteName=${siteName}`, {
@@ -206,14 +218,7 @@ export default function Opt() {
           throw new Error('소셜 링크를 불러오지 못했습니다.');
         }
 
-        setItems(
-          result.links.map((link) => ({
-            localId: createLocalId(),
-            id: link.id,
-            service: link.service,
-            account: link.account ?? '',
-          })),
-        );
+        setItems(toLinkItems(result.links));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '소셜 링크를 불러오지 못했습니다.');
@@ -226,7 +231,7 @@ export default function Opt() {
     }
 
     void loadLinks();
-  }, [siteName]);
+  }, [initialData, initialError, siteName]);
 
   const sortableIds = useMemo(() => items.map((item) => item.localId), [items]);
 

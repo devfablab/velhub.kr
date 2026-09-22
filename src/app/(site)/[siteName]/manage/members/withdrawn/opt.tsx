@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import { type JSX, useCallback, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -58,7 +58,7 @@ type WithdrawnUserRow = {
   messageStatus: MemberRestrictionMessageStatus | null;
 };
 
-type WithdrawnUsersResponse = {
+export type WithdrawnUsersResponse = {
   ok?: boolean;
   users?: WithdrawnUserRow[];
   error?: string;
@@ -79,25 +79,27 @@ function getUserSelectionType(user: WithdrawnUserRow): Exclude<SelectionType, nu
   return 'bannable';
 }
 
-export default function Opt() {
+type OptProps = { initialData: WithdrawnUsersResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
 
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [users, setUsers] = useState<WithdrawnUserRow[]>([]);
+  const [users, setUsers] = useState<WithdrawnUserRow[]>(Array.isArray(initialData?.users) ? initialData.users : []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   const [nicknameKeyword, setNicknameKeyword] = useState('');
   const [appliedKeyword, setAppliedKeyword] = useState('');
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
 
   const [actionType, setActionType] = useState<ActionType>(null);
   const [actionReason, setActionReason] = useState('');
   const [actionTerm, setActionTerm] = useState<Date | null>(null);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [messageUser, setMessageUser] = useState<WithdrawnUserRow | null>(null);
@@ -119,26 +121,6 @@ export default function Opt() {
 
     setUsers(Array.isArray(result.users) ? result.users : []);
   }, [siteName]);
-
-  useEffect(() => {
-    async function init() {
-      try {
-        setErrorMessage('');
-
-        await loadUsers();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '탈퇴 멤버 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('탈퇴 멤버 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void init();
-  }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
     const keyword = normalizeText(appliedKeyword).toLowerCase();

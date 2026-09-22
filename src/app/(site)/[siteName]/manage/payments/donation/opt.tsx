@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -39,7 +39,7 @@ type DonationItem = {
   } | null;
 };
 
-type DonationManageResponse = {
+export type DonationManageResponse = {
   site?: {
     id: string;
     siteKey: string;
@@ -94,50 +94,15 @@ function getDonationKindLabel(donationKind: DonationKind) {
   return '사이트 후원';
 }
 
-export default function Opt() {
+type OptProps = { initialData: DonationManageResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [donationData, setDonationData] = useState<DonationManageResponse | null>(null);
-
-  useEffect(() => {
-    async function loadDonations() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/manage/payments/donation?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as DonationManageResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '후원 내역을 불러오지 못했습니다.');
-        }
-
-        setDonationData(result);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '후원 내역을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('후원 내역을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (!siteName) {
-      setErrorMessage('siteName이 유효하지 않습니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    void loadDonations();
-  }, [siteName]);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [donationData, setDonationData] = useState<DonationManageResponse | null>(initialData);
 
   if (isLoading) {
     return (

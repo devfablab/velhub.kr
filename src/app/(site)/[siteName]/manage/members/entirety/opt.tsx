@@ -92,7 +92,7 @@ type UserRow = {
   level: UserLevelRow | null;
 };
 
-type UsersResponse = {
+export type UsersResponse = {
   ok?: boolean;
   siteName?: string;
   users?: UserRow[];
@@ -114,7 +114,7 @@ type ManageLevelRow = {
   required_likes: number;
 };
 
-type LevelsResponse = {
+export type LevelsResponse = {
   ok?: boolean;
   enabled?: boolean;
   levels?: ManageLevelRow[];
@@ -208,12 +208,18 @@ function getCountValueByType(user: UserRow, detailType: 'post_count' | 'comment_
   return Number(user.membership.checkin_count ?? 0);
 }
 
-export default function Opt() {
+type OptProps = {
+  initialUsers: UsersResponse | null;
+  initialLevels: LevelsResponse | null;
+  initialError: string;
+};
+
+export default function Opt({ initialUsers, initialLevels, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [users, setUsers] = useState<UserRow[]>([]);
-  const [levels, setLevels] = useState<ManageLevelRow[]>([]);
+  const [users, setUsers] = useState<UserRow[]>(Array.isArray(initialUsers?.users) ? initialUsers.users : []);
+  const [levels, setLevels] = useState<ManageLevelRow[]>(Array.isArray(initialLevels?.levels) ? initialLevels.levels : []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   const [searchMethod, setSearchMethod] = useState<SearchMethod>('nickname');
@@ -234,7 +240,7 @@ export default function Opt() {
   const [appliedSearch, setAppliedSearch] = useState<AppliedSearch>(null);
   const [selectedLevelId, setSelectedLevelId] = useState('');
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialUsers && !initialLevels && !initialError);
   const [isLevelChanging, setIsLevelChanging] = useState(false);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
   const [isLevelChangeDialogOpen, setIsLevelChangeDialogOpen] = useState(false);
@@ -242,7 +248,7 @@ export default function Opt() {
   const [actionType, setActionType] = useState<ActionType>(null);
   const [actionReason, setActionReason] = useState('');
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -293,6 +299,7 @@ export default function Opt() {
   }
 
   useEffect(() => {
+    if (initialUsers || initialLevels || initialError) return;
     async function init() {
       try {
         await loadAll();
@@ -308,7 +315,7 @@ export default function Opt() {
     }
 
     void init();
-  }, [siteName]);
+  }, [initialError, initialLevels, initialUsers, siteName]);
 
   const selectableLevels = useMemo(() => {
     const sortedLevels = [...levels].sort((a, b) => a.lv - b.lv);

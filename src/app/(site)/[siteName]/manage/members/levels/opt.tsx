@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type JSX, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
@@ -48,7 +48,7 @@ type LevelRow = {
   required_likes: number;
 };
 
-type LevelResponse = {
+export type LevelResponse = {
   ok?: boolean;
   enabled?: boolean;
   levels?: LevelRow[];
@@ -80,7 +80,9 @@ const requirementTypeOptions: Array<{ value: RequirementType; label: string }> =
   { value: 'automatic', label: '자동등업' },
 ];
 
-export default function Opt() {
+type OptProps = { initialData: LevelResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
@@ -89,16 +91,16 @@ export default function Opt() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [enabled, setEnabled] = useState(false);
-  const [levels, setLevels] = useState<LevelRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [enabled, setEnabled] = useState(Boolean(initialData?.enabled));
+  const [levels, setLevels] = useState<LevelRow[]>(Array.isArray(initialData?.levels) ? initialData.levels : []);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isEnabling, setIsEnabling] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isIconDialogOpen, setIsIconDialogOpen] = useState(false);
   const [targetLevelId, setTargetLevelId] = useState('');
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [deletingIconLevelId, setDeletingIconLevelId] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   async function loadLevels() {
@@ -116,25 +118,6 @@ export default function Opt() {
     setEnabled(Boolean(result.enabled));
     setLevels(Array.isArray(result.levels) ? result.levels : []);
   }
-
-  useEffect(() => {
-    async function init() {
-      try {
-        setErrorMessage('');
-        await loadLevels();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '등급 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('등급 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void init();
-  }, [siteName]);
 
   function handleOpenIconDialog() {
     setIsIconDialogOpen(true);
