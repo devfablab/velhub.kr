@@ -21,6 +21,7 @@ import {
 import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies.client';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
+import DarkThemeProvider from '../DarkThemeProvider';
 import HCaptchaBox from './hCaptcha';
 import styles from '@/app/auth.module.sass';
 
@@ -362,79 +363,115 @@ export default function EmailSignIn() {
   const signUpHref = inviteParams.toString() ? `/auth/sign-up?${inviteParams.toString()}` : '/auth/sign-up';
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
-      <Stack gap={1}>
-        <TextField
-          placeholder="이메일"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={handleEmailChange}
-          fullWidth
-          size="small"
-        />
-        <TextField
-          placeholder="비밀번호"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={handlePasswordChange}
-          fullWidth
-          size="small"
-        />
+    <DarkThemeProvider>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack gap={1}>
+          <TextField
+            placeholder="이메일"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={handleEmailChange}
+            fullWidth
+            size="small"
+          />
+          <TextField
+            placeholder="비밀번호"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={handlePasswordChange}
+            fullWidth
+            size="small"
+          />
 
-        {isCaptchaRequired ? (
-          <Stack gap={1}>
-            <Typography variant="subtitle2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
-            <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
-          </Stack>
-        ) : null}
+          {isCaptchaRequired ? (
+            <Stack gap={1}>
+              <Typography variant="subtitle2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
+              <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
+            </Stack>
+          ) : null}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-          <Anchor href={signUpHref} className={`button small action ${styles.action}`}>
-            회원가입
-          </Anchor>
-          <Anchor href="/auth/find-password" className={`button small action ${styles.action}`}>
-            비밀번호 찾기
-          </Anchor>
-        </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            <Anchor href={signUpHref} className={`button small action ${styles.action}`}>
+              회원가입
+            </Anchor>
+            <Anchor href="/auth/find-password" className={`button small action ${styles.action}`}>
+              비밀번호 찾기
+            </Anchor>
+          </Box>
 
-        <div className={styles.actions}>
-          <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
-            이메일로 계속하기
-          </button>
-        </div>
+          <div className={styles.actions}>
+            <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
+              이메일로 계속하기
+            </button>
+          </div>
 
-        {errorMessage ? (
-          <p className={`alert error ${styles.alert}`}>
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
-        {decisionState === 'idle' && decisionMessage ? (
-          <p className={`alert info ${styles.alert}`}>
-            <InfoOutlineRoundedIcon />
-            <span>{decisionState}</span>
-          </p>
-        ) : null}
-      </Stack>
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={decisionState === 'confirm-enable-email-login'}
-          onClose={handleCancelDecision}
-          className="VhiDrawer-bottom"
-        >
-          <h2>이메일 로그인 설정</h2>
-          <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
-            <Typography variant="subtitle2">{decisionMessage}</Typography>
-            <Stack direction="column" gap={1.5}>
+          {errorMessage ? (
+            <p className={`alert error ${styles.alert}`}>
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
+          ) : null}
+          {decisionState === 'idle' && decisionMessage ? (
+            <p className={`alert info ${styles.alert}`}>
+              <InfoOutlineRoundedIcon />
+              <span>{decisionState}</span>
+            </p>
+          ) : null}
+        </Stack>
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={decisionState === 'confirm-enable-email-login'}
+            onClose={handleCancelDecision}
+            className="VhiDrawer-bottom"
+          >
+            <h2>이메일 로그인 설정</h2>
+            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+            <Stack gap={2} sx={{ pt: 1 }}>
+              <Typography variant="subtitle2">{decisionMessage}</Typography>
+              <Stack direction="column" gap={1.5}>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={handleCancelDecision}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleConfirmEnableEmailLogin}
+                  disabled={isSubmitting}
+                >
+                  비밀번호 설정 메일 보내기
+                </button>
+              </Stack>
+            </Stack>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={decisionState === 'confirm-enable-email-login'}
+            onClose={handleCancelDecision}
+            fullWidth
+            maxWidth="xs"
+            className="VhiDialog"
+          >
+            <DialogTitle>이메일 로그인 설정</DialogTitle>
+            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+            <DialogContent>
+              <Typography variant="subtitle2">{decisionMessage}</Typography>
+            </DialogContent>
+            <DialogActions>
               <button
                 type="button"
-                className="button medium cancel"
+                className="button medium close"
                 onClick={handleCancelDecision}
                 disabled={isSubmitting}
               >
@@ -448,62 +485,62 @@ export default function EmailSignIn() {
               >
                 비밀번호 설정 메일 보내기
               </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog
-          open={decisionState === 'confirm-enable-email-login'}
-          onClose={handleCancelDecision}
-          fullWidth
-          maxWidth="xs"
-          className="VhiDialog"
-        >
-          <DialogTitle>이메일 로그인 설정</DialogTitle>
-          <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography variant="subtitle2">{decisionMessage}</Typography>
-          </DialogContent>
-          <DialogActions>
-            <button
-              type="button"
-              className="button medium close"
-              onClick={handleCancelDecision}
-              disabled={isSubmitting}
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={handleConfirmEnableEmailLogin}
-              disabled={isSubmitting}
-            >
-              비밀번호 설정 메일 보내기
-            </button>
-          </DialogActions>
-        </Dialog>
-      )}
+            </DialogActions>
+          </Dialog>
+        )}
 
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={decisionState === 'confirm-email-login'}
-          onClose={handleCancelDecision}
-          className="VhiDrawer-bottom"
-        >
-          <h2>이메일 로그인 확인</h2>
-          <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
-            <Typography variant="subtitle2">{decisionMessage}</Typography>
-            <Stack direction="column" gap={1.5}>
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={decisionState === 'confirm-email-login'}
+            onClose={handleCancelDecision}
+            className="VhiDrawer-bottom"
+          >
+            <h2>이메일 로그인 확인</h2>
+            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+            <Stack gap={2} sx={{ pt: 1 }}>
+              <Typography variant="subtitle2">{decisionMessage}</Typography>
+              <Stack direction="column" gap={1.5}>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={handleCancelDecision}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleConfirmEmailLogin}
+                  disabled={isSubmitting}
+                >
+                  이메일 로그인
+                </button>
+              </Stack>
+            </Stack>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={decisionState === 'confirm-email-login'}
+            onClose={handleCancelDecision}
+            fullWidth
+            maxWidth="xs"
+            className="VhiDialog"
+          >
+            <DialogTitle>이메일 로그인 확인</DialogTitle>
+            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+            <DialogContent>
+              <Typography variant="subtitle2">{decisionMessage}</Typography>
+            </DialogContent>
+            <DialogActions>
               <button
                 type="button"
-                className="button medium cancel"
+                className="button medium close"
                 onClick={handleCancelDecision}
                 disabled={isSubmitting}
               >
@@ -517,44 +554,10 @@ export default function EmailSignIn() {
               >
                 이메일 로그인
               </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog
-          open={decisionState === 'confirm-email-login'}
-          onClose={handleCancelDecision}
-          fullWidth
-          maxWidth="xs"
-          className="VhiDialog"
-        >
-          <DialogTitle>이메일 로그인 확인</DialogTitle>
-          <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography variant="subtitle2">{decisionMessage}</Typography>
-          </DialogContent>
-          <DialogActions>
-            <button
-              type="button"
-              className="button medium close"
-              onClick={handleCancelDecision}
-              disabled={isSubmitting}
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={handleConfirmEmailLogin}
-              disabled={isSubmitting}
-            >
-              이메일 로그인
-            </button>
-          </DialogActions>
-        </Dialog>
-      )}
-    </Box>
+            </DialogActions>
+          </Dialog>
+        )}
+      </Box>
+    </DarkThemeProvider>
   );
 }

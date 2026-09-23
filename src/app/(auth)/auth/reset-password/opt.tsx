@@ -6,6 +6,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Box, Stack, TextField } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Container from '../container';
+import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -120,47 +121,49 @@ export default function Opt() {
   }
 
   return (
-    <Container>
-      <Box component="form" onSubmit={handleSubmit}>
-        <Stack gap={1}>
-          <TextField
-            placeholder="새 비밀번호"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={handlePasswordChange}
-            fullWidth
-            size="small"
-          />
+    <DarkThemeProvider>
+      <Container>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack gap={1}>
+            <TextField
+              placeholder="새 비밀번호"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={handlePasswordChange}
+              fullWidth
+              size="small"
+            />
 
-          <TextField
-            placeholder="새 비밀번호 확인"
-            type="password"
-            autoComplete="new-password"
-            value={passwordConfirm}
-            onChange={handlePasswordConfirmChange}
-            fullWidth
-            size="small"
-          />
+            <TextField
+              placeholder="새 비밀번호 확인"
+              type="password"
+              autoComplete="new-password"
+              value={passwordConfirm}
+              onChange={handlePasswordConfirmChange}
+              fullWidth
+              size="small"
+            />
 
-          <div className={styles.actions}>
-            <button
-              type="submit"
-              className={`button medium submit ${styles.submit}`}
-              disabled={isSubmitting || !isRecoveryReady}
-            >
-              비밀번호 재설정
-            </button>
-          </div>
+            <div className={styles.actions}>
+              <button
+                type="submit"
+                className={`button medium submit ${styles.submit}`}
+                disabled={isSubmitting || !isRecoveryReady}
+              >
+                비밀번호 재설정
+              </button>
+            </div>
 
-          {errorMessage ? (
-            <p className={`alert error ${styles.alert}`}>
-              <ErrorOutlineRoundedIcon />
-              <span>{errorMessage}</span>
-            </p>
-          ) : null}
-        </Stack>
-      </Box>
-    </Container>
+            {errorMessage ? (
+              <p className={`alert error ${styles.alert}`}>
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+          </Stack>
+        </Box>
+      </Container>
+    </DarkThemeProvider>
   );
 }

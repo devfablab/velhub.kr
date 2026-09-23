@@ -4,9 +4,11 @@ import { type JSX, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Box, FormControlLabel, Stack, Switch, TextField } from '@mui/material';
+import { isValidPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
+import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -86,6 +88,11 @@ export default function EmailSignUp({
 
     if (!password) {
       setErrorMessage('비밀번호를 입력해주세요.');
+      return;
+    }
+
+    if (!isValidPassword(password)) {
+      setErrorMessage(PASSWORD_REQUIREMENTS);
       return;
     }
 
@@ -222,78 +229,85 @@ export default function EmailSignUp({
   const signInHref = inviteParams.toString() ? `/auth/sign-in?${inviteParams.toString()}` : '/auth/sign-in';
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
-      <Stack gap={1}>
-        <TextField
-          placeholder="이메일"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={handleEmailChange}
-          fullWidth
-          size="small"
-        />
-
-        <TextField
-          placeholder="활동명"
-          type="text"
-          autoComplete="nickname"
-          value={userName}
-          onChange={handleUserNameChange}
-          fullWidth
-          size="small"
-        />
-
-        <TextField
-          placeholder="비밀번호"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={handlePasswordChange}
-          fullWidth
-          size="small"
-        />
-
-        <TextField
-          placeholder="비밀번호 확인"
-          type="password"
-          autoComplete="new-password"
-          value={passwordConfirm}
-          onChange={handlePasswordConfirmChange}
-          fullWidth
-          size="small"
-        />
-
-        <SignupAgreementFields />
-
-        {isDevelopment ? (
-          <FormControlLabel
-            control={
-              <Switch checked={bypassEmailConfirm} onChange={(event) => setBypassEmailConfirm(event.target.checked)} />
-            }
-            label="이메일 인증 바이패스"
+    <DarkThemeProvider>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack gap={1}>
+          <TextField
+            placeholder="이메일"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={handleEmailChange}
+            fullWidth
+            size="small"
           />
-        ) : null}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Anchor href={signInHref} className={`button small action ${styles.action}`}>
-            로그인 하기
-          </Anchor>
-        </Box>
+          <TextField
+            placeholder="활동명"
+            type="text"
+            autoComplete="nickname"
+            value={userName}
+            onChange={handleUserNameChange}
+            fullWidth
+            size="small"
+          />
 
-        <div className={styles.actions}>
-          <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
-            이메일로 시작하기
-          </button>
-        </div>
+          <TextField
+            placeholder="비밀번호"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={handlePasswordChange}
+            error={Boolean(password) && !isValidPassword(password)}
+            helperText={PASSWORD_REQUIREMENTS}
+            fullWidth
+            size="small"
+          />
 
-        {errorMessage ? (
-          <p className={`alert error ${styles.alert}`}>
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
-      </Stack>
-    </Box>
+          <TextField
+            placeholder="비밀번호 확인"
+            type="password"
+            autoComplete="new-password"
+            value={passwordConfirm}
+            onChange={handlePasswordConfirmChange}
+            fullWidth
+            size="small"
+          />
+
+          <SignupAgreementFields />
+
+          {isDevelopment ? (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={bypassEmailConfirm}
+                  onChange={(event) => setBypassEmailConfirm(event.target.checked)}
+                />
+              }
+              label="이메일 인증 바이패스"
+            />
+          ) : null}
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Anchor href={signInHref} className={`button small action ${styles.action}`}>
+              로그인 하기
+            </Anchor>
+          </Box>
+
+          <div className={styles.actions}>
+            <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
+              이메일로 시작하기
+            </button>
+          </div>
+
+          {errorMessage ? (
+            <p className={`alert error ${styles.alert}`}>
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
+          ) : null}
+        </Stack>
+      </Box>
+    </DarkThemeProvider>
   );
 }

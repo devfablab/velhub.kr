@@ -1,3 +1,4 @@
+import { isValidPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
 import { getMailFrom, getResendClient } from '@/lib/resend';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -19,6 +20,10 @@ export async function POST(request: Request) {
 
     if (!password) {
       throw new Error('비밀번호를 입력해주세요.');
+    }
+
+    if (!isValidPassword(password)) {
+      return Response.json({ error: PASSWORD_REQUIREMENTS }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();

@@ -5,6 +5,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Box, Stack, TextField } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import Container from '../container';
+import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -70,39 +71,41 @@ export default function Opt() {
   }
 
   return (
-    <Container>
-      <Box component="form" onSubmit={handleSubmit}>
-        <Stack gap={1}>
-          <TextField
-            placeholder="이메일"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={handleEmailChange}
-            fullWidth
-            size="small"
-          />
+    <DarkThemeProvider>
+      <Container>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack gap={1}>
+            <TextField
+              placeholder="이메일"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={handleEmailChange}
+              fullWidth
+              size="small"
+            />
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Anchor href="/auth/sign-in" className={`button small action ${styles.action}`}>
-              로그인으로 돌아가기
-            </Anchor>
-          </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Anchor href="/auth/sign-in" className={`button small action ${styles.action}`}>
+                로그인으로 돌아가기
+              </Anchor>
+            </Box>
 
-          <div className={styles.actions}>
-            <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
-              재설정 메일 보내기
-            </button>
-          </div>
+            <div className={styles.actions}>
+              <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
+                재설정 메일 보내기
+              </button>
+            </div>
 
-          {errorMessage ? (
-            <p className={`alert error ${styles.alert}`}>
-              <ErrorOutlineRoundedIcon />
-              <span>{errorMessage}</span>
-            </p>
-          ) : null}
-        </Stack>
-      </Box>
-    </Container>
+            {errorMessage ? (
+              <p className={`alert error ${styles.alert}`}>
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+          </Stack>
+        </Box>
+      </Container>
+    </DarkThemeProvider>
   );
 }

@@ -609,111 +609,6 @@ a, button, select, input
       @include ds.fw(pre, 800)
       color: ds.$hex-warning
 
-.vh-dialog
-  .close-button
-    background-color: transparent
-    position: absolute
-    top: ds.rem(20)
-    right: ds.rem(17)
-    width: ds.rem(20)
-    height: ds.rem(20)
-
-    svg
-      width: ds.rem(20)
-      height: ds.rem(20)
-
-  .MuiDialog-paper
-    border-radius: ds.rem(17)
-    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
-
-    .MuiDialogTitle-root, .MuiDialogContent-root
-      padding: ds.rem(17) ds.rem(27)
-
-    .MuiDialogTitle-root
-      font-size: ds.rem(16)
-      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
-
-      html[data-theme="yellow-dark"] &
-        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
-
-    .MuiDialogActions-root
-      padding: ds.rem(7) ds.rem(27) ds.rem(27)
-
-      button
-        display: flex
-        justify-content: center
-        align-items: center
-        width: 100%
-        height: ds.rem(52)
-        border-radius: ds.rem(7)
-        @include ds.fw(pre, 700)
-        font-size: ds.rem(20)
-        background-color: ds.$hex-accent
-        color: ds.$hex-bright
-
-        &:disabled
-          background-color: ds.$hex-tertiary
-          color: rgba(ds.$rgb-bright, .7)
-
-  &.vh-alert-dialog
-    .MuiDialog-paper
-      .MuiDialogContent-root
-        img
-          max-width: 100%
-          height: auto
-
-      .MuiDialogActions-root
-        display: flex
-        gap: ds.rem(12)
-        justify-content: flex-end
-
-        .complex-button
-          display: flex
-          gap: ds.rem(12)
-
-          button
-            margin-left: 0
-
-        button
-          display: flex
-          justify-content: center
-          align-items: center
-          padding: 0 ds.rem(17)
-          width: ds.rem(137)
-          height: ds.rem(37)
-          border-radius: ds.rem(7)
-          @include ds.fw(pre, 700)
-          font-size: ds.rem(16)
-          background-color: ds.$hex-accent
-          white-space: nowrap
-          color: ds.$hex-bright
-          background-color: rgba(ds.$rgb-accent, .1)
-          color: ds.$hex-accent
-
-          &.delete-button
-            background-color: transparent!important
-            border: 1px solid ds.$hex-warning!important
-            color: ds.$hex-warning!important
-
-          &.cancel-button
-            background-color: transparent!important
-            color: rgba(ds.$rgb-primary, .5)!important
-
-            html[data-theme="yellow-dark"] &
-              color: rgba(ds.$rgb-bright, .5)!important
-
-          &.warning-button
-            background-color: ds.$hex-warning
-            color: ds.$hex-white
-
-          &:disabled
-            color: rgba(ds.$rgb-accent, .5)!important
-            background-color: rgba(ds.$rgb-accent, .1)!important
-
-        &.complex-buttons
-          gap: 0
-          justify-content: space-between
-
 .vh-checkbox, .vh-radio
   .Mui-checked
     color: ds.$hex-accent!important
@@ -1429,6 +1324,111 @@ html[data-site-type='blog']
       svg
         width: ds.rem(20)
         height: ds.rem(20)
+
+.vh-dialog
+  .close-button
+    background-color: transparent
+    position: absolute
+    top: ds.rem(20)
+    right: ds.rem(17)
+    width: ds.rem(20)
+    height: ds.rem(20)
+
+    svg
+      width: ds.rem(20)
+      height: ds.rem(20)
+
+  .MuiDialog-paper
+    border-radius: ds.rem(17)
+    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
+
+    .MuiDialogTitle-root, .MuiDialogContent-root
+      padding: ds.rem(17) ds.rem(27)
+
+    .MuiDialogTitle-root
+      font-size: ds.rem(16)
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+      html[data-theme="yellow-dark"] &
+        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+    .MuiDialogActions-root
+      padding: ds.rem(7) ds.rem(27) ds.rem(27)
+
+      button
+        display: flex
+        justify-content: center
+        align-items: center
+        width: 100%
+        height: ds.rem(52)
+        border-radius: ds.rem(7)
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(20)
+        background-color: ds.$hex-accent
+        color: ds.$hex-bright
+
+        &:disabled
+          background-color: ds.$hex-tertiary
+          color: rgba(ds.$rgb-bright, .7)
+
+  &.vh-alert-dialog
+    .MuiDialog-paper
+      .MuiDialogContent-root
+        img
+          max-width: 100%
+          height: auto
+
+      .MuiDialogActions-root
+        display: flex
+        gap: ds.rem(12)
+        justify-content: flex-end
+
+        .complex-button
+          display: flex
+          gap: ds.rem(12)
+
+          button
+            margin-left: 0
+
+        button
+          display: flex
+          justify-content: center
+          align-items: center
+          padding: 0 ds.rem(17)
+          width: ds.rem(137)
+          height: ds.rem(37)
+          border-radius: ds.rem(7)
+          @include ds.fw(pre, 700)
+          font-size: ds.rem(16)
+          background-color: ds.$hex-accent
+          white-space: nowrap
+          color: ds.$hex-bright
+          background-color: rgba(ds.$rgb-accent, .1)
+          color: ds.$hex-accent
+
+          &.delete-button
+            background-color: transparent!important
+            border: 1px solid ds.$hex-warning!important
+            color: ds.$hex-warning!important
+
+          &.cancel-button
+            background-color: transparent!important
+            color: rgba(ds.$rgb-primary, .5)!important
+
+            html[data-theme="yellow-dark"] &
+              color: rgba(ds.$rgb-bright, .5)!important
+
+          &.warning-button
+            background-color: ds.$hex-warning
+            color: ds.$hex-white
+
+          &:disabled
+            color: rgba(ds.$rgb-accent, .5)!important
+            background-color: rgba(ds.$rgb-accent, .1)!important
+
+        &.complex-buttons
+          gap: 0
+          justify-content: space-between
 
 .popup-message
   @include ds.fw(neo, 600)
