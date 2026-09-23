@@ -1,6 +1,6 @@
 'use client';
 
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useMemo, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
@@ -510,7 +510,6 @@ export default function Opt({
   const [contentForm, setContentForm] = useState<ContentForm | null>(null);
   const [contentLoading, setContentLoading] = useState(false);
   const [editReviewDialogItem, setEditReviewDialogItem] = useState<AppealCenterItem | null>(null);
-  const hasInitialData = useRef(true);
 
   const loadItems = useCallback(async () => {
     try {
@@ -545,15 +544,6 @@ export default function Opt({
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
-      return;
-    }
-
-    void loadItems();
-  }, [loadItems]);
 
   const visibleOpinionFields = useMemo(() => {
     if (!opinionItem) {

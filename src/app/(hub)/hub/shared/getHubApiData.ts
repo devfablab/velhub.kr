@@ -1,13 +1,20 @@
 import { cookies, headers } from 'next/headers';
 
-export async function getHubApiData<T>(path: string, fallback: string): Promise<{ data: T | null; error: string }> {
+export async function getHubApiData<T>(
+  path: string,
+  fallback: string,
+  init?: RequestInit,
+): Promise<{ data: T | null; error: string }> {
   try {
     const cookieStore = await cookies();
     const headerList = await headers();
     const host = headerList.get('host');
     const protocol = headerList.get('x-forwarded-proto') || 'http';
+    const requestHeaders = new Headers(init?.headers);
+    requestHeaders.set('cookie', cookieStore.toString());
     const response = await fetch(`${protocol}://${host}${path}`, {
-      headers: { cookie: cookieStore.toString() },
+      ...init,
+      headers: requestHeaders,
       cache: 'no-store',
     });
     const data = (await response.json()) as T & { error?: string };

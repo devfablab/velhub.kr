@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -295,8 +295,6 @@ export default function Opt({
   initialTotal: number;
   initialError: string;
 }) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [reports, setReports] = useState<ConciergeReportItem[]>(initialReports);
   const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(0);
@@ -307,7 +305,6 @@ export default function Opt({
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [isListError, setIsListError] = useState(Boolean(initialError));
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const hasInitialData = useRef(true);
 
   const [reporterDialogOpen, setReporterDialogOpen] = useState(false);
   const [reporterLoading, setReporterLoading] = useState(false);
@@ -329,20 +326,24 @@ export default function Opt({
   const [appealDecisionDialog, setAppealDecisionDialog] = useState<AppealDecision | null>(null);
 
   const loadReports = useCallback(
-    async function loadReports() {
+    async function loadReports(
+      nextPage = page,
+      nextTargetType: ReportTargetType | '' = targetType,
+      nextReportType: ConciergeReportType | '' = reportType,
+    ) {
       try {
         setLoading(true);
         setErrorMessage('');
         setIsListError(false);
 
-        const searchParams = new URLSearchParams({ page: String(page) });
+        const searchParams = new URLSearchParams({ page: String(nextPage) });
 
-        if (targetType) {
-          searchParams.set('targetType', targetType);
+        if (nextTargetType) {
+          searchParams.set('targetType', nextTargetType);
         }
 
-        if (reportType) {
-          searchParams.set('reportType', reportType);
+        if (nextReportType) {
+          searchParams.set('reportType', nextReportType);
         }
 
         const response = await fetch(`/api/concierge/reports?${searchParams.toString()}`, {
@@ -375,23 +376,23 @@ export default function Opt({
     [page, reportType, targetType],
   );
 
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
-      return;
-    }
-
-    void loadReports();
-  }, [loadReports]);
-
   function handleTargetTypeChange(event: SelectChangeEvent) {
-    setTargetType(event.target.value as ReportTargetType | '');
+    const nextTargetType = event.target.value as ReportTargetType | '';
+    setTargetType(nextTargetType);
     setPage(0);
+    void loadReports(0, nextTargetType, reportType);
   }
 
   function handleReportTypeChange(event: SelectChangeEvent) {
-    setReportType(event.target.value as ConciergeReportType | '');
+    const nextReportType = event.target.value as ConciergeReportType | '';
+    setReportType(nextReportType);
     setPage(0);
+    void loadReports(0, targetType, nextReportType);
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage);
+    void loadReports(nextPage);
   }
 
   async function handleOpenReporterDialog(report: ConciergeReportItem) {
@@ -929,7 +930,7 @@ export default function Opt({
               page={page}
               rowsPerPage={50}
               rowsPerPageOptions={[50]}
-              onPageChange={(_, nextPage) => setPage(nextPage)}
+              onPageChange={(_, nextPage) => handlePageChange(nextPage)}
             />
           ) : null}
         </>

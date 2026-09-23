@@ -95,6 +95,7 @@ export default async function Page(context: SearchContext) {
 
   return (
     <Opt
+      key={queryParams.toString()}
       isCommunity={isCommunity}
       initialData={initial.data}
       initialError={initial.error}

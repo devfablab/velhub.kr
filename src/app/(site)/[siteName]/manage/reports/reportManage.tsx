@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -447,54 +447,42 @@ export default function ReportManage({ targetType, initialData, initialError }: 
   const [finalReport, setFinalReport] = useState<ReportItem | null>(null);
   const [finalSaving, setFinalSaving] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const hasInitialData = useRef(true);
 
   const statusOptions = useMemo(() => getStatusOptions(targetType), [targetType]);
 
-  const loadReports = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage('');
-    setIsListError(false);
+  const loadReports = useCallback(
+    async (nextShowPast = showPast) => {
+      setLoading(true);
+      setErrorMessage('');
+      setIsListError(false);
 
-    const searchParams = new URLSearchParams({
-      siteName,
-      targetType,
-      mode: showPast ? 'past' : 'current',
-    });
+      const searchParams = new URLSearchParams({
+        siteName,
+        targetType,
+        mode: nextShowPast ? 'past' : 'current',
+      });
 
-    const response = await fetch(`/api/manage/reports?${searchParams.toString()}`, {
-      credentials: 'include',
-    });
+      const response = await fetch(`/api/manage/reports?${searchParams.toString()}`, {
+        credentials: 'include',
+      });
 
-    const result = (await response.json().catch(() => ({
-      error: '신고 목록 응답을 확인하지 못했습니다.',
-    }))) as ReportListResponse;
+      const result = (await response.json().catch(() => ({
+        error: '신고 목록 응답을 확인하지 못했습니다.',
+      }))) as ReportListResponse;
 
-    setLoading(false);
+      setLoading(false);
 
-    if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '신고 목록을 불러오지 못했습니다.');
-      setIsListError(true);
-      setReports([]);
-      return;
-    }
+      if (!response.ok || result.error) {
+        setErrorMessage(result.error ?? '신고 목록을 불러오지 못했습니다.');
+        setIsListError(true);
+        setReports([]);
+        return;
+      }
 
-    setReports(result.reports ?? []);
-  }, [showPast, siteName, targetType]);
-
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
-      return;
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadReports();
-  }, [loadReports, siteName]);
+      setReports(result.reports ?? []);
+    },
+    [showPast, siteName, targetType],
+  );
 
   function handleOpen(report: ReportItem) {
     setSelectedReport(report);
@@ -512,9 +500,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
   }
 
   function handleModeChange() {
-    setShowPast((currentValue) => !currentValue);
+    const nextShowPast = !showPast;
+    setShowPast(nextShowPast);
     setSelectedReport(null);
     setNextStatus('');
+    void loadReports(nextShowPast);
   }
 
   async function handleOpenMessages(report: ReportItem) {

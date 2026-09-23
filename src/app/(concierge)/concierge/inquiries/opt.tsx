@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Tab, Tabs } from '@mui/material';
 import {
   inquiryStatusLabels,
@@ -35,35 +35,26 @@ export default function Opt({
   const [type, setType] = useState<InquiryType>('service_question');
   const [inquiries, setInquiries] = useState<InquiryRow[]>(initialInquiries);
   const [error, setError] = useState(initialError);
-  const hasInitialData = useRef(true);
-
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
+  async function handleTypeChange(nextType: InquiryType) {
+    setType(nextType);
+    const response = await fetch(`/api/concierge/inquiries?type=${nextType}`, { cache: 'no-store' });
+    const result = (await response.json().catch(() => null)) as { inquiries?: InquiryRow[]; error?: string } | null;
+    if (!response.ok) {
+      setError(result?.error ?? '문의 내역을 불러오지 못했습니다.');
       return;
     }
-
-    let cancelled = false;
-    async function load() {
-      const response = await fetch(`/api/concierge/inquiries?type=${type}`, { cache: 'no-store' });
-      const result = (await response.json().catch(() => null)) as { inquiries?: InquiryRow[]; error?: string } | null;
-      if (cancelled) return;
-      if (!response.ok) {
-        setError(result?.error ?? '문의 내역을 불러오지 못했습니다.');
-        return;
-      }
-      setError('');
-      setInquiries(result?.inquiries ?? []);
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [type]);
+    setError('');
+    setInquiries(result?.inquiries ?? []);
+  }
 
   return (
     <div className={styles.inquiry}>
-      <Tabs value={type} onChange={(_, value: InquiryType) => setType(value)} variant="scrollable" scrollButtons="auto">
+      <Tabs
+        value={type}
+        onChange={(_, value: InquiryType) => void handleTypeChange(value)}
+        variant="scrollable"
+        scrollButtons="auto"
+      >
         {inquiryTypes.map((value) => (
           <Tab key={value} value={value} label={inquiryTypeLabels[value]} />
         ))}

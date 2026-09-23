@@ -261,7 +261,6 @@ export default function Opt({
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState(initialError);
-  const hasInitialData = useRef(Boolean(initialData) || Boolean(initialError));
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
@@ -279,6 +278,11 @@ export default function Opt({
     },
     [handleName],
   );
+
+  function changePage(nextPage: number) {
+    setPage(nextPage);
+    void load(nextPage);
+  }
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -312,14 +316,6 @@ export default function Opt({
       return;
     }
   }, [isMounted]);
-
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
-      return;
-    }
-    void load(page);
-  }, [load, page]);
 
   if (message)
     return (
@@ -414,7 +410,7 @@ export default function Opt({
                   type="button"
                   className="button small action"
                   disabled={page <= 1}
-                  onClick={() => setPage((current) => current - 1)}
+                  onClick={() => changePage(page - 1)}
                 >
                   이전
                 </button>
@@ -425,7 +421,7 @@ export default function Opt({
                   type="button"
                   className="button small action"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((current) => current + 1)}
+                  onClick={() => changePage(page + 1)}
                 >
                   다음
                 </button>

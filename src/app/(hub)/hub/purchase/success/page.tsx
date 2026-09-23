@@ -1,8 +1,6 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import Container from '../../menu';
+import { getHubApiData } from '../../shared/getHubApiData';
 import Content from '../tab';
 import styles from '@/app/hub.module.sass';
 
@@ -14,49 +12,32 @@ type BillingMethodSuccessResponse =
       error: string;
     };
 
-export default function Page() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [message, setMessage] = useState('결제 수단을 추가하고 있습니다.');
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-  useEffect(() => {
-    async function completeBillingMethod() {
-      try {
-        const billingKey = searchParams.get('billingKey');
-        const customerKey = searchParams.get('customerKey');
-        const orderNo = searchParams.get('orderNo');
+export default async function Page({ searchParams }: Props) {
+  const params = await searchParams;
+  const result = await getHubApiData<BillingMethodSuccessResponse>(
+    '/api/payments/portone/billing-method/success',
+    '결제 수단을 추가하지 못했습니다.',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        billingKey: typeof params.billingKey === 'string' ? params.billingKey : '',
+        customerKey: typeof params.customerKey === 'string' ? params.customerKey : '',
+        orderNo: typeof params.orderNo === 'string' ? params.orderNo : '',
+      }),
+    },
+  );
 
-        const response = await fetch('/api/payments/portone/billing-method/success', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            billingKey,
-            customerKey,
-            orderNo,
-          }),
-        });
+  if (!result.error && result.data && 'ok' in result.data && result.data.ok) {
+    redirect('/hub/purchase');
+  }
 
-        const result = (await response.json()) as BillingMethodSuccessResponse;
-
-        if (!response.ok || 'error' in result) {
-          throw new Error('error' in result ? result.error : '결제 수단을 추가하지 못했습니다.');
-        }
-
-        router.replace('/hub/purchase');
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setMessage(unknownError.message || '결제 수단을 추가하지 못했습니다.');
-        } else {
-          setMessage('결제 수단을 추가하지 못했습니다.');
-        }
-      }
-    }
-
-    void completeBillingMethod();
-  }, [router, searchParams]);
+  const responseError = result.data && 'error' in result.data ? result.data.error : '';
+  const message = result.error || responseError || '결제 수단을 추가하지 못했습니다.';
 
   return (
     <Container pageTitle="결제 수단 추가" pageBack="/hub/purchase">

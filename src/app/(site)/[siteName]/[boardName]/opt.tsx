@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type JSX, type ReactNode, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
@@ -20,7 +20,6 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import DonationButton from '@/components/service/common/DonationButton';
 import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
@@ -121,8 +120,6 @@ type BoardViewType = 'default' | 'list';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
-const DEFAULT_PAGE_SIZE = 20;
-const BOARD_B_PAGE_SIZE = 9;
 const PAGER_SIZE = 10;
 
 const YOUTUBE_THUMBNAIL_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault', 'default'];
@@ -288,79 +285,23 @@ export default function Opt({
   const initialPage = parsePage(searchParams.get('page'));
   const initialKeyword = normalizeText(searchParams.get('keyword'));
 
-  const [board, setBoard] = useState<BoardItem | null>(initialData?.board ?? null);
-  const [contents, setContents] = useState<PostItem[]>(initialData?.contents ?? []);
+  const [board] = useState<BoardItem | null>(initialData?.board ?? null);
+  const [contents] = useState<PostItem[]>(initialData?.contents ?? []);
   const [keywordInput, setKeywordInput] = useState(initialKeyword);
-  const [searchKeyword, setSearchKeyword] = useState(initialKeyword);
-  const [selectedSeries, setSelectedSeries] = useState<SelectedSeries | null>(initialData?.selectedSeries ?? null);
-  const [currentPage, setCurrentPage] = useState(initialData?.page ?? initialPage);
-  const [totalCount, setTotalCount] = useState(initialData?.totalCount ?? 0);
-  const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
+  const [searchKeyword] = useState(initialKeyword);
+  const [selectedSeries] = useState<SelectedSeries | null>(initialData?.selectedSeries ?? null);
+  const [currentPage] = useState(initialData?.page ?? initialPage);
+  const [totalCount] = useState(initialData?.totalCount ?? 0);
+  const [totalPage] = useState(initialData?.totalPage ?? 1);
   const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
-  const [canWritePost, setCanWritePost] = useState(Boolean(initialData?.actions?.canWritePost));
-  const [blogType, setBlogType] = useState<string | null>(initialData?.blogType ?? null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(initialError);
-  const initialRouteKey = useRef(`${siteName}:${boardName}:${searchParams.toString()}`);
+  const [canWritePost] = useState(Boolean(initialData?.actions?.canWritePost));
+  const [blogType] = useState<string | null>(initialData?.blogType ?? null);
+  const [errorMessage] = useState(initialError);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
-
-  async function loadContents(nextPage = 1, nextKeyword = '', nextSeriesName = '') {
-    try {
-      setErrorMessage('');
-
-      const nextSize = boardName === 'b' ? BOARD_B_PAGE_SIZE : DEFAULT_PAGE_SIZE;
-
-      const queryParams = new URLSearchParams({
-        siteName,
-        page: String(nextPage),
-        size: String(nextSize),
-      });
-
-      if (nextKeyword) {
-        queryParams.set('keyword', nextKeyword);
-      }
-
-      if (nextSeriesName) {
-        queryParams.set('seriesName', nextSeriesName);
-      }
-
-      const response = await fetch(`/api/boards/${boardName}?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as BoardListResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '전체 게시글을 불러오지 못했습니다.');
-      }
-
-      setBoard(result.board);
-      setContents(Array.isArray(result.contents) ? result.contents : []);
-      setCurrentPage(typeof result.page === 'number' ? result.page : nextPage);
-      setTotalCount(typeof result.totalCount === 'number' ? result.totalCount : 0);
-      setTotalPage(typeof result.totalPage === 'number' ? result.totalPage : 1);
-      setSearchKeyword(nextKeyword);
-      setSelectedSeries(result.selectedSeries ?? null);
-      setCanWritePost(Boolean(result.actions?.canWritePost));
-      setBlogType(result.blogType ?? null);
-    } catch (unknownError) {
-      setCanWritePost(false);
-      setSelectedSeries(null);
-
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '전체 게시글을 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('전체 게시글을 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   function updateRoute(nextPage: number, nextKeyword: string, nextSeriesName = '') {
     const queryParams = new URLSearchParams();
@@ -381,27 +322,6 @@ export default function Opt({
 
     router.push(queryString ? `/${siteName}/${boardName}?${queryString}` : `/${siteName}/${boardName}`);
   }
-
-  useEffect(() => {
-    const routeKey = `${siteName}:${boardName}:${searchParams.toString()}`;
-
-    if (initialRouteKey.current === routeKey) {
-      return;
-    }
-    initialRouteKey.current = routeKey;
-    const nextPage = parsePage(searchParams.get('page'));
-    const nextKeyword = normalizeText(searchParams.get('keyword'));
-    const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
-
-    setKeywordInput(nextKeyword);
-    setIsLoading(true);
-    void loadContents(nextPage, nextKeyword, nextSeriesName);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteName, boardName, searchParams]);
-
-  useEffect(() => {
-    setBoardViewType('default');
-  }, [boardName]);
 
   function handleSearchSubmit(event: FormSubmitEvent) {
     event.preventDefault();
@@ -439,27 +359,6 @@ export default function Opt({
   const pageNumbers = getPageNumbers(currentPage, totalPage);
   const hasPreviousPager = pageNumbers[0] > 1;
   const hasNextPager = pageNumbers[pageNumbers.length - 1] < totalPage;
-
-  if (isLoading) {
-    return (
-      <Container
-        pageBack={`/${siteName}`}
-        pageTitle={
-          isSearchMode ? searchKeyword : selectedSeries ? selectedSeries.series_label : board ? board.board_label : ''
-        }
-      >
-        <div className="container">
-          <div className={`${styles.content} content`}>
-            <div className="paper">
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
 
   if (errorMessage) {
     return (

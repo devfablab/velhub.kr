@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 
 type Props = {
   onTimestampAdd?: (timestamp: string) => void;
-  videoId: string;
-  value: string;
+  validationResult: ValidationResult | null;
 };
 
 function formatTimestamp(seconds: number) {
@@ -20,52 +18,23 @@ function formatTimestamp(seconds: number) {
   return hours > 0 ? `${hours}:${formattedMinutes}:${formattedSeconds}` : `${formattedMinutes}:${formattedSeconds}`;
 }
 
-type ValidationResult = {
+export type ValidationResult = {
   status: 'available' | 'empty' | 'unavailable';
   videoId?: string;
 };
 
-export default function YoutubePreview({ onTimestampAdd, videoId, value }: Props) {
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+export async function validateYoutubeVideo(videoId: string): Promise<ValidationResult> {
+  if (!videoId) return { status: 'unavailable' };
+  try {
+    const response = await fetch(`/api/youtube/${encodeURIComponent(videoId)}`);
+    const result = (await response.json()) as { exists?: boolean };
+    return { status: result.exists === true ? 'available' : 'unavailable', videoId };
+  } catch {
+    return { status: 'unavailable' };
+  }
+}
 
-  useEffect(() => {
-    const normalizedValue = value.trim();
-
-    if (!normalizedValue) {
-      const timeoutId = window.setTimeout(() => setValidationResult({ status: 'empty' }), 3000);
-
-      return () => window.clearTimeout(timeoutId);
-    }
-
-    let isCancelled = false;
-    const timeoutId = window.setTimeout(async () => {
-      if (!videoId) {
-        if (!isCancelled) {
-          setValidationResult({ status: 'unavailable' });
-        }
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/youtube/${encodeURIComponent(videoId)}`);
-        const result = (await response.json()) as { exists?: boolean };
-
-        if (!isCancelled) {
-          setValidationResult({ status: result.exists === true ? 'available' : 'unavailable', videoId });
-        }
-      } catch {
-        if (!isCancelled) {
-          setValidationResult({ status: 'unavailable' });
-        }
-      }
-    }, 3000);
-
-    return () => {
-      isCancelled = true;
-      window.clearTimeout(timeoutId);
-    };
-  }, [value, videoId]);
-
+export default function YoutubePreview({ onTimestampAdd, validationResult }: Props) {
   if (!validationResult || validationResult.status === 'empty') {
     return null;
   }

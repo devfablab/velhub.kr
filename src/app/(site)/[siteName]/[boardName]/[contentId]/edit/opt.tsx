@@ -49,7 +49,7 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
-import YoutubePreview from '@/components/service/YoutubePreview';
+import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../../../menu';
 import styles from '@/app/board.module.sass';
@@ -678,6 +678,8 @@ export default function Opt({
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
   const youtubeSummaryReference = useRef<HTMLTextAreaElement | null>(null);
+  const youtubeValidationTimerRef = useRef<number | null>(null);
+  const youtubeValidationRequestRef = useRef(0);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
   const prefixSelectReference = useRef<HTMLDivElement | null>(null);
   const seriesSelectReference = useRef<HTMLDivElement | null>(null);
@@ -713,6 +715,10 @@ export default function Opt({
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [contentSimple, setContentSimple] = useState(initialContent?.content?.content_simple ?? '');
   const [youtubeUrl, setYoutubeUrl] = useState(initialContent?.content?.youtube_url ?? '');
+  const [youtubeValidationResult, setYoutubeValidationResult] = useState<ValidationResult>(() => {
+    const initialVideoId = getYoutubeId(initialContent?.content?.youtube_url ?? '');
+    return initialVideoId ? { status: 'available', videoId: initialVideoId } : { status: 'empty' };
+  });
   const [youtubeCreatedAt, setYoutubeCreatedAt] = useState(
     formatDateValue(parseDateValue(initialContent?.content?.youtube_created_at)),
   );
@@ -774,6 +780,21 @@ export default function Opt({
   const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
   const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;
+
+  function handleYoutubeUrlChange(nextValue: string) {
+    setYoutubeUrl(nextValue);
+    if (youtubeValidationTimerRef.current !== null) window.clearTimeout(youtubeValidationTimerRef.current);
+    const requestId = ++youtubeValidationRequestRef.current;
+    if (!nextValue.trim()) {
+      setYoutubeValidationResult({ status: 'empty' });
+      return;
+    }
+    setYoutubeValidationResult({ status: 'empty' });
+    youtubeValidationTimerRef.current = window.setTimeout(async () => {
+      const result = await validateYoutubeVideo(getYoutubeId(nextValue));
+      if (youtubeValidationRequestRef.current === requestId) setYoutubeValidationResult(result);
+    }, 3000);
+  }
 
   function handleYoutubeTimestampAdd(timestamp: string) {
     const textarea = youtubeSummaryReference.current;
@@ -1930,7 +1951,7 @@ export default function Opt({
                               value={youtubeUrl}
                               placeholder="유튜브 영상 주소를 입력해주세요"
                               style={{ paddingLeft: 12 }}
-                              onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
+                              onChange={(event) => handleYoutubeUrlChange(event.currentTarget.value)}
                             />
                           </div>
                         </div>
@@ -2021,8 +2042,7 @@ export default function Opt({
                   {isYoutubeBoard ? (
                     <>
                       <YoutubePreview
-                        videoId={youtubeId}
-                        value={youtubeUrl}
+                        validationResult={youtubeValidationResult}
                         onTimestampAdd={handleYoutubeTimestampAdd}
                       />
                       <div className="paper paper-p0">

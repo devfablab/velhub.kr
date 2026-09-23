@@ -61,7 +61,12 @@ export default async function Page(context: SearchContext) {
   );
   return (
     <Container pageBack={`/${siteName}`} pageTitle="최근글 보기">
-      <Opt isCommunity={isCommunity} initialData={initial.data} initialError={initial.error} />
+      <Opt
+        key={queryParams.toString()}
+        isCommunity={isCommunity}
+        initialData={initial.data}
+        initialError={initial.error}
+      />
     </Container>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
@@ -32,11 +32,6 @@ import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
-
-type ItemsResponse = {
-  items?: GuidelineAppealItem[];
-  error?: string;
-};
 
 type MessagesResponse = {
   siteName?: string;
@@ -217,8 +212,7 @@ export default function Opt({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [items, setItems] = useState<GuidelineAppealItem[]>(initialItems);
-  const [loading, setLoading] = useState(false);
-  const [isLoginRequired, setIsLoginRequired] = useState(initialLoginRequired);
+  const [isLoginRequired] = useState(initialLoginRequired);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [contentItem, setContentItem] = useState<GuidelineAppealItem | null>(null);
@@ -230,47 +224,6 @@ export default function Opt({
   const [messageOpenedAt, setMessageOpenedAt] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
   const [messageSaving, setMessageSaving] = useState(false);
-  const hasInitialData = useRef(true);
-
-  const loadItems = useCallback(async () => {
-    setLoading(true);
-    setIsLoginRequired(false);
-
-    const response = await fetch('/api/concierge/appeals/guidelines', { credentials: 'include' });
-    const result = (await response.json().catch(() => ({
-      error: '가이드라인 소명 내역 응답을 확인하지 못했습니다.',
-    }))) as ItemsResponse;
-
-    setLoading(false);
-
-    if (response.status === 401) {
-      setItems([]);
-      setErrorMessage('');
-      setIsLoginRequired(true);
-      return;
-    }
-
-    if (!response.ok || result.error) {
-      setItems([]);
-      setErrorMessage(result.error ?? '가이드라인 소명 내역을 불러오지 못했습니다.');
-      return;
-    }
-
-    setItems(result.items ?? []);
-    setIsLoginRequired(false);
-    setErrorMessage('');
-  }, []);
-
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
-      return;
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadItems();
-  }, [loadItems]);
-
   async function openContent(item: GuidelineAppealItem) {
     setContentItem(item);
     setContentResponse(null);
@@ -438,11 +391,7 @@ export default function Opt({
         </div>
       ) : null}
 
-      {loading ? (
-        <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
-          <LoadingIndicator />
-        </Stack>
-      ) : isLoginRequired ? null : items.length === 0 ? (
+      {isLoginRequired ? null : items.length === 0 ? (
         <div className="paper page-info">
           <ServiceNoDataIcon />
           <p>가이드라인 소명내역이 없습니다.</p>

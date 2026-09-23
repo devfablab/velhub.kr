@@ -411,7 +411,6 @@ export default function Opt({
   const [tab, setTab] = useState<'all' | 'series'>('all');
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState(initialError);
-  const hasInitialData = useRef(Boolean(initialData) || Boolean(initialError));
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
@@ -430,13 +429,11 @@ export default function Opt({
     [handleName],
   );
 
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
-      return;
-    }
-    void load(page, tab);
-  }, [load, page, tab]);
+  function changePage(nextPage: number, nextTab = tab) {
+    setPage(nextPage);
+    setTab(nextTab);
+    void load(nextPage, nextTab);
+  }
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -555,20 +552,14 @@ export default function Opt({
                 <button
                   type="button"
                   className={`button medium ${tab === 'all' ? 'submit' : 'action'}`}
-                  onClick={() => {
-                    setTab('all');
-                    setPage(1);
-                  }}
+                  onClick={() => changePage(1, 'all')}
                 >
                   전체글
                 </button>
                 <button
                   type="button"
                   className={`button medium ${tab === 'series' ? 'submit' : 'action'}`}
-                  onClick={() => {
-                    setTab('series');
-                    setPage(1);
-                  }}
+                  onClick={() => changePage(1, 'series')}
                 >
                   연재글
                 </button>
@@ -597,7 +588,7 @@ export default function Opt({
                     type="button"
                     className="button small action"
                     disabled={page <= 1}
-                    onClick={() => setPage((current) => current - 1)}
+                    onClick={() => changePage(page - 1)}
                   >
                     이전
                   </button>
@@ -608,7 +599,7 @@ export default function Opt({
                     type="button"
                     className="button small action"
                     disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
+                    onClick={() => changePage(page + 1)}
                   >
                     다음
                   </button>

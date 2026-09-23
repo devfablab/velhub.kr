@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type JSX, type ReactNode, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -13,7 +13,6 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import FabNew from '@/components/service/common/FabNew';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -65,7 +64,6 @@ export type BoardListResponse = {
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
-const PAGE_SIZE = 20;
 const PAGER_SIZE = 10;
 
 function renderHighlightedText(value: string, keyword: string) {
@@ -130,61 +128,18 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const initialPage = parsePage(searchParams.get('page'));
   const initialKeyword = normalizeText(searchParams.get('keyword'));
 
-  const [contents, setContents] = useState<PostItem[]>(initialData?.contents ?? []);
+  const [contents] = useState<PostItem[]>(initialData?.contents ?? []);
   const [keywordInput, setKeywordInput] = useState(initialKeyword);
-  const [searchKeyword, setSearchKeyword] = useState(initialKeyword);
-  const [currentPage, setCurrentPage] = useState(initialData?.page ?? initialPage);
-  const [totalCount, setTotalCount] = useState(initialData?.totalCount ?? 0);
-  const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(initialError);
-  const initialRouteKey = useRef(`${siteName}:${searchParams.toString()}`);
+  const [searchKeyword] = useState(initialKeyword);
+  const [currentPage] = useState(initialData?.page ?? initialPage);
+  const [totalCount] = useState(initialData?.totalCount ?? 0);
+  const [totalPage] = useState(initialData?.totalPage ?? 1);
+  const [errorMessage] = useState(initialError);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
-
-  async function loadContents(nextPage = 1, nextKeyword = '') {
-    try {
-      setErrorMessage('');
-
-      const queryParams = new URLSearchParams({
-        siteName,
-        page: String(nextPage),
-        size: String(PAGE_SIZE),
-      });
-
-      if (nextKeyword) {
-        queryParams.set('keyword', nextKeyword);
-      }
-
-      const response = await fetch(`/api/boards/all?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as BoardListResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '전체 게시글을 불러오지 못했습니다.');
-      }
-
-      setContents(Array.isArray(result.contents) ? result.contents : []);
-      setCurrentPage(typeof result.page === 'number' ? result.page : nextPage);
-      setTotalCount(typeof result.totalCount === 'number' ? result.totalCount : 0);
-      setTotalPage(typeof result.totalPage === 'number' ? result.totalPage : 1);
-      setSearchKeyword(nextKeyword);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '전체 게시글을 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('전체 게시글을 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   function updateRoute(nextPage: number, nextKeyword: string) {
     const queryParams = new URLSearchParams();
@@ -201,22 +156,6 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
 
     router.push(queryString ? `/${siteName}/board?${queryString}` : `/${siteName}/board`);
   }
-
-  useEffect(() => {
-    const routeKey = `${siteName}:${searchParams.toString()}`;
-
-    if (initialRouteKey.current === routeKey) {
-      return;
-    }
-    initialRouteKey.current = routeKey;
-    const nextPage = parsePage(searchParams.get('page'));
-    const nextKeyword = normalizeText(searchParams.get('keyword'));
-
-    setKeywordInput(nextKeyword);
-    setIsLoading(true);
-    void loadContents(nextPage, nextKeyword);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteName, searchParams]);
 
   function handleSearchSubmit(event: FormSubmitEvent) {
     event.preventDefault();
@@ -238,24 +177,6 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const pageNumbers = getPageNumbers(currentPage, totalPage);
   const hasPreviousPager = pageNumbers[0] > 1;
   const hasNextPager = pageNumbers[pageNumbers.length - 1] < totalPage;
-
-  if (isLoading) {
-    return (
-      <div className="container">
-        <div className={`${styles.content} content`}>
-          <h2>
-            <ListAltOutlinedIcon />
-            <span>최신글 보기</span>
-          </h2>
-          <div className="paper">
-            <div className="loading-container">
-              <LoadingIndicator />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (errorMessage) {
     return (

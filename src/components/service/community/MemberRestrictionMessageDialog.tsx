@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
@@ -90,45 +90,24 @@ export default function MemberRestrictionMessageDialog({
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  useEffect(() => {
-    if (!open || !endpoint) {
+  async function loadMessages() {
+    if (!endpoint) return;
+    setLoading(true);
+    setResponse(null);
+    setMessageText('');
+    setErrorMessage('');
+    setOpenedAt(new Date().toISOString());
+    const fetchResponse = await fetch(endpoint, { credentials: 'include' });
+    const result = (await fetchResponse.json().catch(() => ({
+      error: '소명 메시지 응답을 확인하지 못했습니다.',
+    }))) as MemberRestrictionMessagesResponse;
+    setLoading(false);
+    if (!fetchResponse.ok || result.error) {
+      setErrorMessage(result.error ?? '소명 메시지를 불러오지 못했습니다.');
       return;
     }
-
-    let isActive = true;
-
-    async function loadMessages() {
-      setLoading(true);
-      setResponse(null);
-      setMessageText('');
-      setErrorMessage('');
-      setOpenedAt(new Date().toISOString());
-
-      const fetchResponse = await fetch(endpoint, { credentials: 'include' });
-      const result = (await fetchResponse.json().catch(() => ({
-        error: '소명 메시지 응답을 확인하지 못했습니다.',
-      }))) as MemberRestrictionMessagesResponse;
-
-      if (!isActive) {
-        return;
-      }
-
-      setLoading(false);
-
-      if (!fetchResponse.ok || result.error) {
-        setErrorMessage(result.error ?? '소명 메시지를 불러오지 못했습니다.');
-        return;
-      }
-
-      setResponse(result);
-    }
-
-    void loadMessages();
-
-    return () => {
-      isActive = false;
-    };
-  }, [endpoint, open]);
+    setResponse(result);
+  }
 
   function closeDialog() {
     if (saving) {
@@ -227,7 +206,14 @@ export default function MemberRestrictionMessageDialog({
   return (
     <>
       {!isMobile ? (
-        <Dialog open={open} onClose={closeDialog} maxWidth="lg" fullWidth className="VhiDialog">
+        <Dialog
+          open={open}
+          onClose={closeDialog}
+          maxWidth="lg"
+          fullWidth
+          className="VhiDialog"
+          slotProps={{ transition: { onEntered: () => void loadMessages() } }}
+        >
           <DialogTitle>소명 메시지</DialogTitle>
           <button type="button" className="close-button" onClick={closeDialog} disabled={saving}>
             <CloseRoundedIcon />
@@ -248,7 +234,13 @@ export default function MemberRestrictionMessageDialog({
           </DialogActions>
         </Dialog>
       ) : (
-        <Drawer anchor="bottom" open={open} onClose={closeDialog} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={closeDialog}
+          className="VhiDrawer-bottom"
+          slotProps={{ transition: { onEntered: () => void loadMessages() } }}
+        >
           <h2>소명 메시지</h2>
           <button type="button" className="close-button" onClick={closeDialog} disabled={saving}>
             <CloseRoundedIcon />
