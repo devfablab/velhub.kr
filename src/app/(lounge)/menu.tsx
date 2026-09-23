@@ -32,36 +32,15 @@ import {
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import SecondaryMenu from '@/components/header-groups/lounge/SecondaryMenu';
 import NotificationButton from '@/components/service/common/NotificationButton';
 import { ServiceLogo } from '@/components/Svgs';
+import { useLoungeHeader } from './lounge/shared/LoungeHeaderContext';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
   children: React.ReactNode;
-};
-
-type SiteType = 'blog' | 'community';
-
-type HeaderResponse = {
-  siteLabel: string | null;
-  siteType: SiteType | null;
-  themeType: string;
-  profilePictureUrl: string | null;
-  profileLogoUrl: string | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  sessionCase?: string | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
 };
 
 type UserProfile = {
@@ -108,7 +87,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 }
 
 export default function Container({ children }: ContainerProps) {
-  const { isReady } = useAuthState();
+  const initialHeader = useLoungeHeader();
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -116,16 +95,16 @@ export default function Container({ children }: ContainerProps) {
 
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: null,
-    email: null,
-    avatarUrl: null,
-    isLoggedIn: false,
-    isAuthor: false,
-    creatorHandleName: null,
-    userHandleName: null,
-    hasAffettoMyPosts: false,
-  });
+  const userProfile: UserProfile = {
+    name: initialHeader?.userName ?? null,
+    email: initialHeader?.email ?? null,
+    avatarUrl: initialHeader?.avatar ?? null,
+    isLoggedIn: initialHeader?.isLoggedIn ?? false,
+    isAuthor: initialHeader?.isAuthor ?? false,
+    creatorHandleName: initialHeader?.creatorHandleName ?? null,
+    userHandleName: initialHeader?.userHandleName ?? null,
+    hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
+  };
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -153,48 +132,6 @@ export default function Container({ children }: ContainerProps) {
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
   }, [isMounted, themeMode]);
-
-  useEffect(() => {
-    async function loadHeader() {
-      const response = await fetch('/api/header/lounge', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        setUserProfile({
-          name: null,
-          email: null,
-          avatarUrl: null,
-          isLoggedIn: false,
-          isAuthor: false,
-          creatorHandleName: null,
-          userHandleName: null,
-          hasAffettoMyPosts: false,
-        });
-        return;
-      }
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isLoggedIn: result.isLoggedIn,
-        isAuthor: result.isAuthor,
-        creatorHandleName: result.creatorHandleName,
-        userHandleName: result.userHandleName,
-        hasAffettoMyPosts: result.hasAffettoMyPosts,
-      });
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady]);
 
   function handleOpenProfileDrawer() {
     setIsProfileDrawerOpen(true);
@@ -231,7 +168,7 @@ export default function Container({ children }: ContainerProps) {
     }
   }, [isMobile]);
 
-  if (!isMounted || !isReady) {
+  if (!isMounted) {
     return null;
   }
 

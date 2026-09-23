@@ -4,60 +4,31 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import {
   Avatar,
-  Drawer,
   IconButton,
   ListItemIcon,
   ListItemText,
-  ListSubheader,
   Menu,
   MenuItem,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
 import { ServiceLogo } from '../Svgs';
+import { useHubHeader } from '@/app/(hub)/hub/shared/HubHeaderContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
-
-type SiteType = 'blog' | 'community';
-
-type HeaderResponse = {
-  siteLabel: string | null;
-  siteType: SiteType | null;
-  themeType: string;
-  profilePictureUrl: string | null;
-  profileLogoUrl: string | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  sessionCase?: string | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
-};
 
 type UserProfile = {
   name: string | null;
@@ -102,23 +73,27 @@ function applyThemeMode(themeMode: ThemeMode) {
 }
 
 export default function HeaderHub() {
+  const initialHeader = useHubHeader();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
 
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
-  const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
-  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: null,
-    email: null,
-    avatarUrl: null,
-  });
+  const [, setIsThemeModeDrawerOpen] = useState(false);
+  const [, setIsProfileDrawerOpen] = useState(false);
+  const userProfile: UserProfile = {
+    name: initialHeader?.userName ?? null,
+    email: initialHeader?.email ?? null,
+    avatarUrl: initialHeader?.avatar ?? null,
+    isAuthor: initialHeader?.isAuthor ?? false,
+    creatorHandleName: initialHeader?.creatorHandleName ?? null,
+    userHandleName: initialHeader?.userHandleName ?? null,
+    hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
+  };
 
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -155,38 +130,6 @@ export default function HeaderHub() {
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
   }, [isMounted, themeMode]);
-
-  useEffect(() => {
-    async function loadHeader() {
-      const response = await fetch('/api/header/settings', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        window.location.href = '/auth/sign-in';
-        return;
-      }
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isAuthor: result.isAuthor,
-        creatorHandleName: result.creatorHandleName,
-        userHandleName: result.userHandleName,
-        hasAffettoMyPosts: result.hasAffettoMyPosts,
-      });
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
     if (isMobile) {
@@ -258,7 +201,7 @@ export default function HeaderHub() {
     return <SettingsBrightnessIcon />;
   }
 
-  if (!isMounted || !isReady) {
+  if (!isMounted) {
     return null;
   }
 

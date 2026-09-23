@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -17,13 +18,13 @@ import PopupMessage from '@/components/PopupMessage';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/memberships.module.sass';
 
-type Eligibility = {
+export type Eligibility = {
   owner: { available: boolean; message: string | null };
   creator: { available: boolean; message: string | null };
   allInOne: { available: boolean; message: string | null };
 };
 
-type MembershipStatusResponse = {
+export type MembershipStatusResponse = {
   memberships?: Array<{ id: string; type: MembershipType }>;
   message?: string;
   features?: MembershipFeatureKey[];
@@ -75,10 +76,6 @@ const featureDescriptions: Partial<Record<MembershipFeatureKey, string>> = {
   creator_posts: '여러 사이트에 쓴 연재글을 작가의 서재에서 모아 보여줍니다.',
 };
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : '멤버십 이용 조건을 확인하지 못했습니다.';
-}
-
 function toggleFeature(current: MembershipFeatureKey[], featureKey: MembershipFeatureKey) {
   return current.includes(featureKey) ? current.filter((key) => key !== featureKey) : [...current, featureKey];
 }
@@ -87,74 +84,40 @@ function getPackageKeys(features: typeof ownerFeatures) {
   return features.map((feature) => feature.key);
 }
 
-export default function Opt() {
+export default function Opt({
+  initialEligibility,
+  initialMembership,
+  initialError,
+}: {
+  initialEligibility: Eligibility | null;
+  initialMembership: MembershipStatusResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
-  const [eligibility, setEligibility] = useState<Eligibility | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [mode, setMode] = useState<MembershipMode>('individual');
+  const eligibility = initialEligibility;
+  const errorMessage = initialError;
+  const existingMemberships = initialMembership?.memberships ?? [];
+  const initialFeatures = initialMembership?.features ?? [];
+  const hasExistingMembership = existingMemberships.some((membership) =>
+    ['owner', 'creator', 'all_in_one'].includes(membership.type),
+  );
+  const initialIsAllInOne = existingMemberships.some((membership) => membership.type === 'all_in_one');
+  const [mode, setMode] = useState<MembershipMode>(initialIsAllInOne ? 'all_in_one' : 'individual');
   const [isAllInOneAutomatic, setIsAllInOneAutomatic] = useState(false);
-  const [ownerSelection, setOwnerSelection] = useState<MembershipFeatureKey[]>([]);
-  const [creatorSelection, setCreatorSelection] = useState<MembershipFeatureKey[]>([]);
+  const [ownerSelection, setOwnerSelection] = useState<MembershipFeatureKey[]>(
+    initialIsAllInOne ? [] : initialFeatures.filter((key) => ownerFeatures.some((feature) => feature.key === key)),
+  );
+  const [creatorSelection, setCreatorSelection] = useState<MembershipFeatureKey[]>(
+    initialIsAllInOne ? [] : initialFeatures.filter((key) => creatorFeatures.some((feature) => feature.key === key)),
+  );
   const [isOwnerPackage, setIsOwnerPackage] = useState(false);
   const [isCreatorPackage, setIsCreatorPackage] = useState(false);
-  const [allInOneSelection, setAllInOneSelection] = useState<MembershipFeatureKey[]>([]);
+  const [allInOneSelection, setAllInOneSelection] = useState<MembershipFeatureKey[]>(
+    initialIsAllInOne ? initialFeatures : [],
+  );
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [hasExistingMembership, setHasExistingMembership] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
-
-  useEffect(() => {
-    async function loadEligibility() {
-      try {
-        const [eligibilityResponse, membershipResponse] = await Promise.all([
-          fetch('/api/memberships/eligibility', { credentials: 'include', cache: 'no-store' }),
-          fetch('/api/memberships', { credentials: 'include', cache: 'no-store' }),
-        ]);
-        const result = (await eligibilityResponse.json().catch(() => null)) as
-          | Eligibility
-          | { message?: string }
-          | null;
-        const membershipResult = (await membershipResponse.json().catch(() => null)) as MembershipStatusResponse | null;
-
-        if (!eligibilityResponse.ok || !result || !('owner' in result)) {
-          const message = result && 'message' in result ? result.message : null;
-          throw new Error(message || '멤버십 이용 조건을 확인하지 못했습니다.');
-        }
-
-        if (!membershipResponse.ok) {
-          throw new Error(membershipResult?.message || '멤버십 정보를 불러오지 못했습니다.');
-        }
-
-        const existingMemberships = membershipResult?.memberships ?? [];
-        const hasCreatorMembership = existingMemberships.some((membership) =>
-          ['owner', 'creator', 'all_in_one'].includes(membership.type),
-        );
-
-        if (hasCreatorMembership) {
-          setHasExistingMembership(true);
-          const features = membershipResult?.features ?? [];
-          const isAllInOne = existingMemberships.some((m) => m.type === 'all_in_one');
-
-          if (isAllInOne) {
-            setMode('all_in_one');
-            setAllInOneSelection(features);
-          } else {
-            setMode('individual');
-            const ownerSelected = features.filter((key) => ownerFeatures.some((f) => f.key === key));
-            const creatorSelected = features.filter((key) => creatorFeatures.some((f) => f.key === key));
-            setOwnerSelection(ownerSelected);
-            setCreatorSelection(creatorSelected);
-          }
-        }
-
-        setEligibility(result);
-      } catch (error) {
-        setErrorMessage(getErrorMessage(error));
-      }
-    }
-
-    void loadEligibility();
-  }, [router]);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -183,12 +146,6 @@ export default function Opt() {
     };
   }, [isMounted, themeMode]);
 
-  useEffect(() => {
-    if (!isMounted) {
-      return;
-    }
-  }, [isMounted]);
-
   const effectiveOwnerSelection = isOwnerPackage ? getPackageKeys(ownerFeatures) : ownerSelection;
   const effectiveCreatorSelection = isCreatorPackage ? getPackageKeys(creatorFeatures) : creatorSelection;
   const isAllInOnePackage = useMemo(
@@ -197,7 +154,6 @@ export default function Opt() {
       creatorFeatures.filter((feature) => allInOneSelection.includes(feature.key)).length >= 2,
     [allInOneSelection],
   );
-  const canEditIndividual = mode === 'individual' || isAllInOneAutomatic;
   const canUseAllInOne = eligibility?.allInOne.available ?? false;
 
   const totalPrice = useMemo(() => {

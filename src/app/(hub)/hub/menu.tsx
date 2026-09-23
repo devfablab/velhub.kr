@@ -38,7 +38,7 @@ import {
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
+import { useHubHeader } from './shared/HubHeaderContext';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
@@ -46,27 +46,6 @@ type ContainerProps = {
   pageTitle: string;
   pageBack: string;
   children: React.ReactNode;
-};
-
-type SiteType = 'blog' | 'community';
-
-type HeaderResponse = {
-  siteLabel: string | null;
-  siteType: SiteType | null;
-  themeType: string;
-  profilePictureUrl: string | null;
-  profileLogoUrl: string | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  sessionCase?: string | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
 };
 
 type UserProfile = {
@@ -112,7 +91,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 }
 
 export default function Container({ pageTitle, pageBack, children }: ContainerProps) {
-  const { isReady } = useAuthState();
+  const initialHeader = useHubHeader();
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -120,15 +99,15 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
 
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: null,
-    email: null,
-    avatarUrl: null,
-    isAuthor: false,
-    creatorHandleName: null,
-    userHandleName: null,
-    hasAffettoMyPosts: false,
-  });
+  const userProfile: UserProfile = {
+    name: initialHeader?.userName ?? null,
+    email: initialHeader?.email ?? null,
+    avatarUrl: initialHeader?.avatar ?? null,
+    isAuthor: initialHeader?.isAuthor ?? false,
+    creatorHandleName: initialHeader?.creatorHandleName ?? null,
+    userHandleName: initialHeader?.userHandleName ?? null,
+    hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
+  };
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -156,38 +135,6 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
   }, [isMounted, themeMode]);
-
-  useEffect(() => {
-    async function loadHeader() {
-      const response = await fetch('/api/header/settings', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        window.location.href = '/auth/sign-in';
-        return;
-      }
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isAuthor: result.isAuthor,
-        creatorHandleName: result.creatorHandleName,
-        userHandleName: result.userHandleName,
-        hasAffettoMyPosts: result.hasAffettoMyPosts,
-      });
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady]);
 
   function handleOpenProfileDrawer() {
     setIsProfileDrawerOpen(true);
@@ -224,7 +171,7 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
     }
   }, [isMobile]);
 
-  if (!isMounted || !isReady) {
+  if (!isMounted) {
     return null;
   }
 

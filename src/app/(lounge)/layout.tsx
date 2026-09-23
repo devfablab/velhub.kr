@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies, headers } from 'next/headers';
 import Footer from '@/components/footers/Footer';
 import HeaderLounge from '@/components/headers/Lounge';
 import ChannelWorks from '@/components/service/common/ChannelWorks';
+import { LoungeHeaderProvider, type LoungeHeaderData } from './lounge/shared/LoungeHeaderContext';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',
@@ -34,17 +36,45 @@ export const viewport: Viewport = {
   colorScheme: 'light',
 };
 
-export default function RootLayout({
+async function getHeaderData(): Promise<LoungeHeaderData | null> {
+  try {
+    const cookieStore = await cookies();
+    const headerList = await headers();
+    const host = headerList.get('host');
+    const protocol = headerList.get('x-forwarded-proto') || 'http';
+
+    if (!host) {
+      return null;
+    }
+
+    const response = await fetch(`${protocol}://${host}/api/header/lounge`, {
+      headers: { cookie: cookieStore.toString() },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as LoungeHeaderData;
+  } catch {
+    return null;
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const header = await getHeaderData();
+
   return (
-    <>
+    <LoungeHeaderProvider value={header}>
       <HeaderLounge />
       {children}
       <Footer />
       <ChannelWorks />
-    </>
+    </LoungeHeaderProvider>
   );
 }

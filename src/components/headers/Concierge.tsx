@@ -15,26 +15,13 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import PrimaryMenu from '../header-groups/concierge/PrimaryMenu';
 import SecondaryMenu from '../header-groups/concierge/SecondaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
 import { ServiceLogo } from '../Svgs';
+import { useConciergeHeader } from '@/app/(concierge)/ConciergeHeaderContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
-
-type HeaderResponse = {
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  themeMode: ThemeMode | null;
-  globalRole: string | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
-};
 
 type UserProfile = {
   name: string | null;
@@ -81,31 +68,31 @@ function applyThemeMode(themeMode: ThemeMode) {
 }
 
 export default function HeaderConcierge() {
+  const initialHeader = useConciergeHeader();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
   const lastScrollY = useRef(0);
   const [isUpScroll, setIsUpScroll] = useState(false);
 
-  const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
 
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
-  const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
-  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: null,
-    email: null,
-    avatarUrl: null,
-    isLoggedIn: false,
-    globalRole: null,
-    isAuthor: false,
-    creatorHandleName: null,
-    userHandleName: null,
-    hasAffettoMyPosts: false,
-  });
+  const [, setIsThemeModeDrawerOpen] = useState(false);
+  const [, setIsProfileDrawerOpen] = useState(false);
+  const userProfile: UserProfile = {
+    name: initialHeader?.userName ?? null,
+    email: initialHeader?.email ?? null,
+    avatarUrl: initialHeader?.avatar ?? null,
+    isLoggedIn: initialHeader?.isLoggedIn ?? false,
+    globalRole: initialHeader?.globalRole ?? null,
+    isAuthor: initialHeader?.isAuthor ?? false,
+    creatorHandleName: initialHeader?.creatorHandleName ?? null,
+    userHandleName: initialHeader?.userHandleName ?? null,
+    hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -149,50 +136,6 @@ export default function HeaderConcierge() {
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
   }, [isMounted, themeMode]);
-
-  useEffect(() => {
-    async function loadHeader() {
-      const response = await fetch('/api/header/lounge', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        setUserProfile({
-          name: null,
-          email: null,
-          avatarUrl: null,
-          isLoggedIn: false,
-          globalRole: null,
-          isAuthor: false,
-          creatorHandleName: null,
-          userHandleName: null,
-          hasAffettoMyPosts: false,
-        });
-        return;
-      }
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isLoggedIn: result.isLoggedIn,
-        globalRole: result.globalRole,
-        isAuthor: result.isAuthor,
-        creatorHandleName: result.creatorHandleName,
-        userHandleName: result.userHandleName,
-        hasAffettoMyPosts: result.hasAffettoMyPosts,
-      });
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
     if (isMobile) {
@@ -264,7 +207,7 @@ export default function HeaderConcierge() {
     return <SettingsBrightnessIcon />;
   }
 
-  if (!isMounted || !isReady) {
+  if (!isMounted) {
     return null;
   }
 

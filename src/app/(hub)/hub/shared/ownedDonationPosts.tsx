@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Chip, Dialog, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
@@ -266,55 +266,43 @@ export default function OwnedDonationPosts({ initialData, initialError }: Props)
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const posts = Array.isArray(initialData?.posts) ? initialData.posts : [];
+  const contentRequestIdReference = useRef(0);
   const [selectedPost, setSelectedPost] = useState<PostRow | null>(null);
   const [contentResponse, setContentResponse] = useState<ContentResponse | null>(null);
   const [contentErrorMessage, setContentErrorMessage] = useState('');
 
-  useEffect(() => {
-    if (!selectedPost) {
-      return;
-    }
+  async function openPreview(post: PostRow) {
+    const requestId = contentRequestIdReference.current + 1;
+    contentRequestIdReference.current = requestId;
+    setSelectedPost(post);
+    setContentResponse(null);
+    setContentErrorMessage('');
 
-    let ignore = false;
+    try {
+      const response = await fetch(`/api/boards/${post.boardName}/${post.contentId}?siteName=${post.siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const result = (await response.json()) as ContentResponse;
 
-    async function loadContent() {
-      try {
-        setContentResponse(null);
-        setContentErrorMessage('');
+      if (!response.ok) {
+        throw new Error(result.error || '글 내용을 불러오지 못했습니다.');
+      }
 
-        const response = await fetch(
-          `/api/boards/${selectedPost!.boardName}/${selectedPost!.contentId}?siteName=${selectedPost!.siteName}`,
-          {
-            method: 'GET',
-            credentials: 'include',
-          },
+      if (contentRequestIdReference.current === requestId) {
+        setContentResponse(result);
+      }
+    } catch (unknownError) {
+      if (contentRequestIdReference.current === requestId) {
+        setContentErrorMessage(
+          unknownError instanceof Error ? unknownError.message : '글 내용을 불러오지 못했습니다.',
         );
-        const result = (await response.json()) as ContentResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error || '글 내용을 불러오지 못했습니다.');
-        }
-
-        if (!ignore) {
-          setContentResponse(result);
-        }
-      } catch (unknownError) {
-        if (!ignore) {
-          setContentErrorMessage(
-            unknownError instanceof Error ? unknownError.message : '글 내용을 불러오지 못했습니다.',
-          );
-        }
       }
     }
-
-    void loadContent();
-
-    return () => {
-      ignore = true;
-    };
-  }, [selectedPost]);
+  }
 
   function closePreview() {
+    contentRequestIdReference.current += 1;
     setSelectedPost(null);
     setContentResponse(null);
     setContentErrorMessage('');
@@ -341,7 +329,7 @@ export default function OwnedDonationPosts({ initialData, initialError }: Props)
         <ol>
           {posts.map((post) => (
             <li key={post.id}>
-              <button type="button" onClick={() => setSelectedPost(post)}>
+              <button type="button" onClick={() => void openPreview(post)}>
                 <span className={styles['owned-post-title']}>
                   <strong aria-label="글 제목">{post.title}</strong>
                   {post.isClosed ? <em>삭제된 연재글</em> : null}
