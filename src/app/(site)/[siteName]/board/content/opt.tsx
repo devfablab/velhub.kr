@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -31,6 +31,7 @@ import {
   useTheme,
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
+import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
@@ -61,6 +62,7 @@ type Props = {
   initialPollError: string;
   initialComments: CommentsResponse | null;
   initialSubscriptionStatus: SubscriptionStatusResponse | null;
+  initialLinkPreviews: Record<string, LinkPreviewData | null>;
 };
 
 type BoardInfo = {
@@ -247,12 +249,6 @@ export type ContentResponse = {
   error?: string;
 };
 
-type CountResponse = {
-  ok?: boolean;
-  postCount?: number;
-  error?: string;
-};
-
 type SelectedCategory = {
   category_key: string;
   category_label: string;
@@ -355,6 +351,7 @@ export default function Opt({
   initialPollError,
   initialComments,
   initialSubscriptionStatus,
+  initialLinkPreviews,
 }: Props) {
   const theme = useTheme();
   const params = useParams();
@@ -364,7 +361,7 @@ export default function Opt({
   const contentId = normalizeText(searchParams.get('contentId'));
 
   const [board] = useState<BoardInfo | null>(initialData?.board ?? null);
-  const [content, setContent] = useState<PostContent | null>(initialData?.content ?? null);
+  const content = initialData?.content ?? null;
   const [series] = useState<SeriesItem | null>(initialData?.series ?? null);
   const [seriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
   const [isAuthor] = useState(initialData?.isAuthor ?? false);
@@ -404,17 +401,6 @@ export default function Opt({
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  function updatePostCount(nextPostCount: number) {
-    setContent((previousContent) =>
-      previousContent
-        ? {
-            ...previousContent,
-            post_count: nextPostCount,
-          }
-        : previousContent,
-    );
-  }
-
   function isPastDateTime(value: string) {
     const date = new Date(value);
 
@@ -452,38 +438,6 @@ export default function Opt({
     }
 
     setGalleryViewerIndex((previousIndex) => (previousIndex + 1) % content.images!.length);
-  }
-
-  async function increasePostCount(nextBoardName: string, nextContentId: string) {
-    try {
-      const response = await fetch(`/api/boards/${nextBoardName}/${nextContentId}/count?siteName=${siteName}`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as CountResponse;
-
-      if (!response.ok) {
-        return;
-      }
-
-      if (typeof result.postCount === 'number') {
-        updatePostCount(result.postCount);
-      }
-    } catch {
-      return;
-    }
-  }
-
-  async function recordPostRead(nextBoardName: string, nextContentId: string) {
-    try {
-      await fetch(`/api/boards/${nextBoardName}/${nextContentId}/read?siteName=${siteName}`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-    } catch {
-      return;
-    }
   }
 
   async function togglePostLike() {
@@ -550,15 +504,6 @@ export default function Opt({
       setIsTogglingSave(false);
     }
   }
-
-  useEffect(() => {
-    if (content?.published_status === 'published') {
-      void increasePostCount(boardName, contentId);
-      void recordPostRead(boardName, contentId);
-    }
-    // 조회수와 읽음 기록은 화면 표시 이후에 수행하는 부수 효과다.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardName, contentId]);
 
   const listHref = board ? `/${siteName}/${board.board_key}` : `/${siteName}/board`;
 
@@ -1163,7 +1108,7 @@ export default function Opt({
                   {feedLinkPreviewUrls.length > 0 ? (
                     <div className={styles['link-previews']}>
                       {feedLinkPreviewUrls.map((url) => (
-                        <LinkPreview key={url} href={url} />
+                        <LinkPreview key={url} href={url} preview={initialLinkPreviews[url] ?? null} />
                       ))}
                     </div>
                   ) : null}

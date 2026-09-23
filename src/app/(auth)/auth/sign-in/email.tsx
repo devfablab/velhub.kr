@@ -18,7 +18,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies';
+import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies.client';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import HCaptchaBox from './hCaptcha';

@@ -1,6 +1,6 @@
 import { cache, type ReactNode, Suspense } from 'react';
 import type { Metadata } from 'next';
-import { detectAdult } from '@/lib/service/detectAdult';
+import { detectAdult } from '@/lib/service/detectAdult.server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import FooterSite from '@/components/footers/Site';

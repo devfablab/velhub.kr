@@ -15,7 +15,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies';
+import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies.client';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
 import { LoadingIndicator } from '@/components/LoadingIndicator';

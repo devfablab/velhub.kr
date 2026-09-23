@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Stack, Typography } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
@@ -166,7 +166,6 @@ export default function Opt({
   const [isFormOpen, setIsFormOpen] = useState(
     Boolean(initialData?.identity && !initialData.settlement && !isUnder14(initialData.identity.birth_date)),
   );
-  const hasInitialData = useRef(Boolean(initialData) || Boolean(initialError));
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
@@ -186,14 +185,6 @@ export default function Opt({
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (hasInitialData.current) {
-      hasInitialData.current = false;
-      return;
-    }
-    void load();
-  }, []);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -345,7 +336,9 @@ export default function Opt({
           <h1>작가 신청</h1>
           {content ? <div className="paper">{content}</div> : null}
 
-          {isFormOpen && identity && !isUnder14Age ? <SettlementForm onSuccess={() => void load()} /> : null}
+          {isFormOpen && identity && !isUnder14Age ? (
+            <SettlementForm initialData={initialData} initialError={initialError} onSuccess={() => void load()} />
+          ) : null}
         </div>
       </div>
     </main>

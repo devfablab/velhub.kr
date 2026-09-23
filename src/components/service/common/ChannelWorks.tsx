@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
+import { useChannelWorksMember } from './ChannelWorksContext';
 
 const CHANNEL_WORKS_PLUGIN_KEY = process.env.NEXT_PUBLIC_CHANNEL_WORKS_PLUGIN_KEY;
 const CHANNEL_WORKS_SCRIPT_URL = 'https://cdn.channel.io/plugin/ch-plugin-web.js';
@@ -18,20 +19,6 @@ declare global {
     ChannelIOInitialized?: boolean;
   }
 }
-
-type ChannelMember = {
-  memberId: string;
-  memberHash?: string;
-  profile: {
-    name?: string;
-    email?: string;
-    avatarUrl?: string;
-  };
-};
-
-type ChannelMemberResponse = {
-  member: ChannelMember | null;
-};
 
 function initializeChannelIO() {
   if (window.ChannelIOInitialized) return;
@@ -52,11 +39,10 @@ function initializeChannelIO() {
 
 export default function ChannelWorks() {
   const { isAuthenticated, isReady } = useAuthState();
+  const member = useChannelWorksMember();
 
   useEffect(() => {
     if (!CHANNEL_WORKS_PLUGIN_KEY || !isReady) return;
-
-    const abortController = new AbortController();
 
     initializeChannelIO();
 
@@ -69,40 +55,16 @@ export default function ChannelWorks() {
       document.head.appendChild(script);
     }
 
-    async function bootChannelWorks() {
-      let member: ChannelMember | null = null;
-
-      try {
-        const response = await fetch('/api/channel-works/member', {
-          cache: 'no-store',
-          credentials: 'include',
-          signal: abortController.signal,
-        });
-
-        if (response.ok) {
-          const result = (await response.json()) as ChannelMemberResponse;
-          member = result.member;
-        }
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-      }
-
-      if (abortController.signal.aborted) return;
-
-      window.ChannelIO?.('shutdown');
-      window.ChannelIO?.('boot', {
-        pluginKey: CHANNEL_WORKS_PLUGIN_KEY,
-        ...(member ?? {}),
-      });
-    }
-
-    void bootChannelWorks();
+    window.ChannelIO?.('shutdown');
+    window.ChannelIO?.('boot', {
+      pluginKey: CHANNEL_WORKS_PLUGIN_KEY,
+      ...(isAuthenticated ? (member ?? {}) : {}),
+    });
 
     return () => {
-      abortController.abort();
       window.ChannelIO?.('shutdown');
     };
-  }, [isAuthenticated, isReady]);
+  }, [isAuthenticated, isReady, member]);
 
   return null;
 }

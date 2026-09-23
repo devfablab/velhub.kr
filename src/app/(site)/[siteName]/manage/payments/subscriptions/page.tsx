@@ -1,5 +1,5 @@
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { detectAdult } from '@/lib/service/detectAdult';
+import { detectAdult } from '@/lib/service/detectAdult.server';
 import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';

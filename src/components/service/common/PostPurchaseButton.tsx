@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import {
@@ -21,6 +21,7 @@ import IdentityVerificationButton from './IdentityVerificationButton';
 import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/board.module.sass';
 
 type PostPurchaseStartResponse = {
@@ -66,13 +67,6 @@ type IdentityStatusResponse = {
     purchase_available?: boolean;
     birth_date: string;
   } | null;
-  error?: string;
-};
-
-type SitePublicResponse = {
-  siteInfo?: {
-    purchase_available?: boolean;
-  };
   error?: string;
 };
 
@@ -140,6 +134,8 @@ function getFailUrl({ siteName, boardName, contentId, failUrl }: Props) {
 }
 
 export default function PostPurchaseButton(props: Props) {
+  const siteInitialData = useSiteInitialData();
+  const identityStatus = siteInitialData?.identityStatus as IdentityStatusResponse | null;
   const {
     siteName,
     boardName,
@@ -156,77 +152,22 @@ export default function PostPurchaseButton(props: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [hasIdentity, setHasIdentity] = useState(false);
-  const [isMinor, setIsMinor] = useState(false);
-  const [isUnder14Age, setIsUnder14Age] = useState(false);
+  const hasIdentity = Boolean(identityStatus?.exists);
+  const isMinor = Boolean(
+    identityStatus?.exists && identityStatus.identity && !isAdult(identityStatus.identity.birth_date),
+  );
+  const isUnder14Age = Boolean(
+    identityStatus?.exists && identityStatus.identity && isUnder14(identityStatus.identity.birth_date),
+  );
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentCustomerDialogOpen, setIsPaymentCustomerDialogOpen] = useState(false);
   const [needsPaymentEmail, setNeedsPaymentEmail] = useState(true);
   const [needsPaymentPhone, setNeedsPaymentPhone] = useState(true);
-  const [purchaseAvailable, setPurchaseAvailable] = useState(false);
+  const purchaseAvailable = siteInitialData?.purchaseAvailable ?? false;
   const [minorControlMode, setMinorControlMode] = useState<MinorPaymentControlResult['mode']>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function checkOwnerAge() {
-      try {
-        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as SitePublicResponse;
-
-        if (!ignore) {
-          setPurchaseAvailable(Boolean(response.ok && result.siteInfo?.purchase_available));
-        }
-      } catch {
-        if (!ignore) {
-          setPurchaseAvailable(false);
-        }
-      }
-    }
-
-    async function checkIdentity() {
-      try {
-        const response = await fetch('/api/identity/portone/status', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as IdentityStatusResponse;
-
-        if (!ignore) {
-          setHasIdentity(response.ok && Boolean(result.exists));
-          setIsMinor(response.ok && result.exists && result.identity ? !isAdult(result.identity.birth_date) : false);
-          setIsUnder14Age(
-            response.ok && result.exists && result.identity ? isUnder14(result.identity.birth_date) : false,
-          );
-          setIsReady(true);
-        }
-      } catch {
-        if (!ignore) {
-          setIsReady(true);
-        }
-      }
-    }
-
-    void checkOwnerAge();
-    void checkIdentity();
-
-    return () => {
-      ignore = true;
-    };
-  }, [siteName]);
-
-  if (!isReady) {
-    return null;
-  }
 
   function updateProcessing(nextIsProcessing: boolean) {
     setIsProcessing(nextIsProcessing);

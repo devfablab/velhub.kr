@@ -3,11 +3,13 @@ import type { Metadata, Viewport } from 'next';
 import { Hahmlet, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google';
 import localFont from 'next/font/local';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
+import { getChannelWorksMember } from '@/lib/channelWorks/member.server';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import TotpGuard from '@/components/auth/TotpGuard';
 import WithdrawalGuard from '@/components/auth/WithdrawalGuard';
+import { ChannelWorksMemberProvider } from '@/components/service/common/ChannelWorksContext';
 import ThemeProviderClient from './themeProvider';
 import './globals.sass';
 import 'slick-carousel/slick/slick-theme.css';
@@ -73,6 +75,10 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const sessionClaims = await getSessionClaims();
+  const channelWorksMember = await getChannelWorksMember();
+  const needsTotp = Boolean(
+    sessionClaims?.userId && sessionClaims.authenticationLevel === 'aal1' && sessionClaims.hasTotp === true,
+  );
   let withdrawalStatus: string | null = null;
 
   if (sessionClaims?.userId) {
@@ -93,15 +99,17 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable} ${Sans.variable} ${Serif.variable} ${Ham.variable}`}>
       <body>
         <div id="__app">
-          <AuthStateProvider>
-            <AppRouterCacheProvider>
-              <ThemeProviderClient>
-                <WithdrawalGuard initialStatus={withdrawalStatus}>
-                  <TotpGuard>{children}</TotpGuard>
-                </WithdrawalGuard>
-              </ThemeProviderClient>
-            </AppRouterCacheProvider>
-          </AuthStateProvider>
+          <ChannelWorksMemberProvider member={channelWorksMember}>
+            <AuthStateProvider>
+              <AppRouterCacheProvider>
+                <ThemeProviderClient>
+                  <WithdrawalGuard initialStatus={withdrawalStatus}>
+                    <TotpGuard needsTotp={needsTotp}>{children}</TotpGuard>
+                  </WithdrawalGuard>
+                </ThemeProviderClient>
+              </AppRouterCacheProvider>
+            </AuthStateProvider>
+          </ChannelWorksMemberProvider>
         </div>
       </body>
     </html>

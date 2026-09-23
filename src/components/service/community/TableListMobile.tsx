@@ -20,6 +20,7 @@ import {
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
 import DonationButton from '../common/DonationButton';
+import type { DonationStatusResponse } from '../common/DonationButton';
 import ReportButton from '../common/ReportButton';
 import SubscriptionButton from '../common/SubscriptionButton';
 import type { SubscriptionStatusResponse } from '../common/SubscriptionButton';
@@ -46,6 +47,7 @@ type Props = {
   isCommunity?: boolean;
   writeHref?: string;
   initialSubscriptionStatus?: SubscriptionStatusResponse | null;
+  initialDonationStatus?: DonationStatusResponse | null;
 };
 
 function isWritePath(pathname: string, siteName: string) {
@@ -86,6 +88,7 @@ export default function TableListMobile({
   selectedSeries = null,
   writeHref,
   initialSubscriptionStatus,
+  initialDonationStatus,
 }: Props) {
   const params = useParams();
   const pathname = usePathname();
@@ -188,6 +191,7 @@ export default function TableListMobile({
                   targetType="series"
                   boardName={boardName}
                   seriesName={selectedSeries.series_key}
+                  initialStatus={initialDonationStatus}
                 />
               </>
             ) : null}

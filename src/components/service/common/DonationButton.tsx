@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useEffect, useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Dialog,
@@ -23,6 +23,7 @@ import IdentityVerificationButton from './IdentityVerificationButton';
 import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 
 type DonationTargetType = 'site' | 'series';
 
@@ -43,6 +44,7 @@ type DonationStartResponse = {
 
 type CommonProps = {
   siteName: string;
+  initialStatus?: DonationStatusResponse | null;
   buttonText?: string;
   disabled?: boolean;
   onProcessingChange?: (isProcessing: boolean) => void;
@@ -73,7 +75,7 @@ type IdentityStatusResponse = {
   error?: string;
 };
 
-type DonationStatusResponse = {
+export type DonationStatusResponse = {
   isEnabled?: boolean;
   paymentEmail?: string | null;
   paymentPhone?: string | null;
@@ -168,17 +170,23 @@ function createRequestBody(props: Props, amount: number) {
 }
 
 export default function DonationButton(props: Props) {
+  const siteInitialData = useSiteInitialData();
+  const identityStatus = siteInitialData?.identityStatus as IdentityStatusResponse | null;
+  const siteProfile = siteInitialData?.blogProfile as { donation?: DonationStatusResponse | null } | null;
+  const initialStatus = props.initialStatus ?? (props.targetType === 'series' ? null : siteProfile?.donation) ?? null;
   const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [donationAmount, setDonationAmount] = useState('1,000');
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [canShowDonationButton, setCanShowDonationButton] = useState(false);
-  const [hasIdentity, setHasIdentity] = useState(false);
-  const [paymentEmail, setPaymentEmail] = useState('');
-  const [paymentPhone, setPaymentPhone] = useState('');
-  const [isMinor, setIsMinor] = useState(false);
+  const canShowDonationButton = Boolean(initialStatus?.isEnabled);
+  const hasIdentity = Boolean(identityStatus?.exists);
+  const [paymentEmail, setPaymentEmail] = useState(String(initialStatus?.paymentEmail ?? ''));
+  const [paymentPhone, setPaymentPhone] = useState(String(initialStatus?.paymentPhone ?? ''));
+  const isMinor = Boolean(
+    identityStatus?.exists && identityStatus.identity && !isAdult(identityStatus.identity.birth_date),
+  );
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
   const [minorControlMode, setMinorControlMode] = useState<MinorPaymentControlResult['mode']>(null);
@@ -186,59 +194,6 @@ export default function DonationButton(props: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const donationTitle = getDonationTitle(props);
-  const donationTargetType = getTargetType(props);
-  const seriesBoardName = props.targetType === 'series' ? props.boardName : '';
-  const seriesName = props.targetType === 'series' ? props.seriesName : '';
-
-  useEffect(() => {
-    async function checkDonationStatus() {
-      try {
-        const statusParams = new URLSearchParams({
-          siteName: props.siteName,
-          targetType: donationTargetType,
-        });
-
-        if (donationTargetType === 'series') {
-          statusParams.set('boardName', seriesBoardName);
-          statusParams.set('seriesName', seriesName);
-        }
-
-        const [identityResponse, donationStatusResponse] = await Promise.all([
-          fetch('/api/identity/portone/status', {
-            method: 'GET',
-            credentials: 'include',
-          }),
-          fetch(`/api/payments/portone/donation/status?${statusParams.toString()}`, {
-            method: 'GET',
-            credentials: 'include',
-          }),
-        ]);
-
-        const identityResult = (await identityResponse.json()) as IdentityStatusResponse;
-        const donationStatusResult = (await donationStatusResponse.json()) as DonationStatusResponse;
-
-        setHasIdentity(identityResponse.ok && Boolean(identityResult.exists));
-        setIsMinor(
-          identityResponse.ok && identityResult.exists && identityResult.identity
-            ? !isAdult(identityResult.identity.birth_date)
-            : false,
-        );
-
-        setCanShowDonationButton(Boolean(donationStatusResponse.ok && donationStatusResult.isEnabled));
-        setPaymentEmail(donationStatusResponse.ok ? String(donationStatusResult.paymentEmail ?? '') : '');
-        setPaymentPhone(donationStatusResponse.ok ? String(donationStatusResult.paymentPhone ?? '') : '');
-      } catch {
-        setCanShowDonationButton(false);
-      }
-    }
-
-    void checkDonationStatus();
-
-    return () => {
-      setCanShowDonationButton(true);
-    };
-  }, [donationTargetType, props.siteName, props.targetType, seriesBoardName, seriesName]);
-
   if (!canShowDonationButton) {
     return null;
   }

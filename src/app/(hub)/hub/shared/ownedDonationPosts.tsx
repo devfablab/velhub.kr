@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Chip, Dialog, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import { getLinkPreview, type LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { formatDateSimple, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
@@ -70,6 +71,7 @@ type PostContent = {
 type ContentResponse = {
   board?: BoardInfo;
   content?: PostContent;
+  linkPreviews?: Record<string, LinkPreviewData | null>;
   error?: string;
 };
 
@@ -117,7 +119,15 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-function ContentBody({ board, content }: { board: BoardInfo; content: PostContent }) {
+function ContentBody({
+  board,
+  content,
+  linkPreviews,
+}: {
+  board: BoardInfo;
+  content: PostContent;
+  linkPreviews: Record<string, LinkPreviewData | null>;
+}) {
   const theme = useTheme();
   const hashtags = normalizeHashtags(content.hashtags);
   const feedLinkPreviewUrls =
@@ -194,7 +204,7 @@ function ContentBody({ board, content }: { board: BoardInfo; content: PostConten
           {feedLinkPreviewUrls.length ? (
             <div className={boardStyles['link-previews']}>
               {feedLinkPreviewUrls.map((url) => (
-                <LinkPreview key={url} href={url} />
+                <LinkPreview key={url} href={url} preview={linkPreviews[url] ?? null} />
               ))}
             </div>
           ) : null}
@@ -256,7 +266,7 @@ function PostPreview({ response, errorMessage }: { response: ContentResponse | n
             </div>
           </header>
         </div>
-        <ContentBody board={board} content={content} />
+        <ContentBody board={board} content={content} linkPreviews={response.linkPreviews ?? {}} />
       </article>
     </div>
   );
@@ -288,6 +298,16 @@ export default function OwnedDonationPosts({ initialData, initialError }: Props)
       if (!response.ok) {
         throw new Error(result.error || '글 내용을 불러오지 못했습니다.');
       }
+
+      const previewEntries = await Promise.all(
+        result.board?.board_type === 'feed' && result.content?.content_simple
+          ? extractUrls(result.content.content_simple).map(async (url) => {
+              const previewResult = await getLinkPreview(url);
+              return [url, previewResult.ok ? previewResult.data : null] as const;
+            })
+          : [],
+      );
+      result.linkPreviews = Object.fromEntries(previewEntries);
 
       if (contentRequestIdReference.current === requestId) {
         setContentResponse(result);

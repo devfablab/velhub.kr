@@ -1,13 +1,13 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+ 
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'next/navigation';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import SettlementForm from '@/components/service/common/SettlementForm';
+import SettlementForm, { type SettlementResponse } from '@/components/service/common/SettlementForm';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 
@@ -34,6 +34,8 @@ type RevenueSummaryProps = {
   apiPath?: string;
   initialData?: RevenueSummaryResponse | null;
   initialError?: string;
+  initialSettlement: SettlementResponse | null;
+  initialSettlementError: string;
 };
 
 function isRevenueErrorResponse(value: RevenueSummaryResponse | RevenueErrorResponse): value is RevenueErrorResponse {
@@ -64,7 +66,9 @@ export default function RevenueSummary({
   apiPath = '/api/revenue/summary',
   initialData = null,
   initialError = '',
-}: RevenueSummaryProps = {}) {
+  initialSettlement,
+  initialSettlementError,
+}: RevenueSummaryProps) {
   const params = useParams();
   const siteName = normalizeText(siteNameProp) || normalizeText(params.siteName);
   const [summary, setSummary] = useState<RevenueSummaryResponse | null>(initialData);
@@ -92,11 +96,6 @@ export default function RevenueSummary({
     setSummary(result);
     setErrorMessage('');
   }, [apiPath, siteName]);
-
-  useEffect(() => {
-    if (initialData || initialError) return;
-    void loadSummary();
-  }, [initialData, initialError, loadSummary]);
 
   if (errorMessage) {
     return (
@@ -139,7 +138,11 @@ export default function RevenueSummary({
             </p>
             {summary.isSettlementError ? (
               <div className="paper" style={{ marginTop: '16px' }}>
-                <SettlementForm onSuccess={() => void loadSummary()} />
+                <SettlementForm
+                  initialData={initialSettlement}
+                  initialError={initialSettlementError}
+                  onSuccess={() => void loadSummary()}
+                />
               </div>
             ) : null}
           </>

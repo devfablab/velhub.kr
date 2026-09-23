@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { detectAdult } from '@/lib/service/detectAdult.client';
 import Anchor from '@/components/Anchor';
+import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import styles from '@/app/header.module.sass';
 
 type Props = {
@@ -34,14 +33,7 @@ function getCurrentHref(pathname: string, navItems: PaymentNavItem[]) {
 
 export default function PrimaryMenu({ siteName, isBlog, isSiteStaff }: Props) {
   const pathname = usePathname();
-  const [isAdult, setIsAdult] = useState<boolean>(false);
-
-  useEffect(() => {
-    async function adultDetecter() {
-      setIsAdult(await detectAdult(siteName));
-    }
-    void adultDetecter();
-  }, []);
+  const isAdult = Boolean(useSiteHeader()?.isAdult);
 
   const navItems: PaymentNavItem[] = [
     {

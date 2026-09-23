@@ -1,7 +1,4 @@
-'use client';
-
-import { type ReactNode, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { type ReactNode } from 'react';
 import Verify2fa from '@/components/auth/Verify2fa';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -27,42 +24,7 @@ function TotpLayout() {
   );
 }
 
-export default function TotpGuard({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const [needsTotp, setNeedsTotp] = useState(false);
-
-  useEffect(() => {
-    let isActive = true;
-
-    async function checkTotpStatus() {
-      const response = await fetch('/api/auth/2fa-status', {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-store',
-      });
-
-      if (!response.ok) {
-        if (isActive) {
-          setNeedsTotp(false);
-        }
-
-        return;
-      }
-
-      const result = await response.json();
-
-      if (isActive) {
-        setNeedsTotp(Boolean(result.needsTotp));
-      }
-    }
-
-    void checkTotpStatus();
-
-    return () => {
-      isActive = false;
-    };
-  }, [pathname]);
-
+export default function TotpGuard({ children, needsTotp }: { children: ReactNode; needsTotp: boolean }) {
   if (needsTotp) {
     return <TotpLayout />;
   }

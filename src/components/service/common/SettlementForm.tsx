@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
@@ -180,16 +180,16 @@ function isMinorAge(birthDate: string | null | undefined) {
 export default function SettlementForm({
   onSuccess,
   initialData,
-  initialError = '',
+  initialError,
 }: {
   onSuccess?: () => void;
-  initialData?: SettlementResponse | null;
-  initialError?: string;
+  initialData: SettlementResponse | null;
+  initialError: string;
 }) {
   const [identity, setIdentity] = useState<Identity | null>(initialData?.identity ?? null);
   const [settlement, setSettlement] = useState<Settlement | null>(initialData?.settlement ?? null);
   const [paymentEmail, setPaymentEmail] = useState(initialData?.paymentEmail ?? '');
-  const [isLoading, setIsLoading] = useState(initialData === undefined && !initialError);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [settlementAgreementOpen, setSettlementAgreementOpen] = useState(false);
@@ -236,13 +236,6 @@ export default function SettlementForm({
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (initialData !== undefined || initialError) {
-      return;
-    }
-    void load();
-  }, [initialData, initialError]);
 
   const handleBusinessLicenseChange = (event: ChangeEvent<HTMLInputElement>) => {
     setBusinessLicenseFile(event.target.files?.[0] ?? null);

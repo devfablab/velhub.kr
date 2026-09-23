@@ -23,6 +23,7 @@ import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import DonationButton from '@/components/service/common/DonationButton';
+import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
 import FabNew from '@/components/service/common/FabNew';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
@@ -44,6 +45,7 @@ type Props = {
   initialError: string;
   initialPopularPosts: BoardPostCountResponse | null;
   initialSubscriptionStatus: SubscriptionStatusResponse | null;
+  initialDonationStatus: DonationStatusResponse | null;
 };
 
 type BoardItem = {
@@ -275,6 +277,7 @@ export default function Opt({
   initialError,
   initialPopularPosts,
   initialSubscriptionStatus,
+  initialDonationStatus,
 }: Props) {
   const router = useRouter();
   const params = useParams();
@@ -509,6 +512,7 @@ export default function Opt({
                   selectedSeries={selectedSeries}
                   isCommunity={isCommunity}
                   initialSubscriptionStatus={initialSubscriptionStatus}
+                  initialDonationStatus={initialDonationStatus}
                 />
               ) : (
                 <h2>
@@ -546,6 +550,7 @@ export default function Opt({
                         targetType="series"
                         boardName={boardName}
                         seriesName={selectedSeries.series_key}
+                        initialStatus={initialDonationStatus}
                       />
                     </>
                   ) : null}

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getBoardPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import { getSiteApiData } from '../../getSiteApiData';
@@ -80,6 +81,17 @@ export default async function Page(context: SearchContext) {
         '구독 상태를 확인하지 못했습니다.',
       )
     : { data: null, error: '' };
+  const initialDonationStatus = selectedSeries
+    ? await getSiteApiData<DonationStatusResponse>(
+        `/api/payments/portone/donation/status?${new URLSearchParams({
+          siteName: normalizedSiteName,
+          boardName: boardName.toLowerCase(),
+          targetType: 'series',
+          seriesName: selectedSeries.series_key,
+        }).toString()}`,
+        '후원 상태를 확인하지 못했습니다.',
+      )
+    : { data: null, error: '' };
 
   return (
     <Opt
@@ -88,6 +100,7 @@ export default async function Page(context: SearchContext) {
       initialError={initial.error}
       initialPopularPosts={initialPopularPosts.data}
       initialSubscriptionStatus={initialSubscriptionStatus.data}
+      initialDonationStatus={initialDonationStatus.data}
     />
   );
 }

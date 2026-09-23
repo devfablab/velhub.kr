@@ -1,9 +1,9 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { Box, FormControlLabel, Stack, Switch, TextField, useMediaQuery, useTheme } from '@mui/material';
+import { Box, FormControlLabel, Stack, Switch, TextField } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
@@ -12,16 +12,6 @@ import styles from '@/app/auth.module.sass';
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-type InviteResponse = {
-  ok: boolean;
-  invite: {
-    email: string;
-  };
-  site: {
-    site_key: string;
-  };
-};
-
 type AcceptInviteResponse = {
   ok: boolean;
   siteName: string;
@@ -29,13 +19,16 @@ type AcceptInviteResponse = {
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-export default function EmailSignUp() {
+export default function EmailSignUp({
+  initialInviteEmail = '',
+  initialInviteError = '',
+}: {
+  initialInviteEmail?: string;
+  initialInviteError?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = getSupabaseBrowser();
-  const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
   const { canSubmit, isAgreeTerm, isAgreeChild, isAgreePrivacy } = useSignupAgreements();
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
@@ -43,63 +36,13 @@ export default function EmailSignUp() {
   const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
 
   const [userName, setUserName] = useState('');
-  const [email, setEmail] = useState('');
-  const [isInviteEmailLocked, setIsInviteEmailLocked] = useState(false);
+  const [email, setEmail] = useState(initialInviteEmail);
+  const isInviteEmailLocked = Boolean(initialInviteEmail);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [bypassEmailConfirm, setBypassEmailConfirm] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialInviteError);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isInviteLoading, setIsInviteLoading] = useState(false);
-
-  useEffect(() => {
-    async function loadInvite() {
-      if (!inviteToken) {
-        return;
-      }
-
-      try {
-        setIsInviteLoading(true);
-        setErrorMessage('');
-
-        const response =
-          inviteType === 'community'
-            ? await fetch(`/api/manage/join/invite/${inviteToken}?siteName=${inviteSiteName}`, {
-                method: 'GET',
-                credentials: 'include',
-              })
-            : await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
-                method: 'GET',
-                credentials: 'include',
-              });
-
-        const result = (await response.json()) as InviteResponse | { error?: string };
-
-        if (!response.ok) {
-          throw new Error(
-            'error' in result ? result.error || '초대 정보를 불러오지 못했습니다.' : '초대 정보를 불러오지 못했습니다.',
-          );
-        }
-
-        if (!('invite' in result) || !result.invite?.email) {
-          throw new Error('초대 정보를 불러오지 못했습니다.');
-        }
-
-        setEmail(result.invite.email);
-        setIsInviteEmailLocked(true);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '초대 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('초대 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsInviteLoading(false);
-      }
-    }
-
-    void loadInvite();
-  }, [inviteToken, inviteSiteName, inviteType]);
 
   function handleUserNameChange(event: InputChangeEvent) {
     setUserName(event.currentTarget.value);
@@ -124,7 +67,7 @@ export default function EmailSignUp() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || isInviteLoading) {
+    if (isSubmitting) {
       return;
     }
 
@@ -339,11 +282,7 @@ export default function EmailSignUp() {
         </Box>
 
         <div className={styles.actions}>
-          <button
-            type="submit"
-            className={`button medium submit ${styles.submit}`}
-            disabled={isSubmitting || isInviteLoading}
-          >
+          <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
             이메일로 시작하기
           </button>
         </div>

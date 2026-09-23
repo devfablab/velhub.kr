@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -34,6 +34,7 @@ import {
   useTheme,
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
+import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
@@ -68,6 +69,7 @@ type Props = {
   initialPoll: PollResponse | null;
   initialPollError: string;
   initialSubscriptionStatus: SubscriptionStatusResponse | null;
+  initialLinkPreviews: Record<string, LinkPreviewData | null>;
 };
 
 type BoardInfo = {
@@ -286,12 +288,6 @@ type BoardListResponse = {
   error?: string;
 };
 
-type CountResponse = {
-  ok?: boolean;
-  postCount?: number;
-  error?: string;
-};
-
 type PollResultOption = {
   id: number;
   option_index: number;
@@ -396,6 +392,7 @@ export default function Opt({
   initialPoll,
   initialPollError,
   initialSubscriptionStatus,
+  initialLinkPreviews,
 }: Props) {
   const theme = useTheme();
   const params = useParams();
@@ -407,7 +404,7 @@ export default function Opt({
   const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
   const [board] = useState<BoardInfo | null>(initialData?.board ?? null);
-  const [content, setContent] = useState<PostContent | null>(initialData?.content ?? null);
+  const content = initialData?.content ?? null;
   const [series] = useState<SeriesItem | null>(initialData?.series ?? null);
   const [seriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
   const [previousPost] = useState<AdjacentPost | null>(initialData?.previousPost ?? null);
@@ -459,17 +456,6 @@ export default function Opt({
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-
-  function updatePostCount(nextPostCount: number) {
-    setContent((previousContent) =>
-      previousContent
-        ? {
-            ...previousContent,
-            post_count: nextPostCount,
-          }
-        : previousContent,
-    );
-  }
 
   function isPastDateTime(value: string) {
     const date = new Date(value);
@@ -591,38 +577,6 @@ export default function Opt({
     setGalleryViewerIndex((previousIndex) => (previousIndex + 1) % content.images!.length);
   }
 
-  async function increasePostCount(nextBoardName: string, nextContentId: string) {
-    try {
-      const response = await fetch(`/api/boards/${nextBoardName}/${nextContentId}/count?siteName=${siteName}`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as CountResponse;
-
-      if (!response.ok) {
-        return;
-      }
-
-      if (typeof result.postCount === 'number') {
-        updatePostCount(result.postCount);
-      }
-    } catch {
-      return;
-    }
-  }
-
-  async function recordPostRead(nextBoardName: string, nextContentId: string) {
-    try {
-      await fetch(`/api/boards/${nextBoardName}/${nextContentId}/read?siteName=${siteName}`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-    } catch {
-      return;
-    }
-  }
-
   async function togglePostLike() {
     if (isTogglingLike) {
       return;
@@ -732,15 +686,6 @@ export default function Opt({
       setIsDeletingPost(false);
     }
   }
-
-  useEffect(() => {
-    if (initialData?.content?.published_status === 'published') {
-      void increasePostCount(boardName, contentId);
-      void recordPostRead(boardName, contentId);
-    }
-    // View tracking is intentionally tied to the server-provided post identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardName, contentId, initialData?.content?.published_status]);
 
   async function submitPoll(optionIndex: number) {
     if (isSubmittingPoll) {
@@ -1372,7 +1317,7 @@ export default function Opt({
                   {feedLinkPreviewUrls.length > 0 ? (
                     <div className={styles['link-previews']}>
                       {feedLinkPreviewUrls.map((url) => (
-                        <LinkPreview key={url} href={url} />
+                        <LinkPreview key={url} href={url} preview={initialLinkPreviews[url] ?? null} />
                       ))}
                     </div>
                   ) : null}

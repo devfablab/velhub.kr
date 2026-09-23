@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material';
-import SettlementForm from '@/components/service/common/SettlementForm';
+import SettlementForm, { type SettlementResponse } from '@/components/service/common/SettlementForm';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceWarningIcon } from '@/components/Svgs';
 import RevenueList from '@/app/(site)/[siteName]/payments/RevenueList';
 import RevenueSummary from '@/app/(site)/[siteName]/payments/RevenueSummary';
+import type { RevenueSummaryResponse } from '@/app/(site)/[siteName]/payments/RevenueSummary';
 import styles from '@/app/hub.module.sass';
 
 type RevenueSite = {
@@ -57,9 +58,17 @@ function getSiteTypeLabel(siteType: string | null) {
 export default function RevenueHub({
   initialData,
   initialError,
+  initialSummary,
+  initialSummaryError,
+  initialSettlement,
+  initialSettlementError,
 }: {
   initialData: RevenueSitesResponse | null;
   initialError: string;
+  initialSummary: RevenueSummaryResponse | null;
+  initialSummaryError: string;
+  initialSettlement: SettlementResponse | null;
+  initialSettlementError: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -137,7 +146,11 @@ export default function RevenueHub({
             </div>
             {isSettlementError ? (
               <div className="paper" style={{ marginTop: '16px' }}>
-                <SettlementForm onSuccess={() => void loadSites()} />
+                <SettlementForm
+                  initialData={initialSettlement}
+                  initialError={initialSettlementError}
+                  onSuccess={() => void loadSites()}
+                />
               </div>
             ) : null}
           </>
@@ -182,7 +195,15 @@ export default function RevenueHub({
             </Tabs>
 
             {selectedView === 'summary' ? (
-              <RevenueSummary siteName={selectedSiteName} apiPath="/api/hub/revenue/summary" />
+              <RevenueSummary
+                key={selectedSiteName}
+                siteName={selectedSiteName}
+                apiPath="/api/hub/revenue/summary"
+                initialData={initialSummary}
+                initialError={initialSummaryError}
+                initialSettlement={initialSettlement}
+                initialSettlementError={initialSettlementError}
+              />
             ) : (
               <RevenueList siteName={selectedSiteName} type={selectedView} apiBasePath="/api/hub/revenue" />
             )}

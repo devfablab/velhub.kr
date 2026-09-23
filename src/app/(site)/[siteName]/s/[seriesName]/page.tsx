@@ -9,6 +9,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import DonationButton from '@/components/service/common/DonationButton';
+import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import { ServiceNoDataIcon } from '@/components/Svgs';
@@ -164,6 +165,17 @@ export default async function Page(context: RouteContext) {
         '구독 상태를 확인하지 못했습니다.',
       )
     : { data: null, error: '' };
+  const initialDonationStatus = seriesData.boards
+    ? await getSiteApiData<DonationStatusResponse>(
+        `/api/payments/portone/donation/status?${new URLSearchParams({
+          siteName: normalizedSiteName,
+          boardName: seriesData.boards.board_key,
+          targetType: 'series',
+          seriesName: seriesData.series_key,
+        }).toString()}`,
+        '후원 상태를 확인하지 못했습니다.',
+      )
+    : { data: null, error: '' };
   const posts = await supabaseAdmin
     .from('posts')
     .select(
@@ -260,6 +272,7 @@ export default async function Page(context: RouteContext) {
                   boardName={seriesData.boards.board_key}
                   seriesName={seriesData.series_key}
                   buttonText="연재 후원"
+                  initialStatus={initialDonationStatus.data}
                 />
               </div>
             ) : null}
