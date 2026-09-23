@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { MenuItem, Select, type SelectChangeEvent, Typography } from '@mui/material';
 import {
@@ -322,84 +322,75 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('week');
-  const [appliedRequest, setAppliedRequest] = useState<AppliedRequest | null>(null);
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
   const [repeatVisitStats, setRepeatVisitStats] = useState<RepeatVisitResponse | null>(initialData);
 
-  useEffect(() => {
-    if (!appliedRequest) return;
-    const request = appliedRequest;
+  async function loadRepeatVisitStats(request: AppliedRequest) {
+    try {
+      const isFirstLoad = !repeatVisitStats;
 
-    async function loadRepeatVisitStats() {
-      try {
-        const isFirstLoad = !repeatVisitStats;
-
-        if (isFirstLoad) {
-          setIsInitialLoading(true);
-        } else {
-          setIsChartLoading(true);
-        }
-
-        setErrorMessage('');
-
-        const query = new URLSearchParams({
-          siteName,
-          range: request.range,
-        });
-
-        if (request.range === 'custom' && request.startDate && request.endDate) {
-          query.set('startDate', request.startDate);
-          query.set('endDate', request.endDate);
-        }
-
-        const response = await fetch(`/api/manage/stats/repeat-visit?${query.toString()}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as RepeatVisitResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '재방문율 통계를 불러오지 못했습니다.');
-        }
-
-        setRepeatVisitStats((prevRepeatVisitStats) => {
-          if (!prevRepeatVisitStats) {
-            return result;
-          }
-
-          return {
-            ...prevRepeatVisitStats,
-            range: result.range,
-            chart: result.chart,
-          };
-        });
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '재방문율 통계를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('재방문율 통계를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsInitialLoading(false);
-        setIsChartLoading(false);
+      if (isFirstLoad) {
+        setIsInitialLoading(true);
+      } else {
+        setIsChartLoading(true);
       }
-    }
 
+      setErrorMessage('');
+
+      const query = new URLSearchParams({
+        siteName,
+        range: request.range,
+      });
+
+      if (request.range === 'custom' && request.startDate && request.endDate) {
+        query.set('startDate', request.startDate);
+        query.set('endDate', request.endDate);
+      }
+
+      const response = await fetch(`/api/manage/stats/repeat-visit?${query.toString()}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as RepeatVisitResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '재방문율 통계를 불러오지 못했습니다.');
+      }
+
+      setRepeatVisitStats((prevRepeatVisitStats) => {
+        if (!prevRepeatVisitStats) {
+          return result;
+        }
+
+        return {
+          ...prevRepeatVisitStats,
+          range: result.range,
+          chart: result.chart,
+        };
+      });
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '재방문율 통계를 불러오지 못했습니다.');
+      } else {
+        setErrorMessage('재방문율 통계를 불러오지 못했습니다.');
+      }
+    } finally {
+      setIsInitialLoading(false);
+      setIsChartLoading(false);
+    }
     if (!siteName) {
       setErrorMessage('siteName이 유효하지 않습니다.');
       setIsInitialLoading(false);
       setIsChartLoading(false);
       return;
     }
-
-    void loadRepeatVisitStats();
-  }, [appliedRequest, siteName]);
+  }
 
   function handleSelectPreset(range: Exclude<RangeType, 'custom'>) {
     setSelectedRange(range);
-    setAppliedRequest({ range });
+    void loadRepeatVisitStats({ range });
   }
 
   function handleOpenCustomRange() {
@@ -407,7 +398,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   function handleApplyCustomRange() {
-    setAppliedRequest({
+    void loadRepeatVisitStats({
       range: 'custom',
       startDate: formatDateValue(startDate),
       endDate: formatDateValue(endDate),

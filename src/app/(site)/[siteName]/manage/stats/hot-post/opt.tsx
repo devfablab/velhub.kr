@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   MenuItem,
@@ -224,74 +224,65 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isListLoading, setIsListLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('today');
-  const [appliedRequest, setAppliedRequest] = useState<AppliedRequest | null>(null);
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
   const [hotPostStats, setHotPostStats] = useState<HotPostResponse | null>(initialData);
 
-  useEffect(() => {
-    if (!appliedRequest) return;
-    const request = appliedRequest;
+  async function loadHotPosts(request: AppliedRequest) {
+    try {
+      const isFirstLoad = !hotPostStats;
 
-    async function loadHotPosts() {
-      try {
-        const isFirstLoad = !hotPostStats;
-
-        if (isFirstLoad) {
-          setIsInitialLoading(true);
-        } else {
-          setIsListLoading(true);
-        }
-
-        setErrorMessage('');
-
-        const query = new URLSearchParams({
-          siteName,
-          range: request.range,
-        });
-
-        if (request.range === 'custom' && request.startDate && request.endDate) {
-          query.set('startDate', request.startDate);
-          query.set('endDate', request.endDate);
-        }
-
-        const response = await fetch(`/api/manage/stats/hot-post?${query.toString()}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as HotPostResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '인기글 순위를 불러오지 못했습니다.');
-        }
-
-        setHotPostStats(result);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '인기글 순위를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('인기글 순위를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsInitialLoading(false);
-        setIsListLoading(false);
+      if (isFirstLoad) {
+        setIsInitialLoading(true);
+      } else {
+        setIsListLoading(true);
       }
-    }
 
+      setErrorMessage('');
+
+      const query = new URLSearchParams({
+        siteName,
+        range: request.range,
+      });
+
+      if (request.range === 'custom' && request.startDate && request.endDate) {
+        query.set('startDate', request.startDate);
+        query.set('endDate', request.endDate);
+      }
+
+      const response = await fetch(`/api/manage/stats/hot-post?${query.toString()}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as HotPostResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '인기글 순위를 불러오지 못했습니다.');
+      }
+
+      setHotPostStats(result);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '인기글 순위를 불러오지 못했습니다.');
+      } else {
+        setErrorMessage('인기글 순위를 불러오지 못했습니다.');
+      }
+    } finally {
+      setIsInitialLoading(false);
+      setIsListLoading(false);
+    }
     if (!siteName) {
       setErrorMessage('siteName이 유효하지 않습니다.');
       setIsInitialLoading(false);
       setIsListLoading(false);
       return;
     }
-
-    void loadHotPosts();
-  }, [appliedRequest, siteName]);
+  }
 
   function handleSelectPreset(range: Exclude<RangeType, 'custom'>) {
     setSelectedRange(range);
-    setAppliedRequest({ range });
+    void loadHotPosts({ range });
   }
 
   function handleOpenCustomRange() {
@@ -299,7 +290,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   function handleApplyCustomRange() {
-    setAppliedRequest({
+    void loadHotPosts({
       range: 'custom',
       startDate: formatDateValue(startDate),
       endDate: formatDateValue(endDate),

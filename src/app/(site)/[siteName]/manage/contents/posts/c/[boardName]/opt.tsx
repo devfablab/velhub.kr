@@ -154,7 +154,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     initialData?.filter === 'deleted' ? 'deleted' : 'all',
   );
   const [closedMessage, setClosedMessage] = useState('');
-  const [reloadKey, setReloadKey] = useState(0);
 
   const currentPage = parsePage(searchParams.get('page'));
   const sizeParam = parseSize(searchParams.get('size'));
@@ -176,57 +175,52 @@ export default function Opt({ initialData, initialError }: OptProps) {
     return currentPageIds.some((id) => selectedIds.includes(id));
   }, [currentPageIds, selectedIds]);
 
-  useEffect(() => {
-    if (reloadKey === 0) return;
-    async function loadBoard() {
-      try {
-        if (hasLoaded) {
-          setIsFetching(true);
-        }
-
-        setErrorMessage('');
-
-        const response = await fetch(
-          `/api/boards/${boardName}?siteName=${siteName}&manageContents=true&page=${currentPage}${
-            sizeParam ? `&size=${sizeParam}` : ''
-          }${filterParam ? `&filter=${filterParam}` : ''}`,
-          {
-            method: 'GET',
-            credentials: 'include',
-          },
-        );
-
-        const result = (await response.json()) as BoardResponse | ErrorResponse;
-
-        if (!response.ok) {
-          throw new Error(
-            'error' in result ? result.error || '게시판을 불러오지 못했습니다.' : '게시판을 불러오지 못했습니다.',
-          );
-        }
-
-        if (!('board' in result) || !result.board) {
-          throw new Error('게시판을 불러오지 못했습니다.');
-        }
-
-        setBoard(result.board);
-        setCanManageBoardSettings(result.actions?.canManageBoardSettings === true);
-        setContents(Array.isArray(result.contents) ? result.contents : []);
-        setTotalPage(typeof result.totalPage === 'number' && result.totalPage > 0 ? result.totalPage : 1);
-        setCurrentFilter(result.filter === 'deleted' ? 'deleted' : 'all');
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시판을 불러오지 못했습니다.');
-        }
-      } finally {
-        setHasLoaded(true);
-        setIsFetching(false);
+  async function loadBoard() {
+    try {
+      if (hasLoaded) {
+        setIsFetching(true);
       }
-    }
 
-    void loadBoard();
-  }, [boardName, siteName, currentPage, sizeParam, filterParam, reloadKey, hasLoaded]);
+      setErrorMessage('');
+
+      const response = await fetch(
+        `/api/boards/${boardName}?siteName=${siteName}&manageContents=true&page=${currentPage}${
+          sizeParam ? `&size=${sizeParam}` : ''
+        }${filterParam ? `&filter=${filterParam}` : ''}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        },
+      );
+
+      const result = (await response.json()) as BoardResponse | ErrorResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          'error' in result ? result.error || '게시판을 불러오지 못했습니다.' : '게시판을 불러오지 못했습니다.',
+        );
+      }
+
+      if (!('board' in result) || !result.board) {
+        throw new Error('게시판을 불러오지 못했습니다.');
+      }
+
+      setBoard(result.board);
+      setCanManageBoardSettings(result.actions?.canManageBoardSettings === true);
+      setContents(Array.isArray(result.contents) ? result.contents : []);
+      setTotalPage(typeof result.totalPage === 'number' && result.totalPage > 0 ? result.totalPage : 1);
+      setCurrentFilter(result.filter === 'deleted' ? 'deleted' : 'all');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '게시판을 불러오지 못했습니다.');
+      } else {
+        setErrorMessage('게시판을 불러오지 못했습니다.');
+      }
+    } finally {
+      setHasLoaded(true);
+      setIsFetching(false);
+    }
+  }
 
   useEffect(() => {
     setSelectedIds((previousIds) => previousIds.filter((id) => contents.some((content) => content.id === id)));
@@ -372,7 +366,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         setClosedMessage('');
         setDialogErrorMessage('');
         setSelectedIds((previousIds) => previousIds.filter((id) => id !== deleteTarget.id));
-        setReloadKey((previousValue) => previousValue + 1);
+        await loadBoard();
         return;
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -454,7 +448,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setClosedMessage('');
       setDialogErrorMessage('');
       setSelectedIds([]);
-      setReloadKey((previousValue) => previousValue + 1);
+      await loadBoard();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setDialogErrorMessage(unknownError.message || '게시물 삭제에 실패했습니다.');

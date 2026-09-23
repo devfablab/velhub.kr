@@ -287,7 +287,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>(initialData?.filter ?? 'all');
   const [isFetching, setIsFetching] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(Boolean(initialData || initialError));
-  const [reloadKey, setReloadKey] = useState(0);
   const [closedMessage, setClosedMessage] = useState('');
 
   const sensors = useSensors(
@@ -318,156 +317,149 @@ export default function Opt({ initialData, initialError }: OptProps) {
     return currentPageIds.some((id) => selectedIds.includes(id));
   }, [currentPageIds, selectedIds]);
 
-  useEffect(() => {
-    if (reloadKey === 0) return;
-    async function loadData() {
-      try {
-        if (hasLoaded) {
-          setIsFetching(true);
-        }
+  async function loadData() {
+    try {
+      if (hasLoaded) {
+        setIsFetching(true);
+      }
 
-        setErrorMessage('');
+      setErrorMessage('');
 
-        const siteResponse = await fetch(`/api/site/public?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+      const siteResponse = await fetch(`/api/site/public?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-        const siteResult = (await siteResponse.json()) as SitePublicResponse | ErrorResponse;
+      const siteResult = (await siteResponse.json()) as SitePublicResponse | ErrorResponse;
 
-        if (!siteResponse.ok) {
-          throw new Error(('error' in siteResult ? siteResult.error : '') || '사이트 정보를 불러오지 못했습니다.');
-        }
+      if (!siteResponse.ok) {
+        throw new Error(('error' in siteResult ? siteResult.error : '') || '사이트 정보를 불러오지 못했습니다.');
+      }
 
-        if (!('siteInfo' in siteResult)) {
-          throw new Error('사이트 정보를 불러오지 못했습니다1.');
-        }
+      if (!('siteInfo' in siteResult)) {
+        throw new Error('사이트 정보를 불러오지 못했습니다1.');
+      }
 
-        const nextSiteType = siteResult.siteInfo?.site_type;
-        setSiteType(siteResult.siteInfo?.site_type);
+      const nextSiteType = siteResult.siteInfo?.site_type;
+      setSiteType(siteResult.siteInfo?.site_type);
 
-        const headerResponse = await fetch(`/api/header/site?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+      const headerResponse = await fetch(`/api/header/site?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-        const headerResult = (await headerResponse.json()) as HeaderSiteResponse | ErrorResponse;
-        const nextIsStaff =
-          headerResponse.ok && 'siteRole' in headerResult
-            ? isStaffRole(headerResult.siteRole, 'globalRole' in headerResult ? headerResult.globalRole : null)
-            : false;
+      const headerResult = (await headerResponse.json()) as HeaderSiteResponse | ErrorResponse;
+      const nextIsStaff =
+        headerResponse.ok && 'siteRole' in headerResult
+          ? isStaffRole(headerResult.siteRole, 'globalRole' in headerResult ? headerResult.globalRole : null)
+          : false;
 
-        setIsStaff(nextIsStaff);
+      setIsStaff(nextIsStaff);
 
-        if (nextSiteType === 'blog') {
-          if (filterParam === 'deleted' && !nextIsStaff) {
-            setBoard(null);
-            setBoardName(null);
-            setPosts([]);
-            setBoards([]);
-            setTotalPage(1);
-            setErrorMessage('접근 권한이 없습니다.');
-            return;
-          }
-
-          const statusResponse = await fetch(`/api/manage/contents/blog-posts/status?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const statusResult = (await statusResponse.json()) as StatusResponse | ErrorResponse;
-
-          if (!statusResponse.ok) {
-            throw new Error(
-              ('error' in statusResult ? statusResult.error : '') || '블로그 상태를 확인하지 못했습니다.',
-            );
-          }
-
-          if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
-            throw new Error('블로그 상태를 확인하지 못했습니다.');
-          }
-
-          if (!statusResult.hasBoard || !statusResult.boardName) {
-            setBoard(null);
-            setBoardName(null);
-            setPosts([]);
-            setBoards([]);
-            setTotalPage(1);
-            setIsBoardOrderChanged(false);
-            return;
-          }
-
-          setBoardName(statusResult.boardName);
-
-          const boardResponse = await fetch(
-            `/api/boards/${statusResult.boardName}?siteName=${siteName}&page=${currentPage}${
-              sizeParam ? `&size=${sizeParam}` : ''
-            }${filterParam ? `&filter=${filterParam}` : ''}`,
-            {
-              method: 'GET',
-              credentials: 'include',
-            },
-          );
-
-          const boardResult = (await boardResponse.json()) as BoardContentsResponse | ErrorResponse;
-
-          if (!boardResponse.ok) {
-            throw new Error(
-              ('error' in boardResult ? boardResult.error : '') || '출간된 블로그 글 목록을 불러오지 못했습니다.',
-            );
-          }
-
-          if (!('contents' in boardResult) || !Array.isArray(boardResult.contents) || !('board' in boardResult)) {
-            throw new Error('출간된 블로그 글 목록을 불러오지 못했습니다.');
-          }
-
-          setBoard(boardResult.board);
-          setPosts(boardResult.contents);
+      if (nextSiteType === 'blog') {
+        if (filterParam === 'deleted' && !nextIsStaff) {
+          setBoard(null);
+          setBoardName(null);
+          setPosts([]);
           setBoards([]);
-          setTotalPage(Number(boardResult.totalPage) > 0 ? Number(boardResult.totalPage) : 1);
-          setCurrentFilter(boardResult.filter === 'deleted' ? 'deleted' : 'all');
+          setTotalPage(1);
+          setErrorMessage('접근 권한이 없습니다.');
+          return;
+        }
+
+        const statusResponse = await fetch(`/api/manage/contents/blog-posts/status?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const statusResult = (await statusResponse.json()) as StatusResponse | ErrorResponse;
+
+        if (!statusResponse.ok) {
+          throw new Error(('error' in statusResult ? statusResult.error : '') || '블로그 상태를 확인하지 못했습니다.');
+        }
+
+        if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
+          throw new Error('블로그 상태를 확인하지 못했습니다.');
+        }
+
+        if (!statusResult.hasBoard || !statusResult.boardName) {
+          setBoard(null);
+          setBoardName(null);
+          setPosts([]);
+          setBoards([]);
+          setTotalPage(1);
           setIsBoardOrderChanged(false);
           return;
         }
 
-        setBoard(null);
-        setBoardName(null);
-        setPosts([]);
-        setTotalPage(1);
-        setCurrentFilter('all');
+        setBoardName(statusResult.boardName);
 
-        const boardsResponse = await fetch(`/api/boards?siteName=${siteName}&manageContents=true`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const boardResponse = await fetch(
+          `/api/boards/${statusResult.boardName}?siteName=${siteName}&page=${currentPage}${
+            sizeParam ? `&size=${sizeParam}` : ''
+          }${filterParam ? `&filter=${filterParam}` : ''}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+          },
+        );
 
-        const boardsResult = (await boardsResponse.json()) as BoardsResponse | ErrorResponse;
+        const boardResult = (await boardResponse.json()) as BoardContentsResponse | ErrorResponse;
 
-        if (!boardsResponse.ok) {
-          throw new Error(('error' in boardsResult ? boardsResult.error : '') || '게시판을 불러오지 못했습니다.');
+        if (!boardResponse.ok) {
+          throw new Error(
+            ('error' in boardResult ? boardResult.error : '') || '출간된 블로그 글 목록을 불러오지 못했습니다.',
+          );
         }
 
-        if (!('boards' in boardsResult) || !Array.isArray(boardsResult.boards)) {
-          throw new Error('게시판을 불러오지 못했습니다.');
+        if (!('contents' in boardResult) || !Array.isArray(boardResult.contents) || !('board' in boardResult)) {
+          throw new Error('출간된 블로그 글 목록을 불러오지 못했습니다.');
         }
 
-        setBoards(boardsResult.boards.filter(isVisibleCommunityBoard));
-        setCommunityManageContents(boardsResult.manageContents ?? null);
+        setBoard(boardResult.board);
+        setPosts(boardResult.contents);
+        setBoards([]);
+        setTotalPage(Number(boardResult.totalPage) > 0 ? Number(boardResult.totalPage) : 1);
+        setCurrentFilter(boardResult.filter === 'deleted' ? 'deleted' : 'all');
         setIsBoardOrderChanged(false);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setHasLoaded(true);
-        setIsFetching(false);
+        return;
       }
-    }
 
-    void loadData();
-  }, [siteName, currentPage, sizeParam, filterParam, reloadKey]);
+      setBoard(null);
+      setBoardName(null);
+      setPosts([]);
+      setTotalPage(1);
+      setCurrentFilter('all');
+
+      const boardsResponse = await fetch(`/api/boards?siteName=${siteName}&manageContents=true`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const boardsResult = (await boardsResponse.json()) as BoardsResponse | ErrorResponse;
+
+      if (!boardsResponse.ok) {
+        throw new Error(('error' in boardsResult ? boardsResult.error : '') || '게시판을 불러오지 못했습니다.');
+      }
+
+      if (!('boards' in boardsResult) || !Array.isArray(boardsResult.boards)) {
+        throw new Error('게시판을 불러오지 못했습니다.');
+      }
+
+      setBoards(boardsResult.boards.filter(isVisibleCommunityBoard));
+      setCommunityManageContents(boardsResult.manageContents ?? null);
+      setIsBoardOrderChanged(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '목록을 불러오지 못했습니다.');
+      } else {
+        setErrorMessage('목록을 불러오지 못했습니다.');
+      }
+    } finally {
+      setHasLoaded(true);
+      setIsFetching(false);
+    }
+  }
 
   useEffect(() => {
     setSelectedIds((previousIds) => previousIds.filter((id) => posts.some((post) => post.id === id)));
@@ -680,7 +672,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         setDialogMode(null);
         setClosedMessage('');
         setDialogErrorMessage('');
-        setReloadKey((previousValue) => previousValue + 1);
+        await loadData();
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setDialogErrorMessage(unknownError.message || '게시물 복구에 실패했습니다.');
@@ -745,7 +737,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setClosedMessage('');
       setDialogErrorMessage('');
       setSelectedIds([]);
-      setReloadKey((previousValue) => previousValue + 1);
+      await loadData();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setDialogErrorMessage(unknownError.message || '게시물 삭제에 실패했습니다.');

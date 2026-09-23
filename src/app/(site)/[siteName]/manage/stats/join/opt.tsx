@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { MenuItem, Select, type SelectChangeEvent, Typography } from '@mui/material';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -259,84 +259,75 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('week');
-  const [appliedRequest, setAppliedRequest] = useState<AppliedRequest | null>(null);
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
   const [joinStats, setJoinStats] = useState<JoinStatsResponse | null>(initialData);
 
-  useEffect(() => {
-    if (!appliedRequest) return;
-    const request = appliedRequest;
+  async function loadJoinStats(request: AppliedRequest) {
+    try {
+      const isFirstLoad = !joinStats;
 
-    async function loadJoinStats() {
-      try {
-        const isFirstLoad = !joinStats;
-
-        if (isFirstLoad) {
-          setIsInitialLoading(true);
-        } else {
-          setIsChartLoading(true);
-        }
-
-        setErrorMessage('');
-
-        const query = new URLSearchParams({
-          siteName,
-          range: request.range,
-        });
-
-        if (request.range === 'custom' && request.startDate && request.endDate) {
-          query.set('startDate', request.startDate);
-          query.set('endDate', request.endDate);
-        }
-
-        const response = await fetch(`/api/manage/stats/join?${query.toString()}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as JoinStatsResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '가입자수 통계를 불러오지 못했습니다.');
-        }
-
-        setJoinStats((prevJoinStats) => {
-          if (!prevJoinStats) {
-            return result;
-          }
-
-          return {
-            ...prevJoinStats,
-            range: result.range,
-            chart: result.chart,
-          };
-        });
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '가입자수 통계를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('가입자수 통계를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsInitialLoading(false);
-        setIsChartLoading(false);
+      if (isFirstLoad) {
+        setIsInitialLoading(true);
+      } else {
+        setIsChartLoading(true);
       }
-    }
 
+      setErrorMessage('');
+
+      const query = new URLSearchParams({
+        siteName,
+        range: request.range,
+      });
+
+      if (request.range === 'custom' && request.startDate && request.endDate) {
+        query.set('startDate', request.startDate);
+        query.set('endDate', request.endDate);
+      }
+
+      const response = await fetch(`/api/manage/stats/join?${query.toString()}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as JoinStatsResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '가입자수 통계를 불러오지 못했습니다.');
+      }
+
+      setJoinStats((prevJoinStats) => {
+        if (!prevJoinStats) {
+          return result;
+        }
+
+        return {
+          ...prevJoinStats,
+          range: result.range,
+          chart: result.chart,
+        };
+      });
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '가입자수 통계를 불러오지 못했습니다.');
+      } else {
+        setErrorMessage('가입자수 통계를 불러오지 못했습니다.');
+      }
+    } finally {
+      setIsInitialLoading(false);
+      setIsChartLoading(false);
+    }
     if (!siteName) {
       setErrorMessage('siteName이 유효하지 않습니다.');
       setIsInitialLoading(false);
       setIsChartLoading(false);
       return;
     }
-
-    void loadJoinStats();
-  }, [appliedRequest, siteName]);
+  }
 
   function handleSelectPreset(range: Exclude<RangeType, 'custom'>) {
     setSelectedRange(range);
-    setAppliedRequest({ range });
+    void loadJoinStats({ range });
   }
 
   function handleOpenCustomRange() {
@@ -344,7 +335,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   function handleApplyCustomRange() {
-    setAppliedRequest({
+    void loadJoinStats({
       range: 'custom',
       startDate: formatDateValue(startDate),
       endDate: formatDateValue(endDate),
