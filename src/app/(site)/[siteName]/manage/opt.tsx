@@ -42,7 +42,13 @@ function canAccessAllManageMenus(siteType: string, siteRole: string | null, glob
   return false;
 }
 
-export default function Opt({ initialData, initialError }: { initialData: StaffResponse | null; initialError: string }) {
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: StaffResponse | null;
+  initialError: string;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const siteHeader = useSiteHeader();
@@ -62,16 +68,31 @@ export default function Opt({ initialData, initialError }: { initialData: StaffR
     ...(showAllManageMenus
       ? [{ href: `/${siteName}/manage/settings`, label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보' }]
       : []),
-    ...(showAllManageMenus && siteType === 'community' ? [{ href: `/${siteName}/manage/join`, label: '가입 관리' }] : []),
+    ...(showAllManageMenus && siteType === 'community'
+      ? [{ href: `/${siteName}/manage/join`, label: '가입 관리' }]
+      : []),
     ...(showAllManageMenus
-      ? [{ href: `/${siteName}/manage/${siteType === 'blog' ? 'team' : 'members'}`, label: siteType === 'blog' ? '팀원 관리' : '멤버 관리' }]
+      ? [
+          {
+            href: `/${siteName}/manage/${siteType === 'blog' ? 'team' : 'members'}`,
+            label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
+          },
+        ]
       : []),
     { href: `/${siteName}/manage/contents/posts`, label: '콘텐츠 관리' },
-    ...(showAllManageMenus && siteType === 'community' ? [{ href: `/${siteName}/manage/private`, label: '비공개 게시판' }] : []),
+    ...(showAllManageMenus && siteType === 'community'
+      ? [{ href: `/${siteName}/manage/private`, label: '비공개 게시판' }]
+      : []),
     ...(showAllManageMenus
       ? [
           { href: `/${siteName}/manage/reports`, label: '신고 관리' },
-          { href: siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`, label: '디자인' },
+          {
+            href:
+              siteType === 'blog'
+                ? `/${siteName}/manage/design/blog/fonts`
+                : `/${siteName}/manage/design/community/home`,
+            label: '디자인',
+          },
           { href: `/${siteName}/manage/payments`, label: '결제' },
           { href: `/${siteName}/manage/stats`, label: '통계' },
         ]

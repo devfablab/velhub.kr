@@ -11,16 +11,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import {
-  Avatar,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '../Anchor';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';

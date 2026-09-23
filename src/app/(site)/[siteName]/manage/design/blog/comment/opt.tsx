@@ -99,7 +99,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const siteName = normalizeText(params.siteName);
 
   const [commentProvider, setCommentProvider] = useState<CommentProvider>(initialData?.blog?.commentProvider ?? 'none');
-  const [giscusSettings, setGiscusSettings] = useState<GiscusSettings>(initialData?.blog?.giscusSettings ?? DEFAULT_GISCUS_SETTINGS);
+  const [giscusSettings, setGiscusSettings] = useState<GiscusSettings>(
+    initialData?.blog?.giscusSettings ?? DEFAULT_GISCUS_SETTINGS,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');

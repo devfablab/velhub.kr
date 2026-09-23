@@ -204,7 +204,19 @@ async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
   throw new Error(maxSizeMessage);
 }
 
-export default function Opt({ initialStatus, initialContent, initialCategory, initialSeries, initialError }: { initialStatus?: StatusResponse | null, initialContent?: ContentResponse | null, initialCategory?: CategoryListResponse | null, initialSeries?: SeriesListResponse | null, initialError?: string | null }) {
+export default function Opt({
+  initialStatus,
+  initialContent,
+  initialCategory,
+  initialSeries,
+  initialError,
+}: {
+  initialStatus?: StatusResponse | null;
+  initialContent?: ContentResponse | null;
+  initialCategory?: CategoryListResponse | null;
+  initialSeries?: SeriesListResponse | null;
+  initialError?: string | null;
+}) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -227,7 +239,9 @@ export default function Opt({ initialStatus, initialContent, initialCategory, in
   const [thumbnailImage, setThumbnailImage] = useState(initialContent?.content?.thumbnail_image ?? '');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(initialContent?.content?.thumbnail_width ?? null);
-  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(initialContent?.content?.thumbnail_height ?? null);
+  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(
+    initialContent?.content?.thumbnail_height ?? null,
+  );
   const [hasBoard, setHasBoard] = useState(initialStatus?.hasBoard || false);
   const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
   const [categories] = useState<CategoryRow[]>(initialCategory?.categories ?? []);
@@ -253,7 +267,6 @@ export default function Opt({ initialStatus, initialContent, initialCategory, in
       editorBlobImagesReference.current = [];
     };
   }, []);
-
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);

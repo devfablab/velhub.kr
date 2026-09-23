@@ -1,6 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSessionClaims } from '@/lib/session';
 import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getSessionClaims } from '@/lib/session';
 import { getPublicSiteContentUrl, getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

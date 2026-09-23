@@ -23,7 +23,14 @@ type SiteMenu = {
 type InitialData = {
   boards: Board[];
   writeBoards: Board[];
-  postCountContents: Array<{ id: string; slug: string; subject: string; board_key: string; post_count: number; comment_count: number }>;
+  postCountContents: Array<{
+    id: string;
+    slug: string;
+    subject: string;
+    board_key: string;
+    post_count: number;
+    comment_count: number;
+  }>;
   communitySiteInfo: unknown;
   communityLinks: unknown[];
   communityUserInfo: unknown;

@@ -176,7 +176,15 @@ async function convertImageToWebpFile(file: File, errorMessage = '이미지는 1
   });
 }
 
-export default function Opt({ initialStatus, initialContent, initialError }: { initialStatus: StatusResponse | null; initialContent: ContentResponse | null; initialError?: string | null }) {
+export default function Opt({
+  initialStatus,
+  initialContent,
+  initialError,
+}: {
+  initialStatus: StatusResponse | null;
+  initialContent: ContentResponse | null;
+  initialError?: string | null;
+}) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -206,7 +214,6 @@ export default function Opt({ initialStatus, initialContent, initialError }: { i
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
-
 
   useEffect(() => {
     return () => {

@@ -136,7 +136,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [board, setBoard] = useState<BoardResponse['board'] | null>(initialData?.board ?? null);
-  const [canManageBoardSettings, setCanManageBoardSettings] = useState(initialData?.actions?.canManageBoardSettings === true);
+  const [canManageBoardSettings, setCanManageBoardSettings] = useState(
+    initialData?.actions?.canManageBoardSettings === true,
+  );
   const [contents, setContents] = useState<ContentRow[]>(initialData?.contents ?? []);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
@@ -148,7 +150,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
-  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>(initialData?.filter === 'deleted' ? 'deleted' : 'all');
+  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>(
+    initialData?.filter === 'deleted' ? 'deleted' : 'all',
+  );
   const [closedMessage, setClosedMessage] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
 

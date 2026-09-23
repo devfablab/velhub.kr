@@ -10,13 +10,8 @@ export default async function Page({ params }: RouteContext) {
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
   const initialData = await getSiteApiData<ManagersResponse>(
     `/api/manage/join/managers?siteName=${normalizedSiteName}`,
-    '매니저 정보를 불러오지 못했습니다.'
+    '매니저 정보를 불러오지 못했습니다.',
   );
 
-  return (
-    <Opt
-      initialData={initialData.data}
-      initialError={initialData.error}
-    />
-  );
+  return <Opt initialData={initialData.data} initialError={initialData.error} />;
 }

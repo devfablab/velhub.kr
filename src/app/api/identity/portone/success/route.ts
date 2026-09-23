@@ -80,7 +80,10 @@ export async function POST(request: NextRequest) {
   try {
     await assertActiveIdentityVerificationRequest(identityVerificationId, sessionClaims.userId);
   } catch (error) {
-    return NextResponse.json({ message: error instanceof Error ? error.message : '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : '본인인증 요청 정보가 일치하지 않습니다.' },
+      { status: 400 },
+    );
   }
 
   const supabaseAdmin = getSupabaseAdmin();

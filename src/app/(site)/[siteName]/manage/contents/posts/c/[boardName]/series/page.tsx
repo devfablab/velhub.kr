@@ -27,6 +27,9 @@ export default async function Page(context: RouteContext) {
     redirect(`/${normalizedSiteName}/manage/contents/posts`);
   }
 
-  const initial = await getSiteApiData<SeriesListResponse>(`/api/boards/${boardName}/series?siteName=${normalizedSiteName}`, '연재 목록을 불러오지 못했습니다.');
+  const initial = await getSiteApiData<SeriesListResponse>(
+    `/api/boards/${boardName}/series?siteName=${normalizedSiteName}`,
+    '연재 목록을 불러오지 못했습니다.',
+  );
   return <Opt initialData={initial.data} initialError={initial.error} />;
 }

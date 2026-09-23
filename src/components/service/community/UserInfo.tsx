@@ -64,13 +64,17 @@ export default function UserInfo() {
   const hasInitialData = useRef(Boolean(initialResponse?.status));
 
   const [status, setStatus] = useState<UserInfoStatus | null>(initialResponse?.status ?? null);
-  const [userInfo, setUserInfo] = useState<UserInfoData | null>(initialResponse?.status === 'active' ? (initialResponse.userInfo ?? null) : null);
+  const [userInfo, setUserInfo] = useState<UserInfoData | null>(
+    initialResponse?.status === 'active' ? (initialResponse.userInfo ?? null) : null,
+  );
   const [blockReason, setBlockReason] = useState(initialResponse?.blockReason ?? '');
   const [inviteHref, setInviteHref] = useState(initialResponse?.inviteHref ?? '');
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [nickname, setNickname] = useState(initialResponse?.status === 'active' ? (initialResponse.userInfo?.nickname ?? '') : '');
+  const [nickname, setNickname] = useState(
+    initialResponse?.status === 'active' ? (initialResponse.userInfo?.nickname ?? '') : '',
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
   const [isWithdrawSubmitting, setIsWithdrawSubmitting] = useState(false);

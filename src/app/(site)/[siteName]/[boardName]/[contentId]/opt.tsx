@@ -712,7 +712,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
   }
 
   // The initial response is supplied by the server; later route changes still reload here.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (isInitialLoad.current) {
       isInitialLoad.current = false;

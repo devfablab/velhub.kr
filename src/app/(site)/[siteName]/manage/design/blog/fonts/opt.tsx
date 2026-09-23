@@ -87,14 +87,28 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const siteName = normalizeText(params.siteName);
 
   const blog = initialData?.blog;
-  const hasSubject = blog?.subject_font_family !== null || blog?.subject_letter_spacing !== null || blog?.subject_line_height !== null;
-  const hasDescription = blog?.description_font_family !== null || blog?.description_letter_spacing !== null || blog?.description_line_height !== null || blog?.description_font_size !== null || blog?.description_margin !== null;
-  const [applyScope, setApplyScope] = useState<ApplyScope>(hasSubject ? (hasDescription ? 'both' : 'subject') : hasDescription ? 'description' : 'subject');
-  const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>((blog?.subject_font_family ?? 'neo') as FontFamily);
+  const hasSubject =
+    blog?.subject_font_family !== null || blog?.subject_letter_spacing !== null || blog?.subject_line_height !== null;
+  const hasDescription =
+    blog?.description_font_family !== null ||
+    blog?.description_letter_spacing !== null ||
+    blog?.description_line_height !== null ||
+    blog?.description_font_size !== null ||
+    blog?.description_margin !== null;
+  const [applyScope, setApplyScope] = useState<ApplyScope>(
+    hasSubject ? (hasDescription ? 'both' : 'subject') : hasDescription ? 'description' : 'subject',
+  );
+  const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>(
+    (blog?.subject_font_family ?? 'neo') as FontFamily,
+  );
   const [subjectLetterSpacing, setSubjectLetterSpacing] = useState<number | ''>(blog?.subject_letter_spacing ?? -0.005);
   const [subjectLineHeight, setSubjectLineHeight] = useState<number | ''>(blog?.subject_line_height ?? 1.5);
-  const [descriptionFontFamily, setDescriptionFontFamily] = useState<FontFamily | ''>((blog?.description_font_family ?? 'pre') as FontFamily);
-  const [descriptionLetterSpacing, setDescriptionLetterSpacing] = useState<number | ''>(blog?.description_letter_spacing ?? -0.005);
+  const [descriptionFontFamily, setDescriptionFontFamily] = useState<FontFamily | ''>(
+    (blog?.description_font_family ?? 'pre') as FontFamily,
+  );
+  const [descriptionLetterSpacing, setDescriptionLetterSpacing] = useState<number | ''>(
+    blog?.description_letter_spacing ?? -0.005,
+  );
   const [descriptionLineHeight, setDescriptionLineHeight] = useState<number | ''>(blog?.description_line_height ?? 1.5);
   const [descriptionFontSize, setDescriptionFontSize] = useState<number | ''>(blog?.description_font_size ?? 16);
   const [descriptionMargin, setDescriptionMargin] = useState<number | ''>(blog?.description_margin ?? 16);

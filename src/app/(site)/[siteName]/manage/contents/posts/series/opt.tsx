@@ -190,7 +190,15 @@ function buildCheckUrl({
   return `/api/boards/${boardName}/series/check?${searchParams.toString()}`;
 }
 
-export default function Opt({ initialStatus, initialSeries, initialError }: { initialStatus?: StatusResponse | null, initialSeries?: SeriesListResponse | null, initialError?: string | null }) {
+export default function Opt({
+  initialStatus,
+  initialSeries,
+  initialError,
+}: {
+  initialStatus?: StatusResponse | null;
+  initialSeries?: SeriesListResponse | null;
+  initialError?: string | null;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -245,7 +253,6 @@ export default function Opt({ initialStatus, initialSeries, initialError }: { in
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
   }, [seriesList]);
-
 
   function resetDialogFields() {
     setSeriesKey('');

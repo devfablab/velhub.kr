@@ -181,7 +181,13 @@ function getInitialBoardRole(board: BoardItem | null | undefined) {
   return board && board.boardGeneralManagerCount > 0 ? 'board-assistant-manager' : 'board-general-manager';
 }
 
-export default function Opt({ initialData, initialError }: { initialData: ManagersResponse | null; initialError: string }) {
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: ManagersResponse | null;
+  initialError: string;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -192,7 +198,9 @@ export default function Opt({ initialData, initialError }: { initialData: Manage
   const [managers, setManagers] = useState<ManagerItem[]>(initialData?.managers || []);
   const [boards, setBoards] = useState<BoardItem[]>(initialData?.boards || []);
   const [managerIcons, setManagerIcons] = useState<ManagerIconItem[]>(initialData?.managerIcons || []);
-  const [ownerTransfer, setOwnerTransfer] = useState<ManagersResponse['ownerTransfer'] | null>(initialData?.ownerTransfer || null);
+  const [ownerTransfer, setOwnerTransfer] = useState<ManagersResponse['ownerTransfer'] | null>(
+    initialData?.ownerTransfer || null,
+  );
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchedKeyword, setSearchedKeyword] = useState('');
   const [searchResults, setSearchResults] = useState<MemberSearchItem[]>([]);

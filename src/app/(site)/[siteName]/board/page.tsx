@@ -53,8 +53,12 @@ export default async function Page(context: SearchContext) {
     page: typeof searchParams.page === 'string' ? searchParams.page : '1',
     size: '20',
   });
-  if (typeof searchParams.keyword === 'string' && searchParams.keyword) queryParams.set('keyword', searchParams.keyword);
-  const initial = await getSiteApiData<BoardListResponse>(`/api/boards/all?${queryParams.toString()}`, '전체 게시글을 불러오지 못했습니다.');
+  if (typeof searchParams.keyword === 'string' && searchParams.keyword)
+    queryParams.set('keyword', searchParams.keyword);
+  const initial = await getSiteApiData<BoardListResponse>(
+    `/api/boards/all?${queryParams.toString()}`,
+    '전체 게시글을 불러오지 못했습니다.',
+  );
   return (
     <Container pageBack={`/${siteName}`} pageTitle="최근글 보기">
       <Opt isCommunity={isCommunity} initialData={initial.data} initialError={initial.error} />

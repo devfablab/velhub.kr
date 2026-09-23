@@ -294,9 +294,7 @@ export default function OwnedDonationPosts({ initialData, initialError }: Props)
       }
     } catch (unknownError) {
       if (contentRequestIdReference.current === requestId) {
-        setContentErrorMessage(
-          unknownError instanceof Error ? unknownError.message : '글 내용을 불러오지 못했습니다.',
-        );
+        setContentErrorMessage(unknownError instanceof Error ? unknownError.message : '글 내용을 불러오지 못했습니다.');
       }
     }
   }

@@ -107,7 +107,9 @@ export default function CommentList({
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState(initialData?.mySelfAvatarUrl ?? '');
   const [myPollChoice, setMyPollChoice] = useState<PollChoice | null>(initialData?.myPollChoice ?? null);
   const [canWrite, setCanWrite] = useState(initialData?.actions?.canWrite === true);
-  const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(initialData?.actions?.canWriteReason ?? null);
+  const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(
+    initialData?.actions?.canWriteReason ?? null,
+  );
   const [canManageComment, setCanManageComment] = useState(initialData?.actions?.canManageComment === true);
   const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? '');
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');

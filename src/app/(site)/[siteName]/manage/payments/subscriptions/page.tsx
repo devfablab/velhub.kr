@@ -71,7 +71,10 @@ export default async function Page(context: RouteContext) {
   let initialSeriesSubscriptions: SeriesSubscriptionsResponse | null = null;
   let initialBlogSubscription: BlogSubscriptionResponse | null = null;
   let initialError: string | null = null;
-  const settlementResult = await getSiteApiData<SettlementResponse>('/api/settlement', '정산 정보를 불러오지 못했습니다.');
+  const settlementResult = await getSiteApiData<SettlementResponse>(
+    '/api/settlement',
+    '정산 정보를 불러오지 못했습니다.',
+  );
 
   if (canManageBlogSubscriptions || isAdult) {
     const [seriesResult, blogResult] = await Promise.all([
@@ -95,7 +98,7 @@ export default async function Page(context: RouteContext) {
       if (blogResult.error) initialError = blogResult.error;
     }
   }
-return (
+  return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
@@ -109,7 +112,11 @@ return (
                   initialSettlementError={settlementResult.error}
                 />
               ) : null}
-              <SeriesSubscriptions guidanceMessages={getBlogGuidanceMessages()} initialData={initialSeriesSubscriptions} initialError={initialError} />
+              <SeriesSubscriptions
+                guidanceMessages={getBlogGuidanceMessages()}
+                initialData={initialSeriesSubscriptions}
+                initialError={initialError}
+              />
             </>
           ) : isBlog ? (
             <div className="paper">

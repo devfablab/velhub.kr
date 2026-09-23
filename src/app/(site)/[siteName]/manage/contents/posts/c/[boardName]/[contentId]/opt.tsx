@@ -98,7 +98,13 @@ export type ContentResponse = {
   error?: string;
 };
 
-export default function Opt({ initialContent, initialError }: { initialContent?: ContentResponse | null, initialError?: string | null }) {
+export default function Opt({
+  initialContent,
+  initialError,
+}: {
+  initialContent?: ContentResponse | null;
+  initialError?: string | null;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName).toLowerCase();

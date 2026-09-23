@@ -98,7 +98,13 @@ function hasInvalidBoardKeyCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
 
-export default function Opt({ initialData, initialError }: { initialData: BoardResponse | null; initialError: string }) {
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: BoardResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -116,7 +122,9 @@ export default function Opt({ initialData, initialError }: { initialData: BoardR
   const [originBoardKey] = useState(initialBoard?.board_key ?? '');
   const [boardType] = useState<BoardType>(initialBoard?.board_type ?? 'basic');
   const [postPerPage, setPostPerPage] = useState(initialBoard?.post_per_page ?? 5);
-  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>(initialBoard?.markdown_status ?? 'markdown_default');
+  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>(
+    initialBoard?.markdown_status ?? 'markdown_default',
+  );
   const [writePermission, setWritePermission] = useState<WritePermission>(initialBoard?.write_permission ?? 'member');
   const [postType, setPostType] = useState<PostType>(initialBoard?.post_type ?? 'none');
   const [isActive, setIsActive] = useState(initialBoard?.is_active ?? true);

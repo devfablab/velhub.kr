@@ -125,9 +125,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [joinNotice, setJoinNotice] = useState(initialJoin?.join_notice ?? '');
-  const [joinQuestionStatus, setJoinQuestionStatus] = useState<'enabled' | 'disabled'>(initialJoin?.join_question_status === 'enabled' ? 'enabled' : 'disabled');
+  const [joinQuestionStatus, setJoinQuestionStatus] = useState<'enabled' | 'disabled'>(
+    initialJoin?.join_question_status === 'enabled' ? 'enabled' : 'disabled',
+  );
   const [joinQuestions, setJoinQuestions] = useState<JoinQuestionRow[]>(initialJoin?.join_questions ?? []);
-  const [joinAcceptStatus, setJoinAcceptStatus] = useState<'enabled' | 'disabled' | 'period'>(initialJoin?.join_accept_status === 'disabled' || initialJoin?.join_accept_status === 'period' ? initialJoin.join_accept_status : 'enabled');
+  const [joinAcceptStatus, setJoinAcceptStatus] = useState<'enabled' | 'disabled' | 'period'>(
+    initialJoin?.join_accept_status === 'disabled' || initialJoin?.join_accept_status === 'period'
+      ? initialJoin.join_accept_status
+      : 'enabled',
+  );
   const [joinAcceptStartDay, setJoinAcceptStartDay] = useState(initialJoin?.join_accept_start_day ?? '');
   const [joinAcceptEndDay, setJoinAcceptEndDay] = useState(initialJoin?.join_accept_end_day ?? '');
   const [joinType, setJoinType] = useState<'open' | 'invite'>(initialJoin?.join_type === 'invite' ? 'invite' : 'open');

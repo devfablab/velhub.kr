@@ -6,7 +6,10 @@ import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 type RouteContext = { params: Promise<{ siteName: string }> };
 export default async function Page({ params }: RouteContext) {
   const { siteName } = await params;
-  const initial = await getSiteApiData<ReportListResponse>(`/api/manage/reports?siteName=${siteName}&targetType=post&mode=current`, '신고 목록을 불러오지 못했습니다.');
+  const initial = await getSiteApiData<ReportListResponse>(
+    `/api/manage/reports?siteName=${siteName}&targetType=post&mode=current`,
+    '신고 목록을 불러오지 못했습니다.',
+  );
   return (
     <Container pageTitle="게시물 신고" menu="reports">
       <ReportManage targetType="post" initialData={initial.data} initialError={initial.error} />

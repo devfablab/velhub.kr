@@ -590,8 +590,12 @@ export default function Opt({
     (initialBoards?.boards ?? []).filter((board) => board.is_active === true && board.board_type !== 'page'),
   );
   const [selectedBoardKey, setSelectedBoardKey] = useState(boardName);
-  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(initialBoardInfo?.board?.board_type ?? 'basic');
-  const [postType, setPostType] = useState<'none' | 'prefix' | 'series' | 'both'>(initialBoardInfo?.board?.post_type ?? 'none');
+  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(
+    initialBoardInfo?.board?.board_type ?? 'basic',
+  );
+  const [postType, setPostType] = useState<'none' | 'prefix' | 'series' | 'both'>(
+    initialBoardInfo?.board?.post_type ?? 'none',
+  );
   const [prefixList, setPrefixList] = useState<PrefixRow[]>(initialPrefixes?.prefixes ?? []);
   const [seriesList, setSeriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
@@ -626,7 +630,9 @@ export default function Opt({
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
   const [canPinPost, setCanPinPost] = useState(initialBoardInfo?.actions?.canPinPost === true);
-  const [markdownStatus, setMarkdownStatus] = useState<string | null>(initialBoardInfo?.board?.markdown_status ?? 'markdown_default');
+  const [markdownStatus, setMarkdownStatus] = useState<string | null>(
+    initialBoardInfo?.board?.markdown_status ?? 'markdown_default',
+  );
   const [isPollEnabled, setIsPollEnabled] = useState(false);
   const [poll, setPoll] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogOpen, setPollDialogOpen] = useState(false);

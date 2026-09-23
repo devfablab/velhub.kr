@@ -249,7 +249,15 @@ function SortableCategoryRow({
   );
 }
 
-export default function Opt({ initialStatus, initialCategory, initialError }: { initialStatus?: StatusResponse | null, initialCategory?: CategoryListResponse | null, initialError?: string | null }) {
+export default function Opt({
+  initialStatus,
+  initialCategory,
+  initialError,
+}: {
+  initialStatus?: StatusResponse | null;
+  initialCategory?: CategoryListResponse | null;
+  initialError?: string | null;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -298,7 +306,6 @@ export default function Opt({ initialStatus, initialCategory, initialError }: { 
       return a.category_key.localeCompare(b.category_key);
     });
   }, [categories]);
-
 
   function resetDialogFields() {
     setCategoryKey('');

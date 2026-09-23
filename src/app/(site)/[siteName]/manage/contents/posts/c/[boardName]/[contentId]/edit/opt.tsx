@@ -274,7 +274,17 @@ function getYoutubeId(value: string) {
   return '';
 }
 
-export default function Opt({ initialContent, initialSeries, initialPrefix, initialError }: { initialContent: ContentResponse | null; initialSeries: SeriesListResponse | null; initialPrefix: PrefixListResponse | null; initialError: string }) {
+export default function Opt({
+  initialContent,
+  initialSeries,
+  initialPrefix,
+  initialError,
+}: {
+  initialContent: ContentResponse | null;
+  initialSeries: SeriesListResponse | null;
+  initialPrefix: PrefixListResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -316,7 +326,9 @@ export default function Opt({ initialContent, initialSeries, initialPrefix, init
   const [thumbnailImage, setThumbnailImage] = useState(initialContent?.content?.thumbnail_image ?? '');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState(initialContent?.content?.thumbnail_image_url ?? '');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(initialContent?.content?.thumbnail_width ?? null);
-  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(initialContent?.content?.thumbnail_height ?? null);
+  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(
+    initialContent?.content?.thumbnail_height ?? null,
+  );
   const [images, setImages] = useState<PostImageRow[]>(
     (initialContent?.content?.images ?? []).map((image) => ({ ...image, url: image.url ?? '' })),
   );
@@ -325,12 +337,17 @@ export default function Opt({ initialContent, initialSeries, initialPrefix, init
   const [isPollLocked, setIsPollLocked] = useState(false);
   const [poll, setPoll] = useState<PollState>(
     initialContent?.content?.poll
-      ? { question: initialContent.content.poll.question, options: initialContent.content.poll.options.map((option) => option.label) }
+      ? {
+          question: initialContent.content.poll.question,
+          options: initialContent.content.poll.options.map((option) => option.label),
+        }
       : EMPTY_POLL,
   );
   const [isComment, setIsComment] = useState(initialContent?.content?.is_comment ?? true);
   const [isPin, setIsPin] = useState(initialContent?.content?.is_pin ?? false);
-  const [publishedStatus, setPublishedStatus] = useState<'draft' | 'published'>(initialContent?.content?.published_status ?? 'draft');
+  const [publishedStatus, setPublishedStatus] = useState<'draft' | 'published'>(
+    initialContent?.content?.published_status ?? 'draft',
+  );
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
   const [isSubmittingSave, setIsSubmittingSave] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
@@ -353,7 +370,6 @@ export default function Opt({ initialContent, initialSeries, initialPrefix, init
       editorBlobImagesReference.current = [];
     };
   }, []);
-
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);

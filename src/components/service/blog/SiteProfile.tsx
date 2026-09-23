@@ -31,8 +31,8 @@ import DonationButton from '@/components/service/common/DonationButton';
 import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import IdentityVerificationButton from '../common/IdentityVerificationButton';
-import styles from '@/app/aside.module.sass';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
+import styles from '@/app/aside.module.sass';
 
 type SiteInfo = {
   site_label: string | null;
@@ -238,11 +238,21 @@ export default function SiteProfile() {
   const [isLoading, setIsLoading] = useState(!initialProfile);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDonationProcessing, setIsDonationProcessing] = useState(false);
-  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(Boolean(initialProfile?.subscription?.isEnabled));
-  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(initialProfile?.subscription?.price ?? null);
-  const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>(initialProfile?.subscription?.subscriptionStatus ?? 'none');
-  const [isBlogSubscriptionRefundable, setIsBlogSubscriptionRefundable] = useState(Boolean(initialProfile?.subscription?.isRefundableCancellation));
-  const [blogSubscriptionRefundAmount, setBlogSubscriptionRefundAmount] = useState(initialProfile?.subscription?.refundAmount ?? 0);
+  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(
+    Boolean(initialProfile?.subscription?.isEnabled),
+  );
+  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(
+    initialProfile?.subscription?.price ?? null,
+  );
+  const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>(
+    initialProfile?.subscription?.subscriptionStatus ?? 'none',
+  );
+  const [isBlogSubscriptionRefundable, setIsBlogSubscriptionRefundable] = useState(
+    Boolean(initialProfile?.subscription?.isRefundableCancellation),
+  );
+  const [blogSubscriptionRefundAmount, setBlogSubscriptionRefundAmount] = useState(
+    initialProfile?.subscription?.refundAmount ?? 0,
+  );
   const [isBlogSubscriptionDialogOpen, setIsBlogSubscriptionDialogOpen] = useState(false);
   const [isBlogSubscriptionCancelDialogOpen, setIsBlogSubscriptionCancelDialogOpen] = useState(false);
   const [blogSubscriptionErrorMessage, setBlogSubscriptionErrorMessage] = useState('');
@@ -251,8 +261,12 @@ export default function SiteProfile() {
   const [hasIdentity, setHasIdentity] = useState(Boolean(initialProfile?.identity?.exists));
   const [paymentEmail, setPaymentEmail] = useState(normalizeText(initialProfile?.subscription?.paymentEmail));
   const [paymentPhone, setPaymentPhone] = useState(normalizeText(initialProfile?.subscription?.paymentPhone));
-  const [isMinor, setIsMinor] = useState(() => initialProfile?.identity?.identity ? !isAdult(initialProfile.identity.identity.birth_date) : false);
-  const [isUnder14Age, setIsUnder14Age] = useState(() => initialProfile?.identity?.identity ? isUnder14(initialProfile.identity.identity.birth_date) : false);
+  const [isMinor, setIsMinor] = useState(() =>
+    initialProfile?.identity?.identity ? !isAdult(initialProfile.identity.identity.birth_date) : false,
+  );
+  const [isUnder14Age, setIsUnder14Age] = useState(() =>
+    initialProfile?.identity?.identity ? isUnder14(initialProfile.identity.identity.birth_date) : false,
+  );
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
 

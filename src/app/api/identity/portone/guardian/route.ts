@@ -6,7 +6,6 @@ import {
   getPortOneIdentityVerification,
 } from '@/lib/identity/portone';
 import { getSessionClaims } from '@/lib/session';
-
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type GuardianVerifyBody = {

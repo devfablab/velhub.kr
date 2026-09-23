@@ -421,7 +421,9 @@ export default function MembershipPlan({
             <Stack gap={2}>
               <Stack gap={1}>
                 <Typography variant="body2">
-                  {isMinorUser ? '1개월 이용권 결제에 사용할 카드를 관리합니다.' : '자동결제에 사용할 카드를 관리합니다.'}
+                  {isMinorUser
+                    ? '1개월 이용권 결제에 사용할 카드를 관리합니다.'
+                    : '자동결제에 사용할 카드를 관리합니다.'}
                 </Typography>
                 <p className="alert info">
                   <InfoOutlineRoundedIcon />
@@ -434,8 +436,8 @@ export default function MembershipPlan({
                       <div className="paper" key={billingMethod.id}>
                         <Stack gap={0.5} direction="row" justifyContent="space-between" alignItems="center">
                           <Typography variant="body2">
-                            {getCardCompanyLabel(billingMethod.cardCompany)} ({getCardTypeLabel(billingMethod.cardType)} /{' '}
-                            {getOwnerTypeLabel(billingMethod.ownerType)}){' '}
+                            {getCardCompanyLabel(billingMethod.cardCompany)} ({getCardTypeLabel(billingMethod.cardType)}{' '}
+                            / {getOwnerTypeLabel(billingMethod.ownerType)}){' '}
                             {getCardNumberLabel(billingMethod.cardNumberMasked)}
                           </Typography>
                           {billingMethod.isDefault ? <Chip label="기본" size="small" className="chip success" /> : null}

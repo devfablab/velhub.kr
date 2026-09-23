@@ -228,7 +228,17 @@ function getYoutubeId(value: string) {
   return '';
 }
 
-export default function Opt({ initialBoard, initialSeries, initialPrefix, initialError }: { initialBoard: BoardInfoResponse | null; initialSeries: SeriesListResponse | null; initialPrefix: PrefixListResponse | null; initialError: string }) {
+export default function Opt({
+  initialBoard,
+  initialSeries,
+  initialPrefix,
+  initialError,
+}: {
+  initialBoard: BoardInfoResponse | null;
+  initialSeries: SeriesListResponse | null;
+  initialPrefix: PrefixListResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -287,7 +297,6 @@ export default function Opt({ initialBoard, initialSeries, initialPrefix, initia
       editorBlobImagesReference.current = [];
     };
   }, []);
-
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);

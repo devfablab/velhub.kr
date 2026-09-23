@@ -25,7 +25,11 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import styles from '@/app/board.module.sass';
 
-export type Response = { board?: { is_image_enabled: boolean }; categories?: { id: string; label: string }[]; error?: string };
+export type Response = {
+  board?: { is_image_enabled: boolean };
+  categories?: { id: string; label: string }[];
+  error?: string;
+};
 
 type SelectedImage = {
   id: string;
@@ -37,7 +41,15 @@ const MAX_IMAGE_COUNT = 5;
 const MAX_IMAGE_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
-export default function Opt({ initialData, initialError, initialStatus }: { initialData: Response | null; initialError: string; initialStatus: number }) {
+export default function Opt({
+  initialData,
+  initialError,
+  initialStatus,
+}: {
+  initialData: Response | null;
+  initialError: string;
+  initialStatus: number;
+}) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);

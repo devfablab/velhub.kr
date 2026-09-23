@@ -235,7 +235,9 @@ function toLinkItems(links: NonNullable<LinkResponse['links']>): LinkItem[] {
 export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const [items, setItems] = useState<LinkItem[]>(Array.isArray(initialData?.links) ? toLinkItems(initialData.links) : []);
+  const [items, setItems] = useState<LinkItem[]>(
+    Array.isArray(initialData?.links) ? toLinkItems(initialData.links) : [],
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const previewUrlsRef = useRef(new Set<string>());

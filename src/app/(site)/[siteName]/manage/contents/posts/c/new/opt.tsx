@@ -100,7 +100,13 @@ function hasInvalidBoardKeyCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
 
-export default function Opt({ initialData, initialError }: { initialData: BoardsResponse | null; initialError: string }) {
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: BoardsResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);

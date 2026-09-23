@@ -152,8 +152,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   const [nextRole, setNextRole] = useState<'manager' | 'member' | 'observer' | null>(null);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
   const [ownerTransferTargetId, setOwnerTransferTargetId] = useState('');
-  const [canRequestOwnerTransfer, setCanRequestOwnerTransfer] = useState(initialTeams?.ownerTransfer?.canRequest ?? false);
-  const [hasPendingOwnerTransfer, setHasPendingOwnerTransfer] = useState(initialTeams?.ownerTransfer?.hasPendingRequest ?? false);
+  const [canRequestOwnerTransfer, setCanRequestOwnerTransfer] = useState(
+    initialTeams?.ownerTransfer?.canRequest ?? false,
+  );
+  const [hasPendingOwnerTransfer, setHasPendingOwnerTransfer] = useState(
+    initialTeams?.ownerTransfer?.hasPendingRequest ?? false,
+  );
   const [isOwnerTransferOpen, setIsOwnerTransferOpen] = useState(false);
   const [isOwnerTransferSubmitting, setIsOwnerTransferSubmitting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');

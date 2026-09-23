@@ -51,5 +51,12 @@ export default async function Page(context: RouteContext) {
     initialError ||= categoryResult.error || seriesResult.error;
   }
 
-  return <Opt initialStatus={status.data} initialCategories={categories} initialSeries={series} initialError={initialError} />;
+  return (
+    <Opt
+      initialStatus={status.data}
+      initialCategories={categories}
+      initialSeries={series}
+      initialError={initialError}
+    />
+  );
 }

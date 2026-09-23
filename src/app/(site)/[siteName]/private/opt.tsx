@@ -24,7 +24,13 @@ type Post = {
   hasAnswer: boolean;
   createdAt: string;
 };
-export type Response = { board?: { board_label: string }; isStaff?: boolean; posts?: Post[]; total?: number; error?: string };
+export type Response = {
+  board?: { board_label: string };
+  isStaff?: boolean;
+  posts?: Post[];
+  total?: number;
+  error?: string;
+};
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
@@ -32,14 +38,24 @@ function formatDate(value: string) {
   );
 }
 
-export default function Opt({ initialData, initialError, initialStatus }: { initialData: Response | null; initialError: string; initialStatus: number }) {
+export default function Opt({
+  initialData,
+  initialError,
+  initialStatus,
+}: {
+  initialData: Response | null;
+  initialError: string;
+  initialStatus: number;
+}) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<Response>(initialData ? { ...initialData, error: initialError || initialData.error } : { error: initialError });
+  const [data, setData] = useState<Response>(
+    initialData ? { ...initialData, error: initialError || initialData.error } : { error: initialError },
+  );
   const isInitialLoad = useRef(true);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));

@@ -238,12 +238,22 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
   );
 }
 
-export default function Opt({ initialData, initialError, initialStatus }: { initialData: Data | null; initialError: string; initialStatus: number }) {
+export default function Opt({
+  initialData,
+  initialError,
+  initialStatus,
+}: {
+  initialData: Data | null;
+  initialError: string;
+  initialStatus: number;
+}) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
   const postId = normalizeText(params.postId);
-  const [data, setData] = useState<Data>(initialData ? { ...initialData, error: initialError || initialData.error } : { error: initialError });
+  const [data, setData] = useState<Data>(
+    initialData ? { ...initialData, error: initialError || initialData.error } : { error: initialError },
+  );
   const [contentHtml, setContentHtml] = useState('');
   const [replyImages, setReplyImages] = useState<AttachedImage[]>([]);
   const [replyImageDialogOpen, setReplyImageDialogOpen] = useState(false);

@@ -108,7 +108,15 @@ type ActionResponse = {
   error?: string;
 };
 
-export default function Opt({ initialStatus, initialContent, initialError }: { initialStatus?: StatusResponse | null, initialContent?: ContentResponse | null, initialError?: string | null }) {
+export default function Opt({
+  initialStatus,
+  initialContent,
+  initialError,
+}: {
+  initialStatus?: StatusResponse | null;
+  initialContent?: ContentResponse | null;
+  initialError?: string | null;
+}) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -140,7 +148,6 @@ export default function Opt({ initialStatus, initialContent, initialError }: { i
   const [closedMessage, setClosedMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState(initialError || '');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
-
 
   function handleOpenDeleteDialog() {
     setClosedMessage('');

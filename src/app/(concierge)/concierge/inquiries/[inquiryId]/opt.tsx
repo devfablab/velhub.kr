@@ -18,8 +18,8 @@ import {
 } from '@/lib/concierge/inquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import InquiryDetails from '@/components/concierge/InquiryDetails';
 import PopupMessage from '@/components/PopupMessage';
+import InquiryDetails from '@/components/service/concierge/InquiryDetails';
 import styles from '@/app/concierge.module.sass';
 
 export type Inquiry = {

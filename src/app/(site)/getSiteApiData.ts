@@ -1,6 +1,9 @@
 import { cookies, headers } from 'next/headers';
 
-export async function getSiteApiData<T>(path: string, fallback: string): Promise<{ data: T | null; error: string; status: number }> {
+export async function getSiteApiData<T>(
+  path: string,
+  fallback: string,
+): Promise<{ data: T | null; error: string; status: number }> {
   try {
     const cookieStore = await cookies();
     const headerList = await headers();

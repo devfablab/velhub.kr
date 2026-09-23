@@ -63,7 +63,9 @@ export default function Opt({
   const [contentHtml, setContentHtml] = useState(initialPost?.post?.content_html ?? '');
   const [subject, setSubject] = useState(initialPost?.post?.subject ?? '');
   const [isImageEnabled] = useState(initialBoard?.board?.is_image_enabled === true);
-  const [images, setImages] = useState<EditableImage[]>(initialPost?.post?.images.map((image) => ({ id: image.id, file: null, previewUrl: image.url })) ?? []);
+  const [images, setImages] = useState<EditableImage[]>(
+    initialPost?.post?.images.map((image) => ({ id: image.id, file: null, previewUrl: image.url })) ?? [],
+  );
   const [imageDialogImages, setImageDialogImages] = useState<EditableImage[]>([]);
   const [imageDialogMessage, setImageDialogMessage] = useState('');
   const [imageDialogOpen, setImageDialogOpen] = useState(false);

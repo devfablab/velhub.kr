@@ -268,7 +268,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [siteType, setSiteType] = useState<SiteType | null>(initialData?.siteType ?? null);
   const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? false);
   const [boards, setBoards] = useState<BoardRow[]>(initialData?.boards ?? []);
-  const [communityManageContents, setCommunityManageContents] = useState<NonNullable<BoardsResponse['manageContents']> | null>(initialData?.manageContents ?? null);
+  const [communityManageContents, setCommunityManageContents] = useState<NonNullable<
+    BoardsResponse['manageContents']
+  > | null>(initialData?.manageContents ?? null);
   const [posts, setPosts] = useState<PostRow[]>(initialData?.posts ?? []);
   const [board, setBoard] = useState<BoardRow | null>(initialData?.board ?? null);
   const [boardName, setBoardName] = useState<string | null>(initialData?.boardName ?? null);
