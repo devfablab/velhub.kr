@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from 'next';
 import { Hahmlet, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google';
 import localFont from 'next/font/local';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
+import { getSessionClaims } from '@/lib/session';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import TotpGuard from '@/components/auth/TotpGuard';
 import WithdrawalGuard from '@/components/auth/WithdrawalGuard';
@@ -70,6 +72,23 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
+  const sessionClaims = await getSessionClaims();
+  let withdrawalStatus: string | null = null;
+
+  if (sessionClaims?.userId) {
+    const withdrawalResult = await getSupabaseAdmin()
+      .from('stigmas')
+      .select('withdrawal_status')
+      .eq('user_id', sessionClaims.userId)
+      .maybeSingle();
+
+    if (withdrawalResult.error) {
+      console.error('[root-layout] withdrawal status select error', withdrawalResult.error);
+    } else {
+      withdrawalStatus = withdrawalResult.data?.withdrawal_status ?? null;
+    }
+  }
+
   return (
     <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable} ${Sans.variable} ${Serif.variable} ${Ham.variable}`}>
       <body>
@@ -77,7 +96,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <AuthStateProvider>
             <AppRouterCacheProvider>
               <ThemeProviderClient>
-                <WithdrawalGuard>
+                <WithdrawalGuard initialStatus={withdrawalStatus}>
                   <TotpGuard>{children}</TotpGuard>
                 </WithdrawalGuard>
               </ThemeProviderClient>

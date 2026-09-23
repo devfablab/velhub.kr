@@ -10,7 +10,9 @@ import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import DonationButton from '@/components/service/common/DonationButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
+import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import { ServiceNoDataIcon } from '@/components/Svgs';
+import { getSiteApiData } from '../../../getSiteApiData';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -151,6 +153,17 @@ export default async function Page(context: RouteContext) {
     .maybeSingle();
   const isSeriesSubscriptionEnabled =
     seriesData.is_subscription === true && seriesSubscriptionSetting.data?.is_enabled === true;
+  const initialSubscriptionStatus = seriesData.boards
+    ? await getSiteApiData<SubscriptionStatusResponse>(
+        `/api/payments/portone/subscriptions/status?${new URLSearchParams({
+          siteName: normalizedSiteName,
+          boardName: seriesData.boards.board_key,
+          targetType: 'series',
+          seriesName: seriesData.series_key,
+        }).toString()}`,
+        '구독 상태를 확인하지 못했습니다.',
+      )
+    : { data: null, error: '' };
   const posts = await supabaseAdmin
     .from('posts')
     .select(
@@ -239,6 +252,7 @@ export default async function Page(context: RouteContext) {
                   }}
                   selectedBoard
                   isEnabledByServer={isSeriesSubscriptionEnabled}
+                  initialStatus={initialSubscriptionStatus.data}
                 />
                 <DonationButton
                   siteName={normalizedSiteName}

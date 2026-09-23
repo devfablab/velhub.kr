@@ -1,6 +1,6 @@
 'use client';
 
-import { MouseEvent, useEffect, useMemo, useState } from 'react';
+import { MouseEvent, useMemo, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -22,6 +22,8 @@ import Anchor from '../../Anchor';
 import DonationButton from '../common/DonationButton';
 import ReportButton from '../common/ReportButton';
 import SubscriptionButton from '../common/SubscriptionButton';
+import type { SubscriptionStatusResponse } from '../common/SubscriptionButton';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
 type BoardItem = {
@@ -43,11 +45,7 @@ type Props = {
   selectedSeries?: SelectedSeries | null;
   isCommunity?: boolean;
   writeHref?: string;
-};
-
-type BoardsResponse = {
-  boards?: BoardItem[];
-  error?: string;
+  initialSubscriptionStatus?: SubscriptionStatusResponse | null;
 };
 
 function isWritePath(pathname: string, siteName: string) {
@@ -83,14 +81,22 @@ function isWritePath(pathname: string, siteName: string) {
   return false;
 }
 
-export default function TableListMobile({ board = null, selectedSeries = null, writeHref }: Props) {
+export default function TableListMobile({
+  board = null,
+  selectedSeries = null,
+  writeHref,
+  initialSubscriptionStatus,
+}: Props) {
   const params = useParams();
   const pathname = usePathname();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName);
+  const initialData = useSiteInitialData();
 
-  const [boards, setBoards] = useState<BoardItem[]>([]);
-  const [writeBoards, setWriteBoards] = useState<BoardItem[]>([]);
+  const boards = (initialData?.boards ?? []).filter(
+    (item) => item.is_active === true && item.board_type !== 'page',
+  ) as BoardItem[];
+  const writeBoards = useMemo(() => (initialData?.writeBoards ?? []) as BoardItem[], [initialData?.writeBoards]);
   const [alertMessage, setAlertMessage] = useState('');
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
 
@@ -134,63 +140,6 @@ export default function TableListMobile({ board = null, selectedSeries = null, w
     setMenuAnchorEl(null);
   };
 
-  useEffect(() => {
-    async function loadBoards() {
-      try {
-        setAlertMessage('');
-
-        const response = await fetch(`/api/boards?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as BoardsResponse;
-
-        if (!response.ok) {
-          const message = result.error ?? '게시판 목록을 불러오지 못했습니다.';
-          throw new Error(message);
-        }
-
-        const nextBoards = Array.isArray(result.boards) ? result.boards : [];
-
-        setBoards(nextBoards.filter((board) => board.is_active === true && board.board_type !== 'page'));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setAlertMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');
-        } else {
-          setAlertMessage('게시판 목록을 불러오지 못했습니다.');
-        }
-      }
-    }
-
-    async function loadWriteBoards() {
-      try {
-        const response = await fetch(`/api/boards/write?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as BoardsResponse;
-
-        if (!response.ok) {
-          setWriteBoards([]);
-          return;
-        }
-
-        setWriteBoards(Array.isArray(result.boards) ? result.boards : []);
-      } catch {
-        setWriteBoards([]);
-      }
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    void loadBoards();
-    void loadWriteBoards();
-  }, [siteName]);
-
   return (
     <div className={`${styles['table-list-header']} paper`}>
       <div className={styles['board-subject']}>
@@ -232,6 +181,7 @@ export default function TableListMobile({ board = null, selectedSeries = null, w
                   board={board}
                   selectedSeries={selectedSeries}
                   selectedBoard={true}
+                  initialStatus={initialSubscriptionStatus}
                 />
                 <DonationButton
                   siteName={siteName}

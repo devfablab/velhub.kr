@@ -3,6 +3,9 @@ import { getPostPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import type { CommentsResponse } from '@/components/comments/CommentList';
+import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
+import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
+import type { BoardRecentResponse } from '@/components/service/community/BoardRecentTableList';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Opt, { type ContentResponse, type PollResponse } from './opt';
 
@@ -64,10 +67,31 @@ export default async function Page(context: SearchContext) {
     `/api/boards/${boardName.toLowerCase()}/${contentId}/comments?siteName=${normalizedSiteName}`,
     '댓글 목록을 불러오지 못했습니다.',
   );
+  const [initialPopularPosts, initialRecentPosts] = await Promise.all([
+    getSiteApiData<BoardPostCountResponse>(
+      `/api/boards/${boardName.toLowerCase()}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
+      '인기글을 불러오지 못했습니다.',
+    ),
+    getSiteApiData<BoardRecentResponse>(
+      `/api/boards/${boardName.toLowerCase()}?siteName=${normalizedSiteName}&page=1&size=10&includePin=false`,
+      '최신글을 불러오지 못했습니다.',
+    ),
+  ]);
   const initialPoll = initial.data?.content?.poll
     ? await getSiteApiData<PollResponse>(
         `/api/boards/${boardName.toLowerCase()}/${contentId}/poll?siteName=${normalizedSiteName}`,
         '투표 정보를 불러오지 못했습니다.',
+      )
+    : { data: null, error: '' };
+  const initialSubscriptionStatus = initial.data?.series
+    ? await getSiteApiData<SubscriptionStatusResponse>(
+        `/api/payments/portone/subscriptions/status?${new URLSearchParams({
+          siteName: normalizedSiteName,
+          boardName: boardName.toLowerCase(),
+          targetType: 'series',
+          seriesName: initial.data.series.series_key,
+        }).toString()}`,
+        '구독 상태를 확인하지 못했습니다.',
       )
     : { data: null, error: '' };
 
@@ -77,8 +101,11 @@ export default async function Page(context: SearchContext) {
       initialData={initial.data}
       initialError={initial.error}
       initialComments={initialComments.data}
+      initialPopularPosts={initialPopularPosts.data}
+      initialRecentPosts={initialRecentPosts.data}
       initialPoll={initialPoll.data}
       initialPollError={initialPoll.error}
+      initialSubscriptionStatus={initialSubscriptionStatus.data}
     />
   );
 }

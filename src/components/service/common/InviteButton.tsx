@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 
 type InviteResponse = {
   status?: string;
@@ -11,43 +9,9 @@ type InviteResponse = {
 };
 
 export default function InviteButton() {
-  const params = useParams();
-  const siteName = normalizeText(params.siteName);
-
-  const [inviteHref, setInviteHref] = useState('');
-
-  useEffect(() => {
-    if (!siteName) {
-      return;
-    }
-
-    let ignore = false;
-
-    async function loadInvite() {
-      try {
-        const response = await fetch(`/api/users/${siteName}/me`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as InviteResponse;
-
-        if (!ignore && response.ok && result.status === 'pending_invite' && result.inviteHref) {
-          setInviteHref(result.inviteHref);
-        }
-      } catch {
-        if (!ignore) {
-          setInviteHref('');
-        }
-      }
-    }
-
-    void loadInvite();
-
-    return () => {
-      ignore = true;
-    };
-  }, [siteName]);
+  const initialData = useSiteInitialData();
+  const invite = initialData?.communityUserInfo as InviteResponse | null;
+  const inviteHref = invite?.status === 'pending_invite' ? (invite.inviteHref ?? '') : '';
 
   if (!inviteHref) {
     return null;

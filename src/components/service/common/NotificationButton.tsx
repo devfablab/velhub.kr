@@ -1,6 +1,6 @@
 'use client';
 
-import { type MouseEvent, useEffect, useMemo, useState } from 'react';
+import { type MouseEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
@@ -32,11 +32,6 @@ type NotificationsResponse = {
   error?: string;
 };
 
-type UnreadCountResponse = {
-  count?: number;
-  error?: string;
-};
-
 export default function NotificationButton({ isMobile }: Props) {
   const router = useRouter();
   const initialData = useSiteInitialData();
@@ -54,33 +49,6 @@ export default function NotificationButton({ isMobile }: Props) {
   }, [isMobile, items]);
 
   const isOpen = isMobile ? isDrawerOpen : Boolean(anchorElement);
-
-  async function loadUnreadCount() {
-    try {
-      const response = await fetch('/api/notifications/unread-count', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (response.status === 401) {
-        setIsLoggedIn(false);
-        setUnreadCount(0);
-        return;
-      }
-
-      const result = (await response.json()) as UnreadCountResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '읽지 않은 알림 개수를 불러오지 못했습니다.');
-      }
-
-      setIsLoggedIn(true);
-      setUnreadCount(Number(result.count ?? 0));
-    } catch (unknownError) {
-      console.error(unknownError);
-      setUnreadCount(0);
-    }
-  }
 
   async function loadNotifications() {
     try {
@@ -119,11 +87,6 @@ export default function NotificationButton({ isMobile }: Props) {
       setIsLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (initialData) return;
-    void loadUnreadCount();
-  }, []);
 
   function handleOpen(event: MouseEvent<HTMLButtonElement>) {
     if (isMobile) {

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
 import ReportButton from '@/components/service/common/ReportButton';
@@ -22,12 +21,6 @@ type MenuRow = {
   is_renameable: boolean;
 };
 
-type MenuResponse = {
-  menus?: MenuRow[];
-  privateBoard?: { label: string } | null;
-  error?: string;
-};
-
 function getMenuHref(siteName: string, menu: MenuRow) {
   return `/${siteName}/${menu.slug}`;
 }
@@ -40,43 +33,8 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const pathname = usePathname();
   const initialData = useSiteInitialData();
 
-  const [menus, setMenus] = useState<MenuRow[]>(initialData?.siteMenus ?? []);
-  const [privateBoardLabel, setPrivateBoardLabel] = useState(initialData?.privateBoardLabel ?? '');
-
-  useEffect(() => {
-    if (initialData) {
-      return;
-    }
-
-    async function loadMenus() {
-      try {
-        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as MenuResponse;
-
-        if (!response.ok) {
-          setMenus([]);
-          setPrivateBoardLabel('');
-          return;
-        }
-
-        setMenus(Array.isArray(result.menus) ? result.menus : []);
-        setPrivateBoardLabel(isBlog ? '' : (result.privateBoard?.label ?? ''));
-      } catch {
-        setMenus([]);
-        setPrivateBoardLabel('');
-      }
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    void loadMenus();
-  }, [isBlog, siteName]);
+  const menus = (initialData?.siteMenus ?? []) as MenuRow[];
+  const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
 
   const homeHref = `/${siteName}`;
   const isHomeCurrent = pathname === homeHref;

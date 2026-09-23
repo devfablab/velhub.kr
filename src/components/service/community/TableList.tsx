@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
@@ -28,11 +28,6 @@ type BoardItem = {
   board_label: string;
   board_type: 'blog' | 'page' | 'basic' | 'gallery' | 'youtube' | 'feed';
   is_active: boolean;
-};
-
-type BoardsResponse = {
-  boards?: BoardItem[];
-  error?: string;
 };
 
 type Props = {
@@ -94,13 +89,8 @@ export default function TableList({ writeHref }: Props) {
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName);
   const initialData = useSiteInitialData();
-  const initialSiteName = useRef(siteName);
-  const hasInitialData = useRef(Boolean(initialData));
-
-  const [boards, setBoards] = useState<BoardItem[]>(() =>
-    (initialData?.boards ?? []).filter((board) => board.is_active === true && board.board_type !== 'page'),
-  );
-  const [writeBoards, setWriteBoards] = useState<BoardItem[]>(initialData?.writeBoards ?? []);
+  const boards = (initialData?.boards ?? []).filter((board) => board.is_active === true && board.board_type !== 'page');
+  const writeBoards = useMemo(() => initialData?.writeBoards ?? [], [initialData?.writeBoards]);
   const [alertMessage, setAlertMessage] = useState('');
 
   const theme = useTheme();
@@ -122,65 +112,6 @@ export default function TableList({ writeHref }: Props) {
   }, [boardName, writeBoards]);
 
   const shouldRenderWriteLink = shouldShowWriteLink && canWriteCurrentBoard;
-
-  useEffect(() => {
-    if (initialSiteName.current === siteName && hasInitialData.current) return;
-    initialSiteName.current = siteName;
-    async function loadBoards() {
-      try {
-        setAlertMessage('');
-
-        const response = await fetch(`/api/boards?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as BoardsResponse;
-
-        if (!response.ok) {
-          const message = result.error ?? '게시판 목록을 불러오지 못했습니다.';
-          throw new Error(message);
-        }
-
-        const nextBoards = Array.isArray(result.boards) ? result.boards : [];
-
-        setBoards(nextBoards.filter((board) => board.is_active === true && board.board_type !== 'page'));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setAlertMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');
-        } else {
-          setAlertMessage('게시판 목록을 불러오지 못했습니다.');
-        }
-      }
-    }
-
-    async function loadWriteBoards() {
-      try {
-        const response = await fetch(`/api/boards/write?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as BoardsResponse;
-
-        if (!response.ok) {
-          setWriteBoards([]);
-          return;
-        }
-
-        setWriteBoards(Array.isArray(result.boards) ? result.boards : []);
-      } catch {
-        setWriteBoards([]);
-      }
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    void loadBoards();
-    void loadWriteBoards();
-  }, [siteName]);
 
   return (
     <div className={`${styles['table-list']} paper`}>

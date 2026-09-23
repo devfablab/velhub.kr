@@ -29,6 +29,7 @@ export type SiteHeaderData = {
   nickname: string | null;
   isApproval: boolean | null;
   invite: boolean;
+  inviteHref?: string | null;
   join: boolean;
   sessionCase?: string | null;
   isAuthor?: boolean;

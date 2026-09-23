@@ -26,6 +26,7 @@ import DonationButton from '@/components/service/common/DonationButton';
 import FabNew from '@/components/service/common/FabNew';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
+import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -42,6 +43,7 @@ type Props = {
   initialData: BoardListResponse | null;
   initialError: string;
   initialPopularPosts: BoardPostCountResponse | null;
+  initialSubscriptionStatus: SubscriptionStatusResponse | null;
 };
 
 type BoardItem = {
@@ -267,7 +269,13 @@ function YoutubeThumbnailImage({ content }: { content: PostItem }) {
   );
 }
 
-export default function Opt({ isCommunity, initialData, initialError, initialPopularPosts }: Props) {
+export default function Opt({
+  isCommunity,
+  initialData,
+  initialError,
+  initialPopularPosts,
+  initialSubscriptionStatus,
+}: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -496,7 +504,12 @@ export default function Opt({ isCommunity, initialData, initialError, initialPop
           {isCommunity ? (
             <>
               {isMobile ? (
-                <TableListMobile board={board} selectedSeries={selectedSeries} isCommunity={isCommunity} />
+                <TableListMobile
+                  board={board}
+                  selectedSeries={selectedSeries}
+                  isCommunity={isCommunity}
+                  initialSubscriptionStatus={initialSubscriptionStatus}
+                />
               ) : (
                 <h2>
                   {isSearchMode ? (
@@ -526,6 +539,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialPop
                         board={board}
                         selectedSeries={selectedSeries}
                         selectedBoard={true}
+                        initialStatus={initialSubscriptionStatus}
                       />
                       <DonationButton
                         siteName={siteName}

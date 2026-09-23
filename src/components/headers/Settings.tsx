@@ -10,18 +10,6 @@ import Anchor from '../Anchor';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
-type HeaderResponse = {
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  themeMode: ThemeMode | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
-};
-
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
 
 function isThemeMode(value: unknown): value is ThemeMode {
@@ -100,28 +88,6 @@ export default function HeaderSettings() {
       return;
     }
   }, [isMounted]);
-
-  useEffect(() => {
-    async function loadHeader() {
-      const response = await fetch('/api/header/settings', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        window.location.href = '/auth/sign-in';
-        return;
-      }
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady]);
 
   if (!isMounted || !isReady) {
     return null;

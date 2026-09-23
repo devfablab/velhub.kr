@@ -15,11 +15,11 @@ import {
   MembershipFeatureKey,
   MembershipType,
 } from '@/lib/memberships/catalog';
-import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import Anchor from '@/components/Anchor';
 import PopupMessage from '@/components/PopupMessage';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
@@ -178,14 +178,15 @@ export default function MembershipPlan({
   initialMemberships,
   initialEligibility,
   initialIdentity,
+  initialMinorPaymentControl,
   initialError,
 }: {
   initialMemberships: MembershipResponse | null;
   initialEligibility: Eligibility | null;
   initialIdentity: IdentityStatusResponse | null;
+  initialMinorPaymentControl: MinorPaymentControlResponse | null;
   initialError: string;
 }) {
-  const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const searchParams = useSearchParams();
   const selection = useMemo(() => parseSelection(searchParams.get('selection')), [searchParams]);
   const memberships = useMemo(() => initialMemberships?.memberships ?? [], [initialMemberships]);
@@ -205,6 +206,7 @@ export default function MembershipPlan({
   const initialAge = initialIdentity?.exists ? getAge(initialIdentity.identity?.birth_date) : null;
   const isUnder14Age = hasIdentity && (initialAge === null || initialAge < 14);
   const isMinorUser = initialAge !== null && initialAge < 19;
+  const isBlocked = initialMinorPaymentControl?.mode === 'blocked_until_adult';
 
   const selectedItems = useMemo(() => {
     const items = getSelectionItems(selection);
@@ -225,8 +227,6 @@ export default function MembershipPlan({
     () => selectedItems.reduce((total, item) => total + getMembershipPrice(item.featureKeys, item.type), 0),
     [selectedItems],
   );
-
-  if (!isMinorControlLoaded) return null;
 
   if (isUnder14Age || isBlocked) {
     return (

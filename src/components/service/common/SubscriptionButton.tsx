@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -19,11 +19,12 @@ import {
 } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
-import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import PopupMessage from '@/components/PopupMessage';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/board.module.sass';
 
 type BoardInfo = {
@@ -47,10 +48,11 @@ type Props = {
   selectedSeries: SelectedSeries;
   selectedBoard?: boolean | null;
   isEnabledByServer?: boolean;
+  initialStatus?: SubscriptionStatusResponse | null;
   onStatusChange?: (subscriptionStatus: SubscriptionStatus) => void;
 };
 
-type SubscriptionStatusResponse = {
+export type SubscriptionStatusResponse = {
   isEnabled?: boolean;
   price?: number | null;
   subscriptionStatus?: SubscriptionStatus;
@@ -129,13 +131,6 @@ type IdentityStatusResponse = {
     purchase_available?: boolean;
     birth_date: string;
   } | null;
-  error?: string;
-};
-
-type SitePublicResponse = {
-  siteInfo?: {
-    purchase_available?: boolean;
-  };
   error?: string;
 };
 
@@ -238,17 +233,22 @@ function getCancelDialogDescription({
 export default function SubscriptionButton({
   siteName,
   boardName,
-  board,
   selectedSeries,
   selectedBoard,
   isEnabledByServer = false,
+  initialStatus,
   onStatusChange,
 }: Props) {
-  const { mode: minorControlMode, isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
-  const [isReady, setIsReady] = useState(false);
-  const [hasIdentity, setHasIdentity] = useState(false);
-  const [isMinor, setIsMinor] = useState(false);
-  const [isUnder14Age, setIsUnder14Age] = useState(false);
+  const siteInitialData = useSiteInitialData();
+  const identityStatus = siteInitialData?.identityStatus as IdentityStatusResponse | null;
+  const initialSubscriptionStatus = initialStatus?.subscriptionStatus ?? 'none';
+  const hasIdentity = Boolean(identityStatus?.exists);
+  const isMinor = Boolean(
+    identityStatus?.exists && identityStatus.identity && !isAdult(identityStatus.identity.birth_date),
+  );
+  const isUnder14Age = Boolean(
+    identityStatus?.exists && identityStatus.identity && isUnder14(identityStatus.identity.birth_date),
+  );
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
   const [paymentEmail, setPaymentEmail] = useState('');
@@ -258,138 +258,31 @@ export default function SubscriptionButton({
   const targetType: SubscriptionTargetType = 'series';
   const targetLabel = selectedSeries.series_label;
 
-  const statusQueryString = useMemo(() => {
-    const params = new URLSearchParams({
-      siteName,
-      boardName,
-      targetType,
-    });
+  const [isEnabled] = useState(Boolean(initialStatus?.isEnabled));
 
-    params.set('seriesName', selectedSeries.series_key);
-
-    return params.toString();
-  }, [siteName, boardName, targetType, selectedSeries.series_key]);
-  const [isEnabled, setIsEnabled] = useState(false);
-
-  const [price, setPrice] = useState<number | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
-  const [isRefundableCancellation, setIsRefundableCancellation] = useState(false);
-  const [refundAmount, setRefundAmount] = useState(0);
+  const [price] = useState<number | null>(initialStatus?.price ?? null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>(initialSubscriptionStatus);
+  const [isRefundableCancellation, setIsRefundableCancellation] = useState(
+    Boolean(initialStatus?.isRefundableCancellation),
+  );
+  const [refundAmount, setRefundAmount] = useState(initialStatus?.refundAmount ?? 0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [purchaseAvailable, setPurchaseAvailable] = useState(false);
+  const purchaseAvailable = siteInitialData?.purchaseAvailable ?? false;
+  const [minorControlMode, setMinorControlMode] = useState<MinorPaymentControlResult['mode']>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
-    let ignore = false;
-
-    async function checkOwnerAge() {
-      try {
-        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as SitePublicResponse;
-
-        if (!ignore) {
-          setPurchaseAvailable(Boolean(response.ok && result.siteInfo?.purchase_available));
-        }
-      } catch {
-        if (!ignore) {
-          setPurchaseAvailable(false);
-        }
-      }
-    }
-
-    async function checkIdentity() {
-      try {
-        const response = await fetch('/api/identity/portone/status', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as IdentityStatusResponse;
-
-        if (!ignore) {
-          setHasIdentity(response.ok && Boolean(result.exists));
-          setIsMinor(response.ok && result.exists && result.identity ? !isAdult(result.identity.birth_date) : false);
-          setIsUnder14Age(
-            response.ok && result.exists && result.identity ? isUnder14(result.identity.birth_date) : false,
-          );
-          setIsReady(true);
-        }
-      } catch {
-        if (!ignore) {
-          setIsReady(true);
-        }
-      }
-    }
-
-    void checkOwnerAge();
-    void checkIdentity();
-
-    return () => {
-      ignore = true;
-    };
-  }, [siteName]);
-
-  useEffect(() => {
-    async function loadSubscriptionStatus() {
-      try {
-        setIsEnabled(false);
-        setPrice(null);
-        setSubscriptionStatus('none');
-        setIsRefundableCancellation(false);
-        setRefundAmount(0);
-        onStatusChange?.('none');
-
-        if (!board) {
-          return;
-        }
-
-        const response = await fetch(`/api/payments/portone/subscriptions/status?${statusQueryString}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as SubscriptionStatusResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '구독 상태를 확인하지 못했습니다.');
-        }
-
-        const nextSubscriptionStatus = result.subscriptionStatus ?? 'none';
-
-        setIsEnabled(Boolean(result.isEnabled));
-        setPrice(result.price ?? null);
-        setSubscriptionStatus(nextSubscriptionStatus);
-        setIsRefundableCancellation(Boolean(result.isRefundableCancellation));
-        setRefundAmount(result.refundAmount ?? 0);
-        setPaymentEmail(String(result.paymentEmail ?? ''));
-        setPaymentPhone(String(result.paymentPhone ?? ''));
-        setCustomerName(String(result.customerName ?? ''));
-        onStatusChange?.(nextSubscriptionStatus);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '구독 상태를 확인하지 못했습니다.');
-        } else {
-          setErrorMessage('구독 상태를 확인하지 못했습니다.');
-        }
-      }
-    }
-
-    void loadSubscriptionStatus();
-  }, [board, statusQueryString, onStatusChange]);
-
-  if (!isReady) {
-    return null;
-  }
+    setPaymentEmail(String(initialStatus?.paymentEmail ?? ''));
+    setPaymentPhone(String(initialStatus?.paymentPhone ?? ''));
+    setCustomerName(String(initialStatus?.customerName ?? ''));
+    onStatusChange?.(initialSubscriptionStatus);
+  }, [initialStatus, initialSubscriptionStatus, onStatusChange]);
 
   function handleOpenDialog() {
     if (!hasIdentity) {
@@ -404,6 +297,17 @@ export default function SubscriptionButton({
 
     setErrorMessage('');
     setIsDialogOpen(true);
+  }
+
+  function handleMinorPaymentControl(result: MinorPaymentControlResult) {
+    setMinorControlMode(result.mode);
+
+    if (result.isBlocked) {
+      setErrorMessage('이 계정은 만 19세가 될 때까지 결제 · 구매 · 후원을 이용할 수 없습니다.');
+      return;
+    }
+
+    handleOpenDialog();
   }
 
   function handleCloseDialog() {
@@ -701,7 +605,7 @@ export default function SubscriptionButton({
     return;
   }
 
-  if (!isMinorControlLoaded || isUnder14Age || isBlocked) {
+  if (isUnder14Age) {
     return null;
   }
 
@@ -718,15 +622,19 @@ export default function SubscriptionButton({
       />
 
       {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
-        <button
-          type="button"
-          className={selectedBoard ? 'button small action' : styles.button}
-          onClick={handleOpenDialog}
-          disabled={isProcessing}
-        >
-          {selectedBoard ? null : <LoyaltyOutlinedIcon />}
-          <strong>{getSubscribeButtonText({ subscriptionStatus })}</strong>
-        </button>
+        <MinorPaymentControl onResolved={handleMinorPaymentControl} onError={setErrorMessage}>
+          {({ check, isChecking }) => (
+            <button
+              type="button"
+              className={selectedBoard ? 'button small action' : styles.button}
+              onClick={check}
+              disabled={isProcessing || isChecking}
+            >
+              {selectedBoard ? null : <LoyaltyOutlinedIcon />}
+              <strong>{getSubscribeButtonText({ subscriptionStatus })}</strong>
+            </button>
+          )}
+        </MinorPaymentControl>
       ) : null}
 
       {subscriptionStatus === 'active' || subscriptionStatus === 'past_due' ? (
@@ -742,15 +650,19 @@ export default function SubscriptionButton({
       ) : null}
 
       {subscriptionStatus === 'scheduled_cancel' ? (
-        <button
-          type="button"
-          className={selectedBoard ? 'button small action' : styles.button}
-          onClick={handleOpenDialog}
-          disabled={isProcessing}
-        >
-          {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
-          <strong>연재 구독 유지하기</strong>
-        </button>
+        <MinorPaymentControl onResolved={handleMinorPaymentControl} onError={setErrorMessage}>
+          {({ check, isChecking }) => (
+            <button
+              type="button"
+              className={selectedBoard ? 'button small action' : styles.button}
+              onClick={check}
+              disabled={isProcessing || isChecking}
+            >
+              {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
+              <strong>연재 구독 유지하기</strong>
+            </button>
+          )}
+        </MinorPaymentControl>
       ) : null}
 
       {errorMessage ? (

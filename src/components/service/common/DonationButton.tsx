@@ -18,9 +18,9 @@ import {
 import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
-import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import PopupMessage from '@/components/PopupMessage';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
 
@@ -168,7 +168,6 @@ function createRequestBody(props: Props, amount: number) {
 }
 
 export default function DonationButton(props: Props) {
-  const { mode: minorControlMode, isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -179,10 +178,10 @@ export default function DonationButton(props: Props) {
   const [hasIdentity, setHasIdentity] = useState(false);
   const [paymentEmail, setPaymentEmail] = useState('');
   const [paymentPhone, setPaymentPhone] = useState('');
-  const [customerName, setCustomerName] = useState('');
   const [isMinor, setIsMinor] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
+  const [minorControlMode, setMinorControlMode] = useState<MinorPaymentControlResult['mode']>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -228,7 +227,6 @@ export default function DonationButton(props: Props) {
         setCanShowDonationButton(Boolean(donationStatusResponse.ok && donationStatusResult.isEnabled));
         setPaymentEmail(donationStatusResponse.ok ? String(donationStatusResult.paymentEmail ?? '') : '');
         setPaymentPhone(donationStatusResponse.ok ? String(donationStatusResult.paymentPhone ?? '') : '');
-        setCustomerName(donationStatusResponse.ok ? String(donationStatusResult.customerName ?? '') : '');
       } catch {
         setCanShowDonationButton(false);
       }
@@ -241,7 +239,7 @@ export default function DonationButton(props: Props) {
     };
   }, [donationTargetType, props.siteName, props.targetType, seriesBoardName, seriesName]);
 
-  if (!canShowDonationButton || !isMinorControlLoaded || isBlocked) {
+  if (!canShowDonationButton) {
     return null;
   }
 
@@ -264,6 +262,17 @@ export default function DonationButton(props: Props) {
     setDonationAmount('1,000');
     setErrorMessage('');
     setIsDialogOpen(true);
+  }
+
+  function handleMinorPaymentControl(result: MinorPaymentControlResult) {
+    setMinorControlMode(result.mode);
+
+    if (result.isBlocked) {
+      setErrorMessage('이 계정은 만 19세가 될 때까지 결제 · 구매 · 후원을 이용할 수 없습니다.');
+      return;
+    }
+
+    handleOpenDialog();
   }
 
   function handleCloseDialog() {
@@ -423,14 +432,25 @@ export default function DonationButton(props: Props) {
 
   return (
     <>
-      <button
-        type="button"
-        className="button small action"
-        onClick={handleOpenDialog}
-        disabled={disabled || isProcessing}
-      >
-        <strong>{buttonText}</strong>
-      </button>
+      <MinorPaymentControl onResolved={handleMinorPaymentControl} onError={setErrorMessage}>
+        {({ check, isChecking }) => (
+          <button
+            type="button"
+            className="button small action"
+            onClick={check}
+            disabled={disabled || isProcessing || isChecking}
+          >
+            <strong>{buttonText}</strong>
+          </button>
+        )}
+      </MinorPaymentControl>
+
+      <PopupMessage
+        open={Boolean(errorMessage) && !isDialogOpen}
+        message={errorMessage}
+        onClose={() => setErrorMessage('')}
+        kind="error"
+      />
 
       <PaymentEmailDialog
         open={isPaymentEmailDialogOpen}

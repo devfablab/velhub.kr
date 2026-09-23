@@ -31,6 +31,14 @@ type InitialData = {
     post_count: number;
     comment_count: number;
   }>;
+  recentContents: Array<{
+    id: string;
+    slug: string;
+    subject: string;
+    board_key: string;
+    post_count: number;
+    comment_count: number;
+  }>;
   communitySiteInfo: unknown;
   communityLinks: unknown[];
   communityUserInfo: unknown;
@@ -38,6 +46,10 @@ type InitialData = {
   siteMenus: SiteMenu[];
   privateBoardLabel: string;
   unreadNotificationCount: number;
+  footerSiteInfo: { site_label: string | null } | null;
+  ownerTransfer: { id: string; created_at: string } | null;
+  identityStatus: unknown;
+  purchaseAvailable: boolean;
 };
 
 const SiteInitialDataContext = createContext<InitialData | null>(null);

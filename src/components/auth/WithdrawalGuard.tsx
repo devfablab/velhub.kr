@@ -1,7 +1,7 @@
 'use client';
 
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { type ReactNode, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Dialog,
@@ -15,7 +15,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 
 type WithdrawalStatusResponse = {
   status?: string | null;
@@ -23,50 +22,29 @@ type WithdrawalStatusResponse = {
   error?: string;
 };
 
-export default function WithdrawalGuard({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+export default function WithdrawalGuard({
+  children,
+  initialStatus,
+}: {
+  children: ReactNode;
+  initialStatus: string | null;
+}) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  const { isReady, isAuthenticated, authVersion } = useAuthState();
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(initialStatus);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const loadStatus = useCallback(async () => {
-    if (!isReady || !isAuthenticated) {
-      setStatus(null);
-      return;
-    }
-
-    const response = await fetch('/api/account/withdrawal', {
-      method: 'GET',
-      credentials: 'include',
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      setStatus(null);
-      return;
-    }
-
-    const result = (await response.json()) as WithdrawalStatusResponse;
-    const nextStatus = result.status ?? null;
-
-    if (nextStatus === 'completed') {
-      const supabase = getSupabaseBrowser();
-      await supabase.auth.signOut({ scope: 'global' });
-      router.replace('/');
-      return;
-    }
-
-    setStatus(nextStatus);
-  }, [isAuthenticated, isReady, router]);
-
   useEffect(() => {
-    void loadStatus();
-  }, [authVersion, loadStatus, pathname]);
+    setStatus(initialStatus);
+
+    if (initialStatus === 'completed') {
+      const supabase = getSupabaseBrowser();
+      void supabase.auth.signOut({ scope: 'global' }).then(() => router.replace('/'));
+    }
+  }, [initialStatus, router]);
 
   async function handleCancelWithdrawal() {
     if (isCanceling || isLoggingOut) {

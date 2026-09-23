@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -60,16 +60,14 @@ export default function UserInfo() {
   const siteName = normalizeText(params.siteName);
   const initialData = useSiteInitialData();
   const initialResponse = initialData?.communityUserInfo as UserInfoResponse | null;
-  const initialSiteName = useRef(siteName);
-  const hasInitialData = useRef(Boolean(initialResponse?.status));
 
   const [status, setStatus] = useState<UserInfoStatus | null>(initialResponse?.status ?? null);
   const [userInfo, setUserInfo] = useState<UserInfoData | null>(
     initialResponse?.status === 'active' ? (initialResponse.userInfo ?? null) : null,
   );
-  const [blockReason, setBlockReason] = useState(initialResponse?.blockReason ?? '');
-  const [inviteHref, setInviteHref] = useState(initialResponse?.inviteHref ?? '');
-  const [errorMessage, setErrorMessage] = useState('');
+  const blockReason = initialResponse?.blockReason ?? '';
+  const inviteHref = initialResponse?.inviteHref ?? '';
+  const errorMessage = '';
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [nickname, setNickname] = useState(
@@ -97,45 +95,6 @@ export default function UserInfo() {
 
     return trimmedNickname !== normalizeText(userInfo.nickname);
   }, [trimmedNickname, userInfo]);
-
-  async function loadUserInfo() {
-    try {
-      setErrorMessage('');
-
-      const response = await fetch(`/api/users/${siteName}/me`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as UserInfoResponse;
-
-      if (!response.ok || !result.status) {
-        throw new Error(result.error ?? '사용자 정보를 불러오지 못했습니다.');
-      }
-
-      setStatus(result.status);
-      setInviteHref(result.inviteHref ?? '');
-      setUserInfo(result.status === 'active' ? (result.userInfo ?? null) : null);
-      setBlockReason(result.blockReason ?? '');
-      setNickname(result.status === 'active' ? (result.userInfo?.nickname ?? '') : '');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '사용자 정보를 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('사용자 정보를 불러오지 못했습니다.');
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (initialSiteName.current === siteName && hasInitialData.current) return;
-    initialSiteName.current = siteName;
-    if (!siteName) {
-      return;
-    }
-
-    void loadUserInfo();
-  }, [siteName]);
 
   function handleOpenDialog() {
     if (!userInfo) {

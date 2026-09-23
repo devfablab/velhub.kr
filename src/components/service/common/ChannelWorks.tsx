@@ -51,7 +51,7 @@ function initializeChannelIO() {
 }
 
 export default function ChannelWorks() {
-  const { authVersion, isReady } = useAuthState();
+  const { isAuthenticated, isReady } = useAuthState();
 
   useEffect(() => {
     if (!CHANNEL_WORKS_PLUGIN_KEY || !isReady) return;
@@ -102,7 +102,7 @@ export default function ChannelWorks() {
       abortController.abort();
       window.ChannelIO?.('shutdown');
     };
-  }, [authVersion, isReady]);
+  }, [isAuthenticated, isReady]);
 
   return null;
 }

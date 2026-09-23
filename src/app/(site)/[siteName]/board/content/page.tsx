@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import type { CommentsResponse } from '@/components/comments/CommentList';
+import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Opt, { type ContentResponse, type PollResponse } from './opt';
 
@@ -80,6 +82,21 @@ export default async function Page(context: RouteContext) {
         '투표 정보를 불러오지 못했습니다.',
       )
     : { data: null, error: '' };
+  const initialComments = await getSiteApiData<CommentsResponse>(
+    `/api/boards/${normalizedBoardName}/${contentId}/comments?siteName=${normalizedSiteName}`,
+    '댓글 목록을 불러오지 못했습니다.',
+  );
+  const initialSubscriptionStatus = initial.data?.series
+    ? await getSiteApiData<SubscriptionStatusResponse>(
+        `/api/payments/portone/subscriptions/status?${new URLSearchParams({
+          siteName: normalizedSiteName,
+          boardName: normalizedBoardName,
+          targetType: 'series',
+          seriesName: initial.data.series.series_key,
+        }).toString()}`,
+        '구독 상태를 확인하지 못했습니다.',
+      )
+    : { data: null, error: '' };
 
   return (
     <Opt
@@ -88,6 +105,8 @@ export default async function Page(context: RouteContext) {
       initialError={initial.error}
       initialPoll={initialPoll.data}
       initialPollError={initialPoll.error}
+      initialComments={initialComments.data}
+      initialSubscriptionStatus={initialSubscriptionStatus.data}
     />
   );
 }

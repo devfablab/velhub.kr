@@ -34,10 +34,12 @@ import Avatar from '@mui/material/Avatar';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
+import type { CommentsResponse } from '@/components/comments/CommentList';
 import PopupMessage from '@/components/PopupMessage';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
+import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import RecentTableList from '@/components/service/community/RecentTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -57,6 +59,8 @@ type Props = {
   initialError: string;
   initialPoll: PollResponse | null;
   initialPollError: string;
+  initialComments: CommentsResponse | null;
+  initialSubscriptionStatus: SubscriptionStatusResponse | null;
 };
 
 type BoardInfo = {
@@ -343,7 +347,15 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt({ isCommunity, initialData, initialError, initialPoll, initialPollError }: Props) {
+export default function Opt({
+  isCommunity,
+  initialData,
+  initialError,
+  initialPoll,
+  initialPollError,
+  initialComments,
+  initialSubscriptionStatus,
+}: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -894,6 +906,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialPol
             series_key: series.series_key,
             series_label: series.series_label,
           }}
+          initialStatus={initialSubscriptionStatus}
         />
       ) : null
     ) : null;
@@ -1409,6 +1422,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialPol
                   ? (seconds) => youtubePlayerReference.current?.seekTo(seconds)
                   : undefined
               }
+              initialData={initialComments}
             />
           ) : null}
         </div>

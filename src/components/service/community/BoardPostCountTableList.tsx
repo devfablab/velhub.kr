@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -28,57 +27,8 @@ export type BoardPostCountResponse = {
 export default function BoardPostCountTableList({ initialData }: { initialData?: BoardPostCountResponse | null }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const boardName = normalizeText(params.boardName);
-
-  const initialRouteKey = useRef(`${siteName}:${boardName}`);
-  const hasInitialData = useRef(Boolean(initialData));
-  const [contents, setContents] = useState<BoardPostCountItem[]>(initialData?.contents ?? []);
-  const [boards, setBoards] = useState<BoardItem | undefined>(initialData?.board);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    const routeKey = `${siteName}:${boardName}`;
-    if (hasInitialData.current && initialRouteKey.current === routeKey) return;
-    initialRouteKey.current = routeKey;
-    async function loadContents() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(
-          `/api/boards/${boardName}?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
-          {
-            method: 'GET',
-            credentials: 'include',
-          },
-        );
-
-        const result = (await response.json()) as BoardPostCountResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '게시글 목록을 불러오지 못했습니다.');
-        }
-
-        setContents(Array.isArray(result.contents) ? result.contents : []);
-        setBoards(result.board);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시글 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시글 목록을 불러오지 못했습니다.');
-        }
-      }
-    }
-
-    if (!siteName || !boardName) {
-      return;
-    }
-
-    void loadContents();
-  }, [siteName, boardName]);
-
-  if (errorMessage) {
-    return <p>{errorMessage}</p>;
-  }
+  const contents = initialData?.contents ?? [];
+  const boards = initialData?.board;
 
   if (contents.length === 0) {
     return null;

@@ -16,9 +16,9 @@ import {
 } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
-import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import PopupMessage from '@/components/PopupMessage';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
 import styles from '@/app/board.module.sass';
@@ -140,7 +140,6 @@ function getFailUrl({ siteName, boardName, contentId, failUrl }: Props) {
 }
 
 export default function PostPurchaseButton(props: Props) {
-  const { mode: minorControlMode, isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const {
     siteName,
     boardName,
@@ -166,6 +165,7 @@ export default function PostPurchaseButton(props: Props) {
   const [needsPaymentEmail, setNeedsPaymentEmail] = useState(true);
   const [needsPaymentPhone, setNeedsPaymentPhone] = useState(true);
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
+  const [minorControlMode, setMinorControlMode] = useState<MinorPaymentControlResult['mode']>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -240,6 +240,22 @@ export default function PostPurchaseButton(props: Props) {
     }
     setErrorMessage('');
     setIsConfirmOpen(true);
+  }
+
+  async function handleMinorPaymentControl(result: MinorPaymentControlResult) {
+    setMinorControlMode(result.mode);
+
+    if (result.isBlocked) {
+      setErrorMessage('이 계정은 만 19세가 될 때까지 결제 · 구매 · 후원을 이용할 수 없습니다.');
+      return;
+    }
+
+    if (popup) {
+      await handlePurchase();
+      return;
+    }
+
+    handleOpenConfirm();
   }
 
   function handleCloseConfirm() {
@@ -370,7 +386,7 @@ export default function PostPurchaseButton(props: Props) {
     return;
   }
 
-  if (!isMinorControlLoaded || isUnder14Age || isBlocked) {
+  if (isUnder14Age) {
     return null;
   }
 
@@ -388,32 +404,36 @@ export default function PostPurchaseButton(props: Props) {
         requirePhone={needsPaymentPhone}
         onSaved={() => void handlePurchase()}
       />
-      {popup ? (
-        <>
-          {renderPurchaseConsent()}
-          <Stack gap={1.5}>
+      <MinorPaymentControl onResolved={handleMinorPaymentControl} onError={setErrorMessage}>
+        {({ check, isChecking }) =>
+          popup ? (
+            <>
+              {renderPurchaseConsent()}
+              <Stack gap={1.5}>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={check}
+                  disabled={disabled || isProcessing || isChecking}
+                >
+                  {popup || hideButtonIcon ? null : <SellOutlinedIcon />}
+                  <strong>{purchaseButtonLabel}</strong>
+                </button>
+              </Stack>
+            </>
+          ) : (
             <button
               type="button"
-              className={popup ? 'button medium submit' : styles.button}
-              onClick={() => void handlePurchase()}
-              disabled={disabled || isProcessing}
+              className={triggerButtonClassName}
+              onClick={check}
+              disabled={disabled || isProcessing || isChecking}
             >
-              {popup || hideButtonIcon ? null : <SellOutlinedIcon />}
-              <strong>{purchaseButtonLabel}</strong>
+              {hideButtonIcon ? null : <SellOutlinedIcon />}
+              <strong>{triggerButtonLabel}</strong>
             </button>
-          </Stack>
-        </>
-      ) : (
-        <button
-          type="button"
-          className={popup ? 'button medium submit' : triggerButtonClassName}
-          onClick={handleOpenConfirm}
-          disabled={disabled || isProcessing}
-        >
-          {hideButtonIcon ? null : <SellOutlinedIcon />}
-          <strong>{triggerButtonLabel}</strong>
-        </button>
-      )}
+          )
+        }
+      </MinorPaymentControl>
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">

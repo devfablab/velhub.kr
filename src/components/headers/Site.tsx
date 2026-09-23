@@ -45,32 +45,6 @@ import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
 
-type HeaderResponse = {
-  siteName: string | null;
-  siteLabel: string | null;
-  siteType: SiteType | null;
-  themeType: string;
-  profilePictureUrl: string | null;
-  profileLogoUrl: string | null;
-  blogFontSettings: BlogFontSettings | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  siteRoleLabels: string[];
-  nickname: string | null;
-  isApproval: boolean | null;
-  invite: boolean;
-  join: boolean;
-  sessionCase?: string | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
-};
-
 type UserProfile = {
   name: string | null;
   email: string | null;
@@ -250,7 +224,6 @@ export default function HeaderSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const initialHeader = useSiteHeader();
-  const hasInitialHeader = useRef(Boolean(initialHeader));
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -262,8 +235,8 @@ export default function HeaderSite() {
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
-  const [siteType, setSiteType] = useState<SiteType | null>(initialHeader?.siteType ?? null);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
+  const [siteType] = useState<SiteType | null>(initialHeader?.siteType ?? null);
+  const [userProfile] = useState<UserProfile>({
     name: initialHeader?.userName ?? null,
     email: initialHeader?.email ?? null,
     avatarUrl: initialHeader?.avatar ?? null,
@@ -281,9 +254,9 @@ export default function HeaderSite() {
     hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
   });
 
-  const [siteLabel, setSiteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
-  const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(initialHeader?.profileLogoUrl ?? null);
+  const [siteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
+  const [profilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
+  const [profileLogoUrl] = useState<string | null>(initialHeader?.profileLogoUrl ?? null);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -344,85 +317,11 @@ export default function HeaderSite() {
   }, [pathname, searchParams]);
 
   useEffect(() => {
-    if (hasInitialHeader.current) {
-      if (initialHeader) {
-        applyColorSet(initialHeader.themeType);
-        applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
-      }
-      return;
+    if (initialHeader) {
+      applyColorSet(initialHeader.themeType);
+      applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
     }
-
-    async function loadHeader() {
-      if (!siteName) {
-        return;
-      }
-
-      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        clearBlogFontSettings();
-        setSiteType(null);
-        setUserProfile({
-          name: null,
-          email: null,
-          avatarUrl: null,
-          isLoggedIn: false,
-          globalRole: null,
-          siteRole: null,
-          siteRoleLabels: [],
-          nickname: null,
-          isApproval: null,
-          invite: false,
-          join: false,
-          isAuthor: false,
-          creatorHandleName: null,
-          userHandleName: null,
-          hasAffettoMyPosts: false,
-        });
-        setSiteLabel('');
-        setProfilePictureUrl(null);
-        setProfileLogoUrl(null);
-        return;
-      }
-
-      applyColorSet(result.themeType);
-      applyBlogFontSettings(result.siteType, result.blogFontSettings);
-      setSiteType(result.siteType);
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isLoggedIn: result.isLoggedIn,
-        globalRole: result.globalRole,
-        siteRole: result.siteRole,
-        siteRoleLabels: Array.isArray(result.siteRoleLabels) ? result.siteRoleLabels : [],
-        nickname: result.nickname,
-        isApproval: result.isApproval,
-        invite: result.invite,
-        join: result.join,
-        isAuthor: result.isAuthor,
-        creatorHandleName: result.creatorHandleName,
-        userHandleName: result.userHandleName,
-        hasAffettoMyPosts: result.hasAffettoMyPosts,
-      });
-
-      setSiteLabel(result.siteLabel || result.siteName || '');
-      setProfilePictureUrl(result.profilePictureUrl);
-      setProfileLogoUrl(result.profileLogoUrl);
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady, siteName]);
+  }, [initialHeader]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
     setThemeModeAnchorElement(event.currentTarget);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -26,7 +26,6 @@ import {
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DonationButton from '@/components/service/common/DonationButton';
 import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
@@ -230,20 +229,15 @@ export default function SiteProfile() {
   const initialData = useSiteInitialData();
   const initialProfile = initialData?.blogProfile as InitialSiteProfile | null;
 
-  const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(initialProfile?.siteInfo ?? null);
-  const [blogType, setBlogType] = useState<string | null>(initialProfile?.blogType ?? null);
-  const [profilePictureUrl, setProfilePictureUrl] = useState(initialProfile?.profilePictureUrl ?? '');
-  const [profileLogoUrl, setProfileLogoUrl] = useState(initialProfile?.profileLogoUrl ?? '');
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(initialProfile?.links?.links ?? []);
-  const [isLoading, setIsLoading] = useState(!initialProfile);
-  const [errorMessage, setErrorMessage] = useState('');
+  const siteInfo = initialProfile?.siteInfo ?? null;
+  const blogType = initialProfile?.blogType ?? null;
+  const profilePictureUrl = initialProfile?.profilePictureUrl ?? '';
+  const profileLogoUrl = initialProfile?.profileLogoUrl ?? '';
+  const socialLinks = initialProfile?.links?.links ?? [];
+  const errorMessage = '';
   const [isDonationProcessing, setIsDonationProcessing] = useState(false);
-  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(
-    Boolean(initialProfile?.subscription?.isEnabled),
-  );
-  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(
-    initialProfile?.subscription?.price ?? null,
-  );
+  const isBlogSubscriptionEnabled = Boolean(initialProfile?.subscription?.isEnabled);
+  const blogSubscriptionPrice = initialProfile?.subscription?.price ?? null;
   const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>(
     initialProfile?.subscription?.subscriptionStatus ?? 'none',
   );
@@ -257,151 +251,19 @@ export default function SiteProfile() {
   const [isBlogSubscriptionCancelDialogOpen, setIsBlogSubscriptionCancelDialogOpen] = useState(false);
   const [blogSubscriptionErrorMessage, setBlogSubscriptionErrorMessage] = useState('');
   const [isBlogSubscriptionProcessing, setIsBlogSubscriptionProcessing] = useState(false);
-  const [isDonationEnabled, setIsDonationEnabled] = useState(Boolean(initialProfile?.donation?.isEnabled));
-  const [hasIdentity, setHasIdentity] = useState(Boolean(initialProfile?.identity?.exists));
+  const isDonationEnabled = Boolean(initialProfile?.donation?.isEnabled);
+  const hasIdentity = Boolean(initialProfile?.identity?.exists);
   const [paymentEmail, setPaymentEmail] = useState(normalizeText(initialProfile?.subscription?.paymentEmail));
   const [paymentPhone, setPaymentPhone] = useState(normalizeText(initialProfile?.subscription?.paymentPhone));
-  const [isMinor, setIsMinor] = useState(() =>
-    initialProfile?.identity?.identity ? !isAdult(initialProfile.identity.identity.birth_date) : false,
-  );
-  const [isUnder14Age, setIsUnder14Age] = useState(() =>
-    initialProfile?.identity?.identity ? isUnder14(initialProfile.identity.identity.birth_date) : false,
-  );
+  const isMinor = initialProfile?.identity?.identity ? !isAdult(initialProfile.identity.identity.birth_date) : false;
+  const isUnder14Age = initialProfile?.identity?.identity
+    ? isUnder14(initialProfile.identity.identity.birth_date)
+    : false;
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-
-  useEffect(() => {
-    if (initialProfile) return;
-
-    async function loadIdentity() {
-      const identityResponse = await fetch('/api/identity/portone/status', {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-store',
-      });
-
-      const identityData = identityResponse.ok
-        ? ((await identityResponse.json().catch(() => null)) as IdentityStatusResponse | null)
-        : null;
-
-      const identity = identityData?.exists ? identityData.identity : null;
-
-      setHasIdentity(Boolean(identity));
-      setIsMinor(identity ? !isAdult(identity.birth_date) : false);
-      setIsUnder14Age(identity ? isUnder14(identity.birth_date) : false);
-      setIsLoading(false);
-    }
-
-    void loadIdentity();
-  }, [siteName]);
-
-  useEffect(() => {
-    if (initialProfile) return;
-
-    async function loadBlogSubscriptionStatus() {
-      const response = await fetch(`/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as BlogSubscriptionStatusResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '블로그 구독 상태를 확인하지 못했습니다.');
-      }
-
-      setIsBlogSubscriptionEnabled(Boolean(result.isEnabled));
-      setBlogSubscriptionPrice(result.price ?? null);
-      setBlogSubscriptionStatus(result.subscriptionStatus ?? 'none');
-      setIsBlogSubscriptionRefundable(Boolean(result.isRefundableCancellation));
-      setBlogSubscriptionRefundAmount(result.refundAmount ?? 0);
-      setPaymentEmail(normalizeText(result.paymentEmail));
-      setPaymentPhone(normalizeText(result.paymentPhone));
-    }
-
-    async function loadDonationStatus() {
-      const response = await fetch(`/api/payments/portone/donation/status?siteName=${siteName}&targetType=site`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as DonationStatusResponse;
-
-      if (!response.ok) {
-        setIsDonationEnabled(false);
-        return;
-      }
-
-      setIsDonationEnabled(Boolean(result.isEnabled));
-    }
-
-    async function loadSocialLinks() {
-      try {
-        const response = await fetch(`/api/manage/design/blog/links?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          setSocialLinks([]);
-          return;
-        }
-
-        const result = (await response.json()) as SocialLinksResponse;
-        setSocialLinks(Array.isArray(result.links) ? result.links : []);
-      } catch {
-        setSocialLinks([]);
-      }
-    }
-
-    async function loadSiteProfile() {
-      try {
-        setErrorMessage('');
-        setBlogSubscriptionErrorMessage('');
-
-        const response = await fetch(`/api/info/general/site/${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as SiteProfileResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '사이트 정보를 불러오지 못했습니다.');
-        }
-
-        if (!result.siteInfo) {
-          throw new Error('사이트 정보를 불러오지 못했습니다.');
-        }
-
-        setSiteInfo(result.siteInfo);
-        setBlogType(result.blogType ?? null);
-        setProfilePictureUrl(normalizeText(result.profilePictureUrl));
-        setProfileLogoUrl(normalizeText(result.profileLogoUrl));
-
-        await Promise.all([loadBlogSubscriptionStatus(), loadDonationStatus(), loadSocialLinks()]);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('사이트 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (!siteName) {
-      setErrorMessage('siteName이 유효하지 않습니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    void loadSiteProfile();
-  }, [siteName]);
 
   function handleOpenIdentityDialog() {
     setIsIdentityDialogOpen(true);
@@ -659,16 +521,6 @@ export default function SiteProfile() {
     setPaymentEmail(savedPaymentEmail);
     setPaymentPhone(savedPaymentPhone);
     handleOpenBlogSubscriptionDialog();
-  }
-
-  if (isLoading) {
-    return (
-      <div className="paper">
-        <div className="loading-container">
-          <LoadingIndicator />
-        </div>
-      </div>
-    );
   }
 
   if (!siteInfo) {

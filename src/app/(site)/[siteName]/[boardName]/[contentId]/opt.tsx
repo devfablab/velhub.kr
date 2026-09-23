@@ -43,8 +43,10 @@ import PopupMessage from '@/components/PopupMessage';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
+import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
-import BoardRecentTableList from '@/components/service/community/BoardRecentTableList';
+import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
+import BoardRecentTableList, { type BoardRecentResponse } from '@/components/service/community/BoardRecentTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
@@ -61,8 +63,11 @@ type Props = {
   initialData: ContentResponse | null;
   initialError: string;
   initialComments: CommentsResponse | null;
+  initialPopularPosts: BoardPostCountResponse | null;
+  initialRecentPosts: BoardRecentResponse | null;
   initialPoll: PollResponse | null;
   initialPollError: string;
+  initialSubscriptionStatus: SubscriptionStatusResponse | null;
 };
 
 type BoardInfo = {
@@ -386,8 +391,11 @@ export default function Opt({
   initialData,
   initialError,
   initialComments,
+  initialPopularPosts,
+  initialRecentPosts,
   initialPoll,
   initialPollError,
+  initialSubscriptionStatus,
 }: Props) {
   const theme = useTheme();
   const params = useParams();
@@ -1045,6 +1053,7 @@ export default function Opt({
             series_key: series.series_key,
             series_label: series.series_label,
           }}
+          initialStatus={initialSubscriptionStatus}
         />
       ) : null
     ) : null;
@@ -1787,8 +1796,8 @@ export default function Opt({
         {isCommunity && !isMobile ? (
           <aside>
             <UserInfo />
-            <BoardPostCountTableList />
-            <BoardRecentTableList />
+            <BoardPostCountTableList initialData={initialPopularPosts} />
+            <BoardRecentTableList initialData={initialRecentPosts} />
           </aside>
         ) : null}
       </div>

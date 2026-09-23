@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState } from 'react';
+import { useParams, usePathname } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import {
@@ -17,15 +17,12 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../Anchor';
+import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/footer.module.sass';
 
 type SiteInfo = {
   site_label: string | null;
-};
-
-type SiteProfileResponse = {
-  siteInfo?: SiteInfo;
-  error?: string;
 };
 
 type OwnerTransferItem = {
@@ -37,11 +34,6 @@ type OwnerTransferResponse = {
   ok?: boolean;
   transfer?: OwnerTransferItem | null;
   error?: string;
-};
-
-type SiteHeaderResponse = {
-  invite?: boolean;
-  inviteHref?: string | null;
 };
 
 function openTerms(url: string) {
@@ -67,86 +59,20 @@ function openTerms(url: string) {
 export default function FooterSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
+  const pathname = usePathname();
+  const initialData = useSiteInitialData();
+  const header = useSiteHeader();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
-  const [ownerTransfer, setOwnerTransfer] = useState<OwnerTransferItem | null>(null);
-  const [inviteHref, setInviteHref] = useState<string | null>(null);
-  const [isInvitePromptOpen, setIsInvitePromptOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const siteInfo = initialData?.footerSiteInfo as SiteInfo | null;
+  const [ownerTransfer, setOwnerTransfer] = useState<OwnerTransferItem | null>(initialData?.ownerTransfer ?? null);
+  const inviteHref = header?.invite ? (header.inviteHref ?? null) : null;
+  const isInvitePage =
+    pathname.startsWith(`/${siteName}/invite-blog/`) || pathname.startsWith(`/${siteName}/invite-community/`);
+  const [isInvitePromptOpen, setIsInvitePromptOpen] = useState(Boolean(inviteHref && !isInvitePage));
   const [isResponding, setIsResponding] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [ownerTransferError, setOwnerTransferError] = useState('');
-
-  useEffect(() => {
-    async function loadSiteProfile() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as SiteProfileResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '사이트 정보를 불러오지 못했습니다.');
-        }
-
-        if (!result.siteInfo) {
-          throw new Error('사이트 정보를 불러오지 못했습니다.');
-        }
-
-        setSiteInfo(result.siteInfo);
-
-        const transferResponse = await fetch(`/api/site/owner-transfer?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        const transferResult = (await transferResponse.json()) as OwnerTransferResponse;
-
-        if (!transferResponse.ok) {
-          throw new Error(transferResult.error ?? '운영자 교체 요청을 불러오지 못했습니다.');
-        }
-
-        setOwnerTransfer(transferResult.transfer ?? null);
-
-        const headerResponse = await fetch(`/api/header/site?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        const headerResult = (await headerResponse.json()) as SiteHeaderResponse;
-
-        if (headerResponse.ok && headerResult.invite && headerResult.inviteHref) {
-          const currentPathname = window.location.pathname;
-          const isInvitePage =
-            currentPathname.startsWith(`/${siteName}/invite-blog/`) ||
-            currentPathname.startsWith(`/${siteName}/invite-community/`);
-
-          setInviteHref(headerResult.inviteHref);
-          setIsInvitePromptOpen(!isInvitePage);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('사이트 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (!siteName) {
-      setErrorMessage('siteName이 유효하지 않습니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    void loadSiteProfile();
-  }, [siteName]);
 
   async function handleOwnerTransferDecision(decision: 'accepted' | 'rejected') {
     if (!ownerTransfer || isResponding) {
@@ -191,7 +117,7 @@ export default function FooterSite() {
     }
   }
 
-  if (isLoading || errorMessage || !siteInfo) {
+  if (!siteInfo) {
     return null;
   }
 

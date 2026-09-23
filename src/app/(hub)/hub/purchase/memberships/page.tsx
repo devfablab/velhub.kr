@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import { getHubApiData } from '../../shared/getHubApiData';
@@ -48,11 +49,12 @@ async function getMemberships() {
 }
 
 export default async function Page() {
-  const [result, membership, eligibility, identity] = await Promise.all([
+  const [result, membership, eligibility, identity, minorPaymentControl] = await Promise.all([
     getMemberships(),
     getHubApiData<MembershipResponse>('/api/memberships', '멤버십 정보를 불러오지 못했습니다.'),
     getHubApiData<Eligibility>('/api/memberships/eligibility', '멤버십 이용 가능 여부를 불러오지 못했습니다.'),
     getHubApiData<IdentityStatusResponse>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
+    getHubApiData<MinorPaymentControlResponse>('/api/payments/minor-control', '결제 가능 여부를 확인하지 못했습니다.'),
   ]);
   const paymentHistory = result.payments.flatMap((payment) => {
     const isRefunded = (payment.refunded_amount ?? 0) > 0;
@@ -144,6 +146,7 @@ export default async function Page() {
               initialMemberships={membership.data}
               initialEligibility={eligibility.data}
               initialIdentity={identity.data}
+              initialMinorPaymentControl={minorPaymentControl.data}
               initialError={membership.error}
             />
           </Suspense>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -24,17 +24,6 @@ type SiteInfoData = {
   managerNicknames: string[];
 };
 
-type SiteInfoResponse = {
-  ok?: boolean;
-  siteInfo?: SiteInfoData;
-  error?: string;
-};
-
-type HeaderSiteResponse = {
-  siteRole: string | null;
-  error?: string;
-};
-
 type CommunityLinkService = 'toonation' | 'kakaotalk' | 'discord';
 
 type CommunityLink = {
@@ -44,10 +33,6 @@ type CommunityLink = {
   image: string | null;
   image_url: string;
   sort_order: number;
-};
-
-type CommunityLinksResponse = {
-  links?: CommunityLink[];
 };
 
 const COMMUNITY_LINK_OPTIONS: {
@@ -105,93 +90,13 @@ export default function SiteInfo() {
   const siteName = normalizeText(params.siteName);
   const initialData = useSiteInitialData();
   const header = useSiteHeader();
-  const initialSiteName = useRef(siteName);
-  const hasInitialData = useRef(Boolean(initialData?.communitySiteInfo));
-
-  const [siteInfo, setSiteInfo] = useState<SiteInfoData | null>(initialData?.communitySiteInfo as SiteInfoData | null);
-  const [communityLinks, setCommunityLinks] = useState<CommunityLink[]>(initialData?.communityLinks as CommunityLink[]);
-  const [siteRole, setSiteRole] = useState<string | null>(header?.siteRole ?? null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const siteInfo = initialData?.communitySiteInfo as SiteInfoData | null;
+  const communityLinks = initialData?.communityLinks as CommunityLink[];
+  const siteRole = header?.siteRole ?? null;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (initialSiteName.current === siteName && hasInitialData.current) return;
-    initialSiteName.current = siteName;
-    async function loadSiteInfo() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/site/community?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as SiteInfoResponse;
-
-        if (!response.ok || !result.siteInfo) {
-          throw new Error(result.error ?? '커뮤니티 정보를 불러오지 못했습니다.');
-        }
-
-        setSiteInfo(result.siteInfo);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '커뮤니티 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('커뮤니티 정보를 불러오지 못했습니다.');
-        }
-      }
-    }
-
-    async function loadHeader() {
-      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderSiteResponse;
-
-      if (!response.ok) {
-        setSiteRole(null);
-        return;
-      }
-
-      setSiteRole(result.siteRole ?? null);
-    }
-
-    async function loadCommunityLinks() {
-      try {
-        const response = await fetch(`/api/manage/design/community/links?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          setCommunityLinks([]);
-          return;
-        }
-
-        const result = (await response.json()) as CommunityLinksResponse;
-        setCommunityLinks(Array.isArray(result.links) ? result.links : []);
-      } catch {
-        setCommunityLinks([]);
-      }
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    void loadSiteInfo();
-    void loadHeader();
-    void loadCommunityLinks();
-  }, [siteName]);
-
   if (!siteInfo) {
-    return errorMessage ? (
-      <div className={`${styles['site-info']} paper`}>
-        <p>{errorMessage}</p>
-      </div>
-    ) : null;
+    return null;
   }
 
   return (

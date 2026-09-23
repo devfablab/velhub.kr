@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getBoardPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import { getSiteApiData } from '../../getSiteApiData';
 import Opt, { type BoardListResponse } from './opt';
@@ -67,6 +68,18 @@ export default async function Page(context: SearchContext) {
     `/api/boards/${boardName.toLowerCase()}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
     '인기글을 불러오지 못했습니다.',
   );
+  const selectedSeries = initial.data?.selectedSeries;
+  const initialSubscriptionStatus = selectedSeries
+    ? await getSiteApiData<SubscriptionStatusResponse>(
+        `/api/payments/portone/subscriptions/status?${new URLSearchParams({
+          siteName: normalizedSiteName,
+          boardName: boardName.toLowerCase(),
+          targetType: 'series',
+          seriesName: selectedSeries.series_key,
+        }).toString()}`,
+        '구독 상태를 확인하지 못했습니다.',
+      )
+    : { data: null, error: '' };
 
   return (
     <Opt
@@ -74,6 +87,7 @@ export default async function Page(context: SearchContext) {
       initialData={initial.data}
       initialError={initial.error}
       initialPopularPosts={initialPopularPosts.data}
+      initialSubscriptionStatus={initialSubscriptionStatus.data}
     />
   );
 }

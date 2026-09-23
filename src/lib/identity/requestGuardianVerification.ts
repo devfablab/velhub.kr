@@ -1,5 +1,3 @@
-'use client';
-
 import PortOne from '@portone/browser-sdk/v2';
 
 type StartResponse = { storeId?: string; channelKey?: string; identityVerificationId?: string; message?: string };

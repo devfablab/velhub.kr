@@ -1,68 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
-
-type PostCountItem = {
-  id: string;
-  slug: string;
-  subject: string;
-  board_key: string;
-  post_count: number;
-  comment_count: number;
-};
-
-type PostCountResponse = {
-  contents?: PostCountItem[];
-  error?: string;
-};
 
 export default function RecentTableList() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-
-  const [contents, setContents] = useState<PostCountItem[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    async function loadContents() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/boards/all?siteName=${siteName}&page=1&size=10&includePin=false`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as PostCountResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '게시글 목록을 불러오지 못했습니다.');
-        }
-
-        setContents(Array.isArray(result.contents) ? result.contents : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시글 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시글 목록을 불러오지 못했습니다.');
-        }
-      }
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    void loadContents();
-  }, [siteName]);
-
-  if (errorMessage) {
-    return <p>{errorMessage}</p>;
-  }
+  const initialData = useSiteInitialData();
+  const contents = initialData?.recentContents ?? [];
 
   if (contents.length === 0) {
     return null;

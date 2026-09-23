@@ -2,8 +2,10 @@
 
 import { useMediaQuery, useTheme } from '@mui/material';
 import AuthActions from '@/components/auth/AuthActions';
+import { useLoungeHeader } from './shared/LoungeHeaderContext';
 
 export default function Aside() {
+  const header = useLoungeHeader();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -12,7 +14,7 @@ export default function Aside() {
     <>
       {isMobile ? null : (
         <aside>
-          <AuthActions />
+          <AuthActions initialProfile={header} />
         </aside>
       )}
     </>

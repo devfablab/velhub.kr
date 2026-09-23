@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import { Avatar } from '@mui/material';
 import CommentForm from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
 import Anchor from '../Anchor';
-import { LoadingIndicator } from '../LoadingIndicator';
 import styles from '@/app/comments.module.sass';
 
 type Props = {
@@ -110,10 +109,8 @@ export default function CommentList({
   const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(
     initialData?.actions?.canWriteReason ?? null,
   );
-  const [canManageComment, setCanManageComment] = useState(initialData?.actions?.canManageComment === true);
   const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? '');
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
-  const [isLoading, setIsLoading] = useState(!initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -139,23 +136,14 @@ export default function CommentList({
       setMyPollChoice(result.myPollChoice ?? null);
       setCanWrite(result.actions?.canWrite === true);
       setCanWriteReason(result.actions?.canWriteReason ?? null);
-      setCanManageComment(result.actions?.canManageComment === true);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '댓글 목록을 불러오지 못했습니다.');
       } else {
         setErrorMessage('댓글 목록을 불러오지 못했습니다.');
       }
-    } finally {
-      setIsLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (initialData) return;
-    void loadComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteName, boardName, contentId]);
 
   async function createComment(content: string, parentId: string | null) {
     try {
@@ -360,17 +348,6 @@ export default function CommentList({
         setErrorMessage('댓글 좋아요를 처리하지 못했습니다.');
       }
     }
-  }
-
-  if (isLoading) {
-    return (
-      <section className="comment-section paper">
-        <h3>댓글</h3>
-        <div className="loading-container">
-          <LoadingIndicator />
-        </div>
-      </section>
-    );
   }
 
   const commentCount = getCommentCount(comments);

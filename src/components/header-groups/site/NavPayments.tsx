@@ -1,22 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import styles from '@/app/header.module.sass';
-
-type HeaderSiteResponse = {
-  siteName: string | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  themeMode: 'light' | 'system' | 'dark' | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  sessionCase?: string | null;
-};
 
 type PaymentNavItem = {
   label: string;
@@ -38,38 +26,10 @@ export default function NavPayments() {
 
   const siteName = normalizeText(params.siteName);
 
-  const [isReady, setIsReady] = useState(false);
-  const [isAllowed, setIsAllowed] = useState(false);
+  const header = useSiteHeader();
+  const isAllowed = Boolean(header);
 
-  useEffect(() => {
-    async function loadHeader() {
-      if (!siteName) {
-        setIsReady(true);
-        setIsAllowed(false);
-        return;
-      }
-
-      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderSiteResponse | { error?: string };
-
-      if (!response.ok || !('siteRole' in result)) {
-        setIsReady(true);
-        setIsAllowed(false);
-        return;
-      }
-
-      setIsAllowed(true);
-      setIsReady(true);
-    }
-
-    void loadHeader();
-  }, [siteName]);
-
-  if (!isReady || !isAllowed || !siteName) {
+  if (!isAllowed || !siteName) {
     return null;
   }
 

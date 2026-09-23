@@ -1,85 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { Avatar } from '@mui/material';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 import styles from '@/app/aside.module.sass';
 
-type HeaderResponse = {
+export type AuthActionsProfile = {
   isLoggedIn: boolean;
-  email: string;
-  userName: string;
+  email: string | null;
+  userName: string | null;
   avatar: string | null;
 };
 
-type UserProfile = {
-  name: string;
-  email: string;
-  avatarUrl: string | null;
-  isLoggedIn: boolean;
-};
-
-export default function AuthActions() {
-  const { isReady, isAuthenticated } = useAuthState();
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: '',
-    email: '',
-    avatarUrl: null,
-    isLoggedIn: false,
-  });
-
-  useEffect(() => {
-    async function loadHeader() {
-      const response = await fetch('/api/header/lounge', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        setUserProfile({
-          name: '',
-          email: '',
-          avatarUrl: null,
-          isLoggedIn: false,
-        });
-        return;
-      }
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isLoggedIn: result.isLoggedIn,
-      });
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady]);
-
-  if (!isReady) {
-    return null;
-  }
-
-  if (isAuthenticated) {
+export default function AuthActions({ initialProfile }: { initialProfile: AuthActionsProfile | null }) {
+  if (initialProfile?.isLoggedIn) {
     return (
       <>
         <div className={`${styles['user-info']} paper`}>
           <div className={styles.avatar}>
-            <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name} />
+            <Avatar src={initialProfile.avatar || '/broken-image.jpg'} alt={initialProfile.userName ?? ''} />
           </div>
 
           <div className={styles.info}>
             <div className={styles['info-detail']}>
-              <em>{userProfile.name}</em>
-              <cite>{userProfile.email}</cite>
+              <em>{initialProfile.userName}</em>
+              <cite>{initialProfile.email}</cite>
             </div>
             <div className={styles.button}>
               <Anchor href="/settings" className="button small cancel">

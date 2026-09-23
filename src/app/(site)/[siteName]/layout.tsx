@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { detectAdult } from '@/lib/service/detectAdult';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import FooterSite from '@/components/footers/Site';
 import HeaderSite from '@/components/headers/Site';
 import SiteGoogleAnalytics from '@/components/service/common/SiteGoogleAnalytics';
 import { getSiteApiData } from '../getSiteApiData';
@@ -94,6 +95,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     boards,
     writeBoards,
     postCounts,
+    recentContents,
     communitySiteInfo,
     communityLinks,
     communityUserInfo,
@@ -104,6 +106,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     blogLinks,
     siteMenu,
     unreadNotifications,
+    ownerTransfer,
   ] = await Promise.all([
     getSiteApiData<{
       boards?: Array<{
@@ -136,6 +139,16 @@ export default async function SiteLayout({ children, params }: RouteContext) {
       `/api/boards/all?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
       '인기글을 불러오지 못했습니다.',
     ),
+    getSiteApiData<{
+      contents?: Array<{
+        id: string;
+        slug: string;
+        subject: string;
+        board_key: string;
+        post_count: number;
+        comment_count: number;
+      }>;
+    }>(`/api/boards/all?siteName=${siteName}&page=1&size=10&includePin=false`, '최신글을 불러오지 못했습니다.'),
     header.data?.siteType === 'community'
       ? getSiteApiData<{ siteInfo?: unknown }>(
           `/api/site/community?siteName=${siteName}`,
@@ -154,9 +167,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     header.data?.siteType === 'blog'
       ? getSiteApiData<unknown>(`/api/info/general/site/${siteName}`, '사이트 정보를 불러오지 못했습니다.')
       : Promise.resolve({ data: null }),
-    header.data?.siteType === 'blog'
-      ? getSiteApiData<unknown>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.')
-      : Promise.resolve({ data: null }),
+    getSiteApiData<unknown>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
     header.data?.siteType === 'blog'
       ? getSiteApiData<unknown>(
           `/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`,
@@ -186,8 +197,13 @@ export default async function SiteLayout({ children, params }: RouteContext) {
         is_renameable: boolean;
       }>;
       privateBoard?: { label: string } | null;
+      siteInfo?: { site_label: string | null; purchase_available?: boolean };
     }>(`/api/site/public?siteName=${siteName}`, '메뉴를 불러오지 못했습니다.'),
     getSiteApiData<{ count?: number }>('/api/notifications/unread-count', '알림을 불러오지 못했습니다.'),
+    getSiteApiData<{ transfer?: { id: string; created_at: string } | null }>(
+      `/api/site/owner-transfer?siteName=${siteName}`,
+      '운영자 교체 요청을 불러오지 못했습니다.',
+    ),
   ]);
 
   return (
@@ -198,6 +214,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
             boards: boards.data?.boards ?? [],
             writeBoards: writeBoards.data?.boards ?? [],
             postCountContents: postCounts.data?.contents ?? [],
+            recentContents: recentContents.data?.contents ?? [],
             communitySiteInfo: communitySiteInfo.data?.siteInfo ?? null,
             communityLinks: communityLinks.data?.links ?? [],
             communityUserInfo: communityUserInfo.data ?? null,
@@ -213,10 +230,15 @@ export default async function SiteLayout({ children, params }: RouteContext) {
             siteMenus: siteMenu.data?.menus ?? [],
             privateBoardLabel: header.data?.siteType === 'community' ? (siteMenu.data?.privateBoard?.label ?? '') : '',
             unreadNotificationCount: Number(unreadNotifications.data?.count ?? 0),
+            footerSiteInfo: siteMenu.data?.siteInfo ?? null,
+            ownerTransfer: ownerTransfer.data?.transfer ?? null,
+            identityStatus: blogIdentity.data,
+            purchaseAvailable: Boolean(siteMenu.data?.siteInfo?.purchase_available),
           }}
         >
           <HeaderSite />
           {children}
+          <FooterSite />
         </SiteInitialDataProvider>
       </SiteHeaderProvider>
       {settings.googleAnalytics ? (

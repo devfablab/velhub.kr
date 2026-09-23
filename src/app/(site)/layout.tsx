@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import FooterSite from '@/components/footers/Site';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',
@@ -37,10 +36,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <>
-      {children}
-      <FooterSite />
-    </>
-  );
+  return <>{children}</>;
 }

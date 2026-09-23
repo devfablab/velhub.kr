@@ -1,77 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
-type PostCountItem = {
-  id: string;
-  slug: string;
-  subject: string;
-  board_key: string;
-  post_count: number;
-  comment_count: number;
-};
-
-type PostCountResponse = {
-  contents?: PostCountItem[];
-  error?: string;
-};
-
 export default function PostCountTableList() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const initialData = useSiteInitialData();
-  const initialSiteName = useRef(siteName);
-  const hasInitialData = useRef(Boolean(initialData));
-
-  const [contents, setContents] = useState<PostCountItem[]>(initialData?.postCountContents ?? []);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    if (initialSiteName.current === siteName && hasInitialData.current) return;
-    initialSiteName.current = siteName;
-    async function loadContents() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(
-          `/api/boards/all?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
-          {
-            method: 'GET',
-            credentials: 'include',
-          },
-        );
-
-        const result = (await response.json()) as PostCountResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '게시글 목록을 불러오지 못했습니다.');
-        }
-
-        setContents(Array.isArray(result.contents) ? result.contents : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시글 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시글 목록을 불러오지 못했습니다.');
-        }
-      }
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    void loadContents();
-  }, [siteName]);
-
-  if (errorMessage) {
-    return <p>{errorMessage}</p>;
-  }
+  const contents = initialData?.postCountContents ?? [];
 
   if (contents.length === 0) {
     return null;
