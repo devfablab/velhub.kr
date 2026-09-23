@@ -1,18 +1,17 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { type JSX, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Box, Stack, TextField, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-type InviteResponse = {
+export type InviteResponse = {
   ok?: boolean;
   siteName?: string;
   joinNotice?: string;
@@ -31,55 +30,27 @@ type AcceptInviteResponse = {
   error?: string;
 };
 
-export default function Opt() {
-  const params = useParams();
+export default function Opt({
+  siteName,
+  token,
+  initialData,
+  initialError,
+}: {
+  siteName: string;
+  token: string;
+  initialData: InviteResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
-
-  const siteName = normalizeText(params.siteName).toLowerCase();
-  const token = normalizeText(params.token);
-
-  const [inviteEmail, setInviteEmail] = useState('');
+  const normalizedSiteName = normalizeText(siteName).toLowerCase();
+  const normalizedToken = normalizeText(token);
+  const [inviteEmail] = useState(initialData?.invite?.email ?? '');
   const [nickname, setNickname] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isInvitedUser, setIsInvitedUser] = useState(false);
-  const [isAlreadyMember, setIsAlreadyMember] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn] = useState(Boolean(initialData?.isLoggedIn));
+  const [isInvitedUser] = useState(Boolean(initialData?.isInvitedUser));
+  const [isAlreadyMember] = useState(Boolean(initialData?.isAlreadyMember));
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    async function loadInvite() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/manage/team/members/invite/${token}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as InviteResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '초대 정보를 불러오지 못했습니다.');
-        }
-
-        setInviteEmail(result.invite?.email ?? '');
-        setIsLoggedIn(Boolean(result.isLoggedIn));
-        setIsInvitedUser(Boolean(result.isInvitedUser));
-        setIsAlreadyMember(Boolean(result.isAlreadyMember));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '초대 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('초대 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadInvite();
-  }, [siteName, token]);
+  const [errorMessage, setErrorMessage] = useState(initialError || initialData?.error || '');
 
   function handleNicknameChange(event: InputChangeEvent) {
     setNickname(event.currentTarget.value);
@@ -97,16 +68,19 @@ export default function Opt() {
       setErrorMessage('');
       setIsSubmitting(true);
 
-      const response = await fetch(`/api/manage/team/members/invite/${token}?siteName=${siteName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/manage/team/members/invite/${normalizedToken}?siteName=${normalizedSiteName}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            nickname,
+          }),
         },
-        credentials: 'include',
-        body: JSON.stringify({
-          nickname,
-        }),
-      });
+      );
 
       const result = (await response.json()) as AcceptInviteResponse;
 
@@ -127,16 +101,6 @@ export default function Opt() {
       }
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="paper">
-        <div className="loading-container">
-          <LoadingIndicator />
-        </div>
-      </div>
-    );
   }
 
   if (isAlreadyMember) {

@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import { Stack, Typography } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
@@ -10,7 +9,7 @@ import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
-type UserInfoResponse = {
+export type UserInfoResponse = {
   status?: string;
   isBlock?: boolean;
   blockReason?: string | null;
@@ -20,50 +19,17 @@ type UserInfoResponse = {
   error?: string;
 };
 
-export default function Opt() {
-  const params = useParams();
-  const siteName = normalizeText(params.siteName).toLowerCase();
-
-  const [blockedAt, setBlockedAt] = useState<string | null>(null);
-  const [blockTerm, setBlockTerm] = useState<string | null>(null);
-  const [blockReason, setBlockReason] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+export default function Opt({
+  siteName,
+  initialData,
+  initialError,
+}: {
+  siteName: string;
+  initialData: UserInfoResponse | null;
+  initialError: string;
+}) {
   const [messageOpen, setMessageOpen] = useState(false);
-
-  useEffect(() => {
-    if (!siteName) {
-      return;
-    }
-
-    async function loadUserInfo() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/users/${siteName}/me`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as UserInfoResponse;
-
-        if (!response.ok || result.status !== 'blocked' || result.isBlock !== true) {
-          throw new Error(result.error ?? '차단 정보를 불러오지 못했습니다.');
-        }
-
-        setBlockedAt(result.blockedAt ?? null);
-        setBlockTerm(result.blockTerm ?? null);
-        setBlockReason(normalizeText(result.blockReason) || '등록된 사유가 없습니다.');
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '차단 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('차단 정보를 불러오지 못했습니다.');
-        }
-      }
-    }
-
-    void loadUserInfo();
-  }, [siteName]);
+  const blockReason = normalizeText(initialData?.blockReason) || '등록된 사유가 없습니다.';
 
   return (
     <Container>
@@ -74,13 +40,13 @@ export default function Opt() {
 
             <h2>활동 정지</h2>
 
-            {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
+            {initialError ? <ScreenState kind="error">{initialError}</ScreenState> : null}
 
-            {!errorMessage ? (
+            {!initialError ? (
               <Stack direction="column" gap={1}>
                 <div className="paper">
                   <Typography variant="subtitle2">활동 정지일</Typography>
-                  <Typography variant="body2">{formatDate(blockedAt)}</Typography>
+                  <Typography variant="body2">{formatDate(initialData?.blockedAt ?? null)}</Typography>
                 </div>
 
                 <div className="paper">
@@ -88,10 +54,10 @@ export default function Opt() {
                   <Typography variant="body2">{blockReason}</Typography>
                 </div>
 
-                {blockTerm ? (
+                {initialData?.blockTerm ? (
                   <div className="paper">
                     <Typography variant="subtitle2">활동 정지 해제일</Typography>
-                    <Typography variant="body2">{formatDate(blockTerm)}</Typography>
+                    <Typography variant="body2">{formatDate(initialData.blockTerm)}</Typography>
                   </div>
                 ) : null}
               </Stack>

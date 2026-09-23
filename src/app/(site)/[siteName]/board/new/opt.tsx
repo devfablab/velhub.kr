@@ -53,6 +53,8 @@ import styles from '@/app/board.module.sass';
 type Props = {
   isCommunity: boolean;
   writePolicyMessage?: string;
+  initialBoards: BoardsResponse | null;
+  initialError: string;
 };
 
 type BoardItem = {
@@ -64,7 +66,7 @@ type BoardItem = {
   is_active: boolean;
 };
 
-type BoardsResponse = {
+export type BoardsResponse = {
   boards?: BoardItem[];
   writeBoards?: BoardItem[];
   error?: string;
@@ -534,7 +536,7 @@ function buildDrawPayload(draw: DrawState): DrawPayload {
   };
 }
 
-export default function Opt({ isCommunity, writePolicyMessage }: Props) {
+export default function Opt({ isCommunity, writePolicyMessage, initialBoards, initialError }: Props) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -549,7 +551,9 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
 
   const [accessDialogType, setAccessDialogType] = useState<AccessDialogType>(null);
   const [alertMessage, setAlertMessage] = useState('');
-  const [boards, setBoards] = useState<BoardItem[]>([]);
+  const [boards] = useState<BoardItem[]>(
+    (initialBoards?.boards ?? []).filter((board) => board.is_active && board.board_type !== 'page'),
+  );
   const [selectedBoardKey, setSelectedBoardKey] = useState('');
   const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
   const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
@@ -596,13 +600,13 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const [drawDialogOpen, setDrawDialogOpen] = useState(false);
   const [drawDialog, setDrawDialog] = useState<DrawState>(() => createEmptyDraw());
   const [drawDialogMessage, setDrawDialogMessage] = useState('');
-  const [isLoadingBoards, setIsLoadingBoards] = useState(true);
+  const isLoadingBoards = false;
   const [isLoadingBoardMeta, setIsLoadingBoardMeta] = useState(false);
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
   const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
-  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [isUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError || initialBoards?.error || '');
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
@@ -730,149 +734,106 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    async function loadBoards() {
-      try {
-        setErrorMessage('');
+  async function loadBoardMeta(nextBoardKey: string) {
+    if (!nextBoardKey) {
+      setBoardType('basic');
+      setPostType('none');
+      setPrefixList([]);
+      setSeriesList([]);
+      setSelectedPrefixId('');
+      setSelectedSeriesKey('');
+      setIsPin(false);
+      setCanPinPost(false);
+      setMarkdownStatus('markdown_default');
+      return;
+    }
 
-        const response = await fetch(`/api/boards/write?siteName=${siteName}`, {
+    try {
+      setAlertMessage('');
+      setAccessDialogType(null);
+      setIsLoadingBoardMeta(true);
+      setSelectedPrefixId('');
+      setSelectedSeriesKey('');
+
+      const boardResponse = await fetch(`/api/boards/${nextBoardKey}?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const boardResult = (await boardResponse.json()) as BoardInfoResponse;
+
+      if (!boardResponse.ok) {
+        const message = boardResult.error ?? '게시판 정보를 불러오지 못했습니다.';
+
+        if (message === '로그인이 필요한 서비스입니다.') {
+          setAccessDialogType('login');
+          return;
+        }
+
+        if (message === '커뮤니티 가입 후 이용할 수 있습니다.') {
+          setAccessDialogType('join');
+          return;
+        }
+
+        if (message === '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.') {
+          setAccessDialogType('pending');
+          return;
+        }
+
+        throw new Error(message);
+      }
+
+      const nextBoardType = boardResult.board?.board_type ?? 'basic';
+      const nextPostType = nextBoardType === 'youtube' ? 'none' : (boardResult.board?.post_type ?? 'none');
+      const nextMarkdownStatus = boardResult.board?.markdown_status ?? 'markdown_default';
+
+      setBoardType(nextBoardType);
+      setPostType(nextPostType);
+      setMarkdownStatus(nextMarkdownStatus);
+      setCanPinPost(boardResult.actions?.canPinPost === true);
+      setIsPin(false);
+      setPrefixList([]);
+      setSeriesList([]);
+
+      if (nextPostType === 'prefix') {
+        const prefixResponse = await fetch(`/api/boards/${nextBoardKey}/prefix?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const result = (await response.json()) as BoardsResponse;
+        const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
 
-        if (!response.ok) {
-          const message = result.error ?? '게시판 목록을 불러오지 못했습니다.';
-          throw new Error(message);
+        if (!prefixResponse.ok) {
+          throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
         }
 
-        const nextBoards = (Array.isArray(result.boards) ? result.boards : []).filter(
-          (board) => board.is_active === true && board.board_type !== 'page',
-        );
-
-        setBoards(nextBoards);
-        setSelectedBoardKey('');
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시판 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoadingBoards(false);
-      }
-    }
-
-    void loadBoards();
-  }, [siteName]);
-
-  useEffect(() => {
-    async function loadBoardMeta() {
-      if (!selectedBoardKey) {
-        setBoardType('basic');
-        setPostType('none');
-        setPrefixList([]);
-        setSeriesList([]);
-        setSelectedPrefixId('');
-        setSelectedSeriesKey('');
-        setIsPin(false);
-        setCanPinPost(false);
-        setMarkdownStatus('markdown_default');
-        return;
+        setPrefixList(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
       }
 
-      try {
-        setAlertMessage('');
-        setAccessDialogType(null);
-        setIsLoadingBoardMeta(true);
-        setSelectedPrefixId('');
-        setSelectedSeriesKey('');
-
-        const boardResponse = await fetch(`/api/boards/${selectedBoardKey}?siteName=${siteName}`, {
+      if (nextPostType === 'series') {
+        const seriesResponse = await fetch(`/api/boards/${nextBoardKey}/series?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const boardResult = (await boardResponse.json()) as BoardInfoResponse;
+        const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
 
-        if (!boardResponse.ok) {
-          const message = boardResult.error ?? '게시판 정보를 불러오지 못했습니다.';
-
-          if (message === '로그인이 필요한 서비스입니다.') {
-            setAccessDialogType('login');
-            return;
-          }
-
-          if (message === '커뮤니티 가입 후 이용할 수 있습니다.') {
-            setAccessDialogType('join');
-            return;
-          }
-
-          if (
-            message === '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.'
-          ) {
-            setAccessDialogType('pending');
-            return;
-          }
-
-          throw new Error(message);
+        if (!seriesResponse.ok) {
+          throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
         }
 
-        const nextBoardType = boardResult.board?.board_type ?? 'basic';
-        const nextPostType = nextBoardType === 'youtube' ? 'none' : (boardResult.board?.post_type ?? 'none');
-        const nextMarkdownStatus = boardResult.board?.markdown_status ?? 'markdown_default';
-
-        setBoardType(nextBoardType);
-        setPostType(nextPostType);
-        setMarkdownStatus(nextMarkdownStatus);
-        setCanPinPost(boardResult.actions?.canPinPost === true);
-        setIsPin(false);
-        setPrefixList([]);
-        setSeriesList([]);
-
-        if (nextPostType === 'prefix') {
-          const prefixResponse = await fetch(`/api/boards/${selectedBoardKey}/prefix?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
-
-          if (!prefixResponse.ok) {
-            throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
-          }
-
-          setPrefixList(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
-        }
-
-        if (nextPostType === 'series') {
-          const seriesResponse = await fetch(`/api/boards/${selectedBoardKey}/series?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
-
-          if (!seriesResponse.ok) {
-            throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
-          }
-
-          setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setAlertMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
-        } else {
-          setAlertMessage('게시판 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoadingBoardMeta(false);
+        setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
       }
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setAlertMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
+      } else {
+        setAlertMessage('게시판 정보를 불러오지 못했습니다.');
+      }
+    } finally {
+      setIsLoadingBoardMeta(false);
     }
-
-    void loadBoardMeta();
-  }, [selectedBoardKey, siteName]);
+  }
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -896,6 +857,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
 
   function resetBoardSpecificFields(nextBoardKey: string) {
     setSelectedBoardKey(nextBoardKey);
+    void loadBoardMeta(nextBoardKey);
     setSelectedPrefixId('');
     setSelectedSeriesKey('');
     setSubject('');

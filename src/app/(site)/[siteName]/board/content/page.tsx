@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
+import { getSiteApiData } from '../../../getSiteApiData';
+import Opt, { type ContentResponse, type PollResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -32,7 +33,7 @@ export async function generateMetadata(context: RouteContext) {
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
-  const { boardName = '' } = await context.searchParams;
+  const { boardName = '', contentId = '' } = await context.searchParams;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
   const normalizedBoardName = normalizeText(boardName).toLowerCase();
 
@@ -69,5 +70,24 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  return <Opt isCommunity={isCommunity} />;
+  const initial = await getSiteApiData<ContentResponse>(
+    `/api/boards/${normalizedBoardName}/${contentId}?siteName=${normalizedSiteName}`,
+    '게시글 정보를 불러오지 못했습니다.',
+  );
+  const initialPoll = initial.data?.content?.poll
+    ? await getSiteApiData<PollResponse>(
+        `/api/boards/${normalizedBoardName}/${contentId}/poll?siteName=${normalizedSiteName}`,
+        '투표 정보를 불러오지 못했습니다.',
+      )
+    : { data: null, error: '' };
+
+  return (
+    <Opt
+      isCommunity={isCommunity}
+      initialData={initial.data}
+      initialError={initial.error}
+      initialPoll={initialPoll.data}
+      initialPollError={initialPoll.error}
+    />
+  );
 }

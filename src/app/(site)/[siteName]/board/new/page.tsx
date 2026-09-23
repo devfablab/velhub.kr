@@ -3,8 +3,9 @@ import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSiteApiData } from '../../../getSiteApiData';
 import Container from '../../menu';
-import Opt from './opt';
+import Opt, { type BoardsResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -59,9 +60,18 @@ export default async function Page(context: RouteContext) {
       }
     }
   }
+  const initialBoards = await getSiteApiData<BoardsResponse>(
+    `/api/boards/write?siteName=${normalizedSiteName}`,
+    '게시판 목록을 불러오지 못했습니다.',
+  );
   return (
     <Container pageBack={`/${siteName}/board`} pageTitle="새글 쓰기" pageFin>
-      <Opt isCommunity={isCommunity} writePolicyMessage={writePolicyMessage} />
+      <Opt
+        isCommunity={isCommunity}
+        writePolicyMessage={writePolicyMessage}
+        initialBoards={initialBoards.data}
+        initialError={initialBoards.error}
+      />
     </Container>
   );
 }

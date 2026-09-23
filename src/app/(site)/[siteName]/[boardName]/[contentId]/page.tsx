@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import { getSiteApiData } from '../../../getSiteApiData';
-import Opt, { type ContentResponse } from './opt';
+import Opt, { type ContentResponse, type PollResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -64,6 +64,12 @@ export default async function Page(context: SearchContext) {
     `/api/boards/${boardName.toLowerCase()}/${contentId}/comments?siteName=${normalizedSiteName}`,
     '댓글 목록을 불러오지 못했습니다.',
   );
+  const initialPoll = initial.data?.content?.poll
+    ? await getSiteApiData<PollResponse>(
+        `/api/boards/${boardName.toLowerCase()}/${contentId}/poll?siteName=${normalizedSiteName}`,
+        '투표 정보를 불러오지 못했습니다.',
+      )
+    : { data: null, error: '' };
 
   return (
     <Opt
@@ -71,6 +77,8 @@ export default async function Page(context: SearchContext) {
       initialData={initial.data}
       initialError={initial.error}
       initialComments={initialComments.data}
+      initialPoll={initialPoll.data}
+      initialPollError={initialPoll.error}
     />
   );
 }

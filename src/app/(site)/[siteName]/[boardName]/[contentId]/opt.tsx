@@ -61,6 +61,8 @@ type Props = {
   initialData: ContentResponse | null;
   initialError: string;
   initialComments: CommentsResponse | null;
+  initialPoll: PollResponse | null;
+  initialPollError: string;
 };
 
 type BoardInfo = {
@@ -307,7 +309,7 @@ type PollResult = {
   options: PollResultOption[];
 };
 
-type PollResponse = {
+export type PollResponse = {
   ok?: boolean;
   total_count?: number;
   selected_option_index?: number | null;
@@ -379,7 +381,14 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt({ isCommunity, initialData, initialError, initialComments }: Props) {
+export default function Opt({
+  isCommunity,
+  initialData,
+  initialError,
+  initialComments,
+  initialPoll,
+  initialPollError,
+}: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -389,18 +398,18 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
   const categoryName = normalizeText(searchParams.get('categoryName')).toLowerCase();
   const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
-  const [board, setBoard] = useState<BoardInfo | null>(initialData?.board ?? null);
+  const [board] = useState<BoardInfo | null>(initialData?.board ?? null);
   const [content, setContent] = useState<PostContent | null>(initialData?.content ?? null);
-  const [series, setSeries] = useState<SeriesItem | null>(initialData?.series ?? null);
-  const [seriesContents, setSeriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
-  const [previousPost, setPreviousPost] = useState<AdjacentPost | null>(initialData?.previousPost ?? null);
-  const [nextPost, setNextPost] = useState<AdjacentPost | null>(initialData?.nextPost ?? null);
-  const [isAuthor, setIsAuthor] = useState(initialData?.isAuthor ?? false);
-  const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? false);
-  const [canManageContent, setCanManageContent] = useState(initialData?.canManageContent === true);
-  const [canEditContent, setCanEditContent] = useState(initialData?.canEditContent === true);
-  const [canDeleteContent, setCanDeleteContent] = useState(initialData?.canDeleteContent === true);
-  const [canMovePost, setCanMovePost] = useState(initialData?.canMovePost === true);
+  const [series] = useState<SeriesItem | null>(initialData?.series ?? null);
+  const [seriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
+  const [previousPost] = useState<AdjacentPost | null>(initialData?.previousPost ?? null);
+  const [nextPost] = useState<AdjacentPost | null>(initialData?.nextPost ?? null);
+  const [isAuthor] = useState(initialData?.isAuthor ?? false);
+  const [isStaff] = useState(initialData?.isStaff ?? false);
+  const [canManageContent] = useState(initialData?.canManageContent === true);
+  const [canEditContent] = useState(initialData?.canEditContent === true);
+  const [canDeleteContent] = useState(initialData?.canDeleteContent === true);
+  const [canMovePost] = useState(initialData?.canMovePost === true);
   const [isSeriesMoveDialogOpen, setIsSeriesMoveDialogOpen] = useState(false);
   const [isPostMoveDialogOpen, setIsPostMoveDialogOpen] = useState(false);
   const [moveBoards, setMoveBoards] = useState<MoveBoard[]>([]);
@@ -412,19 +421,25 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
   const [deleteReason, setDeleteReason] = useState('');
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(initialError);
+  const errorMessage = initialError;
 
   const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
   const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
 
-  const [pollResult, setPollResult] = useState<PollResult | null>(null);
-  const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
-  const [pollErrorMessage, setPollErrorMessage] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory | null>(
-    initialData?.selectedCategory ?? null,
+  const [pollResult, setPollResult] = useState<PollResult | null>(() =>
+    initialPoll
+      ? {
+          total_count: initialPoll.total_count ?? 0,
+          selected_option_index: initialPoll.selected_option_index ?? null,
+          is_ended: initialPoll.is_ended === true,
+          options: initialPoll.options ?? [],
+        }
+      : null,
   );
-  const [draw, setDraw] = useState<DrawInfo | null>(initialData?.draw ?? null);
+  const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
+  const [pollErrorMessage, setPollErrorMessage] = useState(initialPollError);
+  const [selectedCategory] = useState<SelectedCategory | null>(initialData?.selectedCategory ?? null);
+  const [draw] = useState<DrawInfo | null>(initialData?.draw ?? null);
 
   const [isLiked, setIsLiked] = useState(initialData?.postActions?.isLiked === true);
   const [isSaved, setIsSaved] = useState(initialData?.postActions?.isSaved === true);
@@ -433,7 +448,6 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
   const youtubePlayerReference = useRef<YoutubePlayerHandle | null>(null);
-  const isInitialLoad = useRef(true);
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -711,122 +725,14 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
     }
   }
 
-  // The initial response is supplied by the server; later route changes still reload here.
-
   useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-      if (initialData?.content?.poll) void loadPollResult(boardName, initialData.content.id);
-      if (initialData?.content?.published_status === 'published') {
-        void increasePostCount(boardName, contentId);
-        void recordPostRead(boardName, contentId);
-      }
-      return;
+    if (initialData?.content?.published_status === 'published') {
+      void increasePostCount(boardName, contentId);
+      void recordPostRead(boardName, contentId);
     }
-    async function loadContent() {
-      try {
-        setErrorMessage('');
-
-        const contentQuery = new URLSearchParams({
-          siteName,
-        });
-
-        if (categoryName) {
-          contentQuery.set('categoryName', categoryName);
-        }
-
-        if (seriesName) {
-          contentQuery.set('seriesName', seriesName);
-        }
-
-        const contentUrl = `/api/boards/${boardName}/${contentId}?${contentQuery.toString()}`;
-
-        const response = await fetch(contentUrl, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as ContentResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '게시글 정보를 불러오지 못했습니다.');
-        }
-
-        setBoard(result.board ?? null);
-        setContent(result.content ?? null);
-        setSeries(result.series ?? null);
-        setSeriesContents(Array.isArray(result.seriesContents) ? result.seriesContents : []);
-        setPreviousPost(result.previousPost ?? null);
-        setNextPost(result.nextPost ?? null);
-        setIsAuthor(result.isAuthor);
-        setIsStaff(result.isStaff);
-        setCanManageContent(result.canManageContent === true);
-        setCanEditContent(result.canEditContent === true);
-        setCanDeleteContent(result.canDeleteContent === true);
-        setCanMovePost(result.canMovePost === true);
-        setSelectedCategory(result.selectedCategory ?? null);
-        setDraw(result.draw ?? null);
-        setIsLiked(result.postActions?.isLiked === true);
-        setIsSaved(result.postActions?.isSaved === true);
-        setLikeCount(typeof result.postActions?.likeCount === 'number' ? result.postActions.likeCount : 0);
-
-        if (result.content?.poll) {
-          void loadPollResult(boardName, result.content.id);
-        }
-
-        if (result.content?.published_status === 'published') {
-          void increasePostCount(boardName, contentId);
-          void recordPostRead(boardName, contentId);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시글 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시글 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (!siteName || !boardName || !contentId) {
-      setErrorMessage('게시글 정보를 불러오지 못했습니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    void loadContent();
-  }, [siteName, boardName, contentId, categoryName, seriesName]);
-
-  async function loadPollResult(nextBoardName: string, nextContentId: string) {
-    try {
-      setPollErrorMessage('');
-
-      const response = await fetch(`/api/boards/${nextBoardName}/${nextContentId}/poll?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as PollResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '투표 정보를 불러오지 못했습니다.');
-      }
-
-      setPollResult({
-        total_count: typeof result.total_count === 'number' ? result.total_count : 0,
-        selected_option_index: typeof result.selected_option_index === 'number' ? result.selected_option_index : null,
-        is_ended: result.is_ended === true,
-        options: Array.isArray(result.options) ? result.options : [],
-      });
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setPollErrorMessage(unknownError.message || '투표 정보를 불러오지 못했습니다.');
-      } else {
-        setPollErrorMessage('투표 정보를 불러오지 못했습니다.');
-      }
-    }
-  }
+    // View tracking is intentionally tied to the server-provided post identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardName, contentId, initialData?.content?.published_status]);
 
   async function submitPoll(optionIndex: number) {
     if (isSubmittingPoll) {
@@ -874,22 +780,6 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
 
   function getPollOptionResult(optionIndex: number) {
     return pollResult?.options.find((option) => option.option_index === optionIndex) ?? null;
-  }
-
-  if (isLoading) {
-    return (
-      <main>
-        <div className="container">
-          <div className={`${styles.content} content`}>
-            <div className="paper">
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
   }
 
   if (errorMessage || !board || !content) {

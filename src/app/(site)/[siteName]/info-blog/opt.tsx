@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type ReactNode, useEffect, useState } from 'react';
+import { type ChangeEvent, type ReactNode, useState } from 'react';
 import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -142,7 +142,7 @@ type NicknameResponse = {
   error?: string;
 };
 
-type FavoriteResponse = {
+export type FavoriteResponse = {
   ok?: boolean;
   isLoggedIn?: boolean;
   isFavorited?: boolean;
@@ -159,6 +159,8 @@ type Props = {
   memberProjects: MemberProject[];
   memberCareers: MemberCareer[];
   canEditMyMemberGeneral: boolean;
+  initialFavorite: FavoriteResponse | null;
+  initialFavoriteError: string;
 };
 
 type GeneralFormValue = {
@@ -330,6 +332,8 @@ export default function Opt({
   memberProjects,
   memberCareers,
   canEditMyMemberGeneral,
+  initialFavorite,
+  initialFavoriteError,
 }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -366,47 +370,18 @@ export default function Opt({
   const [isNicknameSubmitting, setIsNicknameSubmitting] = useState(false);
   const [isItemSubmitting, setIsItemSubmitting] = useState(false);
 
-  const [isFavoriteLoaded, setIsFavoriteLoaded] = useState(false);
-  const [isFavoriteLoggedIn, setIsFavoriteLoggedIn] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [isFavoriteLoaded] = useState(true);
+  const [isFavoriteLoggedIn, setIsFavoriteLoggedIn] = useState(initialFavorite?.isLoggedIn === true);
+  const [isFavorited, setIsFavorited] = useState(initialFavorite?.isFavorited === true);
+  const [favoriteCount, setFavoriteCount] = useState(initialFavorite?.favoriteCount ?? 0);
   const [isFavoriteSubmitting, setIsFavoriteSubmitting] = useState(false);
-  const [favoriteErrorMessage, setFavoriteErrorMessage] = useState('');
-  const [isFavoriteErrorDialogOpen, setIsFavoriteErrorDialogOpen] = useState(false);
+  const [favoriteErrorMessage, setFavoriteErrorMessage] = useState(
+    initialFavoriteError || initialFavorite?.error || '',
+  );
+  const [isFavoriteErrorDialogOpen, setIsFavoriteErrorDialogOpen] = useState(Boolean(initialFavoriteError));
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-
-  async function loadFavoriteStatus() {
-    try {
-      setFavoriteErrorMessage('');
-
-      const response = await fetch(`/api/site/blog/${siteName}/favorites`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as FavoriteResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '즐겨찾기 정보를 불러오지 못했습니다.');
-      }
-
-      setIsFavoriteLoggedIn(result.isLoggedIn === true);
-      setIsFavorited(result.isFavorited === true);
-      setFavoriteCount(typeof result.favoriteCount === 'number' ? result.favoriteCount : 0);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setFavoriteErrorMessage(unknownError.message || '즐겨찾기 정보를 불러오지 못했습니다.');
-      } else {
-        setFavoriteErrorMessage('즐겨찾기 정보를 불러오지 못했습니다.');
-      }
-
-      setIsFavoriteErrorDialogOpen(true);
-    } finally {
-      setIsFavoriteLoaded(true);
-    }
-  }
 
   async function handleToggleFavorite() {
     if (isFavoriteSubmitting) {
@@ -443,11 +418,6 @@ export default function Opt({
       setIsFavoriteSubmitting(false);
     }
   }
-
-  useEffect(() => {
-    void loadFavoriteStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteName]);
 
   function getMyMemberGeneral() {
     return members.find((member) => member.isMine) ?? null;

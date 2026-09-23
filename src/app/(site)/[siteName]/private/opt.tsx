@@ -1,12 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
@@ -38,72 +36,28 @@ function formatDate(value: string) {
   );
 }
 
-export default function Opt({
-  initialData,
-  initialError,
-  initialStatus,
-}: {
-  initialData: Response | null;
-  initialError: string;
-  initialStatus: number;
-}) {
+export default function Opt({ initialData, initialError }: { initialData: Response | null; initialError: string }) {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<Response>(
-    initialData ? { ...initialData, error: initialError || initialData.error } : { error: initialError },
-  );
-  const isInitialLoad = useRef(true);
+  const filter = (normalizeText(searchParams.get('filter')) || 'all') as Filter;
+  const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1);
+  const data: Response = initialData
+    ? { ...initialData, error: initialError || initialData.error }
+    : { error: initialError };
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
 
-  useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-      if (initialStatus === 401) router.replace(`/auth/sign-in?next=/${siteName}/private`);
-      return;
-    }
-    async function load() {
-      setIsLoading(true);
-      const response = await fetch(`/api/private-board?siteName=${siteName}&filter=${filter}&page=${page}`, {
-        credentials: 'include',
-      });
-      const result = (await response.json()) as Response;
-
-      if (response.status === 401) {
-        router.replace(`/auth/sign-in?next=/${siteName}/private`);
-        return;
-      }
-
-      setData(result);
-      setIsLoading(false);
-    }
-
-    void load();
-  }, [filter, initialStatus, page, router, siteName]);
-
-  if (isLoading)
-    return (
-      <div className="container">
-        <div className={`${styles.content} content`}>
-          <h2>
-            <LockOutlinedIcon />
-            <span>비공개 게시판</span>
-          </h2>
-          <div className="paper">
-            <div className="loading-container">
-              <LoadingIndicator />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  function navigate(nextFilter: Filter, nextPage: number) {
+    const query = new URLSearchParams(searchParams.toString());
+    query.set('filter', nextFilter);
+    query.set('page', String(nextPage));
+    router.replace(`?${query.toString()}`);
+  }
   if (data.error)
     return (
       <div className="container">
@@ -155,8 +109,7 @@ export default function Opt({
                   key={value}
                   className={`button small ${filter === value ? 'submit' : 'action'}`}
                   onClick={() => {
-                    setFilter(value);
-                    setPage(1);
+                    navigate(value, 1);
                   }}
                 >
                   {label}
@@ -184,7 +137,7 @@ export default function Opt({
                 type="button"
                 className="button small action"
                 disabled={page === 1}
-                onClick={() => setPage((value) => value - 1)}
+                onClick={() => navigate(filter, page - 1)}
               >
                 이전
               </button>
@@ -195,7 +148,7 @@ export default function Opt({
                 type="button"
                 className="button small action"
                 disabled={page === totalPages}
-                onClick={() => setPage((value) => value + 1)}
+                onClick={() => navigate(filter, page + 1)}
               >
                 다음
               </button>

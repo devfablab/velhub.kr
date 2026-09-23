@@ -2,8 +2,9 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
+import { getSiteApiData } from '../../getSiteApiData';
 import Container from '../menu';
-import Opt from './opt';
+import Opt, { type FavoriteResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -139,6 +140,10 @@ export default async function Page(context: RouteContext) {
   });
 
   const result = (await response.json()) as BlogInfoResponse;
+  const favorite = await getSiteApiData<FavoriteResponse>(
+    `/api/site/blog/${normalizedSiteName}/favorites`,
+    '즐겨찾기 정보를 불러오지 못했습니다.',
+  );
 
   if (!response.ok || !result.siteInfo) {
     return (
@@ -167,6 +172,8 @@ export default async function Page(context: RouteContext) {
         memberProjects={result.memberProjects ?? []}
         memberCareers={result.memberCareers ?? []}
         canEditMyMemberGeneral={result.canEditMyMemberGeneral === true}
+        initialFavorite={favorite.data}
+        initialFavoriteError={favorite.error}
       />
     </Container>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -25,7 +25,6 @@ import {
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import RecentTableList from '@/components/service/community/RecentTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -238,15 +237,7 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
   );
 }
 
-export default function Opt({
-  initialData,
-  initialError,
-  initialStatus,
-}: {
-  initialData: Data | null;
-  initialError: string;
-  initialStatus: number;
-}) {
+export default function Opt({ initialData, initialError }: { initialData: Data | null; initialError: string }) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
@@ -282,10 +273,6 @@ export default function Opt({
     }
     setData(result);
   }
-
-  useEffect(() => {
-    if (initialStatus === 401) router.replace(`/auth/sign-in?next=/${siteName}/private/${postId}`);
-  }, [initialStatus, postId, router, siteName]);
 
   async function reply() {
     if (isSaving) return;
@@ -409,7 +396,7 @@ export default function Opt({
       setIsDeletingPost(false);
     }
   }
-  if (data.error && !data.post)
+  if (!data.post)
     return (
       <div className="container">
         {!isMobile ? (
@@ -419,7 +406,7 @@ export default function Opt({
           </aside>
         ) : null}
         <div className={`${styles.content} content`}>
-          <ScreenState kind="error">{data.error}</ScreenState>
+          <ScreenState kind="error">{data.error || '글 정보를 불러오지 못했습니다.'}</ScreenState>
         </div>
       </div>
     );
@@ -438,8 +425,6 @@ export default function Opt({
       : '작성자의 추가 문의를 기다리고 있습니다.'
     : '운영자 또는 매니저의 답변을 기다리고 있습니다.';
   const hasReplyEditor = canReply || Boolean(editingReplyId);
-  const isLoadingPost = !data.post;
-
   return (
     <div className="container">
       {!isMobile ? (
@@ -465,13 +450,7 @@ export default function Opt({
             </div>
           </>
         )}
-        {isLoadingPost ? (
-          <div className="paper">
-            <div className="loading-container">
-              <LoadingIndicator />
-            </div>
-          </div>
-        ) : (
+        {!data.post ? null : (
           <>
             <article>
               <div className="paper">

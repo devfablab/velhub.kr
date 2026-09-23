@@ -1,5 +1,6 @@
 import { getSitePageMetadata } from '@/lib/seoSite';
-import Opt from './opt';
+import { getSiteApiData } from '../../getSiteApiData';
+import Opt, { type UserInfoResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -17,6 +18,21 @@ export async function generateMetadata(context: RouteContext) {
   });
 }
 
-export default function Page() {
-  return <Opt />;
+export default async function Page({ params }: RouteContext) {
+  const { siteName } = await params;
+  const initial = await getSiteApiData<UserInfoResponse>(
+    `/api/users/${siteName}/me`,
+    '차단 정보를 불러오지 못했습니다.',
+  );
+  const isBlocked = initial.data?.status === 'blocked' && initial.data.isBlock === true;
+
+  return (
+    <Opt
+      siteName={siteName}
+      initialData={isBlocked ? initial.data : null}
+      initialError={
+        isBlocked ? initial.error : initial.data?.error || initial.error || '차단 정보를 불러오지 못했습니다.'
+      }
+    />
+  );
 }

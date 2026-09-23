@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -31,7 +31,7 @@ type JoinQuestionRow = {
   options: string[];
 };
 
-type JoinResponse = {
+export type JoinResponse = {
   ok?: boolean;
   siteName?: string;
   join?: {
@@ -65,6 +65,8 @@ type AnswerRow = {
 
 type Props = {
   siteName: string;
+  initialData: JoinResponse | null;
+  initialError: string;
 };
 
 const VisuallyHiddenInput = styled('input')({
@@ -79,83 +81,40 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export default function Opt({ siteName }: Props) {
+export default function Opt({ siteName, initialData, initialError }: Props) {
   const router = useRouter();
+  const initialJoin = initialData?.join;
+  const initialQuestions =
+    initialJoin?.join_question_status === 'enabled' && Array.isArray(initialJoin.join_questions)
+      ? initialJoin.join_questions
+      : [];
 
-  const [joinType, setJoinType] = useState('');
+  const [joinType] = useState(initialJoin?.join_type ?? '');
   const [nickname, setNickname] = useState('');
-  const [joinNotice, setJoinNotice] = useState('');
-  const [joinQuestionStatus, setJoinQuestionStatus] = useState('');
-  const [joinQuestions, setJoinQuestions] = useState<JoinQuestionRow[]>([]);
-  const [answers, setAnswers] = useState<Record<string, AnswerRow>>({});
-  const [isRejectedHistory, setIsRejectedHistory] = useState(false);
+  const [joinNotice] = useState(initialJoin?.join_notice ?? '');
+  const [joinQuestionStatus] = useState(initialJoin?.join_question_status ?? '');
+  const [joinQuestions] = useState<JoinQuestionRow[]>(initialQuestions);
+  const [answers, setAnswers] = useState<Record<string, AnswerRow>>(() =>
+    initialQuestions.reduce<Record<string, AnswerRow>>((accumulator, question) => {
+      accumulator[question.id] = {
+        question_id: question.id,
+        answer_text: '',
+        selected_option: '',
+        answer_image: '',
+        answer_image_url: '',
+      };
+      return accumulator;
+    }, {}),
+  );
+  const [isRejectedHistory] = useState(Boolean(initialJoin?.rejected_at));
   const [nicknameErrorMessage, setNicknameErrorMessage] = useState('');
   const [nicknameSuccessMessage, setNicknameSuccessMessage] = useState('');
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
   const [checkedNickname, setCheckedNickname] = useState('');
   const [isCheckingNickname, setIsCheckingNickname] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(initialError || initialData?.error || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingQuestionId, setUploadingQuestionId] = useState('');
-
-  useEffect(() => {
-    async function loadJoinInfo() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/manage/join/conditions?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as JoinResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '가입 정보를 불러오지 못했습니다.');
-        }
-
-        const join = result.join;
-
-        if (!join) {
-          throw new Error('가입 정보를 불러오지 못했습니다.');
-        }
-
-        setJoinType(join.join_type);
-        setJoinNotice(join.join_notice ?? '');
-        setJoinQuestionStatus(join.join_question_status);
-        setJoinQuestions(
-          join.join_question_status === 'enabled' && Array.isArray(join.join_questions) ? join.join_questions : [],
-        );
-        setAnswers(
-          (join.join_question_status === 'enabled' ? join.join_questions : []).reduce<Record<string, AnswerRow>>(
-            (accumulator, question) => {
-              accumulator[question.id] = {
-                question_id: question.id,
-                answer_text: '',
-                selected_option: '',
-                answer_image: '',
-                answer_image_url: '',
-              };
-              return accumulator;
-            },
-            {},
-          ),
-        );
-        setIsRejectedHistory(Boolean(join.rejected_at));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '가입 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('가입 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadJoinInfo();
-  }, [siteName]);
 
   function handleNicknameChange(event: InputChangeEvent) {
     const nextValue = event.currentTarget.value;
@@ -463,10 +422,6 @@ export default function Opt({ siteName }: Props) {
       }
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return null;
   }
 
   if (joinType === 'invite') {

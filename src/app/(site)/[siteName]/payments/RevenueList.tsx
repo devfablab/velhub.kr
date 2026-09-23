@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
@@ -19,7 +18,6 @@ import {
   Typography,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 
@@ -70,14 +68,6 @@ type RevenueListPageProps = {
   initialError?: string;
 };
 
-type RevenueErrorResponse = {
-  error: string;
-};
-
-function isRevenueErrorResponse(value: RevenueListResponse | RevenueErrorResponse): value is RevenueErrorResponse {
-  return 'error' in value;
-}
-
 function formatAmount(value: number) {
   return `${value.toLocaleString('ko-KR')}원`;
 }
@@ -119,55 +109,12 @@ export default function RevenueList({
   const searchParams = useSearchParams();
   const siteName = normalizeText(siteNameProp) || normalizeText(params.siteName);
 
-  const [responseData, setResponseData] = useState<RevenueListResponse | null>(initialData);
-  const [errorMessage, setErrorMessage] = useState(initialError);
-  const isInitialLoad = useRef(true);
+  const responseData = initialData;
+  const errorMessage = initialError;
 
   const page = Number(searchParams.get('page') ?? '1') || 1;
   const rangeType = (searchParams.get('rangeType') as RevenueRangeType | null) ?? 'all';
   const visibleDateColumns = getVisibleDateColumns(type);
-
-  const queryString = useMemo(() => {
-    const nextSearchParams = new URLSearchParams(searchParams.toString());
-
-    nextSearchParams.set('siteName', siteName);
-    nextSearchParams.set('page', String(page));
-    nextSearchParams.set('pageSize', '20');
-
-    return nextSearchParams.toString();
-  }, [page, searchParams, siteName]);
-
-  useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-      if (initialData || initialError) return;
-    }
-    async function loadList() {
-      if (!siteName) {
-        return;
-      }
-
-      setResponseData(null);
-      setErrorMessage('');
-
-      const fetchResponse = await fetch(`${apiBasePath}/${type}?${queryString}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await fetchResponse.json()) as RevenueListResponse | RevenueErrorResponse;
-
-      if (!fetchResponse.ok || isRevenueErrorResponse(result)) {
-        setErrorMessage(isRevenueErrorResponse(result) ? result.error : '내역을 불러오지 못했습니다.');
-        return;
-      }
-
-      setResponseData(result);
-      setErrorMessage('');
-    }
-
-    void loadList();
-  }, [apiBasePath, initialData, initialError, queryString, siteName, type]);
 
   function updateSearchParams(nextValues: Record<string, string | null>) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
@@ -374,14 +321,6 @@ export default function RevenueList({
         </Stack>
 
         {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
-
-        {!responseData && !errorMessage ? (
-          <div className={`paper ${styles.paper}`}>
-            <div className="loading-container">
-              <LoadingIndicator />
-            </div>
-          </div>
-        ) : null}
 
         {responseData ? (
           <>

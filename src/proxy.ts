@@ -85,6 +85,16 @@ function isManagePath(pathname: string) {
   return segments.length >= 2 && segments[1] === 'manage';
 }
 
+function isPrivateBoardPath(pathname: string) {
+  if (pathname.startsWith('/api')) {
+    return false;
+  }
+
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length >= 2 && segments[1] === 'private';
+}
+
 function isJoinPath(pathname: string) {
   if (pathname.startsWith('/api')) {
     return false;
@@ -475,6 +485,16 @@ function redirectWithPath(request: NextRequest, pathname: string) {
   return NextResponse.redirect(redirectUrl);
 }
 
+function redirectToSignIn(request: NextRequest, nextPathname: string) {
+  const redirectUrl = request.nextUrl.clone();
+
+  redirectUrl.pathname = '/auth/sign-in';
+  redirectUrl.search = '';
+  redirectUrl.searchParams.set('next', `${nextPathname}${request.nextUrl.search}`);
+
+  return NextResponse.redirect(redirectUrl);
+}
+
 function getShutdownRedirectPath({
   siteName,
   isSiteOwner,
@@ -674,6 +694,10 @@ export async function proxy(request: NextRequest) {
     }
 
     return response;
+  }
+
+  if (isPrivateBoardPath(pathname) && !isLoggedIn) {
+    return redirectToSignIn(request, pathname);
   }
 
   if (isSitePath(pathname)) {

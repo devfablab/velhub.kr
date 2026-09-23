@@ -56,6 +56,12 @@ import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
+  initialContent: ContentResponse | null;
+  initialBoardInfo: BoardInfoResponse | null;
+  initialPrefixes: PrefixListResponse | null;
+  initialSeries: SeriesListResponse | null;
+  initialError: string;
+  initialBoardError: string;
 };
 
 type BoardItem = {
@@ -67,7 +73,7 @@ type BoardItem = {
   is_active: boolean;
 };
 
-type BoardInfoResponse = {
+export type BoardInfoResponse = {
   board?: {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
     post_type: 'none' | 'prefix' | 'series' | 'both';
@@ -79,7 +85,7 @@ type BoardInfoResponse = {
   error?: string;
 };
 
-type ContentResponse = {
+export type ContentResponse = {
   board?: BoardItem;
   content?: {
     id: string;
@@ -126,7 +132,7 @@ type PrefixRow = {
   created_at?: string;
 };
 
-type PrefixListResponse = {
+export type PrefixListResponse = {
   prefixes?: PrefixRow[];
   error?: string;
 };
@@ -146,7 +152,7 @@ type SeriesRow = {
   user_id: string | null;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   series?: SeriesRow[];
   error?: string;
 };
@@ -652,7 +658,15 @@ function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
   return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt({
+  isCommunity,
+  initialContent,
+  initialBoardInfo,
+  initialPrefixes,
+  initialSeries,
+  initialError,
+  initialBoardError,
+}: Props) {
   const router = useRouter();
   const params = useParams();
   const theme = useTheme();
@@ -668,69 +682,85 @@ export default function Opt({ isCommunity }: Props) {
   const prefixSelectReference = useRef<HTMLDivElement | null>(null);
   const seriesSelectReference = useRef<HTMLDivElement | null>(null);
 
-  const [accessDialogType, setAccessDialogType] = useState<AccessDialogType>(null);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [board, setBoard] = useState<BoardItem | null>(null);
-  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
-  const [postType, setPostType] = useState<'none' | 'prefix' | 'series' | 'both'>('none');
-  const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
-  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
-  const [selectedPrefixId, setSelectedPrefixId] = useState('');
-  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
-  const [isClosed, setIsClosed] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
-  const [subject, setSubject] = useState('');
+  const [accessDialogType] = useState<AccessDialogType>(null);
+  const [alertMessage, setAlertMessage] = useState(initialBoardError);
+  const [board] = useState<BoardItem | null>(initialContent?.board ?? null);
+  const initialBoardType =
+    initialContent?.board?.board_type === 'page'
+      ? 'basic'
+      : (initialContent?.board?.board_type ?? initialBoardInfo?.board?.board_type ?? 'basic');
+  const initialPostType =
+    initialBoardType === 'youtube'
+      ? 'none'
+      : (initialContent?.board?.post_type ?? initialBoardInfo?.board?.post_type ?? 'none');
+  const [boardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(initialBoardType);
+  const [postType] = useState<'none' | 'prefix' | 'series' | 'both'>(initialPostType);
+  const [prefixList] = useState<PrefixRow[]>(initialPrefixes?.prefixes ?? initialContent?.prefixes ?? []);
+  const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
+  const [selectedPrefixId, setSelectedPrefixId] = useState(initialContent?.content?.prefix_id ?? '');
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
+  const [isClosed] = useState(initialContent?.content?.is_closed ?? false);
+  const [isLocked] = useState(initialContent?.content?.is_locked ?? false);
+  const [isAuthor] = useState(initialContent?.isAuthor ?? false);
+  const [isStaff] = useState(initialContent?.isStaff ?? false);
+  const [subject, setSubject] = useState(initialContent?.content?.subject ?? '');
   const [subjectPaddingLeft, setSubjectPaddingLeft] = useState(12);
-  const [summary, setSummary] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
-  const [contentMarkdown, setContentMarkdown] = useState('');
-  const [paidPreviewHtml, setPaidPreviewHtml] = useState('');
-  const [paidPreviewMarkdown, setPaidPreviewMarkdown] = useState('');
+  const [summary, setSummary] = useState(initialContent?.content?.summary ?? '');
+  const [contentHtml, setContentHtml] = useState(initialContent?.content?.content_html ?? '');
+  const [contentMarkdown, setContentMarkdown] = useState(initialContent?.content?.content_markdown ?? '');
+  const [paidPreviewHtml, setPaidPreviewHtml] = useState(initialContent?.content?.paid_preview_html ?? '');
+  const [paidPreviewMarkdown, setPaidPreviewMarkdown] = useState(initialContent?.content?.paid_preview_markdown ?? '');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
-  const [contentSimple, setContentSimple] = useState('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [youtubeCreatedAt, setYoutubeCreatedAt] = useState('');
-  const [thumbnailImage, setThumbnailImage] = useState('');
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
-  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
-  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
+  const [contentSimple, setContentSimple] = useState(initialContent?.content?.content_simple ?? '');
+  const [youtubeUrl, setYoutubeUrl] = useState(initialContent?.content?.youtube_url ?? '');
+  const [youtubeCreatedAt, setYoutubeCreatedAt] = useState(
+    formatDateValue(parseDateValue(initialContent?.content?.youtube_created_at)),
+  );
+  const [thumbnailImage, setThumbnailImage] = useState(initialContent?.content?.thumbnail_image ?? '');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState(initialContent?.content?.thumbnail_image_url ?? '');
+  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(initialContent?.content?.thumbnail_width ?? null);
+  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(
+    initialContent?.content?.thumbnail_height ?? null,
+  );
   const [thumbnailBlobFile, setThumbnailBlobFile] = useState<File | null>(null);
   const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState('');
   const [thumbnailDialogOpen, setThumbnailDialogOpen] = useState(false);
   const [thumbnailDialogFile, setThumbnailDialogFile] = useState<File | null>(null);
   const [thumbnailDialogPreviewUrl, setThumbnailDialogPreviewUrl] = useState('');
   const [thumbnailDialogMessage, setThumbnailDialogMessage] = useState('');
-  const [images, setImages] = useState<PostImageRow[]>([]);
+  const [images, setImages] = useState<PostImageRow[]>(initialContent?.content?.images ?? []);
   const [galleryBlobImages, setGalleryBlobImages] = useState<GalleryBlobImage[]>([]);
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [galleryDialogImages, setGalleryDialogImages] = useState<PostImageRow[]>([]);
   const [galleryDialogBlobImages, setGalleryDialogBlobImages] = useState<GalleryBlobImage[]>([]);
   const [galleryDialogMessage, setGalleryDialogMessage] = useState('');
-  const [isComment, setIsComment] = useState(true);
-  const [isPin, setIsPin] = useState(false);
-  const [canPinPost, setCanPinPost] = useState(false);
-  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
-  const [isPollEnabled, setIsPollEnabled] = useState(false);
-  const [poll, setPoll] = useState<PollState>(() => createEmptyPoll());
+  const [isComment, setIsComment] = useState(initialContent?.content?.is_comment !== false);
+  const [isPin, setIsPin] = useState(initialContent?.content?.is_pin === true);
+  const [canPinPost] = useState(initialBoardInfo?.actions?.canPinPost === true);
+  const [markdownStatus] = useState<string | null>(initialBoardInfo?.board?.markdown_status ?? 'markdown_default');
+  const initialPoll = initialContent?.content?.poll
+    ? createPollStateFromPayload(initialContent.content.poll)
+    : createEmptyPoll();
+  const [isPollEnabled, setIsPollEnabled] = useState(Boolean(initialContent?.content?.poll));
+  const [poll, setPoll] = useState<PollState>(() => initialPoll);
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
-  const [pollDialog, setPollDialog] = useState<PollState>(() => createEmptyPoll());
+  const [pollDialog, setPollDialog] = useState<PollState>(() => clonePollState(initialPoll));
   const [pollDialogMessage, setPollDialogMessage] = useState('');
   const pollDialogFilesReference = useRef<Record<number, File>>({});
-  const [isDrawEnabled, setIsDrawEnabled] = useState(false);
-  const [draw, setDraw] = useState<DrawState>(() => createEmptyDraw());
+  const initialDraw = initialContent?.content ? createDrawStateFromContent(initialContent.content) : createEmptyDraw();
+  const [isDrawEnabled, setIsDrawEnabled] = useState(Boolean(initialContent?.content?.draw_type));
+  const [draw, setDraw] = useState<DrawState>(() => initialDraw);
   const [drawDialogOpen, setDrawDialogOpen] = useState(false);
-  const [drawDialog, setDrawDialog] = useState<DrawState>(() => createEmptyDraw());
+  const [drawDialog, setDrawDialog] = useState<DrawState>(() => cloneDrawState(initialDraw));
   const [drawDialogMessage, setDrawDialogMessage] = useState('');
-  const [publishedStatus, setPublishedStatus] = useState<'draft' | 'published'>('draft');
-  const [isLoadingContent, setIsLoadingContent] = useState(true);
-  const [isLoadingBoardMeta, setIsLoadingBoardMeta] = useState(false);
+  const [publishedStatus] = useState<'draft' | 'published'>(initialContent?.content?.published_status ?? 'draft');
+  const isLoadingContent = false;
+  const isLoadingBoardMeta = false;
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
   const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
-  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [isUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
 
   const isBasicBoard = boardType === 'basic';
   const isGalleryBoard = boardType === 'gallery';
@@ -852,189 +882,6 @@ export default function Opt({ isCommunity }: Props) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    async function loadContent() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as ContentResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '게시글 정보를 불러오지 못했습니다.');
-        }
-
-        if (!result.board || !result.content) {
-          throw new Error('게시글 정보를 불러오지 못했습니다.');
-        }
-
-        if (result.isAuthor !== true && result.isStaff !== true) {
-          throw new Error('접근 권한이 없습니다.');
-        }
-
-        setBoard(result.board);
-        setBoardType(result.board.board_type === 'page' ? 'basic' : result.board.board_type);
-        setPostType(result.board.board_type === 'youtube' ? 'none' : (result.board.post_type ?? 'none'));
-        setIsAuthor(result.isAuthor);
-        setIsStaff(result.isStaff);
-        setSubject(result.content.subject ?? '');
-        setIsClosed(result.content.is_closed);
-        setIsLocked(result.content.is_locked);
-        setSummary(result.content.summary ?? '');
-        setContentHtml(result.content.content_html ?? '');
-        setContentMarkdown(result.content.content_markdown ?? '');
-        setPaidPreviewHtml(result.content.paid_preview_html ?? '');
-        setPaidPreviewMarkdown(result.content.paid_preview_markdown ?? '');
-        setContentSimple(result.content.content_simple ?? '');
-        setYoutubeUrl(result.content.youtube_url ?? '');
-        setYoutubeCreatedAt(formatDateValue(parseDateValue(result.content.youtube_created_at)));
-        setThumbnailImage(result.content.thumbnail_image ?? '');
-        setThumbnailImageUrl(result.content.thumbnail_image_url ?? '');
-        setThumbnailWidth(result.content.thumbnail_width);
-        setThumbnailHeight(result.content.thumbnail_height);
-        setImages(Array.isArray(result.content.images) ? result.content.images : []);
-        setIsComment(result.content.is_comment !== false);
-        setIsPin(result.content.is_pin === true);
-        setPublishedStatus(result.content.published_status);
-
-        const nextPoll = createPollStateFromPayload(result.content.poll);
-        setPoll(nextPoll);
-        setPollDialog(clonePollState(nextPoll));
-        setIsPollEnabled(Boolean(result.content.poll));
-
-        const nextDraw = createDrawStateFromContent(result.content);
-        setDraw(nextDraw);
-        setDrawDialog(cloneDrawState(nextDraw));
-        setIsDrawEnabled(Boolean(result.content.draw_type));
-
-        if (Array.isArray(result.prefixes)) {
-          setPrefixList(result.prefixes);
-        }
-
-        if (result.content.prefix_id) {
-          setSelectedPrefixId(result.content.prefix_id);
-        }
-
-        if (result.series?.series_key) {
-          setSelectedSeriesKey(result.series.series_key);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시글 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시글 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoadingContent(false);
-      }
-    }
-
-    if (!siteName || !boardName || !contentId) {
-      setErrorMessage('게시글 정보를 불러오지 못했습니다.');
-      setIsLoadingContent(false);
-      return;
-    }
-
-    void loadContent();
-  }, [siteName, boardName, contentId]);
-
-  useEffect(() => {
-    async function loadBoardMeta() {
-      if (!boardName) {
-        return;
-      }
-
-      try {
-        setAlertMessage('');
-        setAccessDialogType(null);
-        setIsLoadingBoardMeta(true);
-
-        const boardResponse = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const boardResult = (await boardResponse.json()) as BoardInfoResponse;
-
-        if (!boardResponse.ok) {
-          const message = boardResult.error ?? '게시판 정보를 불러오지 못했습니다.';
-
-          if (message === '로그인이 필요한 서비스입니다.') {
-            setAccessDialogType('login');
-            return;
-          }
-
-          if (message === '커뮤니티 가입 후 이용할 수 있습니다.') {
-            setAccessDialogType('join');
-            return;
-          }
-
-          if (
-            message === '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.'
-          ) {
-            setAccessDialogType('pending');
-            return;
-          }
-
-          throw new Error(message);
-        }
-
-        const nextBoardType = boardResult.board?.board_type ?? 'basic';
-        const nextPostType = nextBoardType === 'youtube' ? 'none' : (boardResult.board?.post_type ?? 'none');
-        const nextMarkdownStatus = boardResult.board?.markdown_status ?? 'markdown_default';
-
-        setBoardType(nextBoardType);
-        setPostType(nextPostType);
-        setMarkdownStatus(nextMarkdownStatus);
-        setCanPinPost(boardResult.actions?.canPinPost === true);
-
-        if (nextPostType === 'prefix') {
-          const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
-
-          if (!prefixResponse.ok) {
-            throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
-          }
-
-          setPrefixList(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
-        }
-
-        if (nextPostType === 'series' || nextPostType === 'both') {
-          const seriesResponse = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
-
-          if (!seriesResponse.ok) {
-            throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
-          }
-
-          setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setAlertMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
-        } else {
-          setAlertMessage('게시판 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoadingBoardMeta(false);
-      }
-    }
-
-    void loadBoardMeta();
-  }, [boardName, siteName]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {

@@ -24,7 +24,7 @@ export default async function Page(context: SearchContext) {
 
   return (
     <Container pageBack={`/${siteName}`} pageTitle={initial.data?.board?.board_label ?? '비공개 게시판'}>
-      <Opt initialData={initial.data} initialError={initial.error} initialStatus={initial.status} />
+      <Opt initialData={initial.data} initialError={initial.error} />
     </Container>
   );
 }

@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
 import { Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSiteApiData } from '../../getSiteApiData';
 import Container from '../menu';
-import Opt from './opt';
+import Opt, { type JoinResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -30,6 +31,11 @@ export default async function Page(context: RouteContext) {
     redirect(`/${normalizedSiteName}`);
   }
 
+  const initial = await getSiteApiData<JoinResponse>(
+    `/api/manage/join/conditions?siteName=${normalizedSiteName}`,
+    '가입 정보를 불러오지 못했습니다.',
+  );
+
   return (
     <Container pageBack={`/${siteName}`} pageTitle="가입하기">
       <div className="container">
@@ -38,7 +44,7 @@ export default async function Page(context: RouteContext) {
             커뮤니티 가입
           </Typography>
           <div className="paper" style={{ marginTop: 12 }}>
-            <Opt siteName={normalizedSiteName} />
+            <Opt siteName={normalizedSiteName} initialData={initial.data} initialError={initial.error} />
           </div>
         </div>
       </div>

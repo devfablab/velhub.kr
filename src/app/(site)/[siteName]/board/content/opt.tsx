@@ -34,7 +34,6 @@ import Avatar from '@mui/material/Avatar';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
@@ -54,6 +53,10 @@ import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
+  initialData: ContentResponse | null;
+  initialError: string;
+  initialPoll: PollResponse | null;
+  initialPollError: string;
 };
 
 type BoardInfo = {
@@ -224,7 +227,7 @@ type SeriesContentItem = {
   href: string;
 };
 
-type ContentResponse = {
+export type ContentResponse = {
   board: BoardInfo;
   content?: PostContent;
   series?: SeriesItem | null;
@@ -273,7 +276,7 @@ type PollResult = {
   options: PollResultOption[];
 };
 
-type PollResponse = {
+export type PollResponse = {
   ok?: boolean;
   total_count?: number;
   selected_option_index?: number | null;
@@ -340,7 +343,7 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt({ isCommunity, initialData, initialError, initialPoll, initialPollError }: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -348,27 +351,35 @@ export default function Opt({ isCommunity }: Props) {
   const boardName = normalizeText(searchParams.get('boardName')).toLowerCase();
   const contentId = normalizeText(searchParams.get('contentId'));
 
-  const [board, setBoard] = useState<BoardInfo | null>(null);
-  const [content, setContent] = useState<PostContent | null>(null);
-  const [series, setSeries] = useState<SeriesItem | null>(null);
-  const [seriesContents, setSeriesContents] = useState<SeriesContentItem[]>([]);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
-  const [canManageContent, setCanManageContent] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [board] = useState<BoardInfo | null>(initialData?.board ?? null);
+  const [content, setContent] = useState<PostContent | null>(initialData?.content ?? null);
+  const [series] = useState<SeriesItem | null>(initialData?.series ?? null);
+  const [seriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
+  const [isAuthor] = useState(initialData?.isAuthor ?? false);
+  const [isStaff] = useState(initialData?.isStaff ?? false);
+  const [canManageContent] = useState(initialData?.canManageContent === true);
+  const errorMessage = initialError;
 
   const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
   const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
 
-  const [pollResult, setPollResult] = useState<PollResult | null>(null);
+  const [pollResult, setPollResult] = useState<PollResult | null>(() =>
+    initialPoll
+      ? {
+          total_count: initialPoll.total_count ?? 0,
+          selected_option_index: initialPoll.selected_option_index ?? null,
+          is_ended: initialPoll.is_ended === true,
+          options: initialPoll.options ?? [],
+        }
+      : null,
+  );
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
-  const [pollErrorMessage, setPollErrorMessage] = useState('');
-  const [draw, setDraw] = useState<DrawInfo | null>(null);
+  const [pollErrorMessage, setPollErrorMessage] = useState(initialPollError);
+  const [draw] = useState<DrawInfo | null>(initialData?.draw ?? null);
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(initialData?.postActions?.isLiked === true);
+  const [isSaved, setIsSaved] = useState(initialData?.postActions?.isSaved === true);
+  const [likeCount, setLikeCount] = useState(initialData?.postActions?.likeCount ?? 0);
   const [isTogglingLike, setIsTogglingLike] = useState(false);
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
@@ -529,60 +540,13 @@ export default function Opt({ isCommunity }: Props) {
   }
 
   useEffect(() => {
-    async function loadContent() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as ContentResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '게시글 정보를 불러오지 못했습니다.');
-        }
-
-        setBoard(result.board ?? null);
-        setContent(result.content ?? null);
-        setSeries(result.series ?? null);
-        setSeriesContents(Array.isArray(result.seriesContents) ? result.seriesContents : []);
-        setIsAuthor(result.isAuthor === true);
-        setIsStaff(result.isStaff === true);
-        setCanManageContent(result.canManageContent === true);
-        setDraw(result.draw ?? null);
-        setIsLiked(result.postActions?.isLiked === true);
-        setIsSaved(result.postActions?.isSaved === true);
-        setLikeCount(typeof result.postActions?.likeCount === 'number' ? result.postActions.likeCount : 0);
-
-        if (result.content?.poll) {
-          void loadPollResult(boardName, result.content.id);
-        }
-
-        if (result.content?.published_status === 'published') {
-          void increasePostCount(boardName, contentId);
-          void recordPostRead(boardName, contentId);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시글 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시글 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
+    if (content?.published_status === 'published') {
+      void increasePostCount(boardName, contentId);
+      void recordPostRead(boardName, contentId);
     }
-
-    if (!siteName || !boardName || !contentId) {
-      setErrorMessage('게시글 정보를 불러오지 못했습니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    void loadContent();
-  }, [siteName, boardName, contentId]);
+    // 조회수와 읽음 기록은 화면 표시 이후에 수행하는 부수 효과다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardName, contentId]);
 
   const listHref = board ? `/${siteName}/${board.board_key}` : `/${siteName}/board`;
 
@@ -628,36 +592,6 @@ export default function Opt({ isCommunity }: Props) {
         setDeleteErrorMessage('글을 삭제하지 못했습니다.');
       }
       setIsDeletingPost(false);
-    }
-  }
-
-  async function loadPollResult(nextBoardName: string, nextContentId: string) {
-    try {
-      setPollErrorMessage('');
-
-      const response = await fetch(`/api/boards/${nextBoardName}/${nextContentId}/poll?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as PollResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '투표 정보를 불러오지 못했습니다.');
-      }
-
-      setPollResult({
-        total_count: typeof result.total_count === 'number' ? result.total_count : 0,
-        selected_option_index: typeof result.selected_option_index === 'number' ? result.selected_option_index : null,
-        is_ended: result.is_ended === true,
-        options: Array.isArray(result.options) ? result.options : [],
-      });
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setPollErrorMessage(unknownError.message || '투표 정보를 불러오지 못했습니다.');
-      } else {
-        setPollErrorMessage('투표 정보를 불러오지 못했습니다.');
-      }
     }
   }
 
@@ -707,26 +641,6 @@ export default function Opt({ isCommunity }: Props) {
 
   function getPollOptionResult(optionIndex: number) {
     return pollResult?.options.find((option) => option.option_index === optionIndex) ?? null;
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageBack={`/${siteName}/board`} pageTitle="글 보기" pageFin>
-        <div className="container">
-          <div className={`${styles.content} content`}>
-            <h2>
-              <ListAltOutlinedIcon />
-              <span>글 보기</span>
-            </h2>
-            <div className="paper">
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   if (errorMessage || !board || !content) {

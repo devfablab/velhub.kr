@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
@@ -35,7 +35,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { detectAdult } from '@/lib/service/detectAdult.client';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -60,32 +59,6 @@ type ContainerProps = {
 };
 
 type SiteType = 'blog' | 'community';
-
-type HeaderResponse = {
-  siteName: string | null;
-  siteLabel: string | null;
-  siteType: SiteType | null;
-  themeType: string;
-  profilePictureUrl: string | null;
-  profileLogoUrl: string | null;
-  blogFontSettings: BlogFontSettings | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  siteRoleLabels: string[];
-  nickname: string | null;
-  isApproval: boolean | null;
-  invite: boolean;
-  join: boolean;
-  sessionCase?: string | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
-};
 
 type UserProfile = {
   name: string | null;
@@ -274,17 +247,16 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
   const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
   const initialHeader = useSiteHeader();
-  const hasInitialHeader = useRef(Boolean(initialHeader));
-  const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(initialHeader?.profileLogoUrl ?? null);
-  const [siteLabel, setSiteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
+  const profileLogoUrl = initialHeader?.profileLogoUrl ?? null;
+  const siteLabel = initialHeader?.siteLabel || initialHeader?.siteName || '';
+  const profilePictureUrl = initialHeader?.profilePictureUrl ?? null;
   const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [siteType, setSiteType] = useState<SiteType | null>(initialHeader?.siteType ?? null);
-  const [isAdult, setIsAdult] = useState<boolean>(false);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
+  const siteType: SiteType | null = initialHeader?.siteType ?? null;
+  const isAdult = initialHeader?.isAdult === true;
+  const userProfile: UserProfile = {
     name: initialHeader?.userName ?? null,
     email: initialHeader?.email ?? null,
     avatarUrl: initialHeader?.avatar ?? null,
@@ -300,7 +272,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
     creatorHandleName: initialHeader?.creatorHandleName ?? null,
     userHandleName: initialHeader?.userHandleName ?? null,
     hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
-  });
+  };
 
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
@@ -332,86 +304,13 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
   }, [isMounted, themeMode]);
 
   useEffect(() => {
-    if (hasInitialHeader.current) {
-      hasInitialHeader.current = false;
-      if (initialHeader) {
-        applyColorSet(initialHeader.themeType);
-        applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
-      }
-      void detectAdult(siteName).then(setIsAdult);
-      return;
+    if (initialHeader) {
+      applyColorSet(initialHeader.themeType);
+      applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
+    } else {
+      clearBlogFontSettings();
     }
-    async function loadHeader() {
-      if (!siteName) {
-        return;
-      }
-
-      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        clearBlogFontSettings();
-        setSiteType(null);
-        setUserProfile({
-          name: null,
-          email: null,
-          avatarUrl: null,
-          isLoggedIn: false,
-          globalRole: null,
-          siteRole: null,
-          siteRoleLabels: [],
-          nickname: null,
-          isApproval: null,
-          invite: false,
-          join: false,
-          isAuthor: false,
-          creatorHandleName: null,
-          userHandleName: null,
-          hasAffettoMyPosts: false,
-        });
-        setSiteLabel('');
-        setProfilePictureUrl(null);
-        setProfileLogoUrl(null);
-        return;
-      }
-
-      applyColorSet(result.themeType);
-      applyBlogFontSettings(result.siteType, result.blogFontSettings);
-      setSiteType(result.siteType);
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isLoggedIn: result.isLoggedIn,
-        globalRole: result.globalRole,
-        siteRole: result.siteRole,
-        siteRoleLabels: Array.isArray(result.siteRoleLabels) ? result.siteRoleLabels : [],
-        nickname: result.nickname,
-        isApproval: result.isApproval,
-        invite: result.invite,
-        join: result.join,
-        isAuthor: result.isAuthor,
-        creatorHandleName: result.creatorHandleName,
-        userHandleName: result.userHandleName,
-        hasAffettoMyPosts: result.hasAffettoMyPosts,
-      });
-      setSiteLabel(result.siteLabel || result.siteName || '');
-      setProfilePictureUrl(result.profilePictureUrl);
-      setProfileLogoUrl(result.profileLogoUrl);
-      setIsAdult(await detectAdult(siteName));
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady, siteName]); // eslint-disable-line react-hooks/exhaustive-deps -- server value is used only for the initial render
+  }, [initialHeader]);
 
   function renderThemeModeIcon() {
     if (themeMode === 'light') {

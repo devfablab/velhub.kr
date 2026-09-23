@@ -18,7 +18,7 @@ export default async function Page(context: RouteContext) {
 
   return (
     <Container pageBack={`/${siteName}/private`} pageTitle="글 보기" pageFin>
-      <Opt initialData={initial.data} initialError={initial.error} initialStatus={initial.status} />
+      <Opt initialData={initial.data} initialError={initial.error} />
     </Container>
   );
 }
