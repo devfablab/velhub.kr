@@ -381,7 +381,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={Boolean(selectedUser)}
               onClose={() => setSelectedUser(null)}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>가입 신청 답변</h2>
               <button
@@ -393,8 +393,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={3}>
+              <div className="VhiDrawer-bottom-content">
                 <div className={`paper ${styles['paper-sub']}`}>
                   {selectedUser?.answeredQuestions && selectedUser.answeredQuestions.length > 0 ? (
                     selectedUser.answeredQuestions.map((item, index) => (
@@ -447,13 +446,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <Typography variant="body2">가입 신청 답변이 없습니다.</Typography>
                   )}
                 </div>
-
-                <Stack direction="column" gap={1.5}>
-                  <button type="button" className="button medium cancel" onClick={() => setSelectedUser(null)}>
-                    닫기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button type="button" className="button small cancel" onClick={() => setSelectedUser(null)}>
+                  닫기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -528,7 +526,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </div>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="button medium close" onClick={() => setSelectedUser(null)}>
+                <button type="button" className="cancel-button" onClick={() => setSelectedUser(null)}>
                   닫기
                 </button>
               </DialogActions>
@@ -539,7 +537,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={Boolean(confirmActionType)}
               onClose={handleCloseConfirmAction}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>{getConfirmActionTitle()}</h2>
               <button
@@ -551,32 +549,31 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={3}>
+              <div className="VhiDrawer-bottom-content">
                 <Typography variant="body2">{getConfirmActionMessage()}</Typography>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseConfirmAction}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className={confirmActionType === 'approve' ? 'button medium submit' : 'button medium danger'}
-                    onClick={() => {
-                      if (confirmActionType) {
-                        void handleSubmitAction(confirmActionType);
-                      }
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    {getConfirmActionButtonLabel()}
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseConfirmAction}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className={confirmActionType === 'approve' ? 'button small submit' : 'button small danger'}
+                  onClick={() => {
+                    if (confirmActionType) {
+                      void handleSubmitAction(confirmActionType);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                >
+                  {getConfirmActionButtonLabel()}
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -602,7 +599,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseConfirmAction}
                   disabled={isSubmitting}
                 >
@@ -610,7 +607,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className={confirmActionType === 'approve' ? 'button medium submit' : 'button medium danger'}
+                  className={confirmActionType === 'approve' ? undefined : 'delete-button'}
                   onClick={() => {
                     if (confirmActionType) {
                       void handleSubmitAction(confirmActionType);

@@ -3,6 +3,7 @@
 import { type JSX, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -12,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   FormControlLabel,
   InputAdornment,
   MenuItem,
@@ -1701,25 +1703,58 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </div>
         </div>
       </div>
-      <Dialog
-        open={isTeamMemberBlogTypeDialogOpen}
-        onClose={() => setIsTeamMemberBlogTypeDialogOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        className="vh-dialog vh-alert-dialog"
-      >
-        <DialogTitle>블로그 타입 변경 안내</DialogTitle>
-        <DialogContent>팀원 존재시 1인 블로그로 전환하실 수 없어요.</DialogContent>
-        <DialogActions>
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isTeamMemberBlogTypeDialogOpen}
+          onClose={() => setIsTeamMemberBlogTypeDialogOpen(false)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
+          <h2>블로그 타입 변경 안내</h2>
           <button
             type="button"
-            className="button medium submit"
+            className="close-button"
             onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
+            aria-label="닫기"
           >
-            확인
+            <CloseRoundedIcon />
           </button>
-        </DialogActions>
-      </Dialog>
+          <div className="VhiDrawer-bottom-content">팀원 존재시 1인 블로그로 전환하실 수 없어요.</div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
+            >
+              확인
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isTeamMemberBlogTypeDialogOpen}
+          onClose={() => setIsTeamMemberBlogTypeDialogOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
+          <DialogTitle>블로그 타입 변경 안내</DialogTitle>
+          <button
+            type="button"
+            className="close-button"
+            onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
+            aria-label="닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>팀원 존재시 1인 블로그로 전환하실 수 없어요.</DialogContent>
+          <DialogActions>
+            <button type="button" onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}>
+              확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Container>
   );
 }

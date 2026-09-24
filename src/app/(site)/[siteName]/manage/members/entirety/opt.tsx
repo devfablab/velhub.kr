@@ -912,13 +912,23 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 anchor="bottom"
                 open={isSearchOpen}
                 onClose={() => setIsSearchOpen(false)}
-                className="VhiDrawer-bottom"
+                className="VhiDrawer-bottom VhiDrawer-bottom-service"
               >
                 <h2>멤버 검색</h2>
-                <button className="close-button" onClick={() => setIsSearchOpen(false)} aria-label="검색창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => setIsSearchOpen(false)}
+                  aria-label="검색창 닫기"
+                >
                   <CloseRoundedIcon />
                 </button>
-                {searchContent}
+                <div className="VhiDrawer-bottom-content">{searchContent}</div>
+                <div className="drawer-dialog-actions">
+                  <button type="button" className="button small cancel" onClick={() => setIsSearchOpen(false)}>
+                    닫기
+                  </button>
+                </div>
               </Drawer>
             ) : (
               <Dialog
@@ -929,10 +939,20 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 className="vh-dialog vh-alert-dialog"
               >
                 <DialogTitle>멤버 검색</DialogTitle>
-                <button className="close-button" onClick={() => setIsSearchOpen(false)} aria-label="검색창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => setIsSearchOpen(false)}
+                  aria-label="검색창 닫기"
+                >
                   <CloseRoundedIcon />
                 </button>
                 <DialogContent>{searchContent}</DialogContent>
+                <DialogActions>
+                  <button type="button" className="cancel-button" onClick={() => setIsSearchOpen(false)}>
+                    닫기
+                  </button>
+                </DialogActions>
               </Dialog>
             )}
 
@@ -1059,7 +1079,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                           setIsLevelChangeDialogOpen(false);
                         }
                       }}
-                      className="VhiDrawer-bottom"
+                      className="VhiDrawer-bottom VhiDrawer-bottom-service"
                     >
                       <h2>등급 변경</h2>
                       <button
@@ -1071,28 +1091,27 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       >
                         <CloseRoundedIcon />
                       </button>
-
-                      <Stack gap={3}>
+                      <div className="VhiDrawer-bottom-content">
                         <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
-                        <Stack direction="column" gap={1.5}>
-                          <button
-                            type="button"
-                            className="button medium cancel"
-                            onClick={() => setIsLevelChangeDialogOpen(false)}
-                            disabled={isLevelChanging}
-                          >
-                            취소
-                          </button>
-                          <button
-                            type="button"
-                            className="button medium submit"
-                            onClick={() => void handleChangeLevel()}
-                            disabled={isLevelChanging}
-                          >
-                            변경
-                          </button>
-                        </Stack>
-                      </Stack>
+                      </div>
+                      <div className="drawer-dialog-actions">
+                        <button
+                          type="button"
+                          className="button small cancel"
+                          onClick={() => setIsLevelChangeDialogOpen(false)}
+                          disabled={isLevelChanging}
+                        >
+                          취소
+                        </button>
+                        <button
+                          type="button"
+                          className="button small submit"
+                          onClick={() => void handleChangeLevel()}
+                          disabled={isLevelChanging}
+                        >
+                          변경
+                        </button>
+                      </div>
                     </Drawer>
                   ) : (
                     <Dialog
@@ -1122,18 +1141,13 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       <DialogActions>
                         <button
                           type="button"
-                          className="button medium close"
+                          className="cancel-button"
                           onClick={() => setIsLevelChangeDialogOpen(false)}
                           disabled={isLevelChanging}
                         >
                           취소
                         </button>
-                        <button
-                          type="button"
-                          className="button medium submit"
-                          onClick={() => void handleChangeLevel()}
-                          disabled={isLevelChanging}
-                        >
+                        <button type="button" onClick={() => void handleChangeLevel()} disabled={isLevelChanging}>
                           변경
                         </button>
                       </DialogActions>
@@ -1224,7 +1238,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 anchor="bottom"
                 open={Boolean(actionType)}
                 onClose={handleCloseActionDialog}
-                className="VhiDrawer-bottom"
+                className="VhiDrawer-bottom VhiDrawer-bottom-service"
               >
                 <h2>{getActionTitle()}</h2>
                 <button
@@ -1232,11 +1246,11 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   className="close-button"
                   onClick={handleCloseActionDialog}
                   disabled={isActionSubmitting}
+                  aria-label="닫기"
                 >
                   <CloseRoundedIcon />
                 </button>
-
-                <Stack gap={3}>
+                <div className="VhiDrawer-bottom-content">
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
@@ -1281,25 +1295,25 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       </p>
                     ) : null}
                   </Stack>
-                  <Stack direction="column" gap={1.5}>
-                    <button
-                      type="button"
-                      className="button medium cancel"
-                      onClick={handleCloseActionDialog}
-                      disabled={isActionSubmitting}
-                    >
-                      취소
-                    </button>
-                    <button
-                      type="button"
-                      className="button medium submit"
-                      onClick={handleSubmitAction}
-                      disabled={isActionSubmitting}
-                    >
-                      확인
-                    </button>
-                  </Stack>
-                </Stack>
+                </div>
+                <div className="drawer-dialog-actions">
+                  <button
+                    type="button"
+                    className="button small cancel"
+                    onClick={handleCloseActionDialog}
+                    disabled={isActionSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button small submit"
+                    onClick={handleSubmitAction}
+                    disabled={isActionSubmitting}
+                  >
+                    확인
+                  </button>
+                </div>
               </Drawer>
             ) : (
               <Dialog
@@ -1315,10 +1329,10 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   className="close-button"
                   onClick={handleCloseActionDialog}
                   disabled={isLevelChanging}
+                  aria-label="닫기"
                 >
                   <CloseRoundedIcon />
                 </button>
-
                 <DialogContent>
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Stack gap={1}>
@@ -1368,18 +1382,13 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 <DialogActions>
                   <button
                     type="button"
-                    className="button medium close"
+                    className="cancel-button"
                     onClick={handleCloseActionDialog}
                     disabled={isActionSubmitting}
                   >
                     취소
                   </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmitAction}
-                    disabled={isActionSubmitting}
-                  >
+                  <button type="button" onClick={handleSubmitAction} disabled={isActionSubmitting}>
                     확인
                   </button>
                 </DialogActions>

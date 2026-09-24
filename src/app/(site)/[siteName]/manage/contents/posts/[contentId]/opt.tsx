@@ -540,10 +540,11 @@ export default function Opt({
               anchor="bottom"
               open={isDeleteDialogOpen}
               onClose={handleCloseDeleteDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>게시물 삭제</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDeleteDialog}
                 aria-label="닫기"
@@ -551,7 +552,7 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <p className="alert info">
                     <InfoOutlineRoundedIcon />
@@ -579,21 +580,20 @@ export default function Opt({
                     </p>
                   ) : null}
                 </Stack>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDeleteDialog}
-                    disabled={isDeleting}
-                  >
-                    취소
-                  </button>
-                  <button type="button" className="button medium warning" onClick={handleDelete} disabled={isDeleting}>
-                    삭제
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small warning" onClick={handleDelete} disabled={isDeleting}>
+                  삭제
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -605,6 +605,7 @@ export default function Opt({
             >
               <DialogTitle>게시물 삭제</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDeleteDialog}
                 aria-label="닫기"
@@ -642,15 +643,10 @@ export default function Opt({
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDeleteDialog}
-                  disabled={isDeleting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                   취소
                 </button>
-                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isDeleting}>
+                <button type="button" className="warning-button" onClick={handleDelete} disabled={isDeleting}>
                   삭제
                 </button>
               </DialogActions>
@@ -662,10 +658,11 @@ export default function Opt({
               anchor="bottom"
               open={isRestoreDialogOpen}
               onClose={handleCloseRestoreDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>게시물 복구</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseRestoreDialog}
                 aria-label="닫기"
@@ -673,8 +670,7 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Typography variant="body2">
                   해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
                 </Typography>
@@ -684,20 +680,20 @@ export default function Opt({
                     <span>{dialogErrorMessage}</span>
                   </p>
                 ) : null}
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseRestoreDialog}
-                    disabled={isRestoring}
-                  >
-                    취소
-                  </button>
-                  <button type="button" className="button medium submit" onClick={handleRestore} disabled={isRestoring}>
-                    확인
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isRestoring}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small submit" onClick={handleRestore} disabled={isRestoring}>
+                  확인
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -709,6 +705,7 @@ export default function Opt({
             >
               <DialogTitle>게시물 복구</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseRestoreDialog}
                 aria-label="닫기"
@@ -716,7 +713,6 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-
               <DialogContent>
                 <Typography variant="body2">
                   해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
@@ -731,13 +727,13 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseRestoreDialog}
                   disabled={isRestoring}
                 >
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleRestore} disabled={isRestoring}>
+                <button type="button" onClick={handleRestore} disabled={isRestoring}>
                   확인
                 </button>
               </DialogActions>
@@ -749,10 +745,11 @@ export default function Opt({
               anchor="bottom"
               open={isCategoryDialogOpen}
               onClose={handleCloseCategoryDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>카테고리 설정</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseCategoryDialog}
                 aria-label="닫기"
@@ -760,7 +757,7 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
@@ -791,25 +788,25 @@ export default function Opt({
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseCategoryDialog}
-                    disabled={isCategorySubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSaveCategories}
-                    disabled={isCategorySubmitting}
-                  >
-                    저장
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseCategoryDialog}
+                  disabled={isCategorySubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSaveCategories}
+                  disabled={isCategorySubmitting}
+                >
+                  저장
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -821,6 +818,7 @@ export default function Opt({
             >
               <DialogTitle>카테고리 설정</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseCategoryDialog}
                 aria-label="닫기"
@@ -863,18 +861,13 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseCategoryDialog}
                   disabled={isCategorySubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSaveCategories}
-                  disabled={isCategorySubmitting}
-                >
+                <button type="button" onClick={handleSaveCategories} disabled={isCategorySubmitting}>
                   저장
                 </button>
               </DialogActions>
@@ -886,10 +879,11 @@ export default function Opt({
               anchor="bottom"
               open={isSeriesDialogOpen}
               onClose={handleCloseSeriesDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>연재 설정</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseSeriesDialog}
                 aria-label="닫기"
@@ -897,7 +891,7 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
@@ -934,25 +928,25 @@ export default function Opt({
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseSeriesDialog}
-                    disabled={isSeriesSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSaveSeries}
-                    disabled={isSeriesSubmitting}
-                  >
-                    저장
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseSeriesDialog}
+                  disabled={isSeriesSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSaveSeries}
+                  disabled={isSeriesSubmitting}
+                >
+                  저장
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -964,6 +958,7 @@ export default function Opt({
             >
               <DialogTitle>연재 설정</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseSeriesDialog}
                 aria-label="닫기"
@@ -1012,18 +1007,13 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseSeriesDialog}
                   disabled={isSeriesSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSaveSeries}
-                  disabled={isSeriesSubmitting}
-                >
+                <button type="button" onClick={handleSaveSeries} disabled={isSeriesSubmitting}>
                   저장
                 </button>
               </DialogActions>

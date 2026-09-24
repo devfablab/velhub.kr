@@ -921,10 +921,11 @@ export default function Opt({
               anchor="bottom"
               open={dialogMode === 'new' || dialogMode === 'edit'}
               onClose={handleCloseDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>{dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDialog}
                 aria-label="닫기"
@@ -932,7 +933,7 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={3.5}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack gap={1}>
                     <Typography variant="subtitle2">사이트 주소</Typography>
@@ -1058,25 +1059,25 @@ export default function Opt({
                     onClose={() => setDialogSuccessMessage('')}
                   />
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDialog}
-                    disabled={isSubmitting || isUploadingImage || isDeletingImage}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting || isUploadingImage || isDeletingImage}
-                  >
-                    저장
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  저장
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1088,6 +1089,7 @@ export default function Opt({
             >
               <DialogTitle>{dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDialog}
                 aria-label="닫기"
@@ -1225,7 +1227,7 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseDialog}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
@@ -1233,7 +1235,6 @@ export default function Opt({
                 </button>
                 <button
                   type="button"
-                  className="button medium submit"
                   onClick={handleSubmit}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
@@ -1248,13 +1249,19 @@ export default function Opt({
               anchor="bottom"
               open={dialogMode === 'delete'}
               onClose={handleCloseDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>카테고리 삭제</h2>
-              <button className="close-button" onClick={handleCloseDialog} aria-label="닫기" disabled={isSubmitting}>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                aria-label="닫기"
+                disabled={isSubmitting}
+              >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
 
@@ -1265,25 +1272,20 @@ export default function Opt({
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium warning"
-                    onClick={handleDelete}
-                    disabled={isSubmitting}
-                  >
-                    삭제
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small warning" onClick={handleDelete} disabled={isSubmitting}>
+                  삭제
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1294,7 +1296,13 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>카테고리 삭제</DialogTitle>
-              <button className="close-button" onClick={handleCloseDialog} aria-label="닫기" disabled={isSubmitting}>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                aria-label="닫기"
+                disabled={isSubmitting}
+              >
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
@@ -1310,15 +1318,10 @@ export default function Opt({
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="warning-button" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </DialogActions>

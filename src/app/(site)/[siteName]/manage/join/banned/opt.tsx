@@ -275,7 +275,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
 
           {isMobile ? (
-            <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
+            <Drawer
+              anchor="bottom"
+              open={isDialogOpen}
+              onClose={handleCloseDialog}
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            >
               <h2>가입불가 해제</h2>
               <button
                 type="button"
@@ -286,8 +291,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={3}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <TextField
                     placeholder="가입불가 해제 사유"
@@ -306,21 +310,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
-                    확인
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small submit" onClick={handleSubmit} disabled={isSubmitting}>
+                  확인
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -361,15 +364,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                   확인
                 </button>
               </DialogActions>

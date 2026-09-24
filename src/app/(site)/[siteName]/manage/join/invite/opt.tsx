@@ -290,7 +290,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={isInviteDialogOpen}
               onClose={handleCloseInviteDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>멤버 초대</h2>
               <button
@@ -302,8 +302,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={3}>
+              <div className="VhiDrawer-bottom-content">
                 <Box component="form" onSubmit={handleSubmitInvite}>
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <TextField
@@ -315,26 +314,25 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     />
                   </Stack>
                 </Box>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseInviteDialog}
-                    disabled={isInviteSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={(event) => void handleSubmitInvite(event as unknown as FormSubmitEvent)}
-                    disabled={isInviteSubmitting}
-                  >
-                    초대하기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseInviteDialog}
+                  disabled={isInviteSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={(event) => void handleSubmitInvite(event as unknown as FormSubmitEvent)}
+                  disabled={isInviteSubmitting}
+                >
+                  초대하기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -370,7 +368,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
@@ -378,7 +376,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className="button medium submit"
                   onClick={(event) => void handleSubmitInvite(event as unknown as FormSubmitEvent)}
                   disabled={isInviteSubmitting}
                 >
@@ -393,7 +390,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={Boolean(targetInvite)}
               onClose={handleCloseCancelDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>초대 취소 답변</h2>
               <button
@@ -405,33 +402,31 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={3}>
+              <div className="VhiDrawer-bottom-content">
                 <Typography variant="subtitle2">
                   정말로 초대를 취소하시겠습니까?
                   <br />
                   취소된 초대장은 더이상 사용할 수 없습니다.
                 </Typography>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseCancelDialog}
-                    disabled={isCancelSubmitting}
-                  >
-                    초대 유지
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmitCancelInvite}
-                    disabled={isCancelSubmitting}
-                  >
-                    초대 취소
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseCancelDialog}
+                  disabled={isCancelSubmitting}
+                >
+                  초대 유지
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSubmitCancelInvite}
+                  disabled={isCancelSubmitting}
+                >
+                  초대 취소
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -461,18 +456,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
                   초대 유지
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSubmitCancelInvite}
-                  disabled={isCancelSubmitting}
-                >
+                <button type="button" onClick={handleSubmitCancelInvite} disabled={isCancelSubmitting}>
                   초대 취소
                 </button>
               </DialogActions>

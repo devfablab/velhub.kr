@@ -311,10 +311,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={isDeleteDialogOpen}
               onClose={handleCloseDeleteDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>페이지 삭제</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDeleteDialog}
                 aria-label="닫기"
@@ -322,7 +323,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
 
@@ -333,26 +334,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDeleteDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium warning"
-                    onClick={handleDelete}
-                    disabled={isSubmitting}
-                  >
-                    삭제
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small warning" onClick={handleDelete} disabled={isSubmitting}>
+                  삭제
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -364,6 +359,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             >
               <DialogTitle>페이지 삭제</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDeleteDialog}
                 disabled={isSubmitting}
@@ -386,13 +382,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseDeleteDialog}
                   disabled={isSubmitting}
                 >
                   취소
                 </button>
-                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="warning-button" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </DialogActions>
@@ -404,10 +400,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={isRestoreDialogOpen}
               onClose={handleCloseRestoreDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>페이지 복구</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseRestoreDialog}
                 aria-label="닫기"
@@ -415,7 +412,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
 
@@ -426,25 +423,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseRestoreDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleRestore}
-                    disabled={isSubmitting}
-                  >
-                    확인
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small submit" onClick={handleRestore} disabled={isSubmitting}>
+                  확인
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -456,6 +448,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             >
               <DialogTitle>페이지 복구</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseRestoreDialog}
                 disabled={isSubmitting}
@@ -478,13 +471,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseRestoreDialog}
                   disabled={isSubmitting}
                 >
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleRestore} disabled={isSubmitting}>
+                <button type="button" onClick={handleRestore} disabled={isSubmitting}>
                   확인
                 </button>
               </DialogActions>

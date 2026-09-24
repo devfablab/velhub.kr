@@ -519,7 +519,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           anchor="bottom"
           open={Boolean(actionType)}
           onClose={handleCloseActionDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>{getActionTitle()}</h2>
           <button
@@ -527,15 +527,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
             className="close-button"
             onClick={handleCloseActionDialog}
             disabled={isActionSubmitting}
+            aria-label="닫기"
           >
             <CloseRoundedIcon />
           </button>
-          <Stack direction="column" gap={2} sx={{ p: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <p className="alert warning">
               <WarningAmberRoundedIcon />
               <span>선택한 멤버에게 해당 처리를 진행합니다.</span>
             </p>
-
             <TextField
               placeholder={getActionReasonLabel()}
               value={actionReason}
@@ -545,7 +545,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
               minRows={4}
               size="small"
             />
-
             {actionType === 'ban' ? (
               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                 <Stack gap={1}>
@@ -570,34 +569,31 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Stack>
               </LocalizationProvider>
             ) : null}
-
             {dialogErrorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
                 <span>{dialogErrorMessage}</span>
               </p>
             ) : null}
-
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseActionDialog}
-                disabled={isActionSubmitting}
-              >
-                취소
-              </button>
-
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleSubmitAction}
-                disabled={isActionSubmitting}
-              >
-                확인
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseActionDialog}
+              disabled={isActionSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={handleSubmitAction}
+              disabled={isActionSubmitting}
+            >
+              확인
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -608,16 +604,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{getActionTitle()}</DialogTitle>
-
           <button
             type="button"
             className="close-button"
             onClick={handleCloseActionDialog}
             disabled={isActionSubmitting}
+            aria-label="닫기"
           >
             <CloseRoundedIcon />
           </button>
-
           <DialogContent>
             <Stack direction="column" gap={2}>
               <p className="alert warning">
@@ -663,23 +658,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
               ) : null}
             </Stack>
           </DialogContent>
-
           <DialogActions>
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseActionDialog}
               disabled={isActionSubmitting}
             >
               취소
             </button>
 
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={handleSubmitAction}
-              disabled={isActionSubmitting}
-            >
+            <button type="button" onClick={handleSubmitAction} disabled={isActionSubmitting}>
               확인
             </button>
           </DialogActions>

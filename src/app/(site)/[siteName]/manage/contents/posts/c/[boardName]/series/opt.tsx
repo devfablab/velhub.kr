@@ -922,10 +922,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={dialogMode === 'new' || dialogMode === 'edit'}
               onClose={handleCloseDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>{dialogMode === 'new' ? '연재 추가' : '연재 수정'}</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDialog}
                 disabled={isSubmitting || isUploadingImage || isDeletingImage}
@@ -933,8 +934,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack gap={1}>
                     <Typography variant="subtitle2">연재 식별자 *</Typography>
@@ -1122,25 +1122,25 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDialog}
-                    disabled={isSubmitting || isUploadingImage || isDeletingImage}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting || isUploadingImage || isDeletingImage}
-                  >
-                    저장
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  저장
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1152,6 +1152,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             >
               <DialogTitle>{dialogMode === 'new' ? '연재 추가' : '연재 수정'}</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseDialog}
                 disabled={isSubmitting || isUploadingImage || isDeletingImage}
@@ -1368,7 +1369,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseDialog}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
@@ -1376,7 +1377,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className="button medium submit"
                   onClick={handleSubmit}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
@@ -1391,13 +1391,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={dialogMode === 'delete'}
               onClose={handleCloseDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>연재 삭제</h2>
-              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                disabled={isSubmitting}
+                aria-label="닫기"
+              >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
@@ -1408,26 +1414,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium warning"
-                    onClick={handleDelete}
-                    disabled={isSubmitting}
-                  >
-                    삭제
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small warning" onClick={handleDelete} disabled={isSubmitting}>
+                  삭제
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1438,10 +1438,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>연재 삭제</DialogTitle>
-              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                disabled={isSubmitting}
+                aria-label="닫기"
+              >
                 <CloseRoundedIcon />
               </button>
-
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
@@ -1455,15 +1460,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="warning-button" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </DialogActions>
@@ -1475,10 +1475,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={isUserDialogOpen}
               onClose={handleCloseUserDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>사용자 검색</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseUserDialog}
                 disabled={isUserSearching}
@@ -1486,7 +1487,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack direction="row" gap={1} alignItems="center">
                     <TextField
@@ -1545,17 +1546,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </Table>
                   </div>
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseUserDialog}
-                    disabled={isUserSearching}
-                  >
-                    닫기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseUserDialog}
+                  disabled={isUserSearching}
+                >
+                  닫기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1567,6 +1568,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             >
               <DialogTitle>사용자 검색</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseUserDialog}
                 disabled={isUserSearching}
@@ -1574,7 +1576,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack direction="row" gap={1} alignItems="center">
@@ -1644,7 +1645,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseUserDialog}
                   disabled={isUserSearching}
                 >

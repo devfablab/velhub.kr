@@ -399,13 +399,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={Boolean(actionType)}
               onClose={handleCloseActionDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>{getActionTitle()}</h2>
-              <button className="close-button" onClick={handleCloseActionDialog}>
+              <button type="button" className="close-button" onClick={handleCloseActionDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {actionType === 'kick' || actionType === 'ban' ? (
                     <Stack gap={1}>
@@ -452,26 +452,25 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseActionDialog}
-                    disabled={isActionSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmitAction}
-                    disabled={isActionSubmitting}
-                  >
-                    확인
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseActionDialog}
+                  disabled={isActionSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSubmitAction}
+                  disabled={isActionSubmitting}
+                >
+                  확인
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -482,7 +481,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{getActionTitle()}</DialogTitle>
-              <button className="close-button" onClick={handleCloseActionDialog}>
+              <button type="button" className="close-button" onClick={handleCloseActionDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
@@ -530,18 +529,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close`"
+                  className="cancel-button"
                   onClick={handleCloseActionDialog}
                   disabled={isActionSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSubmitAction}
-                  disabled={isActionSubmitting}
-                >
+                <button type="button" onClick={handleSubmitAction} disabled={isActionSubmitting}>
                   확인
                 </button>
               </DialogActions>

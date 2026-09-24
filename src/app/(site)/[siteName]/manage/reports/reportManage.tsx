@@ -1009,32 +1009,32 @@ export default function ReportManage({ targetType, initialData, initialError }: 
         ) : null}
 
         {isMobile ? (
-          <Drawer anchor="bottom" open={Boolean(selectedReport)} onClose={handleClose} className="VhiDrawer-bottom">
+          <Drawer
+            anchor="bottom"
+            open={Boolean(selectedReport)}
+            onClose={handleClose}
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          >
             <h2>신고 처리</h2>
-            <button type="button" className="close-button" onClick={handleClose} disabled={saving}>
+            <button type="button" className="close-button" onClick={handleClose} disabled={saving} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
-
-            <Stack gap={3}>
-              {detailContent}
-
-              <Stack direction="column" gap={1.5}>
-                <button type="button" className="button medium cancel" onClick={handleClose} disabled={saving}>
-                  닫기
+            <div className="VhiDrawer-bottom-content">{detailContent}</div>
+            <div className="drawer-dialog-actions">
+              <button type="button" className="button small cancel" onClick={handleClose} disabled={saving}>
+                닫기
+              </button>
+              {!showPast && selectedReport && !canFinalize(selectedReport) ? (
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSave}
+                  disabled={saving || !nextStatus}
+                >
+                  {getSubmitLabel(targetType, nextStatus)}
                 </button>
-
-                {!showPast && selectedReport && !canFinalize(selectedReport) ? (
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSave}
-                    disabled={saving || !nextStatus}
-                  >
-                    {getSubmitLabel(targetType, nextStatus)}
-                  </button>
-                ) : null}
-              </Stack>
-            </Stack>
+              ) : null}
+            </div>
           </Drawer>
         ) : (
           <Dialog
@@ -1045,24 +1045,17 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>신고 처리</DialogTitle>
-            <button type="button" className="close-button" onClick={handleClose} disabled={saving}>
+            <button type="button" className="close-button" onClick={handleClose} disabled={saving} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
-
             <DialogContent>{detailContent}</DialogContent>
-
             <DialogActions>
-              <button type="button" className="button medium close" onClick={handleClose} disabled={saving}>
+              <button type="button" className="cancel-button" onClick={handleClose} disabled={saving}>
                 닫기
               </button>
 
               {!showPast && selectedReport && !canFinalize(selectedReport) ? (
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSave}
-                  disabled={saving || !nextStatus}
-                >
+                <button type="button" onClick={handleSave} disabled={saving || !nextStatus}>
                   {getSubmitLabel(targetType, nextStatus)}
                 </button>
               ) : null}
@@ -1075,35 +1068,37 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             anchor="bottom"
             open={Boolean(messageReport)}
             onClose={handleCloseMessages}
-            className="VhiDrawer-bottom"
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>소명 메시지</h2>
-            <button type="button" className="close-button" onClick={handleCloseMessages} disabled={messageSaving}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseMessages}
+              disabled={messageSaving}
+              aria-label="닫기"
+            >
               <CloseRoundedIcon />
             </button>
-
-            <Stack gap={3}>
-              {messageContent}
-
-              <Stack direction="column" gap={1.5}>
-                <button
-                  type="button"
-                  className="button medium cancel"
-                  onClick={handleCloseMessages}
-                  disabled={messageSaving}
-                >
-                  닫기
-                </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleSendReply()}
-                  disabled={messageSaving || messageLoading || !messageText.trim()}
-                >
-                  보내기
-                </button>
-              </Stack>
-            </Stack>
+            <div className="VhiDrawer-bottom-content">{messageContent}</div>
+            <div className="drawer-dialog-actions">
+              <button
+                type="button"
+                className="button small cancel"
+                onClick={handleCloseMessages}
+                disabled={messageSaving}
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                className="button small submit"
+                onClick={() => void handleSendReply()}
+                disabled={messageSaving || messageLoading || !messageText.trim()}
+              >
+                보내기
+              </button>
+            </div>
           </Drawer>
         ) : (
           <Dialog
@@ -1114,22 +1109,22 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>소명 메시지</DialogTitle>
-            <button type="button" className="close-button" onClick={handleCloseMessages} disabled={messageSaving}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseMessages}
+              disabled={messageSaving}
+              aria-label="닫기"
+            >
               <CloseRoundedIcon />
             </button>
             <DialogContent>{messageContent}</DialogContent>
             <DialogActions>
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCloseMessages}
-                disabled={messageSaving}
-              >
+              <button type="button" className="cancel-button" onClick={handleCloseMessages} disabled={messageSaving}>
                 닫기
               </button>
               <button
                 type="button"
-                className="button medium submit"
                 onClick={() => void handleSendReply()}
                 disabled={messageSaving || messageLoading || !messageText.trim()}
               >
@@ -1139,42 +1134,87 @@ export default function ReportManage({ targetType, initialData, initialError }: 
           </Dialog>
         )}
 
-        <Dialog
-          open={Boolean(finalReport)}
-          onClose={handleCloseFinal}
-          fullWidth
-          maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
-        >
-          <DialogTitle>최종 판단</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseFinal} disabled={finalSaving}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography variant="body2">선택하세요.</Typography>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseFinal} disabled={finalSaving}>
-              닫기
-            </button>
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={Boolean(finalReport)}
+            onClose={handleCloseFinal}
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          >
+            <h2>최종 판단</h2>
             <button
               type="button"
-              className="button medium warning"
-              onClick={() => void handleFinalize('keep_deleted')}
+              className="close-button"
+              onClick={handleCloseFinal}
               disabled={finalSaving}
+              aria-label="닫기"
             >
-              삭제상태 유지
+              <CloseRoundedIcon />
             </button>
+            <div className="VhiDrawer-bottom-content">
+              <Typography variant="body2">선택하세요.</Typography>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button type="button" className="button small cancel" onClick={handleCloseFinal} disabled={finalSaving}>
+                닫기
+              </button>
+              <button
+                type="button"
+                className="button small warning"
+                onClick={() => void handleFinalize('keep_deleted')}
+                disabled={finalSaving}
+              >
+                삭제상태 유지
+              </button>
+              <button
+                type="button"
+                className="button small submit"
+                onClick={() => void handleFinalize('restore')}
+                disabled={finalSaving}
+              >
+                복구하기
+              </button>
+            </div>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={Boolean(finalReport)}
+            onClose={handleCloseFinal}
+            fullWidth
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
+          >
+            <DialogTitle>최종 판단</DialogTitle>
             <button
               type="button"
-              className="button medium submit"
-              onClick={() => void handleFinalize('restore')}
+              className="close-button"
+              onClick={handleCloseFinal}
               disabled={finalSaving}
+              aria-label="닫기"
             >
-              복구하기
+              <CloseRoundedIcon />
             </button>
-          </DialogActions>
-        </Dialog>
+            <DialogContent>
+              <Typography variant="body2">선택하세요.</Typography>
+            </DialogContent>
+            <DialogActions>
+              <button type="button" className="cancel-button" onClick={handleCloseFinal} disabled={finalSaving}>
+                닫기
+              </button>
+              <button
+                type="button"
+                className="warning-button"
+                onClick={() => void handleFinalize('keep_deleted')}
+                disabled={finalSaving}
+              >
+                삭제상태 유지
+              </button>
+              <button type="button" onClick={() => void handleFinalize('restore')} disabled={finalSaving}>
+                복구하기
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
 
         <PopupMessage
           open={Boolean(snackbarMessage)}

@@ -314,7 +314,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={Boolean(renameTarget)}
               onClose={handleCloseRenameDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>게시판 이름 변경</h2>
               <button
@@ -326,8 +326,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={3}>
+              <div className="VhiDrawer-bottom-content">
                 <TextField
                   placeholder="게시판 이름"
                   value={renameValue}
@@ -336,26 +335,25 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   size="small"
                   sx={{ mt: 1 }}
                 />
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseRenameDialog}
-                    disabled={isRenaming}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={() => void handleRename()}
-                    disabled={isRenaming}
-                  >
-                    저장
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseRenameDialog}
+                  disabled={isRenaming}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={() => void handleRename()}
+                  disabled={isRenaming}
+                >
+                  저장
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -386,20 +384,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 />
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseRenameDialog}
-                  disabled={isRenaming}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseRenameDialog} disabled={isRenaming}>
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleRename()}
-                  disabled={isRenaming}
-                >
+                <button type="button" onClick={() => void handleRename()} disabled={isRenaming}>
                   저장
                 </button>
               </DialogActions>

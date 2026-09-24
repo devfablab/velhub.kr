@@ -1070,13 +1070,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
             anchor="bottom"
             open={dialogMode === 'delete'}
             onClose={handleCloseDeleteDialog}
-            className="VhiDrawer-bottom"
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>게시물 삭제</h2>
-            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseDeleteDialog}
+              disabled={isDeleting}
+              aria-label="닫기"
+            >
               <CloseRoundedIcon />
             </button>
-            <Stack gap={2} sx={{ pt: 1 }}>
+            <div className="VhiDrawer-bottom-content">
               <Stack gap={2} sx={{ pt: 1 }}>
                 <p className="alert info">
                   <InfoOutlineRoundedIcon />
@@ -1110,20 +1116,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </p>
                 ) : null}
               </Stack>
-              <Stack direction="column" gap={1.5}>
-                <button
-                  type="button"
-                  className="button medium cancel"
-                  onClick={handleCloseDeleteDialog}
-                  disabled={isDeleting}
-                >
-                  취소
-                </button>
-                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isDeleting}>
-                  삭제
-                </button>
-              </Stack>
-            </Stack>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button
+                type="button"
+                className="button small cancel"
+                onClick={handleCloseDeleteDialog}
+                disabled={isDeleting}
+              >
+                취소
+              </button>
+              <button type="button" className="button small danger" onClick={handleDelete} disabled={isDeleting}>
+                삭제
+              </button>
+            </div>
           </Drawer>
         ) : (
           <Dialog
@@ -1134,7 +1140,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>게시물 삭제</DialogTitle>
-            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseDeleteDialog}
+              disabled={isDeleting}
+              aria-label="닫기"
+            >
               <CloseRoundedIcon />
             </button>
             <DialogContent>
@@ -1173,15 +1185,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </Stack>
             </DialogContent>
             <DialogActions>
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCloseDeleteDialog}
-                disabled={isDeleting}
-              >
+              <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                 취소
               </button>
-              <button type="button" className="button medium danger" onClick={handleDelete} disabled={isDeleting}>
+              <button type="button" className="delete-button" onClick={handleDelete} disabled={isDeleting}>
                 삭제
               </button>
             </DialogActions>
@@ -1193,13 +1200,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
             anchor="bottom"
             open={dialogMode === 'restore'}
             onClose={handleCloseDeleteDialog}
-            className="VhiDrawer-bottom"
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>게시물 복구</h2>
-            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseDeleteDialog}
+              disabled={isDeleting}
+              aria-label="닫기"
+            >
               <CloseRoundedIcon />
             </button>
-            <Stack gap={2} sx={{ pt: 1 }}>
+            <div className="VhiDrawer-bottom-content">
               <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography variant="subtitle2">
                   해당 게시물을 복구하시겠습니까?
@@ -1214,20 +1227,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </p>
                 ) : null}
               </Stack>
-              <Stack direction="column" gap={1.5}>
-                <button
-                  type="button"
-                  className="button medium cancel"
-                  onClick={handleCloseDeleteDialog}
-                  disabled={isDeleting}
-                >
-                  취소
-                </button>
-                <button type="button" className="button medium submit" onClick={handleDelete} disabled={isDeleting}>
-                  확인
-                </button>
-              </Stack>
-            </Stack>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button
+                type="button"
+                className="button small cancel"
+                onClick={handleCloseDeleteDialog}
+                disabled={isDeleting}
+              >
+                취소
+              </button>
+              <button type="button" className="button small submit" onClick={handleDelete} disabled={isDeleting}>
+                확인
+              </button>
+            </div>
           </Drawer>
         ) : (
           <Dialog
@@ -1238,7 +1251,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>게시물 복구</DialogTitle>
-            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseDeleteDialog}
+              disabled={isDeleting}
+              aria-label="닫기"
+            >
               <CloseRoundedIcon />
             </button>
             <DialogContent>
@@ -1258,15 +1277,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </Stack>
             </DialogContent>
             <DialogActions>
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCloseDeleteDialog}
-                disabled={isDeleting}
-              >
+              <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                 취소
               </button>
-              <button type="button" className="button medium submit" onClick={handleDelete} disabled={isDeleting}>
+              <button type="button" onClick={handleDelete} disabled={isDeleting}>
                 확인
               </button>
             </DialogActions>

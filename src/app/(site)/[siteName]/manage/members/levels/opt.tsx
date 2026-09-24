@@ -609,13 +609,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={isIconDialogOpen}
               onClose={handleCloseIconDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>아이콘 변경</h2>
-              <button className="close-button" onClick={handleCloseIconDialog}>
+              <button type="button" className="close-button" onClick={handleCloseIconDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <div className={styles['popup-level-rows']}>
                     {levels.map((level) => (
@@ -683,18 +683,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     ))}
                   </div>
                 </Stack>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseIconDialog}
-                    disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
-                  >
-                    닫기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseIconDialog}
+                  disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
+                >
+                  닫기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -705,7 +704,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>아이콘 변경</DialogTitle>
-              <button className="close-button" onClick={handleCloseIconDialog}>
+              <button type="button" className="close-button" onClick={handleCloseIconDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
@@ -778,7 +777,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseIconDialog}
                   disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
                 >

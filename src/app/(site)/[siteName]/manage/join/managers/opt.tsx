@@ -999,7 +999,12 @@ export default function Opt({
           )}
 
           {isMobile ? (
-            <Drawer anchor="bottom" open={isIconDialogOpen} onClose={closeIconDialog} className="VhiDrawer-bottom">
+            <Drawer
+              anchor="bottom"
+              open={isIconDialogOpen}
+              onClose={closeIconDialog}
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            >
               <h2>아이콘 변경</h2>
               <button
                 type="button"
@@ -1010,8 +1015,7 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {iconErrorMessage ? (
                     <p className="alert error">
@@ -1095,18 +1099,17 @@ export default function Opt({
                     })}
                   </div>
                 </Stack>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={closeIconDialog}
-                    disabled={isUploadingIcon || Boolean(deletingIconId)}
-                  >
-                    닫기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={closeIconDialog}
+                  disabled={isUploadingIcon || Boolean(deletingIconId)}
+                >
+                  닫기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1215,7 +1218,7 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={closeIconDialog}
                   disabled={isUploadingIcon || Boolean(deletingIconId)}
                 >
@@ -1226,7 +1229,12 @@ export default function Opt({
           )}
 
           {isMobile ? (
-            <Drawer anchor="bottom" open={isSearchDialogOpen} onClose={closeSearchDialog} className="VhiDrawer-bottom">
+            <Drawer
+              anchor="bottom"
+              open={isSearchDialogOpen}
+              onClose={closeSearchDialog}
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            >
               <h2>멤버 검색</h2>
               <button
                 type="button"
@@ -1237,15 +1245,13 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-
-              <Stack gap={3}>
+              <div className="VhiDrawer-bottom-content">
                 {searchDialogErrorMessage ? (
                   <p className="alert error">
                     <ErrorOutlineRoundedIcon />
                     <span>{searchDialogErrorMessage}</span>
                   </p>
                 ) : null}
-
                 <Stack component="form" gap={3} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
                   <Stack direction="row" gap={1} alignItems="center">
                     <TextField
@@ -1430,17 +1436,17 @@ export default function Opt({
                     </Stack>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={closeSearchDialog}
-                    disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
-                  >
-                    닫기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={closeSearchDialog}
+                  disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
+                >
+                  닫기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1460,7 +1466,6 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-
               <DialogContent>
                 <Stack component="form" gap={2} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
                   {searchDialogErrorMessage ? (
@@ -1656,7 +1661,7 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={closeSearchDialog}
                   disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
                 >
@@ -1671,7 +1676,7 @@ export default function Opt({
               anchor="bottom"
               open={isOwnerTransferConfirmOpen}
               onClose={closeOwnerTransferConfirm}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>운영자 교체</h2>
               <button
@@ -1683,25 +1688,32 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={3}>
-                <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleRequestOwnerTransfer()}
-                  disabled={isSubmittingOwnerTransfer}
-                >
-                  확인
-                </button>
-                <button
-                  type="button"
-                  className="button medium cancel"
-                  onClick={closeOwnerTransferConfirm}
-                  disabled={isSubmittingOwnerTransfer}
-                >
+              <div className="VhiDrawer-bottom-content">
+                <Stack gap={3}>
+                  <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void handleRequestOwnerTransfer()}
+                    disabled={isSubmittingOwnerTransfer}
+                  >
+                    확인
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={closeOwnerTransferConfirm}
+                    disabled={isSubmittingOwnerTransfer}
+                  >
+                    닫기
+                  </button>
+                </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button type="button" className="button small cancel" onClick={closeOwnerTransferConfirm}>
                   닫기
                 </button>
-              </Stack>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1727,7 +1739,7 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={closeOwnerTransferConfirm}
                   disabled={isSubmittingOwnerTransfer}
                 >
@@ -1735,7 +1747,6 @@ export default function Opt({
                 </button>
                 <button
                   type="button"
-                  className="button medium submit"
                   onClick={() => void handleRequestOwnerTransfer()}
                   disabled={isSubmittingOwnerTransfer}
                 >
@@ -1752,7 +1763,7 @@ export default function Opt({
                   anchor="bottom"
                   open={isManagerEditOpen}
                   onClose={closeManagerEdit}
-                  className="VhiDrawer-bottom"
+                  className="VhiDrawer-bottom VhiDrawer-bottom-service"
                 >
                   <h2>매니저 변경</h2>
                   <button
@@ -1763,17 +1774,17 @@ export default function Opt({
                   >
                     <CloseRoundedIcon />
                   </button>
-                  {managerEditContent}
-                  <Stack direction="column" gap={1.5}>
+                  <div className="VhiDrawer-bottom-content">{managerEditContent}</div>
+                  <div className="drawer-dialog-actions">
                     <button
                       type="button"
-                      className="button medium cancel"
+                      className="button small cancel"
                       onClick={closeManagerEdit}
                       disabled={isSubmittingDelete || isSubmittingMove}
                     >
                       닫기
                     </button>
-                  </Stack>
+                  </div>
                 </Drawer>
               ) : (
                 <Dialog
@@ -1796,7 +1807,7 @@ export default function Opt({
                   <DialogActions>
                     <button
                       type="button"
-                      className="button medium close"
+                      className="cancel-button"
                       onClick={closeManagerEdit}
                       disabled={isSubmittingDelete || isSubmittingMove}
                     >

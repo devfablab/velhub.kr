@@ -205,17 +205,24 @@ export default function Opt({ initialData, initialError }: OptProps) {
         </div>
       </div>
       {isMobile ? (
-        <Drawer anchor="bottom" open={Boolean(notice)} onClose={() => setNotice(null)} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={Boolean(notice)}
+          onClose={() => setNotice(null)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>{notice?.title}</h2>
           <button type="button" className="close-button" onClick={() => setNotice(null)} aria-label="팝업 닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <Typography variant="subtitle2">{notice?.message}</Typography>
-            <button type="button" onClick={() => setNotice(null)} className="button medium submit">
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small submit" onClick={() => setNotice(null)}>
               확인
             </button>
-          </Stack>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -233,7 +240,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <Typography variant="subtitle2">{notice?.message}</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" onClick={() => setNotice(null)} className="button medium submit">
+            <button type="button" onClick={() => setNotice(null)}>
               확인
             </button>
           </DialogActions>

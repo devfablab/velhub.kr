@@ -659,10 +659,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={isOwnerTransferOpen}
               onClose={handleCloseOwnerTransfer}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>운영자 교체</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseOwnerTransfer}
                 aria-label="운영자 교체 창 닫기"
@@ -670,7 +671,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Typography variant="body2">
                   선택한 팀원이 수락하면 운영자 권한이 이전되고 현재 운영자는 일반 팀원이 됩니다.
                 </Typography>
@@ -694,25 +695,25 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       ))}
                   </TextField>
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseOwnerTransfer}
-                    disabled={isOwnerTransferSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmitOwnerTransfer}
-                    disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
-                  >
-                    요청하기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseOwnerTransfer}
+                  disabled={isOwnerTransferSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSubmitOwnerTransfer}
+                  disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
+                >
+                  요청하기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -724,6 +725,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             >
               <DialogTitle>운영자 교체</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseOwnerTransfer}
                 aria-label="운영자 교체 창 닫기"
@@ -762,7 +764,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseOwnerTransfer}
                   disabled={isOwnerTransferSubmitting}
                 >
@@ -770,7 +772,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="button medium submit"
                   onClick={handleSubmitOwnerTransfer}
                   disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
                 >
@@ -785,13 +786,18 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={Boolean(selectedTeam)}
               onClose={handleCloseDetail}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>팀블로그 정보</h2>
-              <button className="close-button" onClick={handleCloseDetail} aria-label="팀블로그 정보 창 닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDetail}
+                aria-label="팀블로그 정보 창 닫기"
+              >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 {selectedTeam ? (
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Box>
@@ -833,12 +839,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     ) : null}
                   </Stack>
                 ) : null}
-                <Stack direction="column" gap={1.5}>
-                  <button type="button" className="button medium cancel" onClick={handleCloseDetail}>
-                    닫기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button type="button" className="button small cancel" onClick={handleCloseDetail}>
+                  닫기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -849,7 +855,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>팀블로그 정보</DialogTitle>
-              <button className="close-button" onClick={handleCloseDetail} aria-label="팀블로그 정보 창 닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDetail}
+                aria-label="팀블로그 정보 창 닫기"
+              >
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
@@ -896,7 +907,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 ) : null}
               </DialogContent>
               <DialogActions>
-                <button type="button" className="button medium close" onClick={handleCloseDetail}>
+                <button type="button" className="cancel-button" onClick={handleCloseDetail}>
                   닫기
                 </button>
               </DialogActions>
@@ -908,7 +919,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={Boolean(targetRoleTeam)}
               onClose={handleCloseRoleDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>
                 {nextRole === 'observer'
@@ -918,6 +929,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     : '역할 변경'}
               </h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseRoleDialog}
                 aria-label="역할 변경 창 닫기"
@@ -925,7 +937,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Typography>
                   {nextRole === 'observer' ? (
                     <>
@@ -943,26 +955,25 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     <>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</>
                   )}
                 </Typography>
-
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseRoleDialog}
-                    disabled={isRoleSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmitRole}
-                    disabled={isRoleSubmitting}
-                  >
-                    {nextRole === 'observer' || targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseRoleDialog}
+                  disabled={isRoleSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSubmitRole}
+                  disabled={isRoleSubmitting}
+                >
+                  {nextRole === 'observer' || targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -980,6 +991,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     : '역할 변경'}
               </DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseRoleDialog}
                 disabled={isRoleSubmitting}
@@ -987,7 +999,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               >
                 <CloseRoundedIcon />
               </button>
-
               <DialogContent>
                 <Typography>
                   {nextRole === 'observer' ? (
@@ -1010,18 +1021,13 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseRoleDialog}
                   disabled={isRoleSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSubmitRole}
-                  disabled={isRoleSubmitting}
-                >
+                <button type="button" onClick={handleSubmitRole} disabled={isRoleSubmitting}>
                   {nextRole === 'observer' || targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                 </button>
               </DialogActions>
@@ -1033,10 +1039,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={Boolean(targetTeam)}
               onClose={handleCloseBlockDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseBlockDialog}
                 disabled={isSubmitting}
@@ -1044,7 +1051,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Typography>
                   {nextBlockState ? (
                     <>
@@ -1068,25 +1075,25 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     </>
                   )}
                 </Typography>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseBlockDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium warning"
-                    onClick={handleSubmitBlock}
-                    disabled={isSubmitting}
-                  >
-                    {nextBlockState ? '차단' : '차단 해제'}
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseBlockDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small warning"
+                  onClick={handleSubmitBlock}
+                  disabled={isSubmitting}
+                >
+                  {nextBlockState ? '차단' : '차단 해제'}
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1098,6 +1105,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             >
               <DialogTitle>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseBlockDialog}
                 disabled={isSubmitting}
@@ -1133,18 +1141,13 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseBlockDialog}
                   disabled={isSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium warning"
-                  onClick={handleSubmitBlock}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="warning-button" onClick={handleSubmitBlock} disabled={isSubmitting}>
                   {nextBlockState ? '차단' : '차단 해제'}
                 </button>
               </DialogActions>
@@ -1156,10 +1159,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={isInviteDialogOpen}
               onClose={handleCloseInviteDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>팀원 초대</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseInviteDialog}
                 aria-label="초대 창 닫기"
@@ -1167,7 +1171,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={1}>
                   <Stack>
                     <Typography variant="subtitle2">이메일</Typography>
@@ -1194,25 +1198,25 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     </TextField>
                   </Stack>
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseInviteDialog}
-                    disabled={isInviteSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmitInvite}
-                    disabled={isInviteSubmitting}
-                  >
-                    초대하기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseInviteDialog}
+                  disabled={isInviteSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleSubmitInvite}
+                  disabled={isInviteSubmitting}
+                >
+                  초대하기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1224,6 +1228,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             >
               <DialogTitle>팀원 초대</DialogTitle>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseInviteDialog}
                 aria-label="초대 창 닫기"
@@ -1262,18 +1267,13 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSubmitInvite}
-                  disabled={isInviteSubmitting}
-                >
+                <button type="button" onClick={handleSubmitInvite} disabled={isInviteSubmitting}>
                   초대하기
                 </button>
               </DialogActions>
@@ -1285,13 +1285,18 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={isInviteListDialogOpen}
               onClose={handleCloseInviteListDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>초대 현황</h2>
-              <button className="close-button" onClick={handleCloseInviteListDialog} aria-label="초대 현황 창 닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseInviteListDialog}
+                aria-label="초대 현황 창 닫기"
+              >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <div className={`paper ${styles.paper}`}>
                   <Table size="small">
                     <TableHead>
@@ -1326,12 +1331,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     </TableBody>
                   </Table>
                 </div>
-                <Stack direction="column" gap={1.5}>
-                  <button type="button" className="button medium cancel" onClick={handleCloseInviteListDialog}>
-                    닫기
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button type="button" className="button small cancel" onClick={handleCloseInviteListDialog}>
+                  닫기
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1342,10 +1347,14 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>초대 현황</DialogTitle>
-              <button className="close-button" onClick={handleCloseInviteListDialog} aria-label="초대 현황 창 닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseInviteListDialog}
+                aria-label="초대 현황 창 닫기"
+              >
                 <CloseRoundedIcon />
               </button>
-
               <DialogContent>
                 <div className={`paper ${styles.paper}`}>
                   <Table size="small">
@@ -1383,7 +1392,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </div>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="button medium close" onClick={handleCloseInviteListDialog}>
+                <button type="button" className="cancel-button" onClick={handleCloseInviteListDialog}>
                   닫기
                 </button>
               </DialogActions>
@@ -1395,10 +1404,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={Boolean(targetInvite)}
               onClose={handleCloseCancelDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>초대 취소</h2>
               <button
+                type="button"
                 className="close-button"
                 onClick={handleCloseCancelDialog}
                 aria-label="초대 취소 창 닫기"
@@ -1406,31 +1416,31 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Typography>
                   정말로 초대를 취소하시겠습니까?
                   <br />
                   취소된 초대장은 상대방이 더이상 이용이 불가합니다.
                 </Typography>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseCancelDialog}
-                    disabled={isCancelSubmitting}
-                  >
-                    초대 유지
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium warning"
-                    onClick={handleSubmitCancelInvite}
-                    disabled={isCancelSubmitting}
-                  >
-                    초대 취소
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseCancelDialog}
+                  disabled={isCancelSubmitting}
+                >
+                  초대 유지
+                </button>
+                <button
+                  type="button"
+                  className="button small warning"
+                  onClick={handleSubmitCancelInvite}
+                  disabled={isCancelSubmitting}
+                >
+                  초대 취소
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -1441,7 +1451,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>초대 취소</DialogTitle>
-              <button className="close-button" onClick={handleCloseCancelDialog} aria-label="초대 취소 창 닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseCancelDialog}
+                aria-label="초대 취소 창 닫기"
+              >
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
@@ -1454,7 +1469,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <DialogActions>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
@@ -1462,7 +1477,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="button medium warning"
+                  className="warning-button"
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >

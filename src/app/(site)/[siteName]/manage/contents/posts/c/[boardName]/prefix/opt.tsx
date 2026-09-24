@@ -358,13 +358,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={dialogMode === 'new' || dialogMode === 'edit'}
               onClose={handleCloseDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</h2>
-              <button className="close-button" onClick={handleCloseDialog}>
+              <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <TextField
                     placeholder="말머리명"
@@ -381,20 +381,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
-                    저장
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small submit" onClick={handleSubmit} disabled={isSubmitting}>
+                  저장
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -405,7 +405,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
-              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                disabled={isSubmitting}
+                aria-label="닫기"
+              >
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
@@ -427,15 +433,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                   저장
                 </button>
               </DialogActions>
@@ -447,13 +448,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={dialogMode === 'delete'}
               onClose={handleCloseDialog}
-              className="VhiDrawer-bottom"
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
               <h2>말머리 삭제</h2>
-              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                disabled={isSubmitting}
+                aria-label="닫기"
+              >
                 <CloseRoundedIcon />
               </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
+              <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
 
@@ -464,25 +471,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseDialog}
-                    disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium warning"
-                    onClick={handleDelete}
-                    disabled={isSubmitting}
-                  >
-                    삭제
-                  </button>
-                </Stack>
-              </Stack>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button small warning" onClick={handleDelete} disabled={isSubmitting}>
+                  삭제
+                </button>
+              </div>
             </Drawer>
           ) : (
             <Dialog
@@ -493,7 +495,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>말머리 삭제</DialogTitle>
-              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                disabled={isSubmitting}
+                aria-label="닫기"
+              >
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
@@ -509,15 +517,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="warning-button" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </DialogActions>
