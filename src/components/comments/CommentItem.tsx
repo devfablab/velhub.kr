@@ -405,30 +405,53 @@ export default function CommentItem({
           anchor="bottom"
           open={Boolean(confirmAction)}
           onClose={() => setConfirmAction(null)}
-          className={`VhiDrawer-bottom VhiDrawer-bottom-service`}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
-          <h2>추첨 이벤트 설정</h2>
-          <button className="close-button" onClick={() => setConfirmAction(null)} aria-label="추첨 이벤트 설정 닫기">
+          <h2>{confirmDialog.title}</h2>
+          <button
+            type="button"
+            className="close-button"
+            onClick={() => setConfirmAction(null)}
+            aria-label={`${confirmDialog.title} 닫기`}
+          >
             <CloseRoundedIcon />
           </button>
-          <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmDialog.content}</p>
+          <div className="VhiDrawer-bottom-content">
+            <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmDialog.content}</p>
+          </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={() => setConfirmAction(null)} className="button medium cancel">
+            <button type="button" onClick={() => setConfirmAction(null)} className="button small cancel">
               취소
             </button>
             <button
               type="button"
               onClick={() => void confirmDialog.onConfirm()}
               disabled={isSubmitting}
-              className="button medium submit"
+              className={
+                confirmDialog.confirmClassName === 'delete-button' ? 'button small danger' : 'button small submit'
+              }
             >
               {confirmDialog.confirmLabel}
             </button>
           </div>
         </Drawer>
       ) : (
-        <Dialog open={Boolean(confirmAction)} onClose={() => setConfirmAction(null)} className="vh-dialog">
+        <Dialog
+          open={Boolean(confirmAction)}
+          onClose={() => setConfirmAction(null)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>{confirmDialog.title}</DialogTitle>
+          <button
+            type="button"
+            className="close-button"
+            onClick={() => setConfirmAction(null)}
+            aria-label={`${confirmDialog.title} 닫기`}
+          >
+            <CloseRoundedIcon />
+          </button>
           <DialogContent>
             <DialogContentText sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {confirmDialog.content}
@@ -442,7 +465,7 @@ export default function CommentItem({
               type="button"
               onClick={() => void confirmDialog.onConfirm()}
               disabled={isSubmitting}
-              className={confirmDialog.confirmClassName}
+              className={confirmDialog.confirmClassName || undefined}
             >
               {confirmDialog.confirmLabel}
             </button>

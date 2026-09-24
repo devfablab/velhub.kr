@@ -377,37 +377,36 @@ export default function PostPurchaseButton(props: Props) {
       </MinorPaymentControl>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={isConfirmOpen}
+          onClose={handleCloseConfirm}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>포스팅 소장</h2>
           <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
 
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack>
               <Typography variant="body2">{purchaseQuestion}</Typography>
               {renderPurchaseConsent()}
             </Stack>
-
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseConfirm}
-                disabled={isProcessing}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handlePurchase()}
-                disabled={disabled || isProcessing}
-              >
-                {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseConfirm} disabled={isProcessing}>
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void handlePurchase()}
+              disabled={disabled || isProcessing}
+            >
+              {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -429,15 +428,10 @@ export default function PostPurchaseButton(props: Props) {
           </DialogContent>
 
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isProcessing}>
+            <button type="button" className="cancel-button" onClick={handleCloseConfirm} disabled={isProcessing}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handlePurchase()}
-              disabled={disabled || isProcessing}
-            >
+            <button type="button" onClick={() => void handlePurchase()} disabled={disabled || isProcessing}>
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
             </button>
           </DialogActions>
@@ -455,22 +449,24 @@ export default function PostPurchaseButton(props: Props) {
           anchor="bottom"
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
 
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
               <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
-            <button type="button" className="button medium cancel" onClick={handleCloseIdentityDialog}>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
-          </Stack>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -491,7 +487,7 @@ export default function PostPurchaseButton(props: Props) {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="cancel-button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </DialogActions>
