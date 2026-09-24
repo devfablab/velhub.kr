@@ -751,37 +751,42 @@ export default function Opt() {
       <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isCancelDialogOpen} onClose={closeCancelDialog} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={isCancelDialogOpen}
+          onClose={closeCancelDialog}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>개설 취소</h2>
-          <button className="close-button" onClick={closeCancelDialog} aria-label="닫기">
+          <button type="button" className="close-button" onClick={closeCancelDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <Typography>정말로 개설을 취소하시겠어요?</Typography>
-            <Stack direction="row" gap={1.5}>
-              <button type="button" className="button medium" onClick={closeCancelDialog}>
-                닫기
-              </button>
-              <button type="button" className="button medium close" onClick={handleConfirmCancel}>
-                개설 취소
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={closeCancelDialog}>
+              닫기
+            </button>
+            <button type="button" className="button small warning" onClick={handleConfirmCancel}>
+              개설 취소
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={isCancelDialogOpen} onClose={closeCancelDialog} fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>개설 취소</DialogTitle>
-          <button className="close-button" onClick={closeCancelDialog} aria-label="닫기">
+          <button type="button" className="close-button" onClick={closeCancelDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>
             <Typography>정말로 개설을 취소하시겠어요?</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={closeCancelDialog}>
+            <button type="button" className="cancel-button" onClick={closeCancelDialog}>
               닫기
             </button>
-            <button type="button" className="button medium warning" onClick={handleConfirmCancel}>
+            <button type="button" className="warning-button" onClick={handleConfirmCancel}>
               개설 취소
             </button>
           </DialogActions>
@@ -789,31 +794,36 @@ export default function Opt() {
       )}
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isErrorDialogOpen} onClose={closeErrorDialog} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={isErrorDialogOpen}
+          onClose={closeErrorDialog}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>개설 불가</h2>
-          <button className="close-button" onClick={closeErrorDialog} aria-label="닫기">
+          <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <Typography>하단 에러 메시지를 확인해 주세요</Typography>
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium cancel" onClick={closeErrorDialog}>
-                확인
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small submit" onClick={closeErrorDialog}>
+              확인
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={isErrorDialogOpen} onClose={closeErrorDialog} fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>개설 불가</DialogTitle>
-          <button className="close-button" onClick={closeErrorDialog} aria-label="닫기">
+          <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>
             <Typography>하단 에러 메시지를 확인해 주세요</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={closeErrorDialog}>
+            <button type="button" onClick={closeErrorDialog}>
               확인
             </button>
           </DialogActions>

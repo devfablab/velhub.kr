@@ -166,22 +166,6 @@ export default function IdentityAgreement({
   const [isAgreed, setIsAgreed] = useState(false);
   const title = type === 'identity' ? '본인인증 이용안내' : '정산정보 수집 · 이용 안내';
   const agreementLabel = type === 'identity' ? '[필수] 본인인증 이용안내 동의' : '[필수] 정산정보 수집 · 이용 동의';
-  const closeClassName = isMobile ? 'button medium cancel' : 'button medium close';
-
-  const actions = showAgreementCheck ? (
-    <>
-      <button type="button" className={closeClassName} onClick={onClose}>
-        취소
-      </button>
-      <button type="button" className="button medium submit" disabled={!isAgreed} onClick={onConfirm}>
-        다음
-      </button>
-    </>
-  ) : (
-    <button type="button" className={closeClassName} onClick={onClose}>
-      확인
-    </button>
-  );
 
   const content = (
     <Stack gap={3}>
@@ -197,15 +181,28 @@ export default function IdentityAgreement({
 
   if (isMobile) {
     return (
-      <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom">
+      <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
         <h2>{title}</h2>
-        <button type="button" className="close-button" onClick={onClose}>
+        <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>
-        {content}
-        <Stack direction="column" gap={1.5}>
-          {actions}
-        </Stack>
+        <div className="VhiDrawer-bottom-content">{content}</div>
+        <div className="drawer-dialog-actions">
+          {showAgreementCheck ? (
+            <>
+              <button type="button" className="button small cancel" onClick={onClose}>
+                취소
+              </button>
+              <button type="button" className="button small submit" disabled={!isAgreed} onClick={onConfirm}>
+                다음
+              </button>
+            </>
+          ) : (
+            <button type="button" className="button small submit" onClick={onClose}>
+              확인
+            </button>
+          )}
+        </div>
       </Drawer>
     );
   }
@@ -213,11 +210,26 @@ export default function IdentityAgreement({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth className="VhiDialog">
       <DialogTitle>{title}</DialogTitle>
-      <button type="button" className="close-button" onClick={onClose}>
+      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
       <DialogContent>{content}</DialogContent>
-      <DialogActions>{actions}</DialogActions>
+      <DialogActions>
+        {showAgreementCheck ? (
+          <>
+            <button type="button" className="cancel-button" onClick={onClose}>
+              취소
+            </button>
+            <button type="button" disabled={!isAgreed} onClick={onConfirm}>
+              다음
+            </button>
+          </>
+        ) : (
+          <button type="button" onClick={onClose}>
+            확인
+          </button>
+        )}
+      </DialogActions>
     </Dialog>
   );
 }

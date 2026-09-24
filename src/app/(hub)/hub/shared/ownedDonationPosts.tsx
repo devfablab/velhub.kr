@@ -1,9 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { Chip, Dialog, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import { Chip, useTheme } from '@mui/material';
 import { getLinkPreview, type LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { formatDateSimple, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -11,6 +10,7 @@ import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import ResponsivePopup from './ResponsivePopup';
 import boardStyles from '@/app/board.module.sass';
 import styles from '@/app/hub.module.sass';
 
@@ -273,8 +273,6 @@ function PostPreview({ response, errorMessage }: { response: ContentResponse | n
 }
 
 export default function OwnedDonationPosts({ initialData, initialError }: Props) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const posts = Array.isArray(initialData?.posts) ? initialData.posts : [];
   const contentRequestIdReference = useRef(0);
   const [selectedPost, setSelectedPost] = useState<PostRow | null>(null);
@@ -368,34 +366,17 @@ export default function OwnedDonationPosts({ initialData, initialError }: Props)
         </ol>
       </div>
 
-      {!isMobile ? (
-        <Dialog
-          open={Boolean(selectedPost)}
-          onClose={closePreview}
-          maxWidth="lg"
-          fullWidth
-          className={`VhiDialog ${styles['owned-post-dialog']}`}
-        >
-          <DialogTitle>글 보기</DialogTitle>
-          <button type="button" className="close-button" onClick={closePreview} aria-label="글 닫기">
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>{preview}</DialogContent>
-        </Dialog>
-      ) : (
-        <Drawer
-          anchor="bottom"
-          open={Boolean(selectedPost)}
-          onClose={closePreview}
-          className={`VhiDrawer-bottom ${styles['owned-post-drawer']}`}
-        >
-          <h2>글 보기</h2>
-          <button type="button" className="close-button" onClick={closePreview} aria-label="글 닫기">
-            <CloseRoundedIcon />
-          </button>
-          <div className="VhiDrawer-bottom-content">{preview}</div>
-        </Drawer>
-      )}
+      <ResponsivePopup
+        open={Boolean(selectedPost)}
+        onClose={closePreview}
+        title="글 보기"
+        maxWidth="lg"
+        dialogClassName={styles['owned-post-dialog']}
+        drawerClassName={styles['owned-post-drawer']}
+        actions={[{ label: '닫기', intent: 'cancel', onClick: closePreview }]}
+      >
+        {preview}
+      </ResponsivePopup>
     </section>
   );
 }

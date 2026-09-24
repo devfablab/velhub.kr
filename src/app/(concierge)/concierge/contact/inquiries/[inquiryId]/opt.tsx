@@ -2,19 +2,13 @@
 
 import { ChangeEvent, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
-  Drawer,
   FormControlLabel,
   MenuItem,
   Radio,
@@ -23,8 +17,6 @@ import {
   TextField,
   Typography,
   styled,
-  useMediaQuery,
-  useTheme,
 } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import {
@@ -41,6 +33,7 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import InquiryDetails from '@/components/service/concierge/InquiryDetails';
+import ResponsivePopup from '../../../ResponsivePopup';
 import styles from '@/app/concierge.module.sass';
 
 export type Inquiry = {
@@ -114,9 +107,6 @@ export default function Opt({
   const [guardianIdentityName, setGuardianIdentityName] = useState<string | null>(null);
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [verifyingIdentity, setVerifyingIdentity] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-
   async function load() {
     const response = await fetch(`/api/concierge/contact/inquiries/${inquiryId}`, { cache: 'no-store' });
     const result = (await response.json().catch(() => null)) as { inquiry?: Inquiry; error?: string } | null;
@@ -702,85 +692,28 @@ export default function Opt({
           </button>
         ) : null}
       </Stack>
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={isWithdrawConfirmOpen}
-          onClose={closeWithdrawConfirm}
-          className="VhiDrawer-bottom"
-        >
-          <h2>문의 철회</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={closeWithdrawConfirm}
-            disabled={withdrawing}
-            aria-label="문의 철회 팝업 닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            <Typography variant="subtitle2">
-              이 문의를 철회하시겠어요? 철회한 문의는 다시 처리할 수 없습니다.
-            </Typography>
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={closeWithdrawConfirm}
-                disabled={withdrawing}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium danger"
-                onClick={() => void withdrawInquiry()}
-                disabled={withdrawing}
-              >
-                {withdrawing ? '철회 중' : '문의 철회'}
-              </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog
-          open={isWithdrawConfirmOpen}
-          onClose={closeWithdrawConfirm}
-          fullWidth
-          maxWidth="xs"
-          className="VhiDialog"
-        >
-          <DialogTitle>문의 철회</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={closeWithdrawConfirm}
-            disabled={withdrawing}
-            aria-label="문의 철회 팝업 닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography variant="subtitle2">
-              이 문의를 철회하시겠어요? 철회한 문의는 다시 처리할 수 없습니다.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" onClick={closeWithdrawConfirm} disabled={withdrawing}>
-              취소
-            </button>
-            <button
-              type="button"
-              className="button medium danger"
-              onClick={() => void withdrawInquiry()}
-              disabled={withdrawing}
-            >
-              {withdrawing ? '철회 중' : '문의 철회'}
-            </button>
-          </DialogActions>
-        </Dialog>
-      )}
+      <ResponsivePopup
+        open={isWithdrawConfirmOpen}
+        onClose={closeWithdrawConfirm}
+        title="문의 철회"
+        maxWidth="xs"
+        actions={[
+          {
+            label: '취소',
+            intent: 'cancel',
+            onClick: closeWithdrawConfirm,
+            disabled: withdrawing,
+          },
+          {
+            label: withdrawing ? '철회 중' : '문의 철회',
+            intent: 'danger',
+            onClick: () => void withdrawInquiry(),
+            disabled: withdrawing,
+          },
+        ]}
+      >
+        <Typography variant="subtitle2">이 문의를 철회하시겠어요? 철회한 문의는 다시 처리할 수 없습니다.</Typography>
+      </ResponsivePopup>
     </div>
   );
 }

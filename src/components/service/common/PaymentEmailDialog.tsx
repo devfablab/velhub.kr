@@ -149,27 +149,20 @@ export default function PaymentEmailDialog({
 
   if (isMobile) {
     return (
-      <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom">
+      <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
         <h2>결제 정보 입력</h2>
         <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>
-        <Stack gap={3}>
-          {renderContent()}
-          <Stack gap={1.5}>
-            <button type="button" className="button medium cancel" onClick={handleClose} disabled={isSaving}>
-              취소
-            </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleSave()}
-              disabled={isSaving}
-            >
-              저장하고 계속
-            </button>
-          </Stack>
-        </Stack>
+        <div className="VhiDrawer-bottom-content">{renderContent()}</div>
+        <div className="drawer-dialog-actions">
+          <button type="button" className="button small cancel" onClick={handleClose} disabled={isSaving}>
+            취소
+          </button>
+          <button type="button" className="button small submit" onClick={() => void handleSave()} disabled={isSaving}>
+            저장하고 계속
+          </button>
+        </div>
       </Drawer>
     );
   }
@@ -182,10 +175,10 @@ export default function PaymentEmailDialog({
       </button>
       <DialogContent>{renderContent()}</DialogContent>
       <DialogActions>
-        <button type="button" className="button medium close" onClick={handleClose} disabled={isSaving}>
+        <button type="button" className="cancel-button" onClick={handleClose} disabled={isSaving}>
           취소
         </button>
-        <button type="button" className="button medium submit" onClick={() => void handleSave()} disabled={isSaving}>
+        <button type="button" onClick={() => void handleSave()} disabled={isSaving}>
           저장하고 계속
         </button>
       </DialogActions>

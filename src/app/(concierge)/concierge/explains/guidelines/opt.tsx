@@ -1,14 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Drawer,
   Stack,
   Table,
   TableBody,
@@ -17,7 +11,6 @@ import {
   TableRow,
   TextField,
   Typography,
-  useMediaQuery,
   useTheme,
 } from '@mui/material';
 import {
@@ -32,6 +25,7 @@ import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
+import ResponsivePopup from '../../ResponsivePopup';
 
 type MessagesResponse = {
   siteName?: string;
@@ -209,8 +203,6 @@ export default function Opt({
   initialError: string;
   initialLoginRequired: boolean;
 }) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [items, setItems] = useState<GuidelineAppealItem[]>(initialItems);
   const [isLoginRequired] = useState(initialLoginRequired);
   const [errorMessage, setErrorMessage] = useState(initialError);
@@ -437,79 +429,38 @@ export default function Opt({
         </div>
       )}
 
-      {!isMobile ? (
-        <Dialog open={Boolean(contentItem)} onClose={closeContent} maxWidth="lg" fullWidth className="VhiDialog">
-          <DialogTitle>콘텐츠 보기</DialogTitle>
-          <button type="button" className="close-button" onClick={closeContent}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>{contentBody}</DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" onClick={closeContent}>
-              닫기
-            </button>
-          </DialogActions>
-        </Dialog>
-      ) : (
-        <Drawer anchor="bottom" open={Boolean(contentItem)} onClose={closeContent} className="VhiDrawer-bottom">
-          <h2>콘텐츠 보기</h2>
-          <button type="button" className="close-button" onClick={closeContent}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            {contentBody}
-            <button type="button" className="button medium cancel" onClick={closeContent}>
-              닫기
-            </button>
-          </Stack>
-        </Drawer>
-      )}
+      <ResponsivePopup
+        open={Boolean(contentItem)}
+        onClose={closeContent}
+        title="콘텐츠 보기"
+        maxWidth="lg"
+        actions={[{ label: '닫기', intent: 'cancel', onClick: closeContent }]}
+      >
+        {contentBody}
+      </ResponsivePopup>
 
-      {!isMobile ? (
-        <Dialog open={Boolean(messageItem)} onClose={closeMessages} maxWidth="lg" fullWidth className="VhiDialog">
-          <DialogTitle>소명 메시지</DialogTitle>
-          <button type="button" className="close-button" onClick={closeMessages} disabled={messageSaving}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>{messageBody}</DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" onClick={closeMessages} disabled={messageSaving}>
-              닫기
-            </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void sendMessage()}
-              disabled={messageSaving || messageLoading || !messageText.trim()}
-            >
-              보내기
-            </button>
-          </DialogActions>
-        </Dialog>
-      ) : (
-        <Drawer anchor="bottom" open={Boolean(messageItem)} onClose={closeMessages} className="VhiDrawer-bottom">
-          <h2>소명 메시지</h2>
-          <button type="button" className="close-button" onClick={closeMessages} disabled={messageSaving}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            {messageBody}
-            <Stack gap={1.5}>
-              <button type="button" className="button medium cancel" onClick={closeMessages} disabled={messageSaving}>
-                닫기
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void sendMessage()}
-                disabled={messageSaving || messageLoading || !messageText.trim()}
-              >
-                보내기
-              </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      )}
+      <ResponsivePopup
+        open={Boolean(messageItem)}
+        onClose={closeMessages}
+        title="소명 메시지"
+        maxWidth="lg"
+        actions={[
+          {
+            label: '닫기',
+            intent: 'cancel',
+            onClick: closeMessages,
+            disabled: messageSaving,
+          },
+          {
+            label: '보내기',
+            intent: 'submit',
+            onClick: () => void sendMessage(),
+            disabled: messageSaving || messageLoading || !messageText.trim(),
+          },
+        ]}
+      >
+        {messageBody}
+      </ResponsivePopup>
 
       <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </Stack>

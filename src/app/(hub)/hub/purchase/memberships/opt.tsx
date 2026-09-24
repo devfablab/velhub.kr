@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import { Chip, Stack, Typography } from '@mui/material';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import {
   formatMembershipPrice,
@@ -22,6 +21,7 @@ import IdentityVerificationButton from '@/components/service/common/IdentityVeri
 import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
+import ResponsivePopup from '../../shared/ResponsivePopup';
 import styles from '@/app/hub.module.sass';
 
 export type Eligibility = {
@@ -593,126 +593,93 @@ export default function MembershipPlan({
         kind="error"
       />
 
-      <Dialog
+      <ResponsivePopup
         open={Boolean(cancelTarget)}
         onClose={() => !isChangingSubscription && setCancelTarget(null)}
+        title={cancelTarget?.subscriptionStatus === 'canceled' ? '멤버십 구독 취소 철회' : '멤버십 구독 취소'}
         maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {cancelTarget?.subscriptionStatus === 'canceled' ? '멤버십 구독 취소 철회' : '멤버십 구독 취소'}
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            {cancelTarget?.subscriptionStatus === 'canceled'
-              ? '다음 결제부터 다시 자동 결제됩니다.'
-              : '현재 이용 기간이 끝날 때까지 멤버십 기능을 이용할 수 있으며, 다음 결제일부터 자동 결제되지 않습니다.'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={isChangingSubscription}
-            onClick={() => setCancelTarget(null)}
-          >
-            닫기
-          </button>
-          <button
-            type="button"
-            className="button medium submit"
-            disabled={isChangingSubscription}
-            onClick={() =>
-              void handleSubscriptionChange(cancelTarget?.subscriptionStatus === 'canceled' ? 'resume' : 'cancel')
-            }
-          >
-            {isChangingSubscription
+        actions={[
+          {
+            label: '닫기',
+            intent: 'cancel',
+            disabled: isChangingSubscription,
+            onClick: () => setCancelTarget(null),
+          },
+          {
+            label: isChangingSubscription
               ? '처리 중'
               : cancelTarget?.subscriptionStatus === 'canceled'
                 ? '취소 철회'
-                : '구독 취소'}
-          </button>
-        </DialogActions>
-      </Dialog>
+                : '구독 취소',
+            intent: 'submit',
+            disabled: isChangingSubscription,
+            onClick: () =>
+              void handleSubscriptionChange(cancelTarget?.subscriptionStatus === 'canceled' ? 'resume' : 'cancel'),
+          },
+        ]}
+      >
+        <Typography variant="body2">
+          {cancelTarget?.subscriptionStatus === 'canceled'
+            ? '다음 결제부터 다시 자동 결제됩니다.'
+            : '현재 이용 기간이 끝날 때까지 멤버십 기능을 이용할 수 있으며, 다음 결제일부터 자동 결제되지 않습니다.'}
+        </Typography>
+      </ResponsivePopup>
 
-      <Dialog
+      <ResponsivePopup
         open={Boolean(refundTarget)}
         onClose={() => !isChangingSubscription && setRefundTarget(null)}
+        title="멤버십 환불"
         maxWidth="sm"
-        fullWidth
+        actions={[
+          {
+            label: '닫기',
+            intent: 'cancel',
+            disabled: isChangingSubscription,
+            onClick: () => setRefundTarget(null),
+          },
+          {
+            label: isChangingSubscription ? '환불 중' : '환불',
+            intent: 'warning',
+            disabled: isChangingSubscription,
+            onClick: () => void handleRefund(),
+          },
+        ]}
       >
-        <DialogTitle>멤버십 환불</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            환불하면 멤버십 기능이 바로 종료됩니다. 결제 후 7일 이내에는 전액 환불되며, 이후에는 이용일수와 위약금 10%를
-            공제한 금액이 환불됩니다.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={isChangingSubscription}
-            onClick={() => setRefundTarget(null)}
-          >
-            닫기
-          </button>
-          <button
-            type="button"
-            className="button medium warning"
-            disabled={isChangingSubscription}
-            onClick={() => void handleRefund()}
-          >
-            {isChangingSubscription ? '환불 중' : '환불'}
-          </button>
-        </DialogActions>
-      </Dialog>
+        <Typography variant="body2">
+          환불하면 멤버십 기능이 바로 종료됩니다. 결제 후 7일 이내에는 전액 환불되며, 이후에는 이용일수와 위약금 10%를
+          공제한 금액이 환불됩니다.
+        </Typography>
+      </ResponsivePopup>
 
-      <Dialog
+      <ResponsivePopup
         open={isPaymentPopupOpen}
         onClose={() => !isSubmitting && setIsPaymentPopupOpen(false)}
-        className="VhiDialog"
+        title={isMinorUser ? '1개월 멤버십 구독' : '멤버십 결제 확인'}
         maxWidth="sm"
-        fullWidth
+        actions={[
+          {
+            label: '취소',
+            intent: 'cancel',
+            disabled: isSubmitting,
+            onClick: () => setIsPaymentPopupOpen(false),
+          },
+          {
+            label: isSubmitting ? '결제 중' : '결제 확정',
+            intent: 'submit',
+            disabled: isSubmitting,
+            onClick: () => void handlePayment(),
+          },
+        ]}
       >
-        <DialogTitle>{isMinorUser ? '1개월 멤버십 구독' : '멤버십 결제 확인'}</DialogTitle>
-        <button
-          type="button"
-          className="close-button"
-          onClick={() => setIsPaymentPopupOpen(false)}
-          disabled={isSubmitting}
-        >
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Stack direction="row" alignItems="center" gap={1} mb={2}>
-            <Typography variant="body2">
-              {isMinorUser
-                ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
-                : `멤버십을 월 ${formatMembershipPrice(selectedPrice)}에 구독하시겠어요?`}
-            </Typography>
-          </Stack>
-          <PaymentTerms type="subscription" disabled={isSubmitting} />
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={isSubmitting}
-            onClick={() => setIsPaymentPopupOpen(false)}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className="button medium submit"
-            disabled={isSubmitting}
-            onClick={() => void handlePayment()}
-          >
-            {isSubmitting ? '결제 중' : '결제 확정'}
-          </button>
-        </DialogActions>
-      </Dialog>
+        <Stack direction="row" alignItems="center" gap={1} mb={2}>
+          <Typography variant="body2">
+            {isMinorUser
+              ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+              : `멤버십을 월 ${formatMembershipPrice(selectedPrice)}에 구독하시겠어요?`}
+          </Typography>
+        </Stack>
+        <PaymentTerms type="subscription" disabled={isSubmitting} />
+      </ResponsivePopup>
     </>
   );
 }

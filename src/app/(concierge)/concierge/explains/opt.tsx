@@ -49,6 +49,7 @@ import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
+import ResponsivePopup from '../ResponsivePopup';
 
 type ItemsResponse = {
   items?: AppealCenterItem[];
@@ -842,12 +843,17 @@ export default function Opt({
       )}
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={Boolean(opinionItem)} onClose={closeOpinion} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={Boolean(opinionItem)}
+          onClose={closeOpinion}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>소명 의견서 제출</h2>
-          <button className="close-button" onClick={closeOpinion}>
+          <button type="button" className="close-button" onClick={closeOpinion} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             {opinionItem?.appeal ? (
               <Stack gap={2}>
                 <Stack gap={0.5}>
@@ -1032,20 +1038,20 @@ export default function Opt({
                 </Stack>
               </Stack>
             ) : null}
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium cancel" disabled={actionLoading} onClick={closeOpinion}>
-                취소
-              </button>
-              <button type="button" className="button medium submit" disabled={actionLoading} onClick={submitOpinion}>
-                제출
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" disabled={actionLoading} onClick={closeOpinion}>
+              취소
+            </button>
+            <button type="button" className="button small submit" disabled={actionLoading} onClick={submitOpinion}>
+              제출
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={Boolean(opinionItem)} onClose={closeOpinion} maxWidth="lg" fullWidth className="VhiDialog">
           <DialogTitle>소명 의견서 제출</DialogTitle>
-          <button className="close-button" onClick={closeOpinion}>
+          <button type="button" className="close-button" onClick={closeOpinion} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>
@@ -1235,152 +1241,78 @@ export default function Opt({
             ) : null}
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" disabled={actionLoading} onClick={closeOpinion}>
+            <button type="button" className="cancel-button" disabled={actionLoading} onClick={closeOpinion}>
               취소
             </button>
-            <button type="button" className="button medium submit" disabled={actionLoading} onClick={submitOpinion}>
+            <button type="button" disabled={actionLoading} onClick={submitOpinion}>
               제출
             </button>
           </DialogActions>
         </Dialog>
       )}
 
-      {isMobile ? (
-        <Drawer anchor="bottom" open={Boolean(contentItem)} onClose={closeContent} className="VhiDrawer-bottom">
-          <h2>{contentResponse?.canEdit ? '콘텐츠 수정' : '콘텐츠 보기'}</h2>
-          <button type="button" className="close-button" onClick={closeContent} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            {contentBody}
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium cancel" disabled={actionLoading} onClick={closeContent}>
-                닫기
-              </button>
-              {contentResponse?.canEdit ? (
-                <button type="button" className="button medium submit" disabled={actionLoading} onClick={saveContent}>
-                  수정 저장
-                </button>
-              ) : null}
-              {contentItem?.canRequestEditReview ? (
-                <button
-                  type="button"
-                  className="button medium submit"
-                  disabled={actionLoading}
-                  onClick={() => setEditReviewDialogItem(contentItem)}
-                >
-                  수정 확인 요청
-                </button>
-              ) : null}
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog open={Boolean(contentItem)} onClose={closeContent} maxWidth="lg" fullWidth className="VhiDialog">
-          <DialogTitle>{contentResponse?.canEdit ? '콘텐츠 수정' : '콘텐츠 보기'}</DialogTitle>
-          <button className="close-button" onClick={closeContent}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>{contentBody}</DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" disabled={actionLoading} onClick={closeContent}>
-              닫기
-            </button>
-            {contentResponse?.canEdit ? (
-              <button type="button" className="button medium submit" disabled={actionLoading} onClick={saveContent}>
-                수정 저장
-              </button>
-            ) : null}
-            {contentItem?.canRequestEditReview ? (
-              <button
-                type="button"
-                className="button medium submit"
-                disabled={actionLoading}
-                onClick={() => setEditReviewDialogItem(contentItem)}
-              >
-                수정 확인 요청
-              </button>
-            ) : null}
-          </DialogActions>
-        </Dialog>
-      )}
+      <ResponsivePopup
+        open={Boolean(contentItem)}
+        onClose={closeContent}
+        title={contentResponse?.canEdit ? '콘텐츠 수정' : '콘텐츠 보기'}
+        maxWidth="lg"
+        actions={[
+          {
+            label: '닫기',
+            intent: 'cancel',
+            disabled: actionLoading,
+            onClick: closeContent,
+          },
+          ...(contentResponse?.canEdit
+            ? [
+                {
+                  label: '수정 저장',
+                  intent: 'submit' as const,
+                  disabled: actionLoading,
+                  onClick: saveContent,
+                },
+              ]
+            : []),
+          ...(contentItem?.canRequestEditReview
+            ? [
+                {
+                  label: '수정 확인 요청',
+                  intent: 'submit' as const,
+                  disabled: actionLoading,
+                  onClick: () => setEditReviewDialogItem(contentItem),
+                },
+              ]
+            : []),
+        ]}
+      >
+        {contentBody}
+      </ResponsivePopup>
 
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={Boolean(editReviewDialogItem)}
-          onClose={() => setEditReviewDialogItem(null)}
-          className="VhiDrawer-bottom"
-        >
-          <h2>수정 확인 요청</h2>
-          <button className="close-button" onClick={() => setEditReviewDialogItem(null)}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                disabled={actionLoading}
-                onClick={() => setEditReviewDialogItem(null)}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                disabled={actionLoading || !editReviewDialogItem}
-                onClick={() => {
-                  if (editReviewDialogItem) {
-                    void requestEditReview(editReviewDialogItem);
-                  }
-                }}
-              >
-                요청
-              </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog
-          open={Boolean(editReviewDialogItem)}
-          onClose={() => setEditReviewDialogItem(null)}
-          maxWidth="sm"
-          fullWidth
-          className="VhiDialog"
-        >
-          <DialogTitle>수정 확인 요청</DialogTitle>
-          <button className="close-button" onClick={() => setEditReviewDialogItem(null)}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <button
-              type="button"
-              className="button medium close"
-              disabled={actionLoading}
-              onClick={() => setEditReviewDialogItem(null)}
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              className="button medium submit"
-              disabled={actionLoading || !editReviewDialogItem}
-              onClick={() => {
-                if (editReviewDialogItem) {
-                  void requestEditReview(editReviewDialogItem);
-                }
-              }}
-            >
-              요청
-            </button>
-          </DialogActions>
-        </Dialog>
-      )}
+      <ResponsivePopup
+        open={Boolean(editReviewDialogItem)}
+        onClose={() => setEditReviewDialogItem(null)}
+        title="수정 확인 요청"
+        actions={[
+          {
+            label: '취소',
+            intent: 'cancel',
+            disabled: actionLoading,
+            onClick: () => setEditReviewDialogItem(null),
+          },
+          {
+            label: '요청',
+            intent: 'submit',
+            disabled: actionLoading || !editReviewDialogItem,
+            onClick: () => {
+              if (editReviewDialogItem) {
+                void requestEditReview(editReviewDialogItem);
+              }
+            },
+          },
+        ]}
+      >
+        <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
+      </ResponsivePopup>
 
       <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </Stack>

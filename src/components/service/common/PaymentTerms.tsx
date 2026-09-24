@@ -79,12 +79,17 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
         </button>
       </Stack>
       {isMobile ? (
-        <Drawer anchor="bottom" open={open} onClose={() => setOpen(false)} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={() => setOpen(false)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>{terms.title}</h2>
-          <button className="close-button" onClick={() => setOpen(false)}>
+          <button type="button" className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack gap={1.25}>
               {terms.items.map((item, index) => (
                 <Typography key={item} variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -92,17 +97,17 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
                 </Typography>
               ))}
             </Stack>
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium cancel" onClick={() => setOpen(false)}>
-                닫기
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={() => setOpen(false)}>
+              닫기
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" className="VhiDialog">
           <DialogTitle>{terms.title}</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setOpen(false)}>
+          <button type="button" className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>
@@ -115,7 +120,7 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={() => setOpen(false)}>
+            <button type="button" className="cancel-button" onClick={() => setOpen(false)}>
               닫기
             </button>
           </DialogActions>

@@ -117,31 +117,36 @@ function PrivacyAgreement({ checked, onChange }: { checked: boolean; onChange: (
         </button>
       </Stack>
       {isMobile ? (
-        <Drawer anchor="bottom" open={open} onClose={() => setOpen(false)} className="VhiDrawer-bottom">
-          <Stack gap={3}>
-            <Typography variant="h6">개인정보 수집 및 이용 동의</Typography>
-            <button className="close-button" onClick={() => setOpen(false)}>
-              <CloseRoundedIcon />
-            </button>
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={() => setOpen(false)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
+          <h2>개인정보 수집 및 이용 동의</h2>
+          <button className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
             <PrivacyContent />
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium cancel" onClick={() => setOpen(false)}>
-                확인
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={() => setOpen(false)}>
+              확인
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth className="VhiDialog">
           <DialogTitle>개인정보 수집 및 이용 동의</DialogTitle>
-          <button className="close-button" onClick={() => setOpen(false)}>
+          <button className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>
             <PrivacyContent />
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={() => setOpen(false)}>
+            <button type="button" className="cancel-button" onClick={() => setOpen(false)}>
               확인
             </button>
           </DialogActions>

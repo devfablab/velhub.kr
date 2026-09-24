@@ -2,6 +2,7 @@
 
 import { type JSX, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
@@ -181,105 +182,85 @@ export default function Verify2fa() {
     router.refresh();
   }
 
-  const content = (mq: string) => (
-    <Box component="form" onSubmit={handleSubmit}>
-      {mq === 'mobile' ? (
-        <Stack gap={2} sx={{ pt: 1 }}>
-          <Typography variant="body1">보안을 위해 2단계 인증 코드를 입력해 주세요.</Typography>
-
-          <Stack gap={1}>
-            <Typography variant="subtitle2">인증 코드</Typography>
-            <TextField
-              inputRef={verifyCodeInputRef}
-              placeholder="XXXXXX"
-              type="text"
-              value={verifyCode}
-              onChange={handleVerifyCodeChange}
-              disabled={isLoading || isSubmitting}
-              fullWidth
-              autoComplete="one-time-code"
-              size="small"
-              slotProps={{
-                htmlInput: {
-                  inputMode: 'numeric',
-                  pattern: '[0-9]*',
-                  maxLength: 6,
-                },
-              }}
-            />
-          </Stack>
-          {errorMessage ? (
-            <p className="alert error">
-              <ErrorOutlineRoundedIcon />
-              <span>{errorMessage}</span>
-            </p>
-          ) : null}
-
-          <Stack direction="column" gap={1.5}>
-            <button type="button" className="button medium cancel" onClick={handleSignOut} disabled={isSubmitting}>
-              로그아웃
-            </button>
-            <button type="submit" className="button medium submit" disabled={isLoading || isSubmitting || !factorId}>
-              확인
-            </button>
-          </Stack>
-        </Stack>
-      ) : (
-        <>
-          <DialogContent>
-            <Typography variant="body1">보안을 위해 2단계 인증 코드를 입력해 주세요.</Typography>
-            <Stack sx={{ pt: 2 }}>
-              <Typography variant="subtitle2">인증 코드</Typography>
-              <TextField
-                inputRef={verifyCodeInputRef}
-                placeholder="XXXXXX"
-                type="text"
-                value={verifyCode}
-                onChange={handleVerifyCodeChange}
-                disabled={isLoading || isSubmitting}
-                fullWidth
-                autoComplete="one-time-code"
-                size="small"
-                slotProps={{
-                  htmlInput: {
-                    inputMode: 'numeric',
-                    pattern: '[0-9]*',
-                    maxLength: 6,
-                  },
-                }}
-              />
-            </Stack>
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
-          </DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" onClick={handleSignOut} disabled={isSubmitting}>
-              로그아웃
-            </button>
-            <button type="submit" className="button medium submit" disabled={isLoading || isSubmitting || !factorId}>
-              확인
-            </button>
-          </DialogActions>
-        </>
-      )}
-    </Box>
+  const content = (
+    <>
+      <Typography variant="body1">보안을 위해 2단계 인증 코드를 입력해 주세요.</Typography>
+      <Stack sx={{ pt: 2 }}>
+        <Typography variant="subtitle2">인증 코드</Typography>
+        <TextField
+          inputRef={verifyCodeInputRef}
+          placeholder="XXXXXX"
+          type="text"
+          value={verifyCode}
+          onChange={handleVerifyCodeChange}
+          disabled={isLoading || isSubmitting}
+          fullWidth
+          autoComplete="one-time-code"
+          size="small"
+          slotProps={{
+            htmlInput: {
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+              maxLength: 6,
+            },
+          }}
+        />
+      </Stack>
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
+    </>
   );
 
   return (
     <>
       {isMobile ? (
-        <Drawer anchor="bottom" open={true} className="VhiDrawer-bottom">
+        <Drawer anchor="bottom" open={true} className="VhiDrawer-bottom VhiDrawer-bottom-service">
           <h2>2단계 인증</h2>
-          {content('mobile')}
+          <button className="close-button" onClick={handleSignOut} aria-label="닫기" disabled={isSubmitting}>
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
+            <Box id="verify-2fa-form" component="form" onSubmit={handleSubmit}>
+              {content}
+            </Box>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleSignOut} disabled={isSubmitting}>
+              로그아웃
+            </button>
+            <button
+              type="submit"
+              form="verify-2fa-form"
+              className="button small submit"
+              disabled={isLoading || isSubmitting || !factorId}
+            >
+              확인
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={true} fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>2단계 인증</DialogTitle>
-          {content('desktop')}
+          <button className="close-button" onClick={handleSignOut} aria-label="닫기" disabled={isSubmitting}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Box id="verify-2fa-dialog-form" component="form" onSubmit={handleSubmit}>
+              {content}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="cancel-button" onClick={handleSignOut} disabled={isSubmitting}>
+              로그아웃
+            </button>
+            <button type="submit" form="verify-2fa-dialog-form" disabled={isLoading || isSubmitting || !factorId}>
+              확인
+            </button>
+          </DialogActions>
         </Dialog>
       )}
     </>

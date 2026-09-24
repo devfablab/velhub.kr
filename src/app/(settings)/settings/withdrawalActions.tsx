@@ -124,35 +124,54 @@ export default function WithdrawalActions() {
       </Accordion>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={isConfirmOpen}
+          onClose={handleCloseConfirm}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>데브허브 탈퇴</h2>
-          <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseConfirm}
+            disabled={isSubmitting}
+            aria-label="닫기"
+          >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
-            <button type="button" className="button medium warning" onClick={handleSubmit} disabled={isSubmitting}>
-              탈퇴 신청
-            </button>
-            <button type="button" className="button medium cancel" onClick={handleCloseConfirm} disabled={isSubmitting}>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
-          </Stack>
+            <button type="button" className="button small warning" onClick={handleSubmit} disabled={isSubmitting}>
+              탈퇴 신청
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>데브허브 탈퇴</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseConfirm}
+            disabled={isSubmitting}
+            aria-label="닫기"
+          >
             <CloseRoundedIcon />
           </button>
           <DialogContent>
             <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isSubmitting}>
+            <button type="button" className="cancel-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
-            <button type="button" className="button medium warning" onClick={handleSubmit} disabled={isSubmitting}>
+            <button type="button" className="warning-button" onClick={handleSubmit} disabled={isSubmitting}>
               탈퇴 신청
             </button>
           </DialogActions>

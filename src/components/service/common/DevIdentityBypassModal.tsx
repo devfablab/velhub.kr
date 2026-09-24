@@ -4,7 +4,6 @@
 import { useEffect, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
-  Button,
   Checkbox,
   Dialog,
   DialogActions,
@@ -104,35 +103,35 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
   );
 
   return isMobile ? (
-    <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom">
+    <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
       <h2>개발용 본인인증 바이패스</h2>
-      <button type="button" className="close-button" onClick={onClose}>
+      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
-      <Stack gap={3}>
-        {content}
-        <Button onClick={handleSubmit} className="button action" disabled={bypass && !selectedTxId}>
-          {bypass ? '가짜 데이터로 인증하기' : '원래대로 진행'}
-        </Button>
-        <button type="button" className="button medium cancel" onClick={onClose}>
+      <div className="VhiDrawer-bottom-content">{content}</div>
+      <div className="drawer-dialog-actions">
+        <button type="button" className="button small cancel" onClick={onClose}>
           취소
         </button>
-      </Stack>
+        <button type="button" onClick={handleSubmit} className="button small action" disabled={bypass && !selectedTxId}>
+          {bypass ? '가짜 데이터로 인증하기' : '원래대로 진행'}
+        </button>
+      </div>
     </Drawer>
   ) : (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth className="VhiDialog">
       <DialogTitle>개발용 본인인증 바이패스</DialogTitle>
-      <button type="button" className="close-button" onClick={onClose}>
+      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
       <DialogContent dividers>{content}</DialogContent>
       <DialogActions>
-        <button type="button" className="button medium close" onClick={onClose}>
+        <button type="button" className="cancel-button" onClick={onClose}>
           취소
         </button>
-        <Button onClick={handleSubmit} className="button action" disabled={bypass && !selectedTxId}>
+        <button type="button" onClick={handleSubmit} disabled={bypass && !selectedTxId}>
           {bypass ? '가짜 데이터로 인증하기' : '원래대로 진행'}
-        </Button>
+        </button>
       </DialogActions>
     </Dialog>
   );

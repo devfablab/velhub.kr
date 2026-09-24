@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Dialog,
@@ -9,7 +10,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Stack,
   Typography,
   useMediaQuery,
   useTheme,
@@ -110,9 +110,12 @@ export default function WithdrawalGuard({
     <>
       {children}
       {isMobile ? (
-        <Drawer anchor="bottom" open={isOpen} className="VhiDrawer-bottom">
+        <Drawer anchor="bottom" open={isOpen} className="VhiDrawer-bottom VhiDrawer-bottom-service">
           <h2>탈퇴 신청한 계정입니다</h2>
-          <Stack gap={3}>
+          <button className="close-button" onClick={handleLogout} aria-label="닫기" disabled={isLoggingOut}>
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
             <Typography variant="body2">
               탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해주세요.
             </Typography>
@@ -122,29 +125,32 @@ export default function WithdrawalGuard({
                 <span>{errorMessage}</span>
               </p>
             ) : null}
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleLogout}
-                disabled={isCanceling || isLoggingOut}
-              >
-                로그아웃하기
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleCancelWithdrawal}
-                disabled={isCanceling || isLoggingOut}
-              >
-                탈퇴신청 취소
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleLogout}
+              disabled={isCanceling || isLoggingOut}
+            >
+              로그아웃하기
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={handleCancelWithdrawal}
+              disabled={isCanceling || isLoggingOut}
+            >
+              탈퇴신청 취소
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog open={isOpen} disableEscapeKeyDown fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>탈퇴 신청한 계정입니다</DialogTitle>
+          <button className="close-button" onClick={handleLogout} aria-label="닫기" disabled={isLoggingOut}>
+            <CloseRoundedIcon />
+          </button>
           <DialogContent>
             <Typography variant="body2">
               탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해주세요.
@@ -159,18 +165,13 @@ export default function WithdrawalGuard({
           <DialogActions>
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleLogout}
               disabled={isCanceling || isLoggingOut}
             >
               로그아웃하기
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={handleCancelWithdrawal}
-              disabled={isCanceling || isLoggingOut}
-            >
+            <button type="button" onClick={handleCancelWithdrawal} disabled={isCanceling || isLoggingOut}>
               탈퇴신청 취소
             </button>
           </DialogActions>

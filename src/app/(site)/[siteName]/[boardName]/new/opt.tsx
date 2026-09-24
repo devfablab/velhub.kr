@@ -2734,6 +2734,9 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
             >
               <DialogTitle>투표 설정</DialogTitle>
+              <button className="close-button" onClick={closePollDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
               <DialogContent className={styles['poll-dialog-content']}>
                 {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
 

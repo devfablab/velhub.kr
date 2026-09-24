@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -11,10 +10,6 @@ import {
   AccordionSummary,
   Box,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControl,
   MenuItem,
   Select,
@@ -27,7 +22,6 @@ import {
   TableRow,
   TextField,
   Typography,
-  useMediaQuery,
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
@@ -50,6 +44,7 @@ import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import ResponsivePopup from '../ResponsivePopup';
 
 type ReportsResponse = {
   items?: ConciergeReportItem[];
@@ -936,488 +931,426 @@ export default function Opt({
         </>
       )}
 
-      <Dialog
+      <ResponsivePopup
         open={reporterDialogOpen}
         onClose={() => setReporterDialogOpen(false)}
+        title={`${reporterName} 님의 신고 내역`}
         maxWidth="lg"
-        fullWidth
-        className="VhiDialog"
+        actions={[
+          {
+            label: '닫기',
+            intent: 'cancel',
+            onClick: () => setReporterDialogOpen(false),
+          },
+        ]}
       >
-        <DialogTitle>{reporterName} 님의 신고 내역</DialogTitle>
-        <button className="close-button" onClick={() => setReporterDialogOpen(false)}>
-          <CloseRoundedIcon />
-        </button>
-
-        <DialogContent>
-          {reporterLoading ? (
-            <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 180 }}>
-              <LoadingIndicator />
-            </Stack>
-          ) : (
-            <Stack gap={2}>
-              <Typography variant="subtitle2">
-                총 {reporterReports.length.toLocaleString('ko-KR')}건 신고했습니다.
-              </Typography>
-              <Box>
-                {reporterReports.map((report) => (
-                  <Accordion key={`${report.reportType}-${report.id}`}>
-                    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
-                      <Stack direction={{ xs: 'column', md: 'row' }} gap={1} alignItems={{ md: 'center' }}>
-                        <Chip label={report.reportTypeLabel} size="small" />
-                        <Typography variant="subtitle2">{report.reportName}</Typography>
-                        <Typography variant="body2">
-                          {report.targetTypeLabel} / {report.statusLabel} / {formatDateTimeDetail(report.createdAt)}
-                        </Typography>
-                      </Stack>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <ReportDetails report={report} />
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </Box>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <button type="button" className="button medium close" onClick={() => setReporterDialogOpen(false)}>
-            닫기
-          </button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(detailDialogReport)}
-        onClose={() => setDetailDialogReport(null)}
-        maxWidth="lg"
-        fullWidth
-        className="VhiDialog"
-      >
-        <DialogTitle>
-          {detailDialogReport ? `${detailDialogReport.reportTypeLabel} 신고 내용` : '신고 내용'}
-        </DialogTitle>
-        <button className="close-button" onClick={() => setDetailDialogReport(null)}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>{detailDialogReport ? <ReportDetails report={detailDialogReport} /> : null}</DialogContent>
-        <DialogActions>
-          <button type="button" className="button medium close" onClick={() => setDetailDialogReport(null)}>
-            닫기
-          </button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(appealDialogReport)}
-        onClose={handleCloseAppealDialog}
-        maxWidth="lg"
-        fullWidth
-        className="VhiDialog"
-      >
-        <DialogTitle>{appealDialogReport?.appeal ? '소명 요청서' : '소명 요청서 작성'}</DialogTitle>
-        <button className="close-button" onClick={handleCloseAppealDialog}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
+        {reporterLoading ? (
+          <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 180 }}>
+            <LoadingIndicator />
+          </Stack>
+        ) : (
           <Stack gap={2}>
-            {appealDialogReport ? (
-              <Stack gap={1}>
-                <Typography variant="h6">신고 내용</Typography>
-                <div className="paper">
-                  <ReportDetails report={appealDialogReport} />
-                </div>
-              </Stack>
-            ) : null}
-            {appealDialogReport?.targetType === 'post' ? (
-              <Stack gap={1}>
-                <Typography variant="h6">신고 대상 게시물</Typography>
-                <div className="paper">
-                  {appealTargetContentLoading ? (
-                    <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 160 }}>
-                      <LoadingIndicator />
-                    </Stack>
-                  ) : appealTargetContentError ? (
-                    <p className="alert danger">{appealTargetContentError}</p>
-                  ) : appealTargetContent ? (
-                    <AppealTargetContent response={appealTargetContent} />
-                  ) : null}
-                </div>
-              </Stack>
-            ) : null}
-            <Stack gap={1}>
-              <Typography variant="h6">소명 요청서 작성 내용</Typography>
-              <div className="paper">
-                <Stack gap={0.5}>
-                  <Typography variant="subtitle2">제출 자료 요지 *</Typography>
-                  <TextField
-                    aria-label="제출 자료 요지"
-                    helperText="신고자가 제출한 자료가 어떤 사실을 뒷받침하기 위한 자료인지 개인정보를 제외하고 작성해 주세요."
-                    value={submissionSummary}
-                    onChange={(event) => setSubmissionSummary(event.currentTarget.value)}
-                    multiline
-                    minRows={4}
-                    fullWidth
-                    required
-                    size="small"
-                    slotProps={{ input: { readOnly: Boolean(appealDialogReport?.appeal) } }}
-                  />
-                </Stack>
-                <FormControl fullWidth required>
-                  <Select
-                    displayEmpty
-                    value={deletionReason}
-                    disabled={Boolean(appealDialogReport?.appeal)}
-                    size="small"
-                    onChange={(event) => setDeletionReason(event.target.value)}
-                  >
-                    <MenuItem value="" disabled>
-                      삭제 사유 선택
-                    </MenuItem>
-                    {appealDeletionOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {appealTreatmentMessage ? (
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>{appealTreatmentMessage}</span>
-                  </p>
-                ) : null}
-                <Stack gap={0.5}>
-                  <Typography variant="subtitle2">소명 요청사항 *</Typography>
-                  <TextField
-                    aria-label="소명 요청사항"
-                    helperText="신고 내용 중 소명인이 설명하거나 자료를 제출해야 하는 사항을 구체적으로 작성해 주세요."
-                    value={appealRequest}
-                    onChange={(event) => setAppealRequest(event.currentTarget.value)}
-                    multiline
-                    minRows={4}
-                    fullWidth
-                    required
-                    size="small"
-                    slotProps={{ input: { readOnly: Boolean(appealDialogReport?.appeal) } }}
-                  />
-                </Stack>
-                {appealDialogReport?.appeal?.opinionSubmittedAt ? (
-                  <Stack gap={2}>
-                    <Typography variant="h6">소명 의견서</Typography>
-                    <Stack gap={0.5}>
-                      <Typography variant="subtitle2">소명 입장</Typography>
-                      <Typography variant="body2">{appealOpinionPositionLabel}</Typography>
-                    </Stack>
-                    <Stack gap={0.5}>
-                      <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분</Typography>
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {appealDialogReport.appeal.disputedParts}
+            <Typography variant="subtitle2">
+              총 {reporterReports.length.toLocaleString('ko-KR')}건 신고했습니다.
+            </Typography>
+            <Box>
+              {reporterReports.map((report) => (
+                <Accordion key={`${report.reportType}-${report.id}`}>
+                  <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} gap={1} alignItems={{ md: 'center' }}>
+                      <Chip label={report.reportTypeLabel} size="small" />
+                      <Typography variant="subtitle2">{report.reportName}</Typography>
+                      <Typography variant="body2">
+                        {report.targetTypeLabel} / {report.statusLabel} / {formatDateTimeDetail(report.createdAt)}
                       </Typography>
                     </Stack>
-                    {appealOpinionFieldList.map((field) => {
-                      const value = appealDialogReport.appeal?.opinionData?.[field.key];
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <ReportDetails report={report} />
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
+          </Stack>
+        )}
+      </ResponsivePopup>
 
-                      if (typeof value !== 'string' || !value) {
-                        return null;
-                      }
+      <ResponsivePopup
+        open={Boolean(detailDialogReport)}
+        onClose={() => setDetailDialogReport(null)}
+        title={detailDialogReport ? `${detailDialogReport.reportTypeLabel} 신고 내용` : '신고 내용'}
+        maxWidth="lg"
+        actions={[
+          {
+            label: '닫기',
+            intent: 'cancel',
+            onClick: () => setDetailDialogReport(null),
+          },
+        ]}
+      >
+        {detailDialogReport ? <ReportDetails report={detailDialogReport} /> : null}
+      </ResponsivePopup>
 
-                      return (
-                        <Stack key={field.key} gap={0.5}>
-                          <Typography variant="subtitle2">{field.label}</Typography>
-                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                            {getAppealOpinionValueLabel(field, value)}
-                          </Typography>
-                        </Stack>
-                      );
-                    })}
-                    {appealDialogReport.appeal.contentRequest ? (
-                      <Stack gap={0.5}>
-                        <Typography variant="subtitle2">게시물 · 댓글 처리 요청</Typography>
-                        <Typography variant="body2">
-                          {reportAppealContentRequestLabels[appealDialogReport.appeal.contentRequest]}
-                        </Typography>
-                      </Stack>
-                    ) : null}
-                    {appealDialogReport.appeal.modificationContent ? (
-                      <Stack gap={0.5}>
-                        <Typography variant="subtitle2">수정 예정 내용</Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                          {appealDialogReport.appeal.modificationContent}
-                        </Typography>
-                      </Stack>
-                    ) : null}
-                    {appealDialogReport.appeal.opinionFile ? (
-                      <Stack gap={0.5}>
-                        <Typography variant="subtitle2">첨부자료</Typography>
-                        <Anchor
-                          href={`/api/concierge/reports/file?${new URLSearchParams({
-                            bucket: appealDialogReport.appeal.opinionFile.bucket,
-                            path: appealDialogReport.appeal.opinionFile.path,
-                          }).toString()}`}
-                          className="link"
-                          target="_blank"
-                        >
-                          {appealDialogReport.appeal.opinionFile.name}
-                        </Anchor>
-                      </Stack>
-                    ) : null}
+      <ResponsivePopup
+        open={Boolean(appealDialogReport)}
+        onClose={handleCloseAppealDialog}
+        title={appealDialogReport?.appeal ? '소명 요청서' : '소명 요청서 작성'}
+        maxWidth="lg"
+        actions={[
+          {
+            label: appealDialogReport?.appeal ? '닫기' : '취소',
+            intent: 'cancel',
+            disabled: actionLoading,
+            onClick: handleCloseAppealDialog,
+          },
+          ...(!appealDialogReport?.appeal
+            ? [
+                {
+                  label: '제출',
+                  intent: 'submit' as const,
+                  disabled: actionLoading,
+                  onClick: handleSubmitAppealRequest,
+                },
+              ]
+            : []),
+          ...(canHandleAppeal
+            ? [
+                {
+                  label: '삭제 유지',
+                  intent: 'danger' as const,
+                  disabled: actionLoading,
+                  onClick: () => setAppealDecisionDialog('reject'),
+                },
+                {
+                  label: '복구',
+                  intent: 'action' as const,
+                  disabled: actionLoading,
+                  onClick: () => setAppealDecisionDialog('restore'),
+                },
+              ]
+            : []),
+        ]}
+      >
+        <Stack gap={2}>
+          {appealDialogReport ? (
+            <Stack gap={1}>
+              <Typography variant="h6">신고 내용</Typography>
+              <div className="paper">
+                <ReportDetails report={appealDialogReport} />
+              </div>
+            </Stack>
+          ) : null}
+          {appealDialogReport?.targetType === 'post' ? (
+            <Stack gap={1}>
+              <Typography variant="h6">신고 대상 게시물</Typography>
+              <div className="paper">
+                {appealTargetContentLoading ? (
+                  <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 160 }}>
+                    <LoadingIndicator />
                   </Stack>
+                ) : appealTargetContentError ? (
+                  <p className="alert danger">{appealTargetContentError}</p>
+                ) : appealTargetContent ? (
+                  <AppealTargetContent response={appealTargetContent} />
                 ) : null}
               </div>
             </Stack>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={actionLoading}
-            onClick={handleCloseAppealDialog}
-          >
-            {appealDialogReport?.appeal ? '닫기' : '취소'}
-          </button>
-          {!appealDialogReport?.appeal ? (
-            <button
-              type="button"
-              className="button medium submit"
-              disabled={actionLoading}
-              onClick={handleSubmitAppealRequest}
-            >
-              제출
-            </button>
           ) : null}
-          {canHandleAppeal ? (
-            <>
-              <button
-                type="button"
-                className="button medium danger"
-                disabled={actionLoading}
-                onClick={() => setAppealDecisionDialog('reject')}
-              >
-                삭제 유지
-              </button>
-              <button
-                type="button"
-                className="button medium action"
-                disabled={actionLoading}
-                onClick={() => setAppealDecisionDialog('restore')}
-              >
-                복구
-              </button>
-            </>
-          ) : null}
-        </DialogActions>
-      </Dialog>
+          <Stack gap={1}>
+            <Typography variant="h6">소명 요청서 작성 내용</Typography>
+            <div className="paper">
+              <Stack gap={0.5}>
+                <Typography variant="subtitle2">제출 자료 요지 *</Typography>
+                <TextField
+                  aria-label="제출 자료 요지"
+                  helperText="신고자가 제출한 자료가 어떤 사실을 뒷받침하기 위한 자료인지 개인정보를 제외하고 작성해 주세요."
+                  value={submissionSummary}
+                  onChange={(event) => setSubmissionSummary(event.currentTarget.value)}
+                  multiline
+                  minRows={4}
+                  fullWidth
+                  required
+                  size="small"
+                  slotProps={{ input: { readOnly: Boolean(appealDialogReport?.appeal) } }}
+                />
+              </Stack>
+              <FormControl fullWidth required>
+                <Select
+                  displayEmpty
+                  value={deletionReason}
+                  disabled={Boolean(appealDialogReport?.appeal)}
+                  size="small"
+                  onChange={(event) => setDeletionReason(event.target.value)}
+                >
+                  <MenuItem value="" disabled>
+                    삭제 사유 선택
+                  </MenuItem>
+                  {appealDeletionOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {appealTreatmentMessage ? (
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>{appealTreatmentMessage}</span>
+                </p>
+              ) : null}
+              <Stack gap={0.5}>
+                <Typography variant="subtitle2">소명 요청사항 *</Typography>
+                <TextField
+                  aria-label="소명 요청사항"
+                  helperText="신고 내용 중 소명인이 설명하거나 자료를 제출해야 하는 사항을 구체적으로 작성해 주세요."
+                  value={appealRequest}
+                  onChange={(event) => setAppealRequest(event.currentTarget.value)}
+                  multiline
+                  minRows={4}
+                  fullWidth
+                  required
+                  size="small"
+                  slotProps={{ input: { readOnly: Boolean(appealDialogReport?.appeal) } }}
+                />
+              </Stack>
+              {appealDialogReport?.appeal?.opinionSubmittedAt ? (
+                <Stack gap={2}>
+                  <Typography variant="h6">소명 의견서</Typography>
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">소명 입장</Typography>
+                    <Typography variant="body2">{appealOpinionPositionLabel}</Typography>
+                  </Stack>
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분</Typography>
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {appealDialogReport.appeal.disputedParts}
+                    </Typography>
+                  </Stack>
+                  {appealOpinionFieldList.map((field) => {
+                    const value = appealDialogReport.appeal?.opinionData?.[field.key];
 
-      <Dialog
+                    if (typeof value !== 'string' || !value) {
+                      return null;
+                    }
+
+                    return (
+                      <Stack key={field.key} gap={0.5}>
+                        <Typography variant="subtitle2">{field.label}</Typography>
+                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {getAppealOpinionValueLabel(field, value)}
+                        </Typography>
+                      </Stack>
+                    );
+                  })}
+                  {appealDialogReport.appeal.contentRequest ? (
+                    <Stack gap={0.5}>
+                      <Typography variant="subtitle2">게시물 · 댓글 처리 요청</Typography>
+                      <Typography variant="body2">
+                        {reportAppealContentRequestLabels[appealDialogReport.appeal.contentRequest]}
+                      </Typography>
+                    </Stack>
+                  ) : null}
+                  {appealDialogReport.appeal.modificationContent ? (
+                    <Stack gap={0.5}>
+                      <Typography variant="subtitle2">수정 예정 내용</Typography>
+                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {appealDialogReport.appeal.modificationContent}
+                      </Typography>
+                    </Stack>
+                  ) : null}
+                  {appealDialogReport.appeal.opinionFile ? (
+                    <Stack gap={0.5}>
+                      <Typography variant="subtitle2">첨부자료</Typography>
+                      <Anchor
+                        href={`/api/concierge/reports/file?${new URLSearchParams({
+                          bucket: appealDialogReport.appeal.opinionFile.bucket,
+                          path: appealDialogReport.appeal.opinionFile.path,
+                        }).toString()}`}
+                        className="link"
+                        target="_blank"
+                      >
+                        {appealDialogReport.appeal.opinionFile.name}
+                      </Anchor>
+                    </Stack>
+                  ) : null}
+                </Stack>
+              ) : null}
+            </div>
+          </Stack>
+        </Stack>
+      </ResponsivePopup>
+
+      <ResponsivePopup
         open={Boolean(messageDialogReport)}
         onClose={() => setMessageDialogReport(null)}
+        title="메모 보내기"
         maxWidth="sm"
-        fullWidth
-        className="VhiDialog"
+        actions={[
+          {
+            label: '취소',
+            intent: 'cancel',
+            disabled: actionLoading,
+            onClick: () => setMessageDialogReport(null),
+          },
+          {
+            label: '보내기',
+            intent: 'submit',
+            disabled: actionLoading,
+            onClick: handleSendMessage,
+          },
+        ]}
       >
-        <DialogTitle>메모 보내기</DialogTitle>
-        <button className="close-button" onClick={() => setMessageDialogReport(null)}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Stack gap={2}>
-            {messageDialogReport?.reportType === 'rights' &&
-            (messageDialogReport.targetType === 'site' || messageDialogReport.targetType === 'board') ? (
-              <p className="alert warning">
-                <WarningAmberRoundedIcon />
-                <span>
-                  현재까지 메모를 {messageDialogReport.messageCount.toLocaleString('ko-KR')}회 보냈습니다. 메모를 3회
-                  이상 보낸 뒤에도 문제가 해결되지 않으면 사이트를 차단할 수 있으며, 3회 이후에도 메시지는 계속 보낼 수
-                  있습니다.
-                </span>
-              </p>
-            ) : null}
-            {messageDialogReport?.messages.length ? (
-              <Stack gap={1}>
-                <Typography variant="subtitle2">메모 이력</Typography>
-                {messageDialogReport.messages.map((historyItem) => (
-                  <div className="paper" key={historyItem.id}>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {historyItem.message}
-                    </Typography>
-                    <Typography variant="caption">
-                      {historyItem.senderName} → {historyItem.recipientName} ·{' '}
-                      {formatDateTimeDetail(historyItem.createdAt)}
-                    </Typography>
-                  </div>
-                ))}
-              </Stack>
-            ) : (
-              <Typography variant="body2">아직 보낸 메모가 없습니다.</Typography>
-            )}
-            <Stack gap={0.5}>
-              <Typography variant="subtitle2">메모 내용</Typography>
-              <TextField
-                aria-label="메모 내용"
-                value={message}
-                onChange={(event) => setMessage(event.currentTarget.value)}
-                multiline
-                minRows={4}
-                fullWidth
-              />
+        <Stack gap={2}>
+          {messageDialogReport?.reportType === 'rights' &&
+          (messageDialogReport.targetType === 'site' || messageDialogReport.targetType === 'board') ? (
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>
+                현재까지 메모를 {messageDialogReport.messageCount.toLocaleString('ko-KR')}회 보냈습니다. 메모를 3회 이상
+                보낸 뒤에도 문제가 해결되지 않으면 사이트를 차단할 수 있으며, 3회 이후에도 메시지는 계속 보낼 수
+                있습니다.
+              </span>
+            </p>
+          ) : null}
+          {messageDialogReport?.messages.length ? (
+            <Stack gap={1}>
+              <Typography variant="subtitle2">메모 이력</Typography>
+              {messageDialogReport.messages.map((historyItem) => (
+                <div className="paper" key={historyItem.id}>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {historyItem.message}
+                  </Typography>
+                  <Typography variant="caption">
+                    {historyItem.senderName} → {historyItem.recipientName} ·{' '}
+                    {formatDateTimeDetail(historyItem.createdAt)}
+                  </Typography>
+                </div>
+              ))}
             </Stack>
+          ) : (
+            <Typography variant="body2">아직 보낸 메모가 없습니다.</Typography>
+          )}
+          <Stack gap={0.5}>
+            <Typography variant="subtitle2">메모 내용</Typography>
+            <TextField
+              aria-label="메모 내용"
+              value={message}
+              onChange={(event) => setMessage(event.currentTarget.value)}
+              multiline
+              minRows={4}
+              fullWidth
+            />
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={actionLoading}
-            onClick={() => setMessageDialogReport(null)}
-          >
-            취소
-          </button>
-          <button type="button" className="button medium submit" disabled={actionLoading} onClick={handleSendMessage}>
-            보내기
-          </button>
-        </DialogActions>
-      </Dialog>
+        </Stack>
+      </ResponsivePopup>
 
-      <Dialog
+      <ResponsivePopup
         open={Boolean(statusChangeDialog)}
         onClose={() => setStatusChangeDialog(null)}
+        title={statusChangeDialog?.status === 'completed' ? '처리완료' : '이상 없음'}
         maxWidth="sm"
-        fullWidth
-        className="VhiDialog"
-      >
-        <DialogTitle>{statusChangeDialog?.status === 'completed' ? '처리완료' : '이상 없음'}</DialogTitle>
-        <button className="close-button" onClick={() => setStatusChangeDialog(null)}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Typography variant="body2">
-            {statusChangeDialog?.status === 'completed'
-              ? '처리완료로 변경하고 신고 대상에 제재를 적용하시겠습니까?'
-              : statusChangeDialog?.report.reportType === 'rights'
-                ? '이상 없음으로 처리하고 삭제 상태를 해제하시겠습니까?'
-                : '이상 없음으로 처리하시겠습니까?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={actionLoading}
-            onClick={() => setStatusChangeDialog(null)}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className={`button medium ${statusChangeDialog?.status === 'completed' ? 'warning' : 'submit'}`}
-            disabled={actionLoading || !statusChangeDialog}
-            onClick={() => {
+        actions={[
+          {
+            label: '취소',
+            intent: 'cancel',
+            disabled: actionLoading,
+            onClick: () => setStatusChangeDialog(null),
+          },
+          {
+            label: statusChangeDialog?.status === 'completed' ? '처리완료' : '이상 없음',
+            intent: statusChangeDialog?.status === 'completed' ? 'warning' : 'submit',
+            disabled: actionLoading || !statusChangeDialog,
+            onClick: () => {
               if (statusChangeDialog) {
                 void handleStatusChange(statusChangeDialog.report, statusChangeDialog.status);
               }
-            }}
-          >
-            {statusChangeDialog?.status === 'completed' ? '처리완료' : '이상 없음'}
-          </button>
-        </DialogActions>
-      </Dialog>
+            },
+          },
+        ]}
+      >
+        <Typography variant="body2">
+          {statusChangeDialog?.status === 'completed'
+            ? '처리완료로 변경하고 신고 대상에 제재를 적용하시겠습니까?'
+            : statusChangeDialog?.report.reportType === 'rights'
+              ? '이상 없음으로 처리하고 삭제 상태를 해제하시겠습니까?'
+              : '이상 없음으로 처리하시겠습니까?'}
+        </Typography>
+      </ResponsivePopup>
 
-      <Dialog
+      <ResponsivePopup
         open={Boolean(appealDecisionDialog)}
         onClose={() => setAppealDecisionDialog(null)}
+        title={appealDecisionDialog === 'restore' ? '복구' : '삭제 유지'}
         maxWidth="sm"
-        fullWidth
-        className="VhiDialog"
-      >
-        <DialogTitle>{appealDecisionDialog === 'restore' ? '복구' : '삭제 유지'}</DialogTitle>
-        <button className="close-button" onClick={() => setAppealDecisionDialog(null)}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Typography variant="body2">
-            {appealDecisionDialog === 'restore'
-              ? '게시물 또는 댓글을 복구하시겠습니까?'
-              : '소명을 반려하고 삭제 상태를 유지하시겠습니까?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={actionLoading}
-            onClick={() => setAppealDecisionDialog(null)}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className={`button medium ${appealDecisionDialog === 'restore' ? 'submit' : 'warning'}`}
-            disabled={actionLoading || !appealDecisionDialog}
-            onClick={() => {
+        actions={[
+          {
+            label: '취소',
+            intent: 'cancel',
+            disabled: actionLoading,
+            onClick: () => setAppealDecisionDialog(null),
+          },
+          {
+            label: appealDecisionDialog === 'restore' ? '복구' : '삭제 유지',
+            intent: appealDecisionDialog === 'restore' ? 'submit' : 'warning',
+            disabled: actionLoading || !appealDecisionDialog,
+            onClick: () => {
               if (appealDecisionDialog) {
                 void handleAppealDecision(appealDecisionDialog);
               }
-            }}
-          >
-            {appealDecisionDialog === 'restore' ? '복구' : '삭제 유지'}
-          </button>
-        </DialogActions>
-      </Dialog>
+            },
+          },
+        ]}
+      >
+        <Typography variant="body2">
+          {appealDecisionDialog === 'restore'
+            ? '게시물 또는 댓글을 복구하시겠습니까?'
+            : '소명을 반려하고 삭제 상태를 유지하시겠습니까?'}
+        </Typography>
+      </ResponsivePopup>
 
-      <Dialog
+      <ResponsivePopup
         open={Boolean(siteActionDialog)}
         onClose={() => setSiteActionDialog(null)}
-        maxWidth="sm"
-        fullWidth
-        className="VhiDialog"
-      >
-        <DialogTitle>
-          {siteActionDialog?.action === 'block'
+        title={
+          siteActionDialog?.action === 'block'
             ? '사이트 차단'
             : siteActionDialog?.action === 'unblock'
               ? '사이트 차단 해제'
-              : '사이트 폐쇄'}
-        </DialogTitle>
-        <button className="close-button" onClick={() => setSiteActionDialog(null)}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Typography variant="body2">
-            {siteActionDialog?.action === 'block'
-              ? '진짜 사이트를 차단하시겠습니까?'
-              : siteActionDialog?.action === 'unblock'
-                ? '진짜 사이트 차단을 해제하시겠습니까?'
-                : '진짜 사이트를 폐쇄하시겠습니까?'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={actionLoading}
-            onClick={() => setSiteActionDialog(null)}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className={`button medium ${siteActionDialog?.action === 'unblock' ? 'submit' : 'warning'}`}
-            disabled={actionLoading || !siteActionDialog}
-            onClick={() => {
+              : '사이트 폐쇄'
+        }
+        maxWidth="sm"
+        actions={[
+          {
+            label: '취소',
+            intent: 'cancel',
+            disabled: actionLoading,
+            onClick: () => setSiteActionDialog(null),
+          },
+          {
+            label:
+              siteActionDialog?.action === 'block'
+                ? '차단하기'
+                : siteActionDialog?.action === 'unblock'
+                  ? '차단 해제'
+                  : '사이트 폐쇄',
+            intent: siteActionDialog?.action === 'unblock' ? 'submit' : 'warning',
+            disabled: actionLoading || !siteActionDialog,
+            onClick: () => {
               if (siteActionDialog) {
                 void handleSiteAction(siteActionDialog.report, siteActionDialog.action);
               }
-            }}
-          >
-            {siteActionDialog?.action === 'block'
-              ? '차단하기'
-              : siteActionDialog?.action === 'unblock'
-                ? '차단 해제'
-                : '사이트 폐쇄'}
-          </button>
-        </DialogActions>
-      </Dialog>
+            },
+          },
+        ]}
+      >
+        <Typography variant="body2">
+          {siteActionDialog?.action === 'block'
+            ? '진짜 사이트를 차단하시겠습니까?'
+            : siteActionDialog?.action === 'unblock'
+              ? '진짜 사이트 차단을 해제하시겠습니까?'
+              : '진짜 사이트를 폐쇄하시겠습니까?'}
+        </Typography>
+      </ResponsivePopup>
 
       <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </Stack>

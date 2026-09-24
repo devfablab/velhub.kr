@@ -167,46 +167,23 @@ export default function LogoutActions() {
       </Accordion>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={isConfirmOpen}
+          onClose={handleCloseConfirm}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>모든 디바이스 로그아웃</h2>
-          <button className="close-button" onClick={handleCloseConfirm}>
+          <button type="button" className="close-button" onClick={handleCloseConfirm} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseConfirm}
-                disabled={isLoggingOutAllDevices}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button small danger"
-                onClick={handleLogoutAllDevices}
-                disabled={isLoggingOutAllDevices}
-              >
-                로그아웃
-              </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
-          <DialogTitle>모든 디바이스 로그아웃</DialogTitle>
-          <button className="close-button" onClick={handleCloseConfirm}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
-          </DialogContent>
-          <DialogActions>
+          </div>
+          <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button medium close"
+              className="button small cancel"
               onClick={handleCloseConfirm}
               disabled={isLoggingOutAllDevices}
             >
@@ -215,6 +192,34 @@ export default function LogoutActions() {
             <button
               type="button"
               className="button small danger"
+              onClick={handleLogoutAllDevices}
+              disabled={isLoggingOutAllDevices}
+            >
+              로그아웃
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>모든 디바이스 로그아웃</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseConfirm} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={handleCloseConfirm}
+              disabled={isLoggingOutAllDevices}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="delete-button"
               onClick={handleLogoutAllDevices}
               disabled={isLoggingOutAllDevices}
             >

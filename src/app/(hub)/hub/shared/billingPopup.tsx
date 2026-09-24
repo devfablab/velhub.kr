@@ -1,18 +1,8 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Drawer,
-  Stack,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
 import PopupMessage from '@/components/PopupMessage';
+import ResponsivePopup from './ResponsivePopup';
 import styles from '@/app/hub.module.sass';
 
 type BillingPopupDetailType = 'billing' | 'donation';
@@ -104,8 +94,6 @@ function getExtraRows(detail: BillingPopupDetail) {
 }
 
 export default function BillingPopup({ paymentId, detail, children }: BillingPopupProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [isOpen, setIsOpen] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -193,57 +181,40 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
         {children}
       </button>
 
-      {isMobile ? (
-        <Drawer anchor="bottom" open={isOpen} onClose={handleClose} className="VhiDrawer-bottom">
-          <h2>결제 상세</h2>
-          <button className="close-button" onClick={handleClose}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            {content}
-            <Stack direction="column" gap={1.5}>
-              {detail.detailType === 'donation' && detail.canForceRefundForTest ? (
-                <button type="button" className="button medium cancel" onClick={handleRefund} disabled={isRefunding}>
-                  테스트환경 강제 환불
-                </button>
-              ) : null}
-              {detail.detailType === 'donation' &&
-              !detail.canForceRefundForTest &&
-              detail.canRequestMinorCancellation ? (
-                <button type="button" className="button medium cancel" onClick={handleMinorCancellationRequest}>
-                  청약취소 신청
-                </button>
-              ) : null}
-              <button type="button" className="button medium submit" onClick={handleClose}>
-                확인
-              </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog open={isOpen} onClose={handleClose} fullWidth maxWidth="xs" className="VhiDialog">
-          <DialogTitle>결제 상세</DialogTitle>
-          <button className="close-button" onClick={handleClose}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>{content}</DialogContent>
-          <DialogActions>
-            {detail.detailType === 'donation' && detail.canForceRefundForTest ? (
-              <button type="button" className="button medium close" onClick={handleRefund} disabled={isRefunding}>
-                테스트환경 강제 환불
-              </button>
-            ) : null}
-            {detail.detailType === 'donation' && !detail.canForceRefundForTest && detail.canRequestMinorCancellation ? (
-              <button type="button" className="button medium close" onClick={handleMinorCancellationRequest}>
-                청약취소 신청
-              </button>
-            ) : null}
-            <button type="button" className="button medium submit" onClick={handleClose}>
-              확인
-            </button>
-          </DialogActions>
-        </Dialog>
-      )}
+      <ResponsivePopup
+        open={isOpen}
+        onClose={handleClose}
+        title="결제 상세"
+        maxWidth="xs"
+        actions={[
+          ...(detail.detailType === 'donation' && detail.canForceRefundForTest
+            ? [
+                {
+                  label: '테스트환경 강제 환불',
+                  intent: 'warning' as const,
+                  onClick: handleRefund,
+                  disabled: isRefunding,
+                },
+              ]
+            : []),
+          ...(detail.detailType === 'donation' && !detail.canForceRefundForTest && detail.canRequestMinorCancellation
+            ? [
+                {
+                  label: '청약취소 신청',
+                  intent: 'action' as const,
+                  onClick: handleMinorCancellationRequest,
+                },
+              ]
+            : []),
+          {
+            label: '확인',
+            intent: 'submit',
+            onClick: handleClose,
+          },
+        ]}
+      >
+        {content}
+      </ResponsivePopup>
 
       <PopupMessage
         open={Boolean(errorMessage)}

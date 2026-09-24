@@ -425,33 +425,33 @@ export default function EmailSignIn() {
             anchor="bottom"
             open={decisionState === 'confirm-enable-email-login'}
             onClose={handleCancelDecision}
-            className="VhiDrawer-bottom"
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>이메일 로그인 설정</h2>
             <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
               <CloseRoundedIcon />
             </button>
-            <Stack gap={2} sx={{ pt: 1 }}>
+            <div className="VhiDrawer-bottom-content">
               <Typography variant="subtitle2">{decisionMessage}</Typography>
-              <Stack direction="column" gap={1.5}>
-                <button
-                  type="button"
-                  className="button medium cancel"
-                  onClick={handleCancelDecision}
-                  disabled={isSubmitting}
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleConfirmEnableEmailLogin}
-                  disabled={isSubmitting}
-                >
-                  비밀번호 설정 메일 보내기
-                </button>
-              </Stack>
-            </Stack>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button
+                type="button"
+                className="button small cancel"
+                onClick={handleCancelDecision}
+                disabled={isSubmitting}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button small submit"
+                onClick={handleConfirmEnableEmailLogin}
+                disabled={isSubmitting}
+              >
+                비밀번호 설정 메일 보내기
+              </button>
+            </div>
           </Drawer>
         ) : (
           <Dialog
@@ -469,20 +469,10 @@ export default function EmailSignIn() {
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </DialogContent>
             <DialogActions>
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCancelDecision}
-                disabled={isSubmitting}
-              >
+              <button type="button" className="cancel-button" onClick={handleCancelDecision} disabled={isSubmitting}>
                 취소
               </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleConfirmEnableEmailLogin}
-                disabled={isSubmitting}
-              >
+              <button type="button" onClick={handleConfirmEnableEmailLogin} disabled={isSubmitting}>
                 비밀번호 설정 메일 보내기
               </button>
             </DialogActions>
@@ -494,33 +484,33 @@ export default function EmailSignIn() {
             anchor="bottom"
             open={decisionState === 'confirm-email-login'}
             onClose={handleCancelDecision}
-            className="VhiDrawer-bottom"
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>이메일 로그인 확인</h2>
             <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
               <CloseRoundedIcon />
             </button>
-            <Stack gap={2} sx={{ pt: 1 }}>
+            <div className="VhiDrawer-bottom-content">
               <Typography variant="subtitle2">{decisionMessage}</Typography>
-              <Stack direction="column" gap={1.5}>
-                <button
-                  type="button"
-                  className="button medium cancel"
-                  onClick={handleCancelDecision}
-                  disabled={isSubmitting}
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleConfirmEmailLogin}
-                  disabled={isSubmitting}
-                >
-                  이메일 로그인
-                </button>
-              </Stack>
-            </Stack>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button
+                type="button"
+                className="button small cancel"
+                onClick={handleCancelDecision}
+                disabled={isSubmitting}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button small submit"
+                onClick={handleConfirmEmailLogin}
+                disabled={isSubmitting}
+              >
+                이메일 로그인
+              </button>
+            </div>
           </Drawer>
         ) : (
           <Dialog
@@ -538,20 +528,10 @@ export default function EmailSignIn() {
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </DialogContent>
             <DialogActions>
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCancelDecision}
-                disabled={isSubmitting}
-              >
+              <button type="button" className="cancel-button" onClick={handleCancelDecision} disabled={isSubmitting}>
                 취소
               </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleConfirmEmailLogin}
-                disabled={isSubmitting}
-              >
+              <button type="button" onClick={handleConfirmEmailLogin} disabled={isSubmitting}>
                 이메일 로그인
               </button>
             </DialogActions>

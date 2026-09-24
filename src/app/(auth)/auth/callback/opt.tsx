@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
@@ -503,20 +504,23 @@ export default function Opt() {
           anchor="bottom"
           open={processingState === 'confirm'}
           onClose={handleCancelSocialLogin}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>소셜 로그인 확인</h2>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <button className="close-button" onClick={handleCancelSocialLogin} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
             <Typography variant="subtitle2">{confirmMessage}</Typography>
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>
-                이메일 로그인
-              </button>
-              <button type="button" className="button medium submit" onClick={handleConfirmSocialLogin}>
-                소셜 로그인
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small action" onClick={handleCancelSocialLogin}>
+              이메일 로그인
+            </button>
+            <button type="button" className="button small action" onClick={handleConfirmSocialLogin}>
+              소셜 로그인
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -527,14 +531,17 @@ export default function Opt() {
           className="VhiDialog"
         >
           <DialogTitle>소셜 로그인 확인</DialogTitle>
+          <button className="close-button" onClick={handleCancelSocialLogin} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
           <DialogContent>
             <Typography variant="subtitle2">{confirmMessage}</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>
+            <button type="button" onClick={handleCancelSocialLogin}>
               이메일 로그인
             </button>
-            <button type="button" className="button medium submit" onClick={handleConfirmSocialLogin}>
+            <button type="button" onClick={handleConfirmSocialLogin}>
               소셜 로그인
             </button>
           </DialogActions>
