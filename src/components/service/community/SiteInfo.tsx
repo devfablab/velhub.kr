@@ -226,7 +226,7 @@ export default function SiteInfo() {
           onClose={() => setIsDialogOpen(false)}
           fullWidth
           maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
+          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
         >
           <DialogTitle>커뮤니티 정보</DialogTitle>
           <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">

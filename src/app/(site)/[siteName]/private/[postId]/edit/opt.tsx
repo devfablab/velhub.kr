@@ -358,7 +358,7 @@ export default function Opt({
               <Dialog
                 open={imageDialogOpen}
                 onClose={closeImageDialog}
-                className={`VhiDialog VhiDialog-service ${styles['thumbnail-dialog']}`}
+                className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
               >
                 <DialogTitle>첨부 이미지 업로드</DialogTitle>
                 <button type="button" className="close-button" onClick={closeImageDialog} aria-label="닫기">

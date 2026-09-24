@@ -386,7 +386,7 @@ export default function UserInfo() {
           onClose={handleCloseDialog}
           fullWidth
           maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
+          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
         >
           <DialogTitle>프로필 설정</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
@@ -502,7 +502,7 @@ export default function UserInfo() {
           onClose={handleCloseWithdrawDialog}
           fullWidth
           maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
+          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
         >
           <DialogTitle>{isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}</DialogTitle>
           <button
