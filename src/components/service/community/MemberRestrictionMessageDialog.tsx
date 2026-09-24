@@ -211,21 +211,20 @@ export default function MemberRestrictionMessageDialog({
           onClose={closeDialog}
           maxWidth="lg"
           fullWidth
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
           slotProps={{ transition: { onEntered: () => void loadMessages() } }}
         >
           <DialogTitle>소명 메시지</DialogTitle>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={saving}>
+          <button type="button" className="close-button" onClick={closeDialog} disabled={saving} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>{content}</DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={closeDialog} disabled={saving}>
+            <button type="button" className="cancel-button" onClick={closeDialog} disabled={saving}>
               닫기
             </button>
             <button
               type="button"
-              className="button medium submit"
               onClick={() => void sendMessage()}
               disabled={saving || loading || !messageText.trim()}
             >
@@ -238,29 +237,27 @@ export default function MemberRestrictionMessageDialog({
           anchor="bottom"
           open={open}
           onClose={closeDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
           slotProps={{ transition: { onEntered: () => void loadMessages() } }}
         >
           <h2>소명 메시지</h2>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={saving}>
+          <button type="button" className="close-button" onClick={closeDialog} disabled={saving} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
-            {content}
-            <Stack gap={1.5}>
-              <button type="button" className="button medium cancel" onClick={closeDialog} disabled={saving}>
-                닫기
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void sendMessage()}
-                disabled={saving || loading || !messageText.trim()}
-              >
-                보내기
-              </button>
-            </Stack>
-          </Stack>
+          <div className="VhiDrawer-bottom-content">{content}</div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={closeDialog} disabled={saving}>
+              닫기
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void sendMessage()}
+              disabled={saving || loading || !messageText.trim()}
+            >
+              보내기
+            </button>
+          </div>
         </Drawer>
       )}
 

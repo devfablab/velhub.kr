@@ -105,7 +105,13 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
           </div>
         </Drawer>
       ) : (
-        <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" className="VhiDialog">
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          fullWidth
+          maxWidth="sm"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>{terms.title}</DialogTitle>
           <button type="button" className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />

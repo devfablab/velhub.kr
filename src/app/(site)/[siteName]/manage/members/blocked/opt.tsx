@@ -479,7 +479,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseActionDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{getActionTitle()}</DialogTitle>
               <button className="close-button" onClick={handleCloseActionDialog}>

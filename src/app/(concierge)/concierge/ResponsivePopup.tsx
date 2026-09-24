@@ -54,7 +54,7 @@ export default function ResponsivePopup({ open, title, children, actions, onClos
       </div>
     </Drawer>
   ) : (
-    <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth className="VhiDialog">
+    <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth className="vh-dialog vh-alert-dialog">
       <DialogTitle>{title}</DialogTitle>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />

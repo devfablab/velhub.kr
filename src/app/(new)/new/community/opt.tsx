@@ -774,7 +774,13 @@ export default function Opt() {
           </div>
         </Drawer>
       ) : (
-        <Dialog open={isCancelDialogOpen} onClose={closeCancelDialog} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={isCancelDialogOpen}
+          onClose={closeCancelDialog}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>개설 취소</DialogTitle>
           <button type="button" className="close-button" onClick={closeCancelDialog} aria-label="닫기">
             <CloseRoundedIcon />
@@ -814,7 +820,13 @@ export default function Opt() {
           </div>
         </Drawer>
       ) : (
-        <Dialog open={isErrorDialogOpen} onClose={closeErrorDialog} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={isErrorDialogOpen}
+          onClose={closeErrorDialog}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>개설 불가</DialogTitle>
           <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
             <CloseRoundedIcon />

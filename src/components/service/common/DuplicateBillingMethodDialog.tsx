@@ -34,7 +34,7 @@ export default function DuplicateBillingMethodDialog({ open, title, onClose, onC
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" className="VhiDialog">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
       <DialogTitle>{title}</DialogTitle>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />

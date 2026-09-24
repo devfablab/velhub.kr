@@ -926,7 +926,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 onClose={() => setIsSearchOpen(false)}
                 fullWidth
                 maxWidth="sm"
-                className="VhiDialog"
+                className="vh-dialog vh-alert-dialog"
               >
                 <DialogTitle>멤버 검색</DialogTitle>
                 <button className="close-button" onClick={() => setIsSearchOpen(false)} aria-label="검색창 닫기">
@@ -1104,7 +1104,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       }}
                       fullWidth
                       maxWidth="xs"
-                      className="VhiDialog"
+                      className="vh-dialog vh-alert-dialog"
                     >
                       <DialogTitle>등급 변경</DialogTitle>
                       <button
@@ -1307,7 +1307,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 onClose={handleCloseActionDialog}
                 fullWidth
                 maxWidth="sm"
-                className="VhiDialog"
+                className="vh-dialog vh-alert-dialog"
               >
                 <DialogTitle>{getActionTitle()}</DialogTitle>
                 <button

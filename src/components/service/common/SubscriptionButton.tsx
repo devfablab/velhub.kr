@@ -679,12 +679,23 @@ export default function SubscriptionButton({
       ) : null}
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>{getDialogTitle({ subscriptionStatus, isMinor })}</h2>
-          <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseDialog}
+            disabled={isProcessing}
+            aria-label="닫기"
+          >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             {isResumingScheduledSubscription ? (
               <Stack gap={1}>
                 <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
@@ -722,37 +733,38 @@ export default function SubscriptionButton({
                 <span>{errorMessage}</span>
               </p>
             ) : null}
-            <Stack direction="column" spacing={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseDialog}
-                disabled={isProcessing}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() =>
-                  void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
-                }
-                disabled={isProcessing}
-              >
-                {getDialogSubmitText(subscriptionStatus)}
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseDialog} disabled={isProcessing}>
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() =>
+                void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
+              }
+              disabled={isProcessing}
+            >
+              {getDialogSubmitText(subscriptionStatus)}
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
           open={isDialogOpen}
           onClose={handleCloseDialog}
           aria-labelledby="subscription-dialog-title"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle id="subscription-dialog-title">{getDialogTitle({ subscriptionStatus, isMinor })}</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseDialog}
+            disabled={isProcessing}
+            aria-label="닫기"
+          >
             <CloseRoundedIcon />
           </button>
           <DialogContent>
@@ -795,12 +807,11 @@ export default function SubscriptionButton({
             ) : null}
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
+            <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
               type="button"
-              className="button medium submit"
               onClick={() =>
                 void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
               }
@@ -817,13 +828,19 @@ export default function SubscriptionButton({
           anchor="bottom"
           open={isCancelDialogOpen}
           onClose={handleCloseCancelDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>{getCancelDialogTitle(isRefundableCancellation)}</h2>
-          <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseCancelDialog}
+            disabled={isProcessing}
+            aria-label="닫기"
+          >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack>
               <Typography variant="subtitle2">
                 {isRefundableCancellation
@@ -840,37 +857,43 @@ export default function SubscriptionButton({
                 </p>
               ) : null}
             </Stack>
-            <Stack direction="column" spacing={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseCancelDialog}
-                disabled={isProcessing}
-              >
-                아니요
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleCancelSubscription}
-                disabled={isProcessing}
-              >
-                {isRefundableCancellation ? '환불하기' : '구독 취소'}
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseCancelDialog}
+              disabled={isProcessing}
+            >
+              아니요
+            </button>
+            <button
+              type="button"
+              className="button small warning"
+              onClick={handleCancelSubscription}
+              disabled={isProcessing}
+            >
+              {isRefundableCancellation ? '환불하기' : '구독 취소'}
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
           open={isCancelDialogOpen}
           onClose={handleCloseCancelDialog}
           aria-labelledby="subscription-cancel-dialog-title"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle id="subscription-cancel-dialog-title">
             {getCancelDialogTitle(isRefundableCancellation)}
           </DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseCancelDialog}
+            disabled={isProcessing}
+            aria-label="닫기"
+          >
             <CloseRoundedIcon />
           </button>
           <DialogContent>
@@ -892,20 +915,10 @@ export default function SubscriptionButton({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button
-              type="button"
-              className="button medium close"
-              onClick={handleCloseCancelDialog}
-              disabled={isProcessing}
-            >
+            <button type="button" className="cancel-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
               아니요
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={handleCancelSubscription}
-              disabled={isProcessing}
-            >
+            <button type="button" className="warning-button" onClick={handleCancelSubscription} disabled={isProcessing}>
               {isRefundableCancellation ? '환불하기' : '구독 취소'}
             </button>
           </DialogActions>
@@ -916,22 +929,24 @@ export default function SubscriptionButton({
           anchor="bottom"
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
 
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
               <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
-            <button type="button" className="button medium cancel" onClick={handleCloseIdentityDialog}>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
-          </Stack>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -939,7 +954,7 @@ export default function SubscriptionButton({
           onClose={handleCloseIdentityDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>본인인증 필요</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
@@ -952,7 +967,7 @@ export default function SubscriptionButton({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="cancel-button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </DialogActions>

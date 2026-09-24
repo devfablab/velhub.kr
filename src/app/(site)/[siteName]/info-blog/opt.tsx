@@ -1465,6 +1465,7 @@ export default function Opt({
         >
           <h2>팀원 기본 정보</h2>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseGeneralDialog}
             aria-label="팀원 기본 정보 닫기"
@@ -1472,7 +1473,7 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
               <Stack direction="column" gap={1}>
                 <Stack>
@@ -1546,25 +1547,25 @@ export default function Opt({
                 {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
               </Stack>
             </LocalizationProvider>
-            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseGeneralDialog}
-                disabled={isSubmitting}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleSubmitGeneral()}
-                disabled={isGeneralSubmitDisabled}
-              >
-                저장
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseGeneralDialog}
+              disabled={isSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void handleSubmitGeneral()}
+              disabled={isGeneralSubmitDisabled}
+            >
+              저장
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -1572,10 +1573,11 @@ export default function Opt({
           onClose={handleCloseGeneralDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>팀원 기본 정보</DialogTitle>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseGeneralDialog}
             disabled={isSubmitting}
@@ -1659,20 +1661,10 @@ export default function Opt({
             </LocalizationProvider>
           </DialogContent>
           <DialogActions>
-            <button
-              type="button"
-              className="button medium close"
-              onClick={handleCloseGeneralDialog}
-              disabled={isSubmitting}
-            >
+            <button type="button" className="cancel-button" onClick={handleCloseGeneralDialog} disabled={isSubmitting}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleSubmitGeneral()}
-              disabled={isGeneralSubmitDisabled}
-            >
+            <button type="button" onClick={() => void handleSubmitGeneral()} disabled={isGeneralSubmitDisabled}>
               저장
             </button>
           </DialogActions>
@@ -1688,6 +1680,7 @@ export default function Opt({
         >
           <h2>별명 수정</h2>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseNicknameDialog}
             disabled={isNicknameSubmitting}
@@ -1695,7 +1688,7 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <Stack gap={2}>
               <TextField
                 placeholder="별명"
@@ -1709,25 +1702,25 @@ export default function Opt({
                 <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
               ) : null}
             </Stack>
-            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseNicknameDialog}
-                disabled={isNicknameSubmitting}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleSubmitNickname()}
-                disabled={isNicknameSubmitDisabled}
-              >
-                저장
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseNicknameDialog}
+              disabled={isNicknameSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void handleSubmitNickname()}
+              disabled={isNicknameSubmitDisabled}
+            >
+              저장
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -1735,10 +1728,11 @@ export default function Opt({
           onClose={handleCloseNicknameDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>별명 수정</DialogTitle>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseNicknameDialog}
             disabled={isNicknameSubmitting}
@@ -1764,18 +1758,13 @@ export default function Opt({
           <DialogActions>
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseNicknameDialog}
               disabled={isNicknameSubmitting}
             >
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleSubmitNickname()}
-              disabled={isNicknameSubmitDisabled}
-            >
+            <button type="button" onClick={() => void handleSubmitNickname()} disabled={isNicknameSubmitDisabled}>
               저장
             </button>
           </DialogActions>
@@ -1791,13 +1780,14 @@ export default function Opt({
         >
           <h2>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</h2>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseItemManageDialog}
             aria-label={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}
           >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <Stack direction="column" gap={1} sx={{ p: 1 }}>
               {itemManageDialogType ? (
                 <>
@@ -1834,12 +1824,12 @@ export default function Opt({
 
               {itemErrorMessage ? <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div> : null}
             </Stack>
-            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
-              <button type="button" className="button medium cancel" onClick={handleCloseItemManageDialog}>
-                닫기
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseItemManageDialog}>
+              닫기
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -1847,10 +1837,11 @@ export default function Opt({
           onClose={handleCloseItemManageDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</DialogTitle>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseItemManageDialog}
             aria-label={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}
@@ -1896,7 +1887,7 @@ export default function Opt({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseItemManageDialog}>
+            <button type="button" className="cancel-button" onClick={handleCloseItemManageDialog}>
               닫기
             </button>
           </DialogActions>
@@ -1914,6 +1905,7 @@ export default function Opt({
             {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
           </h2>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseItemFormDialog}
             disabled={isItemSubmitting}
@@ -1923,7 +1915,7 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
               <Stack direction="column" gap={1}>
                 {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
@@ -1932,25 +1924,25 @@ export default function Opt({
                 ) : null}
               </Stack>
             </LocalizationProvider>
-            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseItemFormDialog}
-                disabled={isItemSubmitting}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleSubmitItem()}
-                disabled={isItemSubmitDisabled}
-              >
-                저장
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseItemFormDialog}
+              disabled={isItemSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void handleSubmitItem()}
+              disabled={isItemSubmitDisabled}
+            >
+              저장
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -1958,12 +1950,13 @@ export default function Opt({
           onClose={handleCloseItemFormDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>
             {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
           </DialogTitle>
           <button
+            type="button"
             className="close-button"
             onClick={handleCloseItemFormDialog}
             disabled={isItemSubmitting}
@@ -1986,18 +1979,13 @@ export default function Opt({
           <DialogActions>
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseItemFormDialog}
               disabled={isItemSubmitting}
             >
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleSubmitItem()}
-              disabled={isItemSubmitDisabled}
-            >
+            <button type="button" onClick={() => void handleSubmitItem()} disabled={isItemSubmitDisabled}>
               저장
             </button>
           </DialogActions>
@@ -2013,6 +2001,7 @@ export default function Opt({
         >
           <h2>즐겨찾기 오류</h2>
           <button
+            type="button"
             className="close-button"
             onClick={() => setIsFavoriteErrorDialogOpen(false)}
             disabled={isSubmitting}
@@ -2020,21 +2009,16 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={2} sx={{ pt: 1 }}>
+          <div className="VhiDrawer-bottom-content">
             <div className={`paper paper-error ${styles.paper}`}>
               {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}
             </div>
-
-            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={() => setIsFavoriteErrorDialogOpen(false)}
-              >
-                확인
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small submit" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
+              확인
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -2042,10 +2026,11 @@ export default function Opt({
           onClose={() => setIsFavoriteErrorDialogOpen(false)}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>즐겨찾기 오류</DialogTitle>
           <button
+            type="button"
             className="close-button"
             onClick={() => setIsFavoriteErrorDialogOpen(false)}
             disabled={isSubmitting}
@@ -2059,7 +2044,7 @@ export default function Opt({
             </div>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium submit" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
+            <button type="button" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
               확인
             </button>
           </DialogActions>

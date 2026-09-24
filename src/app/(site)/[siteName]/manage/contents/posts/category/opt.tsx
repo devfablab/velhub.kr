@@ -1084,7 +1084,7 @@ export default function Opt({
               onClose={handleCloseDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}</DialogTitle>
               <button
@@ -1291,7 +1291,7 @@ export default function Opt({
               onClose={handleCloseDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>카테고리 삭제</DialogTitle>
               <button className="close-button" onClick={handleCloseDialog} aria-label="닫기" disabled={isSubmitting}>

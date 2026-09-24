@@ -147,7 +147,7 @@ export default function ToastEditorClient({
         onClose={() => setImageErrorMessage('')}
         fullWidth
         maxWidth="xs"
-        className="VhiDialog"
+        className="vh-dialog vh-alert-dialog"
       >
         <DialogTitle>이미지 등록 안내</DialogTitle>
         <button type="button" className="close-button" onClick={() => setImageErrorMessage('')}>

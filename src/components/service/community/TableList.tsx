@@ -13,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
+  DialogTitle,
   Drawer,
   useMediaQuery,
   useTheme,
@@ -145,26 +146,38 @@ export default function TableList({ writeHref }: Props) {
           anchor="bottom"
           open={Boolean(alertMessage)}
           onClose={() => setAlertMessage('')}
-          className={`VhiDrawer-bottom VhiDrawer-bottom-service `}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
-          <h2>{alertMessage}</h2>
-          <button className="close-button" onClick={() => setAlertMessage('')} aria-label={`${alertMessage} 닫기`}>
+          <h2>안내</h2>
+          <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <p>{alertMessage}</p>
+          <div className="VhiDrawer-bottom-content">
+            <DialogContentText>{alertMessage}</DialogContentText>
+          </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={() => setAlertMessage('')} className="button medium cancel">
+            <button type="button" onClick={() => setAlertMessage('')} className="button small submit">
               확인
             </button>
           </div>
         </Drawer>
       ) : (
-        <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
+        <Dialog
+          open={Boolean(alertMessage)}
+          onClose={() => setAlertMessage('')}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
+          <DialogTitle>안내</DialogTitle>
+          <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
           <DialogContent>
             <DialogContentText>{alertMessage}</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <button onClick={() => setAlertMessage('')} className="button medmu close">
+            <button type="button" onClick={() => setAlertMessage('')}>
               확인
             </button>
           </DialogActions>

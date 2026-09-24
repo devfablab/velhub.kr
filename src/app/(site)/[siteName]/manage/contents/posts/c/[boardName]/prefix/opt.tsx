@@ -402,7 +402,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
               <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
@@ -490,7 +490,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>말머리 삭제</DialogTitle>
               <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">

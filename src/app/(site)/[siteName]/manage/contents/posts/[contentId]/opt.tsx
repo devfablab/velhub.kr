@@ -601,7 +601,7 @@ export default function Opt({
               onClose={handleCloseDeleteDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 삭제</DialogTitle>
               <button
@@ -705,7 +705,7 @@ export default function Opt({
               onClose={handleCloseRestoreDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 복구</DialogTitle>
               <button
@@ -817,7 +817,7 @@ export default function Opt({
               onClose={handleCloseCategoryDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>카테고리 설정</DialogTitle>
               <button
@@ -960,7 +960,7 @@ export default function Opt({
               onClose={handleCloseSeriesDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>연재 설정</DialogTitle>
               <button

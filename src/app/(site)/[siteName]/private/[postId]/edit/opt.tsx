@@ -341,14 +341,14 @@ export default function Opt({
                   ) : null}
                 </div>
                 <div className="drawer-dialog-actions">
-                  <button type="button" onClick={closeImageDialog} className="button medium cancel">
+                  <button type="button" onClick={closeImageDialog} className="button small cancel">
                     취소
                   </button>
                   <button
                     type="button"
                     onClick={applyImageDialog}
                     disabled={imageDialogImages.length === 0}
-                    className="button medium submit"
+                    className="button small submit"
                   >
                     이미지 업로드
                   </button>
@@ -358,9 +358,12 @@ export default function Opt({
               <Dialog
                 open={imageDialogOpen}
                 onClose={closeImageDialog}
-                className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
+                className={`VhiDialog VhiDialog-service ${styles['thumbnail-dialog']}`}
               >
                 <DialogTitle>첨부 이미지 업로드</DialogTitle>
+                <button type="button" className="close-button" onClick={closeImageDialog} aria-label="닫기">
+                  <CloseRoundedIcon />
+                </button>
                 <DialogContent className={styles['thumbnail-dialog-content']}>
                   {imageDialogMessage ? (
                     <DialogContentText className={styles['thumbnail-dialog-message']}>

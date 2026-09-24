@@ -243,7 +243,7 @@ export default function Verify2fa() {
           </div>
         </Drawer>
       ) : (
-        <Dialog open={true} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog open={true} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
           <DialogTitle>2단계 인증</DialogTitle>
           <button className="close-button" onClick={handleSignOut} aria-label="닫기" disabled={isSubmitting}>
             <CloseRoundedIcon />

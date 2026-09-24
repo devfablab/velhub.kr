@@ -146,7 +146,7 @@ export default function WithdrawalGuard({
           </div>
         </Drawer>
       ) : (
-        <Dialog open={isOpen} disableEscapeKeyDown fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog open={isOpen} disableEscapeKeyDown fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
           <DialogTitle>탈퇴 신청한 계정입니다</DialogTitle>
           <button className="close-button" onClick={handleLogout} aria-label="닫기" disabled={isLoggingOut}>
             <CloseRoundedIcon />

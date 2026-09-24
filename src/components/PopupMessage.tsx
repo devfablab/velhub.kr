@@ -25,7 +25,7 @@ export default function PopupMessage({ open, message, onClose, kind = 'info' }: 
       </Stack>
     </Drawer>
   ) : (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" className="VhiDialog">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
       <DialogContent>
         <p className={`popup-message ${kind}`}>{message}</p>
       </DialogContent>

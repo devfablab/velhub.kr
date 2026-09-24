@@ -19,7 +19,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Stack,
   Typography,
   useMediaQuery,
   useTheme,
@@ -277,7 +276,7 @@ export default function ReportButton({
     return (
       <button
         type="button"
-        className="button medium submit"
+        className={isMobile ? 'button small submit' : undefined}
         onClick={handleSubmit}
         disabled={submitting || !selectedCategory}
       >
@@ -308,34 +307,31 @@ export default function ReportButton({
       </Menu>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom">
+        <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
           <h2>신고하기</h2>
-          <button type="button" className="close-button" onClick={handleClose}>
+          <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
 
-          <Stack gap={3}>
-            {renderContent()}
-
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium cancel" onClick={handleClose} disabled={submitting}>
-                {completed ? '닫기' : '취소'}
-              </button>
-              {renderSubmitButton()}
-            </Stack>
-          </Stack>
+          <div className="VhiDrawer-bottom-content">{renderContent()}</div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleClose} disabled={submitting}>
+              {completed ? '닫기' : '취소'}
+            </button>
+            {renderSubmitButton()}
+          </div>
         </Drawer>
       ) : (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" className="VhiDialog">
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" className="vh-dialog vh-alert-dialog">
           <DialogTitle>신고하기</DialogTitle>
-          <button type="button" className="close-button" onClick={handleClose}>
+          <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
 
           <DialogContent>{renderContent()}</DialogContent>
 
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleClose} disabled={submitting}>
+            <button type="button" className="cancel-button" onClick={handleClose} disabled={submitting}>
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}

@@ -323,7 +323,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm" className="VhiDialog">
+            <Dialog
+              open={isDialogOpen}
+              onClose={handleCloseDialog}
+              fullWidth
+              maxWidth="sm"
+              className="vh-dialog vh-alert-dialog"
+            >
               <DialogTitle>가입불가 해제</DialogTitle>
               <button
                 type="button"

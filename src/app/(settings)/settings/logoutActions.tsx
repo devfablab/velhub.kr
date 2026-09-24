@@ -200,7 +200,13 @@ export default function LogoutActions() {
           </div>
         </Drawer>
       ) : (
-        <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={isConfirmOpen}
+          onClose={handleCloseConfirm}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>모든 디바이스 로그아웃</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseConfirm} aria-label="닫기">
             <CloseRoundedIcon />

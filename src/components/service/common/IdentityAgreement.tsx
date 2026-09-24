@@ -208,7 +208,7 @@ export default function IdentityAgreement({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth className="VhiDialog">
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth className="vh-dialog vh-alert-dialog">
       <DialogTitle>{title}</DialogTitle>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />

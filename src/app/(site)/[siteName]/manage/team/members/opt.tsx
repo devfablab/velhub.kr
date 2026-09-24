@@ -720,7 +720,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseOwnerTransfer}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>운영자 교체</DialogTitle>
               <button
@@ -846,7 +846,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseDetail}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>팀블로그 정보</DialogTitle>
               <button className="close-button" onClick={handleCloseDetail} aria-label="팀블로그 정보 창 닫기">
@@ -970,7 +970,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseRoleDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>
                 {nextRole === 'observer'
@@ -1094,7 +1094,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseBlockDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</DialogTitle>
               <button
@@ -1220,7 +1220,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseInviteDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>팀원 초대</DialogTitle>
               <button
@@ -1339,7 +1339,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseInviteListDialog}
               fullWidth
               maxWidth="md"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>초대 현황</DialogTitle>
               <button className="close-button" onClick={handleCloseInviteListDialog} aria-label="초대 현황 창 닫기">
@@ -1438,7 +1438,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseCancelDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>초대 취소</DialogTitle>
               <button className="close-button" onClick={handleCloseCancelDialog} aria-label="초대 취소 창 닫기">

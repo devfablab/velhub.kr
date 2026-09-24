@@ -1131,7 +1131,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             onClose={handleCloseDeleteDialog}
             fullWidth
             maxWidth="sm"
-            className="VhiDialog"
+            className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>게시물 삭제</DialogTitle>
             <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
@@ -1235,7 +1235,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             onClose={handleCloseDeleteDialog}
             fullWidth
             maxWidth="xs"
-            className="VhiDialog"
+            className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>게시물 복구</DialogTitle>
             <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">

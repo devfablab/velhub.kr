@@ -137,7 +137,13 @@ function PrivacyAgreement({ checked, onChange }: { checked: boolean; onChange: (
           </div>
         </Drawer>
       ) : (
-        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth className="VhiDialog">
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          maxWidth="lg"
+          fullWidth
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>개인정보 수집 및 이용 동의</DialogTitle>
           <button className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />

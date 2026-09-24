@@ -119,7 +119,7 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
       </div>
     </Drawer>
   ) : (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth className="VhiDialog">
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth className="vh-dialog vh-alert-dialog">
       <DialogTitle>개발용 본인인증 바이패스</DialogTitle>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />

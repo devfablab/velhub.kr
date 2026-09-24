@@ -534,6 +534,7 @@ export default function SiteProfile() {
       <div className={styles['site-profile-container']}>
         <div className={styles['site-profile-info']}>
           {profileLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={profileLogoUrl} alt="" />
           ) : (
             <div className={styles['site-profile-avatar']}>
@@ -624,7 +625,7 @@ export default function SiteProfile() {
           anchor="bottom"
           open={isBlogSubscriptionCancelDialogOpen}
           onClose={handleCloseBlogSubscriptionCancelDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</h2>
           <button
@@ -636,7 +637,7 @@ export default function SiteProfile() {
           >
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
               <Typography variant="subtitle2">
                 {isBlogSubscriptionRefundable ? '블로그 구독을 환불하시겠어요?' : '블로그 구독을 취소하시겠어요?'}
@@ -654,25 +655,25 @@ export default function SiteProfile() {
                 </p>
               ) : null}
             </Stack>
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCloseBlogSubscriptionCancelDialog}
-                disabled={isBlogSubscriptionProcessing}
-              >
-                계속 이용하기
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleCancelBlogSubscription()}
-                disabled={isBlogSubscriptionProcessing}
-              >
-                {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseBlogSubscriptionCancelDialog}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              계속 이용하기
+            </button>
+            <button
+              type="button"
+              className="button small warning"
+              onClick={() => void handleCancelBlogSubscription()}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -680,7 +681,7 @@ export default function SiteProfile() {
           onClose={handleCloseBlogSubscriptionCancelDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</DialogTitle>
           <button
@@ -714,7 +715,7 @@ export default function SiteProfile() {
           <DialogActions>
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -722,7 +723,7 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
-              className="button medium submit"
+              className="warning-button"
               onClick={() => void handleCancelBlogSubscription()}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -737,23 +738,24 @@ export default function SiteProfile() {
           anchor="bottom"
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
 
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
               <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
-
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
-          </Stack>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -761,7 +763,7 @@ export default function SiteProfile() {
           onClose={handleCloseIdentityDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>본인인증 필요</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
@@ -776,7 +778,7 @@ export default function SiteProfile() {
           </DialogContent>
 
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="cancel-button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </DialogActions>
@@ -788,7 +790,7 @@ export default function SiteProfile() {
           anchor="bottom"
           open={isBlogSubscriptionDialogOpen}
           onClose={handleCloseBlogSubscriptionDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>
             {isMinor
@@ -799,10 +801,10 @@ export default function SiteProfile() {
                   ? '블로그 구독 재가입'
                   : '블로그 구독 가입'}
           </h2>
-          <button className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
+          <button type="button" className="close-button" onClick={handleCloseBlogSubscriptionDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             {isResumingScheduledBlogSubscription ? (
               <Stack gap={1}>
                 <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
@@ -829,27 +831,25 @@ export default function SiteProfile() {
                 <span>{blogSubscriptionErrorMessage}</span>
               </p>
             ) : null}
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseBlogSubscriptionDialog}
-                disabled={isBlogSubscriptionProcessing}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={
-                  isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription
-                }
-                disabled={isBlogSubscriptionProcessing}
-              >
-                {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseBlogSubscriptionDialog}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
+            </button>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -857,7 +857,7 @@ export default function SiteProfile() {
           onClose={handleCloseBlogSubscriptionDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>
             {isMinor
@@ -868,7 +868,7 @@ export default function SiteProfile() {
                   ? '블로그 구독 재가입'
                   : '블로그 구독 가입'}
           </DialogTitle>
-          <button className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
+          <button type="button" className="close-button" onClick={handleCloseBlogSubscriptionDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>
@@ -902,7 +902,7 @@ export default function SiteProfile() {
           <DialogActions>
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseBlogSubscriptionDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -910,7 +910,6 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
-              className="button medium submit"
               onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
               disabled={isBlogSubscriptionProcessing}
             >

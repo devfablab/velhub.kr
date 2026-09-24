@@ -702,7 +702,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseIconDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>아이콘 변경</DialogTitle>
               <button className="close-button" onClick={handleCloseIconDialog}>

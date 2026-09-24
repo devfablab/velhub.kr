@@ -342,7 +342,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseInviteDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>멤버 초대</DialogTitle>
               <button
@@ -439,7 +439,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseCancelDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>초대 취소</DialogTitle>
               <button

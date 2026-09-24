@@ -168,7 +168,7 @@ export default function PaymentEmailDialog({
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" className="VhiDialog">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
       <DialogTitle>결제 정보 입력</DialogTitle>
       <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
         <CloseRoundedIcon />

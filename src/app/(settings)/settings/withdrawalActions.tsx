@@ -153,7 +153,13 @@ export default function WithdrawalActions() {
           </div>
         </Drawer>
       ) : (
-        <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={isConfirmOpen}
+          onClose={handleCloseConfirm}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>데브허브 탈퇴</DialogTitle>
           <button
             type="button"

@@ -1706,7 +1706,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         onClose={() => setIsTeamMemberBlogTypeDialogOpen(false)}
         fullWidth
         maxWidth="xs"
-        className="VhiDialog"
+        className="vh-dialog vh-alert-dialog"
       >
         <DialogTitle>블로그 타입 변경 안내</DialogTitle>
         <DialogContent>팀원 존재시 1인 블로그로 전환하실 수 없어요.</DialogContent>

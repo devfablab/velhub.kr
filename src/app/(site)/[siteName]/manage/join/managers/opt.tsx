@@ -1109,7 +1109,13 @@ export default function Opt({
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={isIconDialogOpen} onClose={closeIconDialog} fullWidth maxWidth="sm" className="VhiDialog">
+            <Dialog
+              open={isIconDialogOpen}
+              onClose={closeIconDialog}
+              fullWidth
+              maxWidth="sm"
+              className="vh-dialog vh-alert-dialog"
+            >
               <DialogTitle>아이콘 변경</DialogTitle>
               <button
                 type="button"
@@ -1437,7 +1443,13 @@ export default function Opt({
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={isSearchDialogOpen} onClose={closeSearchDialog} fullWidth maxWidth="md" className="VhiDialog">
+            <Dialog
+              open={isSearchDialogOpen}
+              onClose={closeSearchDialog}
+              fullWidth
+              maxWidth="md"
+              className="vh-dialog vh-alert-dialog"
+            >
               <DialogTitle>멤버 검색</DialogTitle>
               <button
                 type="button"
@@ -1697,7 +1709,7 @@ export default function Opt({
               onClose={closeOwnerTransferConfirm}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>운영자 교체</DialogTitle>
               <button
@@ -1769,7 +1781,7 @@ export default function Opt({
                   onClose={closeManagerEdit}
                   fullWidth
                   maxWidth="sm"
-                  className="VhiDialog"
+                  className="vh-dialog vh-alert-dialog"
                 >
                   <DialogTitle>매니저 변경</DialogTitle>
                   <button

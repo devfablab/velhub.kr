@@ -773,7 +773,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseDeleteDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 삭제</DialogTitle>
               <button
@@ -877,7 +877,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseDeleteDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 복구</DialogTitle>
               <button

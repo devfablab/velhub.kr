@@ -1144,7 +1144,7 @@ export default function Opt({
               onClose={handleCloseDialog}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{dialogMode === 'new' ? '연재 추가' : '연재 수정'}</DialogTitle>
               <button
@@ -1411,7 +1411,7 @@ export default function Opt({
               onClose={handleCloseDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>연재 삭제</DialogTitle>
               <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
@@ -1538,7 +1538,7 @@ export default function Opt({
               onClose={handleCloseUserDialog}
               fullWidth
               maxWidth="md"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>사용자 검색</DialogTitle>
               <button

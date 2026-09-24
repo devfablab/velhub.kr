@@ -461,7 +461,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={() => setSelectedUser(null)}
               fullWidth
               maxWidth="sm"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>가입 신청 답변</DialogTitle>
               <button
@@ -584,7 +584,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseConfirmAction}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{getConfirmActionTitle()}</DialogTitle>
               <button

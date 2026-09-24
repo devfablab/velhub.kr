@@ -363,7 +363,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={handleCloseRenameDialog}
               fullWidth
               maxWidth="xs"
-              className="VhiDialog"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시판 이름 변경</DialogTitle>
               <button

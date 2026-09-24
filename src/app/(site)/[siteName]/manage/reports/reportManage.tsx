@@ -1037,7 +1037,13 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             </Stack>
           </Drawer>
         ) : (
-          <Dialog open={Boolean(selectedReport)} onClose={handleClose} fullWidth maxWidth="md" className="VhiDialog">
+          <Dialog
+            open={Boolean(selectedReport)}
+            onClose={handleClose}
+            fullWidth
+            maxWidth="md"
+            className="vh-dialog vh-alert-dialog"
+          >
             <DialogTitle>신고 처리</DialogTitle>
             <button type="button" className="close-button" onClick={handleClose} disabled={saving}>
               <CloseRoundedIcon />
@@ -1105,7 +1111,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             onClose={handleCloseMessages}
             fullWidth
             maxWidth="lg"
-            className="VhiDialog"
+            className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>소명 메시지</DialogTitle>
             <button type="button" className="close-button" onClick={handleCloseMessages} disabled={messageSaving}>
@@ -1133,7 +1139,13 @@ export default function ReportManage({ targetType, initialData, initialError }: 
           </Dialog>
         )}
 
-        <Dialog open={Boolean(finalReport)} onClose={handleCloseFinal} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={Boolean(finalReport)}
+          onClose={handleCloseFinal}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>최종 판단</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseFinal} disabled={finalSaving}>
             <CloseRoundedIcon />

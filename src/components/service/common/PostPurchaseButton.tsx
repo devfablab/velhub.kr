@@ -414,7 +414,7 @@ export default function PostPurchaseButton(props: Props) {
           open={isConfirmOpen}
           onClose={handleCloseConfirm}
           aria-labelledby="post-purchase-dialog-title"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle id="post-purchase-dialog-title">포스팅 소장</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isProcessing}>
@@ -478,7 +478,7 @@ export default function PostPurchaseButton(props: Props) {
           onClose={handleCloseIdentityDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>본인인증 필요</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">

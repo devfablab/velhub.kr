@@ -329,7 +329,7 @@ export default function UserInfo() {
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
         >
           <h2>프로필 설정</h2>
-          <button className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
+          <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
             <CloseRoundedIcon />
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
@@ -367,14 +367,14 @@ export default function UserInfo() {
             </dl>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button medium cancel">
+            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button small cancel">
               취소
             </button>
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit || isSubmitting}
-              className="button medium submit"
+              className="button small submit"
             >
               확인
             </button>
@@ -386,9 +386,12 @@ export default function UserInfo() {
           onClose={handleCloseDialog}
           fullWidth
           maxWidth="xs"
-          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>프로필 설정</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
+            <CloseRoundedIcon />
+          </button>
           <DialogContent className={styles['info-content']}>
             {dialogErrorMessage ? <p>{dialogErrorMessage}</p> : null}
             <div className={styles['form-group']}>
@@ -468,14 +471,14 @@ export default function UserInfo() {
 
           <div className="drawer-dialog-actions">
             {isWithdrawBlocked ? (
-              <button type="button" className="button medium submit" onClick={handleCloseWithdrawDialog}>
+              <button type="button" className="button small submit" onClick={handleCloseWithdrawDialog}>
                 {withdrawBlockedButtonText}
               </button>
             ) : (
               <>
                 <button
                   type="button"
-                  className="button medium cancel"
+                  className="button small cancel"
                   onClick={handleCloseWithdrawDialog}
                   disabled={isWithdrawSubmitting}
                 >
@@ -483,7 +486,7 @@ export default function UserInfo() {
                 </button>
                 <button
                   type="button"
-                  className="button medium warning"
+                  className="button small warning"
                   onClick={handleWithdraw}
                   disabled={isWithdrawSubmitting}
                 >
@@ -499,9 +502,18 @@ export default function UserInfo() {
           onClose={handleCloseWithdrawDialog}
           fullWidth
           maxWidth="xs"
-          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}</DialogTitle>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseWithdrawDialog}
+            disabled={isWithdrawSubmitting}
+            aria-label={isWithdrawBlocked ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}
+          >
+            <CloseRoundedIcon />
+          </button>
 
           <DialogContent className={styles['info-content']}>
             {isWithdrawBlocked ? (
@@ -522,7 +534,7 @@ export default function UserInfo() {
 
           <DialogActions>
             {isWithdrawBlocked ? (
-              <button type="button" className="cancel-button" onClick={handleCloseWithdrawDialog}>
+              <button type="button" onClick={handleCloseWithdrawDialog}>
                 {withdrawBlockedButtonText}
               </button>
             ) : (

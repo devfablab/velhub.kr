@@ -459,7 +459,7 @@ export default function EmailSignIn() {
             onClose={handleCancelDecision}
             fullWidth
             maxWidth="xs"
-            className="VhiDialog"
+            className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>이메일 로그인 설정</DialogTitle>
             <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
@@ -518,7 +518,7 @@ export default function EmailSignIn() {
             onClose={handleCancelDecision}
             fullWidth
             maxWidth="xs"
-            className="VhiDialog"
+            className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>이메일 로그인 확인</DialogTitle>
             <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>

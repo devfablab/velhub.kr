@@ -416,50 +416,49 @@ export default function DonationButton(props: Props) {
       />
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>{donationTitle}</h2>
-          <button className="close-button" onClick={handleCloseDialog}>
+          <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack gap={3}>
-            {renderDonationForm()}
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleCloseDialog}
-                disabled={isProcessing}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleDonate()}
-                disabled={isProcessing}
-              >
-                {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
-              </button>
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="xs" className="VhiDialog">
-          <DialogTitle>{donationTitle}</DialogTitle>
-          <button className="close-button" onClick={handleCloseDialog}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>{renderDonationForm()}</DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
+          <div className="VhiDrawer-bottom-content">{renderDonationForm()}</div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
               type="button"
-              className="button medium submit"
+              className="button small submit"
               onClick={() => void handleDonate()}
               disabled={isProcessing}
             >
+              {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
+          <DialogTitle>{donationTitle}</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>{renderDonationForm()}</DialogContent>
+          <DialogActions>
+            <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isProcessing}>
+              취소
+            </button>
+            <button type="button" onClick={() => void handleDonate()} disabled={isProcessing}>
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
             </button>
           </DialogActions>
@@ -470,22 +469,24 @@ export default function DonationButton(props: Props) {
           anchor="bottom"
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
 
-          <Stack gap={3}>
+          <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
               <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
-            <button type="button" className="button medium cancel" onClick={handleCloseIdentityDialog}>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
-          </Stack>
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -493,7 +494,7 @@ export default function DonationButton(props: Props) {
           onClose={handleCloseIdentityDialog}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>본인인증 필요</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
@@ -506,7 +507,7 @@ export default function DonationButton(props: Props) {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="cancel-button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </DialogActions>

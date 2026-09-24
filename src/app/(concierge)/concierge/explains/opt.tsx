@@ -1049,7 +1049,13 @@ export default function Opt({
           </div>
         </Drawer>
       ) : (
-        <Dialog open={Boolean(opinionItem)} onClose={closeOpinion} maxWidth="lg" fullWidth className="VhiDialog">
+        <Dialog
+          open={Boolean(opinionItem)}
+          onClose={closeOpinion}
+          maxWidth="lg"
+          fullWidth
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>소명 의견서 제출</DialogTitle>
           <button type="button" className="close-button" onClick={closeOpinion} aria-label="닫기">
             <CloseRoundedIcon />

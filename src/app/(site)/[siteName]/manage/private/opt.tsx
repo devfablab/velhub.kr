@@ -218,7 +218,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
         </Drawer>
       ) : (
-        <Dialog open={Boolean(notice)} onClose={() => setNotice(null)} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={Boolean(notice)}
+          onClose={() => setNotice(null)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>{notice?.title}</DialogTitle>
           <button type="button" className="close-button" onClick={() => setNotice(null)} aria-label="팝업 닫기">
             <CloseRoundedIcon />

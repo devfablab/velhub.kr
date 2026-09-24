@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import {
@@ -10,7 +11,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Stack,
   Typography,
   useMediaQuery,
   useTheme,
@@ -226,9 +226,23 @@ export default function FooterSite() {
         </div>
       </div>
       {isMobile ? (
-        <Drawer anchor="bottom" open={Boolean(ownerTransfer)} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={Boolean(ownerTransfer)}
+          onClose={() => !isResponding && setOwnerTransfer(null)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
           <h2>운영자 교체</h2>
-          <Stack gap={3}>
+          <button
+            type="button"
+            className="close-button"
+            onClick={() => setOwnerTransfer(null)}
+            disabled={isResponding}
+            aria-label="닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
             <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
             {ownerTransferError ? (
               <p className="alert error">
@@ -236,29 +250,44 @@ export default function FooterSite() {
                 <span>{ownerTransferError}</span>
               </p>
             ) : null}
-            <Stack direction="column" gap={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={() => void handleOwnerTransferDecision('rejected')}
-                disabled={isResponding}
-              >
-                거절
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleOwnerTransferDecision('accepted')}
-                disabled={isResponding}
-              >
-                수락
-              </button>
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={() => void handleOwnerTransferDecision('rejected')}
+              disabled={isResponding}
+            >
+              거절
+            </button>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void handleOwnerTransferDecision('accepted')}
+              disabled={isResponding}
+            >
+              수락
+            </button>
+          </div>
         </Drawer>
       ) : (
-        <Dialog open={Boolean(ownerTransfer)} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={Boolean(ownerTransfer)}
+          onClose={() => !isResponding && setOwnerTransfer(null)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>운영자 교체</DialogTitle>
+          <button
+            type="button"
+            className="close-button"
+            onClick={() => setOwnerTransfer(null)}
+            disabled={isResponding}
+            aria-label="닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
           <DialogContent>
             <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
             {ownerTransferError ? (
@@ -271,18 +300,13 @@ export default function FooterSite() {
           <DialogActions>
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={() => void handleOwnerTransferDecision('rejected')}
               disabled={isResponding}
             >
               거절
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleOwnerTransferDecision('accepted')}
-              disabled={isResponding}
-            >
+            <button type="button" onClick={() => void handleOwnerTransferDecision('accepted')} disabled={isResponding}>
               수락
             </button>
           </DialogActions>
@@ -294,22 +318,25 @@ export default function FooterSite() {
           anchor="bottom"
           open={isInvitePromptOpen && !ownerTransfer}
           onClose={() => setIsInvitePromptOpen(false)}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>가입</h2>
-          <Stack gap={3}>
+          <button type="button" className="close-button" onClick={() => setIsInvitePromptOpen(false)} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
             <Typography variant="body2">초대에 응하시겠어요?</Typography>
-            <Stack direction="column" gap={1.5}>
-              <button type="button" className="button medium cancel" onClick={() => setIsInvitePromptOpen(false)}>
-                둘러보기
-              </button>
-              {inviteHref ? (
-                <Anchor className="button medium submit" href={inviteHref}>
-                  가입하기
-                </Anchor>
-              ) : null}
-            </Stack>
-          </Stack>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={() => setIsInvitePromptOpen(false)}>
+              둘러보기
+            </button>
+            {inviteHref ? (
+              <Anchor className="button small submit" href={inviteHref}>
+                가입하기
+              </Anchor>
+            ) : null}
+          </div>
         </Drawer>
       ) : (
         <Dialog
@@ -317,21 +344,20 @@ export default function FooterSite() {
           onClose={() => setIsInvitePromptOpen(false)}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>가입</DialogTitle>
+          <button type="button" className="close-button" onClick={() => setIsInvitePromptOpen(false)} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
           <DialogContent>
             <Typography variant="body2">초대에 응하시겠어요?</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={() => setIsInvitePromptOpen(false)}>
+            <button type="button" className="cancel-button" onClick={() => setIsInvitePromptOpen(false)}>
               둘러보기
             </button>
-            {inviteHref ? (
-              <Anchor className="button medium submit" href={inviteHref}>
-                가입하기
-              </Anchor>
-            ) : null}
+            {inviteHref ? <Anchor href={inviteHref}>가입하기</Anchor> : null}
           </DialogActions>
         </Dialog>
       )}

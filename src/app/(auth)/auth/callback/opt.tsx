@@ -528,7 +528,7 @@ export default function Opt() {
           onClose={handleCancelSocialLogin}
           fullWidth
           maxWidth="xs"
-          className="VhiDialog"
+          className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>소셜 로그인 확인</DialogTitle>
           <button className="close-button" onClick={handleCancelSocialLogin} aria-label="닫기">
