@@ -1687,6 +1687,11 @@ export default function Opt({
       return;
     }
 
+    if (action !== 'draft' && isGalleryBoard && selectedSeriesKey && images.length + galleryBlobImages.length < 2) {
+      setErrorMessage('갤러리 연재 글에는 이미지를 두 개 이상 등록해주세요.');
+      return;
+    }
+
     try {
       setErrorMessage('');
 
@@ -1991,7 +1996,9 @@ export default function Opt({
                         <div className={styles.image}>
                           <button type="button" onClick={openGalleryDialog}>
                             <CollectionsOutlinedIcon />
-                            <span>갤러리 이미지</span>
+                            <span>
+                              {isGalleryBoard && selectedSeriesKey ? '갤러리 이미지 (최소 2개)' : '갤러리 이미지'}
+                            </span>
                           </button>
                         </div>
                       ) : null}

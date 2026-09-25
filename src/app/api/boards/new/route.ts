@@ -126,6 +126,14 @@ export async function POST(request: Request) {
       return Response.json({ error: '말머리/연재 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (boardType === 'gallery' && postType === 'prefix') {
+      return Response.json({ error: '갤러리 게시판에서는 말머리를 설정할 수 없습니다.' }, { status: 400 });
+    }
+
+    if (boardType !== 'basic' && boardType !== 'gallery' && postType !== 'none') {
+      return Response.json({ error: '해당 게시판 종류에서는 말머리와 연재를 설정할 수 없습니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();

@@ -139,7 +139,7 @@ export default function Opt({
   const [canCreateBoard] = useState(initialData?.limit?.canCreateBoard ?? false);
 
   const canUsePostType = useMemo(() => {
-    return boardType === 'basic';
+    return boardType === 'basic' || boardType === 'gallery';
   }, [boardType]);
 
   function resetBoardLabelCheck() {
@@ -170,7 +170,7 @@ export default function Opt({
 
     setBoardType(nextBoardType);
 
-    if (nextBoardType !== 'basic') {
+    if (!['basic', 'gallery'].includes(nextBoardType) || (nextBoardType === 'gallery' && postType === 'prefix')) {
       setPostType('none');
     }
   }
@@ -610,22 +610,30 @@ export default function Opt({
                     <Stack gap={1}>
                       <FormControl>
                         <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                          말머리/연재 설정
+                          {boardType === 'gallery' ? '연재 설정' : '말머리/연재 설정'}
                         </Typography>
                         <RadioGroup row value={postType} onChange={handlePostTypeChange}>
                           <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
-                          <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                          {boardType === 'basic' ? (
+                            <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                          ) : null}
                           <FormControlLabel value="series" control={<Radio />} label="연재형" />
                         </RadioGroup>
                       </FormControl>
 
                       <p className="alert warning">
                         <WarningAmberRoundedIcon />
-                        <span>말머리/연재 여부는 한번 설정하면 변경하실 수 없습니다. 유의해 주세요.</span>
+                        <span>
+                          {boardType === 'gallery' ? '연재' : '말머리/연재'} 여부는 한번 설정하면 변경하실 수 없습니다.
+                          유의해 주세요.
+                        </span>
                       </p>
                       <p className="alert info">
                         <InfoOutlineRoundedIcon />
-                        <span>말머리 및 연재 관리는 게시판을 만든 이후에 관리하실 수 있습니다.</span>
+                        <span>
+                          {boardType === 'gallery' ? '연재' : '말머리 및 연재'} 관리는 게시판을 만든 이후에 관리하실 수
+                          있습니다.
+                        </span>
                       </p>
                     </Stack>
                   ) : null}

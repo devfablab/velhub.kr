@@ -42,6 +42,10 @@ function isAllowedWritePermission(value: string) {
   return value === 'member' || value === 'manager' || value === 'community-manager' || value === 'owner';
 }
 
+function isAllowedPostType(value: string) {
+  return value === 'none' || value === 'prefix' || value === 'series';
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { boardName } = await context.params;
@@ -98,6 +102,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '글 작성 권한 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (!isAllowedPostType(postType)) {
+      return Response.json({ error: '말머리/연재 설정이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
@@ -144,8 +152,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (currentBoard.data.board_type === 'youtube' && postType !== 'none') {
-      return Response.json({ error: '유튜브 게시판에서는 연재와 말머리를 설정할 수 없습니다.' }, { status: 400 });
+    if (currentBoard.data.board_type === 'gallery' && postType === 'prefix') {
+      return Response.json({ error: '갤러리 게시판에서는 말머리를 설정할 수 없습니다.' }, { status: 400 });
+    }
+
+    if (currentBoard.data.board_type !== 'basic' && currentBoard.data.board_type !== 'gallery' && postType !== 'none') {
+      return Response.json({ error: '해당 게시판 종류에서는 말머리와 연재를 설정할 수 없습니다.' }, { status: 400 });
     }
 
     const denylist = await supabaseAdmin.from('denylist_other').select('word').eq('word', boardKey).maybeSingle();

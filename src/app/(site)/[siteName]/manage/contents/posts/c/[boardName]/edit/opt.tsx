@@ -145,7 +145,7 @@ export default function Opt({
   const [baseUrl, setBaseUrl] = useState('');
 
   const canUsePostType = useMemo(() => {
-    return boardType === 'basic';
+    return boardType === 'basic' || boardType === 'gallery';
   }, [boardType]);
 
   function resetBoardLabelCheck() {
@@ -591,18 +591,22 @@ export default function Opt({
                   <>
                     <FormControl>
                       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                        말머리/연재 설정
+                        {boardType === 'gallery' ? '연재 설정' : '말머리/연재 설정'}
                       </Typography>
                       <RadioGroup row value={postType} onChange={handlePostTypeChange}>
                         <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
-                        <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                        {boardType === 'basic' ? (
+                          <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                        ) : null}
                         <FormControlLabel value="series" control={<Radio />} label="연재형" />
                       </RadioGroup>
                     </FormControl>
 
                     <p className="alert warning">
                       <WarningAmberRoundedIcon />
-                      <span>말머리/연재 여부는 한번 설정되면 변경하실 수 없습니다.</span>
+                      <span>
+                        {boardType === 'gallery' ? '연재' : '말머리/연재'} 여부는 한번 설정되면 변경하실 수 없습니다.
+                      </span>
                     </p>
                   </>
                 ) : null}
