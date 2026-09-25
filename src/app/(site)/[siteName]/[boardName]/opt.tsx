@@ -354,6 +354,13 @@ export default function Opt({
 
   const isSearchMode = Boolean(searchKeyword);
   const seriesNameParam = normalizeText(searchParams.get('seriesName')).toLowerCase();
+  const getContentHref = (slug: string) => {
+    const contentPath = `/${siteName}/${boardName}/${slug}`;
+
+    return seriesNameParam
+      ? `${contentPath}?${new URLSearchParams({ seriesName: seriesNameParam }).toString()}`
+      : contentPath;
+  };
   const getDisplayIdx = (content: PostItem) =>
     seriesNameParam && typeof content.series_idx === 'number' ? content.series_idx : content.idx;
   const pageNumbers = getPageNumbers(currentPage, totalPage);
@@ -577,7 +584,7 @@ export default function Opt({
                 <ol className="list">
                   {contents.map((content) => (
                     <li key={content.id}>
-                      <Anchor href={`/${siteName}/${boardName}/${content.slug}`}>
+                      <Anchor href={getContentHref(content.slug)}>
                         <div className="subject">
                           <div className="board-subject">
                             {content.prefix_label ? (
@@ -673,7 +680,7 @@ export default function Opt({
                                 <HowToVoteIcon />
                               </i>
                             ) : null}
-                            <Anchor href={`/${siteName}/${boardName}/${content.slug}`}>
+                            <Anchor href={getContentHref(content.slug)}>
                               {renderHighlightedText(
                                 content.subject,
                                 content.search_title_matched ? searchKeyword : '',
@@ -707,7 +714,7 @@ export default function Opt({
                   const imageCount = getImageCount(content);
 
                   return (
-                    <Anchor href={`/${siteName}/${boardName}/${content.slug}`} key={content.id}>
+                    <Anchor href={getContentHref(content.slug)} key={content.id}>
                       <div className={styles.thumbnail}>
                         <span>
                           {content.is_pin ? (
@@ -749,7 +756,7 @@ export default function Opt({
             <div className="paper">
               <div className={styles['youtube-items']}>
                 {contents.map((content) => (
-                  <Anchor href={`/${siteName}/${boardName}/${content.slug}`} key={content.id}>
+                  <Anchor href={getContentHref(content.slug)} key={content.id}>
                     <div className={styles.thumbnail}>
                       <span>
                         {content.is_pin ? (
@@ -806,7 +813,7 @@ export default function Opt({
                         <span className={styles.item}>댓글 {content.comment_count}</span>
                       ) : null}
                       <span className={styles.item}>조회 {content.post_count}</span>
-                      <Anchor href={`/${siteName}/${boardName}/${content.slug}`} className={styles.item}>
+                      <Anchor href={getContentHref(content.slug)} className={styles.item}>
                         <span>더보기</span>
                         <ChevronRightRoundedIcon />
                       </Anchor>
@@ -819,7 +826,7 @@ export default function Opt({
             <div className="paper">
               <div className={styles['blog-items']}>
                 {contents.map((content) => (
-                  <Anchor href={`/${siteName}/${boardName}/${content.slug}`} key={content.id}>
+                  <Anchor href={getContentHref(content.slug)} key={content.id}>
                     <div className={styles.thumbnail}>
                       <span>{content.published_status === 'draft' ? <em>(임시글)</em> : null}</span>
                       {content.thumbnail_image_url ? (
@@ -862,10 +869,7 @@ export default function Opt({
                 <ol className="list">
                   {contents.map((content) => (
                     <li key={content.id}>
-                      <Anchor
-                        className={content.is_pin ? 'pinned' : undefined}
-                        href={`/${siteName}/${boardName}/${content.slug}`}
-                      >
+                      <Anchor className={content.is_pin ? 'pinned' : undefined} href={getContentHref(content.slug)}>
                         <div className="subject">
                           <div className="board-subject">
                             {content.is_pin ? (
@@ -960,7 +964,7 @@ export default function Opt({
                               </i>
                             ) : null}
                             {content.published_status === 'draft' ? <em>(임시글)</em> : null}
-                            <Anchor href={`/${siteName}/${boardName}/${content.slug}`}>{content.subject}</Anchor>
+                            <Anchor href={getContentHref(content.slug)}>{content.subject}</Anchor>
                             {content.comment_count > 0 ? (
                               <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
                             ) : null}

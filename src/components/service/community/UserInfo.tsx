@@ -312,12 +312,16 @@ export default function UserInfo() {
           <span>{formatDate(userInfo.joinedAt)} 가입</span>
         </div>
         <div className={styles.button}>
-          <button type="button" onClick={handleOpenDialog}>
-            프로필 설정
-          </button>
-          <button type="button" onClick={handleOpenWithdrawDialog}>
-            탈퇴하기
-          </button>
+          <div>
+            <button type="button" onClick={handleOpenDialog}>
+              프로필 설정
+            </button>
+          </div>
+          <div>
+            <button type="button" onClick={handleOpenWithdrawDialog}>
+              탈퇴하기
+            </button>
+          </div>
         </div>
       </div>
 
@@ -326,7 +330,7 @@ export default function UserInfo() {
           anchor="bottom"
           open={isDialogOpen}
           onClose={handleCloseDialog}
-          className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
+          className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['info-dialog']}`}
         >
           <h2>프로필 설정</h2>
           <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">

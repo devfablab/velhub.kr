@@ -239,6 +239,13 @@
 
     .button
       margin-top: ds.rem(7)
+      display: flex
+      flex-direction: column
+      gap: ds.rem(3)
+
+      @include ds.mq(maxExtraSmall)
+        flex-direction: row
+        gap: ds.rem(5)
 
       button, a
         display: inline-flex

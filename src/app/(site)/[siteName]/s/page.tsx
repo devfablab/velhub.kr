@@ -1,13 +1,9 @@
 import { notFound } from 'next/navigation';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { formatTimeAgo, normalizeText } from '@/lib/utils';
-import Anchor from '@/components/Anchor';
-import SiteProfile from '@/components/service/blog/SiteProfile';
-import { ServiceNoDataIcon } from '@/components/Svgs';
+import { normalizeText } from '@/lib/utils';
 import Container from '../menu';
-import styles from '@/app/board.module.sass';
+import Opt, { type SeriesItem } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -76,6 +72,8 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
+  const isCommunity = rhizome.data.site_type === 'community';
+
   const series = await supabaseAdmin
     .from('board_series')
     .select(
@@ -106,48 +104,19 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  const rows = (series.data ?? []) as SeriesRow[];
+  const rows: SeriesItem[] = ((series.data ?? []) as SeriesRow[]).map((item) => ({
+    id: item.id,
+    series_key: item.series_key,
+    series_label: item.series_label,
+    summary: item.summary,
+    imageUrl: getSeriesImageUrl(item.thumbnail_image),
+    last_published_at: item.last_published_at,
+    is_completed: item.is_completed,
+  }));
 
   return (
     <Container pageBack={`/${siteName}`} pageTitle="연재물">
-      <div className="container">
-        <div className={`content ${styles['blog-list']} ${styles.content}`}>
-          <SiteProfile />
-          <div className="paper">
-            {rows.length > 0 ? (
-              <div className={`${styles['series-items']} ${styles['blog-items']}`}>
-                {rows.map((item) => {
-                  const imageUrl = getSeriesImageUrl(item.thumbnail_image);
-                  return (
-                    <Anchor href={`/${normalizedSiteName}/s/${item.series_key}`} key={item.id}>
-                      <div className={styles.thumbnail}>
-                        {imageUrl ? (
-                          <img src={imageUrl} alt="" />
-                        ) : (
-                          <div className={styles.dummy}>
-                            <MenuBookRoundedIcon />
-                          </div>
-                        )}
-                      </div>
-                      <div className={styles.info}>
-                        <strong>{item.series_label}</strong>
-                        {item.is_completed ? <em>완결</em> : null}
-                        {item.summary ? <p>{item.summary}</p> : null}
-                        {item.last_published_at ? <time>{formatTimeAgo(item.last_published_at)}</time> : null}
-                      </div>
-                    </Anchor>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="paper page-info">
-                <ServiceNoDataIcon />
-                <p>연재물이 없습니다. 😭</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <Opt siteName={normalizedSiteName} isCommunity={isCommunity} rows={rows} />
     </Container>
   );
 }

@@ -929,12 +929,13 @@
         margin: ds.rem(7) 0 ds.rem(12)
 
         @include ds.mq(minSmall)
-          grid-template-columns: repeat(2, 1fr)
+          grid-template-columns: repeat(2, minmax(0, 1fr))
 
         & > li
           display: flex
           flex-direction: row
           align-items: center
+          min-width: 0
           height: ds.rem(21)
           gap: ds.rem(7)
 
@@ -955,6 +956,7 @@
           a
             @include ds.ellipsis
             display: block
+            flex: 1 1 auto
             overflow: hidden
             font-size: ds.rem(14)
             @include ds.fw(pre, 500)

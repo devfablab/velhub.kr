@@ -192,6 +192,7 @@ function renderBoardContents(siteName: string, homeBoard: HomeBoard) {
 export default function Community({ siteName, homeBoards }: Props) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMinimal = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobile = !isNotMobile;
 
   return (
@@ -237,9 +238,17 @@ export default function Community({ siteName, homeBoards }: Props) {
             ))
           )}
           {isMobile ? (
-            <Stack direction="row" gap={1} justifyContent="space-between">
-              <SiteInfo />
-              <UserInfo />
+            <Stack
+              direction={isMinimal ? 'column' : 'row'}
+              gap={1}
+              justifyContent={isMinimal ? undefined : 'space-between'}
+            >
+              <div>
+                <SiteInfo />
+              </div>
+              <div>
+                <UserInfo />
+              </div>
             </Stack>
           ) : null}
         </div>
