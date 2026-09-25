@@ -670,6 +670,8 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     await loadReports();
   }
 
+  const isDetailContentPopup = Boolean(selectedReport && (showPast || canFinalize(selectedReport)));
+
   const detailContent = selectedReport ? (
     <Stack gap={3}>
       <Stack gap={2}>
@@ -1013,7 +1015,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             anchor="bottom"
             open={Boolean(selectedReport)}
             onClose={handleClose}
-            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            className={isDetailContentPopup ? 'VhiDrawer-bottom' : 'VhiDrawer-bottom VhiDrawer-bottom-service'}
           >
             <h2>신고 처리</h2>
             <button type="button" className="close-button" onClick={handleClose} disabled={saving} aria-label="닫기">
@@ -1021,7 +1023,12 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             </button>
             <div className="VhiDrawer-bottom-content">{detailContent}</div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button small cancel" onClick={handleClose} disabled={saving}>
+              <button
+                type="button"
+                className={isDetailContentPopup ? 'button medium cancel' : 'button small cancel'}
+                onClick={handleClose}
+                disabled={saving}
+              >
                 닫기
               </button>
               {!showPast && selectedReport && !canFinalize(selectedReport) ? (
@@ -1042,7 +1049,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             onClose={handleClose}
             fullWidth
             maxWidth="md"
-            className="vh-dialog vh-alert-dialog"
+            className={isDetailContentPopup ? 'VhiDialog' : 'vh-dialog vh-alert-dialog'}
           >
             <DialogTitle>신고 처리</DialogTitle>
             <button type="button" className="close-button" onClick={handleClose} disabled={saving} aria-label="닫기">
@@ -1050,7 +1057,12 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             </button>
             <DialogContent>{detailContent}</DialogContent>
             <DialogActions>
-              <button type="button" className="cancel-button" onClick={handleClose} disabled={saving}>
+              <button
+                type="button"
+                className={isDetailContentPopup ? 'button medium close' : 'cancel-button'}
+                onClick={handleClose}
+                disabled={saving}
+              >
                 닫기
               </button>
 

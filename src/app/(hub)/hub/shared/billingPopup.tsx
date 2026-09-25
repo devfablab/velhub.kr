@@ -186,6 +186,7 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
         onClose={handleClose}
         title="결제 상세"
         maxWidth="xs"
+        variant="content"
         actions={[
           ...(detail.detailType === 'donation' && detail.canForceRefundForTest
             ? [

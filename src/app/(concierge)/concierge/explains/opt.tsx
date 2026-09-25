@@ -1262,6 +1262,7 @@ export default function Opt({
         onClose={closeContent}
         title={contentResponse?.canEdit ? '콘텐츠 수정' : '콘텐츠 보기'}
         maxWidth="lg"
+        variant={contentResponse?.canEdit ? 'default' : 'content'}
         actions={[
           {
             label: '닫기',

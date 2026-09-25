@@ -1776,7 +1776,7 @@ export default function Opt({
           anchor="bottom"
           open={Boolean(itemManageDialogType)}
           onClose={handleCloseItemManageDialog}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          className="VhiDrawer-bottom"
         >
           <h2>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</h2>
           <button
@@ -1826,7 +1826,7 @@ export default function Opt({
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleCloseItemManageDialog}>
+            <button type="button" className="button medium cancel" onClick={handleCloseItemManageDialog}>
               닫기
             </button>
           </div>
@@ -1837,7 +1837,7 @@ export default function Opt({
           onClose={handleCloseItemManageDialog}
           fullWidth
           maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
+          className="VhiDialog"
         >
           <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</DialogTitle>
           <button
@@ -1887,7 +1887,7 @@ export default function Opt({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="cancel-button" onClick={handleCloseItemManageDialog}>
+            <button type="button" className="button medium close" onClick={handleCloseItemManageDialog}>
               닫기
             </button>
           </DialogActions>

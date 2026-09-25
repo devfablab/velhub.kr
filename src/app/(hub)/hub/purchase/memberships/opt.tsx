@@ -656,6 +656,7 @@ export default function MembershipPlan({
         onClose={() => !isSubmitting && setIsPaymentPopupOpen(false)}
         title={isMinorUser ? '1개월 멤버십 구독' : '멤버십 결제 확인'}
         maxWidth="sm"
+        variant="content"
         actions={[
           {
             label: '취소',

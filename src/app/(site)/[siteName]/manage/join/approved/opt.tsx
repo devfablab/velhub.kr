@@ -381,7 +381,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               anchor="bottom"
               open={Boolean(selectedUser)}
               onClose={() => setSelectedUser(null)}
-              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              className="VhiDrawer-bottom"
             >
               <h2>가입 신청 답변</h2>
               <button
@@ -448,7 +448,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </div>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button small cancel" onClick={() => setSelectedUser(null)}>
+                <button type="button" className="button medium cancel" onClick={() => setSelectedUser(null)}>
                   닫기
                 </button>
               </div>
@@ -459,7 +459,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={() => setSelectedUser(null)}
               fullWidth
               maxWidth="sm"
-              className="vh-dialog vh-alert-dialog"
+              className="VhiDialog"
             >
               <DialogTitle>가입 신청 답변</DialogTitle>
               <button
@@ -526,7 +526,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </div>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="cancel-button" onClick={() => setSelectedUser(null)}>
+                <button type="button" className="button medium close" onClick={() => setSelectedUser(null)}>
                   닫기
                 </button>
               </DialogActions>

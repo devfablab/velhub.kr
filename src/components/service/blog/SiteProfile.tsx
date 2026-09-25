@@ -625,7 +625,7 @@ export default function SiteProfile() {
           anchor="bottom"
           open={isBlogSubscriptionCancelDialogOpen}
           onClose={handleCloseBlogSubscriptionCancelDialog}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          className="VhiDrawer-bottom"
         >
           <h2>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</h2>
           <button
@@ -681,7 +681,7 @@ export default function SiteProfile() {
           onClose={handleCloseBlogSubscriptionCancelDialog}
           fullWidth
           maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
+          className="VhiDialog"
         >
           <DialogTitle>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</DialogTitle>
           <button
@@ -715,7 +715,7 @@ export default function SiteProfile() {
           <DialogActions>
             <button
               type="button"
-              className="cancel-button"
+              className="button small cancel"
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -723,7 +723,7 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
-              className="warning-button"
+              className="button small warning"
               onClick={() => void handleCancelBlogSubscription()}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -790,7 +790,7 @@ export default function SiteProfile() {
           anchor="bottom"
           open={isBlogSubscriptionDialogOpen}
           onClose={handleCloseBlogSubscriptionDialog}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          className="VhiDrawer-bottom"
         >
           <h2>
             {isMinor
@@ -857,7 +857,7 @@ export default function SiteProfile() {
           onClose={handleCloseBlogSubscriptionDialog}
           fullWidth
           maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
+          className="VhiDialog"
         >
           <DialogTitle>
             {isMinor
@@ -902,7 +902,7 @@ export default function SiteProfile() {
           <DialogActions>
             <button
               type="button"
-              className="cancel-button"
+              className="button small cancel"
               onClick={handleCloseBlogSubscriptionDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -910,6 +910,7 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
+              className="button small submit"
               onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
               disabled={isBlogSubscriptionProcessing}
             >

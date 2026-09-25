@@ -19,6 +19,7 @@ type Props = {
   actions: ResponsivePopupAction[];
   onClose: () => void;
   maxWidth?: DialogProps['maxWidth'];
+  variant?: 'default' | 'content';
 };
 
 function getDialogActionClass(intent: ResponsivePopupAction['intent']) {
@@ -28,12 +29,25 @@ function getDialogActionClass(intent: ResponsivePopupAction['intent']) {
   return undefined;
 }
 
-export default function ResponsivePopup({ open, title, children, actions, onClose, maxWidth = 'sm' }: Props) {
+export default function ResponsivePopup({
+  open,
+  title,
+  children,
+  actions,
+  onClose,
+  maxWidth = 'sm',
+  variant = 'default',
+}: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   return isMobile ? (
-    <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
+    <Drawer
+      anchor="bottom"
+      open={open}
+      onClose={onClose}
+      className={variant === 'content' ? 'VhiDrawer-bottom' : 'VhiDrawer-bottom VhiDrawer-bottom-service'}
+    >
       <h2>{title}</h2>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
@@ -44,7 +58,11 @@ export default function ResponsivePopup({ open, title, children, actions, onClos
           <button
             key={index}
             type="button"
-            className={`button small ${action.intent ?? 'action'}`}
+            className={
+              variant === 'content' && action.label === '닫기'
+                ? 'button medium cancel'
+                : `button small ${action.intent ?? 'action'}`
+            }
             onClick={action.onClick}
             disabled={action.disabled}
           >
@@ -54,7 +72,13 @@ export default function ResponsivePopup({ open, title, children, actions, onClos
       </div>
     </Drawer>
   ) : (
-    <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth className="vh-dialog vh-alert-dialog">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={maxWidth}
+      fullWidth
+      className={variant === 'content' ? 'VhiDialog' : 'vh-dialog vh-alert-dialog'}
+    >
       <DialogTitle>{title}</DialogTitle>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
@@ -65,7 +89,13 @@ export default function ResponsivePopup({ open, title, children, actions, onClos
           <button
             key={index}
             type="button"
-            className={getDialogActionClass(action.intent)}
+            className={
+              variant === 'content'
+                ? action.label === '닫기'
+                  ? 'button medium close'
+                  : `button small ${action.intent ?? 'action'}`
+                : getDialogActionClass(action.intent)
+            }
             onClick={action.onClick}
             disabled={action.disabled}
           >

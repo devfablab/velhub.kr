@@ -786,7 +786,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={Boolean(selectedTeam)}
               onClose={handleCloseDetail}
-              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              className="VhiDrawer-bottom"
             >
               <h2>팀블로그 정보</h2>
               <button
@@ -841,7 +841,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button small cancel" onClick={handleCloseDetail}>
+                <button type="button" className="button medium cancel" onClick={handleCloseDetail}>
                   닫기
                 </button>
               </div>
@@ -852,7 +852,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseDetail}
               fullWidth
               maxWidth="sm"
-              className="vh-dialog vh-alert-dialog"
+              className="VhiDialog"
             >
               <DialogTitle>팀블로그 정보</DialogTitle>
               <button
@@ -907,7 +907,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 ) : null}
               </DialogContent>
               <DialogActions>
-                <button type="button" className="cancel-button" onClick={handleCloseDetail}>
+                <button type="button" className="button medium close" onClick={handleCloseDetail}>
                   닫기
                 </button>
               </DialogActions>
@@ -1285,7 +1285,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               anchor="bottom"
               open={isInviteListDialogOpen}
               onClose={handleCloseInviteListDialog}
-              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              className="VhiDrawer-bottom"
             >
               <h2>초대 현황</h2>
               <button
@@ -1333,7 +1333,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </div>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button small cancel" onClick={handleCloseInviteListDialog}>
+                <button type="button" className="button medium cancel" onClick={handleCloseInviteListDialog}>
                   닫기
                 </button>
               </div>
@@ -1344,7 +1344,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               onClose={handleCloseInviteListDialog}
               fullWidth
               maxWidth="md"
-              className="vh-dialog vh-alert-dialog"
+              className="VhiDialog"
             >
               <DialogTitle>초대 현황</DialogTitle>
               <button
@@ -1392,7 +1392,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </div>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="cancel-button" onClick={handleCloseInviteListDialog}>
+                <button type="button" className="button medium close" onClick={handleCloseInviteListDialog}>
                   닫기
                 </button>
               </DialogActions>

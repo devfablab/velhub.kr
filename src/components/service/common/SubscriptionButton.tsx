@@ -679,12 +679,7 @@ export default function SubscriptionButton({
       ) : null}
 
       {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
-        >
+        <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
           <h2>{getDialogTitle({ subscriptionStatus, isMinor })}</h2>
           <button
             type="button"
@@ -755,7 +750,7 @@ export default function SubscriptionButton({
           open={isDialogOpen}
           onClose={handleCloseDialog}
           aria-labelledby="subscription-dialog-title"
-          className="vh-dialog vh-alert-dialog"
+          className="VhiDialog"
         >
           <DialogTitle id="subscription-dialog-title">{getDialogTitle({ subscriptionStatus, isMinor })}</DialogTitle>
           <button
@@ -807,11 +802,12 @@ export default function SubscriptionButton({
             ) : null}
           </DialogContent>
           <DialogActions>
-            <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isProcessing}>
+            <button type="button" className="button small cancel" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
               type="button"
+              className="button small submit"
               onClick={() =>
                 void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
               }
@@ -828,7 +824,7 @@ export default function SubscriptionButton({
           anchor="bottom"
           open={isCancelDialogOpen}
           onClose={handleCloseCancelDialog}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          className="VhiDrawer-bottom"
         >
           <h2>{getCancelDialogTitle(isRefundableCancellation)}</h2>
           <button
@@ -882,7 +878,7 @@ export default function SubscriptionButton({
           open={isCancelDialogOpen}
           onClose={handleCloseCancelDialog}
           aria-labelledby="subscription-cancel-dialog-title"
-          className="vh-dialog vh-alert-dialog"
+          className="VhiDialog"
         >
           <DialogTitle id="subscription-cancel-dialog-title">
             {getCancelDialogTitle(isRefundableCancellation)}
@@ -915,10 +911,20 @@ export default function SubscriptionButton({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="cancel-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={handleCloseCancelDialog}
+              disabled={isProcessing}
+            >
               아니요
             </button>
-            <button type="button" className="warning-button" onClick={handleCancelSubscription} disabled={isProcessing}>
+            <button
+              type="button"
+              className="button small warning"
+              onClick={handleCancelSubscription}
+              disabled={isProcessing}
+            >
               {isRefundableCancellation ? '환불하기' : '구독 취소'}
             </button>
           </DialogActions>

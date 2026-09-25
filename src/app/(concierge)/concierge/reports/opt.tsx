@@ -936,6 +936,7 @@ export default function Opt({
         onClose={() => setReporterDialogOpen(false)}
         title={`${reporterName} 님의 신고 내역`}
         maxWidth="lg"
+        variant="content"
         actions={[
           {
             label: '닫기',
@@ -980,6 +981,7 @@ export default function Opt({
         onClose={() => setDetailDialogReport(null)}
         title={detailDialogReport ? `${detailDialogReport.reportTypeLabel} 신고 내용` : '신고 내용'}
         maxWidth="lg"
+        variant="content"
         actions={[
           {
             label: '닫기',

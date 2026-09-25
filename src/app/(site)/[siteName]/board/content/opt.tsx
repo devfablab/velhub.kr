@@ -789,7 +789,7 @@ export default function Opt({
           <Dialog
             open={deleteDialogOpen}
             onClose={() => setDeleteDialogOpen(false)}
-            className="VhiDialog VhiDialog-service"
+            className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle className={styles['dialog-title']}>글 삭제</DialogTitle>
             <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>

@@ -434,6 +434,7 @@ export default function Opt({
         onClose={closeContent}
         title="콘텐츠 보기"
         maxWidth="lg"
+        variant="content"
         actions={[{ label: '닫기', intent: 'cancel', onClick: closeContent }]}
       >
         {contentBody}

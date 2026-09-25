@@ -181,7 +181,7 @@ export default function IdentityAgreement({
 
   if (isMobile) {
     return (
-      <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
+      <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom">
         <h2>{title}</h2>
         <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
           <CloseRoundedIcon />
@@ -208,7 +208,7 @@ export default function IdentityAgreement({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth className="vh-dialog vh-alert-dialog">
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth className="VhiDialog">
       <DialogTitle>{title}</DialogTitle>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
@@ -217,15 +217,15 @@ export default function IdentityAgreement({
       <DialogActions>
         {showAgreementCheck ? (
           <>
-            <button type="button" className="cancel-button" onClick={onClose}>
+            <button type="button" className="button small cancel" onClick={onClose}>
               취소
             </button>
-            <button type="button" disabled={!isAgreed} onClick={onConfirm}>
+            <button type="button" className="button small submit" disabled={!isAgreed} onClick={onConfirm}>
               다음
             </button>
           </>
         ) : (
-          <button type="button" onClick={onClose}>
+          <button type="button" className="button small submit" onClick={onClose}>
             확인
           </button>
         )}

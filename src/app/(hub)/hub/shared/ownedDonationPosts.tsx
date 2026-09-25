@@ -371,6 +371,7 @@ export default function OwnedDonationPosts({ initialData, initialError }: Props)
         onClose={closePreview}
         title="글 보기"
         maxWidth="lg"
+        variant="content"
         dialogClassName={styles['owned-post-dialog']}
         drawerClassName={styles['owned-post-drawer']}
         actions={[{ label: '닫기', intent: 'cancel', onClick: closePreview }]}

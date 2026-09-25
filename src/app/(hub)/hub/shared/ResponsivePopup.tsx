@@ -21,6 +21,7 @@ type Props = {
   maxWidth?: DialogProps['maxWidth'];
   dialogClassName?: string;
   drawerClassName?: string;
+  variant?: 'default' | 'content';
 };
 
 function getDialogActionClass(intent: ResponsivePopupAction['intent']) {
@@ -39,6 +40,7 @@ export default function ResponsivePopup({
   maxWidth = 'sm',
   dialogClassName = '',
   drawerClassName = '',
+  variant = 'default',
 }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -48,7 +50,7 @@ export default function ResponsivePopup({
       anchor="bottom"
       open={open}
       onClose={onClose}
-      className={`VhiDrawer-bottom VhiDrawer-bottom-service ${drawerClassName}`.trim()}
+      className={`VhiDrawer-bottom ${variant === 'content' ? '' : 'VhiDrawer-bottom-service'} ${drawerClassName}`.trim()}
     >
       <h2>{title}</h2>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
@@ -60,7 +62,11 @@ export default function ResponsivePopup({
           <button
             key={index}
             type="button"
-            className={`button small ${action.intent ?? 'action'}`}
+            className={
+              variant === 'content' && action.label === '닫기'
+                ? 'button medium cancel'
+                : `button small ${action.intent ?? 'action'}`
+            }
             onClick={action.onClick}
             disabled={action.disabled}
           >
@@ -75,7 +81,7 @@ export default function ResponsivePopup({
       onClose={onClose}
       maxWidth={maxWidth}
       fullWidth
-      className={`VhiDialog ${dialogClassName}`.trim()}
+      className={`${variant === 'content' ? 'VhiDialog' : 'vh-dialog vh-alert-dialog'} ${dialogClassName}`.trim()}
     >
       <DialogTitle>{title}</DialogTitle>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
@@ -87,7 +93,13 @@ export default function ResponsivePopup({
           <button
             key={index}
             type="button"
-            className={getDialogActionClass(action.intent)}
+            className={
+              variant === 'content'
+                ? action.label === '닫기'
+                  ? 'button medium close'
+                  : `button small ${action.intent ?? 'action'}`
+                : getDialogActionClass(action.intent)
+            }
             onClick={action.onClick}
             disabled={action.disabled}
           >

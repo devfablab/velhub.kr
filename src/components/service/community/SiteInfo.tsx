@@ -203,19 +203,14 @@ export default function SiteInfo() {
       </div>
 
       {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
-        >
+        <Drawer anchor="bottom" open={isDialogOpen} onClose={() => setIsDialogOpen(false)} className="VhiDrawer-bottom">
           <h2>커뮤니티 정보</h2>
           <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>{infoContent}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small submit" onClick={() => setIsDialogOpen(false)}>
+            <button type="button" className="button medium cancel" onClick={() => setIsDialogOpen(false)}>
               닫기
             </button>
           </div>
@@ -226,7 +221,7 @@ export default function SiteInfo() {
           onClose={() => setIsDialogOpen(false)}
           fullWidth
           maxWidth="xs"
-          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
+          className={`VhiDialog ${styles['info-dialog']}`}
         >
           <DialogTitle>커뮤니티 정보</DialogTitle>
           <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
@@ -234,7 +229,7 @@ export default function SiteInfo() {
           </button>
           <DialogContent className={styles['info-content']}>{infoContent}</DialogContent>
           <DialogActions>
-            <button type="button" onClick={() => setIsDialogOpen(false)}>
+            <button type="button" className="button medium close" onClick={() => setIsDialogOpen(false)}>
               닫기
             </button>
           </DialogActions>

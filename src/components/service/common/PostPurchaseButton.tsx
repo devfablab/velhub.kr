@@ -377,12 +377,7 @@ export default function PostPurchaseButton(props: Props) {
       </MinorPaymentControl>
 
       {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={isConfirmOpen}
-          onClose={handleCloseConfirm}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
-        >
+        <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">
           <h2>포스팅 소장</h2>
           <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isProcessing}>
             <CloseRoundedIcon />
@@ -413,7 +408,7 @@ export default function PostPurchaseButton(props: Props) {
           open={isConfirmOpen}
           onClose={handleCloseConfirm}
           aria-labelledby="post-purchase-dialog-title"
-          className="vh-dialog vh-alert-dialog"
+          className="VhiDialog"
         >
           <DialogTitle id="post-purchase-dialog-title">포스팅 소장</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isProcessing}>
@@ -428,10 +423,15 @@ export default function PostPurchaseButton(props: Props) {
           </DialogContent>
 
           <DialogActions>
-            <button type="button" className="cancel-button" onClick={handleCloseConfirm} disabled={isProcessing}>
+            <button type="button" className="button small cancel" onClick={handleCloseConfirm} disabled={isProcessing}>
               취소
             </button>
-            <button type="button" onClick={() => void handlePurchase()} disabled={disabled || isProcessing}>
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void handlePurchase()}
+              disabled={disabled || isProcessing}
+            >
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
             </button>
           </DialogActions>
