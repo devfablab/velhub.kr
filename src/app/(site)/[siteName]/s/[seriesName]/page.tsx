@@ -1,21 +1,15 @@
 import { notFound } from 'next/navigation';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import { Chip } from '@mui/material';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getSeriesPageMetadata } from '@/lib/seoSite';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Anchor from '@/components/Anchor';
-import SiteProfile from '@/components/service/blog/SiteProfile';
-import DonationButton from '@/components/service/common/DonationButton';
 import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
-import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
-import { ServiceNoDataIcon } from '@/components/Svgs';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Container from '../../menu';
-import styles from '@/app/board.module.sass';
+import Opt, { type SeriesContentItem } from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -43,6 +37,7 @@ type SeriesRow = {
   boards: {
     board_key: string;
     board_label: string;
+    board_type: 'basic' | 'gallery' | 'blog';
   } | null;
 };
 
@@ -52,10 +47,16 @@ type PostRow = {
   subject: string;
   summary: string | null;
   thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
+  images: unknown;
   created_at: string;
   published_at: string | null;
   published_status: 'draft' | 'published';
   post_count: number | null;
+  user_id: string;
+  series_idx: number | null;
+  is_pin: boolean;
   board_id: string;
   site_id: string;
   series_id: string | null;
@@ -65,6 +66,24 @@ type PostRow = {
     board_key: string;
     board_label: string;
   } | null;
+};
+
+type PostImageRow = {
+  path?: string | null;
+  url?: string | null;
+  width?: number | null;
+  height?: number | null;
+};
+
+type StigmaRow = {
+  id: string;
+  user_id: string | null;
+  user_name: string | null;
+};
+
+type MembershipRow = {
+  user_id: string;
+  nickname: string | null;
 };
 
 const PAGE_SIZE = 10;
@@ -77,6 +96,89 @@ function getPageNumber(value: string | undefined) {
   }
 
   return pageNumber;
+}
+
+function getPublicPostImageUrl(path: string | null | undefined) {
+  const normalizedPath = normalizeText(path);
+
+  if (!normalizedPath) return '';
+  if (/^https?:\/\//i.test(normalizedPath)) return normalizedPath;
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
+
+  return supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath).data.publicUrl ?? '';
+}
+
+function normalizePostImages(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return (value as PostImageRow[])
+    .map((image) => {
+      const path = normalizeText(image.path);
+      const url = normalizeText(image.url) || getPublicPostImageUrl(path);
+
+      if (!url) return null;
+
+      return {
+        url,
+        width: typeof image.width === 'number' ? image.width : null,
+        height: typeof image.height === 'number' ? image.height : null,
+      };
+    })
+    .filter((image): image is { url: string; width: number | null; height: number | null } => Boolean(image));
+}
+
+async function getAuthorNameMap(siteId: string, userIds: string[]) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const uniqueUserIds = Array.from(new Set(userIds.map((userId) => normalizeText(userId)).filter(Boolean)));
+  const authorMap = new Map<string, string>();
+
+  if (uniqueUserIds.length === 0) return authorMap;
+
+  const [stigmasByIdResult, stigmasByAuthResult] = await Promise.all([
+    supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('id', uniqueUserIds),
+    supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', uniqueUserIds),
+  ]);
+  const stigmaRows = [
+    ...((stigmasByIdResult.data ?? []) as StigmaRow[]),
+    ...((stigmasByAuthResult.data ?? []) as StigmaRow[]),
+  ];
+  const stigmaIds = Array.from(new Set(stigmaRows.map((stigma) => stigma.id).filter(Boolean)));
+  const membershipResult =
+    stigmaIds.length > 0
+      ? await supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('user_id, nickname')
+          .eq('site_id', siteId)
+          .in('user_id', stigmaIds)
+      : { data: [], error: null };
+  const membershipMap = new Map(
+    ((membershipResult.data ?? []) as MembershipRow[]).map((membership) => [
+      membership.user_id,
+      normalizeText(membership.nickname),
+    ]),
+  );
+
+  uniqueUserIds.forEach((userId) => {
+    const stigma = stigmaRows.find((row) => row.id === userId || row.user_id === userId);
+    const nickname = stigma ? membershipMap.get(stigma.id) : '';
+
+    if (nickname) {
+      authorMap.set(userId, nickname);
+      return;
+    }
+
+    if (stigma?.user_name) {
+      try {
+        authorMap.set(userId, decrypt(stigma.user_name));
+      } catch {
+        authorMap.set(userId, '');
+      }
+    }
+  });
+
+  return authorMap;
 }
 
 export async function generateMetadata(context: RouteContext) {
@@ -113,6 +215,8 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
+  const isCommunity = rhizome.data.site_type === 'community';
+
   const series = await supabaseAdmin
     .from('board_series')
     .select(
@@ -131,7 +235,8 @@ export default async function Page(context: RouteContext) {
         user_id,
         boards (
           board_key,
-          board_label
+          board_label,
+          board_type
         )
       `,
     )
@@ -184,10 +289,17 @@ export default async function Page(context: RouteContext) {
         slug,
         subject,
         summary,
+        thumbnail_image,
+        thumbnail_width,
+        thumbnail_height,
+        images,
         created_at,
         published_at,
         published_status,
         post_count,
+        user_id,
+        series_idx,
+        is_pin,
         board_id,
         site_id,
         series_id,
@@ -233,107 +345,79 @@ export default async function Page(context: RouteContext) {
   );
   const visiblePosts = allPosts.filter((post) => post.is_closed === false || permanentlyOwnedPostIds.has(post.id));
   const from = (currentPage - 1) * PAGE_SIZE;
-  const contents = visiblePosts.slice(from, from + PAGE_SIZE);
+  const pagePosts = visiblePosts.slice(from, from + PAGE_SIZE);
+  const pagePostIds = pagePosts.map((post) => post.id);
+  const [authorMap, commentsResult] = await Promise.all([
+    getAuthorNameMap(
+      rhizome.data.id,
+      pagePosts.map((post) => post.user_id),
+    ),
+    pagePostIds.length > 0
+      ? supabaseAdmin
+          .from('post_comments')
+          .select('post_id')
+          .eq('site_id', rhizome.data.id)
+          .eq('board_id', seriesData.board_id)
+          .in('post_id', pagePostIds)
+          .eq('is_deleted', false)
+          .eq('is_blinded', false)
+      : { data: [], error: null },
+  ]);
+
+  if (commentsResult.error) {
+    notFound();
+  }
+
+  const commentCountMap = new Map<string, number>();
+
+  (commentsResult.data ?? []).forEach((comment) => {
+    commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) ?? 0) + 1);
+  });
+
+  const contents: SeriesContentItem[] = pagePosts.map((post) => ({
+    id: post.id,
+    slug: String(post.slug),
+    subject: post.subject,
+    summary: normalizeText(post.summary),
+    created_at: post.created_at,
+    published_at: post.published_at,
+    published_status: post.published_status,
+    post_count: Number(post.post_count ?? 0),
+    series_idx: post.series_idx,
+    is_pin: post.is_pin === true,
+    is_closed: post.is_closed,
+    author_name: authorMap.get(post.user_id) ?? '',
+    comment_count: commentCountMap.get(post.id) ?? 0,
+    thumbnail_image_url: getPublicPostImageUrl(post.thumbnail_image) || null,
+    thumbnail_width: post.thumbnail_width ?? 1200,
+    thumbnail_height: post.thumbnail_height ?? 675,
+    images: normalizePostImages(post.images),
+  }));
   const totalCount = visiblePosts.length;
   const totalPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return (
     <Container pageBack={`/${siteName}/s`} pageTitle={seriesData.series_label}>
-      <div className="container">
-        <div className={`content ${styles['blog-list']} ${styles.content}`}>
-          <SiteProfile />
-          <div className={styles.headline}>
-            <div className={styles['series-info']}>
-              <h2>{seriesData.series_label}</h2>
-              {seriesData.is_completed ? <Chip label="완결" size="small" className={styles.em} /> : null}
-            </div>
-            {seriesData.summary ? <p>{seriesData.summary}</p> : null}
-            {seriesData.boards ? (
-              <div className={styles['series-actions']}>
-                <SubscriptionButton
-                  siteName={normalizedSiteName}
-                  boardName={seriesData.boards.board_key}
-                  board={{
-                    id: seriesData.board_id,
-                    board_key: seriesData.boards.board_key,
-                    board_label: seriesData.boards.board_label,
-                  }}
-                  selectedSeries={{
-                    series_key: seriesData.series_key,
-                    series_label: seriesData.series_label,
-                  }}
-                  selectedBoard
-                  isEnabledByServer={isSeriesSubscriptionEnabled}
-                  initialStatus={initialSubscriptionStatus.data}
-                />
-                <DonationButton
-                  siteName={normalizedSiteName}
-                  targetType="series"
-                  boardName={seriesData.boards.board_key}
-                  seriesName={seriesData.series_key}
-                  buttonText="연재 후원"
-                  initialStatus={initialDonationStatus.data}
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div className="paper">
-            {contents.length > 0 ? (
-              <div className={styles['blog-items']}>
-                {contents.map((content) => (
-                  <Anchor
-                    href={`/${normalizedSiteName}/${content.boards?.board_key}/${content.slug}?seriesName=${seriesData.series_key}`}
-                    key={content.id}
-                  >
-                    <div className={styles.thumbnail}>
-                      <span>{content.published_status === 'draft' ? <em>(임시글)</em> : null}</span>
-                      {content.thumbnail_image ? (
-                        <img src={content.thumbnail_image} alt="" />
-                      ) : (
-                        <div className={styles.dummy}>
-                          <MenuBookRoundedIcon />
-                        </div>
-                      )}
-                    </div>
-                    <div className={styles.info}>
-                      <div className={styles.subject}>
-                        <strong>{content.subject}</strong>
-                        {content.is_closed ? <em>삭제된 연재글</em> : null}
-                      </div>
-                    </div>
-                  </Anchor>
-                ))}
-              </div>
-            ) : (
-              <div className="paper page-info">
-                <ServiceNoDataIcon />
-                <p>등록된 글이 없습니다.</p>
-              </div>
-            )}
-
-            {totalPage > 1 ? (
-              <nav>
-                {currentPage > 1 ? (
-                  <Anchor href={`/${normalizedSiteName}/s/${normalizedSeriesName}?page=${currentPage - 1}`}>
-                    이전
-                  </Anchor>
-                ) : null}
-
-                <span>
-                  {currentPage} / {totalPage}
-                </span>
-
-                {currentPage < totalPage ? (
-                  <Anchor href={`/${normalizedSiteName}/s/${normalizedSeriesName}?page=${currentPage + 1}`}>
-                    다음
-                  </Anchor>
-                ) : null}
-              </nav>
-            ) : null}
-          </div>
-        </div>
-      </div>
+      {seriesData.boards ? (
+        <Opt
+          siteName={normalizedSiteName}
+          boardId={seriesData.board_id}
+          boardName={seriesData.boards.board_key}
+          boardLabel={seriesData.boards.board_label}
+          boardType={seriesData.boards.board_type}
+          seriesName={seriesData.series_key}
+          seriesLabel={seriesData.series_label}
+          summary={seriesData.summary}
+          isCompleted={seriesData.is_completed}
+          isCommunity={isCommunity}
+          isSubscriptionEnabled={isSeriesSubscriptionEnabled}
+          initialSubscriptionStatus={initialSubscriptionStatus.data}
+          initialDonationStatus={initialDonationStatus.data}
+          contents={contents}
+          currentPage={currentPage}
+          totalPage={totalPage}
+        />
+      ) : null}
     </Container>
   );
 }

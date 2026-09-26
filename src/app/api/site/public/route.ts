@@ -104,6 +104,14 @@ export async function GET(request: Request) {
         .eq('site_id', siteId)
         .order('sort_order', { ascending: true });
     })();
+    const categoriesPromise =
+      siteType === 'blog'
+        ? supabaseAdmin.from('board_categories').select('id', { count: 'exact', head: true }).eq('site_id', siteId)
+        : Promise.resolve({ count: 0, error: null });
+    const seriesPromise = supabaseAdmin
+      .from('board_series')
+      .select('id', { count: 'exact', head: true })
+      .eq('site_id', siteId);
     const communityPromise =
       siteType === 'community'
         ? (async () => {
@@ -139,15 +147,25 @@ export async function GET(request: Request) {
           })()
         : Promise.resolve(null);
 
-    const [chorogonRes, boardsRes, communityRes, privateBoardRes, siteLimitResult, hasOwnerDomainFeature] =
-      await Promise.all([
-        chorogonPromise,
-        boardsPromise,
-        communityPromise,
-        privateBoardPromise,
-        siteLimitPromise,
-        hasOwnerDomainPromise,
-      ]);
+    const [
+      chorogonRes,
+      boardsRes,
+      categoriesRes,
+      seriesRes,
+      communityRes,
+      privateBoardRes,
+      siteLimitResult,
+      hasOwnerDomainFeature,
+    ] = await Promise.all([
+      chorogonPromise,
+      boardsPromise,
+      categoriesPromise,
+      seriesPromise,
+      communityPromise,
+      privateBoardPromise,
+      siteLimitPromise,
+      hasOwnerDomainPromise,
+    ]);
 
     const [hasUnlimitedSites, ownerSitesResult] = siteLimitResult ?? [false, null];
     const ownerSiteIds = ownerSitesResult?.data?.map((site) => site.id) ?? [];
@@ -213,6 +231,8 @@ export async function GET(request: Request) {
         join_accept_status: joinAcceptStatus,
         join_accept_start_day: joinAcceptStartDay,
         join_accept_end_day: joinAcceptEndDay,
+        has_categories: !categoriesRes.error && Number(categoriesRes.count ?? 0) > 0,
+        has_series: !seriesRes.error && Number(seriesRes.count ?? 0) > 0,
       },
       menus: boardRows.map((board) => ({
         id: board.id,

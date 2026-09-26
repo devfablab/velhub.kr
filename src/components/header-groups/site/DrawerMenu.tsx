@@ -75,6 +75,8 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
   const initialData = useSiteInitialData();
   const menus = (initialData?.siteMenus ?? []) as MenuRow[];
   const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
+  const hasCategories = isBlog && initialData?.hasCategories === true;
+  const hasSeries = initialData?.hasSeries === true;
 
   const allHref = `/${siteName}/board`;
   const hasCommunityBoard = menus.some((menu) => menu.board_type !== 'page');
@@ -99,24 +101,29 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
               <span>블로그 소개</span>
             </Anchor>
           </MenuItem>
-          <MenuItem onClick={onClose}>
-            <Anchor href={categoryHref}>
-              <CategoryOutlinedIcon fontSize="small" />
-              <span>카테고리</span>
-            </Anchor>
-          </MenuItem>
-          <MenuItem onClick={onClose}>
-            <Anchor href={seriesHref}>
-              <LibraryBooksOutlinedIcon fontSize="small" />
-              <span>연재</span>
-            </Anchor>
-          </MenuItem>
+          {hasCategories ? (
+            <MenuItem onClick={onClose}>
+              <Anchor href={categoryHref}>
+                <CategoryOutlinedIcon fontSize="small" />
+                <span>카테고리</span>
+              </Anchor>
+            </MenuItem>
+          ) : null}
         </>
       ) : hasCommunityBoard ? (
         <MenuItem onClick={onClose}>
           <Anchor href={allHref}>
             <ListAltOutlinedIcon fontSize="small" />
             <span>게시판</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
+
+      {hasSeries ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={seriesHref}>
+            <LibraryBooksOutlinedIcon fontSize="small" />
+            <span>연재</span>
           </Anchor>
         </MenuItem>
       ) : null}

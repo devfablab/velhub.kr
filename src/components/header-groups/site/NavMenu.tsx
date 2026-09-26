@@ -35,6 +35,8 @@ export default function NavMenu({ siteName, isBlog }: Props) {
 
   const menus = (initialData?.siteMenus ?? []) as MenuRow[];
   const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
+  const hasCategories = isBlog && initialData?.hasCategories === true;
+  const hasSeries = initialData?.hasSeries === true;
 
   const homeHref = `/${siteName}`;
   const isHomeCurrent = pathname === homeHref;
@@ -76,24 +78,17 @@ export default function NavMenu({ siteName, isBlog }: Props) {
                   <i />
                 </Anchor>
               </li>
-              <li
-                className={isCategoryHrefCurrent ? styles.current : undefined}
-                aria-current={isCategoryHrefCurrent ? 'page' : false}
-              >
-                <Anchor href={categoryHref}>
-                  <span>카테고리</span>
-                  <i />
-                </Anchor>
-              </li>
-              <li
-                className={isSeriesHrefCurrent ? styles.current : undefined}
-                aria-current={isSeriesHrefCurrent ? 'page' : false}
-              >
-                <Anchor href={seriesHref}>
-                  <span>연재</span>
-                  <i />
-                </Anchor>
-              </li>
+              {hasCategories ? (
+                <li
+                  className={isCategoryHrefCurrent ? styles.current : undefined}
+                  aria-current={isCategoryHrefCurrent ? 'page' : false}
+                >
+                  <Anchor href={categoryHref}>
+                    <span>카테고리</span>
+                    <i />
+                  </Anchor>
+                </li>
+              ) : null}
             </>
           ) : hasCommunityBoard ? (
             <li
@@ -102,6 +97,18 @@ export default function NavMenu({ siteName, isBlog }: Props) {
             >
               <Anchor href={allHref}>
                 <span>게시판</span>
+                <i />
+              </Anchor>
+            </li>
+          ) : null}
+
+          {hasSeries ? (
+            <li
+              className={isSeriesHrefCurrent ? styles.current : undefined}
+              aria-current={isSeriesHrefCurrent ? 'page' : false}
+            >
+              <Anchor href={seriesHref}>
+                <span>연재</span>
                 <i />
               </Anchor>
             </li>

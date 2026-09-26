@@ -916,14 +916,14 @@ export default function Opt({
               ) : null}
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="button small cancel" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
                 type="button"
                 onClick={() => void deletePost()}
                 disabled={isDeletingPost}
-                className="delete-button"
+                className="button small danger"
               >
                 삭제
               </button>
@@ -1602,7 +1602,7 @@ export default function Opt({
                 <p>연재글은 다른 게시판으로 이동시킬 수 없습니다.</p>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="submit-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
+                <button type="button" className="button small submit" onClick={() => setIsSeriesMoveDialogOpen(false)}>
                   확인
                 </button>
               </div>
@@ -1621,7 +1621,7 @@ export default function Opt({
                 <p>연재글은 다른 게시판으로 이동시킬 수 없습니다.</p>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="submit-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
+                <button type="button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
                   확인
                 </button>
               </DialogActions>
@@ -1664,12 +1664,12 @@ export default function Opt({
                 )}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="cancel-button" onClick={() => setIsPostMoveDialogOpen(false)}>
+                <button type="button" className="button small cancel" onClick={() => setIsPostMoveDialogOpen(false)}>
                   취소
                 </button>
                 <button
                   type="button"
-                  className="submit-button"
+                  className="button small submit"
                   disabled={
                     !selectedMoveBoardKey ||
                     selectedMoveBoardKey === board.board_key ||
@@ -1723,7 +1723,6 @@ export default function Opt({
                 </button>
                 <button
                   type="button"
-                  className="submit-button"
                   disabled={
                     !selectedMoveBoardKey ||
                     selectedMoveBoardKey === board.board_key ||

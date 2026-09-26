@@ -237,11 +237,6 @@ function createBreadcrumbItems(pathname: string): BreadcrumbItem[] {
       const third = rest[3];
       const fourth = rest[4];
 
-      items.push({
-        label: '게시판 목록',
-        href: `${basePath}/posts/c`,
-      });
-
       if (!boardName) {
         return items;
       }
@@ -260,10 +255,6 @@ function createBreadcrumbItems(pathname: string): BreadcrumbItem[] {
       });
 
       if (!third) {
-        items.push({
-          label: '글 목록',
-        });
-
         return items;
       }
 

@@ -239,10 +239,7 @@ function SortableBoardRow({
 
       <TableCell align="right">
         {canEditBoard ? (
-          <Anchor
-            className="button medium action"
-            href={`/${siteName}/manage/contents/posts/c/${board.board_key}/edit`}
-          >
+          <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/c/${board.board_key}/edit`}>
             수정
           </Anchor>
         ) : null}

@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js';
 import '@toast-ui/editor/dist/i18n/ko-kr';
 import { Editor } from '@toast-ui/react-editor';
@@ -45,6 +54,8 @@ export default function ToastEditorClient({
 }: Props) {
   const editorReference = useRef<Editor | null>(null);
   const [imageErrorMessage, setImageErrorMessage] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   function syncEditorValue() {
     const instance = editorReference.current?.getInstance();
@@ -142,26 +153,48 @@ export default function ToastEditorClient({
         }
         onChange={syncEditorValue}
       />
-      <Dialog
-        open={Boolean(imageErrorMessage)}
-        onClose={() => setImageErrorMessage('')}
-        fullWidth
-        maxWidth="xs"
-        className="vh-dialog vh-alert-dialog"
-      >
-        <DialogTitle>이미지 등록 안내</DialogTitle>
-        <button type="button" className="close-button" onClick={() => setImageErrorMessage('')}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Typography>{imageErrorMessage}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <button type="button" className="button medium close" onClick={() => setImageErrorMessage('')}>
-            확인
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(imageErrorMessage)}
+          onClose={() => setImageErrorMessage('')}
+          className="VhiDrawer-bottom"
+        >
+          <h2>이미지 등록 안내</h2>
+          <button type="button" className="close-button" onClick={() => setImageErrorMessage('')} aria-label="닫기">
+            <CloseRoundedIcon />
           </button>
-        </DialogActions>
-      </Dialog>
+          <div className="VhiDrawer-bottom-content">
+            <Typography>{imageErrorMessage}</Typography>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button medium cancel" onClick={() => setImageErrorMessage('')}>
+              확인
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={Boolean(imageErrorMessage)}
+          onClose={() => setImageErrorMessage('')}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>이미지 등록 안내</DialogTitle>
+          <button type="button" className="close-button" onClick={() => setImageErrorMessage('')} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography>{imageErrorMessage}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={() => setImageErrorMessage('')}>
+              확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </>
   );
 }

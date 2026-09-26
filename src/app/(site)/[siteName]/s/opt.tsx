@@ -2,7 +2,7 @@
 
 import LibraryBooksOutlinedIcon from '@mui/icons-material/LibraryBooksOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import { useMediaQuery, useTheme } from '@mui/material';
+import { Chip, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
@@ -17,6 +17,7 @@ export type SeriesItem = {
   id: string;
   series_key: string;
   series_label: string;
+  board_label: string;
   summary: string | null;
   imageUrl: string;
   last_published_at: string | null;
@@ -67,6 +68,11 @@ export default function Opt({ siteName, isCommunity, rows }: Props) {
                     )}
                   </div>
                   <div className={styles.info}>
+                    {isCommunity ? (
+                      <Stack direction="column" alignItems="flex-start" sx={{ mb: 1 }}>
+                        <Chip label={item.board_label} size="small" className="chip success" />
+                      </Stack>
+                    ) : null}
                     <strong>{item.series_label}</strong>
                     {item.is_completed ? <em>완결</em> : null}
                     {item.summary ? <p>{item.summary}</p> : null}

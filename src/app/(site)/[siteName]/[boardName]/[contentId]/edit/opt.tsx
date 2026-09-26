@@ -47,6 +47,7 @@ import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import NumberField from '@/components/custom-ui/NumberField';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
@@ -740,6 +741,7 @@ export default function Opt({
   const [galleryDialogImages, setGalleryDialogImages] = useState<PostImageRow[]>([]);
   const [galleryDialogBlobImages, setGalleryDialogBlobImages] = useState<GalleryBlobImage[]>([]);
   const [galleryDialogMessage, setGalleryDialogMessage] = useState('');
+  const [galleryMinimumWarningOpen, setGalleryMinimumWarningOpen] = useState(false);
   const [isComment, setIsComment] = useState(initialContent?.content?.is_comment !== false);
   const [isPin, setIsPin] = useState(initialContent?.content?.is_pin === true);
   const [canPinPost] = useState(initialBoardInfo?.actions?.canPinPost === true);
@@ -1045,8 +1047,8 @@ export default function Opt({
   function applyGalleryDialogImages() {
     const totalCount = galleryDialogImages.length + galleryDialogBlobImages.length;
 
-    if (totalCount === 0) {
-      setGalleryDialogMessage('이미지를 추가해주세요.');
+    if (totalCount < 2) {
+      setGalleryMinimumWarningOpen(true);
       return;
     }
 
@@ -1687,8 +1689,8 @@ export default function Opt({
       return;
     }
 
-    if (action !== 'draft' && isGalleryBoard && selectedSeriesKey && images.length + galleryBlobImages.length < 2) {
-      setErrorMessage('갤러리 연재 글에는 이미지를 두 개 이상 등록해주세요.');
+    if (action !== 'draft' && isGalleryBoard && images.length + galleryBlobImages.length < 2) {
+      setErrorMessage('갤러리 이미지를 두 개 이상 등록해주세요.');
       return;
     }
 
@@ -1996,9 +1998,7 @@ export default function Opt({
                         <div className={styles.image}>
                           <button type="button" onClick={openGalleryDialog}>
                             <CollectionsOutlinedIcon />
-                            <span>
-                              {isGalleryBoard && selectedSeriesKey ? '갤러리 이미지 (최소 2개)' : '갤러리 이미지'}
-                            </span>
+                            <span>{isGalleryBoard ? '갤러리 이미지 (최소 2개)' : '갤러리 이미지'}</span>
                           </button>
                         </div>
                       ) : null}
@@ -2212,14 +2212,14 @@ export default function Opt({
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" onClick={closeThumbnailDialog} className="button medium cancel">
+                <button type="button" onClick={closeThumbnailDialog} className="button small cancel">
                   취소
                 </button>
                 <button
                   type="button"
                   onClick={applyThumbnailDialogImage}
                   disabled={!thumbnailDialogFile}
-                  className="button medium submit"
+                  className="button small submit"
                 >
                   이미지 업로드
                 </button>
@@ -2232,6 +2232,9 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
             >
               <DialogTitle>썸네일 이미지 업로드</DialogTitle>
+              <button type="button" className="close-button" onClick={closeThumbnailDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
               <DialogContent className={styles['thumbnail-dialog-content']}>
                 {thumbnailDialogMessage ? (
                   <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -2274,6 +2277,13 @@ export default function Opt({
               </DialogActions>
             </Dialog>
           )}
+
+          <PopupMessage
+            open={galleryMinimumWarningOpen}
+            message="2개 이상의 이미지를 필수로 등록하셔야 합니다."
+            kind="error"
+            onClose={() => setGalleryMinimumWarningOpen(false)}
+          />
 
           {isMobile ? (
             <Drawer
@@ -2350,10 +2360,10 @@ export default function Opt({
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" onClick={closeGalleryDialog} className="cancel-button">
+                <button type="button" onClick={closeGalleryDialog} className="button small cancel">
                   취소
                 </button>
-                <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
+                <button type="button" onClick={applyGalleryDialogImages} className="button small submit">
                   이미지 업로드
                 </button>
               </div>
@@ -2365,6 +2375,9 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
             >
               <DialogTitle>갤러리 이미지 업로드</DialogTitle>
+              <button type="button" className="close-button" onClick={closeGalleryDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
               <DialogContent className={styles['thumbnail-dialog-content']}>
                 {galleryDialogMessage ? (
                   <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -2432,7 +2445,7 @@ export default function Opt({
                 <button type="button" onClick={closeGalleryDialog} className="cancel-button">
                   취소
                 </button>
-                <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
+                <button type="button" onClick={applyGalleryDialogImages}>
                   이미지 업로드
                 </button>
               </DialogActions>
@@ -2639,14 +2652,14 @@ export default function Opt({
               </div>
               <div className="drawer-dialog-actions">
                 {isPollEnabled ? (
-                  <button type="button" onClick={removePoll} className="button medium danger">
+                  <button type="button" onClick={removePoll} className="button small danger">
                     투표 삭제
                   </button>
                 ) : null}
-                <button type="button" onClick={closePollDialog} className="button medium cancel">
+                <button type="button" onClick={closePollDialog} className="button small cancel">
                   취소
                 </button>
-                <button type="button" onClick={applyPollDialog} className="button medium submit">
+                <button type="button" onClick={applyPollDialog} className="button small submit">
                   이미지 업로드
                 </button>
               </div>
@@ -2660,6 +2673,9 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
             >
               <DialogTitle>투표 설정</DialogTitle>
+              <button type="button" className="close-button" onClick={closePollDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
               <DialogContent className={styles['poll-dialog-content']}>
                 {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
 
@@ -2941,24 +2957,24 @@ export default function Opt({
               <div className={`drawer-dialog-actions ${isDrawEnabled ? 'complex-buttons' : undefined}`}>
                 {isDrawEnabled ? (
                   <>
-                    <button type="button" onClick={removeDraw} className="button medium danger">
+                    <button type="button" onClick={removeDraw} className="button small danger">
                       추첨 이벤트 삭제
                     </button>
                     <div className="complex-button">
-                      <button type="button" onClick={closeDrawDialog} className="button medium cancel">
+                      <button type="button" onClick={closeDrawDialog} className="button small cancel">
                         취소
                       </button>
-                      <button type="button" onClick={applyDrawDialog} className="button medium submit">
+                      <button type="button" onClick={applyDrawDialog} className="button small submit">
                         추첨 이벤트 설정
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <button type="button" onClick={closeDrawDialog} className="button medium cancel">
+                    <button type="button" onClick={closeDrawDialog} className="button small cancel">
                       취소
                     </button>
-                    <button type="button" onClick={applyDrawDialog} className="button medium submit">
+                    <button type="button" onClick={applyDrawDialog} className="button small submit">
                       추첨 이벤트 설정
                     </button>
                   </>
@@ -2974,6 +2990,9 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
             >
               <DialogTitle>추첨 이벤트 설정</DialogTitle>
+              <button type="button" className="close-button" onClick={closeDrawDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
               <DialogContent className={styles['draw-dialog-content']}>
                 {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
 
@@ -3074,26 +3093,41 @@ export default function Opt({
               onClose={accessDialog.onCancel}
               className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['poll-dialog']}`}
             >
-              <h2>투표 설정</h2>
-              <button className="close-button" onClick={accessDialog.onCancel} aria-label="투표 설정 닫기">
+              <h2>{accessDialog.title}</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={accessDialog.onCancel}
+                aria-label={`${accessDialog.title} 닫기`}
+              >
                 <CloseRoundedIcon />
               </button>
-              <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
+              <div className="VhiDrawer-bottom-content">
+                <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
+              </div>
               <div className="drawer-dialog-actions">
                 {accessDialog.cancelLabel ? (
-                  <button type="button" onClick={accessDialog.onCancel} className="button medium cancel">
+                  <button type="button" onClick={accessDialog.onCancel} className="button small cancel">
                     {accessDialog.cancelLabel}
                   </button>
                 ) : null}
 
-                <button type="button" onClick={accessDialog.onConfirm} className="button medium submit">
+                <button type="button" onClick={accessDialog.onConfirm} className="button small submit">
                   {accessDialog.confirmLabel}
                 </button>
               </div>
             </Drawer>
           ) : (
-            <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
+            <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog vh-alert-dialog">
               <DialogTitle>{accessDialog.title}</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={accessDialog.onCancel}
+                aria-label={`${accessDialog.title} 닫기`}
+              >
+                <CloseRoundedIcon />
+              </button>
               <DialogContent>
                 <DialogContentText sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                   {accessDialog.content}
@@ -3101,7 +3135,7 @@ export default function Opt({
               </DialogContent>
               <DialogActions>
                 {accessDialog.cancelLabel ? (
-                  <button type="button" onClick={accessDialog.onCancel}>
+                  <button type="button" className="cancel-button" onClick={accessDialog.onCancel}>
                     {accessDialog.cancelLabel}
                   </button>
                 ) : null}
@@ -3113,36 +3147,12 @@ export default function Opt({
             </Dialog>
           )}
 
-          {isMobile ? (
-            <Drawer
-              anchor="bottom"
-              open={Boolean(alertMessage)}
-              onClose={() => setAlertMessage('')}
-              className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
-            >
-              <h2>{alertMessage}</h2>
-              <button className="close-button" onClick={() => setAlertMessage('')} aria-label={`${alertMessage} 닫기`}>
-                <CloseRoundedIcon />
-              </button>
-              <p>{alertMessage}</p>
-              <div className="drawer-dialog-actions">
-                <button type="button" onClick={() => setAlertMessage('')} className="button medium cancel">
-                  확인
-                </button>
-              </div>
-            </Drawer>
-          ) : (
-            <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
-              <DialogContent>
-                <DialogContentText>{alertMessage}</DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <button type="button" onClick={() => setAlertMessage('')}>
-                  확인
-                </button>
-              </DialogActions>
-            </Dialog>
-          )}
+          <PopupMessage
+            open={Boolean(alertMessage)}
+            message={alertMessage}
+            kind="error"
+            onClose={() => setAlertMessage('')}
+          />
         </div>
       </div>
     </Container>

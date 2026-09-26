@@ -572,8 +572,8 @@ export default function Opt({
       return;
     }
 
-    if (action === 'publish' && isGalleryBoard && selectedSeriesKey && images.length < 2) {
-      setErrorMessage('갤러리 연재 글에는 이미지를 두 개 이상 등록해주세요.');
+    if (action === 'publish' && isGalleryBoard && images.length < 2) {
+      setErrorMessage('갤러리 이미지를 두 개 이상 등록해주세요.');
       return;
     }
 
@@ -815,10 +815,7 @@ export default function Opt({
                       </p>
                       <p className="alert info">
                         <InfoOutlineRoundedIcon />
-                        <span>
-                          {isGalleryBoard && selectedSeriesKey ? '2개 이상' : '1개 이상'} 등록해야 하며, 순서 변경은
-                          불가능합니다.
-                        </span>
+                        <span>{isGalleryBoard ? '2개 이상' : '1개 이상'} 등록해야 하며, 순서 변경은 불가능합니다.</span>
                       </p>
                       <p className="alert info">
                         <InfoOutlineRoundedIcon />

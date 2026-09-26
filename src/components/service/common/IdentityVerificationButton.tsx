@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Snackbar } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import PopupMessage from '@/components/PopupMessage';
 import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
@@ -62,6 +61,7 @@ export default function IdentityVerificationButton({
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageKind, setMessageKind] = useState<'info' | 'error'>('info');
   const [bypassModalOpen, setBypassModalOpen] = useState(false);
   const [pendingRequest, setPendingRequest] = useState<IdentityVerificationRequest | null>(null);
 
@@ -78,6 +78,7 @@ export default function IdentityVerificationButton({
         await executePortOne(request);
       }
     } catch (error) {
+      setMessageKind('error');
       setMessage(getMessage(error));
     } finally {
       setIsProcessing(false);
@@ -96,6 +97,7 @@ export default function IdentityVerificationButton({
           mockTxId,
         });
         setAgreementOpen(false);
+        setMessageKind('info');
         setMessage('본인인증이 완료되었습니다.');
         if (onVerified) {
           onVerified(identity);
@@ -106,6 +108,7 @@ export default function IdentityVerificationButton({
         await executePortOne(pendingRequest);
       }
     } catch (error) {
+      setMessageKind('error');
       setMessage(getMessage(error));
     } finally {
       setIsProcessing(false);
@@ -130,6 +133,7 @@ export default function IdentityVerificationButton({
       identityVerificationId,
     });
     setAgreementOpen(false);
+    setMessageKind('info');
     setMessage('본인인증이 완료되었습니다.');
 
     if (onVerified) {
@@ -144,6 +148,7 @@ export default function IdentityVerificationButton({
       await sendJson('/api/identity/agreement', { type: 'identity' });
       await handleVerify();
     } catch (error) {
+      setMessageKind('error');
       setMessage(getMessage(error));
     }
   };
@@ -167,7 +172,7 @@ export default function IdentityVerificationButton({
         }}
         onConfirm={(bypass, mockTxId) => void handleBypassConfirm(bypass, mockTxId)}
       />
-      <PopupMessage open={Boolean(message)} message={message} onClose={() => setMessage('')} />
+      <PopupMessage open={Boolean(message)} message={message} kind={messageKind} onClose={() => setMessage('')} />
     </>
   );
 }

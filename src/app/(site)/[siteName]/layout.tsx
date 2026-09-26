@@ -197,7 +197,12 @@ export default async function SiteLayout({ children, params }: RouteContext) {
         is_renameable: boolean;
       }>;
       privateBoard?: { label: string } | null;
-      siteInfo?: { site_label: string | null; purchase_available?: boolean };
+      siteInfo?: {
+        site_label: string | null;
+        purchase_available?: boolean;
+        has_categories?: boolean;
+        has_series?: boolean;
+      };
     }>(`/api/site/public?siteName=${siteName}`, '메뉴를 불러오지 못했습니다.'),
     getSiteApiData<{ count?: number }>('/api/notifications/unread-count', '알림을 불러오지 못했습니다.'),
     getSiteApiData<{ transfer?: { id: string; created_at: string } | null }>(
@@ -234,6 +239,8 @@ export default async function SiteLayout({ children, params }: RouteContext) {
             ownerTransfer: ownerTransfer.data?.transfer ?? null,
             identityStatus: blogIdentity.data,
             purchaseAvailable: Boolean(siteMenu.data?.siteInfo?.purchase_available),
+            hasCategories: Boolean(siteMenu.data?.siteInfo?.has_categories),
+            hasSeries: Boolean(siteMenu.data?.siteInfo?.has_series),
           }}
         >
           <HeaderSite />

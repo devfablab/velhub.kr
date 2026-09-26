@@ -108,6 +108,7 @@ export default async function Page(context: RouteContext) {
     id: item.id,
     series_key: item.series_key,
     series_label: item.series_label,
+    board_label: item.boards?.board_label ?? '',
     summary: item.summary,
     imageUrl: getSeriesImageUrl(item.thumbnail_image),
     last_published_at: item.last_published_at,

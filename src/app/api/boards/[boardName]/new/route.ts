@@ -856,17 +856,8 @@ export async function POST(request: Request, context: RouteContext) {
           return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
         }
 
-        const minimumImageCount = seriesId ? 2 : 1;
-
-        if (!finalImages || finalImages.length < minimumImageCount) {
-          return Response.json(
-            {
-              error: seriesId
-                ? '갤러리 연재 글에는 이미지를 두 개 이상 등록해주세요.'
-                : '갤러리 이미지를 하나 이상 등록해주세요.',
-            },
-            { status: 400 },
-          );
+        if (!finalImages || finalImages.length < 2) {
+          return Response.json({ error: '갤러리 이미지를 두 개 이상 등록해주세요.' }, { status: 400 });
         }
       }
     }

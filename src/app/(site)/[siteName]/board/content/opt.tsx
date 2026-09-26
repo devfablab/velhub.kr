@@ -772,14 +772,14 @@ export default function Opt({
               ) : null}
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="button small cancel" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
                 type="button"
                 onClick={() => void deletePost()}
                 disabled={isDeletingPost}
-                className="delete-button"
+                className="button small danger"
               >
                 {isDeletingPost ? '삭제 중' : '삭제'}
               </button>
@@ -823,14 +823,14 @@ export default function Opt({
               ) : null}
             </DialogContent>
             <DialogActions>
-              <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
                 type="button"
                 onClick={() => void deletePost()}
                 disabled={isDeletingPost}
-                className="button medium delete"
+                className="delete-button"
               >
                 {isDeletingPost ? '삭제 중' : '삭제'}
               </button>

@@ -45,6 +45,8 @@ type RhizomeStateResult = {
     join_accept_status?: string | null;
     join_accept_start_day?: string | null;
     join_accept_end_day?: string | null;
+    has_categories?: boolean;
+    has_series?: boolean;
   };
 };
 
@@ -722,6 +724,14 @@ export async function proxy(request: NextRequest) {
       }
 
       return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
+    }
+
+    const siteInfo = rhizomeState.result?.siteInfo;
+    const isEmptyCategoryPath = pathname === `/${siteName}/c` && siteInfo?.has_categories === false;
+    const isEmptySeriesPath = pathname === `/${siteName}/s` && siteInfo?.has_series === false;
+
+    if (rhizomeState.response.ok && (isEmptyCategoryPath || isEmptySeriesPath)) {
+      return redirectWithPath(request, customDomainSiteName ? '/' : `/${siteName}`);
     }
 
     if (isInvitePath(pathname)) {

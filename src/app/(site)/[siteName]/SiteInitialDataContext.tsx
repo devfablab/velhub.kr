@@ -50,6 +50,8 @@ type InitialData = {
   ownerTransfer: { id: string; created_at: string } | null;
   identityStatus: unknown;
   purchaseAvailable: boolean;
+  hasCategories: boolean;
+  hasSeries: boolean;
 };
 
 const SiteInitialDataContext = createContext<InitialData | null>(null);
