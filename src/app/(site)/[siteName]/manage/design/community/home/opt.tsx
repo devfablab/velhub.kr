@@ -73,15 +73,9 @@ function getBoardTypeLabel(boardType: string) {
 }
 
 function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef } = useSortable({
     id: item.id,
   });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-  };
 
   return (
     <div ref={setNodeRef} className={`paper ${styles.paper}`}>

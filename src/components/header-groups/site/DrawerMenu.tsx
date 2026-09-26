@@ -109,23 +109,32 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
               </Anchor>
             </MenuItem>
           ) : null}
+          {hasSeries ? (
+            <MenuItem onClick={onClose}>
+              <Anchor href={seriesHref}>
+                <LibraryBooksOutlinedIcon fontSize="small" />
+                <span>연재</span>
+              </Anchor>
+            </MenuItem>
+          ) : null}
         </>
       ) : hasCommunityBoard ? (
-        <MenuItem onClick={onClose}>
-          <Anchor href={allHref}>
-            <ListAltOutlinedIcon fontSize="small" />
-            <span>게시판</span>
-          </Anchor>
-        </MenuItem>
-      ) : null}
-
-      {hasSeries ? (
-        <MenuItem onClick={onClose}>
-          <Anchor href={seriesHref}>
-            <LibraryBooksOutlinedIcon fontSize="small" />
-            <span>연재</span>
-          </Anchor>
-        </MenuItem>
+        <>
+          {hasSeries ? (
+            <MenuItem onClick={onClose}>
+              <Anchor href={seriesHref}>
+                <LibraryBooksOutlinedIcon fontSize="small" />
+                <span>연재</span>
+              </Anchor>
+            </MenuItem>
+          ) : null}
+          <MenuItem onClick={onClose}>
+            <Anchor href={allHref}>
+              <ListAltOutlinedIcon fontSize="small" />
+              <span>게시판</span>
+            </Anchor>
+          </MenuItem>
+        </>
       ) : null}
 
       {menus.map((menu) => {

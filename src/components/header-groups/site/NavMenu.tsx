@@ -89,29 +89,41 @@ export default function NavMenu({ siteName, isBlog }: Props) {
                   </Anchor>
                 </li>
               ) : null}
+              {hasSeries ? (
+                <li
+                  className={isSeriesHrefCurrent ? styles.current : undefined}
+                  aria-current={isSeriesHrefCurrent ? 'page' : false}
+                >
+                  <Anchor href={seriesHref}>
+                    <span>연재</span>
+                    <i />
+                  </Anchor>
+                </li>
+              ) : null}
             </>
           ) : hasCommunityBoard ? (
-            <li
-              className={isAllHrefCurrent ? styles.current : undefined}
-              aria-current={isAllHrefCurrent ? 'page' : false}
-            >
-              <Anchor href={allHref}>
-                <span>게시판</span>
-                <i />
-              </Anchor>
-            </li>
-          ) : null}
-
-          {hasSeries ? (
-            <li
-              className={isSeriesHrefCurrent ? styles.current : undefined}
-              aria-current={isSeriesHrefCurrent ? 'page' : false}
-            >
-              <Anchor href={seriesHref}>
-                <span>연재</span>
-                <i />
-              </Anchor>
-            </li>
+            <>
+              {hasSeries ? (
+                <li
+                  className={isSeriesHrefCurrent ? styles.current : undefined}
+                  aria-current={isSeriesHrefCurrent ? 'page' : false}
+                >
+                  <Anchor href={seriesHref}>
+                    <span>연재</span>
+                    <i />
+                  </Anchor>
+                </li>
+              ) : null}
+              <li
+                className={isAllHrefCurrent ? styles.current : undefined}
+                aria-current={isAllHrefCurrent ? 'page' : false}
+              >
+                <Anchor href={allHref}>
+                  <span>게시판</span>
+                  <i />
+                </Anchor>
+              </li>
+            </>
           ) : null}
 
           {menus.map((menu) => {

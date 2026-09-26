@@ -2,14 +2,30 @@
 
 import { type JSX, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
+  Box,
   Dialog,
   DialogActions,
   DialogContent,
@@ -54,32 +70,45 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        cursor: 'grab',
       }}
-      {...attributes}
-      {...listeners}
     >
-      <Typography>{menu.display_label}</Typography>
-
-      {menu.is_renameable ? (
-        <button
+      <Stack direction="row" gap={2} alignItems="center">
+        <Box
+          component="button"
           type="button"
-          className="button medium action"
-          onPointerDown={(event) => event.stopPropagation()}
-          onMouseDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpenRenameDialog(menu);
+          {...attributes}
+          {...listeners}
+          sx={{
+            border: 0,
+            p: 0,
+            m: 0,
+            bgcolor: 'transparent',
+            color: 'text.secondary',
+            display: 'flex',
+            cursor: 'grab',
           }}
+          aria-label="순서 변경"
         >
-          이름 변경
-        </button>
-      ) : null}
+          <DragIndicatorIcon />
+        </Box>
+
+        <Typography sx={{ flex: '1 1 auto', minWidth: 0 }}>{menu.display_label}</Typography>
+
+        {menu.is_renameable ? (
+          <button type="button" className="button medium action" onClick={() => onOpenRenameDialog(menu)}>
+            이름 변경
+          </button>
+        ) : null}
+      </Stack>
     </div>
   );
 }
 
-export type InitialMenuResponse = { menus?: MenuRow[]; error?: string };
+export type InitialMenuResponse = {
+  menus?: MenuRow[];
+  hasSeries?: boolean;
+  error?: string;
+};
 type OptProps = { initialData: InitialMenuResponse | null; initialError: string };
 
 export default function Opt({ initialData, initialError }: OptProps) {
@@ -89,11 +118,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
         distance: 4,
       },
     }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const [menus, setMenus] = useState<MenuRow[]>(initialData?.menus ?? []);
+  const hasSeries = initialData?.hasSeries === true;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
@@ -254,11 +287,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </p>
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
+                  <SortableContext items={menus.map((menu) => menu.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap={2}>
                       <div className={`paper ${styles.paper}`}>
                         <Typography>홈</Typography>
                       </div>
+                      {hasSeries ? (
+                        <div className={`paper ${styles.paper}`}>
+                          <Typography>연재</Typography>
+                        </div>
+                      ) : null}
                       <div className={`paper ${styles.paper}`}>
                         <Typography>게시판</Typography>
                       </div>

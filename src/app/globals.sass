@@ -1411,6 +1411,10 @@ html[data-site-type='blog']
             border: 1px solid ds.$hex-warning!important
             color: ds.$hex-warning!important
 
+            &:disabled
+              border-color: rgba(ds.$rgb-warning, .5)!important
+              color: rgba(ds.$rgb-warning, .5)!important
+
           &.cancel-button
             background-color: transparent!important
             color: rgba(ds.$rgb-primary, .5)!important
@@ -1421,6 +1425,10 @@ html[data-site-type='blog']
           &.warning-button
             background-color: ds.$hex-warning
             color: ds.$hex-white
+
+            &:disabled
+              background-color: rgba(ds.$rgb-warning, .1)!important
+              color: rgba(ds.$rgb-white, .5)!important
 
           &:disabled
             color: rgba(ds.$rgb-accent, .5)!important
@@ -1457,7 +1465,7 @@ html[data-site-type='blog']
   span
     text-align: left
 
-  &.info
+  &.info, &.popup-info
     color: ds.$hex-accent
 
     span
@@ -1466,11 +1474,24 @@ html[data-site-type='blog']
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
 
-  &.error
+  &.error, &.popup-error
     color: ds.$hex-warning
 
-  &.warning
+  &.warning, &.popup-warning
     color: ds.$hex-action
+
+  &.popup-info, &.popup-error, &.popup-warning
+    justify-content: center
+    gap: ds.rem(5)
+
+    svg
+      margin-top: ds.rem(4)
+      width: ds.rem(16)
+      height: ds.rem(16)
+
+    span
+      @include ds.fw(pre, 600)
+      font-size: ds.rem(16)
 
   svg
     width: ds.rem(22)

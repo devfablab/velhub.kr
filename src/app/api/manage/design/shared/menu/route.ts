@@ -57,13 +57,23 @@ export async function GET(request: Request) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const boards = await access.supabaseAdmin
-      .from('boards')
-      .select('id, board_type, board_label, sort_order')
-      .eq('site_id', access.siteId)
-      .order('sort_order', { ascending: true });
+    const [boards, categories, series] = await Promise.all([
+      access.supabaseAdmin
+        .from('boards')
+        .select('id, board_type, board_label, sort_order')
+        .eq('site_id', access.siteId)
+        .order('sort_order', { ascending: true }),
+      access.supabaseAdmin
+        .from('board_categories')
+        .select('id', { count: 'exact', head: true })
+        .eq('site_id', access.siteId),
+      access.supabaseAdmin
+        .from('board_series')
+        .select('id', { count: 'exact', head: true })
+        .eq('site_id', access.siteId),
+    ]);
 
-    if (boards.error) {
+    if (boards.error || categories.error || series.error) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -91,6 +101,8 @@ export async function GET(request: Request) {
     }
 
     return Response.json({
+      hasCategories: (categories.count ?? 0) > 0,
+      hasSeries: (series.count ?? 0) > 0,
       menus: boardRows.map((board) => ({
         id: board.id,
         board_type: board.board_type,
