@@ -110,6 +110,7 @@ type SeriesRow = {
   site_id: string;
   last_published_at: string | null;
   is_completed: boolean;
+  is_subscription: boolean | null;
   user_id: string | null;
 };
 
@@ -569,6 +570,8 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
+  const [paidPreviewHtml, setPaidPreviewHtml] = useState('');
+  const [paidPreviewMarkdown, setPaidPreviewMarkdown] = useState('');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [contentSimple, setContentSimple] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -618,11 +621,16 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
     () => boards.find((board) => board.board_key === selectedBoardKey) ?? null,
     [boards, selectedBoardKey],
   );
+  const selectedSeries = useMemo(
+    () => seriesList.find((series) => series.series_key === selectedSeriesKey) ?? null,
+    [seriesList, selectedSeriesKey],
+  );
 
   const isBasicBoard = boardType === 'basic';
   const isGalleryBoard = boardType === 'gallery';
   const isYoutubeBoard = boardType === 'youtube';
   const isFeedBoard = boardType === 'feed';
+  const canRegisterPaidPreview = (isBasicBoard || isGalleryBoard) && selectedSeries?.is_subscription === true;
   const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
   const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;
@@ -885,6 +893,8 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
     editorBlobImagesReference.current = [];
     setContentHtml('');
     setContentMarkdown('');
+    setPaidPreviewHtml('');
+    setPaidPreviewMarkdown('');
     setEditorBlobImages([]);
     setContentSimple('');
     setYoutubeUrl('');
@@ -1439,19 +1449,26 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
       return {
         contentHtml,
         contentMarkdown,
+        paidPreviewHtml,
+        paidPreviewMarkdown,
       };
     }
 
     let nextContentHtml = contentHtml;
     let nextContentMarkdown = contentMarkdown;
+    let nextPaidPreviewHtml = paidPreviewHtml;
+    let nextPaidPreviewMarkdown = paidPreviewMarkdown;
     const usedPreviewUrls = new Set<string>();
 
     for (const image of currentEditorBlobImages) {
       const isUsedInHtml = nextContentHtml.includes(image.previewUrl);
       const isUsedInMarkdown = nextContentMarkdown.includes(image.previewUrl);
+      const isUsedInPaidPreviewHtml = nextPaidPreviewHtml.includes(image.previewUrl);
+      const isUsedInPaidPreviewMarkdown = nextPaidPreviewMarkdown.includes(image.previewUrl);
 
-      if (!isUsedInHtml && !isUsedInMarkdown) {
+      if (!isUsedInHtml && !isUsedInMarkdown && !isUsedInPaidPreviewHtml && !isUsedInPaidPreviewMarkdown) {
         URL.revokeObjectURL(image.previewUrl);
+        usedPreviewUrls.add(image.previewUrl);
         continue;
       }
 
@@ -1460,6 +1477,8 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
 
       nextContentHtml = replaceAllImageUrl(nextContentHtml, image.previewUrl, uploadedImage.url);
       nextContentMarkdown = replaceAllImageUrl(nextContentMarkdown, image.previewUrl, uploadedImage.url);
+      nextPaidPreviewHtml = replaceAllImageUrl(nextPaidPreviewHtml, image.previewUrl, uploadedImage.url);
+      nextPaidPreviewMarkdown = replaceAllImageUrl(nextPaidPreviewMarkdown, image.previewUrl, uploadedImage.url);
       usedPreviewUrls.add(image.previewUrl);
 
       URL.revokeObjectURL(image.previewUrl);
@@ -1470,11 +1489,15 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
     editorBlobImagesReference.current = remainingEditorBlobImages;
     setContentHtml(nextContentHtml);
     setContentMarkdown(nextContentMarkdown);
+    setPaidPreviewHtml(nextPaidPreviewHtml);
+    setPaidPreviewMarkdown(nextPaidPreviewMarkdown);
     setEditorBlobImages(remainingEditorBlobImages);
 
     return {
       contentHtml: nextContentHtml,
       contentMarkdown: nextContentMarkdown,
+      paidPreviewHtml: nextPaidPreviewHtml,
+      paidPreviewMarkdown: nextPaidPreviewMarkdown,
     };
   }
 
@@ -1707,6 +1730,8 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
           summary: isBasicBoard || isFeedBoard ? null : summary,
           contentHtml: isBasicBoard || isGalleryBoard ? normalizeEditorHtml(uploadedEditorContent.contentHtml) : null,
           contentMarkdown: isBasicBoard || isGalleryBoard ? uploadedEditorContent.contentMarkdown : null,
+          paidPreviewHtml: canRegisterPaidPreview ? normalizeEditorHtml(uploadedEditorContent.paidPreviewHtml) : null,
+          paidPreviewMarkdown: canRegisterPaidPreview ? uploadedEditorContent.paidPreviewMarkdown : null,
           contentSimple: isFeedBoard ? contentSimple : null,
           thumbnailImage: uploadedThumbnail.thumbnailImage || null,
           thumbnailWidth: uploadedThumbnail.thumbnailWidth,
@@ -1742,6 +1767,11 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
 
       if (!result.slug) {
         throw new Error('글 작성에 실패했습니다.');
+      }
+
+      if (selectedSeriesKey) {
+        router.replace(`/${siteName}/s/${selectedSeriesKey}`);
+        return;
       }
 
       router.replace(`/${siteName}/board/content?boardName=${selectedBoardKey}&contentId=${result.slug}`);
@@ -2057,6 +2087,45 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
                         placeholder="영상설명을 간단히 입력해주세요"
                         onChange={(event) => setSummary(event.currentTarget.value)}
                       />
+                    </div>
+                  </>
+                ) : null}
+
+                {canRegisterPaidPreview ? (
+                  <>
+                    <div className="paper">
+                      <header className={styles['content-header']}>
+                        <h3>
+                          <strong>미리보기</strong>
+                        </h3>
+                        <p>연재 구독하지 않은 독자에게 보여줄 내용을 작성해주세요.</p>
+                      </header>
+                    </div>
+                    <div className={styles.form}>
+                      <fieldset>
+                        <div className={`${styles.editor} service-editor`}>
+                          <ToastEditor
+                            key={`paid-preview-${selectedSeriesKey}`}
+                            initialValue={paidPreviewHtml}
+                            initialMarkdown={paidPreviewMarkdown}
+                            initialEditType="wysiwyg"
+                            themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                            markdownStatus={markdownStatus}
+                            hideModeSwitch
+                            onHtmlChange={setPaidPreviewHtml}
+                            onMarkdownChange={setPaidPreviewMarkdown}
+                            onUploadImage={handleUploadEditorImage}
+                          />
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div className="paper">
+                      <header className={styles['content-header']}>
+                        <h3>
+                          <strong>본문작성</strong>
+                        </h3>
+                        <p>연재를 구독한 독자에게 보여줄 본문 내용을 작성해주세요.</p>
+                      </header>
                     </div>
                   </>
                 ) : null}

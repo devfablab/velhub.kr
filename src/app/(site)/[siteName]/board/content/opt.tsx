@@ -630,6 +630,13 @@ export default function Opt({
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
   const isSubscriptionSeriesPost = series?.is_subscription === true;
+  const editSearchParams = new URLSearchParams({ boardName, contentId: content.slug });
+
+  if (series?.series_key) {
+    editSearchParams.set('seriesName', series.series_key);
+  }
+
+  const editHref = `/${siteName}/board/content/edit?${editSearchParams.toString()}`;
 
   const canPurchasePost =
     content.published_status === 'published' &&
@@ -710,10 +717,7 @@ export default function Opt({
     !content.is_locked ? (
       <>
         {canEdit ? (
-          <Anchor
-            href={`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${content.slug}`}
-            className={`${styles.button} button`}
-          >
+          <Anchor href={editHref} className={`${styles.button} button`}>
             <EditNoteRoundedIcon />
             <strong>수정</strong>
           </Anchor>
@@ -926,10 +930,7 @@ export default function Opt({
                     <ArrowForwardIosRoundedIcon />
                   </Anchor>
                   {canEdit ? (
-                    <Anchor
-                      href={`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${content.slug}`}
-                      className={styles['edit-link']}
-                    >
+                    <Anchor href={editHref} className={styles['edit-link']}>
                       <span>글 수정</span>
                       <EditNoteRoundedIcon />
                     </Anchor>

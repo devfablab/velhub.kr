@@ -767,6 +767,11 @@ export default function Opt({
     : categoryName
       ? `/${siteName}/c/${categoryName}`
       : `/${siteName}/${boardName}`;
+  const editPath =
+    board.board_type === 'blog'
+      ? `/${siteName}/manage/contents/posts/${content.slug}/edit`
+      : `/${siteName}/${boardName}/${content.slug}/edit`;
+  const editHref = seriesName ? `${editPath}?${new URLSearchParams({ seriesName }).toString()}` : editPath;
   const isSubscriptionSeriesPost = series?.is_subscription === true;
   const canShowPostMoveButton = isCommunity && !isPage && canMovePost;
 
@@ -850,14 +855,7 @@ export default function Opt({
     !content.is_locked ? (
       <>
         {canEdit ? (
-          <Anchor
-            href={
-              board.board_type === 'blog'
-                ? `/${siteName}/manage/contents/posts/${content.slug}/edit`
-                : `/${siteName}/${boardName}/${content.slug}/edit`
-            }
-            className={`${styles.button} button`}
-          >
+          <Anchor href={editHref} className={`${styles.button} button`}>
             <EditNoteRoundedIcon />
             <strong>수정</strong>
           </Anchor>
@@ -1113,14 +1111,7 @@ export default function Opt({
                       <ArrowForwardIosRoundedIcon />
                     </Anchor>
                     {canEdit ? (
-                      <Anchor
-                        href={
-                          board.board_type === 'blog'
-                            ? `/${siteName}/manage/contents/posts/${content.slug}/edit`
-                            : `/${siteName}/${boardName}/${content.slug}/edit`
-                        }
-                        className={styles['edit-link']}
-                      >
+                      <Anchor href={editHref} className={styles['edit-link']}>
                         <span>글 수정</span>
                         <EditNoteRoundedIcon />
                       </Anchor>

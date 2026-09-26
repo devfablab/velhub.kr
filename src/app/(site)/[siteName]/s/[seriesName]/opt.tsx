@@ -295,7 +295,7 @@ export default function Opt({
       {isCommunity && !isMobile ? (
         <aside>
           <SiteInfo />
-          <TableList />
+          <TableList writeHref={`/${siteName}/${boardName}/new?seriesName=${seriesName}`} />
         </aside>
       ) : null}
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { type ChangeEvent, type JSX, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
@@ -670,11 +670,13 @@ export default function Opt({
 }: Props) {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const theme = useTheme();
 
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
+  const returnSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
@@ -1761,6 +1763,11 @@ export default function Opt({
         throw new Error('글 수정에 실패했습니다.');
       }
 
+      if (returnSeriesName && selectedSeriesKey) {
+        router.replace(`/${siteName}/s/${selectedSeriesKey}`);
+        return;
+      }
+
       router.replace(`/${siteName}/${boardName}/${result.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -2064,6 +2071,45 @@ export default function Opt({
                     </>
                   ) : null}
 
+                  {canRegisterPaidPreview ? (
+                    <>
+                      <div className="paper">
+                        <header className={styles['content-header']}>
+                          <h3>
+                            <strong>미리보기</strong>
+                          </h3>
+                          <p>연재 구독하지 않은 독자에게 보여줄 내용을 작성해주세요.</p>
+                        </header>
+                      </div>
+                      <div className={styles.form}>
+                        <fieldset>
+                          <div className={`${styles.editor} service-editor`}>
+                            <ToastEditor
+                              key={`paid-preview-${selectedSeriesKey}`}
+                              initialValue={paidPreviewHtml}
+                              initialMarkdown={paidPreviewMarkdown}
+                              initialEditType="wysiwyg"
+                              themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                              markdownStatus={markdownStatus}
+                              hideModeSwitch
+                              onHtmlChange={setPaidPreviewHtml}
+                              onMarkdownChange={setPaidPreviewMarkdown}
+                              onUploadImage={handleUploadEditorImage}
+                            />
+                          </div>
+                        </fieldset>
+                      </div>
+                      <div className="paper">
+                        <header className={styles['content-header']}>
+                          <h3>
+                            <strong>본문작성</strong>
+                          </h3>
+                          <p>연재를 구독한 독자에게 보여줄 본문 내용을 작성해주세요.</p>
+                        </header>
+                      </div>
+                    </>
+                  ) : null}
+
                   {isBasicBoard || isGalleryBoard ? (
                     <div
                       className={`${styles.editor} ${isBasicBoard ? styles['editor-basic-edit'] : styles['editor-gallery-edit']} service-editor`}
@@ -2079,27 +2125,6 @@ export default function Opt({
                         onMarkdownChange={setContentMarkdown}
                         onUploadImage={handleUploadEditorImage}
                       />
-                    </div>
-                  ) : null}
-
-                  {canRegisterPaidPreview ? (
-                    <div className="paper">
-                      <h3>미리보기</h3>
-                      <p>연재를 구독하지 않은 독자에게 보여줄 내용을 작성해주세요.</p>
-                      <div className={`${styles.editor} service-editor`}>
-                        <ToastEditor
-                          key={`paid-preview-${selectedSeriesKey}`}
-                          initialValue={paidPreviewHtml}
-                          initialMarkdown={paidPreviewMarkdown}
-                          initialEditType="wysiwyg"
-                          themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                          markdownStatus={markdownStatus}
-                          hideModeSwitch
-                          onHtmlChange={setPaidPreviewHtml}
-                          onMarkdownChange={setPaidPreviewMarkdown}
-                          onUploadImage={handleUploadEditorImage}
-                        />
-                      </div>
                     </div>
                   ) : null}
 

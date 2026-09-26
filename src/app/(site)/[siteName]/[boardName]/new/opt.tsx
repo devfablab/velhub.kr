@@ -63,6 +63,7 @@ type Props = {
   initialBoardInfo: BoardInfoResponse | null;
   initialPrefixes: PrefixListResponse | null;
   initialSeries: SeriesListResponse | null;
+  initialSeriesName: string;
   initialError: string;
 };
 
@@ -568,6 +569,7 @@ export default function Opt({
   initialBoardInfo,
   initialPrefixes,
   initialSeries,
+  initialSeriesName,
   initialError,
 }: Props) {
   const router = useRouter();
@@ -600,7 +602,7 @@ export default function Opt({
   const [prefixList, setPrefixList] = useState<PrefixRow[]>(initialPrefixes?.prefixes ?? []);
   const [seriesList, setSeriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
-  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialSeriesName);
   const [subject, setSubject] = useState('');
   const [subjectPaddingLeft, setSubjectPaddingLeft] = useState(12);
   const [summary, setSummary] = useState('');
@@ -1801,6 +1803,11 @@ export default function Opt({
         throw new Error('글 작성에 실패했습니다.');
       }
 
+      if (selectedSeriesKey) {
+        router.replace(`/${siteName}/s/${selectedSeriesKey}`);
+        return;
+      }
+
       router.replace(`/${siteName}/${selectedBoardKey}/${result.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -2142,6 +2149,45 @@ export default function Opt({
                     </>
                   ) : null}
 
+                  {canRegisterPaidPreview ? (
+                    <>
+                      <div className="paper">
+                        <header className={styles['content-header']}>
+                          <h3>
+                            <strong>미리보기</strong>
+                          </h3>
+                          <p>연재 구독하지 않은 독자에게 보여줄 내용을 작성해주세요.</p>
+                        </header>
+                      </div>
+                      <div className={styles.form}>
+                        <fieldset>
+                          <div className={`${styles.editor} service-editor`}>
+                            <ToastEditor
+                              key={`paid-preview-${selectedSeriesKey}`}
+                              initialValue={paidPreviewHtml}
+                              initialMarkdown={paidPreviewMarkdown}
+                              initialEditType="wysiwyg"
+                              themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                              markdownStatus={markdownStatus}
+                              hideModeSwitch
+                              onHtmlChange={setPaidPreviewHtml}
+                              onMarkdownChange={setPaidPreviewMarkdown}
+                              onUploadImage={handleUploadEditorImage}
+                            />
+                          </div>
+                        </fieldset>
+                      </div>
+                      <div className="paper">
+                        <header className={styles['content-header']}>
+                          <h3>
+                            <strong>본문작성</strong>
+                          </h3>
+                          <p>연재를 구독한 독자에게 보여줄 본문 내용을 작성해주세요.</p>
+                        </header>
+                      </div>
+                    </>
+                  ) : null}
+
                   {isBasicBoard || isGalleryBoard ? (
                     <div
                       className={`${styles.editor} ${isBasicBoard ? styles['editor-basic'] : styles['editor-gallery']} service-editor`}
@@ -2157,27 +2203,6 @@ export default function Opt({
                         onMarkdownChange={setContentMarkdown}
                         onUploadImage={handleUploadEditorImage}
                       />
-                    </div>
-                  ) : null}
-
-                  {canRegisterPaidPreview ? (
-                    <div className="paper">
-                      <h3>미리보기</h3>
-                      <p>연재를 구독하지 않은 독자에게 보여줄 내용을 작성해주세요.</p>
-                      <div className={`${styles.editor} service-editor`}>
-                        <ToastEditor
-                          key={`paid-preview-${selectedSeriesKey}`}
-                          initialValue={paidPreviewHtml}
-                          initialMarkdown={paidPreviewMarkdown}
-                          initialEditType="wysiwyg"
-                          themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                          markdownStatus={markdownStatus}
-                          hideModeSwitch
-                          onHtmlChange={setPaidPreviewHtml}
-                          onMarkdownChange={setPaidPreviewMarkdown}
-                          onUploadImage={handleUploadEditorImage}
-                        />
-                      </div>
                     </div>
                   ) : null}
 

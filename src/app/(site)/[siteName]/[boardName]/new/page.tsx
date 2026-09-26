@@ -16,11 +16,16 @@ type RouteContext = {
     siteName: string;
     boardName: string;
   }>;
+  searchParams: Promise<{
+    seriesName?: string;
+  }>;
 };
 
 export default async function Page(context: RouteContext) {
   const { siteName, boardName } = await context.params;
+  const searchParams = await context.searchParams;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
+  const requestedSeriesName = normalizeText(searchParams.seriesName).toLowerCase();
 
   if (!normalizedSiteName) {
     notFound();
@@ -91,6 +96,12 @@ export default async function Page(context: RouteContext) {
         )
       : Promise.resolve({ data: null, error: '' }),
   ]);
+  const initialSeriesName =
+    initialSeries.data?.series?.some(
+      (series) => series.series_key === requestedSeriesName && series.is_completed !== true,
+    ) === true
+      ? requestedSeriesName
+      : '';
   const initialError = initialBoards.error || initialBoardInfo.error || initialPrefixes.error || initialSeries.error;
 
   return (
@@ -101,6 +112,7 @@ export default async function Page(context: RouteContext) {
       initialBoardInfo={initialBoardInfo.data}
       initialPrefixes={initialPrefixes.data}
       initialSeries={initialSeries.data}
+      initialSeriesName={initialSeriesName}
       initialError={initialError}
     />
   );
