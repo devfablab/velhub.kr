@@ -2005,7 +2005,7 @@ export default function Opt({
                         <div className={styles.image}>
                           <button type="button" onClick={openGalleryDialog}>
                             <CollectionsOutlinedIcon />
-                            <span>{isGalleryBoard ? '갤러리 이미지 (최소 2개)' : '갤러리 이미지'}</span>
+                            <span>갤러리 이미지 (최소 2개)</span>
                           </button>
                         </div>
                       ) : null}

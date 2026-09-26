@@ -192,15 +192,14 @@
       .post-info
         &.post-row
           display: flex
-          flex-direction: row
           gap: ds.rem(12)
+          flex-direction: column
 
-          .form-group
-            @include ds.mq(minLarge)
+          @include ds.mq(minLarge)
+            flex-direction: row
+
+            .form-group
               @include ds.col
-
-          @include ds.mq(maxMedium)
-            flex-direction: column
 
         .form-group
           display: flex
@@ -249,7 +248,7 @@
               > div
                 height: ds.rem(37)
                 border-radius: ds.rem(7)
-                padding-left: ds.rem(182)
+                padding-left: ds.rem(143)
                 font-size: ds.rem(16)
                 @include ds.fw(pre, 600)
                 color: ds.$hex-primary

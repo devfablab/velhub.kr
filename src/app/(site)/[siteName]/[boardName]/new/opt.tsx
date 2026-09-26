@@ -2008,7 +2008,7 @@ export default function Opt({
                             <input
                               type="text"
                               value={subject}
-                              placeholder="제목을 입력해 주세요 (필수)"
+                              placeholder="제목을 입력해 주세요"
                               style={{ paddingLeft: subjectPaddingLeft }}
                               onChange={(event) => setSubject(event.currentTarget.value)}
                             />
@@ -2041,14 +2041,14 @@ export default function Opt({
                             <input
                               type="text"
                               value={youtubeUrl}
-                              placeholder="유튜브 영상 주소를 입력해주세요 (필수)"
+                              placeholder="유튜브 영상 주소를 입력해주세요"
                               style={{ paddingLeft: 12 }}
                               onChange={(event) => handleYoutubeUrlChange(event.currentTarget.value)}
                             />
                           </div>
                         </div>
                         <div className={styles['form-group']}>
-                          <label htmlFor="youtube-created-at">유튜브 업로드 날짜 (필수)</label>
+                          <label htmlFor="youtube-created-at">유튜브 업로드 날짜</label>
                           <div className={styles['form-control']}>
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                               <DatePicker
@@ -2083,7 +2083,7 @@ export default function Opt({
                         <div className={styles.image}>
                           <button type="button" onClick={openGalleryDialog}>
                             <CollectionsOutlinedIcon />
-                            <span>{isGalleryBoard ? '갤러리 이미지 (최소 2개)' : '갤러리 이미지'}</span>
+                            <span>갤러리 이미지</span>
                           </button>
                         </div>
                       ) : null}

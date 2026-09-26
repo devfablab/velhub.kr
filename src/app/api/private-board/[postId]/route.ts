@@ -134,31 +134,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
 
   const authorStigma = await result.access.supabaseAdmin
     .from('stigmas')
-    .select('id, user_id, avatar, user_name')
+    .select('id, avatar, user_name')
     .eq('id', result.post.author_stigma_id)
     .maybeSingle();
-  const [authorMembership, authorUser, authorCreator] = await Promise.all([
-    result.access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('nickname')
-      .eq('site_id', result.access.site.id)
-      .eq('user_id', result.post.author_stigma_id)
-      .maybeSingle(),
-    authorStigma.data?.user_id
-      ? result.access.supabaseAdmin
-          .from('users')
-          .select('handle_name')
-          .eq('user_id', authorStigma.data.user_id)
-          .maybeSingle()
-      : { data: null },
-    authorStigma.data?.user_id
-      ? result.access.supabaseAdmin
-          .from('creators')
-          .select('handle_name')
-          .eq('user_id', authorStigma.data.user_id)
-          .maybeSingle()
-      : { data: null },
-  ]);
+  const authorMembership = await result.access.supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('nickname')
+    .eq('site_id', result.access.site.id)
+    .eq('user_id', result.post.author_stigma_id)
+    .is('withdrawn_at', null)
+    .maybeSingle();
   const avatarValue = normalizeText(authorStigma.data?.avatar);
   const authorAvatarUrl = avatarValue
     ? /^https?:\/\//i.test(avatarValue)
@@ -169,31 +154,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
     visibleReplies.map(async (reply) => {
       const replyAuthorStigma = await result.access.supabaseAdmin
         .from('stigmas')
-        .select('user_id, avatar, user_name')
+        .select('avatar, user_name')
         .eq('id', reply.author_stigma_id)
         .maybeSingle();
-      const [replyAuthorMembership, replyAuthorUser, replyAuthorCreator] = await Promise.all([
-        result.access.supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('nickname')
-          .eq('site_id', result.access.site.id)
-          .eq('user_id', reply.author_stigma_id)
-          .maybeSingle(),
-        replyAuthorStigma.data?.user_id
-          ? result.access.supabaseAdmin
-              .from('users')
-              .select('handle_name')
-              .eq('user_id', replyAuthorStigma.data.user_id)
-              .maybeSingle()
-          : { data: null },
-        replyAuthorStigma.data?.user_id
-          ? result.access.supabaseAdmin
-              .from('creators')
-              .select('handle_name')
-              .eq('user_id', replyAuthorStigma.data.user_id)
-              .maybeSingle()
-          : { data: null },
-      ]);
+      const replyAuthorMembership = await result.access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('nickname')
+        .eq('site_id', result.access.site.id)
+        .eq('user_id', reply.author_stigma_id)
+        .is('withdrawn_at', null)
+        .maybeSingle();
       const replyAvatarValue = normalizeText(replyAuthorStigma.data?.avatar);
 
       return {
@@ -204,8 +174,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
           now - new Date(reply.created_at).getTime() <= 5 * 60 * 1000,
         author_name:
           normalizeText(replyAuthorMembership.data?.nickname) ||
-          normalizeText(replyAuthorUser.data?.handle_name) ||
-          normalizeText(replyAuthorCreator.data?.handle_name) ||
           getFallbackAuthorName(replyAuthorStigma.data?.user_name) ||
           '알 수 없음',
         author_avatar_url: replyAvatarValue
@@ -227,8 +195,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
       images: postImages.filter((image) => image.url),
       author_name:
         normalizeText(authorMembership.data?.nickname) ||
-        normalizeText(authorUser.data?.handle_name) ||
-        normalizeText(authorCreator.data?.handle_name) ||
         getFallbackAuthorName(authorStigma.data?.user_name) ||
         '알 수 없음',
       author_avatar_url: authorAvatarUrl,

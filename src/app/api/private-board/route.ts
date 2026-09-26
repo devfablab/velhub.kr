@@ -1,4 +1,6 @@
+import { decrypt } from '@/lib/encryption/decrypt';
 import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/private-board/access';
+import { normalizeText } from '@/lib/utils';
 
 const PAGE_SIZE = 20;
 
@@ -29,45 +31,42 @@ export async function GET(request: Request) {
 
   const rows = posts.data ?? [];
   const authorIds = [...new Set(rows.map((post) => post.author_stigma_id))];
-  const [categories, authorStigmas] = await Promise.all([
+  const [categories, authorStigmas, nicknames] = await Promise.all([
     access.supabaseAdmin
       .from('private_board_categories')
       .select('id, category_label')
       .eq('private_board_id', access.board.id)
       .order('sort_order'),
-    authorIds.length ? access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', authorIds) : { data: [] },
-  ]);
-
-  const authorUserIds = [...new Set((authorStigmas.data ?? []).map((stigma) => stigma.user_id))];
-  const [users, creators] = await Promise.all([
-    authorUserIds.length
-      ? access.supabaseAdmin.from('users').select('user_id, handle_name').in('user_id', authorUserIds)
-      : { data: [] },
-    authorUserIds.length
-      ? access.supabaseAdmin.from('creators').select('user_id, handle_name').in('user_id', authorUserIds)
+    authorIds.length ? access.supabaseAdmin.from('stigmas').select('id, user_name').in('id', authorIds) : { data: [] },
+    authorIds.length
+      ? access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('user_id, nickname')
+          .eq('site_id', access.site.id)
+          .is('withdrawn_at', null)
+          .in('user_id', authorIds)
       : { data: [] },
   ]);
-
-  const nicknames = authorIds.length
-    ? await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('user_id, nickname')
-        .eq('site_id', access.site.id)
-        .in('user_id', authorIds)
-    : { data: [] };
 
   if (categories.error) {
     return Response.json({ error: '카테고리를 불러오지 못했습니다.' }, { status: 500 });
   }
 
   const categoryMap = new Map((categories.data ?? []).map((category) => [category.id, category.category_label]));
-  const handleByUserId = new Map(
-    [...(users.data ?? []), ...(creators.data ?? [])].map((profile) => [profile.user_id, profile.handle_name]),
+  const nicknameMap = new Map((nicknames.data ?? []).map((member) => [member.user_id, normalizeText(member.nickname)]));
+  const accountNameMap = new Map(
+    (authorStigmas.data ?? []).map((stigma) => {
+      const encryptedName = normalizeText(stigma.user_name);
+
+      if (!encryptedName) return [stigma.id, ''] as const;
+
+      try {
+        return [stigma.id, decrypt(encryptedName)] as const;
+      } catch {
+        return [stigma.id, ''] as const;
+      }
+    }),
   );
-  const handleMap = new Map(
-    (authorStigmas.data ?? []).map((stigma) => [stigma.id, handleByUserId.get(stigma.user_id)]),
-  );
-  const nicknameMap = new Map((nicknames.data ?? []).map((member) => [member.user_id, member.nickname]));
 
   return Response.json({
     board: access.board,
@@ -80,7 +79,7 @@ export async function GET(request: Request) {
       id: post.id,
       categoryLabel: categoryMap.get(post.category_id) ?? '분류없음',
       subject: post.subject,
-      authorName: nicknameMap.get(post.author_stigma_id) || handleMap.get(post.author_stigma_id) || '알 수 없음',
+      authorName: nicknameMap.get(post.author_stigma_id) || accountNameMap.get(post.author_stigma_id) || '알 수 없음',
       hasAnswer: Boolean(post.answered_at),
       createdAt: post.created_at,
     })),
