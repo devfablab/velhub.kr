@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
@@ -18,9 +17,11 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { FormControl, MenuItem, Select, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import DonationButton from '@/components/service/common/DonationButton';
 import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
@@ -496,11 +497,6 @@ export default function Opt({
               <Select value={String(pageSize)} onChange={handlePageSizeChange} aria-label="페이지당 게시글 수">
                 {pageSizeOptions.map((sizeOption) => (
                   <MenuItem key={sizeOption} value={String(sizeOption)}>
-                    {pageSize === sizeOption ? (
-                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                    ) : (
-                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                    )}
                     {sizeOption}개씩
                   </MenuItem>
                 ))}

@@ -4,16 +4,17 @@ import { type JSX, type ReactNode, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { FormControl, MenuItem, Select, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import FabNew from '@/components/service/common/FabNew';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -265,11 +266,6 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
             <Select value={String(pageSize)} onChange={handlePageSizeChange} aria-label="페이지당 게시글 수">
               {pageSizeOptions.map((sizeOption) => (
                 <MenuItem key={sizeOption} value={String(sizeOption)}>
-                  {pageSize === sizeOption ? (
-                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                  ) : (
-                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                  )}
                   {sizeOption}개씩
                 </MenuItem>
               ))}
