@@ -11,8 +11,6 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
-  MenuItem,
-  Select,
   Stack,
   styled,
   TextField,
@@ -25,6 +23,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 
 type LegalType = 'illegal_info' | 'illegal_filming' | 'privacy';
 

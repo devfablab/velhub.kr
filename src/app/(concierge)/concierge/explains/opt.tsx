@@ -12,8 +12,6 @@ import {
   DialogTitle,
   Drawer,
   FormControl,
-  MenuItem,
-  Select,
   Stack,
   styled,
   Table,
@@ -43,6 +41,8 @@ import {
   reportAppealDeletionReasonOptions,
 } from '@/lib/reports/appeals';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';

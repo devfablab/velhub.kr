@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Chip, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Chip, Stack, TextField, Typography } from '@mui/material';
 import {
   inquiryInformationRequestLabels,
   inquiryResolutionLabels,
@@ -19,6 +19,8 @@ import {
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import InquiryDetails from '@/components/service/concierge/InquiryDetails';
 import styles from '@/app/concierge.module.sass';
 
@@ -433,6 +435,7 @@ export default function Opt({
               fullWidth
               size="small"
               value={status}
+              slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
               onChange={(event) => setStatus(event.target.value as Inquiry['status'])}
             >
               {statusOptions.map((value) => (
@@ -449,6 +452,7 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={resolutionCode}
+                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                   onChange={(event) => setResolutionCode(event.target.value as InquiryResolutionCode)}
                 >
                   {options.map((value) => (
@@ -477,6 +481,7 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={informationRequestType}
+                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                   onChange={(event) => setInformationRequestType(event.target.value as InquiryInformationRequestType)}
                 >
                   <MenuItem value="text_response">{inquiryInformationRequestLabels.text_response}</MenuItem>

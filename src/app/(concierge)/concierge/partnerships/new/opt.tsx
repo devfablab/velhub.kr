@@ -3,19 +3,11 @@
 import { ChangeEvent, FormEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import {
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-  styled,
-} from '@mui/material';
+import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, styled } from '@mui/material';
 import type { PartnershipFormInfo } from '@/lib/partnerships';
 import Anchor from '@/components/Anchor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import styles from '@/app/concierge.module.sass';
 
 const acceptedFileTypes = '.pdf,.jpg,.jpeg,.png,.zip';

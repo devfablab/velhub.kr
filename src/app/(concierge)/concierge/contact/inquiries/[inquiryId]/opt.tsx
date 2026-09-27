@@ -10,7 +10,6 @@ import {
   Chip,
   Divider,
   FormControlLabel,
-  MenuItem,
   Radio,
   RadioGroup,
   Stack,
@@ -31,6 +30,8 @@ import {
 } from '@/lib/concierge/inquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import MenuItem from '@/components/SelectMenuItem';
+import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import InquiryDetails from '@/components/service/concierge/InquiryDetails';
 import ResponsivePopup from '../../../ResponsivePopup';
@@ -638,6 +639,7 @@ export default function Opt({
             fullWidth
             size="small"
             value={holderType}
+            slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
             onChange={(event) => setHolderType(event.target.value)}
           >
             <MenuItem value="account_holder">계정주 본인</MenuItem>

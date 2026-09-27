@@ -9,10 +9,8 @@ import {
   Divider,
   FormControlLabel,
   FormGroup,
-  MenuItem,
   Radio,
   RadioGroup,
-  Select,
   Stack,
   styled,
   TextField,
@@ -20,6 +18,8 @@ import {
 } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import Anchor from '@/components/Anchor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';

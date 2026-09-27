@@ -11,8 +11,6 @@ import {
   Box,
   Chip,
   FormControl,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -41,6 +39,8 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';

@@ -1,5 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from 'react';
+import { FormControl } from '@mui/material';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import ResponsivePopup from '../shared/ResponsivePopup';
 
 type Folder = {
@@ -156,18 +159,16 @@ export default function FolderModals({
           { label: '이동', intent: 'submit', onClick: handleMoveSites, disabled: isLoading },
         ]}
       >
-        <select
-          value={selectedFolderId || ''}
-          onChange={(event) => setSelectedFolderId(event.target.value || null)}
-          style={{ width: '100%', padding: '8px' }}
-        >
-          <option value="">기본 폴더</option>
-          {folders.map((folder) => (
-            <option key={folder.id} value={folder.id}>
-              {folder.label}
-            </option>
-          ))}
-        </select>
+        <FormControl fullWidth size="small">
+          <Select value={selectedFolderId || ''} onChange={(event) => setSelectedFolderId(event.target.value || null)}>
+            <MenuItem value="">기본 폴더</MenuItem>
+            {folders.map((folder) => (
+              <MenuItem key={folder.id} value={folder.id}>
+                {folder.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </ResponsivePopup>
     </>
   );

@@ -15,10 +15,8 @@ import {
   FormControl,
   FormControlLabel,
   InputAdornment,
-  MenuItem,
   Radio,
   RadioGroup,
-  Select,
   Stack,
   styled,
   TextField,
@@ -37,6 +35,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import styles from '@/app/concierge.module.sass';
 
 type ReportTargetType = 'site' | 'board' | 'post' | 'comment';

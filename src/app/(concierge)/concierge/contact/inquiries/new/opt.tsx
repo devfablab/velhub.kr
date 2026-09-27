@@ -9,7 +9,6 @@ import {
   Checkbox,
   FormControlLabel,
   InputAdornment,
-  MenuItem,
   Radio,
   RadioGroup,
   Stack,
@@ -26,6 +25,8 @@ import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { MEMBERSHIP_FEATURES, type MembershipFeatureKey, type MembershipType } from '@/lib/memberships/catalog';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import Anchor from '@/components/Anchor';
+import MenuItem from '@/components/SelectMenuItem';
+import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 
 export type PaymentRow = {
   id: string;
@@ -360,6 +361,7 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={inquiryType}
+                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                   onChange={(event) => {
                     const next = event.target.value as InquiryType;
                     setInquiryType(next);
@@ -381,6 +383,7 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={inquirySubtype}
+                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                   onChange={(event) => {
                     setInquirySubtype(event.target.value);
                     setPaymentId('');
@@ -490,6 +493,7 @@ export default function Opt({
                           fullWidth
                           size="small"
                           value={attemptedMembershipType}
+                          slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                           onChange={(event) => {
                             setAttemptedMembershipType(event.target.value as MembershipType);
                             setAttemptedFeatureKeys([]);
@@ -538,6 +542,7 @@ export default function Opt({
                         fullWidth
                         size="small"
                         value={attemptedPaymentSubtype}
+                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                         onChange={(event) => {
                           setAttemptedPaymentSubtype(event.target.value);
                           setSelectedSite(null);
@@ -611,6 +616,7 @@ export default function Opt({
                         fullWidth
                         size="small"
                         value={selectedSeriesId}
+                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                         onChange={(event) => {
                           setSelectedSeriesId(event.target.value);
                           setSelectedPostId('');
@@ -814,6 +820,7 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={recurrence}
+                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                   onChange={(event) => setRecurrence(event.target.value)}
                 >
                   {recurrenceOptions.map((option) => (
