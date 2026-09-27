@@ -10,6 +10,9 @@ type SignInRequestBody = {
   captchaToken: string | null;
 };
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const INVALID_CREDENTIALS_MESSAGE = '이메일 또는 비밀번호가 올바르지 않습니다.';
+
 function getSupabasePublic() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -115,7 +118,7 @@ async function forceResetPassword(email: string, requestOrigin: string) {
   const generateLinkResult = await supabaseAdmin.auth.admin.generateLink({
     type: 'recovery',
     email,
-    options: { redirectTo: `${requestOrigin}/reset-password` },
+    options: { redirectTo: `${requestOrigin}/auth/reset-password` },
   });
 
   if (generateLinkResult.error || !generateLinkResult.data.properties.action_link) {
@@ -141,6 +144,16 @@ async function forceResetPassword(email: string, requestOrigin: string) {
 }
 
 async function sendCaptchaRequiredEmail(email: string) {
+  const accountResult = await getSupabaseAdmin().from('particles').select('id').eq('email', email).maybeSingle();
+
+  if (accountResult.error) {
+    throw new Error(accountResult.error.message);
+  }
+
+  if (!accountResult.data) {
+    return;
+  }
+
   const sendResult = await getResendClient().emails.send({
     from: getMailFrom(),
     to: email,
@@ -159,6 +172,16 @@ async function sendCaptchaRequiredEmail(email: string) {
   }
 }
 
+async function increaseFailureCount(failureRedisKey: string) {
+  const nextFailureCount = await redis.incr(failureRedisKey);
+
+  if (nextFailureCount === 1) {
+    await redis.expire(failureRedisKey, 60 * 60);
+  }
+
+  return nextFailureCount;
+}
+
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as SignInRequestBody;
@@ -173,6 +196,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '이메일을 입력해주세요.' }, { status: 400 });
     }
 
+    if (!EMAIL_PATTERN.test(email)) {
+      return Response.json({ error: '올바른 이메일 형식으로 입력해 주세요.' }, { status: 400 });
+    }
+
     if (!password) {
       return Response.json({ error: '비밀번호를 입력해주세요.' }, { status: 400 });
     }
@@ -185,26 +212,32 @@ export async function POST(request: Request) {
 
     if (failureCount >= 5) {
       if (!captchaToken) {
+        const nextFailureCount = await increaseFailureCount(failureRedisKey);
+
         return Response.json(
           {
-            error: 'hCaptcha 확인이 필요합니다.',
+            error: INVALID_CREDENTIALS_MESSAGE,
             code: 'captcha_required',
             captchaRequired: true,
+            failureCount: nextFailureCount,
           },
-          { status: 400 },
+          { status: 401 },
         );
       }
 
       const isCaptchaValid = await verifyHCaptchaToken(captchaToken, clientIpAddress);
 
       if (!isCaptchaValid) {
+        const nextFailureCount = await increaseFailureCount(failureRedisKey);
+
         return Response.json(
           {
-            error: 'hCaptcha 확인에 실패했습니다.',
+            error: INVALID_CREDENTIALS_MESSAGE,
             code: 'captcha_invalid',
             captchaRequired: true,
+            failureCount: nextFailureCount,
           },
-          { status: 400 },
+          { status: 401 },
         );
       }
     }
@@ -217,12 +250,18 @@ export async function POST(request: Request) {
     });
 
     if (signInResult.error) {
-      const nextFailureCount = await redis.incr(failureRedisKey);
-
-      if (nextFailureCount === 1) {
-        await redis.expire(failureRedisKey, 60 * 60);
+      if (signInResult.error.code === 'email_not_confirmed') {
+        return Response.json(
+          {
+            error: '이메일 인증이 완료되지 않았습니다.\n메일함에서 인증 링크를 확인해 주세요.',
+            code: 'email_not_confirmed',
+            captchaRequired: failureCount >= 5,
+          },
+          { status: 401 },
+        );
       }
 
+      const nextFailureCount = await increaseFailureCount(failureRedisKey);
       const captchaRequired = nextFailureCount >= 5;
 
       if (nextFailureCount === 5) {
@@ -231,17 +270,6 @@ export async function POST(request: Request) {
         } catch (emailError) {
           console.error('[auth/email/sign-in] captcha required email error', emailError);
         }
-      }
-
-      if (signInResult.error.code === 'email_not_confirmed') {
-        return Response.json(
-          {
-            error: '이메일 인증이 완료되지 않았습니다. 메일함에서 인증 링크를 확인해주세요.',
-            code: 'email_not_confirmed',
-            captchaRequired,
-          },
-          { status: 401 },
-        );
       }
 
       if (nextFailureCount >= 10) {
@@ -254,9 +282,10 @@ export async function POST(request: Request) {
 
         return Response.json(
           {
-            error: '로그인 시도가 너무 많아 비밀번호를 초기화했습니다. 가입된 이메일이라면 메일함을 확인해주세요.',
+            error: '로그인 시도가 너무 많아 비밀번호를 초기화했습니다.\n메일함을 확인해 주세요.',
             code: 'password_force_reset',
             captchaRequired: true,
+            failureCount: nextFailureCount,
           },
           { status: 401 },
         );
@@ -264,9 +293,10 @@ export async function POST(request: Request) {
 
       return Response.json(
         {
-          error: '이메일 또는 비밀번호가 올바르지 않습니다.',
+          error: INVALID_CREDENTIALS_MESSAGE,
           code: 'invalid_credentials',
           captchaRequired,
+          failureCount: nextFailureCount,
         },
         { status: 401 },
       );
@@ -286,10 +316,10 @@ export async function POST(request: Request) {
       refreshToken: authSession.refresh_token,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '로그인 처리 중 오류가 발생했습니다.' }, { status: 500 });
-    }
-
-    return Response.json({ error: '로그인 처리 중 오류가 발생했습니다.' }, { status: 500 });
+    console.error('[auth/email/sign-in] unexpected error', unknownError);
+    return Response.json(
+      { error: '로그인 처리 중 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.' },
+      { status: 500 },
+    );
   }
 }

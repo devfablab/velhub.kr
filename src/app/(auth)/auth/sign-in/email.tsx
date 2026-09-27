@@ -1,9 +1,8 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
@@ -12,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
+  FormHelperText,
   Stack,
   TextField,
   Typography,
@@ -34,6 +34,67 @@ type AcceptInviteResponse = {
   siteName: string;
 };
 
+type SignInFieldErrors = {
+  email: string;
+  password: string;
+  captcha: string;
+};
+
+type SignInResponse = {
+  accessToken?: string;
+  refreshToken?: string;
+  error?: string;
+  code?: string;
+  captchaRequired?: boolean;
+  failureCount?: number;
+};
+
+type LoginErrorPopup = {
+  open: boolean;
+  title: string;
+  messages: string[];
+  fieldErrors: SignInFieldErrors;
+};
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMPTY_FIELD_ERRORS: SignInFieldErrors = {
+  email: '',
+  password: '',
+  captcha: '',
+};
+const EMPTY_ERROR_POPUP: LoginErrorPopup = {
+  open: false,
+  title: '',
+  messages: [],
+  fieldErrors: EMPTY_FIELD_ERRORS,
+};
+
+function addSentenceLineBreaks(message: string) {
+  return message.replace(/([.!?])\s+(?=\S)/g, '$1\n');
+}
+
+class SignInRequestError extends Error {
+  code: string;
+  failureCount: number;
+
+  constructor(result: SignInResponse) {
+    super(result.error ?? '로그인 처리 중 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.');
+    this.name = 'SignInRequestError';
+    this.code = result.code ?? '';
+    this.failureCount = result.failureCount ?? 0;
+  }
+}
+
+class LoginFlowError extends Error {
+  title: string;
+
+  constructor(title: string, message: string) {
+    super(message);
+    this.name = 'LoginFlowError';
+    this.title = title;
+  }
+}
+
 export default function EmailSignIn() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,7 +112,8 @@ export default function EmailSignIn() {
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [isCaptchaRequired, setIsCaptchaRequired] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<SignInFieldErrors>(EMPTY_FIELD_ERRORS);
+  const [errorPopup, setErrorPopup] = useState<LoginErrorPopup>(EMPTY_ERROR_POPUP);
   const [decisionMessage, setDecisionMessage] = useState('');
   const [decisionState, setDecisionState] = useState<SignInDecision>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,16 +126,147 @@ export default function EmailSignIn() {
 
   useEffect(() => {
     if (callbackErrorDescription) {
-      setErrorMessage(callbackErrorDescription);
+      showErrorPopup('로그인 오류', [callbackErrorDescription]);
     }
   }, [callbackErrorDescription]);
 
+  function showErrorPopup(title: string, messages: string[], nextFieldErrors = EMPTY_FIELD_ERRORS) {
+    setErrorPopup({
+      open: true,
+      title,
+      messages: messages.map(addSentenceLineBreaks),
+      fieldErrors: nextFieldErrors,
+    });
+  }
+
+  function handleErrorPopupClose() {
+    setFieldErrors(errorPopup.fieldErrors);
+    setErrorPopup((previousValue) => ({ ...previousValue, open: false }));
+  }
+
+  function showFieldValidationError(field: keyof SignInFieldErrors, message: string) {
+    setErrorPopup((previousValue) => {
+      const nextFieldErrors = {
+        ...previousValue.fieldErrors,
+        [field]: message,
+      };
+
+      return {
+        open: true,
+        title: '로그인 정보 확인',
+        messages: Object.values(nextFieldErrors).filter(Boolean),
+        fieldErrors: nextFieldErrors,
+      };
+    });
+  }
+
   function handleEmailChange(event: InputChangeEvent) {
     setEmail(event.currentTarget.value);
+    setFieldErrors((previousValue) => ({ ...previousValue, email: '' }));
+    setErrorPopup((previousValue) => ({
+      ...previousValue,
+      fieldErrors: { ...previousValue.fieldErrors, email: '' },
+    }));
   }
 
   function handlePasswordChange(event: InputChangeEvent) {
     setPassword(event.currentTarget.value);
+    setFieldErrors((previousValue) => ({ ...previousValue, password: '' }));
+    setErrorPopup((previousValue) => ({
+      ...previousValue,
+      fieldErrors: { ...previousValue.fieldErrors, password: '' },
+    }));
+  }
+
+  const handleCaptchaTokenChange = useCallback((token: string) => {
+    setCaptchaToken(token);
+
+    if (token) {
+      setFieldErrors((previousValue) => ({ ...previousValue, captcha: '' }));
+      setErrorPopup((previousValue) => ({
+        ...previousValue,
+        fieldErrors: { ...previousValue.fieldErrors, captcha: '' },
+      }));
+    }
+  }, []);
+
+  function validateSignInFields() {
+    const trimmedEmail = email.trim().toLowerCase();
+    const nextFieldErrors: SignInFieldErrors = {
+      email: !trimmedEmail
+        ? '이메일을 입력해 주세요.'
+        : !EMAIL_PATTERN.test(trimmedEmail)
+          ? '올바른 이메일 형식으로 입력해 주세요.'
+          : '',
+      password: password ? '' : '비밀번호를 입력해 주세요.',
+      captcha: isCaptchaRequired && !captchaToken ? '보안 확인을 완료해 주세요.' : '',
+    };
+
+    const messages = Object.values(nextFieldErrors).filter(Boolean);
+
+    if (messages.length > 0) {
+      showErrorPopup('로그인 정보 확인', messages, nextFieldErrors);
+      return false;
+    }
+
+    return true;
+  }
+
+  function showSignInError(error: unknown) {
+    if (error instanceof SignInRequestError) {
+      const messages = [error.message];
+
+      if (error.failureCount > 0) {
+        messages.push(`로그인 ${error.failureCount}회째 시도 중입니다 `);
+      }
+
+      if (error.code === 'email_not_confirmed') {
+        showErrorPopup('이메일 인증 확인', messages, {
+          ...EMPTY_FIELD_ERRORS,
+          email: '이메일 인증을 완료해 주세요.',
+        });
+        return;
+      }
+
+      if (error.code === 'password_force_reset') {
+        showErrorPopup('로그인 제한', messages, {
+          ...EMPTY_FIELD_ERRORS,
+          password: '비밀번호를 재설정해 주세요.',
+        });
+        return;
+      }
+
+      if (error.code === 'captcha_required' || error.code === 'captcha_invalid') {
+        showErrorPopup('로그인 실패', messages, {
+          ...EMPTY_FIELD_ERRORS,
+          captcha: '보안 확인을 다시 완료해 주세요.',
+        });
+        return;
+      }
+
+      if (error.code === 'invalid_credentials') {
+        showErrorPopup('로그인 실패', messages, {
+          ...EMPTY_FIELD_ERRORS,
+          email: '로그인 정보를 확인해 주세요.',
+          password: '로그인 정보를 확인해 주세요.',
+        });
+        return;
+      }
+
+      showErrorPopup('로그인 오류', messages);
+      return;
+    }
+
+    if (error instanceof LoginFlowError) {
+      showErrorPopup(error.title, [error.message]);
+      return;
+    }
+
+    showErrorPopup('로그인 오류', [
+      error instanceof Error && error.message
+        ? error.message
+        : '로그인 처리 중 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.',
+    ]);
   }
 
   async function runInviteAccept() {
@@ -94,7 +287,8 @@ export default function EmailSignIn() {
     const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
 
     if (!acceptInviteResponse.ok) {
-      throw new Error(
+      throw new LoginFlowError(
+        '초대 처리 오류',
         'error' in acceptInviteResult
           ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
           : '초대 처리에 실패했습니다.',
@@ -102,7 +296,7 @@ export default function EmailSignIn() {
     }
 
     if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
-      throw new Error('초대 처리에 실패했습니다.');
+      throw new LoginFlowError('초대 처리 오류', '초대 처리에 실패했습니다.');
     }
 
     router.replace(`/${acceptInviteResult.siteName}`);
@@ -123,7 +317,7 @@ export default function EmailSignIn() {
       }),
     });
 
-    const signInResult = await signInResponse.json();
+    const signInResult = (await signInResponse.json()) as SignInResponse;
 
     if (!signInResponse.ok) {
       setIsCaptchaRequired(Boolean(signInResult.captchaRequired));
@@ -132,10 +326,14 @@ export default function EmailSignIn() {
         setCaptchaResetKey((previousValue) => previousValue + 1);
       }
 
-      throw new Error(signInResult.error ?? '로그인 중 오류가 발생했습니다.');
+      throw new SignInRequestError(signInResult);
     }
 
     clearChannelWorksCookies();
+
+    if (!signInResult.accessToken || !signInResult.refreshToken) {
+      throw new LoginFlowError('로그인 세션 오류', '로그인 세션을 설정하지 못했습니다.\n잠시 후 다시 시도해 주세요.');
+    }
 
     const setSessionResult = await supabase.auth.setSession({
       access_token: signInResult.accessToken,
@@ -143,7 +341,7 @@ export default function EmailSignIn() {
     });
 
     if (setSessionResult.error) {
-      throw new Error(setSessionResult.error.message);
+      throw new LoginFlowError('로그인 세션 오류', '로그인 세션을 설정하지 못했습니다.\n잠시 후 다시 시도해 주세요.');
     }
 
     const inviteAccepted = await runInviteAccept();
@@ -155,7 +353,10 @@ export default function EmailSignIn() {
     const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
     if (assuranceLevelResult.error) {
-      throw new Error(assuranceLevelResult.error.message);
+      throw new LoginFlowError(
+        '보안 정보 확인 오류',
+        '로그인은 완료되었지만 보안 정보를 확인하지 못했습니다.\n다시 로그인해 주세요.',
+      );
     }
 
     const currentLevel = assuranceLevelResult.data.currentLevel;
@@ -188,22 +389,10 @@ export default function EmailSignIn() {
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    if (!trimmedEmail) {
-      setErrorMessage('이메일을 입력해주세요.');
+    if (!validateSignInFields()) {
       return;
     }
 
-    if (!password) {
-      setErrorMessage('비밀번호를 입력해주세요.');
-      return;
-    }
-
-    if (isCaptchaRequired && !captchaToken) {
-      setErrorMessage('hCaptcha 확인을 진행해주세요.');
-      return;
-    }
-
-    setErrorMessage('');
     setDecisionMessage('');
     setDecisionState('idle');
     setIsSubmitting(true);
@@ -244,11 +433,7 @@ export default function EmailSignIn() {
 
       await runSignIn(trimmedEmail);
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '로그인 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('로그인 중 오류가 발생했습니다.');
-      }
+      showSignInError(unknownError);
       setIsSubmitting(false);
     }
   }
@@ -261,11 +446,13 @@ export default function EmailSignIn() {
     const trimmedEmail = email.trim().toLowerCase();
 
     if (!trimmedEmail) {
-      setErrorMessage('이메일을 입력해주세요.');
+      showErrorPopup('로그인 정보 확인', ['이메일을 입력해 주세요.'], {
+        ...EMPTY_FIELD_ERRORS,
+        email: '이메일을 입력해 주세요.',
+      });
       return;
     }
 
-    setErrorMessage('');
     setIsSubmitting(true);
 
     try {
@@ -291,11 +478,11 @@ export default function EmailSignIn() {
       );
       setIsSubmitting(false);
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '처리 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('처리 중 오류가 발생했습니다.');
-      }
+      showErrorPopup('메일 전송 오류', [
+        unknownError instanceof Error && unknownError.message
+          ? unknownError.message
+          : '비밀번호 설정 메일을 보내지 못했습니다.',
+      ]);
       setIsSubmitting(false);
     }
   }
@@ -307,32 +494,16 @@ export default function EmailSignIn() {
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    if (!trimmedEmail) {
-      setErrorMessage('이메일을 입력해주세요.');
+    if (!validateSignInFields()) {
       return;
     }
 
-    if (!password) {
-      setErrorMessage('비밀번호를 입력해주세요.');
-      return;
-    }
-
-    if (isCaptchaRequired && !captchaToken) {
-      setErrorMessage('캡챠 확인을 진행해주세요.');
-      return;
-    }
-
-    setErrorMessage('');
     setIsSubmitting(true);
 
     try {
       await runSignIn(trimmedEmail);
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '로그인 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('로그인 중 오류가 발생했습니다.');
-      }
+      showSignInError(unknownError);
       setIsSubmitting(false);
     }
   }
@@ -367,20 +538,40 @@ export default function EmailSignIn() {
       <Box component="form" onSubmit={handleSubmit}>
         <Stack gap={1}>
           <TextField
+            name="email"
             placeholder="이메일"
             type="email"
+            required
             autoComplete="email"
             value={email}
             onChange={handleEmailChange}
+            onInvalid={(event) => {
+              event.preventDefault();
+              const input = event.currentTarget as HTMLInputElement;
+              showFieldValidationError(
+                'email',
+                input.validity.valueMissing ? '이메일을 입력해 주세요.' : '올바른 이메일 형식으로 입력해 주세요.',
+              );
+            }}
+            error={Boolean(fieldErrors.email)}
+            helperText={fieldErrors.email}
             fullWidth
             size="small"
           />
           <TextField
+            name="password"
             placeholder="비밀번호"
             type="password"
+            required
             autoComplete="current-password"
             value={password}
             onChange={handlePasswordChange}
+            onInvalid={(event) => {
+              event.preventDefault();
+              showFieldValidationError('password', '비밀번호를 입력해 주세요.');
+            }}
+            error={Boolean(fieldErrors.password)}
+            helperText={fieldErrors.password}
             fullWidth
             size="small"
           />
@@ -388,7 +579,8 @@ export default function EmailSignIn() {
           {isCaptchaRequired ? (
             <Stack gap={1}>
               <Typography variant="subtitle2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
-              <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
+              <HCaptchaBox onTokenChange={handleCaptchaTokenChange} resetKey={captchaResetKey} />
+              {fieldErrors.captcha ? <FormHelperText error>{fieldErrors.captcha}</FormHelperText> : null}
             </Stack>
           ) : null}
 
@@ -407,19 +599,67 @@ export default function EmailSignIn() {
             </button>
           </div>
 
-          {errorMessage ? (
-            <p className={`alert error ${styles.alert}`}>
-              <ErrorOutlineRoundedIcon />
-              <span>{errorMessage}</span>
-            </p>
-          ) : null}
           {decisionState === 'idle' && decisionMessage ? (
             <p className={`alert info ${styles.alert}`}>
               <InfoOutlineRoundedIcon />
-              <span>{decisionState}</span>
+              <span>{decisionMessage}</span>
             </p>
           ) : null}
         </Stack>
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={errorPopup.open}
+            onClose={handleErrorPopupClose}
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          >
+            <h2>{errorPopup.title}</h2>
+            <button type="button" className="close-button" onClick={handleErrorPopupClose} aria-label="닫기">
+              <CloseRoundedIcon />
+            </button>
+            <div className="VhiDrawer-bottom-content">
+              <ul>
+                {errorPopup.messages.map((message, index) => (
+                  <li key={`${index}-${message}`} style={{ whiteSpace: 'pre-line' }}>
+                    {message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button type="button" className="button small cancel" onClick={handleErrorPopupClose}>
+                확인
+              </button>
+            </div>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={errorPopup.open}
+            onClose={handleErrorPopupClose}
+            fullWidth
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
+          >
+            <DialogTitle>{errorPopup.title}</DialogTitle>
+            <button type="button" className="close-button" onClick={handleErrorPopupClose} aria-label="닫기">
+              <CloseRoundedIcon />
+            </button>
+            <DialogContent>
+              <ul>
+                {errorPopup.messages.map((message, index) => (
+                  <li key={`${index}-${message}`} style={{ whiteSpace: 'pre-line' }}>
+                    {message}
+                  </li>
+                ))}
+              </ul>
+            </DialogContent>
+            <DialogActions>
+              <button type="button" onClick={handleErrorPopupClose}>
+                확인
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
         {isMobile ? (
           <Drawer
             anchor="bottom"
@@ -428,7 +668,13 @@ export default function EmailSignIn() {
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>이메일 로그인 설정</h2>
-            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCancelDecision}
+              aria-label="닫기"
+              disabled={isSubmitting}
+            >
               <CloseRoundedIcon />
             </button>
             <div className="VhiDrawer-bottom-content">
@@ -462,7 +708,13 @@ export default function EmailSignIn() {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>이메일 로그인 설정</DialogTitle>
-            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCancelDecision}
+              aria-label="닫기"
+              disabled={isSubmitting}
+            >
               <CloseRoundedIcon />
             </button>
             <DialogContent>
@@ -487,7 +739,13 @@ export default function EmailSignIn() {
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>이메일 로그인 확인</h2>
-            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCancelDecision}
+              aria-label="닫기"
+              disabled={isSubmitting}
+            >
               <CloseRoundedIcon />
             </button>
             <div className="VhiDrawer-bottom-content">
@@ -521,7 +779,13 @@ export default function EmailSignIn() {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>이메일 로그인 확인</DialogTitle>
-            <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCancelDecision}
+              aria-label="닫기"
+              disabled={isSubmitting}
+            >
               <CloseRoundedIcon />
             </button>
             <DialogContent>

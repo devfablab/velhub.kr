@@ -8,6 +8,8 @@ type AuthIdentity = {
   provider?: string;
 };
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function hasEmailIdentity(identities: AuthIdentity[] | undefined) {
   return Boolean(identities?.some((identity) => identity.provider === 'email'));
 }
@@ -20,6 +22,10 @@ export async function POST(request: Request) {
 
     if (!email) {
       return Response.json({ error: '이메일을 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!EMAIL_PATTERN.test(email)) {
+      return Response.json({ error: '올바른 이메일 형식으로 입력해 주세요.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
