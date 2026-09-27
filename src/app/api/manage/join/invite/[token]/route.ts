@@ -195,10 +195,7 @@ export async function GET(request: Request, context: RouteContext) {
       isAlreadyMember,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대장을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
+    console.error('커뮤니티 초대장 조회 실패:', unknownError);
     return Response.json({ error: '초대장을 불러오지 못했습니다.' }, { status: 500 });
   }
 }
@@ -428,10 +425,7 @@ export async function POST(request: Request, context: RouteContext) {
       siteName: rhizome.data.site_key,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대 처리에 실패했습니다.' }, { status: 500 });
-    }
-
-    return Response.json({ error: '초대 처리에 실패했습니다1.' }, { status: 500 });
+    console.error('커뮤니티 초대 처리 실패:', unknownError);
+    return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
   }
 }

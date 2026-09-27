@@ -43,7 +43,7 @@ export default async function Page({
       const path =
         inviteType === 'community'
           ? `/api/manage/join/invite/${encodeURIComponent(inviteToken)}?siteName=${encodeURIComponent(inviteSiteName)}`
-          : `/api/manage/design/blog/team/invite/${encodeURIComponent(inviteToken)}`;
+          : `/api/manage/team/members/invite/${encodeURIComponent(inviteToken)}?siteName=${encodeURIComponent(inviteSiteName)}`;
       const response = await fetch(`${protocol}://${host}${path}`, {
         headers: { cookie: cookieStore.toString() },
         cache: 'no-store',

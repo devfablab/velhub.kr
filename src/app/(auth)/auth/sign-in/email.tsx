@@ -29,11 +29,6 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 type SignInDecision = 'idle' | 'confirm-enable-email-login' | 'confirm-email-login';
-type AcceptInviteResponse = {
-  ok: boolean;
-  siteName: string;
-};
-
 type SignInFieldErrors = {
   email: string;
   password: string;
@@ -274,32 +269,8 @@ export default function EmailSignIn() {
       return false;
     }
 
-    if (inviteType === 'community') {
-      router.replace(`/${inviteSiteName}/invite-community/${inviteToken}`);
-      return true;
-    }
-
-    const acceptInviteResponse = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-
-    const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
-
-    if (!acceptInviteResponse.ok) {
-      throw new LoginFlowError(
-        '초대 처리 오류',
-        'error' in acceptInviteResult
-          ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
-          : '초대 처리에 실패했습니다.',
-      );
-    }
-
-    if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
-      throw new LoginFlowError('초대 처리 오류', '초대 처리에 실패했습니다.');
-    }
-
-    router.replace(`/${acceptInviteResult.siteName}`);
+    const invitePath = inviteType === 'community' ? 'invite-community' : 'invite-blog';
+    router.replace(`/${inviteSiteName}/${invitePath}/${inviteToken}`);
     return true;
   }
 

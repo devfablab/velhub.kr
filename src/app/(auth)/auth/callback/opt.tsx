@@ -37,11 +37,6 @@ type PendingSocialSave = {
   tokenExpiresAt: number | null;
 };
 
-type AcceptInviteResponse = {
-  ok: boolean;
-  siteName: string;
-};
-
 function wait(delay: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, delay);
@@ -115,53 +110,8 @@ export default function Opt() {
         return false;
       }
 
-      if (inviteType === 'community') {
-        const acceptInviteResponse = await fetch(`/api/manage/join/invite/${inviteToken}?siteName=${inviteSiteName}`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-
-        const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
-
-        if (!acceptInviteResponse.ok) {
-          throw new Error(
-            'error' in acceptInviteResult
-              ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
-              : '초대 처리에 실패했습니다.',
-          );
-        }
-
-        if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
-          throw new Error('초대 처리에 실패했습니다.');
-        }
-
-        router.replace(`/${acceptInviteResult.siteName}`);
-        return true;
-      }
-
-      const acceptInviteResponse = await fetch(
-        `/api/manage/design/blog/team/invite/${inviteToken}?siteName=${inviteSiteName}`,
-        {
-          method: 'POST',
-          credentials: 'include',
-        },
-      );
-
-      const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
-
-      if (!acceptInviteResponse.ok) {
-        throw new Error(
-          'error' in acceptInviteResult
-            ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
-            : '초대 처리에 실패했습니다.',
-        );
-      }
-
-      if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
-        throw new Error('초대 처리에 실패했습니다.');
-      }
-
-      router.replace(`/${acceptInviteResult.siteName}`);
+      const invitePath = inviteType === 'community' ? 'invite-community' : 'invite-blog';
+      router.replace(`/${inviteSiteName}/${invitePath}/${inviteToken}`);
       return true;
     }
 
@@ -378,35 +328,9 @@ export default function Opt() {
         throw new Error(socialSaveResult.error ?? '소셜 로그인 저장 처리에 실패했습니다.');
       }
 
-      if (inviteToken && inviteType === 'community') {
-        router.replace(`/${inviteSiteName}/invite-community/${inviteToken}`);
-        return;
-      }
-
       if (inviteToken) {
-        const acceptInviteResponse = await fetch(
-          `/api/manage/design/blog/team/invite/${inviteToken}?siteName=${inviteSiteName}`,
-          {
-            method: 'POST',
-            credentials: 'include',
-          },
-        );
-
-        const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
-
-        if (!acceptInviteResponse.ok) {
-          throw new Error(
-            'error' in acceptInviteResult
-              ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
-              : '초대 처리에 실패했습니다.',
-          );
-        }
-
-        if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
-          throw new Error('초대 처리에 실패했습니다.');
-        }
-
-        router.replace(`/${acceptInviteResult.siteName}`);
+        const invitePath = inviteType === 'community' ? 'invite-community' : 'invite-blog';
+        router.replace(`/${inviteSiteName}/${invitePath}/${inviteToken}`);
         return;
       }
 

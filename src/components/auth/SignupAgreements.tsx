@@ -9,7 +9,9 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
+  FormControl,
   FormControlLabel,
+  FormHelperText,
   FormGroup,
   Stack,
   Table,
@@ -100,7 +102,17 @@ function PrivacyContent() {
   );
 }
 
-function PrivacyAgreement({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
+function PrivacyAgreement({
+  checked,
+  error,
+  onChange,
+  onInvalid,
+}: {
+  checked: boolean;
+  error: string;
+  onChange: (value: boolean) => void;
+  onInvalid: () => void;
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [open, setOpen] = useState(false);
@@ -108,10 +120,23 @@ function PrivacyAgreement({ checked, onChange }: { checked: boolean; onChange: (
   return (
     <>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <FormControlLabel
-          control={<Checkbox checked={checked} onChange={(event) => onChange(event.target.checked)} />}
-          label={<Typography variant="body2">[필수] 개인정보 수집 및 이용 동의</Typography>}
-        />
+        <FormControl error={Boolean(error)}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                required
+                checked={checked}
+                onChange={(event) => onChange(event.target.checked)}
+                onInvalid={(event) => {
+                  event.preventDefault();
+                  onInvalid();
+                }}
+              />
+            }
+            label={<Typography variant="body2">[필수] 개인정보 수집 및 이용 동의</Typography>}
+          />
+          {error ? <FormHelperText>{error}</FormHelperText> : null}
+        </FormControl>
         <button type="button" className="button-term" onClick={() => setOpen(true)}>
           내용 보기
         </button>
@@ -151,7 +176,15 @@ function PrivacyAgreement({ checked, onChange }: { checked: boolean; onChange: (
   );
 }
 
-export function SignupAgreementFields() {
+export function SignupAgreementFields({
+  errors = { child: '', term: '', privacy: '' },
+  onClearError = () => undefined,
+  onInvalid = () => undefined,
+}: {
+  errors?: { child: string; term: string; privacy: string };
+  onClearError?: (field: 'isAgreeChild' | 'isAgreeTerm' | 'isAgreePrivacy') => void;
+  onInvalid?: (field: 'isAgreeChild' | 'isAgreeTerm' | 'isAgreePrivacy', message: string) => void;
+}) {
   const { isAgreeTerm, isAgreeChild, isAgreePrivacy, setAgreement } = useSignupAgreements();
   const allChecked = isAgreeTerm && isAgreeChild && isAgreePrivacy;
 
@@ -159,6 +192,11 @@ export function SignupAgreementFields() {
     setAgreement('term', value);
     setAgreement('child', value);
     setAgreement('privacy', value);
+    if (value) {
+      onClearError('isAgreeChild');
+      onClearError('isAgreeTerm');
+      onClearError('isAgreePrivacy');
+    }
   }
 
   return (
@@ -168,18 +206,48 @@ export function SignupAgreementFields() {
           control={<Checkbox checked={allChecked} onChange={(event) => setAll(event.target.checked)} />}
           label={<Typography variant="subtitle2">모두 동의합니다</Typography>}
         />
-        <FormControlLabel
-          control={
-            <Checkbox checked={isAgreeChild} onChange={(event) => setAgreement('child', event.target.checked)} />
-          }
-          label={<Typography variant="body2">[필수] 만 14세 이상입니다</Typography>}
-        />
+        <FormControl error={Boolean(errors.child)}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                required
+                checked={isAgreeChild}
+                onChange={(event) => {
+                  setAgreement('child', event.target.checked);
+                  if (event.target.checked) onClearError('isAgreeChild');
+                }}
+                onInvalid={(event) => {
+                  event.preventDefault();
+                  onInvalid('isAgreeChild', '만 14세 이상 여부를 확인해 주세요.');
+                }}
+              />
+            }
+            label={<Typography variant="body2">[필수] 만 14세 이상입니다</Typography>}
+          />
+          {errors.child ? <FormHelperText>{errors.child}</FormHelperText> : null}
+        </FormControl>
       </FormGroup>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <FormControlLabel
-          control={<Checkbox checked={isAgreeTerm} onChange={(event) => setAgreement('term', event.target.checked)} />}
-          label={<Typography variant="body2">[필수] 이용약관 동의</Typography>}
-        />
+        <FormControl error={Boolean(errors.term)}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                required
+                checked={isAgreeTerm}
+                onChange={(event) => {
+                  setAgreement('term', event.target.checked);
+                  if (event.target.checked) onClearError('isAgreeTerm');
+                }}
+                onInvalid={(event) => {
+                  event.preventDefault();
+                  onInvalid('isAgreeTerm', '이용약관에 동의해 주세요.');
+                }}
+              />
+            }
+            label={<Typography variant="body2">[필수] 이용약관 동의</Typography>}
+          />
+          {errors.term ? <FormHelperText>{errors.term}</FormHelperText> : null}
+        </FormControl>
         <button
           type="button"
           className="button-term"
@@ -206,7 +274,15 @@ export function SignupAgreementFields() {
           내용 보기
         </button>
       </Stack>
-      <PrivacyAgreement checked={isAgreePrivacy} onChange={(value) => setAgreement('privacy', value)} />
+      <PrivacyAgreement
+        checked={isAgreePrivacy}
+        error={errors.privacy}
+        onChange={(value) => {
+          setAgreement('privacy', value);
+          if (value) onClearError('isAgreePrivacy');
+        }}
+        onInvalid={() => onInvalid('isAgreePrivacy', '개인정보 수집 및 이용에 동의해 주세요.')}
+      />
     </Stack>
   );
 }

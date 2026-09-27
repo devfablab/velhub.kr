@@ -203,10 +203,7 @@ export async function GET(request: Request, context: RouteContext) {
       isAlreadyMember,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대장을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
+    console.error('팀 블로그 초대장 조회 실패:', unknownError);
     return Response.json({ error: '초대장을 불러오지 못했습니다.' }, { status: 500 });
   }
 }
@@ -359,7 +356,7 @@ export async function POST(request: Request, context: RouteContext) {
     const joinedAt = new Date().toISOString();
 
     if (currentRhizomeStigma.error) {
-      return Response.json({ error: '초대 처리에 실패했습니다.1' }, { status: 500 });
+      return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
 
     if (currentRhizomeStigma.data) {
@@ -379,7 +376,7 @@ export async function POST(request: Request, context: RouteContext) {
         .eq('id', currentRhizomeStigma.data.id);
 
       if (updateRhizomeStigma.error) {
-        return Response.json({ error: '초대 처리에 실패했습니다.2' }, { status: 500 });
+        return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
       }
     } else {
       const insertRhizomeStigma = await supabaseAdmin
@@ -407,7 +404,7 @@ export async function POST(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (insertRhizomeStigma.error || !insertRhizomeStigma.data) {
-        return Response.json({ error: '초대 처리에 실패했습니다.3' }, { status: 500 });
+        return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
       }
 
       acceptedUserId = insertRhizomeStigma.data.id;
@@ -423,13 +420,13 @@ export async function POST(request: Request, context: RouteContext) {
       .eq('id', invite.data.id);
 
     if (updateInvite.error) {
-      return Response.json({ error: '초대 처리에 실패했습니다.4' }, { status: 500 });
+      return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
 
     const deleteInvite = await supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
 
     if (deleteInvite.error) {
-      return Response.json({ error: '초대 처리에 실패했습니다.5' }, { status: 500 });
+      return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -437,10 +434,7 @@ export async function POST(request: Request, context: RouteContext) {
       siteName: rhizome.data.site_key,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대 처리에 실패했습니다.6' }, { status: 500 });
-    }
-
-    return Response.json({ error: '초대 처리에 실패했습니다.7' }, { status: 500 });
+    console.error('팀 블로그 초대 처리 실패:', unknownError);
+    return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
   }
 }

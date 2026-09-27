@@ -88,6 +88,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [inviteEmailError, setInviteEmailError] = useState('');
+  const [pendingInviteEmailError, setPendingInviteEmailError] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarKind, setSnackbarKind] = useState<'info' | 'error'>('info');
 
@@ -104,6 +106,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   function handleInviteEmailChange(event: InputChangeEvent) {
     setInviteEmail(event.currentTarget.value);
+    setInviteEmailError('');
+    setPendingInviteEmailError('');
   }
 
   function handleOpenInviteDialog() {
@@ -117,6 +121,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
     setIsInviteDialogOpen(false);
     setInviteEmail('');
+    setInviteEmailError('');
   }
 
   function handleOpenCancelDialog(invite: InviteRow) {
@@ -138,6 +143,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return;
     }
 
+    const normalizedEmail = inviteEmail.trim().toLowerCase();
+
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      const message = normalizedEmail ? '올바른 이메일 형식으로 입력해 주세요.' : '이메일을 입력해 주세요.';
+      setPendingInviteEmailError(message);
+      setErrorMessage(message);
+      return;
+    }
+
     try {
       setIsInviteSubmitting(true);
       setErrorMessage('');
@@ -150,7 +164,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         },
         body: JSON.stringify({
           siteName,
-          email: inviteEmail,
+          email: normalizedEmail,
         }),
       });
 
@@ -159,11 +173,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       if (!response.ok) {
         const responseError = 'error' in result ? result.error || '초대에 실패했습니다.' : '초대에 실패했습니다.';
 
-        if (responseError === '이미 가입한 멤버입니다.' || responseError === '이미 초대장을 받은 멤버입니다.') {
-          setSnackbarKind('error');
-          setSnackbarMessage(responseError);
-          return;
-        }
+        if (response.status < 500) setPendingInviteEmailError(responseError);
 
         throw new Error(responseError);
       }
@@ -240,8 +250,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-
           <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
             <button type="button" className="button small action" onClick={handleOpenInviteDialog}>
               멤버 초대
@@ -303,12 +311,26 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Box component="form" onSubmit={handleSubmitInvite}>
+                <Box id="community-invite-form" component="form" onSubmit={handleSubmitInvite}>
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <TextField
                       placeholder="이메일"
+                      name="email"
+                      type="email"
+                      required
                       value={inviteEmail}
                       onChange={handleInviteEmailChange}
+                      onInvalid={(event) => {
+                        event.preventDefault();
+                        const input = event.currentTarget as HTMLInputElement;
+                        const message = input.validity.valueMissing
+                          ? '이메일을 입력해 주세요.'
+                          : '올바른 이메일 형식으로 입력해 주세요.';
+                        setPendingInviteEmailError(message);
+                        setErrorMessage(message);
+                      }}
+                      error={Boolean(inviteEmailError)}
+                      helperText={inviteEmailError}
                       fullWidth
                       size="small"
                     />
@@ -317,19 +339,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </div>
               <div className="drawer-dialog-actions">
                 <button
-                  type="button"
+                  type="submit"
+                  form="community-invite-form"
                   className="button small cancel"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button small submit"
-                  onClick={(event) => void handleSubmitInvite(event as unknown as FormSubmitEvent)}
-                  disabled={isInviteSubmitting}
-                >
+                <button type="button" className="button small submit" disabled={isInviteSubmitting}>
                   초대하기
                 </button>
               </div>
@@ -353,12 +371,26 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Box component="form" onSubmit={handleSubmitInvite}>
+                <Box id="community-invite-form-desktop" component="form" onSubmit={handleSubmitInvite}>
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <TextField
                       placeholder="이메일"
+                      name="email"
+                      type="email"
+                      required
                       value={inviteEmail}
                       onChange={handleInviteEmailChange}
+                      onInvalid={(event) => {
+                        event.preventDefault();
+                        const input = event.currentTarget as HTMLInputElement;
+                        const message = input.validity.valueMissing
+                          ? '이메일을 입력해 주세요.'
+                          : '올바른 이메일 형식으로 입력해 주세요.';
+                        setPendingInviteEmailError(message);
+                        setErrorMessage(message);
+                      }}
+                      error={Boolean(inviteEmailError)}
+                      helperText={inviteEmailError}
                       fullWidth
                       size="small"
                     />
@@ -374,11 +406,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  onClick={(event) => void handleSubmitInvite(event as unknown as FormSubmitEvent)}
-                  disabled={isInviteSubmitting}
-                >
+                <button type="submit" form="community-invite-form-desktop" disabled={isInviteSubmitting}>
                   초대하기
                 </button>
               </DialogActions>
@@ -464,6 +492,88 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button type="button" onClick={handleSubmitCancelInvite} disabled={isCancelSubmitting}>
                   초대 취소
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(errorMessage)}
+              onClose={() => {
+                setInviteEmailError(pendingInviteEmailError);
+                setErrorMessage('');
+              }}
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            >
+              {pendingInviteEmailError ? <h2>초대 정보 확인</h2> : null}
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => {
+                  setInviteEmailError(pendingInviteEmailError);
+                  setErrorMessage('');
+                }}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <div className="VhiDrawer-bottom-content">
+                <ul>
+                  <li>{errorMessage}</li>
+                </ul>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setErrorMessage('');
+                  }}
+                >
+                  확인
+                </button>
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(errorMessage)}
+              onClose={() => {
+                setInviteEmailError(pendingInviteEmailError);
+                setErrorMessage('');
+              }}
+              fullWidth
+              maxWidth="xs"
+              className="vh-dialog vh-alert-dialog"
+            >
+              {pendingInviteEmailError ? <DialogTitle>초대 정보 확인</DialogTitle> : null}
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => {
+                  setInviteEmailError(pendingInviteEmailError);
+                  setErrorMessage('');
+                }}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <ul>
+                  <li>{errorMessage}</li>
+                </ul>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setErrorMessage('');
+                  }}
+                >
+                  확인
                 </button>
               </DialogActions>
             </Dialog>

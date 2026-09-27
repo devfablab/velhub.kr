@@ -15,7 +15,7 @@ export default async function Page({ params }: PageProps) {
   const { siteName, token } = await params;
 
   const initialData = await getSiteApiData<InviteResponse>(
-    `/api/manage/design/blog/team/invite/${token}?siteName=${siteName}`,
+    `/api/manage/team/members/invite/${token}?siteName=${siteName}`,
     '초대장을 불러오지 못했습니다.',
   );
 

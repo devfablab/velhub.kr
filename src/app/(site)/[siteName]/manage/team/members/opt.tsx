@@ -170,6 +170,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isInviteListDialogOpen, setIsInviteListDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [inviteErrorMessage, setInviteErrorMessage] = useState('');
+  const [inviteEmailError, setInviteEmailError] = useState('');
+  const [pendingInviteEmailError, setPendingInviteEmailError] = useState('');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -265,6 +268,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
     setIsInviteDialogOpen(false);
     setInviteEmail('');
     setInviteRole('manager');
+    setInviteEmailError('');
+    setPendingInviteEmailError('');
+    setInviteErrorMessage('');
   }
 
   function handleOpenInviteListDialog() {
@@ -475,6 +481,15 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   }
 
   async function handleSubmitInvite() {
+    const normalizedEmail = inviteEmail.trim().toLowerCase();
+
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      const message = normalizedEmail ? '올바른 이메일 형식으로 입력해 주세요.' : '이메일을 입력해 주세요.';
+      setPendingInviteEmailError(message);
+      setInviteErrorMessage(message);
+      return;
+    }
+
     try {
       setIsInviteSubmitting(true);
       setErrorMessage('');
@@ -487,7 +502,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
         },
         body: JSON.stringify({
           siteName,
-          email: inviteEmail,
+          email: normalizedEmail,
           role: inviteRole,
         }),
       });
@@ -495,7 +510,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       const result = (await response.json()) as CreateInviteResponse | { error?: string };
 
       if (!response.ok) {
-        throw new Error('error' in result ? result.error || '초대를 실패했습니다.' : '초대를 실패했습니다.');
+        const responseError = 'error' in result ? result.error || '초대를 실패했습니다.' : '초대를 실패했습니다.';
+        if (response.status < 500) setPendingInviteEmailError(responseError);
+        throw new Error(responseError);
       }
 
       if (!('invite' in result) || !result.invite) {
@@ -508,9 +525,10 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       setIsInviteDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '초대를 실패했습니다.');
+        const message = unknownError.message || '초대를 실패했습니다.';
+        setInviteErrorMessage(message);
       } else {
-        setErrorMessage('초대를 실패했습니다.');
+        setInviteErrorMessage('초대를 실패했습니다.');
       }
     } finally {
       setIsInviteSubmitting(false);
@@ -747,6 +765,8 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     <Typography variant="subtitle2">새 운영자</Typography>
                     <TextField
                       select
+                      name="role"
+                      required
                       value={ownerTransferTargetId}
                       onChange={(event) => setOwnerTransferTargetId(event.target.value)}
                       size="small"
@@ -785,6 +805,88 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
                 >
                   요청하기
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(inviteErrorMessage)}
+              onClose={() => {
+                setInviteEmailError(pendingInviteEmailError);
+                setInviteErrorMessage('');
+              }}
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            >
+              {pendingInviteEmailError ? <h2>초대 정보 확인</h2> : null}
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => {
+                  setInviteEmailError(pendingInviteEmailError);
+                  setInviteErrorMessage('');
+                }}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <div className="VhiDrawer-bottom-content">
+                <ul>
+                  <li>{inviteErrorMessage}</li>
+                </ul>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button
+                  type="button"
+                  className="button small cancel"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setInviteErrorMessage('');
+                  }}
+                >
+                  확인
+                </button>
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(inviteErrorMessage)}
+              onClose={() => {
+                setInviteEmailError(pendingInviteEmailError);
+                setInviteErrorMessage('');
+              }}
+              fullWidth
+              maxWidth="xs"
+              className="vh-dialog vh-alert-dialog"
+            >
+              {pendingInviteEmailError ? <DialogTitle>초대 정보 확인</DialogTitle> : null}
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => {
+                  setInviteEmailError(pendingInviteEmailError);
+                  setInviteErrorMessage('');
+                }}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <ul>
+                  <li>{inviteErrorMessage}</li>
+                </ul>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setInviteErrorMessage('');
+                  }}
+                >
+                  확인
                 </button>
               </DialogActions>
             </Dialog>
@@ -1181,49 +1283,74 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={1}>
-                  <Stack>
-                    <Typography variant="subtitle2">이메일</Typography>
-                    <TextField
-                      placeholder="초대할 팀원의 이메일을 입력해주세요."
-                      value={inviteEmail}
-                      onChange={(event) => setInviteEmail(event.target.value)}
-                      fullWidth
-                      size="small"
-                    />
-                  </Stack>
+                <Box
+                  id="team-invite-form"
+                  component="form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmitInvite();
+                  }}
+                >
+                  <Stack gap={1}>
+                    <Stack>
+                      <Typography variant="subtitle2">이메일</Typography>
+                      <TextField
+                        placeholder="초대할 팀원의 이메일을 입력해주세요."
+                        name="email"
+                        type="email"
+                        required
+                        value={inviteEmail}
+                        onChange={(event) => {
+                          setInviteEmail(event.target.value);
+                          setInviteEmailError('');
+                          setPendingInviteEmailError('');
+                        }}
+                        onInvalid={(event) => {
+                          event.preventDefault();
+                          const input = event.currentTarget as HTMLInputElement;
+                          const message = input.validity.valueMissing
+                            ? '이메일을 입력해 주세요.'
+                            : '올바른 이메일 형식으로 입력해 주세요.';
+                          setPendingInviteEmailError(message);
+                          setInviteErrorMessage(message);
+                        }}
+                        error={Boolean(inviteEmailError)}
+                        helperText={inviteEmailError}
+                        fullWidth
+                        size="small"
+                      />
+                    </Stack>
 
-                  <Stack>
-                    <Typography variant="subtitle2">역할</Typography>
-                    <TextField
-                      select
-                      value={inviteRole}
-                      onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
-                      fullWidth
-                      size="small"
-                      InputProps={{ startAdornment: <SelectCheckAdornment /> }}
-                    >
-                      <MenuItem value="manager">매니저</MenuItem>
-                      <MenuItem value="member">멤버</MenuItem>
-                    </TextField>
+                    <Stack>
+                      <Typography variant="subtitle2">역할</Typography>
+                      <TextField
+                        select
+                        name="role"
+                        required
+                        value={inviteRole}
+                        onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
+                        fullWidth
+                        size="small"
+                        InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                      >
+                        <MenuItem value="manager">매니저</MenuItem>
+                        <MenuItem value="member">멤버</MenuItem>
+                      </TextField>
+                    </Stack>
                   </Stack>
-                </Stack>
+                </Box>
               </div>
               <div className="drawer-dialog-actions">
                 <button
-                  type="button"
+                  type="submit"
+                  form="team-invite-form"
                   className="button small cancel"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button small submit"
-                  onClick={handleSubmitInvite}
-                  disabled={isInviteSubmitting}
-                >
+                <button type="button" className="button small submit" disabled={isInviteSubmitting}>
                   초대하기
                 </button>
               </div>
@@ -1247,33 +1374,60 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={1}>
-                  <Stack>
-                    <Typography variant="subtitle2">이메일</Typography>
-                    <TextField
-                      placeholder="초대할 팀원의 이메일을 입력해주세요."
-                      value={inviteEmail}
-                      onChange={(event) => setInviteEmail(event.target.value)}
-                      fullWidth
-                      size="small"
-                    />
-                  </Stack>
+                <Box
+                  id="team-invite-form-desktop"
+                  component="form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmitInvite();
+                  }}
+                >
+                  <Stack gap={1}>
+                    <Stack>
+                      <Typography variant="subtitle2">이메일</Typography>
+                      <TextField
+                        placeholder="초대할 팀원의 이메일을 입력해주세요."
+                        name="email"
+                        type="email"
+                        required
+                        value={inviteEmail}
+                        onChange={(event) => {
+                          setInviteEmail(event.target.value);
+                          setInviteEmailError('');
+                          setPendingInviteEmailError('');
+                        }}
+                        onInvalid={(event) => {
+                          event.preventDefault();
+                          const input = event.currentTarget as HTMLInputElement;
+                          const message = input.validity.valueMissing
+                            ? '이메일을 입력해 주세요.'
+                            : '올바른 이메일 형식으로 입력해 주세요.';
+                          setPendingInviteEmailError(message);
+                          setInviteErrorMessage(message);
+                        }}
+                        error={Boolean(inviteEmailError)}
+                        helperText={inviteEmailError}
+                        fullWidth
+                        size="small"
+                      />
+                    </Stack>
 
-                  <Stack>
-                    <Typography variant="subtitle2">역할</Typography>
-                    <TextField
-                      select
-                      value={inviteRole}
-                      onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
-                      fullWidth
-                      size="small"
-                      InputProps={{ startAdornment: <SelectCheckAdornment /> }}
-                    >
-                      <MenuItem value="manager">매니저</MenuItem>
-                      <MenuItem value="member">멤버</MenuItem>
-                    </TextField>
+                    <Stack>
+                      <Typography variant="subtitle2">역할</Typography>
+                      <TextField
+                        select
+                        value={inviteRole}
+                        onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
+                        fullWidth
+                        size="small"
+                        InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                      >
+                        <MenuItem value="manager">매니저</MenuItem>
+                        <MenuItem value="member">멤버</MenuItem>
+                      </TextField>
+                    </Stack>
                   </Stack>
-                </Stack>
+                </Box>
               </DialogContent>
               <DialogActions>
                 <button
@@ -1284,7 +1438,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 >
                   취소
                 </button>
-                <button type="button" onClick={handleSubmitInvite} disabled={isInviteSubmitting}>
+                <button type="submit" form="team-invite-form-desktop" disabled={isInviteSubmitting}>
                   초대하기
                 </button>
               </DialogActions>

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { createInviteEmailProof } from '@/lib/invites/emailProof';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { normalizeText } from '@/lib/utils';
 
@@ -43,12 +44,15 @@ async function sendInviteEmail(params: {
   siteName: string;
   siteLabel: string | null;
   token: string;
+  emailProof: string | null;
   appUrl: string;
 }) {
   const resend = getResendClient();
   const from = getInviteMailFrom();
   const appUrl = params.appUrl;
-  const inviteUrl = `${appUrl}/${params.siteName}/invite-community/${params.token}`;
+  const inviteUrl = params.emailProof
+    ? `${appUrl}/auth/sign-up?inviteToken=${encodeURIComponent(params.token)}&siteName=${encodeURIComponent(params.siteName)}&inviteType=community&inviteProof=${encodeURIComponent(params.emailProof)}`
+    : `${appUrl}/${params.siteName}/invite-community/${params.token}`;
   const siteLabel = params.siteLabel?.trim() || params.siteName;
 
   await resend.emails.send({
@@ -211,10 +215,7 @@ export async function GET(request: Request) {
       invites: invite.data ?? [],
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대 목록을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
+    console.error('커뮤니티 초대 목록 조회 실패:', unknownError);
     return Response.json({ error: '초대 목록을 불러오지 못했습니다.' }, { status: 500 });
   }
 }
@@ -250,6 +251,8 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '회원 정보 확인에 실패했습니다.' }, { status: 500 });
     }
 
+    let invitedStigmaId: string | null = null;
+
     if (particleResult.data) {
       const stigmaResult = await access.supabaseAdmin
         .from('stigmas')
@@ -262,6 +265,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (stigmaResult.data) {
+        invitedStigmaId = stigmaResult.data.id;
         const membershipResult = await access.supabaseAdmin
           .from('rhizome_stigmas')
           .select('id')
@@ -301,6 +305,7 @@ export async function POST(request: NextRequest) {
 
     const token = randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const emailProof = invitedStigmaId ? null : createInviteEmailProof();
 
     const invite = await access.supabaseAdmin
       .from('invite')
@@ -314,6 +319,9 @@ export async function POST(request: NextRequest) {
         accepted_user_id: null,
         joined_at: null,
         cancelled_at: null,
+        email_verification_token_hash: emailProof?.proofHash ?? null,
+        email_verification_expires_at: emailProof ? expiresAt : null,
+        email_verification_used_at: null,
       })
       .select('id, email, role, status, expires_at, accepted_user_id, joined_at, cancelled_at')
       .maybeSingle();
@@ -330,54 +338,30 @@ export async function POST(request: NextRequest) {
         siteName: access.siteKey,
         siteLabel: access.siteLabel,
         token,
+        emailProof: emailProof?.proof ?? null,
         appUrl,
       });
     } catch (unknownError) {
       await access.supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
 
-      if (unknownError instanceof Error) {
-        return Response.json({ error: unknownError.message || '초대 메일 발송에 실패했습니다.' }, { status: 500 });
-      }
-
+      console.error('커뮤니티 초대 메일 발송 실패:', unknownError);
       return Response.json({ error: '초대 메일 발송에 실패했습니다.' }, { status: 500 });
     }
 
-    const invitedUserResult = await access.supabaseAdmin
-      .from('particles')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
+    if (invitedStigmaId) {
+      const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+        user_id: invitedStigmaId,
+        send_user_id: null,
+        send_site_id: access.siteId,
+        send_board_id: null,
+        send_series_id: null,
+        send_post_id: null,
+        notification_type: NOTIFICATION_TYPE.COMMUNITY_MEMBER_INVITATION_SENT,
+        is_read: false,
+      });
 
-    if (invitedUserResult.error) {
-      console.error(invitedUserResult.error);
-    }
-
-    if (invitedUserResult.data?.id) {
-      const invitedStigmaResult = await access.supabaseAdmin
-        .from('stigmas')
-        .select('id')
-        .eq('user_id', invitedUserResult.data.id)
-        .maybeSingle();
-
-      if (invitedStigmaResult.error) {
-        console.error(invitedStigmaResult.error);
-      }
-
-      if (invitedStigmaResult.data?.id) {
-        const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-          user_id: invitedStigmaResult.data.id,
-          send_user_id: null,
-          send_site_id: access.siteId,
-          send_board_id: null,
-          send_series_id: null,
-          send_post_id: null,
-          notification_type: NOTIFICATION_TYPE.COMMUNITY_MEMBER_INVITATION_SENT,
-          is_read: false,
-        });
-
-        if (notificationResult.error) {
-          console.error(notificationResult.error);
-        }
+      if (notificationResult.error) {
+        console.error(notificationResult.error);
       }
     }
 
@@ -386,10 +370,7 @@ export async function POST(request: NextRequest) {
       invite: invite.data,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대를 실패했습니다.' }, { status: 500 });
-    }
-
+    console.error('커뮤니티 멤버 초대 생성 실패:', unknownError);
     return Response.json({ error: '초대를 실패했습니다.' }, { status: 500 });
   }
 }
@@ -454,10 +435,7 @@ export async function PATCH(request: Request) {
       invite: cancelInvite.data,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대 취소에 실패했습니다.' }, { status: 500 });
-    }
-
+    console.error('커뮤니티 초대 취소 실패:', unknownError);
     return Response.json({ error: '초대 취소에 실패했습니다.' }, { status: 500 });
   }
 }

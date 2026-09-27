@@ -92,7 +92,7 @@ export default function Opt({
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/manage/design/blog/team/invite/${token}?siteName=${siteName}`, {
+      const response = await fetch(`/api/manage/team/members/invite/${token}?siteName=${siteName}`, {
         method: 'POST',
         credentials: 'include',
       });
