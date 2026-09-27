@@ -4,13 +4,14 @@ import { type JSX, type ReactNode, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Stack, useMediaQuery, useTheme } from '@mui/material';
+import { FormControl, MenuItem, Select, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FabNew from '@/components/service/common/FabNew';
@@ -27,6 +28,8 @@ type Props = {
   isCommunity: boolean;
   initialData: BoardListResponse | null;
   initialError: string;
+  pageSizeOptions: number[];
+  defaultPageSize: number;
 };
 
 type PostItem = {
@@ -119,7 +122,7 @@ function getPageNumbers(currentPage: number, totalPage: number) {
   return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
 }
 
-export default function Opt({ isCommunity, initialData, initialError }: Props) {
+export default function Opt({ isCommunity, initialData, initialError, pageSizeOptions, defaultPageSize }: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -134,6 +137,9 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const [currentPage] = useState(initialData?.page ?? initialPage);
   const [totalCount] = useState(initialData?.totalCount ?? 0);
   const [totalPage] = useState(initialData?.totalPage ?? 1);
+  const pageSize = pageSizeOptions.includes(initialData?.size ?? Number.NaN)
+    ? (initialData?.size ?? defaultPageSize)
+    : defaultPageSize;
   const [errorMessage] = useState(initialError);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -141,8 +147,10 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
 
-  function updateRoute(nextPage: number, nextKeyword: string) {
+  function updateRoute(nextPage: number, nextKeyword: string, nextPageSize = pageSize) {
     const queryParams = new URLSearchParams();
+
+    queryParams.set('size', String(nextPageSize));
 
     if (nextPage > 1) {
       queryParams.set('page', String(nextPage));
@@ -171,6 +179,16 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
     }
 
     updateRoute(nextPage, searchKeyword);
+  }
+
+  function handlePageSizeChange(event: SelectChangeEvent) {
+    const nextPageSize = Number(event.target.value);
+
+    if (!pageSizeOptions.includes(nextPageSize) || nextPageSize === pageSize) {
+      return;
+    }
+
+    updateRoute(1, searchKeyword, nextPageSize);
   }
 
   const isSearchMode = Boolean(searchKeyword);
@@ -242,6 +260,20 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
         )}
 
         <div className={styles['board-search-container']}>
+          <FormControl size="small" className={styles['page-size-select']}>
+            <Select value={String(pageSize)} onChange={handlePageSizeChange} aria-label="페이지당 게시글 수">
+              {pageSizeOptions.map((sizeOption) => (
+                <MenuItem key={sizeOption} value={String(sizeOption)}>
+                  {pageSize === sizeOption ? (
+                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                  ) : (
+                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                  )}
+                  {sizeOption}개씩
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <form onSubmit={handleSearchSubmit} className="form">
             <fieldset>
               <legend>게시글 검색</legend>

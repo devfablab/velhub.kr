@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { DEFAULT_LIST_BOARD_PAGE_SIZE, LIST_BOARD_PAGE_SIZES, normalizePageSize } from '@/lib/board/pageSize';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -48,10 +49,11 @@ export default async function Page(context: SearchContext) {
   }
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
+  const pageSize = normalizePageSize(searchParams.size, LIST_BOARD_PAGE_SIZES, DEFAULT_LIST_BOARD_PAGE_SIZE);
   const queryParams = new URLSearchParams({
     siteName: normalizedSiteName,
     page: typeof searchParams.page === 'string' ? searchParams.page : '1',
-    size: '20',
+    size: String(pageSize),
   });
   if (typeof searchParams.keyword === 'string' && searchParams.keyword)
     queryParams.set('keyword', searchParams.keyword);
@@ -66,6 +68,8 @@ export default async function Page(context: SearchContext) {
         isCommunity={isCommunity}
         initialData={initial.data}
         initialError={initial.error}
+        pageSizeOptions={[...LIST_BOARD_PAGE_SIZES]}
+        defaultPageSize={DEFAULT_LIST_BOARD_PAGE_SIZE}
       />
     </Container>
   );

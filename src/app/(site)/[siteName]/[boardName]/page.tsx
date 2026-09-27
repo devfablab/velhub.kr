@@ -1,4 +1,12 @@
 import { notFound } from 'next/navigation';
+import {
+  DEFAULT_LIST_BOARD_PAGE_SIZE,
+  DEFAULT_MEDIA_BOARD_PAGE_SIZE,
+  isMediaBoardPageSize,
+  LIST_BOARD_PAGE_SIZES,
+  MEDIA_BOARD_PAGE_SIZES,
+  normalizePageSize,
+} from '@/lib/board/pageSize';
 import { getBoardPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -42,7 +50,7 @@ export default async function Page(context: SearchContext) {
 
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
-    .select('site_type')
+    .select('id, site_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -51,22 +59,38 @@ export default async function Page(context: SearchContext) {
   }
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
+  const normalizedBoardName = boardName.toLowerCase();
+  const boardResult = await supabaseAdmin
+    .from('boards')
+    .select('board_type')
+    .eq('site_id', rhizomeResult.data.id)
+    .eq('board_key', normalizedBoardName)
+    .maybeSingle();
+
+  if (boardResult.error || !boardResult.data) {
+    notFound();
+  }
+
+  const usesMediaPageSizes = isMediaBoardPageSize(rhizomeResult.data.site_type, boardResult.data.board_type);
+  const pageSizeOptions = usesMediaPageSizes ? MEDIA_BOARD_PAGE_SIZES : LIST_BOARD_PAGE_SIZES;
+  const defaultPageSize = usesMediaPageSizes ? DEFAULT_MEDIA_BOARD_PAGE_SIZE : DEFAULT_LIST_BOARD_PAGE_SIZE;
+  const pageSize = normalizePageSize(searchParams.size, pageSizeOptions, defaultPageSize);
 
   const queryParams = new URLSearchParams({
     siteName: normalizedSiteName,
     page: typeof searchParams.page === 'string' ? searchParams.page : '1',
-    size: boardName.toLowerCase() === 'b' ? '9' : '20',
+    size: String(pageSize),
   });
   if (typeof searchParams.keyword === 'string' && searchParams.keyword)
     queryParams.set('keyword', searchParams.keyword);
   if (typeof searchParams.seriesName === 'string' && searchParams.seriesName)
     queryParams.set('seriesName', searchParams.seriesName);
   const initial = await getSiteApiData<BoardListResponse>(
-    `/api/boards/${boardName.toLowerCase()}?${queryParams.toString()}`,
+    `/api/boards/${normalizedBoardName}?${queryParams.toString()}`,
     '전체 게시글을 불러오지 못했습니다.',
   );
   const initialPopularPosts = await getSiteApiData<BoardPostCountResponse>(
-    `/api/boards/${boardName.toLowerCase()}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
+    `/api/boards/${normalizedBoardName}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
     '인기글을 불러오지 못했습니다.',
   );
   const selectedSeries = initial.data?.selectedSeries;
@@ -74,7 +98,7 @@ export default async function Page(context: SearchContext) {
     ? await getSiteApiData<SubscriptionStatusResponse>(
         `/api/payments/portone/subscriptions/status?${new URLSearchParams({
           siteName: normalizedSiteName,
-          boardName: boardName.toLowerCase(),
+          boardName: normalizedBoardName,
           targetType: 'series',
           seriesName: selectedSeries.series_key,
         }).toString()}`,
@@ -85,7 +109,7 @@ export default async function Page(context: SearchContext) {
     ? await getSiteApiData<DonationStatusResponse>(
         `/api/payments/portone/donation/status?${new URLSearchParams({
           siteName: normalizedSiteName,
-          boardName: boardName.toLowerCase(),
+          boardName: normalizedBoardName,
           targetType: 'series',
           seriesName: selectedSeries.series_key,
         }).toString()}`,
@@ -102,6 +126,8 @@ export default async function Page(context: SearchContext) {
       initialPopularPosts={initialPopularPosts.data}
       initialSubscriptionStatus={initialSubscriptionStatus.data}
       initialDonationStatus={initialDonationStatus.data}
+      pageSizeOptions={[...pageSizeOptions]}
+      defaultPageSize={defaultPageSize}
     />
   );
 }

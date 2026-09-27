@@ -88,7 +88,12 @@
 
   .board-search-container
     display: flex
+    flex-wrap: wrap
     justify-content: flex-end
+    gap: ds.rem(7)
+
+    .page-size-select
+      min-width: ds.rem(120)
 
     form
       .form-group

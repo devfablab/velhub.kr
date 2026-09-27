@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
@@ -17,7 +18,7 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Stack, useMediaQuery, useTheme } from '@mui/material';
+import { FormControl, MenuItem, Select, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
@@ -45,6 +46,8 @@ type Props = {
   initialPopularPosts: BoardPostCountResponse | null;
   initialSubscriptionStatus: SubscriptionStatusResponse | null;
   initialDonationStatus: DonationStatusResponse | null;
+  pageSizeOptions: number[];
+  defaultPageSize: number;
 };
 
 type BoardItem = {
@@ -275,6 +278,8 @@ export default function Opt({
   initialPopularPosts,
   initialSubscriptionStatus,
   initialDonationStatus,
+  pageSizeOptions,
+  defaultPageSize,
 }: Props) {
   const router = useRouter();
   const params = useParams();
@@ -293,6 +298,9 @@ export default function Opt({
   const [currentPage] = useState(initialData?.page ?? initialPage);
   const [totalCount] = useState(initialData?.totalCount ?? 0);
   const [totalPage] = useState(initialData?.totalPage ?? 1);
+  const pageSize = pageSizeOptions.includes(initialData?.size ?? Number.NaN)
+    ? (initialData?.size ?? defaultPageSize)
+    : defaultPageSize;
   const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
   const [canWritePost] = useState(Boolean(initialData?.actions?.canWritePost));
   const [blogType] = useState<string | null>(initialData?.blogType ?? null);
@@ -303,8 +311,10 @@ export default function Opt({
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
 
-  function updateRoute(nextPage: number, nextKeyword: string, nextSeriesName = '') {
+  function updateRoute(nextPage: number, nextKeyword: string, nextSeriesName = '', nextPageSize = pageSize) {
     const queryParams = new URLSearchParams();
+
+    queryParams.set('size', String(nextPageSize));
 
     if (nextPage > 1) {
       queryParams.set('page', String(nextPage));
@@ -340,6 +350,18 @@ export default function Opt({
     const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
     updateRoute(nextPage, searchKeyword, nextSeriesName);
+  }
+
+  function handlePageSizeChange(event: SelectChangeEvent) {
+    const nextPageSize = Number(event.target.value);
+
+    if (!pageSizeOptions.includes(nextPageSize) || nextPageSize === pageSize) {
+      return;
+    }
+
+    const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
+
+    updateRoute(1, searchKeyword, nextSeriesName, nextPageSize);
   }
 
   function handleSeriesClick(seriesKey: string | null) {
@@ -469,6 +491,20 @@ export default function Opt({
           )}
 
           <div className={styles['board-search-container']}>
+            <FormControl size="small" className={styles['page-size-select']}>
+              <Select value={String(pageSize)} onChange={handlePageSizeChange} aria-label="페이지당 게시글 수">
+                {pageSizeOptions.map((sizeOption) => (
+                  <MenuItem key={sizeOption} value={String(sizeOption)}>
+                    {pageSize === sizeOption ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    {sizeOption}개씩
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <form onSubmit={handleSearchSubmit} className="form">
               <fieldset>
                 <legend>게시글 검색</legend>
