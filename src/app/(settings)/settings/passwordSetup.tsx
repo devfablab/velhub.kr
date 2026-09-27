@@ -13,9 +13,11 @@ import styles from '@/app/settings.module.sass';
 
 export default function PasswordSetup({
   initialHasPassword,
+  initialCanSetPassword,
   initialError,
 }: {
   initialHasPassword: boolean;
+  initialCanSetPassword: boolean;
   initialError: string;
 }) {
   const supabase = getSupabaseBrowser();
@@ -92,7 +94,7 @@ export default function PasswordSetup({
     );
   }
 
-  if (hasPassword) {
+  if (hasPassword || !initialCanSetPassword) {
     return null;
   }
 

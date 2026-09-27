@@ -5,7 +5,10 @@ export async function GET() {
 
   return Response.json({
     needsTotp: Boolean(
-      sessionClaims?.userId && sessionClaims.authenticationLevel === 'aal1' && sessionClaims.hasTotp === true,
+      sessionClaims?.userId &&
+      sessionClaims.authenticationLevel === 'aal1' &&
+      sessionClaims.hasTotp === true &&
+      sessionClaims.hasTotpRecoveryAccess === false,
     ),
   });
 }

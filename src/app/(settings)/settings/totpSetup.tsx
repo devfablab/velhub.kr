@@ -30,8 +30,6 @@ type TotpFactor = {
   friendly_name?: string | null;
 };
 
-type AssuranceLevel = 'aal1' | 'aal2' | null;
-
 type PendingSetup = {
   factorId: string;
   secret: string;
@@ -39,11 +37,9 @@ type PendingSetup = {
 };
 
 export default function TotpSetup({
-  initialCurrentLevel,
   initialFactors,
   initialError,
 }: {
-  initialCurrentLevel: AssuranceLevel;
   initialFactors: TotpFactor[];
   initialError: string;
 }) {
@@ -54,11 +50,12 @@ export default function TotpSetup({
   const [isSetting, setIsSetting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const [currentLevel, setCurrentLevel] = useState<AssuranceLevel>(initialCurrentLevel);
   const [totpFactors, setTotpFactors] = useState<TotpFactor[]>(initialFactors);
   const [pendingSetup, setPendingSetup] = useState<PendingSetup | null>(null);
 
   const [verifyCode, setVerifyCode] = useState('');
+  const [resetVerifyCode, setResetVerifyCode] = useState('');
+  const [isResetVerificationOpen, setIsResetVerificationOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -93,8 +90,6 @@ export default function TotpSetup({
         throw new Error(assuranceLevelResult.error.message);
       }
 
-      setCurrentLevel((assuranceLevelResult.data.currentLevel as AssuranceLevel) ?? null);
-
       const freshTotpFactors = await getFreshTotpFactors();
       setTotpFactors(freshTotpFactors);
     } catch (unknownError) {
@@ -113,7 +108,7 @@ export default function TotpSetup({
   }
 
   function handleVerifyCodeChange(event: InputChangeEvent) {
-    setVerifyCode(event.currentTarget.value.trim());
+    setVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6));
   }
 
   async function removeFactor(targetFactorId: string) {
@@ -145,7 +140,7 @@ export default function TotpSetup({
     setVerifyCode('');
   }
 
-  async function handleSetOrReset() {
+  async function handleSetOrReset(isResetVerified = false) {
     if (isSetting) {
       return;
     }
@@ -162,15 +157,9 @@ export default function TotpSetup({
       setTotpFactors(freshTotpFactors);
 
       if (freshVerifiedFactor) {
-        const isConfirmed = window.confirm('진짜로 재설정하시겠어요?');
-
-        if (!isConfirmed) {
-          setIsSetting(false);
+        if (!isResetVerified) {
+          setIsResetVerificationOpen(true);
           return;
-        }
-
-        if (currentLevel !== 'aal2') {
-          throw new Error('재설정은 2단계 인증까지 완료된 로그인 상태에서만 가능합니다.');
         }
 
         await removeFactor(freshVerifiedFactor.id);
@@ -198,6 +187,41 @@ export default function TotpSetup({
     }
   }
 
+  async function handleResetVerification(event: FormSubmitEvent) {
+    event.preventDefault();
+    if (isSetting || isVerifying || !verifiedFactor) return;
+
+    if (!/^\d{6}$/.test(resetVerifyCode)) {
+      setErrorMessage('인증 코드는 숫자 6자리로 입력해 주세요.');
+      return;
+    }
+
+    setIsVerifying(true);
+    setErrorMessage('');
+
+    try {
+      const challengeResult = await supabase.auth.mfa.challenge({ factorId: verifiedFactor.id });
+      if (challengeResult.error) throw challengeResult.error;
+
+      const verifyResult = await supabase.auth.mfa.verify({
+        factorId: verifiedFactor.id,
+        challengeId: challengeResult.data.id,
+        code: resetVerifyCode,
+      });
+      if (verifyResult.error) throw new Error('인증 코드가 올바르지 않습니다.');
+
+      setResetVerifyCode('');
+      setIsResetVerificationOpen(false);
+      await handleSetOrReset(true);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message || '인증 코드 확인에 실패했습니다.' : '인증 코드 확인에 실패했습니다.',
+      );
+    } finally {
+      setIsVerifying(false);
+    }
+  }
+
   async function handleVerify(event: FormSubmitEvent) {
     event.preventDefault();
 
@@ -211,8 +235,8 @@ export default function TotpSetup({
       return;
     }
 
-    if (!verifyCode) {
-      setErrorMessage('인증 코드를 입력해주세요.');
+    if (!/^\d{6}$/.test(verifyCode)) {
+      setErrorMessage('인증 코드는 숫자 6자리로 입력해 주세요.');
       setSuccessMessage('');
       return;
     }
@@ -240,9 +264,23 @@ export default function TotpSetup({
         throw new Error(verifyResult.error.message);
       }
 
+      const recoveryCodeResponse = await fetch('/api/auth/mfa/recovery-code', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const recoveryCodeResult = (await recoveryCodeResponse.json().catch(() => null)) as {
+        errors?: string[];
+      } | null;
+
+      if (!recoveryCodeResponse.ok) {
+        throw new Error(recoveryCodeResult?.errors?.[0] ?? '복구 코드를 발급하지 못했습니다.');
+      }
+
       setPendingSetup(null);
       setVerifyCode('');
-      setSuccessMessage('앱 기반 2단계 인증 설정이 완료되었습니다.');
+      setSuccessMessage(
+        '앱 기반 2단계 인증 설정이 완료되었습니다.\n앞으로 인증 앱의 6자리 코드 또는 이메일로 전송된 복구 코드로 2단계 인증할 수 있습니다.',
+      );
       await loadTotpState();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -303,7 +341,42 @@ export default function TotpSetup({
 
         <AccordionDetails>
           <Stack gap={2.5}>
-            {pendingSetup ? (
+            {isResetVerificationOpen && verifiedFactor ? (
+              <Box component="form" onSubmit={handleResetVerification}>
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">현재 인증 앱 코드 확인</Typography>
+                  <TextField
+                    placeholder="XXXXXX"
+                    type="text"
+                    value={resetVerifyCode}
+                    onChange={(event: InputChangeEvent) =>
+                      setResetVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6))
+                    }
+                    inputProps={{
+                      inputMode: 'numeric',
+                      pattern: '[0-9]{6}',
+                      minLength: 6,
+                      maxLength: 6,
+                      required: true,
+                    }}
+                    fullWidth
+                    size="small"
+                  />
+                  <Stack direction="row" justifyContent="flex-end" gap={1}>
+                    <button
+                      type="button"
+                      className="button medium cancel"
+                      onClick={() => setIsResetVerificationOpen(false)}
+                    >
+                      취소
+                    </button>
+                    <button type="submit" className="button medium warning" disabled={isVerifying}>
+                      인증 후 재설정
+                    </button>
+                  </Stack>
+                </Stack>
+              </Box>
+            ) : pendingSetup ? (
               <Stack gap={2.5}>
                 <p className="alert info">
                   <InfoOutlineRoundedIcon />
@@ -347,12 +420,13 @@ export default function TotpSetup({
                         type="text"
                         value={verifyCode}
                         onChange={handleVerifyCodeChange}
+                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]{6}', minLength: 6, maxLength: 6 }}
                         size="small"
                         fullWidth
                       />
                     </Stack>
 
-                    <button type="button" className="button medium submit" disabled={isVerifying}>
+                    <button type="submit" className="button medium submit" disabled={isVerifying}>
                       인증 코드 확인
                     </button>
                   </Stack>

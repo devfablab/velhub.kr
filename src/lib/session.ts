@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createHash } from 'crypto';
+import { hasTotpRecoveryAccess as getTotpRecoveryAccess } from '@/lib/auth/totpRecovery.server';
 import { redis } from '@/lib/redis';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -16,6 +17,7 @@ type SessionClaims = {
   autoLogin: boolean;
   lastActiveAt: number;
   hasTotp: boolean;
+  hasTotpRecoveryAccess: boolean;
 };
 
 type CookieStore = Awaited<ReturnType<typeof cookies>>;
@@ -159,6 +161,7 @@ async function buildSessionClaimsFromAuthClaims(
   });
 
   const hasTotp = !!factorsResult.data?.factors?.some((factor) => factor.status === 'verified');
+  const hasTotpRecoveryAccess = hasTotp ? await getTotpRecoveryAccess(claims.sub, claims.session_id ?? null) : false;
 
   const sessionClaims: SessionClaims = {
     userId: claims.sub,
@@ -170,6 +173,7 @@ async function buildSessionClaimsFromAuthClaims(
     autoLogin,
     lastActiveAt,
     hasTotp,
+    hasTotpRecoveryAccess,
   };
 
   await setCachedSessionClaims(cookieFingerprint, sessionClaims);
@@ -343,4 +347,10 @@ export async function clearSessionClaimsCache(sessionId: string | null) {
   }
 
   await redis.del(`session:claims:legacy:${normalizedSessionId}`);
+}
+
+export async function clearCurrentSessionClaimsCache() {
+  const cookieStore = await cookies();
+  const cookieFingerprint = getAuthCookieFingerprint(cookieStore.getAll());
+  await clearSessionCacheByFingerprint(cookieFingerprint);
 }

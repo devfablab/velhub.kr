@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -131,15 +130,6 @@ export default function WithdrawalActions() {
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>데브허브 탈퇴</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseConfirm}
-            disabled={isSubmitting}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
           <div className="VhiDrawer-bottom-content">
             <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
           </div>
@@ -161,15 +151,6 @@ export default function WithdrawalActions() {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>데브허브 탈퇴</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseConfirm}
-            disabled={isSubmitting}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
           <DialogContent>
             <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
           </DialogContent>

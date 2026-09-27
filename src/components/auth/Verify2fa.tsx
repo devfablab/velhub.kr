@@ -221,7 +221,7 @@ export default function Verify2fa() {
             setErrorMessages([message]);
           }}
           error={Boolean(fieldError)}
-          helperText={fieldError}
+          helperText={fieldError || '인증 앱의 코드 또는 이메일로 받은 복구 코드를 입력해 주세요.'}
           disabled={isLoading || isSubmitting}
           fullWidth
           autoComplete="one-time-code"

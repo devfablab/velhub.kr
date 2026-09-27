@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Stack, TextField, Typography } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
@@ -21,8 +20,6 @@ export default function PasswordChange({
   initialError: string;
 }) {
   const router = useRouter();
-  const supabase = getSupabaseBrowser();
-
   const [isLoading] = useState(false);
   const [hasPassword] = useState(initialHasPassword);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -92,47 +89,22 @@ export default function PasswordChange({
     setIsSubmitting(true);
 
     try {
-      const sessionResult = await supabase.auth.getSession();
-
-      if (sessionResult.error) {
-        throw new Error(sessionResult.error.message);
-      }
-
-      const authSession = sessionResult.data.session;
-
-      if (!authSession?.user?.email) {
-        throw new Error('로그인 정보를 확인하지 못했습니다.');
-      }
-
-      const signInResult = await supabase.auth.signInWithPassword({
-        email: authSession.user.email,
-        password: currentPassword,
+      const response = await fetch('/api/auth/password/change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, nextPassword, nextPasswordConfirm }),
       });
+      const result = (await response.json().catch(() => null)) as { ok?: boolean; errors?: string[] } | null;
 
-      if (signInResult.error) {
-        throw new Error('현재 비밀번호가 올바르지 않습니다.');
-      }
-
-      const updateUserResult = await supabase.auth.updateUser({
-        password: nextPassword,
-      });
-
-      if (updateUserResult.error) {
-        throw new Error(updateUserResult.error.message);
-      }
-
-      const signOutResult = await supabase.auth.signOut({
-        scope: 'local',
-      });
-
-      if (signOutResult.error) {
-        throw new Error(signOutResult.error.message);
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.errors?.[0] ?? '비밀번호 변경 중 오류가 발생했습니다.');
       }
 
       setCurrentPassword('');
       setNextPassword('');
       setNextPasswordConfirm('');
-      setSuccessMessage('비밀번호가 변경되어 로그아웃되었습니다.');
+      setSuccessMessage('비밀번호가 변경되어 모든 디바이스에서 로그아웃되었습니다.');
 
       router.replace('/');
     } catch (unknownError) {

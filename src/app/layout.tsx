@@ -77,7 +77,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const sessionClaims = await getSessionClaims();
   const channelWorksMember = await getChannelWorksMember();
   const needsTotp = Boolean(
-    sessionClaims?.userId && sessionClaims.authenticationLevel === 'aal1' && sessionClaims.hasTotp === true,
+    sessionClaims?.userId &&
+    sessionClaims.authenticationLevel === 'aal1' &&
+    sessionClaims.hasTotp === true &&
+    sessionClaims.hasTotpRecoveryAccess === false,
   );
   let withdrawalStatus: string | null = null;
   let withdrawalRequestedAt: string | null = null;

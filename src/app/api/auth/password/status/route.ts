@@ -40,6 +40,7 @@ export async function GET() {
     return Response.json({
       isSocialAccount: particlesResult.data.social === true,
       hasPassword: hasEmailIdentity(identities),
+      canSetPassword: !authUserResult.data.user.email?.endsWith('@auth.velhub.local'),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

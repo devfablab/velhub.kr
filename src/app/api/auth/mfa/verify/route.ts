@@ -1,5 +1,15 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import { consumeTotpRecoveryCode } from '@/lib/auth/totpRecovery.server';
+import { redis } from '@/lib/redis';
+import { clearCurrentSessionClaimsCache, getSessionClaims } from '@/lib/session';
+
+const RECOVERY_FAILURE_LIMIT = 5;
+const RECOVERY_FAILURE_WINDOW_SECONDS = 15 * 60;
+
+function getRecoveryFailureKey(userId: string, sessionId: string) {
+  return `totp-recovery:failure:${userId}:${sessionId}`;
+}
 
 function getSupabaseUrl() {
   const value = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -85,6 +95,32 @@ export async function POST(request: Request) {
       }
 
       if (verifyResult.error.status === 400 || verifyResult.error.status === 422) {
+        const sessionClaims = await getSessionClaims();
+        const recovered =
+          sessionClaims?.userId === userResult.data.user.id && sessionClaims.sessionId
+            ? await consumeTotpRecoveryCode(sessionClaims.userId, sessionClaims.sessionId, code)
+            : false;
+
+        if (recovered) {
+          if (sessionClaims?.userId && sessionClaims.sessionId) {
+            await redis.del(getRecoveryFailureKey(sessionClaims.userId, sessionClaims.sessionId));
+          }
+          await clearCurrentSessionClaimsCache();
+          return Response.json({ ok: true, recoveryCodeUsed: true });
+        }
+
+        if (sessionClaims?.userId && sessionClaims.sessionId) {
+          const failureKey = getRecoveryFailureKey(sessionClaims.userId, sessionClaims.sessionId);
+          const failureCount = await redis.incr(failureKey);
+          if (failureCount === 1) await redis.expire(failureKey, RECOVERY_FAILURE_WINDOW_SECONDS);
+          if (failureCount >= RECOVERY_FAILURE_LIMIT) {
+            return Response.json(
+              { title: '2단계 인증 확인', errors: ['인증 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.'] },
+              { status: 429 },
+            );
+          }
+        }
+
         return Response.json(
           {
             title: '2단계 인증 확인',

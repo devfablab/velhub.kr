@@ -28,8 +28,8 @@ export default async function Page() {
   } | null = null;
   let loginMethodError = '';
   let hasPassword = false;
+  let canSetPassword = false;
   let passwordError = '';
-  let totpCurrentLevel: 'aal1' | 'aal2' | null = null;
   let totpFactors: { id: string; status?: string; friendly_name?: string | null }[] = [];
   let totpError = '';
   try {
@@ -56,7 +56,6 @@ export default async function Page() {
     if (!session?.userId) throw new Error('앱 기반 2단계 인증 상태를 불러오지 못했습니다.');
     const factorsResult = await getSupabaseAdmin().auth.admin.mfa.listFactors({ userId: session.userId });
     if (factorsResult.error) throw new Error(factorsResult.error.message);
-    totpCurrentLevel = session.authenticationLevel === 'aal2' ? 'aal2' : 'aal1';
     totpFactors = (factorsResult.data?.factors ?? []).map((factor) => ({
       id: factor.id,
       status: factor.status,
@@ -72,9 +71,10 @@ export default async function Page() {
       `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/auth/password/status`,
       { headers: { cookie: cookieStore.toString() }, cache: 'no-store' },
     );
-    const result = (await response.json()) as { hasPassword?: boolean; error?: string };
+    const result = (await response.json()) as { hasPassword?: boolean; canSetPassword?: boolean; error?: string };
     if (!response.ok) throw new Error(result.error ?? '비밀번호 상태를 확인하지 못했습니다.');
     hasPassword = Boolean(result.hasPassword);
+    canSetPassword = Boolean(result.canSetPassword);
   } catch (error) {
     passwordError = error instanceof Error ? error.message : '비밀번호 상태를 확인하지 못했습니다.';
   }
@@ -104,9 +104,13 @@ export default async function Page() {
           <Grid container gap={2}>
             <UserInfo initialData={userInfo} initialError={userInfoError} />
             <PasswordChange initialHasPassword={hasPassword} initialError={passwordError} />
-            <PasswordSetup initialHasPassword={hasPassword} initialError={passwordError} />
+            <PasswordSetup
+              initialHasPassword={hasPassword}
+              initialCanSetPassword={canSetPassword}
+              initialError={passwordError}
+            />
             <LoginMethod initialData={loginMethod} initialError={loginMethodError} />
-            <TotpSetup initialCurrentLevel={totpCurrentLevel} initialFactors={totpFactors} initialError={totpError} />
+            <TotpSetup initialFactors={totpFactors} initialError={totpError} />
             <LogoutActions />
             <WithdrawalActions />
           </Grid>

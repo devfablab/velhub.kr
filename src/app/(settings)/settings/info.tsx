@@ -16,6 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, isValidActivityName } from '@/lib/auth/emailSignUp';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
@@ -23,7 +24,6 @@ import styles from '@/app/settings.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
-type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -36,6 +36,8 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
+const MAX_AVATAR_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_AVATAR_FILE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 function isExternalAvatarValue(value: string) {
   return value.startsWith('http://') || value.startsWith('https://');
@@ -60,14 +62,10 @@ export default function UserInfo({
   const [bio, setBio] = useState(initialData?.bio ?? '');
 
   const [userNameDraft, setUserNameDraft] = useState(initialData?.userName ?? '');
-  const [bioDraft, setBioDraft] = useState(initialData?.bio ?? '');
-
   const [isEditingUserName, setIsEditingUserName] = useState(false);
-  const [isEditingBio, setIsEditingBio] = useState(false);
 
   const [isSubmittingAvatar, setIsSubmittingAvatar] = useState(false);
   const [isSubmittingUserName, setIsSubmittingUserName] = useState(false);
-  const [isSubmittingBio, setIsSubmittingBio] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
@@ -96,10 +94,6 @@ export default function UserInfo({
     setUserNameDraft(event.currentTarget.value);
   }
 
-  function handleBioChange(event: TextAreaChangeEvent | InputChangeEvent) {
-    setBioDraft(event.currentTarget.value);
-  }
-
   async function saveInfo(nextUserName: string, nextAvatar: string, nextBio: string) {
     const response = await fetch('/api/info/general/user', {
       method: 'POST',
@@ -126,7 +120,6 @@ export default function UserInfo({
     setBio(result.bio ?? '');
 
     setUserNameDraft(result.userName ?? '');
-    setBioDraft(result.bio ?? '');
   }
 
   async function handleSubmitUserName(event: FormSubmitEvent) {
@@ -138,8 +131,8 @@ export default function UserInfo({
 
     const trimmedUserName = userNameDraft.trim();
 
-    if (!trimmedUserName) {
-      setErrorMessage('활동명을 입력해주세요.');
+    if (!isValidActivityName(trimmedUserName)) {
+      setErrorMessage('활동명은 2자 이상 10자 이하로 입력해 주세요.');
       setSuccessMessage('');
       return;
     }
@@ -163,37 +156,23 @@ export default function UserInfo({
     }
   }
 
-  async function handleSubmitBio(event: FormSubmitEvent) {
-    event.preventDefault();
-
-    if (isSubmittingBio) {
-      return;
-    }
-
-    setErrorMessage('');
-    setSuccessMessage('');
-    setIsSubmittingBio(true);
-
-    try {
-      await saveInfo(userName, avatar, bioDraft.trim());
-      setIsEditingBio(false);
-      setSuccessMessage('자기소개가 수정되었습니다.');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '자기소개 수정에 실패했습니다.');
-      } else {
-        setErrorMessage('자기소개 수정에 실패했습니다.');
-      }
-    } finally {
-      setIsSubmittingBio(false);
-    }
-  }
-
   async function handleAvatarFileChange(event: InputChangeEvent) {
     const inputElement = event.currentTarget;
     const selectedFile = inputElement.files?.[0];
 
     if (!selectedFile || isSubmittingAvatar) {
+      inputElement.value = '';
+      return;
+    }
+
+    if (!ALLOWED_AVATAR_FILE_TYPES.has(selectedFile.type)) {
+      setErrorMessage('JPG, PNG, GIF, WEBP 형식의 이미지 파일만 업로드할 수 있습니다.');
+      inputElement.value = '';
+      return;
+    }
+
+    if (selectedFile.size <= 0 || selectedFile.size > MAX_AVATAR_FILE_SIZE) {
+      setErrorMessage('아바타 이미지는 5MB 이하로 업로드해 주세요.');
       inputElement.value = '';
       return;
     }
@@ -204,25 +183,6 @@ export default function UserInfo({
 
     try {
       const currentAvatarValue = avatarUrl || avatar;
-
-      if (currentAvatarValue && !isExternalAvatarValue(currentAvatarValue)) {
-        const deleteResponse = await fetch('/api/attachment/delete/avatar/user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: currentAvatarValue,
-          }),
-        });
-
-        const deleteResult = await deleteResponse.json();
-
-        if (!deleteResponse.ok) {
-          throw new Error(deleteResult.error ?? '기존 아바타 삭제에 실패했습니다.');
-        }
-      }
 
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -246,6 +206,19 @@ export default function UserInfo({
       }
 
       await saveInfo(userName, nextAvatar, bio);
+
+      if (currentAvatarValue && !isExternalAvatarValue(currentAvatarValue)) {
+        const deleteResponse = await fetch('/api/attachment/delete/avatar/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ path: currentAvatarValue }),
+        });
+
+        if (!deleteResponse.ok) {
+          console.error('[settings-avatar] previous avatar delete failed');
+        }
+      }
       setSuccessMessage('아바타가 수정되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -272,11 +245,6 @@ export default function UserInfo({
     setIsEditingUserName(false);
   }
 
-  function handleCancelBio() {
-    setBioDraft(bio);
-    setIsEditingBio(false);
-  }
-
   if (isLoading) {
     return (
       <Grid size={12}>
@@ -287,7 +255,7 @@ export default function UserInfo({
     );
   }
 
-  const hasUnsetField = !userName || !avatar || !bio;
+  const hasUnsetField = !userName || !avatar;
 
   return (
     <Grid size={12} className={styles.grid}>
@@ -327,7 +295,7 @@ export default function UserInfo({
               <VisuallyHiddenInput
                 ref={fileInputReference}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/gif,image/webp"
                 onChange={handleAvatarFileChange}
               />
 
@@ -357,7 +325,13 @@ export default function UserInfo({
               ) : (
                 <Box component="form" onSubmit={handleSubmitUserName}>
                   <Stack gap={1} direction="row">
-                    <TextField size="small" value={userNameDraft} onChange={handleUserNameChange} fullWidth />
+                    <TextField
+                      size="small"
+                      value={userNameDraft}
+                      onChange={handleUserNameChange}
+                      inputProps={{ minLength: ACTIVITY_NAME_MIN_LENGTH, maxLength: ACTIVITY_NAME_MAX_LENGTH }}
+                      fullWidth
+                    />
 
                     <button
                       type="button"
@@ -370,53 +344,6 @@ export default function UserInfo({
                     <button type="submit" className="button medium submit" disabled={isSubmittingUserName}>
                       저장
                     </button>
-                  </Stack>
-                </Box>
-              )}
-            </Stack>
-
-            <Stack gap={1.5}>
-              <Typography variant="subtitle2">자기소개</Typography>
-              {!isEditingBio ? (
-                <Stack gap={1.5}>
-                  {bio ? (
-                    <Typography component="p" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                      {bio}
-                    </Typography>
-                  ) : (
-                    <Typography variant="body1">자기소개 등록이 필요합니다</Typography>
-                  )}
-                  <Stack gap={1.5} alignItems="flex-end">
-                    <button type="button" className="button medium action" onClick={() => setIsEditingBio(true)}>
-                      자기소개 수정
-                    </button>
-                  </Stack>
-                </Stack>
-              ) : (
-                <Box component="form" onSubmit={handleSubmitBio}>
-                  <Stack gap={1.5}>
-                    <TextField
-                      value={bioDraft}
-                      onChange={handleBioChange}
-                      fullWidth
-                      multiline
-                      size="small"
-                      minRows={4}
-                    />
-
-                    <Stack direction="row" gap={1.5} justifyContent="flex-end">
-                      <button
-                        type="button"
-                        className="button medium cancel"
-                        onClick={handleCancelBio}
-                        disabled={isSubmittingBio}
-                      >
-                        취소
-                      </button>
-                      <button type="submit" className="button medium submit" disabled={isSubmittingBio}>
-                        저장
-                      </button>
-                    </Stack>
                   </Stack>
                 </Box>
               )}

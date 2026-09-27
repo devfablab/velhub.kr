@@ -1,3 +1,4 @@
+import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getSessionClaims } from '@/lib/session';
@@ -78,8 +79,8 @@ export async function POST(request: Request) {
     const avatar = requestBody.avatar.trim();
     const bio = requestBody.bio.trim();
 
-    if (!userName) {
-      return Response.json({ error: '활동명을 입력해주세요.' }, { status: 400 });
+    if (!isValidActivityName(userName)) {
+      return Response.json({ error: '활동명은 2자 이상 10자 이하로 입력해 주세요.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
