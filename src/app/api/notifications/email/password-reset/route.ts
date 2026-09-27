@@ -2,26 +2,40 @@ import { getMailFrom, getResendClient } from '@/lib/resend';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type RequestBody = {
-  email: string | null;
+  email?: string | null;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function successResponse() {
+  return Response.json({ ok: true });
+}
 
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
     const email = requestBody.email?.trim().toLowerCase() ?? '';
 
-    if (!email) {
-      throw new Error('이메일을 입력해주세요.');
+    if (!email || !EMAIL_PATTERN.test(email)) {
+      return Response.json(
+        {
+          title: '이메일 확인',
+          errors: [!email ? '이메일을 입력해 주세요.' : '올바른 이메일 형식으로 입력해 주세요.'],
+          fieldErrors: { email: !email ? '이메일을 입력해 주세요.' : '올바른 이메일 형식으로 입력해 주세요.' },
+        },
+        { status: 400 },
+      );
     }
 
     const generateLinkResult = await getSupabaseAdmin().auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: `${new URL(request.url).origin}/reset-password` },
+      options: { redirectTo: `${new URL(request.url).origin}/auth/reset-password` },
     });
 
     if (generateLinkResult.error || !generateLinkResult.data.properties.action_link) {
-      throw new Error(generateLinkResult.error?.message || '비밀번호 재설정 링크를 만들지 못했습니다.');
+      console.info('[password-reset-mail] recovery link was not issued', generateLinkResult.error);
+      return successResponse();
     }
 
     const sendResult = await getResendClient().emails.send({
@@ -38,18 +52,12 @@ export async function POST(request: Request) {
     });
 
     if (sendResult.error) {
-      throw new Error(sendResult.error.message || '비밀번호 재설정 메일을 보내지 못했습니다.');
+      console.error('[password-reset-mail] send error', sendResult.error);
     }
 
-    return Response.json({ ok: true });
+    return successResponse();
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json(
-        { error: unknownError.message || '비밀번호 재설정 메일 처리 중 오류가 발생했습니다.' },
-        { status: 500 },
-      );
-    }
-
-    return Response.json({ error: '비밀번호 재설정 메일 처리 중 오류가 발생했습니다.' }, { status: 500 });
+    console.error('[password-reset-mail] unexpected error', unknownError);
+    return successResponse();
   }
 }
