@@ -80,11 +80,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     sessionClaims?.userId && sessionClaims.authenticationLevel === 'aal1' && sessionClaims.hasTotp === true,
   );
   let withdrawalStatus: string | null = null;
+  let withdrawalRequestedAt: string | null = null;
 
   if (sessionClaims?.userId) {
     const withdrawalResult = await getSupabaseAdmin()
       .from('stigmas')
-      .select('withdrawal_status')
+      .select('withdrawal_requested_at, withdrawal_status')
       .eq('user_id', sessionClaims.userId)
       .maybeSingle();
 
@@ -92,6 +93,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       console.error('[root-layout] withdrawal status select error', withdrawalResult.error);
     } else {
       withdrawalStatus = withdrawalResult.data?.withdrawal_status ?? null;
+      withdrawalRequestedAt = withdrawalResult.data?.withdrawal_requested_at ?? null;
     }
   }
 
@@ -103,7 +105,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <AuthStateProvider>
               <AppRouterCacheProvider>
                 <ThemeProviderClient>
-                  <WithdrawalGuard initialStatus={withdrawalStatus}>
+                  <WithdrawalGuard initialStatus={withdrawalStatus} initialRequestedAt={withdrawalRequestedAt}>
                     <TotpGuard needsTotp={needsTotp}>{children}</TotpGuard>
                   </WithdrawalGuard>
                 </ThemeProviderClient>

@@ -3,7 +3,7 @@ import {
   ACCOUNT_WITHDRAWAL_GRACE_MS,
   ACCOUNT_WITHDRAWAL_STATUS,
   completeAccountWithdrawal,
-} from '@/lib/users/accountWithdrawalServer';
+} from '@/lib/users/accountWithdrawal.server';
 
 type PendingStigmaRow = {
   user_id: string;

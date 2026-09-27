@@ -4,7 +4,7 @@ import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE, ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
+import { ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE, ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {

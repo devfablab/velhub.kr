@@ -2,14 +2,14 @@ import { cancelAccountRecurringPayments } from '@/lib/payments/cancelAccountRecu
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+export { ACCOUNT_WITHDRAWAL_GRACE_MS } from '@/lib/users/accountWithdrawal.shared';
+
 export const ACCOUNT_WITHDRAWAL_STATUS = {
   PENDING: 'pending',
   COMPLETED: 'completed',
 } as const;
 
 export const ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE = '데브허브 탈퇴 신청으로 인한 삭제';
-export const ACCOUNT_WITHDRAWAL_GRACE_MS = 30 * 24 * 60 * 60 * 1000;
-
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
 type StigmaRow = {

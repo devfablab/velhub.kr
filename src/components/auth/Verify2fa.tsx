@@ -3,7 +3,6 @@
 import { type JSX, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
   Dialog,
@@ -40,7 +39,8 @@ export default function Verify2fa() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verifyCode, setVerifyCode] = useState('');
   const [factorId, setFactorId] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [fieldError, setFieldError] = useState('');
 
   useEffect(() => {
     async function initialize() {
@@ -54,9 +54,7 @@ export default function Verify2fa() {
 
         const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
-        if (assuranceLevelResult.error) {
-          throw new Error(assuranceLevelResult.error.message);
-        }
+        if (assuranceLevelResult.error) throw new Error('2단계 인증 정보를 확인하지 못했습니다.');
 
         if (assuranceLevelResult.data.currentLevel === 'aal2') {
           router.refresh();
@@ -65,9 +63,7 @@ export default function Verify2fa() {
 
         const factorsResult = await supabase.auth.mfa.listFactors();
 
-        if (factorsResult.error) {
-          throw new Error(factorsResult.error.message);
-        }
+        if (factorsResult.error) throw new Error('2단계 인증 정보를 확인하지 못했습니다.');
 
         const verifiedTotpFactor = ((factorsResult.data.totp ?? []) as TotpFactor[]).find(
           (factor) => factor.status === 'verified',
@@ -80,9 +76,9 @@ export default function Verify2fa() {
         setFactorId(verifiedTotpFactor.id);
       } catch (error) {
         if (error instanceof Error) {
-          setErrorMessage(error.message);
+          setErrorMessages([error.message]);
         } else {
-          setErrorMessage('2단계 인증 정보를 확인하지 못했습니다.');
+          setErrorMessages(['2단계 인증 정보를 확인하지 못했습니다.']);
         }
       } finally {
         setIsLoading(false);
@@ -118,6 +114,8 @@ export default function Verify2fa() {
     const nextVerifyCode = event.target.value.replace(/\D/g, '').slice(0, 6);
 
     setVerifyCode(nextVerifyCode);
+    setFieldError('');
+    setErrorMessages([]);
 
     if (submitTimeoutRef.current) {
       window.clearTimeout(submitTimeoutRef.current);
@@ -142,44 +140,67 @@ export default function Verify2fa() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || !factorId || !verifyCode) {
-      if (!verifyCode) setErrorMessage('인증 코드를 입력해주세요.');
+    if (isSubmitting) return;
+
+    if (!factorId) {
+      setErrorMessages(['설정된 2단계 인증 정보를 찾지 못했습니다.']);
       return;
     }
 
-    if (verifyCode.length !== 6) {
-      setErrorMessage('인증 코드 6자리를 입력해주세요.');
+    if (!/^\d{6}$/.test(verifyCode)) {
+      const message = '인증 코드는 숫자 6자리로 입력해 주세요.';
+      setFieldError(message);
+      setErrorMessages([message]);
       return;
     }
 
-    setErrorMessage('');
+    setErrorMessages([]);
+    setFieldError('');
     setIsSubmitting(true);
 
     try {
-      const challengeAndVerifyResult = await supabase.auth.mfa.challengeAndVerify({
-        factorId,
-        code: verifyCode,
+      const response = await fetch('/api/auth/mfa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ factorId, code: verifyCode }),
       });
+      const result = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        errors?: string[];
+        fieldError?: string;
+      } | null;
 
-      if (challengeAndVerifyResult.error) {
-        throw new Error('인증 코드가 올바르지 않습니다.');
+      if (!response.ok || !result?.ok) {
+        setErrorMessages(
+          result?.errors?.length ? result.errors : ['2단계 인증 확인에 실패했습니다.\n잠시 후 다시 시도해 주세요.'],
+        );
+        setFieldError(result?.fieldError ?? '');
+        setVerifyCode('');
+        return;
       }
-      window.location.reload();
 
+      const returnPath = sessionStorage.getItem('auth:after-mfa') || sessionStorage.getItem('route:returnPath') || '/';
+      sessionStorage.removeItem('auth:after-mfa');
+      router.replace(returnPath);
       router.refresh();
-    } catch (error) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage('2단계 인증 확인에 실패했습니다.');
-      }
+    } catch {
+      setErrorMessages(['2단계 인증 확인에 실패했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.']);
+      setVerifyCode('');
+    } finally {
       setIsSubmitting(false);
     }
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.refresh();
+    const result = await supabase.auth.signOut();
+
+    if (result.error) {
+      setErrorMessages(['로그아웃하지 못했습니다.\n잠시 후 다시 시도해 주세요.']);
+      return;
+    }
+
+    router.replace('/');
   }
 
   const content = (
@@ -193,6 +214,14 @@ export default function Verify2fa() {
           type="text"
           value={verifyCode}
           onChange={handleVerifyCodeChange}
+          onInvalid={(event) => {
+            event.preventDefault();
+            const message = '인증 코드는 숫자 6자리로 입력해 주세요.';
+            setFieldError(message);
+            setErrorMessages([message]);
+          }}
+          error={Boolean(fieldError)}
+          helperText={fieldError}
           disabled={isLoading || isSubmitting}
           fullWidth
           autoComplete="one-time-code"
@@ -200,17 +229,22 @@ export default function Verify2fa() {
           slotProps={{
             htmlInput: {
               inputMode: 'numeric',
-              pattern: '[0-9]*',
+              pattern: '[0-9]{6}',
+              minLength: 6,
               maxLength: 6,
+              required: true,
             },
           }}
         />
       </Stack>
-      {errorMessage ? (
-        <p className="alert error">
-          <ErrorOutlineRoundedIcon />
-          <span>{errorMessage}</span>
-        </p>
+      {errorMessages.length > 0 ? (
+        <ul>
+          {errorMessages.map((message, index) => (
+            <li key={`${index}-${message}`} style={{ whiteSpace: 'pre-line' }}>
+              {message}
+            </li>
+          ))}
+        </ul>
       ) : null}
     </>
   );

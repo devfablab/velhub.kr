@@ -373,15 +373,13 @@ async function saveNaverSocialUser(params: {
 }
 
 function getRedirectAfterNaverLogin(request: NextRequest, state: NaverState) {
-  if (state.inviteType === 'community' && state.inviteToken && state.siteName) {
-    return new URL(`/${state.siteName}/invite-community/${state.inviteToken}`, request.nextUrl.origin);
-  }
+  const callbackUrl = new URL('/auth/callback', request.nextUrl.origin);
 
-  if (state.siteName) {
-    return new URL(`/${state.siteName}`, request.nextUrl.origin);
-  }
+  if (state.inviteToken) callbackUrl.searchParams.set('inviteToken', state.inviteToken);
+  if (state.siteName) callbackUrl.searchParams.set('siteName', state.siteName);
+  if (state.inviteType) callbackUrl.searchParams.set('inviteType', state.inviteType);
 
-  return new URL('/', request.nextUrl.origin);
+  return callbackUrl;
 }
 
 export async function GET(request: NextRequest) {
@@ -449,10 +447,7 @@ export async function GET(request: NextRequest) {
 
     signInUrl.searchParams.set('error', 'naver_callback_failed');
 
-    if (process.env.NODE_ENV !== 'production') {
-      const errorMessage = unknownError instanceof Error ? unknownError.message : '알 수 없는 오류';
-      signInUrl.searchParams.set('errorDescription', errorMessage);
-    }
+    signInUrl.searchParams.set('errorDescription', '네이버 로그인이 취소되었거나 실패했습니다. 다시 시도해 주세요.');
 
     const response = NextResponse.redirect(signInUrl);
     response.cookies.delete('velhub-naver-state');

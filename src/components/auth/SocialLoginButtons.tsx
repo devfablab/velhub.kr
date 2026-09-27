@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import GoogleIcon from '@mui/icons-material/Google';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import VhiKakao from '../icons/VhiKakao';
 import VhiNaver from '../icons/VhiNaver';
@@ -20,12 +21,15 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const supabase = getSupabaseBrowser();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const siteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
   const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const actionText = pathname === '/auth/sign-up' ? '시작하기' : '계속하기';
@@ -71,12 +75,10 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
       if (error) {
         throw new Error(error.message);
       }
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || 'Google 로그인 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('Google 로그인 중 오류가 발생했습니다.');
-      }
+    } catch {
+      setErrorMessage('Google 로그인을 시작하지 못했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+
+      setIsErrorPopupOpen(true);
 
       setIsSubmitting(false);
     }
@@ -117,12 +119,10 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
       if (error) {
         throw new Error(error.message);
       }
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || 'GitHub 로그인 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('GitHub 로그인 중 오류가 발생했습니다.');
-      }
+    } catch {
+      setErrorMessage('GitHub 로그인을 시작하지 못했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+
+      setIsErrorPopupOpen(true);
 
       setIsSubmitting(false);
     }
@@ -163,12 +163,10 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
       if (error) {
         throw new Error(error.message);
       }
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '카카오 로그인 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('카카오 로그인 중 오류가 발생했습니다.');
-      }
+    } catch {
+      setErrorMessage('카카오 로그인을 시작하지 못했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+
+      setIsErrorPopupOpen(true);
 
       setIsSubmitting(false);
     }
@@ -248,12 +246,52 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
         </button>
       ) : null}
 
-      {errorMessage ? (
-        <p className="alert error">
-          <ErrorOutlineRoundedIcon />
-          <span>{errorMessage}</span>
-        </p>
-      ) : null}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isErrorPopupOpen}
+          onClose={() => setIsErrorPopupOpen(false)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
+          <h2>소셜 로그인 오류</h2>
+          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
+            <ul>
+              <li style={{ whiteSpace: 'pre-line' }}>{errorMessage}</li>
+            </ul>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={() => setIsErrorPopupOpen(false)}>
+              확인
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isErrorPopupOpen}
+          onClose={() => setIsErrorPopupOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
+          <DialogTitle>소셜 로그인 오류</DialogTitle>
+          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <ul>
+              <li style={{ whiteSpace: 'pre-line' }}>{errorMessage}</li>
+            </ul>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" onClick={() => setIsErrorPopupOpen(false)}>
+              확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 }

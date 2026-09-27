@@ -2,7 +2,6 @@ import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type SocialCheckRequestBody = {
-  email: string;
   authUserId: string;
 };
 
@@ -10,7 +9,6 @@ export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as SocialCheckRequestBody;
 
-    const email = requestBody.email.trim().toLowerCase();
     const authUserId = requestBody.authUserId.trim();
     const sessionClaims = await getSessionClaims();
 
@@ -19,6 +17,13 @@ export async function POST(request: Request) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const authUserResult = await supabaseAdmin.auth.admin.getUserById(authUserId);
+
+    if (authUserResult.error || !authUserResult.data.user?.email) {
+      return Response.json({ error: '소셜 로그인 정보를 확인하지 못했습니다.' }, { status: 401 });
+    }
+
+    const email = authUserResult.data.user.email.trim().toLowerCase();
 
     const stigmaResult = await supabaseAdmin
       .from('stigmas')
@@ -53,7 +58,7 @@ export async function POST(request: Request) {
       return Response.json({
         needsSignup: false,
         needsConfirm: true,
-        message: '이미 이메일로 가입한 계정입니다. 그래도 소셜 로그인으로 로그인하시겠습니까?',
+        message: '소셜 로그인 인증이 완료되었습니다. 기존 계정에 이 소셜 로그인을 연결하시겠습니까?',
       });
     }
 

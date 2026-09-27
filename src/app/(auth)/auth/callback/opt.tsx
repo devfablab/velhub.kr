@@ -37,6 +37,39 @@ type PendingSocialSave = {
   tokenExpiresAt: number | null;
 };
 
+type SocialApiResponse = {
+  ok?: boolean;
+  error?: string;
+  errors?: string[];
+  title?: string;
+  needsConfirm?: boolean;
+  needsSignup?: boolean;
+  message?: string;
+};
+
+function getApiErrorMessage(result: SocialApiResponse | null, fallback: string) {
+  if (result?.errors?.length) return result.errors.join('\n');
+  return result?.error || fallback;
+}
+
+function getInviteQuery(inviteToken: string, inviteSiteName: string, inviteType: string) {
+  const params = new URLSearchParams();
+  if (inviteToken) params.set('inviteToken', inviteToken);
+  if (inviteSiteName) params.set('siteName', inviteSiteName);
+  if (inviteType) params.set('inviteType', inviteType);
+  return params.toString();
+}
+
+class SocialFlowError extends Error {
+  title: string;
+
+  constructor(title: string, message: string) {
+    super(message);
+    this.name = 'SocialFlowError';
+    this.title = title;
+  }
+}
+
 function wait(delay: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, delay);
@@ -53,6 +86,8 @@ export default function Opt() {
 
   const [processingState, setProcessingState] = useState<ProcessingState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState('');
+  const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [pendingSocialSave, setPendingSocialSave] = useState<PendingSocialSave | null>(null);
   const [failedProvider, setFailedProvider] = useState<SocialProvider | null>(null);
@@ -79,6 +114,18 @@ export default function Opt() {
       }
 
       setErrorMessage('같은 이메일로 이미 가입된 계정입니다. 기존에 사용하던 소셜 로그인으로 로그인해 주세요.');
+      setErrorTitle('소셜 로그인 확인');
+      setIsErrorPopupOpen(true);
+      setProcessingState('failed');
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    if (authError) {
+      setErrorMessage('소셜 로그인이 취소되었거나 실패했습니다. 다시 시도해 주세요.');
+      setErrorTitle('소셜 로그인 확인');
+      setIsErrorPopupOpen(true);
       setProcessingState('failed');
       return () => {
         isCancelled = true;
@@ -92,7 +139,7 @@ export default function Opt() {
         const sessionResult = await supabase.auth.getSession();
 
         if (sessionResult.error) {
-          throw new Error(sessionResult.error.message);
+          throw new Error('소셜 로그인 정보를 확인하지 못했습니다.\n잠시 후 다시 시도해 주세요.');
         }
 
         if (sessionResult.data.session) {
@@ -127,14 +174,17 @@ export default function Opt() {
         body: JSON.stringify(targetPendingSocialSave),
       });
 
-      const socialSaveResult = await socialSaveResponse.json();
+      const socialSaveResult = (await socialSaveResponse.json().catch(() => null)) as SocialApiResponse | null;
 
       if (!socialSaveResponse.ok) {
         await supabase.auth.signOut({
           scope: 'local',
         });
 
-        throw new Error(socialSaveResult.error ?? '소셜 로그인 저장 처리에 실패했습니다.');
+        throw new SocialFlowError(
+          socialSaveResult?.title ?? '',
+          getApiErrorMessage(socialSaveResult, '소셜 로그인 저장 처리에 실패했습니다.'),
+        );
       }
 
       if (inviteType !== 'community') {
@@ -148,13 +198,20 @@ export default function Opt() {
       const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
       if (assuranceLevelResult.error) {
-        throw new Error(assuranceLevelResult.error.message);
+        throw new Error('2단계 인증 상태를 확인하지 못했습니다.\n잠시 후 다시 시도해 주세요.');
       }
 
       const currentLevel = assuranceLevelResult.data.currentLevel;
       const nextLevel = assuranceLevelResult.data.nextLevel;
 
       if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
+        const afterMfaPath =
+          inviteToken && inviteSiteName
+            ? `/${inviteSiteName}/${inviteType === 'community' ? 'invite-community' : 'invite-blog'}/${inviteToken}`
+            : inviteSiteName
+              ? `/${inviteSiteName}`
+              : sessionStorage.getItem('route:returnPath') || '/';
+        sessionStorage.setItem('auth:after-mfa', afterMfaPath);
         router.replace('/auth/verify-2fa');
         return;
       }
@@ -179,6 +236,7 @@ export default function Opt() {
 
       setProcessingState('processing');
       setErrorMessage('');
+      setErrorTitle('');
       setConfirmMessage('');
 
       try {
@@ -187,6 +245,7 @@ export default function Opt() {
 
         clearChannelWorksCookies();
 
+        const selectedProvider = sessionStorage.getItem('auth:social-provider');
         sessionStorage.removeItem('auth:social-provider');
 
         if (isCancelled) {
@@ -196,7 +255,7 @@ export default function Opt() {
         const userResult = await supabase.auth.getUser();
 
         if (userResult.error) {
-          throw new Error(userResult.error.message);
+          throw new Error('소셜 로그인 정보를 확인하지 못했습니다.\n잠시 후 다시 시도해 주세요.');
         }
 
         const authUser = userResult.data.user;
@@ -207,10 +266,30 @@ export default function Opt() {
 
         const primaryIdentity = authUser.identities?.[0];
 
+        const metadataProvider =
+          typeof authUser.user_metadata?.provider === 'string'
+            ? authUser.user_metadata.provider.trim().toLowerCase()
+            : '';
         const provider =
-          primaryIdentity?.provider ?? authUser.app_metadata?.provider ?? authUser.user_metadata?.provider ?? null;
+          metadataProvider === 'naver'
+            ? 'naver'
+            : selectedProvider === 'kakao' || selectedProvider === 'google' || selectedProvider === 'github'
+              ? selectedProvider
+              : (authUser.identities?.find((identity) => identity.provider !== 'email')?.provider ??
+                  primaryIdentity?.provider ??
+                  authUser.app_metadata?.provider ??
+                  metadataProvider) ||
+                null;
 
-        const providerAccountId = primaryIdentity?.id ?? authUser.user_metadata?.sub ?? null;
+        const providerAccountId =
+          provider === 'naver'
+            ? typeof authUser.user_metadata?.naver_id === 'string'
+              ? authUser.user_metadata.naver_id
+              : null
+            : (authUser.identities?.find((identity) => identity.provider === provider)?.id ??
+              primaryIdentity?.id ??
+              authUser.user_metadata?.sub ??
+              null);
 
         const userName =
           authUser.user_metadata?.name ??
@@ -249,25 +328,29 @@ export default function Opt() {
           }),
         });
 
-        const socialCheckResult = await socialCheckResponse.json();
+        const socialCheckResult = (await socialCheckResponse.json().catch(() => null)) as SocialApiResponse | null;
 
         if (!socialCheckResponse.ok) {
           await supabase.auth.signOut({
             scope: 'local',
           });
 
-          throw new Error(socialCheckResult.error ?? '계정 정보를 확인하지 못했습니다.');
+          throw new SocialFlowError(
+            socialCheckResult?.title ?? '로그인 정보 확인',
+            getApiErrorMessage(socialCheckResult, '계정 정보를 확인하지 못했습니다.'),
+          );
         }
 
-        if (socialCheckResult.needsConfirm) {
+        if (socialCheckResult?.needsConfirm) {
           setPendingSocialSave(nextPendingSocialSave);
-          setConfirmMessage(socialCheckResult.message);
+          setConfirmMessage(socialCheckResult.message ?? '이 소셜 로그인을 기존 계정에 연결하시겠습니까?');
           setProcessingState('confirm');
           return;
         }
 
-        if (socialCheckResult.needsSignup) {
-          router.replace('/auth/social-sign-up');
+        if (socialCheckResult?.needsSignup) {
+          const inviteQuery = getInviteQuery(inviteToken, inviteSiteName, inviteType);
+          router.replace(`/auth/social-sign-up${inviteQuery ? `?${inviteQuery}` : ''}`);
           return;
         }
 
@@ -277,11 +360,13 @@ export default function Opt() {
           return;
         }
 
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '소셜 로그인 처리 중 오류가 발생했습니다.');
-        } else {
-          setErrorMessage('소셜 로그인 처리 중 오류가 발생했습니다.');
-        }
+        setErrorMessage(
+          unknownError instanceof Error && unknownError.message
+            ? unknownError.message
+            : '소셜 로그인 처리 중 오류가 발생했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.',
+        );
+        setErrorTitle(unknownError instanceof SocialFlowError ? unknownError.title : '');
+        setIsErrorPopupOpen(true);
 
         setProcessingState('failed');
       }
@@ -304,6 +389,7 @@ export default function Opt() {
     }
 
     setErrorMessage('');
+    setErrorTitle('');
     setProcessingState('processing');
 
     try {
@@ -318,14 +404,17 @@ export default function Opt() {
         body: JSON.stringify(pendingSocialSave),
       });
 
-      const socialSaveResult = await socialSaveResponse.json();
+      const socialSaveResult = (await socialSaveResponse.json().catch(() => null)) as SocialApiResponse | null;
 
       if (!socialSaveResponse.ok) {
         await supabase.auth.signOut({
           scope: 'local',
         });
 
-        throw new Error(socialSaveResult.error ?? '소셜 로그인 저장 처리에 실패했습니다.');
+        throw new SocialFlowError(
+          socialSaveResult?.title ?? '',
+          getApiErrorMessage(socialSaveResult, '소셜 로그인 저장 처리에 실패했습니다.'),
+        );
       }
 
       if (inviteToken) {
@@ -337,13 +426,20 @@ export default function Opt() {
       const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
       if (assuranceLevelResult.error) {
-        throw new Error(assuranceLevelResult.error.message);
+        throw new Error('2단계 인증 상태를 확인하지 못했습니다.\n잠시 후 다시 시도해 주세요.');
       }
 
       const currentLevel = assuranceLevelResult.data.currentLevel;
       const nextLevel = assuranceLevelResult.data.nextLevel;
 
       if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
+        const afterMfaPath =
+          inviteToken && inviteSiteName
+            ? `/${inviteSiteName}/${inviteType === 'community' ? 'invite-community' : 'invite-blog'}/${inviteToken}`
+            : inviteSiteName
+              ? `/${inviteSiteName}`
+              : returnPath || '/';
+        sessionStorage.setItem('auth:after-mfa', afterMfaPath);
         router.replace('/auth/verify-2fa');
         return;
       }
@@ -360,11 +456,13 @@ export default function Opt() {
 
       router.replace('/');
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '소셜 로그인 처리 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('소셜 로그인 처리 중 오류가 발생했습니다.');
-      }
+      setErrorMessage(
+        unknownError instanceof Error && unknownError.message
+          ? unknownError.message
+          : '소셜 로그인 처리 중 오류가 발생했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.',
+      );
+      setErrorTitle(unknownError instanceof SocialFlowError ? unknownError.title : '');
+      setIsErrorPopupOpen(true);
 
       setProcessingState('failed');
     }
@@ -439,10 +537,10 @@ export default function Opt() {
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button small action" onClick={handleCancelSocialLogin}>
-              이메일 로그인
+              연결하지 않음
             </button>
             <button type="button" className="button small action" onClick={handleConfirmSocialLogin}>
-              소셜 로그인
+              연결 허용
             </button>
           </div>
         </Drawer>
@@ -463,10 +561,75 @@ export default function Opt() {
           </DialogContent>
           <DialogActions>
             <button type="button" onClick={handleCancelSocialLogin}>
-              이메일 로그인
+              연결하지 않음
             </button>
             <button type="button" onClick={handleConfirmSocialLogin}>
-              소셜 로그인
+              연결 허용
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isErrorPopupOpen}
+          onClose={() => setIsErrorPopupOpen(false)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
+          {errorTitle ? <h2>{errorTitle}</h2> : null}
+          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
+            {errorTitle ? (
+              <ul>
+                {errorMessage.split('\n').map((message, index) => (
+                  <li key={`${index}-${message}`}>{message}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="alert popup-error">
+                <ErrorOutlineRoundedIcon />
+                <span style={{ whiteSpace: 'pre-line' }}>{errorMessage}</span>
+              </p>
+            )}
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={() => setIsErrorPopupOpen(false)}>
+              확인
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isErrorPopupOpen}
+          onClose={() => setIsErrorPopupOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
+          {errorTitle ? <DialogTitle>{errorTitle}</DialogTitle> : null}
+          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            {errorTitle ? (
+              <ul>
+                {errorMessage.split('\n').map((message, index) => (
+                  <li key={`${index}-${message}`}>{message}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="alert popup-error">
+                <ErrorOutlineRoundedIcon />
+                <span style={{ whiteSpace: 'pre-line' }}>{errorMessage}</span>
+              </p>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <button type="button" onClick={() => setIsErrorPopupOpen(false)}>
+              확인
             </button>
           </DialogActions>
         </Dialog>

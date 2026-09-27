@@ -1,206 +1,266 @@
 import crypto from 'crypto';
+import { EMAIL_PATTERN, isValidActivityName } from '@/lib/auth/emailSignUp';
+import { type SocialSignUpFieldErrors, validateSocialSignUpFields } from '@/lib/auth/socialSignUp';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type SocialRequestBody = {
-  authUserId: string | null;
-  email: string | null;
-  provider: string | null;
-  providerAccountId: string | null;
-  userName: string | null;
-  avatar: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  tokenExpiresAt: number | null;
+  authUserId?: string | null;
+  email?: string | null;
+  provider?: string | null;
+  providerAccountId?: string | null;
+  userName?: string | null;
+  avatar?: string | null;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  tokenExpiresAt?: number | null;
   isAgreeTerm?: boolean | null;
   isAgreeChild?: boolean | null;
   isAgreePrivacy?: boolean | null;
   paymentEmail?: string | null;
 };
 
-function getSafeUserName(userName: string | null, email: string) {
-  if (userName && userName.trim()) {
-    return userName.trim();
-  }
+const SUPPORTED_PROVIDERS = new Set(['google', 'github', 'kakao', 'naver']);
 
-  const emailLocalPart = email.split('@')[0]?.trim();
-
-  if (emailLocalPart) {
-    return emailLocalPart;
-  }
-
-  return 'social-user';
+function getTokenExpiresAtDateTime(tokenExpiresAt: number | null | undefined) {
+  if (!tokenExpiresAt || !Number.isFinite(tokenExpiresAt)) return null;
+  const value = new Date(tokenExpiresAt * 1000);
+  return Number.isNaN(value.getTime()) ? null : value.toISOString();
 }
 
-function getTokenExpiresAtDateTime(tokenExpiresAt: number | null) {
-  if (!tokenExpiresAt) {
-    return null;
-  }
+function validationError(fieldErrors: SocialSignUpFieldErrors) {
+  return Response.json(
+    {
+      title: '회원가입 정보 확인',
+      errors: Object.values(fieldErrors).filter(Boolean),
+      fieldErrors,
+    },
+    { status: 400 },
+  );
+}
 
-  return new Date(tokenExpiresAt * 1000).toISOString();
+function knownError(title: string, message: string, status: number) {
+  return Response.json({ title, errors: [message] }, { status });
 }
 
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as SocialRequestBody;
+    const sessionClaims = await getSessionClaims();
+    const requestedAuthUserId = requestBody.authUserId?.trim() ?? '';
 
-    const authUserId = requestBody.authUserId?.trim() ?? '';
-    const email = requestBody.email?.trim().toLowerCase() ?? '';
-    const provider = requestBody.provider?.trim().toLowerCase() ?? '';
-    const providerAccountId = requestBody.providerAccountId?.trim() ?? null;
-    const paymentEmail = requestBody.paymentEmail?.trim() ?? null;
-    const avatar = requestBody.avatar?.trim() ?? null;
-    const accessToken = requestBody.accessToken?.trim() ?? null;
-    const refreshToken = requestBody.refreshToken?.trim() ?? null;
-    const tokenExpiresAt = getTokenExpiresAtDateTime(requestBody.tokenExpiresAt);
-    const hasAgreementPayload = [requestBody.isAgreeTerm, requestBody.isAgreeChild, requestBody.isAgreePrivacy].some(
-      (value) => value !== undefined && value !== null,
-    );
-
-    if (!authUserId) {
-      return Response.json({ error: 'authUserId가 유효하지 않습니다.' }, { status: 400 });
+    if (!sessionClaims?.userId || !requestedAuthUserId || sessionClaims.userId !== requestedAuthUserId) {
+      return knownError('로그인 정보 확인', '소셜 로그인 정보가 만료되었습니다. 다시 로그인해 주세요.', 401);
     }
-
-    if (!email) {
-      return Response.json({ error: '이메일이 유효하지 않습니다.' }, { status: 400 });
-    }
-
-    if (!provider) {
-      return Response.json({ error: 'provider가 유효하지 않습니다.' }, { status: 400 });
-    }
-
-    if (provider === 'naver' && !paymentEmail) {
-      return Response.json({ error: '이메일을 입력해주세요.' }, { status: 400 });
-    }
-
-    if (
-      hasAgreementPayload &&
-      (requestBody.isAgreeTerm !== true || requestBody.isAgreeChild !== true || requestBody.isAgreePrivacy !== true)
-    ) {
-      return Response.json({ error: '필수 동의 항목에 모두 동의해 주세요.' }, { status: 400 });
-    }
-
-    const safeUserName = getSafeUserName(requestBody.userName ?? null, email);
-
-    const encryptedEmail = encrypt(email);
-    const encryptedUserName = encrypt(safeUserName);
-    const encryptedPaymentEmail = paymentEmail ? encrypt(paymentEmail) : null;
 
     const supabaseAdmin = getSupabaseAdmin();
+    const authUserResult = await supabaseAdmin.auth.admin.getUserById(sessionClaims.userId);
+    const authEmail = authUserResult.data.user?.email;
 
-    const particlesUpsertResult = await supabaseAdmin.from('particles').upsert(
-      {
-        id: authUserId,
-        email,
-        social: true,
-      },
-      {
-        onConflict: 'id',
-      },
-    );
-
-    if (particlesUpsertResult.error) {
-      console.error('particles 저장 실패:', particlesUpsertResult.error);
-      return Response.json({ error: 'particles 저장에 실패했습니다.' }, { status: 500 });
+    if (authUserResult.error || !authEmail) {
+      return knownError('로그인 정보 확인', '소셜 로그인 정보를 확인하지 못했습니다. 다시 로그인해 주세요.', 401);
     }
 
-    const stigmasSelectResult = await supabaseAdmin
+    const authUser = authUserResult.data.user;
+    const metadataProvider =
+      typeof authUser.user_metadata?.provider === 'string' ? authUser.user_metadata.provider.trim().toLowerCase() : '';
+    const requestedProvider = requestBody.provider?.trim().toLowerCase() ?? '';
+    const provider =
+      metadataProvider === 'naver'
+        ? 'naver'
+        : String(
+            SUPPORTED_PROVIDERS.has(requestedProvider) &&
+              authUser.identities?.some((identity) => identity.provider === requestedProvider)
+              ? requestedProvider
+              : (authUser.identities?.find((identity) => SUPPORTED_PROVIDERS.has(identity.provider))?.provider ??
+                  authUser.app_metadata?.provider ??
+                  metadataProvider),
+          )
+            .trim()
+            .toLowerCase();
+    const email = authEmail.trim().toLowerCase();
+
+    if (!SUPPORTED_PROVIDERS.has(provider)) {
+      return knownError('로그인 정보 확인', '지원하지 않는 소셜 로그인입니다.', 400);
+    }
+
+    const stigmaResult = await supabaseAdmin
       .from('stigmas')
-      .select('id')
-      .eq('user_id', authUserId)
+      .select('id, is_agree_term, is_agree_child, is_agree_privacy')
+      .eq('user_id', sessionClaims.userId)
       .maybeSingle();
 
-    if (stigmasSelectResult.error) {
-      console.error('stigmas 조회 실패:', stigmasSelectResult.error);
-      return Response.json({ error: 'stigmas 조회에 실패했습니다.' }, { status: 500 });
+    if (stigmaResult.error) {
+      console.error('[auth-social] profile select error', stigmaResult.error);
+      return Response.json(
+        { errors: ['회원 정보를 확인하지 못했습니다.\n잠시 후 다시 시도해 주세요.'] },
+        { status: 500 },
+      );
     }
 
-    const agreementPayload = hasAgreementPayload
-      ? { is_agree_term: true, is_agree_child: true, is_agree_privacy: true }
-      : {};
+    const hasCompletedSignUp = Boolean(
+      stigmaResult.data?.is_agree_term === true &&
+      stigmaResult.data?.is_agree_child === true &&
+      stigmaResult.data?.is_agree_privacy === true,
+    );
+    const isSignUpRequest = !hasCompletedSignUp;
+    let userName = requestBody.userName?.trim() ?? '';
+    let paymentEmail = requestBody.paymentEmail?.trim().toLowerCase() ?? '';
 
-    if (stigmasSelectResult.data) {
-      const stigmasUpdateResult = await supabaseAdmin
-        .from('stigmas')
-        .update({
-          user_name: encryptedUserName,
-          email: encryptedEmail,
-          payment_email: encryptedPaymentEmail,
+    if (isSignUpRequest) {
+      const validation = validateSocialSignUpFields({
+        provider,
+        userName,
+        paymentEmail,
+        isAgreeTerm: requestBody.isAgreeTerm === true,
+        isAgreeChild: requestBody.isAgreeChild === true,
+        isAgreePrivacy: requestBody.isAgreePrivacy === true,
+      });
+
+      if (validation.messages.length > 0) return validationError(validation.fieldErrors);
+      userName = validation.userName;
+      paymentEmail = validation.paymentEmail;
+    } else {
+      if (userName && !isValidActivityName(userName)) userName = '';
+      if (paymentEmail && !EMAIL_PATTERN.test(paymentEmail)) paymentEmail = '';
+    }
+
+    const providerAccountId =
+      provider === 'naver'
+        ? typeof authUser.user_metadata?.naver_id === 'string'
+          ? authUser.user_metadata.naver_id.trim()
+          : requestBody.providerAccountId?.trim() || null
+        : (authUser.identities?.find((identity) => identity.provider === provider)?.id ??
+          requestBody.providerAccountId?.trim() ??
+          null);
+    const avatar = requestBody.avatar?.trim() || null;
+    const accessToken = requestBody.accessToken?.trim() || null;
+    const refreshToken = requestBody.refreshToken?.trim() || null;
+    const tokenExpiresAt = getTokenExpiresAtDateTime(requestBody.tokenExpiresAt);
+
+    const particlesUpsertResult = await supabaseAdmin
+      .from('particles')
+      .upsert({ id: sessionClaims.userId, email, social: true }, { onConflict: 'id' });
+
+    if (particlesUpsertResult.error) {
+      console.error('[auth-social] account save error', particlesUpsertResult.error);
+      return Response.json(
+        { errors: ['회원가입 처리 중 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.'] },
+        { status: 500 },
+      );
+    }
+
+    const profilePayload = isSignUpRequest
+      ? {
+          user_name: encrypt(userName),
+          email: encrypt(email),
+          payment_email: provider === 'naver' ? encrypt(paymentEmail) : null,
           avatar,
-          ...agreementPayload,
-        })
-        .eq('user_id', authUserId);
+          is_agree_term: true,
+          is_agree_child: true,
+          is_agree_privacy: true,
+        }
+      : {
+          email: encrypt(email),
+          ...(avatar ? { avatar } : {}),
+        };
 
-      if (stigmasUpdateResult.error) {
-        console.error('stigmas 수정 실패:', stigmasUpdateResult.error);
-        return Response.json({ error: 'stigmas 수정에 실패했습니다.' }, { status: 500 });
+    if (stigmaResult.data) {
+      const updateResult = await supabaseAdmin
+        .from('stigmas')
+        .update(profilePayload)
+        .eq('user_id', sessionClaims.userId);
+
+      if (updateResult.error) {
+        console.error('[auth-social] profile update error', updateResult.error);
+        return Response.json(
+          { errors: ['회원 정보를 저장하지 못했습니다.\n잠시 후 다시 시도해 주세요.'] },
+          { status: 500 },
+        );
       }
     } else {
-      const stigmasInsertResult = await supabaseAdmin.from('stigmas').insert({
+      const insertResult = await supabaseAdmin.from('stigmas').insert({
         id: crypto.randomUUID(),
-        user_id: authUserId,
-        user_name: encryptedUserName,
+        user_id: sessionClaims.userId,
+        user_name: encrypt(userName),
         bio: null,
         avatar,
         role: 'user',
-        email: encryptedEmail,
-        payment_email: encryptedPaymentEmail,
-        ...agreementPayload,
+        email: encrypt(email),
+        payment_email: provider === 'naver' && paymentEmail ? encrypt(paymentEmail) : null,
+        is_agree_term: true,
+        is_agree_child: true,
+        is_agree_privacy: true,
       });
 
-      if (stigmasInsertResult.error) {
-        console.error('stigmas 생성 실패:', stigmasInsertResult.error);
-        return Response.json({ error: 'stigmas 생성에 실패했습니다.' }, { status: 500 });
+      if (insertResult.error) {
+        console.error('[auth-social] profile insert error', insertResult.error);
+        return Response.json(
+          { errors: ['회원 정보를 저장하지 못했습니다.\n잠시 후 다시 시도해 주세요.'] },
+          { status: 500 },
+        );
       }
     }
 
-    const electronsSelectResult = await supabaseAdmin
+    const electronResult = await supabaseAdmin
       .from('electrons')
       .select('id')
-      .eq('user_id', authUserId)
+      .eq('user_id', sessionClaims.userId)
       .eq('service', provider)
       .maybeSingle();
 
-    if (electronsSelectResult.error) {
-      console.error('electrons 조회 실패:', electronsSelectResult.error);
-      return Response.json({ error: 'electrons 조회에 실패했습니다.' }, { status: 500 });
+    if (electronResult.error) {
+      console.error('[auth-social] connection select error', electronResult.error);
+      return Response.json(
+        { errors: ['소셜 로그인 연결 정보를 확인하지 못했습니다.\n잠시 후 다시 시도해 주세요.'] },
+        { status: 500 },
+      );
     }
 
-    if (electronsSelectResult.data) {
-      const electronsUpdateResult = await supabaseAdmin
-        .from('electrons')
-        .update({
-          account_id: providerAccountId,
-          refresh_token: refreshToken,
-          access_token: accessToken,
-          token_expires_at: tokenExpiresAt,
-        })
-        .eq('id', electronsSelectResult.data.id);
+    const connectionPayload = {
+      account_id: providerAccountId,
+      ...(accessToken ? { access_token: accessToken } : {}),
+      ...(refreshToken ? { refresh_token: refreshToken } : {}),
+      ...(tokenExpiresAt ? { token_expires_at: tokenExpiresAt } : {}),
+    };
 
-      if (electronsUpdateResult.error) {
-        console.error('electrons 수정 실패:', electronsUpdateResult.error);
-        return Response.json({ error: 'electrons 수정에 실패했습니다.' }, { status: 500 });
+    if (electronResult.data) {
+      const updateResult = await supabaseAdmin
+        .from('electrons')
+        .update(connectionPayload)
+        .eq('id', electronResult.data.id);
+
+      if (updateResult.error) {
+        console.error('[auth-social] connection update error', updateResult.error);
+        return Response.json(
+          { errors: ['소셜 로그인 연결 정보를 저장하지 못했습니다.\n잠시 후 다시 시도해 주세요.'] },
+          { status: 500 },
+        );
       }
     } else {
-      const electronsInsertResult = await supabaseAdmin.from('electrons').insert({
+      const insertResult = await supabaseAdmin.from('electrons').insert({
         id: crypto.randomUUID(),
-        user_id: authUserId,
+        user_id: sessionClaims.userId,
         service: provider,
-        account_id: providerAccountId,
-        refresh_token: refreshToken,
-        access_token: accessToken,
-        token_expires_at: tokenExpiresAt,
+        ...connectionPayload,
       });
 
-      if (electronsInsertResult.error) {
-        console.error('electrons 생성 실패:', electronsInsertResult.error);
-        return Response.json({ error: 'electrons 생성에 실패했습니다.' }, { status: 500 });
+      if (insertResult.error) {
+        console.error('[auth-social] connection insert error', insertResult.error);
+        return Response.json(
+          { errors: ['소셜 로그인 연결 정보를 저장하지 못했습니다.\n잠시 후 다시 시도해 주세요.'] },
+          { status: 500 },
+        );
       }
     }
 
     return Response.json({ ok: true });
   } catch (unknownError) {
-    console.error('소셜 로그인 처리 실패:', unknownError);
-    return Response.json({ error: '소셜 로그인 처리 중 오류가 발생했습니다.' }, { status: 500 });
+    console.error('[auth-social] unexpected error', unknownError);
+    return Response.json(
+      { errors: ['소셜 로그인 처리 중 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.'] },
+      { status: 500 },
+    );
   }
 }

@@ -1,6 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { cancelAccountWithdrawal, requestAccountWithdrawal } from '@/lib/users/accountWithdrawalServer';
+import { cancelAccountWithdrawal, requestAccountWithdrawal } from '@/lib/users/accountWithdrawal.server';
 
 export async function GET() {
   try {

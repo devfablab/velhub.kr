@@ -2,7 +2,7 @@ import { getCommunityManagerAccess } from '@/lib/community/community-manager/uti
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
+import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

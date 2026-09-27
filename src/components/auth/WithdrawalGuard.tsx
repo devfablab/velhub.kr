@@ -2,7 +2,6 @@
 
 import { type ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Dialog,
@@ -15,6 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { ACCOUNT_WITHDRAWAL_GRACE_MS } from '@/lib/users/accountWithdrawal.shared';
 
 type WithdrawalStatusResponse = {
   status?: string | null;
@@ -22,12 +22,27 @@ type WithdrawalStatusResponse = {
   error?: string;
 };
 
+function getWithdrawalCompletionDate(requestedAt: string | null) {
+  if (!requestedAt) return null;
+  const requestedAtTime = new Date(requestedAt).getTime();
+  if (Number.isNaN(requestedAtTime)) return null;
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Asia/Seoul',
+  }).format(new Date(requestedAtTime + ACCOUNT_WITHDRAWAL_GRACE_MS));
+}
+
 export default function WithdrawalGuard({
   children,
   initialStatus,
+  initialRequestedAt,
 }: {
   children: ReactNode;
   initialStatus: string | null;
+  initialRequestedAt: string | null;
 }) {
   const router = useRouter();
   const theme = useTheme();
@@ -89,9 +104,7 @@ export default function WithdrawalGuard({
       const supabase = getSupabaseBrowser();
       const result = await supabase.auth.signOut({ scope: 'local' });
 
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
+      if (result.error) throw new Error('로그아웃에 실패했습니다.\n잠시 후 다시 시도해 주세요.');
 
       router.replace('/');
     } catch (unknownError) {
@@ -105,6 +118,10 @@ export default function WithdrawalGuard({
   }
 
   const isOpen = status === 'pending';
+  const withdrawalCompletionDate = getWithdrawalCompletionDate(initialRequestedAt);
+  const withdrawalMessage = withdrawalCompletionDate
+    ? `${withdrawalCompletionDate}에 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해 주세요.`
+    : '탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해 주세요.';
 
   return (
     <>
@@ -112,13 +129,8 @@ export default function WithdrawalGuard({
       {isMobile ? (
         <Drawer anchor="bottom" open={isOpen} className="VhiDrawer-bottom VhiDrawer-bottom-service">
           <h2>탈퇴 신청한 계정입니다</h2>
-          <button className="close-button" onClick={handleLogout} aria-label="닫기" disabled={isLoggingOut}>
-            <CloseRoundedIcon />
-          </button>
           <div className="VhiDrawer-bottom-content">
-            <Typography variant="body2">
-              탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해주세요.
-            </Typography>
+            <Typography variant="body2">{withdrawalMessage}</Typography>
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
@@ -148,13 +160,8 @@ export default function WithdrawalGuard({
       ) : (
         <Dialog open={isOpen} disableEscapeKeyDown fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
           <DialogTitle>탈퇴 신청한 계정입니다</DialogTitle>
-          <button className="close-button" onClick={handleLogout} aria-label="닫기" disabled={isLoggingOut}>
-            <CloseRoundedIcon />
-          </button>
           <DialogContent>
-            <Typography variant="body2">
-              탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해주세요.
-            </Typography>
+            <Typography variant="body2">{withdrawalMessage}</Typography>
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
