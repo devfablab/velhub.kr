@@ -48,6 +48,23 @@ function getThumbnailImageUrl(content: PostListItem) {
   return content.thumbnail_image_url || '';
 }
 
+function getContentDescription(contentHtml: string | null) {
+  const plainText = (contentHtml ?? '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(?:39|x27);/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return Array.from(plainText).slice(0, 327).join('');
+}
+
 export default function Blog(props: Props) {
   if (
     props.board === null ||
@@ -78,6 +95,7 @@ export default function Blog(props: Props) {
               <ol>
                 {props.blogContents.map((content) => {
                   const thumbnailImageUrl = getThumbnailImageUrl(content);
+                  const description = getContentDescription(content.content_html);
                   return (
                     <li key={content.id}>
                       <Anchor href={`/${props.siteName}/${props.board?.board_key}/${content.slug}`}>
@@ -96,6 +114,7 @@ export default function Blog(props: Props) {
                         <div className={styles.info}>
                           <strong>{content.subject}</strong>
                           {content.summary ? <span>{content.summary}</span> : null}
+                          {description ? <p className={styles.description}>{description}</p> : null}
                           {content.published_at ? (
                             <time dateTime={content.published_at}>{formatTimeAgo(content.published_at)}</time>
                           ) : null}

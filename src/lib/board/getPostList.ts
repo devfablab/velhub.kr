@@ -73,6 +73,7 @@ export type PostListItem = {
   slug: string;
   subject: string;
   summary: string;
+  content_html: string | null;
   content_simple: string | null;
   edited_at: string;
   created_at: string;
@@ -499,6 +500,7 @@ export async function getPostList({
       slug: String(post.slug),
       subject: post.subject,
       summary: post.summary ?? '',
+      content_html: post.content_html,
       content_simple: post.content_simple,
       edited_at: post.edited_at,
       created_at: post.created_at,

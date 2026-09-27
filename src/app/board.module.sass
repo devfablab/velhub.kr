@@ -1175,6 +1175,19 @@
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-light
 
+            .description
+              @include ds.line-abbr(3, 63, 1.5)
+              white-space: pre-wrap
+              overflow-wrap: anywhere
+              font-size: ds.rem(14)
+              color: ds.$hex-secondary
+
+              html[data-site-type='blog'] &
+                font-family: var(--blog-description-font-family)
+
+              html[data-theme="yellow-dark"] &
+                color: ds.$hex-light
+
             time
               font-size: ds.rem(12)
               opacity: .5
