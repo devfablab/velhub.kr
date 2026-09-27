@@ -3,7 +3,6 @@
 import { type JSX, useEffect, useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import PushPinIcon from '@mui/icons-material/PushPin';
@@ -19,7 +18,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  MenuItem,
   Pagination,
   PaginationItem,
   Stack,
@@ -35,6 +33,8 @@ import {
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MenuItem from '@/components/SelectMenuItem';
+import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -115,7 +115,7 @@ function parsePage(value: string | null) {
 function parseSize(value: string | null) {
   const parsedValue = Number(value);
 
-  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+  if (!Number.isFinite(parsedValue) || !SIZE_OPTIONS.includes(parsedValue)) {
     return null;
   }
 
@@ -159,8 +159,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const sizeParam = parseSize(searchParams.get('size'));
   const filterParam = normalizeText(searchParams.get('filter')).toLowerCase();
 
-  const defaultPostPerPage =
-    typeof board?.post_per_page === 'number' && Number.isFinite(board.post_per_page) ? board.post_per_page : 5;
+  const defaultPostPerPage = SIZE_OPTIONS.includes(board?.post_per_page ?? 0) ? (board?.post_per_page ?? 5) : 5;
 
   const currentSize = sizeParam ?? defaultPostPerPage;
   const safeCurrentPage = currentPage > totalPage ? totalPage : currentPage;
@@ -557,14 +556,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
               }}
               size="small"
               sx={{ minWidth: 180 }}
+              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
             >
               {SIZE_OPTIONS.map((sizeOption) => (
                 <MenuItem key={sizeOption} value={sizeOption}>
-                  {currentSize === sizeOption ? (
-                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                  ) : (
-                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                  )}
                   {sizeOption}개씩
                   {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
                 </MenuItem>

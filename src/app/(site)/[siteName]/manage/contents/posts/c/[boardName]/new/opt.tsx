@@ -9,8 +9,6 @@ import {
   FormControl,
   FormControlLabel,
   ListItemText,
-  MenuItem,
-  Select,
   Stack,
   styled,
   TextField,
@@ -27,6 +25,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -738,6 +738,9 @@ export default function Opt({
                         value={selectedSeriesKey}
                         onChange={handleSeriesChange}
                       >
+                        <MenuItem value="">
+                          <ListItemText primary="선택 안함" />
+                        </MenuItem>
                         {seriesList
                           .filter((series) => !series.is_completed)
                           .map((series) => (

@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  MenuItem,
   Stack,
   Table,
   TableBody,
@@ -24,6 +23,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
+import MenuItem from '@/components/SelectMenuItem';
+import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -683,7 +684,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     onChange={(event) => setOwnerTransferTargetId(event.target.value)}
                     size="small"
                     fullWidth
+                    InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                   >
+                    <MenuItem value="" disabled>
+                      새 운영자 선택
+                    </MenuItem>
                     {sortedTeams
                       .filter(
                         (team) => !team.is_self && !team.is_block && team.role !== 'owner' && team.role !== 'observer',
@@ -746,7 +751,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       onChange={(event) => setOwnerTransferTargetId(event.target.value)}
                       size="small"
                       fullWidth
+                      InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                     >
+                      <MenuItem value="" disabled>
+                        새 운영자 선택
+                      </MenuItem>
                       {sortedTeams
                         .filter(
                           (team) =>
@@ -1192,6 +1201,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
                       fullWidth
                       size="small"
+                      InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                     >
                       <MenuItem value="manager">매니저</MenuItem>
                       <MenuItem value="member">멤버</MenuItem>
@@ -1257,6 +1267,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
                       fullWidth
                       size="small"
+                      InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                     >
                       <MenuItem value="manager">매니저</MenuItem>
                       <MenuItem value="member">멤버</MenuItem>

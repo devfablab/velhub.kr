@@ -12,8 +12,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  MenuItem,
-  Select,
   Stack,
   styled,
   TextField,
@@ -23,6 +21,8 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 

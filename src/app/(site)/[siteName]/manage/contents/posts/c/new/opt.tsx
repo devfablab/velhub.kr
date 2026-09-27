@@ -440,7 +440,13 @@ export default function Opt({
 
                   <Stack gap={1}>
                     <Typography variant="subtitle2">게시판 종류 *</Typography>
-                    <TextField select value={boardType} onChange={handleBoardTypeChange} fullWidth size="small">
+                    <TextField
+                      select
+                      value={boardType}
+                      onChange={handleBoardTypeChange}
+                      fullWidth
+                      size="small"
+                    >
                       <MenuItem value="basic">
                         {boardType === 'basic' ? (
                           <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
@@ -548,7 +554,13 @@ export default function Opt({
 
                   <Stack gap={1}>
                     <Typography variant="subtitle2">목록 표시 개수 *</Typography>
-                    <TextField select value={postPerPage} onChange={handlePostPerPageChange} fullWidth size="small">
+                    <TextField
+                      select
+                      value={postPerPage}
+                      onChange={handlePostPerPageChange}
+                      fullWidth
+                      size="small"
+                    >
                       {POST_PER_PAGE_OPTIONS.map((count) => (
                         <MenuItem key={count} value={count}>
                           {postPerPage === count ? (

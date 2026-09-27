@@ -4,12 +4,9 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
-  Checkbox,
   FormControl,
   FormControlLabel,
   ListItemText,
-  MenuItem,
-  Select,
   Stack,
   styled,
   TextField,
@@ -22,6 +19,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -244,8 +243,18 @@ export default function Opt({
   );
   const [hasBoard, setHasBoard] = useState(initialStatus?.hasBoard || false);
   const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
-  const [categories] = useState<CategoryRow[]>(initialCategory?.categories ?? []);
-  const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
+  const initialCategories = [...(initialCategory?.categories ?? [])];
+  for (const currentCategory of initialContent?.categories ?? []) {
+    if (!initialCategories.some((category) => category.id === currentCategory.id)) {
+      initialCategories.push(currentCategory);
+    }
+  }
+  const initialSeriesList = [...(initialSeries?.series ?? [])];
+  if (initialContent?.series && !initialSeriesList.some((seriesItem) => seriesItem.id === initialContent.series?.id)) {
+    initialSeriesList.push(initialContent.series);
+  }
+  const [categories] = useState<CategoryRow[]>(initialCategories);
+  const [seriesList] = useState<SeriesRow[]>(initialSeriesList);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     initialContent?.categories?.map((category) => category.category_key) ?? [],
   );
@@ -601,7 +610,7 @@ export default function Opt({
                       <ListItemText primary="선택 안함" />
                     </MenuItem>
                     {seriesList
-                      .filter((series) => !series.is_completed)
+                      .filter((series) => !series.is_completed || series.series_key === selectedSeriesKey)
                       .map((series) => (
                         <MenuItem key={series.id} value={series.series_key}>
                           <ListItemText primary={series.series_label} />
@@ -628,7 +637,6 @@ export default function Opt({
                   >
                     {categories.map((category) => (
                       <MenuItem key={category.id} value={category.category_key}>
-                        <Checkbox checked={selectedCategories.includes(category.category_key)} />
                         <ListItemText primary={category.category_label} />
                       </MenuItem>
                     ))}

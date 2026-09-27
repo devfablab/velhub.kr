@@ -23,10 +23,8 @@ import {
   FormControlLabel,
   FormGroup,
   FormLabel,
-  MenuItem,
   Radio,
   RadioGroup,
-  Select,
   SelectChangeEvent,
   useMediaQuery,
   useTheme,
@@ -45,6 +43,8 @@ import NumberField from '@/components/custom-ui/NumberField';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';

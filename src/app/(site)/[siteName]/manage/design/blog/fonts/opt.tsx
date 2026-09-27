@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -10,10 +9,8 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   FormControl,
   FormControlLabel,
-  MenuItem,
   Radio,
   RadioGroup,
-  Select,
   Stack,
   Typography,
   useMediaQuery,
@@ -21,6 +18,8 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -98,20 +97,46 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [applyScope, setApplyScope] = useState<ApplyScope>(
     hasSubject ? (hasDescription ? 'both' : 'subject') : hasDescription ? 'description' : 'subject',
   );
+  const initialSubjectFontFamily = blog?.subject_font_family ?? 'neo';
+  const initialSubjectLetterSpacing = blog?.subject_letter_spacing ?? -0.005;
+  const initialSubjectLineHeight = blog?.subject_line_height ?? 1.5;
+  const initialDescriptionFontFamily = blog?.description_font_family ?? 'pre';
+  const initialDescriptionLetterSpacing = blog?.description_letter_spacing ?? -0.005;
+  const initialDescriptionLineHeight = blog?.description_line_height ?? 1.5;
+  const initialDescriptionFontSize = blog?.description_font_size ?? 16;
+  const initialDescriptionMargin = blog?.description_margin ?? 16;
   const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>(
-    (blog?.subject_font_family ?? 'neo') as FontFamily,
+    SUBJECT_FONT_OPTIONS.some((option) => option.value === initialSubjectFontFamily) ? initialSubjectFontFamily : 'neo',
   );
-  const [subjectLetterSpacing, setSubjectLetterSpacing] = useState<number | ''>(blog?.subject_letter_spacing ?? -0.005);
-  const [subjectLineHeight, setSubjectLineHeight] = useState<number | ''>(blog?.subject_line_height ?? 1.5);
+  const [subjectLetterSpacing, setSubjectLetterSpacing] = useState<number | ''>(
+    LETTER_SPACING_OPTIONS.some((option) => option.value === initialSubjectLetterSpacing)
+      ? initialSubjectLetterSpacing
+      : -0.005,
+  );
+  const [subjectLineHeight, setSubjectLineHeight] = useState<number | ''>(
+    LINE_HEIGHT_OPTIONS.some((option) => option.value === initialSubjectLineHeight) ? initialSubjectLineHeight : 1.5,
+  );
   const [descriptionFontFamily, setDescriptionFontFamily] = useState<FontFamily | ''>(
-    (blog?.description_font_family ?? 'pre') as FontFamily,
+    DESCRIPTION_FONT_OPTIONS.some((option) => option.value === initialDescriptionFontFamily)
+      ? initialDescriptionFontFamily
+      : 'pre',
   );
   const [descriptionLetterSpacing, setDescriptionLetterSpacing] = useState<number | ''>(
-    blog?.description_letter_spacing ?? -0.005,
+    LETTER_SPACING_OPTIONS.some((option) => option.value === initialDescriptionLetterSpacing)
+      ? initialDescriptionLetterSpacing
+      : -0.005,
   );
-  const [descriptionLineHeight, setDescriptionLineHeight] = useState<number | ''>(blog?.description_line_height ?? 1.5);
-  const [descriptionFontSize, setDescriptionFontSize] = useState<number | ''>(blog?.description_font_size ?? 16);
-  const [descriptionMargin, setDescriptionMargin] = useState<number | ''>(blog?.description_margin ?? 16);
+  const [descriptionLineHeight, setDescriptionLineHeight] = useState<number | ''>(
+    LINE_HEIGHT_OPTIONS.some((option) => option.value === initialDescriptionLineHeight)
+      ? initialDescriptionLineHeight
+      : 1.5,
+  );
+  const [descriptionFontSize, setDescriptionFontSize] = useState<number | ''>(
+    FONT_SIZE_OPTIONS.some((option) => option.value === initialDescriptionFontSize) ? initialDescriptionFontSize : 16,
+  );
+  const [descriptionMargin, setDescriptionMargin] = useState<number | ''>(
+    MARGIN_OPTIONS.some((option) => option.value === initialDescriptionMargin) ? initialDescriptionMargin : 16,
+  );
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -243,11 +268,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {SUBJECT_FONT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {subjectFontFamily === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -265,11 +285,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {LETTER_SPACING_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {subjectLetterSpacing === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -287,11 +302,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {LINE_HEIGHT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {subjectLineHeight === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -317,11 +327,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {DESCRIPTION_FONT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {descriptionFontFamily === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -339,11 +344,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {FONT_SIZE_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {descriptionFontSize === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -361,11 +361,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {LETTER_SPACING_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {descriptionLetterSpacing === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -383,11 +378,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {LINE_HEIGHT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {descriptionLineHeight === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -405,11 +395,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   >
                     {MARGIN_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
-                        {descriptionMargin === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
                         {option.label}
                       </MenuItem>
                     ))}

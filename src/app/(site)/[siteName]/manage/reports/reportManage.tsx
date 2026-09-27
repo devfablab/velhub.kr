@@ -14,8 +14,6 @@ import {
   DialogTitle,
   Drawer,
   FormControl,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -43,6 +41,8 @@ import {
 import { formatTimeAgo } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/manage.module.sass';
 

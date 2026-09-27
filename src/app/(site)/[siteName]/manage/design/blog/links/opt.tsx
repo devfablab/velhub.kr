@@ -15,18 +15,10 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
-import {
-  Box,
-  IconButton,
-  InputAdornment,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Box, IconButton, InputAdornment, Stack, TextField, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 

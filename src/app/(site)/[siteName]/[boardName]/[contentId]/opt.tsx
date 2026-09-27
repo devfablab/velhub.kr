@@ -26,8 +26,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  MenuItem,
-  Select,
   type SelectChangeEvent,
   TextField,
   useMediaQuery,
@@ -41,6 +39,8 @@ import Comment from '@/components/comments/Comment';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
@@ -506,10 +506,12 @@ export default function Opt({
         throw new Error(result.error ?? '게시판 목록을 불러오지 못했습니다.');
       }
 
-      setMoveBoards(
-        (result.boards ?? []).filter(
-          (moveBoard) => moveBoard.is_active && moveBoard.board_type !== 'page' && moveBoard.board_type !== 'blog',
-        ),
+      const nextMoveBoards = (result.boards ?? []).filter(
+        (moveBoard) => moveBoard.is_active && moveBoard.board_type !== 'page' && moveBoard.board_type !== 'blog',
+      );
+      setMoveBoards(nextMoveBoards);
+      setSelectedMoveBoardKey(
+        nextMoveBoards.some((moveBoard) => moveBoard.board_key === board.board_key) ? board.board_key : '',
       );
     } catch (unknownError) {
       setMoveBoardErrorMessage(

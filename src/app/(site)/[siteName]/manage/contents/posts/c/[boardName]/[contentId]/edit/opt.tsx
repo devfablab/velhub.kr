@@ -9,8 +9,6 @@ import {
   FormControl,
   FormControlLabel,
   ListItemText,
-  MenuItem,
-  Select,
   Stack,
   styled,
   TextField,
@@ -27,6 +25,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -304,10 +304,20 @@ export default function Opt({
   );
   const [postType] = useState<'none' | 'prefix' | 'series'>(initialContent?.board?.post_type ?? 'none');
   const [markdownStatus] = useState<string | null>(initialContent?.board?.markdown_status ?? 'markdown_default');
-  const [seriesList, setSeriesList] = useState<
-    Array<{ id: string; series_key: string; series_label: string; is_completed: boolean }>
-  >(initialSeries?.series ?? []);
-  const [prefixList] = useState<Array<{ id: string; prefix_label: string }>>(initialPrefix?.prefixes ?? []);
+  const initialSeriesList = [...(initialSeries?.series ?? [])];
+  if (initialContent?.series && !initialSeriesList.some((seriesItem) => seriesItem.id === initialContent.series?.id)) {
+    initialSeriesList.push({ ...initialContent.series, is_completed: false });
+  }
+  const initialPrefixList = [...(initialPrefix?.prefixes ?? [])];
+  const currentPrefix = initialContent?.prefixes?.find(
+    (prefixItem) => prefixItem.id === initialContent?.content?.prefix_id,
+  );
+  if (currentPrefix && !initialPrefixList.some((prefixItem) => prefixItem.id === currentPrefix.id)) {
+    initialPrefixList.push(currentPrefix);
+  }
+  const [seriesList, setSeriesList] =
+    useState<Array<{ id: string; series_key: string; series_label: string; is_completed: boolean }>>(initialSeriesList);
+  const [prefixList] = useState<Array<{ id: string; prefix_label: string }>>(initialPrefixList);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
   const [selectedPrefixId, setSelectedPrefixId] = useState(initialContent?.content?.prefix_id ?? '');
   const [isClosed, setIsClosed] = useState(initialContent?.content?.is_closed || false);
@@ -883,11 +893,16 @@ export default function Opt({
                         value={selectedSeriesKey}
                         onChange={handleSeriesChange}
                       >
-                        {seriesList.map((series) => (
-                          <MenuItem key={series.id} value={series.series_key}>
-                            <ListItemText primary={series.series_label} />
-                          </MenuItem>
-                        ))}
+                        <MenuItem value="">
+                          <ListItemText primary="선택 안함" />
+                        </MenuItem>
+                        {seriesList
+                          .filter((series) => !series.is_completed || series.series_key === selectedSeriesKey)
+                          .map((series) => (
+                            <MenuItem key={series.id} value={series.series_key}>
+                              <ListItemText primary={series.series_label} />
+                            </MenuItem>
+                          ))}
                       </Select>
                     </FormControl>
                     <p className="alert warning">

@@ -7,7 +7,6 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,8 +14,6 @@ import {
   Drawer,
   FormControl,
   ListItemText,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -26,6 +23,8 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { formatDate, getOgImageUrl, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -93,12 +92,12 @@ type PostResponse = {
 
 export type ContentResponse = PostResponse;
 
-type CategoryListResponse = {
+export type CategoryListResponse = {
   categories?: CategoryRow[];
   error?: string;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   series?: SeriesRow[];
   error?: string;
 };
@@ -111,10 +110,14 @@ type ActionResponse = {
 export default function Opt({
   initialStatus,
   initialContent,
+  initialCategory,
+  initialSeries,
   initialError,
 }: {
   initialStatus?: StatusResponse | null;
   initialContent?: ContentResponse | null;
+  initialCategory?: CategoryListResponse | null;
+  initialSeries?: SeriesListResponse | null;
   initialError?: string | null;
 }) {
   const router = useRouter();
@@ -127,9 +130,19 @@ export default function Opt({
 
   const [boardName, setBoardName] = useState(initialStatus?.boardName || '');
   const [post, setPost] = useState<PostResponse['content'] | null>(initialContent?.content ?? null);
-  const [categories, setCategories] = useState<CategoryRow[]>(initialContent?.categories ?? []);
+  const initialCategories = [...(initialCategory?.categories ?? [])];
+  for (const currentCategory of initialContent?.categories ?? []) {
+    if (!initialCategories.some((category) => category.id === currentCategory.id)) {
+      initialCategories.push(currentCategory);
+    }
+  }
+  const initialSeriesList = [...(initialSeries?.series ?? [])];
+  if (initialContent?.series && !initialSeriesList.some((seriesItem) => seriesItem.id === initialContent.series?.id)) {
+    initialSeriesList.push(initialContent.series);
+  }
+  const [categories, setCategories] = useState<CategoryRow[]>(initialCategories);
   const [series, setSeries] = useState<SeriesRow | null>(initialContent?.series ?? null);
-  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
+  const [seriesList, setSeriesList] = useState<SeriesRow[]>(initialSeriesList);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     initialContent?.categories?.map((category) => category.category_key) ?? [],
   );
@@ -774,7 +787,6 @@ export default function Opt({
                     >
                       {categories.map((category) => (
                         <MenuItem key={category.id} value={category.category_key}>
-                          <Checkbox checked={selectedCategories.includes(category.category_key)} />
                           <ListItemText primary={category.category_label} />
                         </MenuItem>
                       ))}
@@ -843,7 +855,6 @@ export default function Opt({
                     >
                       {categories.map((category) => (
                         <MenuItem key={category.id} value={category.category_key}>
-                          <Checkbox checked={selectedCategories.includes(category.category_key)} />
                           <ListItemText primary={category.category_label} />
                         </MenuItem>
                       ))}

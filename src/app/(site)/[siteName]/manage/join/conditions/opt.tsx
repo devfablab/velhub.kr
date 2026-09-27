@@ -463,7 +463,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">글 작성 정책</Typography>
-                <TextField select value={policyPost} onChange={handlePolicyPostChange} fullWidth size="small">
+                <TextField
+                  select
+                  value={policyPost}
+                  onChange={handlePolicyPostChange}
+                  fullWidth
+                  size="small"
+                >
                   <MenuItem value="comment_0">
                     {policyPost === 'comment_0' ? (
                       <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
@@ -501,7 +507,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">댓글 작성 정책</Typography>
-                <TextField select value={policyComment} onChange={handlePolicyCommentChange} fullWidth size="small">
+                <TextField
+                  select
+                  value={policyComment}
+                  onChange={handlePolicyCommentChange}
+                  fullWidth
+                  size="small"
+                >
                   <MenuItem value="estimate_0">
                     {policyComment === 'estimate_0' ? (
                       <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { MenuItem, Select, type SelectChangeEvent, Typography } from '@mui/material';
+import { type SelectChangeEvent, Typography } from '@mui/material';
 import {
   Area,
   AreaChart,
@@ -17,6 +17,8 @@ import {
 } from 'recharts';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 

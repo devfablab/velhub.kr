@@ -23,10 +23,8 @@ import {
   FormControlLabel,
   FormGroup,
   FormLabel,
-  MenuItem,
   Radio,
   RadioGroup,
-  Select,
   SelectChangeEvent,
   useMediaQuery,
   useTheme,
@@ -43,6 +41,8 @@ import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import NumberField from '@/components/custom-ui/NumberField';
 import ToastEditor from '@/components/editor/ToastEditor';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
@@ -677,10 +677,25 @@ export default function Opt({
       : (initialContent?.board?.post_type ?? initialBoardInfo?.board?.post_type ?? 'none');
   const [boardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(initialBoardType);
   const [postType] = useState<'none' | 'prefix' | 'series'>(initialPostType);
-  const [prefixList] = useState<PrefixRow[]>(initialPrefixes?.prefixes ?? initialContent?.prefixes ?? []);
-  const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
-  const [selectedPrefixId, setSelectedPrefixId] = useState(initialContent?.content?.prefix_id ?? '');
-  const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
+  const initialPrefixId = initialContent?.content?.prefix_id ?? '';
+  const initialSeriesKey = initialContent?.series?.series_key ?? '';
+  const initialPrefixList = [...(initialPrefixes?.prefixes ?? initialContent?.prefixes ?? [])];
+  const currentPrefix = initialContent?.prefixes?.find((prefix) => prefix.id === initialPrefixId);
+  if (currentPrefix && !initialPrefixList.some((prefix) => prefix.id === currentPrefix.id)) {
+    initialPrefixList.push(currentPrefix);
+  }
+  const initialSeriesList = [...(initialSeries?.series ?? [])];
+  if (initialContent?.series && !initialSeriesList.some((series) => series.id === initialContent.series?.id)) {
+    initialSeriesList.push(initialContent.series);
+  }
+  const [prefixList] = useState<PrefixRow[]>(initialPrefixList);
+  const [seriesList] = useState<SeriesRow[]>(initialSeriesList);
+  const [selectedPrefixId, setSelectedPrefixId] = useState(
+    initialPrefixList.some((prefix) => prefix.id === initialPrefixId) ? initialPrefixId : '',
+  );
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState(
+    initialSeriesList.some((series) => series.series_key === initialSeriesKey) ? initialSeriesKey : '',
+  );
   const [subject, setSubject] = useState(initialContent?.content?.subject ?? '');
   const [subjectPaddingLeft, setSubjectPaddingLeft] = useState(12);
   const [summary, setSummary] = useState(initialContent?.content?.summary ?? '');

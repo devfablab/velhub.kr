@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  MenuItem,
-  Select,
   type SelectChangeEvent,
   Table,
   TableBody,
@@ -17,6 +15,8 @@ import {
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 

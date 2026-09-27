@@ -4,9 +4,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
   Button,
-  MenuItem,
   Pagination,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -18,11 +16,15 @@ import {
   Typography,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 
 export type RevenueListType = 'transactions' | 'refunds' | 'scheduled' | 'confirmed' | 'completed';
 type RevenueRangeType = 'all' | 'year' | 'quarter' | 'half' | 'custom';
+
+const REVENUE_RANGE_TYPES: RevenueRangeType[] = ['all', 'year', 'quarter', 'half', 'custom'];
 
 type RevenueListItem = {
   id: string;
@@ -113,7 +115,33 @@ export default function RevenueList({
   const errorMessage = initialError;
 
   const page = Number(searchParams.get('page') ?? '1') || 1;
-  const rangeType = (searchParams.get('rangeType') as RevenueRangeType | null) ?? 'all';
+  const requestedRangeType = searchParams.get('rangeType');
+  const rangeType = REVENUE_RANGE_TYPES.includes(requestedRangeType as RevenueRangeType)
+    ? (requestedRangeType as RevenueRangeType)
+    : 'all';
+  const availableYears = responseData?.filters.years.map(String) ?? [];
+  const requestedYear = searchParams.get('year') ?? '';
+  const selectedYear = availableYears.includes(requestedYear) ? requestedYear : '';
+  const requestedQuarter =
+    requestedYear && searchParams.get('quarter') ? `${requestedYear}-${searchParams.get('quarter')}` : '';
+  const selectedQuarter = responseData?.filters.quarters.some(
+    (option) => `${option.year}-${option.quarter}` === requestedQuarter,
+  )
+    ? requestedQuarter
+    : '';
+  const requestedHalf = requestedYear && searchParams.get('half') ? `${requestedYear}-${searchParams.get('half')}` : '';
+  const selectedHalf = responseData?.filters.halves.some((option) => `${option.year}-${option.half}` === requestedHalf)
+    ? requestedHalf
+    : '';
+  const requestedStartYear = searchParams.get('startYear') ?? '';
+  const requestedEndYear = searchParams.get('endYear') ?? '';
+  const selectedStartYear = availableYears.includes(requestedStartYear) ? requestedStartYear : '';
+  const selectedEndYear = availableYears.includes(requestedEndYear) ? requestedEndYear : '';
+  const availableMonths = Array.from({ length: 12 }, (_value, index) => String(index + 1));
+  const requestedStartMonth = searchParams.get('startMonth') ?? '';
+  const requestedEndMonth = searchParams.get('endMonth') ?? '';
+  const selectedStartMonth = availableMonths.includes(requestedStartMonth) ? requestedStartMonth : '';
+  const selectedEndMonth = availableMonths.includes(requestedEndMonth) ? requestedEndMonth : '';
   const visibleDateColumns = getVisibleDateColumns(type);
 
   function updateSearchParams(nextValues: Record<string, string | null>) {
@@ -190,7 +218,7 @@ export default function RevenueList({
               <Select
                 size="small"
                 displayEmpty
-                value={searchParams.get('year') ?? ''}
+                value={selectedYear}
                 onChange={(changeEvent) => updateSearchParams({ year: changeEvent.target.value })}
               >
                 <MenuItem value="">년도 선택</MenuItem>
@@ -206,11 +234,7 @@ export default function RevenueList({
               <Select
                 size="small"
                 displayEmpty
-                value={
-                  searchParams.get('year') && searchParams.get('quarter')
-                    ? `${searchParams.get('year')}-${searchParams.get('quarter')}`
-                    : ''
-                }
+                value={selectedQuarter}
                 onChange={(changeEvent) => {
                   const [year, quarter] = changeEvent.target.value.split('-');
                   updateSearchParams({ year, quarter });
@@ -232,11 +256,7 @@ export default function RevenueList({
               <Select
                 size="small"
                 displayEmpty
-                value={
-                  searchParams.get('year') && searchParams.get('half')
-                    ? `${searchParams.get('year')}-${searchParams.get('half')}`
-                    : ''
-                }
+                value={selectedHalf}
                 onChange={(changeEvent) => {
                   const [year, half] = changeEvent.target.value.split('-');
                   updateSearchParams({ year, half });
@@ -259,7 +279,7 @@ export default function RevenueList({
                 <Select
                   size="small"
                   displayEmpty
-                  value={searchParams.get('startYear') ?? ''}
+                  value={selectedStartYear}
                   onChange={(changeEvent) => updateSearchParams({ startYear: changeEvent.target.value })}
                 >
                   <MenuItem value="">시작 년도</MenuItem>
@@ -272,7 +292,7 @@ export default function RevenueList({
                 <Select
                   size="small"
                   displayEmpty
-                  value={searchParams.get('startMonth') ?? ''}
+                  value={selectedStartMonth}
                   onChange={(changeEvent) => updateSearchParams({ startMonth: changeEvent.target.value })}
                 >
                   <MenuItem value="">시작 월</MenuItem>
@@ -286,7 +306,7 @@ export default function RevenueList({
                 <Select
                   size="small"
                   displayEmpty
-                  value={searchParams.get('endYear') ?? ''}
+                  value={selectedEndYear}
                   onChange={(changeEvent) => updateSearchParams({ endYear: changeEvent.target.value })}
                 >
                   <MenuItem value="">종료 년도</MenuItem>
@@ -299,7 +319,7 @@ export default function RevenueList({
                 <Select
                   size="small"
                   displayEmpty
-                  value={searchParams.get('endMonth') ?? ''}
+                  value={selectedEndMonth}
                   onChange={(changeEvent) => updateSearchParams({ endMonth: changeEvent.target.value })}
                 >
                   <MenuItem value="">종료 월</MenuItem>

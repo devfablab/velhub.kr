@@ -12,8 +12,6 @@ import {
   DialogContentText,
   DialogTitle,
   Drawer,
-  MenuItem,
-  Select,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -21,6 +19,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import styles from '@/app/board.module.sass';
@@ -58,8 +58,14 @@ export default function Opt({
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-  const [categories] = useState<Category[]>(initialBoard?.categories ?? []);
-  const [categoryId, setCategoryId] = useState(initialPost?.post?.category_id ?? '');
+  const initialCategories = initialBoard?.categories ?? [];
+  const initialCategoryId = initialPost?.post?.category_id ?? '';
+  const [categories] = useState<Category[]>(initialCategories);
+  const [categoryId, setCategoryId] = useState(
+    initialCategories.some((category) => category.id === initialCategoryId)
+      ? initialCategoryId
+      : (initialCategories[0]?.id ?? ''),
+  );
   const [contentHtml, setContentHtml] = useState(initialPost?.post?.content_html ?? '');
   const [subject, setSubject] = useState(initialPost?.post?.subject ?? '');
   const [isImageEnabled] = useState(initialBoard?.board?.is_image_enabled === true);
@@ -236,6 +242,9 @@ export default function Opt({
                           onChange={(event) => setCategoryId(event.target.value)}
                           className={styles['MuiInputBase-root']}
                         >
+                          <MenuItem value="" disabled>
+                            분류 선택
+                          </MenuItem>
                           {categories.map((category) => (
                             <MenuItem key={category.id} value={category.id}>
                               {category.label}

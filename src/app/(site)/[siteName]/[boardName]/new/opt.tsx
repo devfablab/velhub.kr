@@ -27,10 +27,8 @@ import {
   FormControlLabel,
   FormGroup,
   FormLabel,
-  MenuItem,
   Radio,
   RadioGroup,
-  Select,
   SelectChangeEvent,
   useMediaQuery,
   useTheme,
@@ -49,6 +47,8 @@ import NumberField from '@/components/custom-ui/NumberField';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
@@ -589,10 +589,13 @@ export default function Opt({
 
   const [accessDialogType, setAccessDialogType] = useState<AccessDialogType>(null);
   const [alertMessage, setAlertMessage] = useState('');
-  const [boards] = useState<BoardItem[]>(() =>
-    (initialBoards?.boards ?? []).filter((board) => board.is_active === true && board.board_type !== 'page'),
+  const initialWriteBoards = (initialBoards?.boards ?? []).filter(
+    (board) => board.is_active === true && board.board_type !== 'page',
   );
-  const [selectedBoardKey, setSelectedBoardKey] = useState(boardName);
+  const [boards] = useState<BoardItem[]>(initialWriteBoards);
+  const [selectedBoardKey, setSelectedBoardKey] = useState(
+    initialWriteBoards.some((board) => board.board_key === boardName) ? boardName : '',
+  );
   const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(
     initialBoardInfo?.board?.board_type ?? 'basic',
   );

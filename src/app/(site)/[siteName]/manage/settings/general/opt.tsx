@@ -2,7 +2,6 @@
 
 import { type JSX, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -16,8 +15,6 @@ import {
   Drawer,
   FormControlLabel,
   InputAdornment,
-  MenuItem,
-  Select,
   SelectChangeEvent,
   Stack,
   styled,
@@ -38,6 +35,8 @@ import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -1304,7 +1303,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {editingField === 'blog_type' ? (
                 <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems="center">
                   <Select
-                    value={String(draftValue)}
+                    value={draftValue === 'team' ? 'team' : 'personal'}
                     onChange={(event) => setDraftValue(event.target.value)}
                     size="small"
                     fullWidth
@@ -1336,7 +1335,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <button
                     type="button"
                     className="button small action"
-                    onClick={() => startEdit('blog_type', blogType || 'personal')}
+                    onClick={() => startEdit('blog_type', blogType === 'team' ? 'team' : 'personal')}
                   >
                     수정
                   </button>
@@ -1583,14 +1582,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <Typography variant="subtitle2">테마</Typography>
             {editingField === 'theme_type' ? (
               <>
-                <Select value={String(draftValue || 'default')} onChange={handleThemeTypeChange} fullWidth size="small">
+                <Select
+                  value={isThemeType(String(draftValue)) ? String(draftValue) : 'default'}
+                  onChange={handleThemeTypeChange}
+                  fullWidth
+                  size="small"
+                >
                   {THEME_TYPES.map((themeValue) => (
                     <MenuItem key={themeValue} value={themeValue}>
-                      {draftValue === themeValue ? (
-                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                      ) : (
-                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                      )}
                       {themeValue}
                     </MenuItem>
                   ))}

@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  MenuItem,
   Radio,
   Stack,
   styled,
@@ -29,6 +28,8 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -879,6 +880,7 @@ export default function Opt({
             onChange={handleMoveRoleChange}
             size="small"
             fullWidth
+            InputProps={{ startAdornment: <SelectCheckAdornment /> }}
           >
             {roleOptions.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -895,7 +897,11 @@ export default function Opt({
               onChange={handleMoveBoardChange}
               size="small"
               fullWidth
+              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
             >
+              <MenuItem value="" disabled>
+                게시판 선택
+              </MenuItem>
               {boardOptionsForMove.map((board) => (
                 <MenuItem key={board.value} value={board.value}>
                   {board.label}
@@ -1334,6 +1340,7 @@ export default function Opt({
                             }}
                             size="small"
                             fullWidth
+                            InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                           >
                             <MenuItem value="common">기타 매니저</MenuItem>
                             <MenuItem value="board">개별 게시판 매니저</MenuItem>
@@ -1351,6 +1358,7 @@ export default function Opt({
                               }
                               size="small"
                               fullWidth
+                              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                             >
                               <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
                               <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
@@ -1372,7 +1380,11 @@ export default function Opt({
                                   setAssignBoardRole(getInitialBoardRole(nextBoard));
                                 }}
                                 size="small"
+                                InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                               >
+                                <MenuItem value="" disabled>
+                                  게시판 선택
+                                </MenuItem>
                                 {boards.map((board) => (
                                   <MenuItem key={board.boardId} value={board.boardId}>
                                     {board.boardLabel}
@@ -1395,6 +1407,7 @@ export default function Opt({
                                   }
                                   size="small"
                                   fullWidth
+                                  InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                                 >
                                   <MenuItem
                                     value="board-general-manager"
@@ -1554,6 +1567,7 @@ export default function Opt({
                           }}
                           size="small"
                           sx={{ minWidth: 180 }}
+                          InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                         >
                           <MenuItem value="common">기타 매니저</MenuItem>
                           <MenuItem value="board">개별 게시판 매니저</MenuItem>
@@ -1572,6 +1586,7 @@ export default function Opt({
                             }
                             size="small"
                             sx={{ minWidth: 240 }}
+                            InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                           >
                             <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
                             <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
@@ -1594,7 +1609,11 @@ export default function Opt({
                               }}
                               size="small"
                               fullWidth
+                              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                             >
+                              <MenuItem value="" disabled>
+                                게시판 선택
+                              </MenuItem>
                               {boards.map((board) => (
                                 <MenuItem key={board.boardId} value={board.boardId}>
                                   {board.boardLabel}
@@ -1617,6 +1636,7 @@ export default function Opt({
                                 }
                                 size="small"
                                 sx={{ minWidth: 240 }}
+                                InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                               >
                                 <MenuItem
                                   value="board-general-manager"

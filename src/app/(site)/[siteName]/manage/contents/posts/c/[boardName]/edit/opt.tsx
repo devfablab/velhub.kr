@@ -121,7 +121,9 @@ export default function Opt({
   const [boardKey, setBoardKey] = useState(initialBoard?.board_key ?? '');
   const [originBoardKey] = useState(initialBoard?.board_key ?? '');
   const [boardType] = useState<BoardType>(initialBoard?.board_type ?? 'basic');
-  const [postPerPage, setPostPerPage] = useState(initialBoard?.post_per_page ?? 5);
+  const [postPerPage, setPostPerPage] = useState(
+    POST_PER_PAGE_OPTIONS.includes(initialBoard?.post_per_page ?? 0) ? (initialBoard?.post_per_page ?? 5) : 5,
+  );
   const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>(
     initialBoard?.markdown_status ?? 'markdown_default',
   );

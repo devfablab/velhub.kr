@@ -12,8 +12,6 @@ import {
   DialogContentText,
   DialogTitle,
   Drawer,
-  MenuItem,
-  Select,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -21,6 +19,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import styles from '@/app/board.module.sass';
@@ -237,6 +237,9 @@ export default function Opt({
                       onChange={(event) => setCategoryId(event.target.value)}
                       className={styles['MuiInputBase-root']}
                     >
+                      <MenuItem value="" disabled>
+                        분류 선택
+                      </MenuItem>
                       {categories.map((category) => (
                         <MenuItem key={category.id} value={category.id}>
                           {category.label}
