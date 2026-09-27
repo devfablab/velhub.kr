@@ -308,6 +308,7 @@ export default function Opt({
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
+  const isMinimal = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
 
@@ -1069,9 +1070,17 @@ export default function Opt({
             )
           ) : null}
           {isCommunity && isMobile ? (
-            <Stack direction="row" gap={1} justifyContent="space-between" sx={{ pt: 3 }}>
-              <SiteInfo />
-              <UserInfo />
+            <Stack
+              direction={isMinimal ? 'column' : 'row'}
+              gap={1}
+              justifyContent={isMinimal ? undefined : 'space-between'}
+            >
+              <div>
+                <SiteInfo />
+              </div>
+              <div>
+                <UserInfo />
+              </div>
             </Stack>
           ) : null}
         </div>

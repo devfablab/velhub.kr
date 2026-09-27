@@ -146,6 +146,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
+  const isMinimal = useMediaQuery(theme.breakpoints.down('sm'));
 
   function updateRoute(nextPage: number, nextKeyword: string, nextPageSize = pageSize) {
     const queryParams = new URLSearchParams();
@@ -593,10 +594,18 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
             ) : null}
           </nav>
         ) : null}
-        {isMobile ? (
-          <Stack direction="row" gap={1} justifyContent="space-between" sx={{ pt: 3 }}>
-            <SiteInfo />
-            <UserInfo />
+        {isCommunity && isMobile ? (
+          <Stack
+            direction={isMinimal ? 'column' : 'row'}
+            gap={1}
+            justifyContent={isMinimal ? undefined : 'space-between'}
+          >
+            <div>
+              <SiteInfo />
+            </div>
+            <div>
+              <UserInfo />
+            </div>
           </Stack>
         ) : null}
       </div>
