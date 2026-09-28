@@ -68,11 +68,7 @@ export async function POST(request: NextRequest) {
       successUrl: successUrl.toString(),
       failUrl: failUrl.toString(),
     });
-  } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '결제 수단 추가를 시작하지 못했습니다.' }, { status: 500 });
-    }
-
+  } catch {
     return Response.json({ error: '결제 수단 추가를 시작하지 못했습니다.' }, { status: 500 });
   }
 }

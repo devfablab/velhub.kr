@@ -1,6 +1,7 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from 'react';
 import { FormControl } from '@mui/material';
+import { validateFavoriteFolderLabel } from '@/lib/hub/favoriteFolder.shared';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import ResponsivePopup from '../shared/ResponsivePopup';
@@ -13,17 +14,23 @@ type Folder = {
 type FolderModalsProps = {
   isAddFolderOpen: boolean;
   setIsAddFolderOpen: (open: boolean) => void;
-  onAddFolder: (label: string) => Promise<void>;
+  onAddFolder: (label: string) => Promise<FolderActionError | null>;
 
   editFolder: Folder | null;
   setEditFolder: (folder: Folder | null) => void;
-  onEditFolder: (id: string, newLabel: string) => Promise<void>;
-  onDeleteFolder: (id: string) => Promise<void>;
+  onEditFolder: (id: string, newLabel: string) => Promise<FolderActionError | null>;
+  onDeleteFolder: (id: string) => Promise<FolderActionError | null>;
 
   isMoveSitesOpen: boolean;
   setIsMoveSitesOpen: (open: boolean) => void;
   folders: Folder[];
-  onMoveSites: (targetFolderId: string | null) => Promise<void>;
+  onMoveSites: (targetFolderId: string | null) => Promise<FolderActionError | null>;
+};
+
+export type FolderActionError = {
+  message: string;
+  fieldError?: string;
+  isUnknown?: boolean;
 };
 
 export default function FolderModals({
@@ -44,45 +51,92 @@ export default function FolderModals({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [addLabelError, setAddLabelError] = useState('');
+  const [editLabelError, setEditLabelError] = useState('');
+  const [popupError, setPopupError] = useState<FolderActionError | null>(null);
 
   useEffect(() => {
     if (editFolder) {
       setEditLabel(editFolder.label);
+      setEditLabelError('');
     }
   }, [editFolder]);
 
   const handleAddFolder = async () => {
-    if (!addLabel.trim() || isLoading) return;
+    if (isLoading) return;
+    const validated = validateFavoriteFolderLabel(addLabel);
+    if (validated.error) {
+      setAddLabelError(validated.error);
+      setPopupError({ message: validated.error, fieldError: validated.error });
+      return;
+    }
     setIsLoading(true);
-    await onAddFolder(addLabel);
-    setAddLabel('');
-    setIsAddFolderOpen(false);
-    setIsLoading(false);
+    try {
+      const actionError = await onAddFolder(validated.label);
+      if (actionError) {
+        setAddLabelError(actionError.fieldError ?? '');
+        setPopupError(actionError);
+        return;
+      }
+      setAddLabel('');
+      setAddLabelError('');
+      setIsAddFolderOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEditFolder = async () => {
-    if (!editLabel.trim() || !editFolder || isLoading) return;
+    if (!editFolder || isLoading) return;
+    const validated = validateFavoriteFolderLabel(editLabel);
+    if (validated.error) {
+      setEditLabelError(validated.error);
+      setPopupError({ message: validated.error, fieldError: validated.error });
+      return;
+    }
     setIsLoading(true);
-    await onEditFolder(editFolder.id, editLabel);
-    setEditFolder(null);
-    setIsLoading(false);
+    try {
+      const actionError = await onEditFolder(editFolder.id, validated.label);
+      if (actionError) {
+        setEditLabelError(actionError.fieldError ?? '');
+        setPopupError(actionError);
+        return;
+      }
+      setEditFolder(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteFolder = async () => {
     if (!editFolder || isLoading) return;
     setIsLoading(true);
-    await onDeleteFolder(editFolder.id);
-    setIsDeleteConfirmOpen(false);
-    setEditFolder(null);
-    setIsLoading(false);
+    try {
+      const actionError = await onDeleteFolder(editFolder.id);
+      if (actionError) {
+        setPopupError(actionError);
+        return;
+      }
+      setIsDeleteConfirmOpen(false);
+      setEditFolder(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleMoveSites = async () => {
     if (isLoading) return;
     setIsLoading(true);
-    await onMoveSites(selectedFolderId);
-    setIsMoveSitesOpen(false);
-    setIsLoading(false);
+    try {
+      const actionError = await onMoveSites(selectedFolderId);
+      if (actionError) {
+        setPopupError(actionError);
+        return;
+      }
+      setIsMoveSitesOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -106,9 +160,22 @@ export default function FolderModals({
           type="text"
           placeholder="폴더 이름 입력"
           value={addLabel}
-          onChange={(event) => setAddLabel(event.target.value)}
+          onChange={(event) => {
+            setAddLabel(event.target.value);
+            setAddLabelError('');
+          }}
+          minLength={2}
+          maxLength={10}
+          required
+          aria-invalid={Boolean(addLabelError)}
+          aria-describedby={addLabelError ? 'add-folder-label-error' : undefined}
           style={{ width: '100%', padding: '8px' }}
         />
+        {addLabelError ? (
+          <p id="add-folder-label-error" className="alert popup-error">
+            {addLabelError}
+          </p>
+        ) : null}
       </ResponsivePopup>
 
       <ResponsivePopup
@@ -131,9 +198,22 @@ export default function FolderModals({
           type="text"
           placeholder="폴더 이름 입력"
           value={editLabel}
-          onChange={(event) => setEditLabel(event.target.value)}
+          onChange={(event) => {
+            setEditLabel(event.target.value);
+            setEditLabelError('');
+          }}
+          minLength={2}
+          maxLength={10}
+          required
+          aria-invalid={Boolean(editLabelError)}
+          aria-describedby={editLabelError ? 'edit-folder-label-error' : undefined}
           style={{ width: '100%', padding: '8px' }}
         />
+        {editLabelError ? (
+          <p id="edit-folder-label-error" className="alert popup-error">
+            {editLabelError}
+          </p>
+        ) : null}
       </ResponsivePopup>
 
       <ResponsivePopup
@@ -170,6 +250,13 @@ export default function FolderModals({
           </Select>
         </FormControl>
       </ResponsivePopup>
+
+      <FormErrorDialog
+        open={Boolean(popupError)}
+        title={popupError?.isUnknown ? null : '폴더 이름 확인'}
+        messages={popupError ? [popupError.message] : []}
+        onClose={() => setPopupError(null)}
+      />
     </>
   );
 }

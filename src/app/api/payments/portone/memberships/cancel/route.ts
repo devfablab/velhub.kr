@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cancelPortOnePayment } from '@/lib/payments/portone';
-import { calculateMembershipRefundAmount } from '@/lib/payments/refunds';
-import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -20,7 +18,7 @@ export async function POST(request: Request) {
   const membershipId = body?.membershipId;
 
   if (!membershipId) {
-    return NextResponse.json({ error: 'membershipId가 유효하지 않습니다.' }, { status: 400 });
+    return NextResponse.json({ error: '변경할 멤버십 정보를 확인해 주세요.' }, { status: 400 });
   }
   const supabaseAdmin = getSupabaseAdmin();
   const membershipResult = await supabaseAdmin

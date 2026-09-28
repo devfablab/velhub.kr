@@ -83,13 +83,12 @@ export async function POST(request: NextRequest) {
 
     try {
       cardInfo = getPortOneBillingCardInfo(billingKeyInfo);
-    } catch (unknownError) {
+    } catch {
       console.error('PortOne billing method card parse failed:', billingKeyInfo);
 
       return Response.json(
         {
-          error: unknownError instanceof Error ? unknownError.message : '빌링키 카드 정보를 확인하지 못했습니다.',
-          debug: process.env.NODE_ENV === 'development' ? { billingKeyInfo } : undefined,
+          error: '결제수단 정보를 확인하지 못했습니다.',
         },
         { status: 500 },
       );
@@ -214,11 +213,7 @@ export async function POST(request: NextRequest) {
     }
 
     return Response.json({ ok: true, duplicatePaymentMethod: duplicateBillingMethodIds.length > 0 });
-  } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '결제 수단을 추가하지 못했습니다.' }, { status: 500 });
-    }
-
+  } catch {
     return Response.json({ error: '결제 수단을 추가하지 못했습니다.' }, { status: 500 });
   }
 }

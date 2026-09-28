@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import PopupMessage from '@/components/PopupMessage';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import ResponsivePopup from './ResponsivePopup';
 import styles from '@/app/hub.module.sass';
 
@@ -96,7 +96,7 @@ function getExtraRows(detail: BillingPopupDetail) {
 export default function BillingPopup({ paymentId, detail, children }: BillingPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [refundError, setRefundError] = useState<{ title: string | null; message: string } | null>(null);
 
   const rows = [
     { label: '사이트', value: detail.siteLabel },
@@ -123,7 +123,7 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
   async function handleRefund() {
     try {
       setIsRefunding(true);
-      setErrorMessage('');
+      setRefundError(null);
 
       const response = await fetch('/api/hub/purchase/donation/refund', {
         method: 'POST',
@@ -140,17 +140,18 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
       const result = (await response.json()) as RefundResponse;
 
       if (!response.ok || 'error' in result) {
-        throw new Error('error' in result ? result.error : '환불 처리에 실패했습니다.');
+        if (response.status >= 500) {
+          setRefundError({ title: null, message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.' });
+        } else {
+          setRefundError({ title: '후원 환불 확인', message: 'error' in result ? result.error : '환불 처리에 실패했습니다.' });
+        }
+        return;
       }
 
       window.location.reload();
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '환불 처리에 실패했습니다.');
-      } else {
-        setErrorMessage('환불 처리에 실패했습니다.');
-      }
-
+    } catch {
+      setRefundError({ title: null, message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.' });
+    } finally {
       setIsRefunding(false);
     }
   }
@@ -217,11 +218,11 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
         {content}
       </ResponsivePopup>
 
-      <PopupMessage
-        open={Boolean(errorMessage)}
-        message={errorMessage}
-        onClose={() => setErrorMessage('')}
-        kind="error"
+      <FormErrorDialog
+        open={Boolean(refundError)}
+        title={refundError?.title ?? null}
+        messages={refundError ? [refundError.message] : []}
+        onClose={() => setRefundError(null)}
       />
     </>
   );

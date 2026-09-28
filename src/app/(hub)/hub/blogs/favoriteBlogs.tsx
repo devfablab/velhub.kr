@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import ScreenState from '@/components/service/ScreenState';
-import FolderModals from './folderModals';
+import FolderModals, { type FolderActionError } from './folderModals';
 import styles from '@/app/hub.module.sass';
 
 type FavoriteBlogRow = {
@@ -65,7 +65,7 @@ export default function FavoriteBlogs({
       const blogsResult = (await blogsRes.json()) as FavoriteBlogsResponse;
       const foldersResult = await foldersRes.json();
 
-      if (!blogsRes.ok) throw new Error(blogsResult.error ?? 'Error loading blogs');
+      if (!blogsRes.ok) throw new Error(blogsResult.error ?? '즐겨찾는 블로그를 불러오지 못했습니다.');
 
       setBlogs(Array.isArray(blogsResult.blogs) ? blogsResult.blogs : []);
       setFolders(foldersResult.folders || []);
@@ -74,44 +74,83 @@ export default function FavoriteBlogs({
     }
   };
 
+  const getFolderActionError = async (response: Response): Promise<FolderActionError | null> => {
+    if (response.ok) return null;
+
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string; fieldErrors?: { label?: string } }
+      | null;
+    if (response.status >= 500 || !payload?.error) {
+      return { message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', isUnknown: true };
+    }
+    return { message: payload.error, fieldError: payload.fieldErrors?.label };
+  };
+
   const handleAddFolder = async (label: string) => {
-    await fetch('/api/hub/favorite-folders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label }),
-    });
-    await loadData();
+    try {
+      const response = await fetch('/api/hub/favorite-folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      });
+      const actionError = await getFolderActionError(response);
+      if (actionError) return actionError;
+      await loadData();
+      return null;
+    } catch {
+      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+    }
   };
 
   const handleEditFolder = async (id: string, label: string) => {
-    await fetch(`/api/hub/favorite-folders/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label }),
-    });
-    await loadData();
+    try {
+      const response = await fetch(`/api/hub/favorite-folders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      });
+      const actionError = await getFolderActionError(response);
+      if (actionError) return actionError;
+      await loadData();
+      return null;
+    } catch {
+      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+    }
   };
 
   const handleDeleteFolder = async (id: string) => {
-    await fetch(`/api/hub/favorite-folders/${id}`, { method: 'DELETE' });
-    await loadData();
+    try {
+      const response = await fetch(`/api/hub/favorite-folders/${id}`, { method: 'DELETE' });
+      const actionError = await getFolderActionError(response);
+      if (actionError) return actionError;
+      await loadData();
+      return null;
+    } catch {
+      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+    }
   };
 
   const handleMoveSites = async (targetFolderId: string | null) => {
-    if (selectedSiteIds.size === 0) return;
+    if (selectedSiteIds.size === 0) return null;
     const updates = Array.from(selectedSiteIds).map((id) => {
       const blog = blogs.find((b) => b.id === id);
       return { id, folder_id: targetFolderId, sort_order: blog?.sortOrder || 0 };
     });
 
-    await fetch('/api/hub/blog-favorites/move', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ updates }),
-    });
-
-    setSelectedSiteIds(new Set());
-    await loadData();
+    try {
+      const response = await fetch('/api/hub/blog-favorites/move', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      });
+      const actionError = await getFolderActionError(response);
+      if (actionError) return actionError;
+      setSelectedSiteIds(new Set());
+      await loadData();
+      return null;
+    } catch {
+      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+    }
   };
 
   const handleDragStart = (event: React.DragEvent, item: FavoriteBlogRow) => {

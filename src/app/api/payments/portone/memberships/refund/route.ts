@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const membershipId = body?.membershipId;
 
   if (!membershipId) {
-    return NextResponse.json({ error: 'membershipId가 유효하지 않습니다.' }, { status: 400 });
+    return NextResponse.json({ error: '환불할 멤버십 정보를 확인해 주세요.' }, { status: 400 });
   }
   const supabaseAdmin = getSupabaseAdmin();
   const membershipResult = await supabaseAdmin
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
     if (payment && payment.status === PAYMENT_STATUS.PAID && Number(payment.refunded_amount ?? 0) === 0) {
       if (!payment.payment_key) {
-        return NextResponse.json({ error: '결제 취소에 필요한 paymentId가 없습니다.' }, { status: 400 });
+        return NextResponse.json({ error: '환불할 결제 정보를 확인하지 못했습니다.' }, { status: 400 });
       }
 
       const refund = calculateMembershipRefundAmount({

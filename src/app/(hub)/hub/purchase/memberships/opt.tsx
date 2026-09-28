@@ -15,7 +15,7 @@ import {
   MembershipType,
 } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
-import PopupMessage from '@/components/PopupMessage';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
@@ -60,6 +60,11 @@ type BillingMethod = {
   cardType: string | null;
   ownerType: string | null;
   isDefault: boolean;
+};
+
+type ErrorDialogState = {
+  title: string | null;
+  messages: string[];
 };
 
 const MEMBERSHIP_LABEL: Record<MembershipType, string> = {
@@ -200,13 +205,30 @@ export default function MembershipPlan({
   const [refundTarget, setRefundTarget] = useState<CurrentMembership | null>(null);
   const [isPaymentPopupOpen, setIsPaymentPopupOpen] = useState(false);
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [errorDialog, setErrorDialog] = useState<ErrorDialogState | null>(
+    initialError ? { title: null, messages: [initialError] } : null,
+  );
   const eligibility = initialEligibility;
   const hasIdentity = Boolean(initialIdentity?.exists);
   const initialAge = initialIdentity?.exists ? getAge(initialIdentity.identity?.birth_date) : null;
   const isUnder14Age = hasIdentity && (initialAge === null || initialAge < 14);
   const isMinorUser = initialAge !== null && initialAge < 19;
   const isBlocked = initialMinorPaymentControl?.mode === 'blocked_until_adult';
+
+  function getResponseError(
+    response: Response,
+    result: { error?: string; errors?: string[] },
+    title: string,
+    fallbackMessage: string,
+  ): ErrorDialogState {
+    if (response.status >= 500) {
+      return { title: null, messages: ['처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'] };
+    }
+
+    const messages = (result.errors ?? []).filter((message): message is string => Boolean(message));
+    if (result.error) messages.push(result.error);
+    return { title, messages: [...new Set(messages.length ? messages : [fallbackMessage])] };
+  }
 
   const selectedItems = useMemo(() => {
     const items = getSelectionItems(selection);
@@ -248,7 +270,7 @@ export default function MembershipPlan({
     if (!selectedItems.length || !selectedBillingMethodId || isSubmitting) return;
 
     setIsSubmitting(true);
-    setErrorMessage('');
+    setErrorDialog(null);
 
     const existingTypes = new Set(memberships.map((m) => m.type));
     const isModification = selectedItems.some(
@@ -275,7 +297,7 @@ export default function MembershipPlan({
           guardianIdentityVerificationId,
         }),
       });
-      const result = (await response.json()) as { error?: string; guardianAuthRequired?: boolean };
+      const result = (await response.json()) as { error?: string; errors?: string[]; guardianAuthRequired?: boolean };
 
       if (!response.ok) {
         if (result.guardianAuthRequired && !guardianIdentityVerificationId) {
@@ -283,12 +305,15 @@ export default function MembershipPlan({
           await handlePayment(await requestGuardianIdentityVerification());
           return;
         }
-        throw new Error(result.error || '멤버십 결제를 완료하지 못했습니다.');
+        setErrorDialog(getResponseError(response, result, '멤버십 결제 확인', '멤버십 결제를 완료하지 못했습니다.'));
+        setIsSubmitting(false);
+        setIsPaymentPopupOpen(false);
+        return;
       }
 
       window.location.replace('/hub/purchase/memberships');
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '멤버십 결제를 완료하지 못했습니다.');
+    } catch {
+      setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
       setIsSubmitting(false);
       setIsPaymentPopupOpen(false);
     }
@@ -300,7 +325,7 @@ export default function MembershipPlan({
     }
 
     setIsChangingSubscription(true);
-    setErrorMessage('');
+    setErrorDialog(null);
 
     try {
       const response = await fetch(`/api/payments/portone/memberships/${action}`, {
@@ -309,15 +334,17 @@ export default function MembershipPlan({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ membershipId: cancelTarget.id }),
       });
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; errors?: string[] };
 
       if (!response.ok) {
-        throw new Error(result.error || '멤버십 구독 상태를 변경하지 못했습니다.');
+        setErrorDialog(getResponseError(response, result, '멤버십 구독 확인', '멤버십 구독 상태를 변경하지 못했습니다.'));
+        setIsChangingSubscription(false);
+        return;
       }
 
       window.location.replace('/hub/purchase/memberships');
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '멤버십 구독 상태를 변경하지 못했습니다.');
+    } catch {
+      setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
       setIsChangingSubscription(false);
     }
   }
@@ -328,7 +355,7 @@ export default function MembershipPlan({
     }
 
     setIsChangingSubscription(true);
-    setErrorMessage('');
+    setErrorDialog(null);
 
     try {
       const response = await fetch('/api/payments/portone/memberships/refund', {
@@ -337,15 +364,17 @@ export default function MembershipPlan({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ membershipId: refundTarget.id }),
       });
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; errors?: string[] };
 
       if (!response.ok) {
-        throw new Error(result.error || '멤버십 환불을 완료하지 못했습니다.');
+        setErrorDialog(getResponseError(response, result, '멤버십 환불 확인', '멤버십 환불을 완료하지 못했습니다.'));
+        setIsChangingSubscription(false);
+        return;
       }
 
       window.location.replace('/hub/purchase/memberships');
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '멤버십 환불을 완료하지 못했습니다.');
+    } catch {
+      setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
       setIsChangingSubscription(false);
     }
   }
@@ -586,11 +615,11 @@ export default function MembershipPlan({
         </Stack>
       </section>
 
-      <PopupMessage
-        open={Boolean(errorMessage)}
-        message={errorMessage}
-        onClose={() => setErrorMessage('')}
-        kind="error"
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog?.messages ?? []}
+        onClose={() => setErrorDialog(null)}
       />
 
       <ResponsivePopup

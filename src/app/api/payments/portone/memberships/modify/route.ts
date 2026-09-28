@@ -129,20 +129,18 @@ export async function POST(request: Request) {
     return isMembershipType(value.type) ? [{ type: value.type, featureKeys }] : [];
   });
 
-  if (
-    !billingMethodId ||
-    !normalizedPurchases.length ||
-    normalizedPurchases.some((purchase) => !isValidPurchase(purchase))
-  ) {
-    return NextResponse.json({ error: '선택한 멤버십 구성이 올바르지 않습니다.' }, { status: 400 });
-  }
-
   const hasAllInOne = normalizedPurchases.some((purchase) => purchase.type === 'all_in_one');
-  if (hasAllInOne && normalizedPurchases.some((purchase) => purchase.type === 'owner' || purchase.type === 'creator')) {
-    return NextResponse.json(
-      { error: '올인원 멤버십은 다른 창작자 멤버십과 함께 선택할 수 없습니다.' },
-      { status: 400 },
-    );
+  const validationErrors = [
+    !billingMethodId ? '결제수단을 선택해 주세요.' : '',
+    !normalizedPurchases.length || normalizedPurchases.some((purchase) => !isValidPurchase(purchase))
+      ? '선택한 멤버십 구성을 확인해 주세요.'
+      : '',
+    hasAllInOne && normalizedPurchases.some((purchase) => purchase.type === 'owner' || purchase.type === 'creator')
+      ? '올인원 멤버십은 오너 또는 크리에이터 멤버십과 함께 선택할 수 없습니다.'
+      : '',
+  ].filter(Boolean);
+  if (validationErrors.length) {
+    return NextResponse.json({ errors: validationErrors }, { status: 400 });
   }
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -197,7 +195,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
 
   const existingMemberships = existingMembershipResult.data ?? [];
-  const existingTypes = new Set(existingMemberships.map((membership) => membership.membership_type));
 
   const hasCreatorFamily = normalizedPurchases.some((p) => ['owner', 'creator', 'all_in_one'].includes(p.type));
   const hasAffettoFamily = normalizedPurchases.some((p) => p.type === 'affetto');
@@ -412,17 +409,14 @@ export async function POST(request: Request) {
         .eq('id', paymentResult.data.id);
       if (paymentUpdateResult.error) throw new Error('결제 구독 정보를 갱신하지 못했습니다.');
     }
-  } catch (error) {
+  } catch {
     await Promise.all(
       completedPaymentKeys.map((paymentKey) =>
         cancelPortOnePayment({ paymentId: paymentKey, cancelReason: '멤버십 결제 저장 실패' }).catch(() => null),
       ),
     );
     if (createdMembershipIds.length) await supabaseAdmin.from('memberships').delete().in('id', createdMembershipIds);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '멤버십 결제에 실패했습니다.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: '멤버십 결제에 실패했습니다.' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

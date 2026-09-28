@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import DuplicateBillingMethodDialog from '@/components/service/common/DuplicateBillingMethodDialog';
 import styles from '@/app/hub.module.sass';
 
@@ -26,30 +27,41 @@ type BillingMethodStartResponse = {
   error?: string;
 };
 
-function getBillingMethodMessage(status: string | null, message: string | null) {
+type ErrorDialogState = { title: string | null; message: string };
+
+function getBillingMethodMessage(status: string | null) {
   if (status === 'success') {
     return '결제수단을 변경했습니다.';
   }
 
   if (status === 'fail') {
-    return message || '결제수단을 변경하지 못했습니다.';
+    return '결제수단을 변경하지 못했습니다. 카드 정보를 확인한 뒤 다시 시도해 주세요.';
   }
 
   return '';
 }
 
+function getPortOneFailureMessage(code: string | undefined) {
+  const normalizedCode = code?.toUpperCase() ?? '';
+  if (normalizedCode.includes('CANCEL')) return '결제수단 변경을 취소했습니다.';
+  if (normalizedCode.includes('NOT_SUPPORTED') || normalizedCode.includes('UNSUPPORTED')) {
+    return '이 카드로는 결제수단을 등록할 수 없습니다. 다른 카드를 사용해 주세요.';
+  }
+  return '카드 정보를 확인한 뒤 다시 시도해 주세요.';
+}
+
 export default function ChangePaymentMethodButton() {
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorDialog, setErrorDialog] = useState<ErrorDialogState | null>(null);
   const [isDuplicatePaymentMethodDialogOpen, setIsDuplicatePaymentMethodDialogOpen] = useState(false);
 
-  const billingMethodMessage = getBillingMethodMessage(searchParams.get('billingMethod'), searchParams.get('message'));
+  const billingMethodMessage = getBillingMethodMessage(searchParams.get('billingMethod'));
 
   async function handleChangePaymentMethod() {
     try {
       setIsProcessing(true);
-      setErrorMessage('');
+      setErrorDialog(null);
 
       const response = await fetch('/api/payments/portone/billing-method/start', {
         method: 'POST',
@@ -67,7 +79,14 @@ export default function ChangePaymentMethodButton() {
       const result = (await response.json()) as BillingMethodStartResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '결제수단 변경을 시작하지 못했습니다.');
+        if (response.status === 401) {
+          setErrorDialog({ title: '로그인 필요', message: '로그인 후 결제수단을 변경해 주세요.' });
+        } else if (response.status === 400 && result.error?.includes('휴대전화')) {
+          setErrorDialog({ title: '본인인증 확인', message: '본인인증된 휴대전화 번호를 확인한 뒤 다시 시도해 주세요.' });
+        } else {
+          setErrorDialog({ title: null, message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.' });
+        }
+        return;
       }
 
       if (
@@ -80,7 +99,8 @@ export default function ChangePaymentMethodButton() {
         !result.orderName ||
         !result.successUrl
       ) {
-        throw new Error('결제수단 변경 정보가 올바르지 않습니다.');
+        setErrorDialog({ title: null, message: '결제수단 변경 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+        return;
       }
 
       const billingKeyResponse = (await PortOne.requestIssueBillingKey({
@@ -102,15 +122,18 @@ export default function ChangePaymentMethodButton() {
       })) as PortOneBillingKeyResponse | undefined;
 
       if (!billingKeyResponse) {
-        throw new Error('결제수단 변경 응답이 없습니다.');
+        setErrorDialog({ title: null, message: '결제수단 변경 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+        return;
       }
 
       if (billingKeyResponse.code) {
-        throw new Error(billingKeyResponse.message || '결제수단 변경에 실패했습니다.');
+        setErrorDialog({ title: '결제수단 변경', message: getPortOneFailureMessage(billingKeyResponse.code) });
+        return;
       }
 
       if (!billingKeyResponse.billingKey) {
-        throw new Error('billingKey가 발급되지 않았습니다.');
+        setErrorDialog({ title: null, message: '결제수단 변경 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+        return;
       }
 
       const successResponse = await fetch('/api/payments/portone/billing-method/success', {
@@ -129,7 +152,14 @@ export default function ChangePaymentMethodButton() {
       const successResult = (await successResponse.json()) as { error?: string; duplicatePaymentMethod?: boolean };
 
       if (!successResponse.ok) {
-        throw new Error(successResult.error ?? '결제수단을 변경하지 못했습니다.');
+        if (successResponse.status === 401) {
+          setErrorDialog({ title: '로그인 필요', message: '로그인 후 결제수단을 변경해 주세요.' });
+        } else if (successResponse.status === 400) {
+          setErrorDialog({ title: '결제수단 확인', message: '결제수단 정보를 확인하지 못했습니다. 다시 등록해 주세요.' });
+        } else {
+          setErrorDialog({ title: null, message: '결제수단을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+        }
+        return;
       }
 
       if (successResult.duplicatePaymentMethod) {
@@ -139,13 +169,9 @@ export default function ChangePaymentMethodButton() {
       }
 
       window.location.href = '/hub/purchase?billingMethod=success';
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '결제수단 변경을 시작하지 못했습니다.');
-      } else {
-        setErrorMessage('결제수단 변경을 시작하지 못했습니다.');
-      }
-
+    } catch {
+      setErrorDialog({ title: null, message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.' });
+    } finally {
       setIsProcessing(false);
     }
   }
@@ -155,13 +181,18 @@ export default function ChangePaymentMethodButton() {
       <button type="button" className="button small action" onClick={handleChangePaymentMethod} disabled={isProcessing}>
         결제수단 변경
       </button>
-      {errorMessage ? <p role="status">{errorMessage}</p> : null}
-      {!errorMessage && billingMethodMessage ? <p role="status">{billingMethodMessage}</p> : null}
+      {billingMethodMessage ? <p role="status">{billingMethodMessage}</p> : null}
       <DuplicateBillingMethodDialog
         open={isDuplicatePaymentMethodDialogOpen}
         title="결제수단 변경"
         onClose={() => setIsDuplicatePaymentMethodDialogOpen(false)}
         onConfirm={() => (window.location.href = '/hub/purchase?billingMethod=success')}
+      />
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog ? [errorDialog.message] : []}
+        onClose={() => setErrorDialog(null)}
       />
     </div>
   );

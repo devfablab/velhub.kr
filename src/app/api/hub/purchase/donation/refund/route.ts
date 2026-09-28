@@ -128,11 +128,7 @@ export async function POST(request: NextRequest) {
       refundedAmount: nextRefundedAmount,
       refundedAt: canceledAt,
     });
-  } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '후원 환불에 실패했습니다.' }, { status: 500 });
-    }
-
+  } catch {
     return Response.json({ error: '후원 환불에 실패했습니다.' }, { status: 500 });
   }
 }
