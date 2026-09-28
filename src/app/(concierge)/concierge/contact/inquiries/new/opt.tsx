@@ -46,7 +46,17 @@ type TargetOption = {
 type AttemptedPaymentKind = 'membership' | 'subscription' | 'donation' | 'post_purchase';
 type FieldErrors = Partial<
   Record<
-    'title' | 'content' | 'pageUrl' | 'occurredAt' | 'attemptedAction' | 'actualBehavior' | 'recurrence' | 'paymentId' | 'attemptedPayment',
+    | 'title'
+    | 'content'
+    | 'pageUrl'
+    | 'occurredAt'
+    | 'attemptedAction'
+    | 'actualBehavior'
+    | 'recurrence'
+    | 'paymentId'
+    | 'attemptedPayment'
+    | 'displayedMessage'
+    | 'errorMessage',
     string
   >
 >;
@@ -206,9 +216,13 @@ export default function Opt({
           next.pageUrl = 'http 또는 https 주소를 입력해 주세요.';
         }
       }
+      if (pageUrl.length > 2000) next.pageUrl = '문제가 발생한 화면 주소는 2,000자 이하로 입력해 주세요.';
       if (!occurredAt) next.occurredAt = '문제가 발생한 날짜와 시간을 입력해 주세요.';
       if (!attemptedAction.trim()) next.attemptedAction = '하려고 했던 작업을 입력해 주세요.';
+      else if (attemptedAction.length > 2000) next.attemptedAction = '하려고 했던 작업은 2,000자 이하로 입력해 주세요.';
       if (!actualBehavior.trim()) next.actualBehavior = '실제로 발생한 문제를 입력해 주세요.';
+      else if (actualBehavior.length > 5000) next.actualBehavior = '실제로 발생한 문제는 5,000자 이하로 입력해 주세요.';
+      if (errorMessage.length > 5000) next.errorMessage = '오류 메시지는 5,000자 이하로 입력해 주세요.';
       if (!['always', 'often', 'sometimes', 'once'].includes(recurrence)) {
         next.recurrence = '문제 발생 빈도를 선택해 주세요.';
       }
@@ -216,6 +230,8 @@ export default function Opt({
     if (isPaymentProblem) {
       if (!occurredAt) next.occurredAt = '문제가 발생한 날짜와 시간을 입력해 주세요.';
       if (!actualBehavior.trim()) next.actualBehavior = '실제로 발생한 상황을 입력해 주세요.';
+      else if (actualBehavior.length > 5000) next.actualBehavior = '실제로 발생한 상황은 5,000자 이하로 입력해 주세요.';
+      if (displayedMessage.length > 5000) next.displayedMessage = '화면에 표시된 메시지는 5,000자 이하로 입력해 주세요.';
       if (paymentRequired && !paymentId) next.paymentId = '문제가 발생한 결제를 선택해 주세요.';
       if (!paymentRequired) {
         const hasTarget =
@@ -232,9 +248,22 @@ export default function Opt({
     return next;
   }
 
+  function clearFieldError(field: keyof FieldErrors) {
+    setFieldErrors((current) => ({ ...current, [field]: '' }));
+  }
+
+  function showTargetLookupError(message: string, isUnknown = false) {
+    setError(message);
+    setErrorDialog({
+      title: isUnknown ? null : '결제 대상 확인',
+      messages: [message],
+    });
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inquiryUnavailableReason) return;
+    if (!event.currentTarget.reportValidity()) return;
     setError('');
     setErrorDialog(null);
     const nextFieldErrors = validateFields();
@@ -370,14 +399,22 @@ export default function Opt({
     if (!siteQuery.trim()) return;
     setSearchingTargets(true);
     setError('');
-    const response = await fetch(
-      `/api/concierge/contact/payment-targets?scope=sites&q=${encodeURIComponent(siteQuery.trim())}&subtype=${encodeURIComponent(attemptedPaymentSubtype)}`,
-      { cache: 'no-store' },
-    );
-    const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
-    if (!response.ok) setError(result?.error ?? '사이트를 검색하지 못했습니다.');
-    else setSiteResults(result?.items ?? []);
-    setSearchingTargets(false);
+    try {
+      const response = await fetch(
+        `/api/concierge/contact/payment-targets?scope=sites&q=${encodeURIComponent(siteQuery.trim())}&subtype=${encodeURIComponent(attemptedPaymentSubtype)}`,
+        { cache: 'no-store' },
+      );
+      const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
+      if (!response.ok) {
+        showTargetLookupError(result?.error ?? '사이트를 검색하지 못했습니다.', response.status >= 500 || !result?.error);
+      } else {
+        setSiteResults(result?.items ?? []);
+      }
+    } catch {
+      showTargetLookupError('인터넷 연결을 확인한 뒤 다시 시도해 주세요.', true);
+    } finally {
+      setSearchingTargets(false);
+    }
   }
 
   async function selectSite(site: TargetOption) {
@@ -394,14 +431,22 @@ export default function Opt({
       return;
     }
     setSearchingTargets(true);
-    const response = await fetch(
-      `/api/concierge/contact/payment-targets?scope=series&siteId=${encodeURIComponent(site.id)}`,
-      { cache: 'no-store' },
-    );
-    const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
-    if (!response.ok) setError(result?.error ?? '결제 대상을 불러오지 못했습니다.');
-    else setTargetOptions(result?.items ?? []);
-    setSearchingTargets(false);
+    try {
+      const response = await fetch(
+        `/api/concierge/contact/payment-targets?scope=series&siteId=${encodeURIComponent(site.id)}`,
+        { cache: 'no-store' },
+      );
+      const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
+      if (!response.ok) {
+        showTargetLookupError(result?.error ?? '결제 대상을 불러오지 못했습니다.', response.status >= 500 || !result?.error);
+      } else {
+        setTargetOptions(result?.items ?? []);
+      }
+    } catch {
+      showTargetLookupError('인터넷 연결을 확인한 뒤 다시 시도해 주세요.', true);
+    } finally {
+      setSearchingTargets(false);
+    }
   }
 
   async function searchPosts() {
@@ -414,11 +459,19 @@ export default function Opt({
       seriesId: selectedSeriesId,
       q: postQuery.trim(),
     });
-    const response = await fetch(`/api/concierge/contact/payment-targets?${params}`, { cache: 'no-store' });
-    const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
-    if (!response.ok) setError(result?.error ?? '연재글을 검색하지 못했습니다.');
-    else setPostResults(result?.items ?? []);
-    setSearchingTargets(false);
+    try {
+      const response = await fetch(`/api/concierge/contact/payment-targets?${params}`, { cache: 'no-store' });
+      const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
+      if (!response.ok) {
+        showTargetLookupError(result?.error ?? '연재글을 검색하지 못했습니다.', response.status >= 500 || !result?.error);
+      } else {
+        setPostResults(result?.items ?? []);
+      }
+    } catch {
+      showTargetLookupError('인터넷 연결을 확인한 뒤 다시 시도해 주세요.', true);
+    } finally {
+      setSearchingTargets(false);
+    }
   }
 
   return (
@@ -451,6 +504,7 @@ export default function Opt({
                     setInquiryType(next);
                     setInquirySubtype(inquirySubtypes[next][0].value);
                     setPaymentId('');
+                    setFieldErrors({});
                   }}
                 >
                   {inquiryTypeOptions.map((option) => (
@@ -471,6 +525,7 @@ export default function Opt({
                   onChange={(event) => {
                     setInquirySubtype(event.target.value);
                     setPaymentId('');
+                    setFieldErrors({});
                   }}
                 >
                   {inquirySubtypes[inquiryType].map((option) => (
@@ -839,7 +894,12 @@ export default function Opt({
                       fullWidth
                       size="small"
                       value={displayedMessage}
-                      onChange={(event) => setDisplayedMessage(event.target.value)}
+                      onChange={(event) => {
+                        setDisplayedMessage(event.target.value);
+                        clearFieldError('displayedMessage');
+                      }}
+                      error={Boolean(fieldErrors.displayedMessage)}
+                      helperText={fieldErrors.displayedMessage}
                       slotProps={{ htmlInput: { maxLength: 5000 } }}
                     />
                   </Stack>
@@ -877,7 +937,7 @@ export default function Opt({
                         value={pageUrl}
                   onChange={(event) => {
                     setPageUrl(event.target.value);
-                    setFieldErrors((current) => ({ ...current, pageUrl: '' }));
+                    clearFieldError('pageUrl');
                   }}
                   error={Boolean(fieldErrors.pageUrl)}
                   helperText={fieldErrors.pageUrl}
@@ -891,7 +951,7 @@ export default function Opt({
                     value={occurredAt}
                     onChange={(value) => {
                       setOccurredAt(value);
-                      setFieldErrors((current) => ({ ...current, occurredAt: '' }));
+                      clearFieldError('occurredAt');
                     }}
                     ampm={false}
                     views={['year', 'month', 'day', 'hours', 'minutes']}
@@ -919,7 +979,7 @@ export default function Opt({
                   value={attemptedAction}
                   onChange={(event) => {
                     setAttemptedAction(event.target.value);
-                    setFieldErrors((current) => ({ ...current, attemptedAction: '' }));
+                    clearFieldError('attemptedAction');
                   }}
                   error={Boolean(fieldErrors.attemptedAction)}
                   helperText={fieldErrors.attemptedAction}
@@ -937,7 +997,7 @@ export default function Opt({
                   value={actualBehavior}
                   onChange={(event) => {
                     setActualBehavior(event.target.value);
-                    setFieldErrors((current) => ({ ...current, actualBehavior: '' }));
+                    clearFieldError('actualBehavior');
                   }}
                   error={Boolean(fieldErrors.actualBehavior)}
                   helperText={fieldErrors.actualBehavior}
@@ -954,7 +1014,7 @@ export default function Opt({
                   slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                   onChange={(event) => {
                     setRecurrence(event.target.value);
-                    setFieldErrors((current) => ({ ...current, recurrence: '' }));
+                    clearFieldError('recurrence');
                   }}
                   error={Boolean(fieldErrors.recurrence)}
                   helperText={fieldErrors.recurrence}
@@ -973,9 +1033,14 @@ export default function Opt({
                   minRows={2}
                   fullWidth
                   size="small"
-                  value={errorMessage}
-                  onChange={(event) => setErrorMessage(event.target.value)}
-                  slotProps={{ htmlInput: { maxLength: 5000 } }}
+                      value={errorMessage}
+                      onChange={(event) => {
+                        setErrorMessage(event.target.value);
+                        clearFieldError('errorMessage');
+                      }}
+                      error={Boolean(fieldErrors.errorMessage)}
+                      helperText={fieldErrors.errorMessage}
+                      slotProps={{ htmlInput: { maxLength: 5000 } }}
                 />
               </Stack>
             </Stack>
@@ -1019,7 +1084,7 @@ export default function Opt({
                   value={title}
                   onChange={(event) => {
                     setTitle(event.target.value);
-                    setFieldErrors((current) => ({ ...current, title: '' }));
+                    clearFieldError('title');
                   }}
                   error={Boolean(fieldErrors.title)}
                   helperText={fieldErrors.title}
@@ -1037,7 +1102,7 @@ export default function Opt({
                   value={content}
                   onChange={(event) => {
                     setContent(event.target.value);
-                    setFieldErrors((current) => ({ ...current, content: '' }));
+                    clearFieldError('content');
                   }}
                   error={Boolean(fieldErrors.content)}
                   helperText={fieldErrors.content}

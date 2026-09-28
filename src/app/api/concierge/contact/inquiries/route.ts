@@ -476,8 +476,16 @@ export async function POST(request: NextRequest) {
     const fieldErrors: InquiryFieldErrors = {
       pageUrl: !pageUrl ? '문제가 발생한 화면 주소를 입력해 주세요.' : '',
       occurredAt: !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
-      attemptedAction: !attemptedAction ? '하려고 했던 작업을 입력해 주세요.' : '',
-      actualBehavior: !actualBehavior ? '실제로 발생한 문제를 입력해 주세요.' : '',
+      attemptedAction: !attemptedAction
+        ? '하려고 했던 작업을 입력해 주세요.'
+        : attemptedAction.length > 2000
+          ? '하려고 했던 작업은 2,000자 이하로 입력해 주세요.'
+          : '',
+      actualBehavior: !actualBehavior
+        ? '실제로 발생한 문제를 입력해 주세요.'
+        : actualBehavior.length > 5000
+          ? '실제로 발생한 문제는 5,000자 이하로 입력해 주세요.'
+          : '',
       recurrence: !['always', 'often', 'sometimes', 'once'].includes(recurrence) ? '문제 발생 빈도를 선택해 주세요.' : '',
     };
     if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
@@ -485,12 +493,20 @@ export async function POST(request: NextRequest) {
   if (isPaymentProblem) {
     const fieldErrors: InquiryFieldErrors = {
       occurredAt: !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
-      actualBehavior: !actualBehavior ? '실제로 발생한 상황을 입력해 주세요.' : '',
+      actualBehavior: !actualBehavior
+        ? '실제로 발생한 상황을 입력해 주세요.'
+        : actualBehavior.length > 5000
+          ? '실제로 발생한 상황은 5,000자 이하로 입력해 주세요.'
+          : '',
       paymentId: requiresPayment && !paymentId ? '문제가 발생한 결제를 선택해 주세요.' : '',
       attemptedPayment: !requiresPayment && !attemptedPayment.kind ? '결제하려던 항목을 선택해 주세요.' : '',
     };
     if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
   }
+  if (pageUrl.length > 2000) return validationError({ pageUrl: '문제가 발생한 화면 주소는 2,000자 이하로 입력해 주세요.' });
+  if (errorMessage.length > 5000) return validationError({ errorMessage: '오류 메시지는 5,000자 이하로 입력해 주세요.' });
+  if (displayedMessage.length > 5000)
+    return validationError({ displayedMessage: '화면에 표시된 메시지는 5,000자 이하로 입력해 주세요.' });
   if (inquiryType === 'minor_purchase_cancellation' && !paymentId)
     return validationError({ paymentId: '청약취소를 요청할 결제를 선택해 주세요.' });
 

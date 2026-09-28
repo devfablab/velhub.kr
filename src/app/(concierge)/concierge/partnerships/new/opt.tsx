@@ -2,7 +2,6 @@
 
 import { ChangeEvent, FormEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, styled } from '@mui/material';
 import type { PartnershipFormInfo } from '@/lib/partnerships';
 import Anchor from '@/components/Anchor';
@@ -78,7 +77,6 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
   const [introductionFile, setIntroductionFile] = useState<File | null>(null);
   const [personalInfoAgreed, setPersonalInfoAgreed] = useState(false);
   const [noticeAgreed, setNoticeAgreed] = useState(false);
-  const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmissionLocked, setIsSubmissionLocked] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -100,7 +98,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError('');
+    if (!event.currentTarget.reportValidity()) return;
     const nextFieldErrors: FieldErrors = {
       categoryId: !categoryId ? '제휴 희망 영역을 선택해 주세요.' : '',
       organizationName: !organizationName.trim() ? '회사 또는 기관명을 입력해 주세요.' : '',
@@ -141,10 +139,14 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
         error?: string;
         errors?: string[];
         fieldErrors?: FieldErrors;
+        attachmentUnavailable?: boolean;
       } | null;
       if (!response.ok || !result) {
         if (response.status >= 500 || !result?.error) {
           setErrorDialog({ title: null, messages: ['처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'] });
+        } else if (result.attachmentUnavailable) {
+          setFieldErrors({ attachment: result.error });
+          setErrorDialog({ title: '첨부파일 등록 불가', messages: result.error.split('\n').filter(Boolean) });
         } else {
           setFieldErrors(result.fieldErrors ?? {});
           setErrorDialog({ title: '제휴 제안 내용 확인', messages: [...new Set([...(result.errors ?? []), result.error].filter(Boolean))] });
@@ -164,12 +166,6 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
   return (
     <form onSubmit={(event) => void submit(event)}>
       <Stack className="paper" gap={2}>
-        {error ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{error}</span>
-          </p>
-        ) : null}
         <div className={styles['form-group']}>
           <Stack gap={0.5}>
             <Typography variant="subtitle2">제휴 희망 영역 *</Typography>
@@ -180,7 +176,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 value={categoryId}
                 onChange={(event) => {
                   setCategoryId(event.target.value);
-                  setError('');
+                  setFieldErrors((current) => ({ ...current, categoryId: '' }));
                 }}
               >
                 <MenuItem value="" disabled>
@@ -203,7 +199,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               value={organizationName}
               onChange={(event) => {
                 setOrganizationName(event.target.value);
-                setError('');
+                setFieldErrors((current) => ({ ...current, organizationName: '' }));
               }}
               size="small"
               error={Boolean(fieldErrors.organizationName)}
@@ -220,7 +216,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               value={proposerName}
               onChange={(event) => {
                 setProposerName(event.target.value);
-                setError('');
+                setFieldErrors((current) => ({ ...current, proposerName: '' }));
               }}
               size="small"
               error={Boolean(fieldErrors.proposerName)}
@@ -236,7 +232,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               value={proposerPhone}
               onChange={(event) => {
                 setProposerPhone(event.target.value);
-                setError('');
+                setFieldErrors((current) => ({ ...current, proposerPhone: '' }));
               }}
               slotProps={{ htmlInput: { inputMode: 'tel', autoComplete: 'tel' } }}
               size="small"
@@ -258,7 +254,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 value={proposerEmail}
                 onChange={(event) => {
                   setProposerEmail(event.target.value);
-                  setError('');
+                  setFieldErrors((current) => ({ ...current, proposerEmail: '' }));
                 }}
                 slotProps={{ htmlInput: { inputMode: 'email', autoComplete: 'email' } }}
                 size="small"
@@ -266,6 +262,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 helperText={fieldErrors.proposerEmail}
               />
             )}
+            {fieldErrors.proposerEmail ? <p className="alert popup-error">{fieldErrors.proposerEmail}</p> : null}
           </Stack>
           <Stack gap={0.5}>
             <Typography variant="subtitle2">홈페이지 주소</Typography>
@@ -275,7 +272,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               value={homepageUrl}
               onChange={(event) => {
                 setHomepageUrl(event.target.value);
-                setError('');
+                setFieldErrors((current) => ({ ...current, homepageUrl: '' }));
               }}
               size="small"
               error={Boolean(fieldErrors.homepageUrl)}
@@ -292,7 +289,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             value={subject}
             onChange={(event) => {
               setSubject(event.target.value);
-              setError('');
+              setFieldErrors((current) => ({ ...current, subject: '' }));
             }}
             slotProps={{ htmlInput: { maxLength: 200 } }}
             size="small"
@@ -311,7 +308,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             value={content}
             onChange={(event) => {
               setContent(event.target.value);
-              setError('');
+              setFieldErrors((current) => ({ ...current, content: '' }));
             }}
             size="small"
             error={Boolean(fieldErrors.content)}
@@ -347,7 +344,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                     checked={personalInfoAgreed}
                     onChange={(event) => {
                       setPersonalInfoAgreed(event.target.checked);
-                      setError('');
+                      setFieldErrors((current) => ({ ...current, personalInfoAgreed: '' }));
                     }}
                   />
                 }
@@ -386,7 +383,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                     checked={noticeAgreed}
                     onChange={(event) => {
                       setNoticeAgreed(event.target.checked);
-                      setError('');
+                      setFieldErrors((current) => ({ ...current, noticeAgreed: '' }));
                     }}
                   />
                 }
