@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   const db = getSupabaseAdmin();
   const current = await getCurrentStigma();
   const formData = await request.formData().catch(() => null);
-  if (!formData) return Response.json({ error: '제휴 제안 정보를 읽지 못했습니다.' }, { status: 400 });
+  if (!formData) return validationError({ form: '제휴 제안 정보를 읽지 못했습니다.' });
 
   const categoryId = getText(formData.get('categoryId'));
   const subject = getText(formData.get('subject'));
@@ -82,7 +82,11 @@ export async function POST(request: NextRequest) {
     categoryId: !categoryId ? '제휴 희망 영역을 선택해 주세요.' : '',
     subject: !subject ? '제목을 입력해 주세요.' : subject.length > 200 ? '제목은 200자 이하로 입력해 주세요.' : '',
     content: !content ? '내용을 입력해 주세요.' : '',
-    organizationName: !organizationName ? '회사 또는 기관명을 입력해 주세요.' : '',
+    organizationName: !organizationName
+      ? '회사 또는 기관명을 입력해 주세요.'
+      : organizationName.length < 2 || organizationName.length > 50
+        ? '회사 또는 기관명은 2자 이상 50자 이하로 입력해 주세요.'
+        : '',
     proposerName: !proposerName ? '제안자명을 입력해 주세요.' : '',
     proposerPhone: !proposerPhone ? '전화번호를 입력해 주세요.' : '',
     proposerEmail: !proposerEmail ? '이메일 주소를 입력해 주세요.' : !isValidEmail(proposerEmail) ? '이메일 주소를 확인해 주세요.' : '',
@@ -93,8 +97,8 @@ export async function POST(request: NextRequest) {
   if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
 
   const categoryResult = await db.from('partnership_categories').select('id').eq('id', categoryId).maybeSingle();
-  if (categoryResult.error || !categoryResult.data)
-    return validationError({ categoryId: '제휴 희망 영역을 확인해 주세요.' });
+  if (categoryResult.error) return Response.json({ error: '제휴 희망 영역을 확인하지 못했습니다.' }, { status: 500 });
+  if (!categoryResult.data) return validationError({ categoryId: '제휴 희망 영역을 확인해 주세요.' });
 
   const files = [proposalFile, introductionFile].filter(Boolean) as File[];
   for (const file of files) {

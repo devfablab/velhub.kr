@@ -11,6 +11,13 @@ import Select from '@/components/SelectWithCheck';
 import styles from '@/app/concierge.module.sass';
 
 const acceptedFileTypes = '.pdf,.jpg,.jpeg,.png,.zip';
+const acceptedFileMimeTypes = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'application/zip',
+  'application/x-zip-compressed',
+]);
 type FieldErrors = Partial<Record<'categoryId' | 'subject' | 'content' | 'organizationName' | 'proposerName' | 'proposerPhone' | 'proposerEmail' | 'homepageUrl' | 'personalInfoAgreed' | 'noticeAgreed' | 'attachment', string>>;
 
 const VisuallyHiddenInput = styled('input')({
@@ -84,8 +91,17 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
 
   const selectFile = (setter: (file: File | null) => void) => (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
-    if (file && (file.size > 25 * 1024 * 1024 || !['pdf', 'jpg', 'jpeg', 'png', 'zip'].includes(file.name.split('.').pop()?.toLowerCase() ?? ''))) {
-      const message = file.size > 25 * 1024 * 1024 ? '첨부 파일은 각각 25MB 이하만 첨부할 수 있습니다.' : '첨부 파일은 PDF, JPG, PNG, ZIP 형식만 가능합니다.';
+    const extension = file?.name.split('.').pop()?.toLowerCase() ?? '';
+    if (
+      file &&
+      (file.size > 25 * 1024 * 1024 ||
+        !['pdf', 'jpg', 'jpeg', 'png', 'zip'].includes(extension) ||
+        Boolean(file.type && !acceptedFileMimeTypes.has(file.type)))
+    ) {
+      const message =
+        file.size > 25 * 1024 * 1024
+          ? '첨부 파일은 각각 25MB 이하만 첨부할 수 있습니다.'
+          : '첨부 파일은 PDF, JPG, PNG, ZIP 형식만 가능합니다.';
       setFieldErrors((current) => ({ ...current, attachment: message }));
       setErrorDialog({ title: '첨부 파일 확인', messages: [message] });
       event.target.value = '';
@@ -101,7 +117,11 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
     if (!event.currentTarget.reportValidity()) return;
     const nextFieldErrors: FieldErrors = {
       categoryId: !categoryId ? '제휴 희망 영역을 선택해 주세요.' : '',
-      organizationName: !organizationName.trim() ? '회사 또는 기관명을 입력해 주세요.' : '',
+      organizationName: !organizationName.trim()
+        ? '회사 또는 기관명을 입력해 주세요.'
+        : organizationName.trim().length < 2 || organizationName.trim().length > 50
+          ? '회사 또는 기관명은 2자 이상 50자 이하로 입력해 주세요.'
+          : '',
       proposerName: !proposerName.trim() ? '제안자명을 입력해 주세요.' : '',
       proposerPhone: !proposerPhone.trim() ? '전화번호를 입력해 주세요.' : '',
       proposerEmail: !proposerEmail.trim() ? '이메일 주소를 입력해 주세요.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(proposerEmail.trim()) ? '이메일 주소를 확인해 주세요.' : '',
@@ -201,6 +221,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 setOrganizationName(event.target.value);
                 setFieldErrors((current) => ({ ...current, organizationName: '' }));
               }}
+              slotProps={{ htmlInput: { minLength: 2, maxLength: 50 } }}
               size="small"
               error={Boolean(fieldErrors.organizationName)}
               helperText={fieldErrors.organizationName}
@@ -262,7 +283,9 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 helperText={fieldErrors.proposerEmail}
               />
             )}
-            {fieldErrors.proposerEmail ? <p className="alert popup-error">{fieldErrors.proposerEmail}</p> : null}
+            {formInfo.isLoggedIn && formInfo.paymentEmail && fieldErrors.proposerEmail ? (
+              <p className="alert popup-error">{fieldErrors.proposerEmail}</p>
+            ) : null}
           </Stack>
           <Stack gap={0.5}>
             <Typography variant="subtitle2">홈페이지 주소</Typography>
