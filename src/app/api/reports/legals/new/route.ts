@@ -643,11 +643,7 @@ export async function POST(request: Request) {
     }
 
     return Response.json({ ok: true });
-  } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '신고를 접수하지 못했습니다.' }, { status: 500 });
-    }
-
+  } catch {
     return Response.json({ error: '신고를 접수하지 못했습니다.' }, { status: 500 });
   }
 }

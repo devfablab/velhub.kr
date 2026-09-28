@@ -8,6 +8,13 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 
 const MINOR_CANCELLATION_COOLDOWN_MS = 15 * 24 * 60 * 60 * 1000;
 
+type InquiryFieldErrors = Record<string, string>;
+
+function validationError(fieldErrors: InquiryFieldErrors) {
+  const errors = [...new Set(Object.values(fieldErrors).filter(Boolean))];
+  return Response.json({ error: errors[0] ?? '입력 정보를 확인해 주세요.', errors, fieldErrors }, { status: 400 });
+}
+
 function getText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -452,47 +459,50 @@ export async function POST(request: NextRequest) {
     body?.environment && typeof body.environment === 'object' ? (body.environment as Record<string, unknown>) : {};
   const occurredAtDate = occurredAt ? new Date(occurredAt) : null;
 
-  if (!isInquiryType(inquiryType)) return Response.json({ error: '문의 유형을 선택해 주세요.' }, { status: 400 });
+  if (!isInquiryType(inquiryType)) return validationError({ inquiryType: '문의 유형을 선택해 주세요.' });
   if (!inquirySubtypes[inquiryType].some((option) => option.value === inquirySubtype))
-    return Response.json({ error: '문의 세부 유형을 선택해 주세요.' }, { status: 400 });
+    return validationError({ inquirySubtype: '문의 세부 유형을 선택해 주세요.' });
   const isBug = inquiryType === 'bug_report';
   const isPaymentProblem = inquiryType === 'payment_refund_error';
   const requiresPayment = isPaymentProblem && inquirySubtype !== 'payment_declined';
-  if (!isBug && !isPaymentProblem && (!title || title.length > 120 || !content || content.length > 10000))
-    return Response.json({ error: '제목 또는 문의 내용을 확인해 주세요.' }, { status: 400 });
-  if (
-    isBug &&
-    (!pageUrl ||
-      !occurredAtDate ||
-      Number.isNaN(occurredAtDate.getTime()) ||
-      !attemptedAction ||
-      !actualBehavior ||
-      !['always', 'often', 'sometimes', 'once'].includes(recurrence))
-  )
-    return Response.json({ error: '에러 / 버그 발생 정보를 모두 입력해 주세요.' }, { status: 400 });
-  if (
-    isPaymentProblem &&
-    (!occurredAtDate ||
-      Number.isNaN(occurredAtDate.getTime()) ||
-      !actualBehavior ||
-      (requiresPayment ? !paymentId : !attemptedPayment.kind))
-  )
-    return Response.json({ error: '결제 / 환불 문제 정보를 모두 입력해 주세요.' }, { status: 400 });
+  if (!isBug && !isPaymentProblem) {
+    const fieldErrors: InquiryFieldErrors = {
+      title: !title ? '제목을 입력해 주세요.' : title.length > 120 ? '제목은 120자 이하로 입력해 주세요.' : '',
+      content: !content ? '문의 내용을 입력해 주세요.' : content.length > 10000 ? '문의 내용은 10,000자 이하로 입력해 주세요.' : '',
+    };
+    if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
+  }
+  if (isBug) {
+    const fieldErrors: InquiryFieldErrors = {
+      pageUrl: !pageUrl ? '문제가 발생한 화면 주소를 입력해 주세요.' : '',
+      occurredAt: !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
+      attemptedAction: !attemptedAction ? '하려고 했던 작업을 입력해 주세요.' : '',
+      actualBehavior: !actualBehavior ? '실제로 발생한 문제를 입력해 주세요.' : '',
+      recurrence: !['always', 'often', 'sometimes', 'once'].includes(recurrence) ? '문제 발생 빈도를 선택해 주세요.' : '',
+    };
+    if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
+  }
+  if (isPaymentProblem) {
+    const fieldErrors: InquiryFieldErrors = {
+      occurredAt: !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
+      actualBehavior: !actualBehavior ? '실제로 발생한 상황을 입력해 주세요.' : '',
+      paymentId: requiresPayment && !paymentId ? '문제가 발생한 결제를 선택해 주세요.' : '',
+      attemptedPayment: !requiresPayment && !attemptedPayment.kind ? '결제하려던 항목을 선택해 주세요.' : '',
+    };
+    if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
+  }
   if (inquiryType === 'minor_purchase_cancellation' && !paymentId)
-    return Response.json({ error: '청약취소를 요청할 결제를 선택해 주세요.' }, { status: 400 });
+    return validationError({ paymentId: '청약취소를 요청할 결제를 선택해 주세요.' });
 
   const db = getSupabaseAdmin();
   let attemptedPaymentTarget: Awaited<ReturnType<typeof resolveAttemptedPayment>> | null = null;
   if (isPaymentProblem && !requiresPayment) {
     if (attemptedPayment.kind === 'donation' && (!attemptedPayment.amount || attemptedPayment.amount <= 0))
-      return Response.json({ error: '후원하려던 금액을 입력해 주세요.' }, { status: 400 });
+      return validationError({ attemptedPayment: '후원하려던 금액을 입력해 주세요.' });
     try {
       attemptedPaymentTarget = await resolveAttemptedPayment(attemptedPayment);
     } catch (error) {
-      return Response.json(
-        { error: error instanceof Error ? error.message : '결제하려던 항목을 확인해 주세요.' },
-        { status: 400 },
-      );
+      return validationError({ attemptedPayment: error instanceof Error ? error.message : '결제하려던 항목을 확인해 주세요.' });
     }
   }
   if (inquiryType === 'minor_purchase_cancellation') {
@@ -553,7 +563,7 @@ export async function POST(request: NextRequest) {
       const url = new URL(pageUrl);
       if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('invalid protocol');
     } catch {
-      return Response.json({ error: '문제가 발생한 화면 주소를 확인해 주세요.' }, { status: 400 });
+      return validationError({ pageUrl: '문제가 발생한 화면 주소를 확인해 주세요.' });
     }
   }
   const inquiryTitle = isBug || isPaymentProblem ? null : title;

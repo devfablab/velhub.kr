@@ -6,11 +6,13 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, styled } from '@mui/material';
 import type { PartnershipFormInfo } from '@/lib/partnerships';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import styles from '@/app/concierge.module.sass';
 
 const acceptedFileTypes = '.pdf,.jpg,.jpeg,.png,.zip';
+type FieldErrors = Partial<Record<'categoryId' | 'subject' | 'content' | 'organizationName' | 'proposerName' | 'proposerPhone' | 'proposerEmail' | 'homepageUrl' | 'personalInfoAgreed' | 'noticeAgreed' | 'attachment', string>>;
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -79,15 +81,44 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmissionLocked, setIsSubmissionLocked] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(null);
 
   const selectFile = (setter: (file: File | null) => void) => (event: ChangeEvent<HTMLInputElement>) => {
-    setter(event.target.files?.[0] ?? null);
+    const file = event.target.files?.[0] ?? null;
+    if (file && (file.size > 25 * 1024 * 1024 || !['pdf', 'jpg', 'jpeg', 'png', 'zip'].includes(file.name.split('.').pop()?.toLowerCase() ?? ''))) {
+      const message = file.size > 25 * 1024 * 1024 ? '첨부 파일은 각각 25MB 이하만 첨부할 수 있습니다.' : '첨부 파일은 PDF, JPG, PNG, ZIP 형식만 가능합니다.';
+      setFieldErrors((current) => ({ ...current, attachment: message }));
+      setErrorDialog({ title: '첨부 파일 확인', messages: [message] });
+      event.target.value = '';
+      return;
+    }
+    setter(file);
+    setFieldErrors((current) => ({ ...current, attachment: '' }));
     event.target.value = '';
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    const nextFieldErrors: FieldErrors = {
+      categoryId: !categoryId ? '제휴 희망 영역을 선택해 주세요.' : '',
+      organizationName: !organizationName.trim() ? '회사 또는 기관명을 입력해 주세요.' : '',
+      proposerName: !proposerName.trim() ? '제안자명을 입력해 주세요.' : '',
+      proposerPhone: !proposerPhone.trim() ? '전화번호를 입력해 주세요.' : '',
+      proposerEmail: !proposerEmail.trim() ? '이메일 주소를 입력해 주세요.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(proposerEmail.trim()) ? '이메일 주소를 확인해 주세요.' : '',
+      homepageUrl: homepageUrl && !/^https?:\/\//i.test(homepageUrl.trim()) ? 'http 또는 https 주소를 입력해 주세요.' : '',
+      subject: !subject.trim() ? '제목을 입력해 주세요.' : subject.trim().length > 200 ? '제목은 200자 이하로 입력해 주세요.' : '',
+      content: !content.trim() ? '내용을 입력해 주세요.' : '',
+      personalInfoAgreed: !personalInfoAgreed ? '개인정보 수집 및 이용에 동의해 주세요.' : '',
+      noticeAgreed: !noticeAgreed ? '제휴 제안 유의사항을 확인해 주세요.' : '',
+    };
+    const messages = Object.values(nextFieldErrors).filter((message): message is string => Boolean(message));
+    setFieldErrors(nextFieldErrors);
+    if (messages.length) {
+      setErrorDialog({ title: '제휴 제안 내용 확인', messages });
+      return;
+    }
     setIsSubmitting(true);
     setIsSubmissionLocked(true);
     const data = new FormData();
@@ -108,11 +139,22 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
       const result = (await response.json().catch(() => null)) as {
         responseChannel?: 'portal' | 'email';
         error?: string;
+        errors?: string[];
+        fieldErrors?: FieldErrors;
       } | null;
-      if (!response.ok || !result) throw new Error(result?.error ?? '제휴 제안을 보내지 못했습니다.');
+      if (!response.ok || !result) {
+        if (response.status >= 500 || !result?.error) {
+          setErrorDialog({ title: null, messages: ['처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'] });
+        } else {
+          setFieldErrors(result.fieldErrors ?? {});
+          setErrorDialog({ title: '제휴 제안 내용 확인', messages: [...new Set([...(result.errors ?? []), result.error].filter(Boolean))] });
+        }
+        setIsSubmissionLocked(false);
+        return;
+      }
       router.push(result.responseChannel === 'email' ? '/concierge/partnerships/done' : '/concierge/partnerships');
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '제휴 제안을 보내지 못했습니다.');
+    } catch {
+      setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
       setIsSubmissionLocked(false);
     } finally {
       setIsSubmitting(false);
@@ -151,6 +193,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 ))}
               </Select>
             </FormControl>
+            {fieldErrors.categoryId ? <p className="alert popup-error">{fieldErrors.categoryId}</p> : null}
           </Stack>
           <Stack gap={0.5}>
             <Typography variant="subtitle2">회사/기관명 *</Typography>
@@ -163,6 +206,8 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 setError('');
               }}
               size="small"
+              error={Boolean(fieldErrors.organizationName)}
+              helperText={fieldErrors.organizationName}
             />
           </Stack>
         </div>
@@ -178,6 +223,8 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 setError('');
               }}
               size="small"
+              error={Boolean(fieldErrors.proposerName)}
+              helperText={fieldErrors.proposerName}
             />
           </Stack>
           <Stack gap={0.5}>
@@ -193,6 +240,8 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               }}
               slotProps={{ htmlInput: { inputMode: 'tel', autoComplete: 'tel' } }}
               size="small"
+              error={Boolean(fieldErrors.proposerPhone)}
+              helperText={fieldErrors.proposerPhone}
             />
           </Stack>
         </div>
@@ -213,6 +262,8 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 }}
                 slotProps={{ htmlInput: { inputMode: 'email', autoComplete: 'email' } }}
                 size="small"
+                error={Boolean(fieldErrors.proposerEmail)}
+                helperText={fieldErrors.proposerEmail}
               />
             )}
           </Stack>
@@ -227,6 +278,8 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 setError('');
               }}
               size="small"
+              error={Boolean(fieldErrors.homepageUrl)}
+              helperText={fieldErrors.homepageUrl}
             />
           </Stack>
         </div>
@@ -243,6 +296,8 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             }}
             slotProps={{ htmlInput: { maxLength: 200 } }}
             size="small"
+            error={Boolean(fieldErrors.subject)}
+            helperText={fieldErrors.subject}
           />
         </Stack>
         <Stack gap={0.5}>
@@ -259,7 +314,8 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               setError('');
             }}
             size="small"
-            helperText="제안자의 권리 보호를 위해 특허출원되지 않은 기술은 핵심 기술에 대한 상세한 설명을 제외하고 작성해 주십시오."
+            error={Boolean(fieldErrors.content)}
+            helperText={fieldErrors.content || '제안자의 권리 보호를 위해 특허출원되지 않은 기술은 핵심 기술에 대한 상세한 설명을 제외하고 작성해 주십시오.'}
           />
         </Stack>
 
@@ -281,6 +337,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             />
           </div>
         ) : null}
+        {fieldErrors.attachment ? <p className="alert popup-error">{fieldErrors.attachment}</p> : null}
         <Stack gap={2}>
           <Stack>
             <div>
@@ -364,6 +421,9 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             </div>
           </Stack>
         </Stack>
+        {(fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed) ? (
+          <p className="alert popup-error">{fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed}</p>
+        ) : null}
         {!formInfo.attachmentAvailable ? (
           <Typography color="warning.main" sx={{ whiteSpace: 'pre-line' }}>
             현재 첨부파일이 포함된 제휴 제안은 일시적으로 접수할 수 없습니다.{`\n`}
@@ -379,6 +439,12 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
           </button>
         </Stack>
       </Stack>
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog?.messages ?? []}
+        onClose={() => setErrorDialog(null)}
+      />
     </form>
   );
 }

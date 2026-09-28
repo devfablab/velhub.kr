@@ -29,6 +29,11 @@ function isValidHomepage(value: string) {
   }
 }
 
+function validationError(fieldErrors: Record<string, string>) {
+  const errors = [...new Set(Object.values(fieldErrors).filter(Boolean))];
+  return Response.json({ error: errors[0] ?? '입력 정보를 확인해 주세요.', errors, fieldErrors }, { status: 400 });
+}
+
 export async function GET(request: NextRequest) {
   if (request.nextUrl.searchParams.get('form') !== 'true') {
     const result = await getPartnershipProposals();
@@ -73,24 +78,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (!categoryId || !subject || !content || !organizationName || !proposerName || !proposerPhone || !proposerEmail)
-    return Response.json({ error: '필수 항목을 모두 입력해 주세요.' }, { status: 400 });
-  if (subject.length > 200) return Response.json({ error: '제목은 200자 이하로 입력해 주세요.' }, { status: 400 });
-  if (!isValidEmail(proposerEmail)) return Response.json({ error: '이메일 주소를 확인해 주세요.' }, { status: 400 });
-  if (!isValidHomepage(homepageUrl)) return Response.json({ error: '홈페이지 주소를 확인해 주세요.' }, { status: 400 });
-  if (!personalInfoAgreed || !noticeAgreed)
-    return Response.json({ error: '필수 동의 항목을 확인해 주세요.' }, { status: 400 });
+  const fieldErrors = {
+    categoryId: !categoryId ? '제휴 희망 영역을 선택해 주세요.' : '',
+    subject: !subject ? '제목을 입력해 주세요.' : subject.length > 200 ? '제목은 200자 이하로 입력해 주세요.' : '',
+    content: !content ? '내용을 입력해 주세요.' : '',
+    organizationName: !organizationName ? '회사 또는 기관명을 입력해 주세요.' : '',
+    proposerName: !proposerName ? '제안자명을 입력해 주세요.' : '',
+    proposerPhone: !proposerPhone ? '전화번호를 입력해 주세요.' : '',
+    proposerEmail: !proposerEmail ? '이메일 주소를 입력해 주세요.' : !isValidEmail(proposerEmail) ? '이메일 주소를 확인해 주세요.' : '',
+    homepageUrl: !isValidHomepage(homepageUrl) ? '홈페이지 주소를 확인해 주세요.' : '',
+    personalInfoAgreed: !personalInfoAgreed ? '개인정보 수집 및 이용에 동의해 주세요.' : '',
+    noticeAgreed: !noticeAgreed ? '제휴 제안 유의사항을 확인해 주세요.' : '',
+  };
+  if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
 
   const categoryResult = await db.from('partnership_categories').select('id').eq('id', categoryId).maybeSingle();
   if (categoryResult.error || !categoryResult.data)
-    return Response.json({ error: '제휴 희망 영역을 확인해 주세요.' }, { status: 400 });
+    return validationError({ categoryId: '제휴 희망 영역을 확인해 주세요.' });
 
   const files = [proposalFile, introductionFile].filter(Boolean) as File[];
   for (const file of files) {
     if (file.size > PARTNERSHIP_ATTACHMENT_MAX_BYTES)
-      return Response.json({ error: '첨부 파일은 각각 25MB 이하만 첨부할 수 있습니다.' }, { status: 400 });
+      return validationError({ attachment: '첨부 파일은 각각 25MB 이하만 첨부할 수 있습니다.' });
     if (!isPartnershipAttachment(file))
-      return Response.json({ error: '첨부 파일은 PDF, JPG, PNG, ZIP 형식만 가능합니다.' }, { status: 400 });
+      return validationError({ attachment: '첨부 파일은 PDF, JPG, PNG, ZIP 형식만 가능합니다.' });
   }
 
   const responseChannel = files.length ? 'email' : 'portal';
@@ -116,11 +127,8 @@ export async function POST(request: NextRequest) {
         homepageUrl: homepageUrl || null,
         files,
       });
-    } catch (error) {
-      return Response.json(
-        { error: error instanceof Error ? error.message : '제휴 제안 메일을 보내지 못했습니다.' },
-        { status: 500 },
-      );
+    } catch {
+      return Response.json({ error: '제휴 제안 메일을 보내지 못했습니다.' }, { status: 500 });
     }
   }
 

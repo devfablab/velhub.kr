@@ -25,6 +25,7 @@ import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { MEMBERSHIP_FEATURES, type MembershipFeatureKey, type MembershipType } from '@/lib/memberships/catalog';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 
@@ -43,6 +44,12 @@ type TargetOption = {
 };
 
 type AttemptedPaymentKind = 'membership' | 'subscription' | 'donation' | 'post_purchase';
+type FieldErrors = Partial<
+  Record<
+    'title' | 'content' | 'pageUrl' | 'occurredAt' | 'attemptedAction' | 'actualBehavior' | 'recurrence' | 'paymentId' | 'attemptedPayment',
+    string
+  >
+>;
 
 const recurrenceOptions = [
   { value: 'always', label: '항상 발생' },
@@ -143,6 +150,8 @@ export default function Opt({
   const [evidence, setEvidence] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(null);
 
   useEffect(() => {
     if (!isAutoMinorCancellation) return;
@@ -179,10 +188,62 @@ export default function Opt({
       ? paymentLoadError || (!payments.length ? '문의할 수 있는 결제 내역이 없습니다.' : '')
       : '';
 
+  function validateFields() {
+    const next: FieldErrors = {};
+    if (!isBug && !isPaymentProblem) {
+      if (!title.trim()) next.title = '제목을 입력해 주세요.';
+      else if (title.trim().length > 120) next.title = '제목은 120자 이하로 입력해 주세요.';
+      if (!content.trim()) next.content = '문의 내용을 입력해 주세요.';
+      else if (content.trim().length > 10000) next.content = '문의 내용은 10,000자 이하로 입력해 주세요.';
+    }
+    if (isBug) {
+      if (!pageUrl.trim()) next.pageUrl = '문제가 발생한 화면 주소를 입력해 주세요.';
+      else {
+        try {
+          const url = new URL(pageUrl);
+          if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+        } catch {
+          next.pageUrl = 'http 또는 https 주소를 입력해 주세요.';
+        }
+      }
+      if (!occurredAt) next.occurredAt = '문제가 발생한 날짜와 시간을 입력해 주세요.';
+      if (!attemptedAction.trim()) next.attemptedAction = '하려고 했던 작업을 입력해 주세요.';
+      if (!actualBehavior.trim()) next.actualBehavior = '실제로 발생한 문제를 입력해 주세요.';
+      if (!['always', 'often', 'sometimes', 'once'].includes(recurrence)) {
+        next.recurrence = '문제 발생 빈도를 선택해 주세요.';
+      }
+    }
+    if (isPaymentProblem) {
+      if (!occurredAt) next.occurredAt = '문제가 발생한 날짜와 시간을 입력해 주세요.';
+      if (!actualBehavior.trim()) next.actualBehavior = '실제로 발생한 상황을 입력해 주세요.';
+      if (paymentRequired && !paymentId) next.paymentId = '문제가 발생한 결제를 선택해 주세요.';
+      if (!paymentRequired) {
+        const hasTarget =
+          attemptedPaymentKind === 'membership'
+            ? attemptedFeatureKeys.length > 0
+            : Boolean(selectedSite && (!needsSeries || selectedSeriesId) && (!needsPost || selectedPostId));
+        if (!hasTarget) next.attemptedPayment = '결제하려던 항목을 선택해 주세요.';
+        if (attemptedPaymentKind === 'donation' && !parseCurrencyInput(attemptedAmount)) {
+          next.attemptedPayment = '후원하려던 금액을 입력해 주세요.';
+        }
+      }
+    }
+    if (isMinorCancellation && !paymentId) next.paymentId = '청약취소를 요청할 결제를 선택해 주세요.';
+    return next;
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inquiryUnavailableReason) return;
     setError('');
+    setErrorDialog(null);
+    const nextFieldErrors = validateFields();
+    const messages = Object.values(nextFieldErrors).filter((message): message is string => Boolean(message));
+    setFieldErrors(nextFieldErrors);
+    if (messages.length) {
+      setErrorDialog({ title: '문의 내용 확인', messages });
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -224,10 +285,23 @@ export default function Opt({
       const result = (await response.json().catch(() => null)) as {
         inquiry?: { id: string };
         error?: string;
+        errors?: string[];
+        fieldErrors?: FieldErrors;
       } | null;
 
       if (!response.ok || !result?.inquiry) {
-        throw new Error(result?.error ?? '문의 접수에 실패했습니다.');
+        if (response.status >= 500 || !result?.error) {
+          setErrorDialog({ title: null, messages: ['처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'] });
+        } else {
+          const responseFieldErrors = result.fieldErrors ?? {};
+          setFieldErrors(responseFieldErrors);
+          setErrorDialog({
+            title: '문의 내용 확인',
+            messages: [...new Set([...(result.errors ?? []), result.error].filter(Boolean))],
+          });
+        }
+        setIsSubmitting(false);
+        return;
       }
 
       if (evidence && (isBug || isPaymentProblem)) {
@@ -239,14 +313,14 @@ export default function Opt({
         });
         await uploadResponse.json().catch(() => null);
         if (!uploadResponse.ok) {
-          router.push(`/concierge/contact/inquiries/${result.inquiry.id}?attachment=failed`);
+          router.push('/concierge/contact/inquiries/done?attachment=failed');
           return;
         }
       }
 
-      router.push(`/concierge/contact/inquiries/${result.inquiry.id}`);
-    } catch (unknownError) {
-      setError(unknownError instanceof Error ? unknownError.message : '문의 접수에 실패했습니다.');
+      router.push('/concierge/contact/inquiries/done');
+    } catch {
+      setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
       setIsSubmitting(false);
     }
   }
@@ -254,9 +328,19 @@ export default function Opt({
   function chooseEvidence(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0] ?? null;
     setError('');
+    if (selectedFile && !['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(selectedFile.type)) {
+      setEvidence(null);
+      const message = '첨부 파일은 PDF, JPG, PNG 또는 WEBP 파일만 등록할 수 있습니다.';
+      setError(message);
+      setErrorDialog({ title: '첨부 파일 확인', messages: [message] });
+      event.target.value = '';
+      return;
+    }
     if (selectedFile && selectedFile.size > 1024 * 1024) {
       setEvidence(null);
-      setError('첨부 파일은 1MB 이하만 가능합니다.');
+      const message = '첨부 파일은 1MB 이하만 가능합니다.';
+      setError(message);
+      setErrorDialog({ title: '첨부 파일 확인', messages: [message] });
       event.target.value = '';
       return;
     }
@@ -423,11 +507,18 @@ export default function Opt({
               ) : cancellationPayments.length ? (
                 <Stack>
                   <Typography variant="subtitle2">청약취소를 요청할 결제</Typography>
-                  <RadioGroup value={paymentId} onChange={(event) => setPaymentId(event.target.value)}>
+                  <RadioGroup
+                    value={paymentId}
+                    onChange={(event) => {
+                      setPaymentId(event.target.value);
+                      setFieldErrors((current) => ({ ...current, paymentId: '' }));
+                    }}
+                  >
                     {cancellationPayments.map((payment) => (
                       <FormControlLabel key={payment.id} value={payment.id} control={<Radio />} label={payment.label} />
                     ))}
                   </RadioGroup>
+                  {fieldErrors.paymentId ? <p className="alert popup-error">{fieldErrors.paymentId}</p> : null}
                 </Stack>
               ) : null}
             </Stack>
@@ -445,16 +536,25 @@ export default function Opt({
                 <Stack gap={1}>
                   <Typography variant="subtitle2">문제가 발생한 결제</Typography>
                   {payments.length ? (
-                    <RadioGroup value={paymentId} onChange={(event) => setPaymentId(event.target.value)}>
-                      {payments.map((payment) => (
-                        <FormControlLabel
-                          key={payment.id}
-                          value={payment.id}
-                          control={<Radio />}
-                          label={payment.label}
-                        />
-                      ))}
-                    </RadioGroup>
+                    <>
+                      <RadioGroup
+                        value={paymentId}
+                        onChange={(event) => {
+                          setPaymentId(event.target.value);
+                          setFieldErrors((current) => ({ ...current, paymentId: '' }));
+                        }}
+                      >
+                        {payments.map((payment) => (
+                          <FormControlLabel
+                            key={payment.id}
+                            value={payment.id}
+                            control={<Radio />}
+                            label={payment.label}
+                          />
+                        ))}
+                      </RadioGroup>
+                      {fieldErrors.paymentId ? <p className="alert popup-error">{fieldErrors.paymentId}</p> : null}
+                    </>
                   ) : null}
                 </Stack>
               ) : (
@@ -699,6 +799,7 @@ export default function Opt({
                   ) : null}
                 </Stack>
               )}
+              {fieldErrors.attemptedPayment ? <p className="alert popup-error">{fieldErrors.attemptedPayment}</p> : null}
               {inquiryUnavailableReason ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />
@@ -711,7 +812,10 @@ export default function Opt({
                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                       <DateTimePicker
                         value={occurredAt}
-                        onChange={setOccurredAt}
+                        onChange={(value) => {
+                          setOccurredAt(value);
+                          setFieldErrors((current) => ({ ...current, occurredAt: '' }));
+                        }}
                         ampm={false}
                         views={['year', 'month', 'day', 'hours', 'minutes']}
                         format="yyyy년 MM월 dd일 HH시 mm분"
@@ -720,6 +824,8 @@ export default function Opt({
                             required: true,
                             fullWidth: true,
                             size: 'small',
+                            error: Boolean(fieldErrors.occurredAt),
+                            helperText: fieldErrors.occurredAt,
                           },
                         }}
                       />
@@ -746,7 +852,12 @@ export default function Opt({
                       fullWidth
                       size="small"
                       value={actualBehavior}
-                      onChange={(event) => setActualBehavior(event.target.value)}
+                      onChange={(event) => {
+                        setActualBehavior(event.target.value);
+                        setFieldErrors((current) => ({ ...current, actualBehavior: '' }));
+                      }}
+                      error={Boolean(fieldErrors.actualBehavior)}
+                      helperText={fieldErrors.actualBehavior}
                       slotProps={{ htmlInput: { maxLength: 5000 } }}
                     />
                   </Stack>
@@ -763,8 +874,13 @@ export default function Opt({
                   type="url"
                   fullWidth
                   size="small"
-                  value={pageUrl}
-                  onChange={(event) => setPageUrl(event.target.value)}
+                        value={pageUrl}
+                  onChange={(event) => {
+                    setPageUrl(event.target.value);
+                    setFieldErrors((current) => ({ ...current, pageUrl: '' }));
+                  }}
+                  error={Boolean(fieldErrors.pageUrl)}
+                  helperText={fieldErrors.pageUrl}
                   slotProps={{ htmlInput: { maxLength: 2000 } }}
                 />
               </Stack>
@@ -773,7 +889,10 @@ export default function Opt({
                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                   <DateTimePicker
                     value={occurredAt}
-                    onChange={setOccurredAt}
+                    onChange={(value) => {
+                      setOccurredAt(value);
+                      setFieldErrors((current) => ({ ...current, occurredAt: '' }));
+                    }}
                     ampm={false}
                     views={['year', 'month', 'day', 'hours', 'minutes']}
                     format="yyyy년 MM월 dd일 HH시 mm분"
@@ -782,6 +901,8 @@ export default function Opt({
                         required: true,
                         fullWidth: true,
                         size: 'small',
+                        error: Boolean(fieldErrors.occurredAt),
+                        helperText: fieldErrors.occurredAt,
                       },
                     }}
                   />
@@ -796,7 +917,12 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={attemptedAction}
-                  onChange={(event) => setAttemptedAction(event.target.value)}
+                  onChange={(event) => {
+                    setAttemptedAction(event.target.value);
+                    setFieldErrors((current) => ({ ...current, attemptedAction: '' }));
+                  }}
+                  error={Boolean(fieldErrors.attemptedAction)}
+                  helperText={fieldErrors.attemptedAction}
                   slotProps={{ htmlInput: { maxLength: 2000 } }}
                 />
               </Stack>
@@ -809,7 +935,12 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={actualBehavior}
-                  onChange={(event) => setActualBehavior(event.target.value)}
+                  onChange={(event) => {
+                    setActualBehavior(event.target.value);
+                    setFieldErrors((current) => ({ ...current, actualBehavior: '' }));
+                  }}
+                  error={Boolean(fieldErrors.actualBehavior)}
+                  helperText={fieldErrors.actualBehavior}
                   slotProps={{ htmlInput: { maxLength: 5000 } }}
                 />
               </Stack>
@@ -821,7 +952,12 @@ export default function Opt({
                   size="small"
                   value={recurrence}
                   slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
-                  onChange={(event) => setRecurrence(event.target.value)}
+                  onChange={(event) => {
+                    setRecurrence(event.target.value);
+                    setFieldErrors((current) => ({ ...current, recurrence: '' }));
+                  }}
+                  error={Boolean(fieldErrors.recurrence)}
+                  helperText={fieldErrors.recurrence}
                 >
                   {recurrenceOptions.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
@@ -881,7 +1017,12 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={title}
-                  onChange={(event) => setTitle(event.target.value)}
+                  onChange={(event) => {
+                    setTitle(event.target.value);
+                    setFieldErrors((current) => ({ ...current, title: '' }));
+                  }}
+                  error={Boolean(fieldErrors.title)}
+                  helperText={fieldErrors.title}
                   slotProps={{ htmlInput: { maxLength: 120 } }}
                 />
               </Stack>
@@ -894,7 +1035,12 @@ export default function Opt({
                   fullWidth
                   size="small"
                   value={content}
-                  onChange={(event) => setContent(event.target.value)}
+                  onChange={(event) => {
+                    setContent(event.target.value);
+                    setFieldErrors((current) => ({ ...current, content: '' }));
+                  }}
+                  error={Boolean(fieldErrors.content)}
+                  helperText={fieldErrors.content}
                   slotProps={{ htmlInput: { maxLength: 10000 } }}
                 />
               </Stack>
@@ -918,6 +1064,12 @@ export default function Opt({
           ) : null}
         </Stack>
       </Stack>
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog?.messages ?? []}
+        onClose={() => setErrorDialog(null)}
+      />
     </form>
   );
 }
