@@ -41,6 +41,24 @@ type UploadedAttachment = {
   size: number;
 };
 
+function validationError(fieldErrors: Record<string, string>) {
+  const errors = [...new Set(Object.values(fieldErrors).filter(Boolean))];
+  return Response.json({ error: errors[0] ?? '입력 정보를 확인해 주세요.', errors, fieldErrors }, { status: 400 });
+}
+
+function isValidUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 const legalTypes = ['illegal_info', 'illegal_filming', 'privacy'] as const;
 
 const illegalInfoRequestTypes = ['illegal_info', 'false_manipulated_info'] as const;
@@ -533,9 +551,7 @@ export async function POST(request: Request) {
     const commentId = getFormStringValue(formData, 'commentId');
     const reportUrl = getFormStringValue(formData, 'reportUrl');
 
-    if (!isLegalType(legalType)) {
-      return Response.json({ error: '신고 유형을 선택해 주세요.' }, { status: 400 });
-    }
+    if (!isLegalType(legalType)) return validationError({ legalType: '신고 유형을 선택해 주세요.' });
 
     const targetType = inferTargetType({
       targetTypeValue,
@@ -545,9 +561,9 @@ export async function POST(request: Request) {
       commentId,
     });
 
-    if (!targetType && !reportUrl) {
-      return Response.json({ error: '문제가 있는 링크를 입력해 주세요.' }, { status: 400 });
-    }
+    if (!targetType && !reportUrl) return validationError({ reportUrl: '문제가 있는 링크를 입력해 주세요.' });
+    if (!targetType && !isValidUrl(reportUrl ?? ''))
+      return validationError({ reportUrl: 'http 또는 https 주소를 입력해 주세요.' });
 
     if (legalType === 'privacy' && targetType) {
       formData.set('privacyReportType', targetType === 'post' || targetType === 'comment' ? targetType : 'other');
@@ -556,26 +572,19 @@ export async function POST(request: Request) {
     const email = getFormStringValue(formData, 'email');
     const phone = getFormStringValue(formData, 'phone');
 
-    if (!email) {
-      return Response.json({ error: '이메일을 입력해 주세요.' }, { status: 400 });
-    }
+    if (!email) return validationError({ email: '이메일을 입력해 주세요.' });
+    if (!isValidEmail(email)) return validationError({ email: '이메일 주소를 확인해 주세요.' });
 
-    if (!phone) {
-      return Response.json({ error: '휴대폰 또는 전화번호를 입력해 주세요.' }, { status: 400 });
-    }
+    if (!phone) return validationError({ phone: '휴대폰 또는 전화번호를 입력해 주세요.' });
 
     const files = getFiles(formData);
     const fileErrorMessage = validateFiles(files);
 
-    if (fileErrorMessage) {
-      return Response.json({ error: fileErrorMessage }, { status: 400 });
-    }
+    if (fileErrorMessage) return validationError({ attachment: fileErrorMessage });
 
     const typeErrorMessage = validateLegalTypeInputs(legalType, formData);
 
-    if (typeErrorMessage) {
-      return Response.json({ error: typeErrorMessage }, { status: 400 });
-    }
+    if (typeErrorMessage) return validationError({ form: typeErrorMessage });
 
     const targetValues = await resolveTargetValues({
       targetType,

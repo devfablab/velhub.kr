@@ -1,8 +1,7 @@
 'use client';
 
 import { type ChangeEvent, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { useRouter, useSearchParams } from 'next/navigation';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
@@ -21,8 +20,8 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 
@@ -33,7 +32,37 @@ type ReportTargetType = 'site' | 'board' | 'post' | 'comment';
 type SubmitResponse = {
   ok?: boolean;
   error?: string;
+  errors?: string[];
+  fieldErrors?: Record<string, string>;
 };
+
+type FieldErrors = Partial<
+  Record<
+    | 'legalType'
+    | 'reportUrl'
+    | 'email'
+    | 'phone'
+    | 'attachment'
+    | 'requestType'
+    | 'illegalInfoCategories'
+    | 'falseManipulatedInfoCategories'
+    | 'reportContent'
+    | 'reportReason'
+    | 'reportBasis'
+    | 'illegalInfoConfirmed'
+    | 'falseManipulatedInfoConfirmed'
+    | 'illegalInfoNoticeConfirmed'
+    | 'filmingRequestTypes'
+    | 'filmingReasonTypes'
+    | 'filmingTarget'
+    | 'filmingRequestConfirmed'
+    | 'filmingNoticeConfirmed'
+    | 'privacyReportType'
+    | 'exposedInformation'
+    | 'privacyRequestReason',
+    string
+  >
+>;
 
 export type SettlementResponse = {
   exists?: boolean;
@@ -254,7 +283,7 @@ function getSingleFileError(file: File, currentFiles: File[]) {
   }
 
   if (file.size > maxFileSize) {
-    return 'PDF 파일은 1개당 10MB 이하만 첨부할 수 있습니다.';
+    return 'PDF 파일은 1개당 5MB 이하만 첨부할 수 있습니다.';
   }
 
   return '';
@@ -267,6 +296,7 @@ export default function Opt({
   initialReporter: SettlementResponse | null;
   initialError: string;
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const initialLegalType = useMemo(
@@ -325,8 +355,10 @@ export default function Opt({
   const [privacyRequestReason, setPrivacyRequestReason] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(initialError);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
+    initialError ? { title: null, messages: [initialError] } : null,
+  );
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -361,10 +393,33 @@ export default function Opt({
     setPrivacyRequestReason('');
   }
 
+  function clearFieldError(field: keyof FieldErrors) {
+    setFieldErrors((current) => ({ ...current, [field]: '' }));
+  }
+
+  function showValidationErrors(errors: FieldErrors, title = '신고 내용 확인') {
+    const messages = [...new Set(Object.values(errors).filter((message): message is string => Boolean(message)))];
+    setFieldErrors(errors);
+    if (messages.length) setErrorDialog({ title, messages });
+  }
+
+  function renderSelectionErrors(fields: (keyof FieldErrors)[]) {
+    const messages = [...new Set(fields.map((field) => fieldErrors[field]).filter((message): message is string => Boolean(message)))];
+    return messages.length ? (
+      <Stack gap={0.5}>
+        {messages.map((message) => (
+          <p className="alert popup-error" key={message}>
+            {message}
+          </p>
+        ))}
+      </Stack>
+    ) : null;
+  }
+
   function handleLegalTypeChange(changeEvent: SelectChangeEvent) {
     setSelectedLegalType(changeEvent.target.value as LegalType);
     resetTypeFields();
-    setErrorMessage('');
+    setFieldErrors({});
   }
 
   function handleRequestTypeChange(changeEvent: SelectChangeEvent) {
@@ -391,150 +446,75 @@ export default function Opt({
     const fileError = getSingleFileError(file, files);
 
     if (fileError) {
-      setErrorMessage(fileError);
+      showValidationErrors({ attachment: fileError }, '첨부 파일 확인');
       return;
     }
 
-    setErrorMessage('');
+    clearFieldError('attachment');
     setFiles((currentFiles) => [...currentFiles, file]);
   }
 
   function handleRemoveFile(fileIndex: number) {
     setFiles((currentFiles) => currentFiles.filter((file, index) => index !== fileIndex));
-    setErrorMessage('');
+    clearFieldError('attachment');
   }
 
-  function validateCommonInputs() {
-    if (!selectedLegalType) {
-      return '신고 유형을 선택해 주세요.';
+  function validateInputs(): FieldErrors {
+    const errors: FieldErrors = {};
+    if (!selectedLegalType) errors.legalType = '신고 유형을 선택해 주세요.';
+    if (hasTargetParams && !targetType) errors.reportUrl = '신고 대상이 올바르지 않습니다.';
+    if (!hasTargetParams) {
+      if (!reportUrl.trim()) errors.reportUrl = '문제가 있는 링크를 입력해 주세요.';
+      else {
+        try {
+          const url = new URL(reportUrl);
+          if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+        } catch {
+          errors.reportUrl = 'http 또는 https 주소를 입력해 주세요.';
+        }
+      }
     }
-
-    if (hasTargetParams && !targetType) {
-      return '신고 대상이 올바르지 않습니다.';
-    }
-
-    if (!hasTargetParams && !reportUrl.trim()) {
-      return '문제가 있는 링크를 입력해 주세요.';
-    }
-
-    if (!email.trim()) {
-      return '이메일을 입력해 주세요.';
-    }
-
-    if (!phone.trim()) {
-      return '휴대폰 또는 전화번호를 입력해 주세요.';
-    }
-
-    return getFileError(files);
-  }
-
-  function validateIllegalInfoInputs() {
-    if (!requestType) {
-      return '신고 · 요청 구분을 선택해 주세요.';
-    }
-
-    if (requestType === 'illegal_info' && illegalInfoCategories.length === 0) {
-      return '불법정보 신고 · 요청 구분을 선택해 주세요.';
-    }
-
-    if (requestType === 'false_manipulated_info' && falseManipulatedInfoCategories.length === 0) {
-      return '허위조작정보 신고 · 요청 구분을 선택해 주세요.';
-    }
-
-    if (!reportContent.trim()) {
-      return '신고 내용을 입력해 주세요.';
-    }
-
-    if (!reportReason.trim()) {
-      return '신고 이유를 입력해 주세요.';
-    }
-
-    if (!reportBasis.trim()) {
-      return '신고 근거를 입력해 주세요.';
-    }
-
-    if (requestType === 'illegal_info' && !illegalInfoConfirmed) {
-      return '불법정보 신고 · 요청 확인이 필요합니다.';
-    }
-
-    if (requestType === 'false_manipulated_info' && !falseManipulatedInfoConfirmed) {
-      return '허위조작정보 신고 · 요청 확인이 필요합니다.';
-    }
-
-    if (!illegalInfoNoticeConfirmed) {
-      return '불법정보/허위조작정보 신고 유의사항 확인이 필요합니다.';
-    }
-
-    return '';
-  }
-
-  function validateIllegalFilmingInputs() {
-    if (filmingRequestTypes.length === 0) {
-      return '신고 · 요청 구분을 선택해 주세요.';
-    }
-
-    if (filmingReasonTypes.length === 0) {
-      return '신고 · 요청 사유를 선택해 주세요.';
-    }
-
-    if (!filmingTarget.trim()) {
-      return '신고 · 요청 대상을 입력해 주세요.';
-    }
-
-    if (!filmingRequestConfirmed) {
-      return '불법촬영물등 신고 · 요청 확인이 필요합니다.';
-    }
-
-    if (!filmingNoticeConfirmed) {
-      return '불법촬영물등 신고 유의사항 확인이 필요합니다.';
-    }
-
-    return '';
-  }
-
-  function validatePrivacyInputs() {
-    if (!resolvedPrivacyReportType) {
-      return '신고유형을 선택해 주세요.';
-    }
-
-    if (!exposedInformation.trim()) {
-      return '노출된 정보를 입력해 주세요.';
-    }
-
-    if (!privacyRequestReason.trim()) {
-      return '요청사유를 입력해 주세요.';
-    }
-
-    return '';
-  }
-
-  function validateInputs() {
-    const commonErrorMessage = validateCommonInputs();
-
-    if (commonErrorMessage) {
-      return commonErrorMessage;
-    }
+    if (!email.trim()) errors.email = '이메일을 입력해 주세요.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = '이메일 주소를 확인해 주세요.';
+    if (!phone.trim()) errors.phone = '휴대폰 또는 전화번호를 입력해 주세요.';
+    const fileError = getFileError(files);
+    if (fileError) errors.attachment = fileError;
 
     if (selectedLegalType === 'illegal_info') {
-      return validateIllegalInfoInputs();
+      if (!requestType) errors.requestType = '신고 · 요청 구분을 선택해 주세요.';
+      if (requestType === 'illegal_info' && illegalInfoCategories.length === 0)
+        errors.illegalInfoCategories = '불법정보 신고 · 요청 구분을 선택해 주세요.';
+      if (requestType === 'false_manipulated_info' && falseManipulatedInfoCategories.length === 0)
+        errors.falseManipulatedInfoCategories = '허위조작정보 신고 · 요청 구분을 선택해 주세요.';
+      if (!reportContent.trim()) errors.reportContent = '신고 내용을 입력해 주세요.';
+      if (!reportReason.trim()) errors.reportReason = '신고 이유를 입력해 주세요.';
+      if (!reportBasis.trim()) errors.reportBasis = '신고 근거를 입력해 주세요.';
+      if (requestType === 'illegal_info' && !illegalInfoConfirmed)
+        errors.illegalInfoConfirmed = '불법정보 신고 · 요청 확인이 필요합니다.';
+      if (requestType === 'false_manipulated_info' && !falseManipulatedInfoConfirmed)
+        errors.falseManipulatedInfoConfirmed = '허위조작정보 신고 · 요청 확인이 필요합니다.';
+      if (!illegalInfoNoticeConfirmed) errors.illegalInfoNoticeConfirmed = '불법정보/허위조작정보 신고 유의사항 확인이 필요합니다.';
     }
-
     if (selectedLegalType === 'illegal_filming') {
-      return validateIllegalFilmingInputs();
+      if (!filmingRequestTypes.length) errors.filmingRequestTypes = '신고 · 요청 구분을 선택해 주세요.';
+      if (!filmingReasonTypes.length) errors.filmingReasonTypes = '신고 · 요청 사유를 선택해 주세요.';
+      if (!filmingTarget.trim()) errors.filmingTarget = '신고 · 요청 대상을 입력해 주세요.';
+      if (!filmingRequestConfirmed) errors.filmingRequestConfirmed = '불법촬영물등 신고 · 요청 확인이 필요합니다.';
+      if (!filmingNoticeConfirmed) errors.filmingNoticeConfirmed = '불법촬영물등 신고 유의사항 확인이 필요합니다.';
     }
-
     if (selectedLegalType === 'privacy') {
-      return validatePrivacyInputs();
+      if (!resolvedPrivacyReportType) errors.privacyReportType = '신고유형을 선택해 주세요.';
+      if (!exposedInformation.trim()) errors.exposedInformation = '노출된 정보를 입력해 주세요.';
+      if (!privacyRequestReason.trim()) errors.privacyRequestReason = '요청사유를 입력해 주세요.';
     }
-
-    return '신고 유형을 선택해 주세요.';
+    return errors;
   }
 
-  async function handleSubmit() {
-    const validationMessage = validateInputs();
-
-    if (validationMessage) {
-      setErrorMessage(validationMessage);
+  async function handleSubmit(form: HTMLFormElement) {
+    if (!form.reportValidity()) return;
+    const validationErrors = validateInputs();
+    if (Object.values(validationErrors).some(Boolean)) {
+      showValidationErrors(validationErrors);
       return;
     }
 
@@ -590,7 +570,8 @@ export default function Opt({
 
     try {
       setSubmitting(true);
-      setErrorMessage('');
+      setFieldErrors({});
+      setErrorDialog(null);
 
       const response = await fetch('/api/reports/legals/new', {
         method: 'POST',
@@ -603,13 +584,17 @@ export default function Opt({
       }))) as SubmitResponse;
 
       if (!response.ok || result.error) {
-        setErrorMessage(result.error ?? '신고를 접수하지 못했습니다.');
+        if (response.status >= 500 || !result.error) {
+          setErrorDialog({ title: null, messages: ['처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'] });
+        } else {
+          setFieldErrors(result.fieldErrors ?? {});
+          setErrorDialog({ title: '신고 내용 확인', messages: [...new Set([...(result.errors ?? []), result.error])] });
+        }
         return;
       }
-
-      setSnackbarOpen(true);
+      router.push('/concierge/reports');
     } catch {
-      setErrorMessage('신고를 접수하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.');
+      setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
     } finally {
       setSubmitting(false);
     }
@@ -676,7 +661,10 @@ export default function Opt({
           <Select
             displayEmpty
             value={selectedLegalType}
-            onChange={handleLegalTypeChange}
+            onChange={(event) => {
+              handleLegalTypeChange(event);
+              clearFieldError('legalType');
+            }}
             renderValue={(selected) => {
               if (!selected) {
                 return '신고 유형 선택';
@@ -708,10 +696,17 @@ export default function Opt({
             이메일
           </Typography>
           <TextField
+            required
+            type="email"
             value={email}
-            onChange={(changeEvent) => setEmail(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setEmail(changeEvent.currentTarget.value);
+              clearFieldError('email');
+            }}
             fullWidth
             size="small"
+            error={Boolean(fieldErrors.email)}
+            helperText={fieldErrors.email}
           />
         </Stack>
 
@@ -720,10 +715,17 @@ export default function Opt({
             휴대폰 또는 전화번호
           </Typography>
           <TextField
+            required
+            type="tel"
             value={phone}
-            onChange={(changeEvent) => setPhone(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setPhone(changeEvent.currentTarget.value);
+              clearFieldError('phone');
+            }}
             fullWidth
             size="small"
+            error={Boolean(fieldErrors.phone)}
+            helperText={fieldErrors.phone}
           />
         </Stack>
 
@@ -761,8 +763,9 @@ export default function Opt({
 
             <p className="alert warning">
               <WarningAmberRoundedIcon />
-              <span>PDF 파일 최대 2개, 1개당 10MB 이하로 첨부할 수 있습니다.</span>
+              <span>PDF 파일 최대 2개, 1개당 5MB 이하로 첨부할 수 있습니다.</span>
             </p>
+            {fieldErrors.attachment ? <p className="alert popup-error">{fieldErrors.attachment}</p> : null}
           </Stack>
         </Stack>
         {renderLegalTypeSelect()}
@@ -859,10 +862,17 @@ export default function Opt({
                 신고대상 URL
               </Typography>
               <TextField
+                required
+                type="url"
                 value={reportUrl}
-                onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
+                onChange={(changeEvent) => {
+                  setReportUrl(changeEvent.currentTarget.value);
+                  clearFieldError('reportUrl');
+                }}
                 fullWidth
                 size="small"
+                error={Boolean(fieldErrors.reportUrl)}
+                helperText={fieldErrors.reportUrl}
               />
             </Stack>
             <p className="alert info">
@@ -959,13 +969,19 @@ export default function Opt({
             신고 내용
           </Typography>
           <TextField
+            required
             placeholder="게시물 내에서 불법정보 또는 허위조작정보로 신고하려는 내용(문구, 이미지 등)을 구체적으로 기재하여 주시기 바랍니다."
             value={reportContent}
-            onChange={(changeEvent) => setReportContent(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setReportContent(changeEvent.currentTarget.value);
+              clearFieldError('reportContent');
+            }}
             fullWidth
             multiline
             minRows={4}
             size="small"
+            error={Boolean(fieldErrors.reportContent)}
+            helperText={fieldErrors.reportContent}
           />
         </Stack>
 
@@ -977,13 +993,19 @@ export default function Opt({
             신고 이유
           </Typography>
           <TextField
+            required
             placeholder="해당 정보를 불법정보 또는 허위조작정보로 판단하신 이유를 기재하여 주시기 바랍니다."
             value={reportReason}
-            onChange={(changeEvent) => setReportReason(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setReportReason(changeEvent.currentTarget.value);
+              clearFieldError('reportReason');
+            }}
             fullWidth
             multiline
             minRows={4}
             size="small"
+            error={Boolean(fieldErrors.reportReason)}
+            helperText={fieldErrors.reportReason}
           />
         </Stack>
 
@@ -995,13 +1017,19 @@ export default function Opt({
             신고 근거
           </Typography>
           <TextField
+            required
             placeholder="해당 정보를 불법정보 또는 허위조작정보로 판단하신 근거를 기재하고 증빙자료를 첨부해주시기 바랍니다."
             value={reportBasis}
-            onChange={(changeEvent) => setReportBasis(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setReportBasis(changeEvent.currentTarget.value);
+              clearFieldError('reportBasis');
+            }}
             fullWidth
             multiline
             minRows={4}
             size="small"
+            error={Boolean(fieldErrors.reportBasis)}
+            helperText={fieldErrors.reportBasis}
           />
         </Stack>
 
@@ -1082,6 +1110,14 @@ export default function Opt({
             label="위 내용을 확인했습니다."
           />
         </Stack>
+        {renderSelectionErrors([
+          'requestType',
+          'illegalInfoCategories',
+          'falseManipulatedInfoCategories',
+          'illegalInfoConfirmed',
+          'falseManipulatedInfoConfirmed',
+          'illegalInfoNoticeConfirmed',
+        ])}
       </Stack>
     );
   }
@@ -1218,13 +1254,19 @@ export default function Opt({
             신고 · 요청 대상
           </Typography>
           <TextField
+            required
             placeholder="※ 불법촬영물등의 위치를 특정할 수 있도록 URL과 화면 캡쳐본을 첨부하여 주시되, URL 기재가 어려울 경우 검색어 등 해당 불법촬영물등의 위치에 대한 상세 설명을 기재하여 주시기 바랍니다."
             value={filmingTarget}
-            onChange={(changeEvent) => setFilmingTarget(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setFilmingTarget(changeEvent.currentTarget.value);
+              clearFieldError('filmingTarget');
+            }}
             fullWidth
             multiline
             minRows={4}
             size="small"
+            error={Boolean(fieldErrors.filmingTarget)}
+            helperText={fieldErrors.filmingTarget}
           />
         </Stack>
 
@@ -1313,6 +1355,7 @@ export default function Opt({
             label="위 내용을 확인하였습니다."
           />
         </Stack>
+        {renderSelectionErrors(['filmingRequestTypes', 'filmingReasonTypes', 'filmingRequestConfirmed', 'filmingNoticeConfirmed'])}
       </Stack>
     );
   }
@@ -1377,11 +1420,17 @@ export default function Opt({
             노출된 정보
           </Typography>
           <TextField
+            required
             placeholder="실명, 연락처 등 노출된 개인정보를 입력해주세요."
             value={exposedInformation}
-            onChange={(changeEvent) => setExposedInformation(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setExposedInformation(changeEvent.currentTarget.value);
+              clearFieldError('exposedInformation');
+            }}
             fullWidth
             size="small"
+            error={Boolean(fieldErrors.exposedInformation)}
+            helperText={fieldErrors.exposedInformation}
           />
         </Stack>
 
@@ -1390,13 +1439,19 @@ export default function Opt({
             요청사유
           </Typography>
           <TextField
+            required
             placeholder="신고유형이 댓글인 경우 화면에 보이는 작성자 정보와 작성시간을 '요청사유'에 전달해 주세요."
             value={privacyRequestReason}
-            onChange={(changeEvent) => setPrivacyRequestReason(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setPrivacyRequestReason(changeEvent.currentTarget.value);
+              clearFieldError('privacyRequestReason');
+            }}
             fullWidth
             multiline
             minRows={4}
             size="small"
+            error={Boolean(fieldErrors.privacyRequestReason)}
+            helperText={fieldErrors.privacyRequestReason}
           />
         </Stack>
         <div className="paper">
@@ -1419,6 +1474,7 @@ export default function Opt({
             </Stack>
           </Stack>
         </div>
+        {renderSelectionErrors(['privacyReportType'])}
       </Stack>
     );
   }
@@ -1444,14 +1500,13 @@ export default function Opt({
   }
 
   return (
-    <div className="paper">
-      {errorMessage ? (
-        <p className="alert error">
-          <ErrorOutlineRoundedIcon />
-          <span>{errorMessage}</span>
-        </p>
-      ) : null}
-
+    <form
+      className="paper"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void handleSubmit(event.currentTarget);
+      }}
+    >
       <Stack gap={3}>
         {initialLegalType ? (
           <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
@@ -1465,23 +1520,21 @@ export default function Opt({
         ) : null}
 
         {renderCommonFields()}
+        {renderSelectionErrors(['legalType'])}
         {renderTypeForm()}
 
-        {errorMessage ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
-
         <Stack direction="row" justifyContent="flex-end">
-          <button type="button" className="button medium submit" onClick={handleSubmit} disabled={submitting}>
+          <button type="submit" className="button medium submit" disabled={submitting}>
             {submitting ? '접수 중' : '신고 접수'}
           </button>
         </Stack>
       </Stack>
-
-      <PopupMessage open={snackbarOpen} message={'신고가 접수되었습니다.'} onClose={() => setSnackbarOpen(false)} />
-    </div>
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog?.messages ?? []}
+        onClose={() => setErrorDialog(null)}
+      />
+    </form>
   );
 }
