@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type ReactNode, useMemo, useState } from 'react';
+import { type ChangeEvent, type FormEvent, type ReactNode, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -33,6 +33,7 @@ import { ko } from 'date-fns/locale';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -56,7 +57,11 @@ type ReporterCapacity = 'direct' | 'proxy';
 type SubmitResponse = {
   ok?: boolean;
   error?: string;
+  errors?: string[];
+  fieldErrors?: FieldErrors;
 };
+
+type FieldErrors = Record<string, string>;
 
 export type SettlementResponse = {
   exists?: boolean;
@@ -230,6 +235,19 @@ function getRightsReportFileError(file: File, label: string) {
   return '';
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function RequiredFieldLabel({ children, isMobile }: { children: ReactNode; isMobile: boolean }) {
   return (
     <Typography
@@ -303,8 +321,12 @@ export default function Opt({
   const [copyrightProofFiles, setCopyrightProofFiles] = useState<File[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
+    initialError ? { title: null, messages: [initialError] } : null,
+  );
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -355,10 +377,41 @@ export default function Opt({
     setCopyrightProofFiles([]);
   }
 
+  function clearFieldError(field: string) {
+    setFieldErrors((currentErrors) => {
+      if (!currentErrors[field]) {
+        return currentErrors;
+      }
+
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  }
+
+  function showValidationErrors(nextFieldErrors: FieldErrors) {
+    const messages = [...new Set(Object.values(nextFieldErrors))];
+    setFieldErrors(nextFieldErrors);
+    setErrorDialog({ title: '입력 내용 확인', messages });
+  }
+
+  function showUnknownError(message: string) {
+    setErrorDialog({ title: null, messages: [message] });
+  }
+
+  function renderFieldError(field: string) {
+    return fieldErrors[field] ? (
+      <p className="alert popup-error">
+        <ErrorOutlineRoundedIcon />
+        <span>{fieldErrors[field]}</span>
+      </p>
+    ) : null;
+  }
+
   function handleReportCategoryChange(changeEvent: SelectChangeEvent) {
     setReportCategory(changeEvent.target.value as RightsReportCategory);
     resetCategoryFields();
-    setErrorMessage('');
+    clearFieldError('reportCategory');
   }
 
   function handleRightsOwnerTypeChange(changeEvent: ChangeEvent<HTMLInputElement>) {
@@ -375,7 +428,7 @@ export default function Opt({
       setPowerOfAttorneyFile(null);
       setInfringementReason('');
       setInfringementEvidenceFile(null);
-      setErrorMessage('');
+      clearFieldError('rightsOwnerType');
     }
   }
 
@@ -399,12 +452,13 @@ export default function Opt({
       setRightsHolderProofFile(null);
     }
 
-    setErrorMessage('');
+    clearFieldError('reporterCapacity');
   }
 
   function handleSinglePdfFileChange(
     changeEvent: ChangeEvent<HTMLInputElement>,
     label: string,
+    field: string,
     setFile: (file: File | null) => void,
   ) {
     const file = changeEvent.currentTarget.files?.[0] ?? null;
@@ -418,12 +472,12 @@ export default function Opt({
     const fileError = getRightsReportFileError(file, label);
 
     if (fileError) {
-      setErrorMessage(fileError);
+      showValidationErrors({ [field]: fileError });
       return;
     }
 
     setFile(file);
-    setErrorMessage('');
+    clearFieldError(field);
   }
 
   function handleAddCopyrightOriginalUrl() {
@@ -434,18 +488,23 @@ export default function Opt({
     }
 
     if (copyrightOriginalUrls.length >= 10) {
-      setErrorMessage('저작물 원본 URL은 최대 10개까지 입력할 수 있습니다.');
+      showValidationErrors({ copyrightOriginalUrls: '저작물 원본 URL은 최대 10개까지 입력할 수 있습니다.' });
+      return;
+    }
+
+    if (!isValidHttpUrl(nextUrl)) {
+      showValidationErrors({ copyrightOriginalUrls: '저작물 원본 URL을 올바른 주소 형식으로 입력해 주세요.' });
       return;
     }
 
     setCopyrightOriginalUrls((currentUrls) => [...currentUrls, nextUrl]);
     setCopyrightOriginalUrlInput('');
-    setErrorMessage('');
+    clearFieldError('copyrightOriginalUrls');
   }
 
   function handleRemoveCopyrightOriginalUrl(urlIndex: number) {
     setCopyrightOriginalUrls((currentUrls) => currentUrls.filter((url, index) => index !== urlIndex));
-    setErrorMessage('');
+    clearFieldError('copyrightOriginalUrls');
   }
 
   function handleCopyrightProofFileChange(changeEvent: ChangeEvent<HTMLInputElement>) {
@@ -460,50 +519,58 @@ export default function Opt({
     const fileError = getSingleCopyrightProofFileError(file, copyrightProofFiles);
 
     if (fileError) {
-      setErrorMessage(fileError);
+      showValidationErrors({ copyrightProofFiles: fileError });
       return;
     }
 
     setCopyrightProofFiles((currentFiles) => [...currentFiles, file]);
-    setErrorMessage('');
+    clearFieldError('copyrightProofFiles');
   }
 
   function handleRemoveCopyrightProofFile(fileIndex: number) {
     setCopyrightProofFiles((currentFiles) => currentFiles.filter((file, index) => index !== fileIndex));
-    setErrorMessage('');
+    clearFieldError('copyrightProofFiles');
   }
 
-  function validateInputs() {
+  function validateInputs(): FieldErrors {
+    const errors: FieldErrors = {};
+
     if (!reportCategory) {
-      return '신고 사유를 선택해 주세요.';
+      errors.reportCategory = '신고 사유를 선택해 주세요.';
     }
 
     if (hasTargetParams && !targetType) {
-      return '신고 대상이 올바르지 않습니다.';
+      errors.target = '신고 대상이 올바르지 않습니다.';
     }
 
-    if (!hasTargetParams && !reportUrl.trim()) {
-      return '신고대상 URL을 입력해 주세요.';
+    if (!hasTargetParams) {
+      if (!reportUrl.trim()) {
+        errors.reportUrl = '신고대상 URL을 입력해 주세요.';
+      } else if (!isValidHttpUrl(reportUrl.trim())) {
+        errors.reportUrl = '신고대상 URL을 올바른 주소 형식으로 입력해 주세요.';
+      }
     }
 
     if (!email.trim()) {
-      return '이메일을 입력해 주세요.';
+      errors.email = '이메일을 입력해 주세요.';
+    } else if (!isValidEmail(email.trim())) {
+      errors.email = '이메일을 올바른 형식으로 입력해 주세요.';
     }
 
     if (!phone.trim()) {
-      return '전화번호를 입력해 주세요.';
+      errors.phone = '전화번호를 입력해 주세요.';
     }
 
     if (isSms === null) {
-      return '처리결과 SMS 안내 수신 여부를 선택해 주세요.';
+      errors.isSms = '처리결과 SMS 안내 수신 여부를 선택해 주세요.';
     }
 
     if (isOwnerRequiredCategory(reportCategory) && !rightsOwnerType) {
-      return '권리 소유자를 선택해 주세요.';
+      errors.rightsOwnerType = '권리 소유자를 선택해 주세요.';
     }
 
     if (isOwnerDetailsCategory(reportCategory) && !reporterCapacity) {
-      return rightsOwnerType === 'organization'
+      errors.reporterCapacity = rightsOwnerType === 'organization'
         ? '피해단체 대표자 정보를 선택해 주세요.'
         : '피해자 정보를 선택해 주세요.';
     }
@@ -513,17 +580,17 @@ export default function Opt({
       (rightsOwnerType === 'organization' || (rightsOwnerType === 'individual' && reporterCapacity === 'proxy'));
 
     if (requiresRightsHolderDetails && !rightsHolderName.trim()) {
-      return rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
+      errors.rightsHolderName = rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
     }
 
     if (requiresRightsHolderDetails && !rightsHolderPhone.trim()) {
-      return rightsOwnerType === 'organization'
+      errors.rightsHolderPhone = rightsOwnerType === 'organization'
         ? '피해단체 전화번호를 입력해 주세요.'
         : '피해자 전화번호를 입력해 주세요.';
     }
 
     if (requiresRightsHolderDetails && !rightsHolderProofFile) {
-      return rightsOwnerType === 'organization' ? '단체 증빙서류를 첨부해 주세요.' : '피해자 신분증을 첨부해 주세요.';
+      errors.rightsHolderProofFile = rightsOwnerType === 'organization' ? '단체 증빙서류를 첨부해 주세요.' : '피해자 신분증을 첨부해 주세요.';
     }
 
     if (
@@ -531,7 +598,7 @@ export default function Opt({
       reporterCapacity === 'proxy' &&
       (!delegationStartedOn || !isValid(delegationStartedOn) || !delegationEndedOn || !isValid(delegationEndedOn))
     ) {
-      return '위임 기간을 입력해 주세요.';
+      errors.delegationPeriod = '위임 기간을 입력해 주세요.';
     }
 
     if (
@@ -541,19 +608,19 @@ export default function Opt({
       delegationEndedOn &&
       delegationStartedOn.getTime() > delegationEndedOn.getTime()
     ) {
-      return '위임 종료일은 시작일보다 빠를 수 없습니다.';
+      errors.delegationPeriod = '위임 종료일은 시작일보다 빠를 수 없습니다.';
     }
 
     if (isOwnerDetailsCategory(reportCategory) && reporterCapacity === 'proxy' && !powerOfAttorneyFile) {
-      return '위임장을 첨부해 주세요.';
+      errors.powerOfAttorneyFile = '위임장을 첨부해 주세요.';
     }
 
     if (isOwnerDetailsCategory(reportCategory) && !infringementReason.trim()) {
-      return '권리침해 내용 및 신고 사유를 입력해 주세요.';
+      errors.infringementReason = '권리침해 내용 및 신고 사유를 입력해 주세요.';
     }
 
     if (isOwnerDetailsCategory(reportCategory) && !infringementEvidenceFile) {
-      return '권리침해 증빙자료를 첨부해 주세요.';
+      errors.infringementEvidenceFile = '권리침해 증빙자료를 첨부해 주세요.';
     }
 
     if (
@@ -561,17 +628,23 @@ export default function Opt({
       copyrightOriginalUrls.length === 0 &&
       copyrightProofFiles.length === 0
     ) {
-      return '저작물 원본 URL 또는 저작물 원본임을 증명할 수 있는 PDF 중 하나는 입력해 주세요.';
+      errors.copyrightEvidence = '저작물 원본 URL 또는 저작물 원본임을 증명할 수 있는 PDF 중 하나는 입력해 주세요.';
     }
 
-    return '';
+    return errors;
   }
 
-  async function handleSubmit() {
-    const validationMessage = validateInputs();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const validationErrors = validateInputs();
+    const nativeFormIsValid = formRef.current?.reportValidity() ?? true;
 
-    if (validationMessage) {
-      setErrorMessage(validationMessage);
+    if (Object.keys(validationErrors).length > 0) {
+      showValidationErrors(validationErrors);
+      return;
+    }
+
+    if (!nativeFormIsValid) {
       return;
     }
 
@@ -627,7 +700,7 @@ export default function Opt({
 
     try {
       setSubmitting(true);
-      setErrorMessage('');
+      setFieldErrors({});
 
       const response = await fetch('/api/reports/rights/new', {
         method: 'POST',
@@ -640,13 +713,21 @@ export default function Opt({
       }))) as SubmitResponse;
 
       if (!response.ok || result.error) {
-        setErrorMessage(result.error ?? '신고를 접수하지 못했습니다.');
+        if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0) {
+          showValidationErrors(result.fieldErrors);
+        } else if (result.errors?.length) {
+          setErrorDialog({ title: '입력 내용 확인', messages: result.errors });
+        } else if (response.status >= 500) {
+          showUnknownError(result.error ?? '신고를 접수하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        } else {
+          setErrorDialog({ title: '신고 내용 확인', messages: [result.error ?? '신고를 접수하지 못했습니다.'] });
+        }
         return;
       }
 
       setSnackbarOpen(true);
     } catch {
-      setErrorMessage('신고를 접수하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.');
+      showUnknownError('신고를 접수하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -712,6 +793,7 @@ export default function Opt({
               </MenuItem>
             ))}
           </Select>
+          {renderFieldError('reportCategory')}
         </FormControl>
       </Stack>
     );
@@ -955,8 +1037,15 @@ export default function Opt({
             신고대상 URL
           </Typography>
           <TextField
+            type="url"
+            required
             value={reportUrl}
-            onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setReportUrl(changeEvent.currentTarget.value);
+              clearFieldError('reportUrl');
+            }}
+            error={Boolean(fieldErrors.reportUrl)}
+            helperText={fieldErrors.reportUrl}
             fullWidth
             size="small"
           />
@@ -980,8 +1069,15 @@ export default function Opt({
             이메일
           </Typography>
           <TextField
+            type="email"
+            required
             value={email}
-            onChange={(changeEvent) => setEmail(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setEmail(changeEvent.currentTarget.value);
+              clearFieldError('email');
+            }}
+            error={Boolean(fieldErrors.email)}
+            helperText={fieldErrors.email}
             fullWidth
             size="small"
           />
@@ -992,8 +1088,15 @@ export default function Opt({
             전화번호
           </Typography>
           <TextField
+            type="tel"
+            required
             value={phone}
-            onChange={(changeEvent) => setPhone(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setPhone(changeEvent.currentTarget.value);
+              clearFieldError('phone');
+            }}
+            error={Boolean(fieldErrors.phone)}
+            helperText={fieldErrors.phone}
             fullWidth
             size="small"
           />
@@ -1005,13 +1108,14 @@ export default function Opt({
             value={isSms === null ? '' : String(isSms)}
             onChange={(changeEvent) => {
               setIsSms(changeEvent.currentTarget.value === 'true');
-              setErrorMessage('');
+              clearFieldError('isSms');
             }}
             sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}
           >
             <FormControlLabel value="true" control={<Radio />} label="받음" />
             <FormControlLabel value="false" control={<Radio />} label="안 받음" />
           </RadioGroup>
+          {renderFieldError('isSms')}
         </Stack>
         {renderReportCategorySelect()}
       </Stack>
@@ -1034,6 +1138,7 @@ export default function Opt({
           <FormControlLabel value="individual" control={<Radio />} label="개인 (본인 ∙ 가족 ∙ 지인 등)" />
           <FormControlLabel value="organization" control={<Radio />} label="단체 (기업 ∙ 개인사업자 등)" />
         </RadioGroup>
+        {renderFieldError('rightsOwnerType')}
       </Stack>
     );
   }
@@ -1042,11 +1147,13 @@ export default function Opt({
     label,
     file,
     setFile,
+    field,
     helper,
   }: {
     label: string;
     file: File | null;
     setFile: (file: File | null) => void;
+    field: string;
     helper?: ReactNode;
   }) {
     return (
@@ -1056,7 +1163,14 @@ export default function Opt({
           {file ? (
             <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
               <Typography variant="body2">{file.name}</Typography>
-              <button type="button" className="button small danger" onClick={() => setFile(null)}>
+              <button
+                type="button"
+                className="button small danger"
+                onClick={() => {
+                  setFile(null);
+                  clearFieldError(field);
+                }}
+              >
                 파일 삭제
               </button>
             </Stack>
@@ -1067,12 +1181,13 @@ export default function Opt({
                 <VisuallyHiddenInput
                   type="file"
                   accept="application/pdf,.pdf"
-                  onChange={(changeEvent) => handleSinglePdfFileChange(changeEvent, label, setFile)}
+                  onChange={(changeEvent) => handleSinglePdfFileChange(changeEvent, label, field, setFile)}
                 />
               </Button>
             </Box>
           )}
           {helper}
+          {renderFieldError(field)}
           <p className="alert warning">
             <WarningAmberRoundedIcon />
             <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
@@ -1108,6 +1223,7 @@ export default function Opt({
               label={isOrganization ? '타인(대표자 대신 신고)' : '타인(피해자 대신 신고)'}
             />
           </RadioGroup>
+          {renderFieldError('reporterCapacity')}
         </Stack>
 
         {requiresRightsHolderDetails ? (
@@ -1117,8 +1233,14 @@ export default function Opt({
                 {isOrganization ? '피해단체 이름' : '피해자 이름'}
               </RequiredFieldLabel>
               <TextField
+                required
                 value={rightsHolderName}
-                onChange={(changeEvent) => setRightsHolderName(changeEvent.currentTarget.value)}
+                onChange={(changeEvent) => {
+                  setRightsHolderName(changeEvent.currentTarget.value);
+                  clearFieldError('rightsHolderName');
+                }}
+                error={Boolean(fieldErrors.rightsHolderName)}
+                helperText={fieldErrors.rightsHolderName}
                 fullWidth
                 size="small"
               />
@@ -1129,8 +1251,15 @@ export default function Opt({
                 {isOrganization ? '피해단체 전화번호' : '피해자 전화번호'}
               </RequiredFieldLabel>
               <TextField
+                type="tel"
+                required
                 value={rightsHolderPhone}
-                onChange={(changeEvent) => setRightsHolderPhone(changeEvent.currentTarget.value)}
+                onChange={(changeEvent) => {
+                  setRightsHolderPhone(changeEvent.currentTarget.value);
+                  clearFieldError('rightsHolderPhone');
+                }}
+                error={Boolean(fieldErrors.rightsHolderPhone)}
+                helperText={fieldErrors.rightsHolderPhone}
                 fullWidth
                 size="small"
               />
@@ -1138,6 +1267,7 @@ export default function Opt({
 
             {renderSinglePdfField({
               label: isOrganization ? '단체 증빙서류' : '피해자 신분증',
+              field: 'rightsHolderProofFile',
               file: rightsHolderProofFile,
               setFile: setRightsHolderProofFile,
               helper: isOrganization ? (
@@ -1162,24 +1292,33 @@ export default function Opt({
                 <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems="center" sx={{ width: '100%' }}>
                   <DatePicker
                     value={delegationStartedOn}
-                    onChange={setDelegationStartedOn}
+                    onChange={(value) => {
+                      setDelegationStartedOn(value);
+                      clearFieldError('delegationPeriod');
+                    }}
                     format="yyyy년 MM월 dd일"
                     slotProps={{
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: Boolean(fieldErrors.delegationPeriod),
+                        helperText: fieldErrors.delegationPeriod,
                       },
                     }}
                   />
                   <Typography variant="body2">~</Typography>
                   <DatePicker
                     value={delegationEndedOn}
-                    onChange={setDelegationEndedOn}
+                    onChange={(value) => {
+                      setDelegationEndedOn(value);
+                      clearFieldError('delegationPeriod');
+                    }}
                     format="yyyy년 MM월 dd일"
                     slotProps={{
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: Boolean(fieldErrors.delegationPeriod),
                       },
                     }}
                   />
@@ -1189,6 +1328,7 @@ export default function Opt({
 
             {renderSinglePdfField({
               label: '위임장',
+              field: 'powerOfAttorneyFile',
               file: powerOfAttorneyFile,
               setFile: setPowerOfAttorneyFile,
               helper: (
@@ -1218,8 +1358,14 @@ export default function Opt({
         <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <RequiredFieldLabel isMobile={isMobile}>권리침해 내용 및 신고 사유</RequiredFieldLabel>
           <TextField
+            required
             value={infringementReason}
-            onChange={(changeEvent) => setInfringementReason(changeEvent.currentTarget.value)}
+            onChange={(changeEvent) => {
+              setInfringementReason(changeEvent.currentTarget.value);
+              clearFieldError('infringementReason');
+            }}
+            error={Boolean(fieldErrors.infringementReason)}
+            helperText={fieldErrors.infringementReason}
             placeholder="신고 사유와 소명 내용을 구체적으로 입력해 주세요."
             fullWidth
             multiline
@@ -1230,6 +1376,7 @@ export default function Opt({
 
         {renderSinglePdfField({
           label: '권리침해 증빙자료',
+          field: 'infringementEvidenceFile',
           file: infringementEvidenceFile,
           setFile: setInfringementEvidenceFile,
           helper: (
@@ -1278,8 +1425,15 @@ export default function Opt({
               <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
                 <TextField
                   placeholder="예) https://example.com/your-original-work"
+                  type="url"
                   value={copyrightOriginalUrlInput}
-                  onChange={(changeEvent) => setCopyrightOriginalUrlInput(changeEvent.currentTarget.value)}
+                  onChange={(changeEvent) => {
+                    setCopyrightOriginalUrlInput(changeEvent.currentTarget.value);
+                    clearFieldError('copyrightOriginalUrls');
+                    clearFieldError('copyrightEvidence');
+                  }}
+                  error={Boolean(fieldErrors.copyrightOriginalUrls || fieldErrors.copyrightEvidence)}
+                  helperText={fieldErrors.copyrightOriginalUrls ?? fieldErrors.copyrightEvidence}
                   onKeyDown={(event) => runInputAdornmentAction(event, handleAddCopyrightOriginalUrl)}
                   fullWidth
                   size="small"
@@ -1347,6 +1501,8 @@ export default function Opt({
               <WarningAmberRoundedIcon />
               <span>PDF 파일 최대 5개, 1개당 2MB 이하로 첨부할 수 있습니다.</span>
             </p>
+            {renderFieldError('copyrightProofFiles')}
+            {renderFieldError('copyrightEvidence')}
           </Stack>
         </Stack>
       </Stack>
@@ -1354,14 +1510,7 @@ export default function Opt({
   }
 
   return (
-    <div className="paper">
-      {errorMessage ? (
-        <p className="alert error">
-          <ErrorOutlineRoundedIcon />
-          <span>{errorMessage}</span>
-        </p>
-      ) : null}
-
+    <form className="paper" ref={formRef} onSubmit={handleSubmit} noValidate>
       <Stack gap={3}>
         <div className="paper">
           <Typography variant="body2">
@@ -1415,17 +1564,10 @@ export default function Opt({
             <Typography variant="body2">자세한 사항은 개인정보 처리방침을 참고해 주시기 바랍니다.</Typography>
           </Stack>
         </Stack>
-        {errorMessage ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
         <Stack direction="row" justifyContent="flex-end">
           <button
-            type="button"
+            type="submit"
             className="button medium submit"
-            onClick={handleSubmit}
             disabled={submitting || reporterLoading}
           >
             {submitting ? '접수 중' : '신고 접수'}
@@ -1433,6 +1575,12 @@ export default function Opt({
         </Stack>
       </Stack>
       <PopupMessage open={snackbarOpen} message={'신고가 접수되었습니다.'} onClose={() => setSnackbarOpen(false)} />
-    </div>
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog?.messages ?? []}
+        onClose={() => setErrorDialog(null)}
+      />
+    </form>
   );
 }

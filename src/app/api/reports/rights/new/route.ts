@@ -59,6 +59,7 @@ type UploadedCopyrightProofFile = {
 };
 
 type UploadedReportFile = UploadedCopyrightProofFile;
+type FieldErrors = Record<string, string>;
 
 const maxCopyrightProofFileSize = 2 * 1024 * 1024;
 const maxRightsReportFileSize = 10 * 1024 * 1024;
@@ -171,6 +172,28 @@ function getReasonType(formData: FormData): RightsReasonType | null {
   }
 
   return null;
+}
+
+function isValidEmail(value: string | null) {
+  return Boolean(value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+}
+
+function isValidHttpUrl(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function validationError(fieldErrors: FieldErrors) {
+  const errors = [...new Set(Object.values(fieldErrors))];
+  return Response.json({ error: errors[0], errors, fieldErrors }, { status: 400 });
 }
 
 function validateCopyrightProofFiles(files: File[]) {
@@ -528,10 +551,6 @@ export async function POST(request: Request) {
     const copyrightOriginalUrls = getFormStringArray(formData, 'copyrightOriginalUrls');
     const copyrightProofFiles = getCopyrightProofFiles(formData);
 
-    if (!reasonType) {
-      return Response.json({ error: '신고 사유를 선택해 주세요.' }, { status: 400 });
-    }
-
     const targetType = inferTargetType({
       targetTypeValue,
       siteName,
@@ -540,114 +559,69 @@ export async function POST(request: Request) {
       commentId,
     });
 
-    if (!targetType && !reportUrl) {
-      return Response.json({ error: '신고대상 URL을 입력해 주세요.' }, { status: 400 });
-    }
-
-    if (!email) {
-      return Response.json({ error: '이메일을 입력해 주세요.' }, { status: 400 });
-    }
-
-    if (!phone) {
-      return Response.json({ error: '전화번호를 입력해 주세요.' }, { status: 400 });
-    }
-
-    if (isSms === null) {
-      return Response.json({ error: '처리결과 SMS 안내 수신 여부를 선택해 주세요.' }, { status: 400 });
-    }
-
-    if (isOwnerRequiredReasonType(reasonType) && !isRightsOwnerType(rightsOwnerTypeValue)) {
-      return Response.json({ error: '권리 소유자를 선택해 주세요.' }, { status: 400 });
-    }
-
     const rightsOwnerType = isRightsOwnerType(rightsOwnerTypeValue) ? rightsOwnerTypeValue : null;
     const reporterCapacity = isReporterCapacity(reporterCapacityValue) ? reporterCapacityValue : null;
-    const usesOwnerDetails = isOwnerDetailsReasonType(reasonType);
-
-    if (usesOwnerDetails && !reporterCapacity) {
-      return Response.json({ error: '신고자와 권리 소유자의 관계를 선택해 주세요.' }, { status: 400 });
-    }
+    const usesOwnerDetails = reasonType ? isOwnerDetailsReasonType(reasonType) : false;
 
     const requiresRightsHolderDetails =
       usesOwnerDetails &&
       (rightsOwnerType === 'organization' || (rightsOwnerType === 'individual' && reporterCapacity === 'proxy'));
 
+    const fieldErrors: FieldErrors = {};
+
+    if (!reasonType) fieldErrors.reportCategory = '신고 사유를 선택해 주세요.';
+    if (!targetType && !reportUrl) fieldErrors.reportUrl = '신고대상 URL을 입력해 주세요.';
+    if (!targetType && reportUrl && !isValidHttpUrl(reportUrl)) {
+      fieldErrors.reportUrl = '신고대상 URL을 올바른 주소 형식으로 입력해 주세요.';
+    }
+    if (!email) fieldErrors.email = '이메일을 입력해 주세요.';
+    else if (!isValidEmail(email)) fieldErrors.email = '이메일을 올바른 형식으로 입력해 주세요.';
+    if (!phone) fieldErrors.phone = '전화번호를 입력해 주세요.';
+    if (isSms === null) fieldErrors.isSms = '처리결과 SMS 안내 수신 여부를 선택해 주세요.';
+
+    if (reasonType && isOwnerRequiredReasonType(reasonType) && !rightsOwnerType) {
+      fieldErrors.rightsOwnerType = '권리 소유자를 선택해 주세요.';
+    }
+    if (usesOwnerDetails && !reporterCapacity) {
+      fieldErrors.reporterCapacity = '신고자와 권리 소유자의 관계를 선택해 주세요.';
+    }
     if (requiresRightsHolderDetails && !rightsHolderName) {
-      return Response.json(
-        {
-          error: rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.',
-        },
-        { status: 400 },
-      );
+      fieldErrors.rightsHolderName = rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
     }
-
     if (requiresRightsHolderDetails && !rightsHolderPhone) {
-      return Response.json(
-        {
-          error:
-            rightsOwnerType === 'organization'
-              ? '피해단체 전화번호를 입력해 주세요.'
-              : '피해자 전화번호를 입력해 주세요.',
-        },
-        { status: 400 },
-      );
+      fieldErrors.rightsHolderPhone = rightsOwnerType === 'organization' ? '피해단체 전화번호를 입력해 주세요.' : '피해자 전화번호를 입력해 주세요.';
     }
-
     if (requiresRightsHolderDetails) {
-      const proofFileError = validateRightsReportFile(
-        rightsHolderProofFile,
-        rightsOwnerType === 'organization' ? '단체 증빙서류' : '피해자 신분증',
-      );
-
-      if (proofFileError) {
-        return Response.json({ error: proofFileError }, { status: 400 });
-      }
+      const proofFileError = validateRightsReportFile(rightsHolderProofFile, rightsOwnerType === 'organization' ? '단체 증빙서류' : '피해자 신분증');
+      if (proofFileError) fieldErrors.rightsHolderProofFile = proofFileError;
     }
-
     if (usesOwnerDetails && reporterCapacity === 'proxy') {
       if (!isDateValue(delegationStartedOn) || !isDateValue(delegationEndedOn)) {
-        return Response.json({ error: '위임 기간을 입력해 주세요.' }, { status: 400 });
+        fieldErrors.delegationPeriod = '위임 기간을 입력해 주세요.';
+      } else if (delegationStartedOn! > delegationEndedOn!) {
+        fieldErrors.delegationPeriod = '위임 종료일은 시작일보다 빠를 수 없습니다.';
       }
-
-      if (delegationStartedOn! > delegationEndedOn!) {
-        return Response.json({ error: '위임 종료일은 시작일보다 빠를 수 없습니다.' }, { status: 400 });
-      }
-
       const attorneyFileError = validateRightsReportFile(powerOfAttorneyFile, '위임장');
+      if (attorneyFileError) fieldErrors.powerOfAttorneyFile = attorneyFileError;
+    }
+    if (usesOwnerDetails && !infringementReason) fieldErrors.infringementReason = '권리침해 내용 및 신고 사유를 입력해 주세요.';
+    if (usesOwnerDetails) {
+      const evidenceFileError = validateRightsReportFile(infringementEvidenceFile, '권리침해 증빙자료');
+      if (evidenceFileError) fieldErrors.infringementEvidenceFile = evidenceFileError;
+    }
 
-      if (attorneyFileError) {
-        return Response.json({ error: attorneyFileError }, { status: 400 });
+    // 저작권 선택지는 화면에서 임시로 숨겨 둔 상태입니다. 다시 노출할 때 아래 검증도 함께 사용합니다.
+    if (reasonType === 'copyright') {
+      if (copyrightOriginalUrls.length > 10) fieldErrors.copyrightOriginalUrls = '저작물 원본 URL은 최대 10개까지 입력할 수 있습니다.';
+      if (copyrightOriginalUrls.some((url) => !isValidHttpUrl(url))) fieldErrors.copyrightOriginalUrls = '저작물 원본 URL을 올바른 주소 형식으로 입력해 주세요.';
+      const fileErrorMessage = validateCopyrightProofFiles(copyrightProofFiles);
+      if (fileErrorMessage) fieldErrors.copyrightProofFiles = fileErrorMessage;
+      if (copyrightOriginalUrls.length === 0 && copyrightProofFiles.length === 0) {
+        fieldErrors.copyrightEvidence = '저작물 원본 URL 또는 저작물 원본임을 증명할 수 있는 PDF 중 하나는 입력해 주세요.';
       }
     }
 
-    if (usesOwnerDetails && !infringementReason) {
-      return Response.json({ error: '권리침해 내용 및 신고 사유를 입력해 주세요.' }, { status: 400 });
-    }
-
-    const evidenceFileError = usesOwnerDetails
-      ? validateRightsReportFile(infringementEvidenceFile, '권리침해 증빙자료')
-      : '';
-
-    if (evidenceFileError) {
-      return Response.json({ error: evidenceFileError }, { status: 400 });
-    }
-
-    if (copyrightOriginalUrls.length > 10) {
-      return Response.json({ error: '저작물 원본 URL은 최대 10개까지 입력할 수 있습니다.' }, { status: 400 });
-    }
-
-    const fileErrorMessage = validateCopyrightProofFiles(copyrightProofFiles);
-
-    if (fileErrorMessage) {
-      return Response.json({ error: fileErrorMessage }, { status: 400 });
-    }
-
-    if (reasonType === 'copyright' && copyrightOriginalUrls.length === 0 && copyrightProofFiles.length === 0) {
-      return Response.json(
-        { error: '저작물 원본 URL 또는 저작물 원본임을 증명할 수 있는 PDF 중 하나는 입력해 주세요.' },
-        { status: 400 },
-      );
-    }
+    if (Object.keys(fieldErrors).length > 0) return validationError(fieldErrors);
 
     const targetValues = await resolveTargetValues({
       targetType,
