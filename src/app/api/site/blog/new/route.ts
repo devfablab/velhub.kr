@@ -1,8 +1,10 @@
 import crypto from 'crypto';
 import path from 'path';
 import sharp from 'sharp';
+import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session';
+import { EMPTY_SITE_CREATE_FIELD_ERRORS, validateSiteCreateFields } from '@/lib/site/createValidation.shared';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -23,10 +25,6 @@ function normalizeSiteKey(rawValue: string) {
     .replace(/-+$/g, '');
 }
 
-function hasInvalidCharacters(value: string) {
-  return /[^a-z0-9-]/.test(value);
-}
-
 function isVisibilityType(value: unknown): value is VisibilityType {
   return value === 'public' || value === 'private';
 }
@@ -42,6 +40,13 @@ function isCommentProvider(value: unknown): value is CommentProvider {
 function getFormText(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === 'string' ? value : '';
+}
+
+function getFieldErrorResponse(field: keyof typeof EMPTY_SITE_CREATE_FIELD_ERRORS, error: string) {
+  return Response.json(
+    { error, fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, [field]: error } },
+    { status: 400 },
+  );
 }
 
 function isAllowedProfilePictureFile(file: File) {
@@ -70,10 +75,14 @@ async function uploadProfilePicture({
 
   const inputBuffer = Buffer.from(await file.arrayBuffer());
   const extension = path.extname(file.name).toLowerCase();
-  const shouldConvertToWebp = extension === '.png' || extension === '.jpg' || extension === '.jpeg';
-  const uploadBuffer = shouldConvertToWebp ? await sharp(inputBuffer).webp({ lossless: true }).toBuffer() : inputBuffer;
+  const shouldConvertToWebp = extension !== '.svg';
+  const uploadBuffer = shouldConvertToWebp
+    ? await sharp(inputBuffer).resize(72, 72, { fit: 'cover' }).webp({ lossless: true }).toBuffer()
+    : extension === '.svg'
+      ? sanitizeSvg(inputBuffer)
+      : inputBuffer;
   const contentType = shouldConvertToWebp ? 'image/webp' : file.type;
-  const outputExtension = shouldConvertToWebp ? '.webp' : extension;
+  const outputExtension = shouldConvertToWebp ? '.webp' : '.svg';
   const storagePath = `site/${authUserId}/${crypto.randomUUID()}${outputExtension}`;
 
   const uploadResult = await supabaseAdmin.storage.from(AVATAR_BUCKET).upload(storagePath, uploadBuffer, {
@@ -121,11 +130,16 @@ async function resolveUniqueSiteLabel(supabaseAdmin: ReturnType<typeof getSupaba
 
   let nextNumber = 1;
 
-  while (usedLabels.has(`${normalizedBaseLabel}${nextNumber}`)) {
+  while (true) {
+    const suffix = String(nextNumber);
+    const candidate = [...normalizedBaseLabel].slice(0, 10 - suffix.length).join('') + suffix;
+
+    if (!usedLabels.has(candidate)) {
+      return candidate;
+    }
+
     nextNumber += 1;
   }
-
-  return `${normalizedBaseLabel}${nextNumber}`;
 }
 
 export async function POST(request: Request) {
@@ -150,32 +164,14 @@ export async function POST(request: Request) {
     const themeType = isThemeType(themeValue) ? themeValue : 'default';
     const commentProvider = isCommentProvider(commentProviderValue) ? commentProviderValue : 'disqus';
 
-    if (!normalizedSiteKey) {
-      return Response.json({ error: '사이트 주소를 입력해주세요.' }, { status: 400 });
-    }
+    const validation = validateSiteCreateFields({
+      siteKey: normalizedSiteKey,
+      siteLabel: trimmedSiteLabel,
+      summary: trimmedSummary,
+    });
 
-    if (hasInvalidCharacters(normalizedSiteKey)) {
-      return Response.json({ error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다." }, { status: 400 });
-    }
-
-    if (/^\d/.test(normalizedSiteKey)) {
-      return Response.json({ error: '사이트 주소는 숫자로 시작할 수 없습니다.' }, { status: 400 });
-    }
-
-    if (normalizedSiteKey.length < 5 || normalizedSiteKey.length > 15) {
-      return Response.json({ error: '사이트 주소는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
-    }
-
-    if (trimmedSiteLabel && (trimmedSiteLabel.length < 4 || trimmedSiteLabel.length > 10)) {
-      return Response.json({ error: '사이트명은 4자 이상 10자 이하여야 합니다.' }, { status: 400 });
-    }
-
-    if (trimmedSummary.length > 52) {
-      return Response.json({ error: '사이트 설명은 52자 이하여야 합니다.' }, { status: 400 });
-    }
-
-    if (normalizedSiteKey.includes('--')) {
-      return Response.json({ error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다." }, { status: 400 });
+    if (validation.messages.length > 0) {
+      return Response.json({ error: validation.messages[0], fieldErrors: validation.fieldErrors }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -233,7 +229,7 @@ export async function POST(request: Request) {
     }
 
     if (denylistResult.data) {
-      return Response.json({ error: '사용할 수 없는 사이트 주소입니다.' }, { status: 400 });
+      return getFieldErrorResponse('siteKey', '사용할 수 없는 사이트 주소입니다.');
     }
 
     const rhizomeResult = await supabaseAdmin
@@ -247,7 +243,7 @@ export async function POST(request: Request) {
     }
 
     if (rhizomeResult.data) {
-      return Response.json({ error: '사용할 수 없는 사이트 주소입니다.' }, { status: 400 });
+      return getFieldErrorResponse('siteKey', '사용할 수 없는 사이트 주소입니다.');
     }
 
     let finalSiteLabel = '';
@@ -264,7 +260,7 @@ export async function POST(request: Request) {
       }
 
       if (siteLabelResult.data) {
-        return Response.json({ error: '이미 사용 중인 사이트명입니다.' }, { status: 400 });
+        return getFieldErrorResponse('siteLabel', '이미 사용 중인 사이트명입니다.');
       }
 
       finalSiteLabel = trimmedSiteLabel;
@@ -282,9 +278,9 @@ export async function POST(request: Request) {
           file: profilePictureFile,
         });
       } catch (uploadError) {
-        return Response.json(
-          { error: uploadError instanceof Error ? uploadError.message : '프로필 이미지 업로드에 실패했습니다.' },
-          { status: 400 },
+        return getFieldErrorResponse(
+          'profilePicture',
+          uploadError instanceof Error ? uploadError.message : '프로필 이미지 업로드에 실패했습니다.',
         );
       }
     }
@@ -318,10 +314,7 @@ export async function POST(request: Request) {
       siteLabel: finalSiteLabel,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '블로그 개설에 실패했습니다.' }, { status: 500 });
-    }
-
-    return Response.json({ error: '블로그 개설에 실패했습니다.' }, { status: 500 });
+    console.error('create_blog_site 요청 실패:', unknownError);
+    return Response.json({ error: '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.' }, { status: 500 });
   }
 }

@@ -25,7 +25,15 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import {
+  EMPTY_SITE_CREATE_FIELD_ERRORS,
+  getSiteKeyError,
+  getSiteLabelError,
+  SiteCreateFieldErrors,
+  validateSiteCreateFields,
+} from '@/lib/site/createValidation.shared';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import PopupMessage from '@/components/PopupMessage';
@@ -39,6 +47,7 @@ type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textare
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
+type ErrorDialogState = { title: string | null; messages: string[] };
 
 const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
 
@@ -67,10 +76,6 @@ function normalizeSiteKey(rawValue: string) {
 
 function normalizeSiteKeyInput(rawValue: string) {
   return rawValue.toLowerCase().replace(/_/g, '-').replace(/\s+/g, '-').replace(/-+/g, '-');
-}
-
-function hasInvalidCharacters(value: string) {
-  return /[^a-z0-9-]/.test(value);
 }
 
 function isThemeType(value: string): value is ThemeType {
@@ -130,6 +135,8 @@ export default function Opt() {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<SiteCreateFieldErrors>(EMPTY_SITE_CREATE_FIELD_ERRORS);
+  const [errorDialog, setErrorDialog] = useState<ErrorDialogState>({ title: null, messages: [] });
   const [successMessage, setSuccessMessage] = useState('');
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -184,10 +191,20 @@ export default function Opt() {
     };
   }, [profilePictureUrl]);
 
-  function openErrorDialog(message: string) {
-    setErrorMessage(message);
+  function openErrorDialog(
+    message: string | string[],
+    options: { title?: string | null; fieldErrors?: SiteCreateFieldErrors } = {},
+  ) {
+    const messages = Array.isArray(message) ? message : [message];
+    setErrorMessage(messages.join('\n'));
     setSuccessMessage('');
+    setFieldErrors(options.fieldErrors ?? EMPTY_SITE_CREATE_FIELD_ERRORS);
+    setErrorDialog({ title: options.title === undefined ? '개설 정보 확인' : options.title, messages });
     setIsErrorDialogOpen(true);
+  }
+
+  function openUnknownErrorDialog() {
+    openErrorDialog('요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.', { title: null });
   }
 
   function closeErrorDialog() {
@@ -199,6 +216,7 @@ export default function Opt() {
 
     setSiteKey(normalizedValue);
     setSiteKeyStatusMessage('');
+    setFieldErrors((previousValue) => ({ ...previousValue, siteKey: '', siteLabel: '' }));
     setErrorMessage('');
     setSuccessMessage('');
   }
@@ -206,12 +224,14 @@ export default function Opt() {
   function handleSiteLabelChange(event: InputChangeEvent) {
     setSiteLabel(event.currentTarget.value.slice(0, 10));
     setSiteLabelStatusMessage('');
+    setFieldErrors((previousValue) => ({ ...previousValue, siteLabel: '' }));
     setErrorMessage('');
     setSuccessMessage('');
   }
 
   function handleSummaryChange(event: TextAreaChangeEvent | InputChangeEvent) {
     setSummary(event.currentTarget.value.slice(0, 52));
+    setFieldErrors((previousValue) => ({ ...previousValue, summary: '' }));
   }
 
   function handleThemeTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -250,13 +270,12 @@ export default function Opt() {
     setSuccessMessage('');
     setSiteKeyStatusMessage('');
 
-    if (!normalizedSiteKey) {
-      openErrorDialog('사이트 주소를 입력해주세요.');
-      return;
-    }
+    const siteKeyError = getSiteKeyError(normalizedSiteKey);
 
-    if (hasInvalidCharacters(normalizedSiteKey)) {
-      openErrorDialog("영소문자, 하이픈('-'), 숫자만 사용 가능합니다.");
+    if (siteKeyError) {
+      openErrorDialog(siteKeyError, {
+        fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteKey: siteKeyError },
+      });
       return;
     }
 
@@ -274,23 +293,29 @@ export default function Opt() {
         }),
       });
 
-      const result = await response.json();
+      const result: unknown = await response.json().catch(() => null);
 
-      if (typeof result.normalizedSiteKey === 'string') {
-        setSiteKey(result.normalizedSiteKey);
+      if (result && typeof result === 'object' && typeof (result as { normalizedSiteKey?: unknown }).normalizedSiteKey === 'string') {
+        setSiteKey((result as { normalizedSiteKey: string }).normalizedSiteKey);
       }
 
       if (!response.ok) {
-        throw new Error(result.error ?? '사이트 주소 확인에 실패했습니다.');
+        const message =
+          result && typeof result === 'object' && typeof (result as { error?: unknown }).error === 'string'
+            ? (result as { error: string }).error
+            : '';
+
+        if (response.status >= 500 || !message) {
+          openUnknownErrorDialog();
+        } else {
+          openErrorDialog(message, { title: '사이트 주소 확인', fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteKey: message } });
+        }
+        return;
       }
 
       setSiteKeyStatusMessage('사용 가능한 사이트 주소입니다.');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        openErrorDialog(unknownError.message || '사이트 주소 확인에 실패했습니다.');
-      } else {
-        openErrorDialog('사이트 주소 확인에 실패했습니다.');
-      }
+    } catch {
+      openUnknownErrorDialog();
     } finally {
       setIsCheckingSiteKey(false);
     }
@@ -307,8 +332,13 @@ export default function Opt() {
     setSuccessMessage('');
     setSiteLabelStatusMessage('');
 
-    if (!trimmedSiteLabel) {
-      openErrorDialog('사이트명을 입력해주세요.');
+    const siteLabelError = getSiteLabelError(normalizeSiteKey(siteKey), trimmedSiteLabel);
+
+    if (siteLabelError) {
+      openErrorDialog(siteLabelError, {
+        title: '사이트명 확인',
+        fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteLabel: siteLabelError },
+      });
       return;
     }
 
@@ -326,19 +356,25 @@ export default function Opt() {
         }),
       });
 
-      const result = await response.json();
+      const result: unknown = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(result.error ?? '사이트명 확인에 실패했습니다.');
+        const message =
+          result && typeof result === 'object' && typeof (result as { error?: unknown }).error === 'string'
+            ? (result as { error: string }).error
+            : '';
+
+        if (response.status >= 500 || !message) {
+          openUnknownErrorDialog();
+        } else {
+          openErrorDialog(message, { title: '사이트명 확인', fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteLabel: message } });
+        }
+        return;
       }
 
       setSiteLabelStatusMessage('사용 가능한 사이트명입니다.');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        openErrorDialog(unknownError.message || '사이트명 확인에 실패했습니다.');
-      } else {
-        openErrorDialog('사이트명 확인에 실패했습니다.');
-      }
+    } catch {
+      openUnknownErrorDialog();
     } finally {
       setIsCheckingSiteLabel(false);
     }
@@ -363,11 +399,15 @@ export default function Opt() {
     inputElement.value = '';
 
     if (!isAllowedFile) {
-      openErrorDialog('PNG, JPG, WEBP, SVG 파일만 선택할 수 있습니다.');
+      const profilePictureError = 'PNG, JPG, WEBP, SVG 파일만 선택할 수 있습니다.';
+      openErrorDialog(profilePictureError, {
+        fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, profilePicture: profilePictureError },
+      });
       return;
     }
 
     setErrorMessage('');
+    setFieldErrors((previousValue) => ({ ...previousValue, profilePicture: '' }));
     setProfilePictureFile(selectedFile);
     setProfilePictureUrl(URL.createObjectURL(selectedFile));
     setSuccessMessage('프로필 이미지를 선택했습니다.');
@@ -408,13 +448,15 @@ export default function Opt() {
     setSiteKeyStatusMessage('');
     setSiteLabelStatusMessage('');
 
-    if (!normalizedSiteKey) {
-      openErrorDialog('사이트 주소를 입력해주세요.');
-      return;
-    }
+    const validation = validateSiteCreateFields({
+      siteKey: normalizedSiteKey,
+      siteLabel: trimmedSiteLabel,
+      summary: trimmedSummary,
+    });
 
-    if (hasInvalidCharacters(normalizedSiteKey)) {
-      openErrorDialog("영소문자, 하이픈('-'), 숫자만 사용 가능합니다.");
+    if (validation.messages.length > 0) {
+      (event.currentTarget as HTMLFormElement).reportValidity();
+      openErrorDialog(validation.messages, { title: '입력 내용 확인', fieldErrors: validation.fieldErrors });
       return;
     }
 
@@ -439,20 +481,34 @@ export default function Opt() {
         body: formData,
       });
 
-      const result = await response.json();
+      const result: unknown = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(result.error ?? '블로그 개설에 실패했습니다.');
+        const message =
+          result && typeof result === 'object' && typeof (result as { error?: unknown }).error === 'string'
+            ? (result as { error: string }).error
+            : '';
+        const responseFieldErrors =
+          result && typeof result === 'object' && 'fieldErrors' in result
+            ? (result as { fieldErrors: SiteCreateFieldErrors }).fieldErrors
+            : EMPTY_SITE_CREATE_FIELD_ERRORS;
+
+        if (response.status >= 500 || !message) {
+          openUnknownErrorDialog();
+        } else {
+          openErrorDialog(message, {
+            title: response.status === 403 ? '개설 제한' : '개설 정보 확인',
+            fieldErrors: responseFieldErrors,
+          });
+        }
+        setIsSubmitting(false);
+        return;
       }
 
       setSuccessMessage('블로그가 개설되었습니다.');
       router.replace(`/${siteKey}`);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        openErrorDialog(unknownError.message || '블로그 개설에 실패했습니다.');
-      } else {
-        openErrorDialog('블로그 개설에 실패했습니다.');
-      }
+    } catch {
+      openUnknownErrorDialog();
       setIsSubmitting(false);
     }
   }
@@ -464,7 +520,7 @@ export default function Opt() {
   }, [isMounted]);
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
+    <Box component="form" noValidate onSubmit={handleSubmit}>
       <div className={`paper ${styles.paper}`}>
         <Stack gap={3}>
           <Stack gap={1}>
@@ -474,10 +530,11 @@ export default function Opt() {
               onChange={handleSiteKeyChange}
               onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSiteKey, isCheckingSiteKey)}
               fullWidth
-              helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${siteKey.length} / 15`}
+              error={Boolean(fieldErrors.siteKey)}
+              helperText={fieldErrors.siteKey || `영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${siteKey.length} / 15`}
               size="small"
               slotProps={{
-                htmlInput: { maxLength: 15 },
+                htmlInput: { required: true, minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' },
                 input: {
                   startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
                   endAdornment: (
@@ -513,10 +570,17 @@ export default function Opt() {
                 runInputAdornmentAction(event, handleCheckSiteLabel, !siteLabel.trim() || isCheckingSiteLabel)
               }
               fullWidth
+              required={!isValidActivityName(normalizeSiteKey(siteKey))}
               size="small"
-              helperText={`입력하지 않으면 블로그 주소 기준으로 자동 생성됩니다. ${siteLabel.length} / 10`}
+              error={Boolean(fieldErrors.siteLabel)}
+              helperText={
+                fieldErrors.siteLabel ||
+                (isValidActivityName(normalizeSiteKey(siteKey))
+                  ? `입력하면 2자 이상 10자 이하로 작성해 주세요. 비우면 블로그 주소 기준으로 자동 생성됩니다. ${siteLabel.length} / 10`
+                  : `블로그 주소가 10자를 초과하면 사이트명을 입력해야 합니다. ${siteLabel.length} / 10`)
+              }
               slotProps={{
-                htmlInput: { maxLength: 10 },
+                htmlInput: { minLength: 2, maxLength: 10 },
                 input: {
                   endAdornment: siteLabel.trim() ? (
                     <InputAdornment position="end">
@@ -566,6 +630,12 @@ export default function Opt() {
                 </button>
               </Stack>
             ) : null}
+            {fieldErrors.profilePicture ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.profilePicture}</span>
+              </p>
+            ) : null}
           </Stack>
 
           <Stack gap={1}>
@@ -577,7 +647,8 @@ export default function Opt() {
               fullWidth
               multiline
               minRows={4}
-              helperText={`${summary.length} / 52`}
+              error={Boolean(fieldErrors.summary)}
+              helperText={fieldErrors.summary || `${summary.length} / 52`}
               slotProps={{ htmlInput: { maxLength: 52 } }}
             />
           </Stack>
@@ -711,12 +782,23 @@ export default function Opt() {
           onClose={closeErrorDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
-          <h2>개설 불가</h2>
+          {errorDialog.title ? <h2>{errorDialog.title}</h2> : null}
           <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <Typography>하단 에러 메시지를 확인해 주세요</Typography>
+            {errorDialog.title ? (
+              <ul>
+                {errorDialog.messages.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="alert popup-error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorDialog.messages[0]}</span>
+              </p>
+            )}
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button small submit" onClick={closeErrorDialog}>
@@ -732,12 +814,23 @@ export default function Opt() {
           maxWidth="xs"
           className="vh-dialog vh-alert-dialog"
         >
-          <DialogTitle>개설 불가</DialogTitle>
+          {errorDialog.title ? <DialogTitle>{errorDialog.title}</DialogTitle> : null}
           <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Typography>하단 에러 메시지를 확인해 주세요</Typography>
+            {errorDialog.title ? (
+              <ul>
+                {errorDialog.messages.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="alert popup-error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorDialog.messages[0]}</span>
+              </p>
+            )}
           </DialogContent>
           <DialogActions>
             <button type="button" onClick={closeErrorDialog}>

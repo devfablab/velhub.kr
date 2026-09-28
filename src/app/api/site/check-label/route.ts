@@ -1,3 +1,4 @@
+import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -28,12 +29,12 @@ export async function POST(request: Request) {
       );
     }
 
-    if (normalizedSiteLabel.length < 4 || normalizedSiteLabel.length > 10) {
+    if (!isValidActivityName(normalizedSiteLabel)) {
       return Response.json(
         {
           ok: false,
           normalizedSiteLabel,
-          error: '사이트명은 4자 이상 10자 이하여야 합니다.',
+          error: '사이트명은 2자 이상 10자 이하여야 합니다.',
         },
         { status: 400 },
       );
