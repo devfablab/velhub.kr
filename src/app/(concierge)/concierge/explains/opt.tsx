@@ -41,11 +41,12 @@ import {
   reportAppealDeletionReasonOptions,
 } from '@/lib/reports/appeals';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
-import MenuItem from '@/components/SelectMenuItem';
-import Select from '@/components/SelectWithCheck';
 import ToastEditor from '@/components/editor/ToastEditor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
+import MenuItem from '@/components/SelectMenuItem';
+import Select from '@/components/SelectWithCheck';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
@@ -55,6 +56,8 @@ type ItemsResponse = {
   items?: AppealCenterItem[];
   error?: string;
 };
+
+type FieldErrors = Record<string, string>;
 
 type PostImage = {
   path: string;
@@ -498,6 +501,9 @@ export default function Opt({
   const [isLoginRequired, setIsLoginRequired] = useState(initialLoginRequired);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [opinionFieldErrors, setOpinionFieldErrors] = useState<FieldErrors>({});
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(null);
+  const [opinionSuccessOpen, setOpinionSuccessOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [opinionItem, setOpinionItem] = useState<AppealCenterItem | null>(null);
   const [opinionPosition, setOpinionPosition] = useState('');
@@ -564,11 +570,36 @@ export default function Opt({
     setContentRequest('');
     setModificationContent('');
     setOpinionFile(null);
+    setOpinionFieldErrors({});
   }
 
   function closeOpinion() {
     setOpinionItem(null);
     setOpinionFile(null);
+    setOpinionFieldErrors({});
+  }
+
+  function clearOpinionFieldError(field: string) {
+    setOpinionFieldErrors((currentErrors) => {
+      if (!currentErrors[field]) return currentErrors;
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  }
+
+  function showOpinionValidationErrors(fieldErrors: FieldErrors) {
+    setOpinionFieldErrors(fieldErrors);
+    setErrorDialog({ title: '입력 내용 확인', messages: [...new Set(Object.values(fieldErrors))] });
+  }
+
+  function renderOpinionFieldError(field: string) {
+    return opinionFieldErrors[field] ? <Typography color="error" variant="caption">{opinionFieldErrors[field]}</Typography> : null;
+  }
+
+  function closeOpinionSuccess() {
+    setOpinionSuccessOpen(false);
+    void loadItems();
   }
 
   async function submitOpinion() {
@@ -576,40 +607,25 @@ export default function Opt({
       return;
     }
 
-    if (!opinionPosition || !disputedParts.trim()) {
-      setErrorMessage('소명 입장과 인정하거나 이의를 제기하는 부분을 입력해 주세요.');
+    const fieldErrors: FieldErrors = {};
+    if (!opinionPosition) fieldErrors.opinionPosition = '소명 입장을 선택해 주세요.';
+    if (!disputedParts.trim()) fieldErrors.disputedParts = '인정하거나 이의를 제기하는 부분을 입력해 주세요.';
+    visibleOpinionFields.forEach((field) => {
+      if (!normalizeText(opinionValues[field.key])) fieldErrors[field.key] = `${field.label} 항목을 입력해 주세요.`;
+    });
+    if (!contentRequest) fieldErrors.contentRequest = '게시물 · 댓글 처리 요청을 선택해 주세요.';
+    if (contentRequest === 'edit_and_review' && !modificationContent.trim()) fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
+    if (!opinionFile) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
+    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf')) fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
+    else if (opinionFile.size >= MAX_FILE_SIZE) fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
+    if (Object.keys(fieldErrors).length > 0) {
+      showOpinionValidationErrors(fieldErrors);
       return;
     }
 
-    const missingField = visibleOpinionFields.find((field) => !normalizeText(opinionValues[field.key]));
+    const selectedOpinionFile = opinionFile;
 
-    if (missingField) {
-      setErrorMessage(`${missingField.label} 항목을 입력해 주세요.`);
-      return;
-    }
-
-    if (!contentRequest) {
-      setErrorMessage('게시물 · 댓글 처리 요청을 선택해 주세요.');
-      return;
-    }
-
-    if (contentRequest === 'edit_and_review' && !modificationContent.trim()) {
-      setErrorMessage('수정 예정 내용을 입력해 주세요.');
-      return;
-    }
-
-    if (!opinionFile) {
-      setErrorMessage('첨부자료 PDF를 선택해 주세요.');
-      return;
-    }
-
-    if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf')) {
-      setErrorMessage('첨부자료는 PDF 파일만 등록할 수 있습니다.');
-      return;
-    }
-
-    if (opinionFile.size >= MAX_FILE_SIZE) {
-      setErrorMessage('첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.');
+    if (!selectedOpinionFile) {
       return;
     }
 
@@ -621,26 +637,25 @@ export default function Opt({
       formData.set('opinionData', JSON.stringify(opinionValues));
       formData.set('contentRequest', contentRequest);
       formData.set('modificationContent', modificationContent.trim());
-      formData.set('file', opinionFile);
+      formData.set('file', selectedOpinionFile);
       const response = await fetch(`/api/concierge/appeals/${opinionItem.appeal.id}/opinion`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
       });
-      const result = (await response.json().catch(() => ({ error: '소명 의견서 응답을 확인하지 못했습니다.' }))) as {
-        error?: string;
-      };
+      const result = (await response.json().catch(() => ({ error: '소명 의견서 응답을 확인하지 못했습니다.' }))) as { error?: string; errors?: string[]; fieldErrors?: FieldErrors };
 
       if (!response.ok || result.error) {
-        setErrorMessage(result.error ?? '소명 의견서를 제출하지 못했습니다.');
+        if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0) showOpinionValidationErrors(result.fieldErrors);
+        else if (response.status >= 500) setErrorDialog({ title: null, messages: [result.error ?? '소명 의견서를 제출하지 못했습니다.'] });
+        else setErrorDialog({ title: '소명 의견서 확인', messages: result.errors?.length ? result.errors : [result.error ?? '소명 의견서를 제출하지 못했습니다.'] });
         return;
       }
 
       closeOpinion();
-      setSnackbarMessage('소명 의견서를 제출했습니다.');
-      await loadItems();
+      setOpinionSuccessOpen(true);
     } catch {
-      setErrorMessage('소명 의견서를 제출하지 못했습니다.');
+      setErrorDialog({ title: null, messages: ['소명 의견서를 제출하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.'] });
     } finally {
       setActionLoading(false);
     }
@@ -909,7 +924,10 @@ export default function Opt({
                     displayEmpty
                     value={opinionPosition}
                     size="small"
-                    onChange={(event) => setOpinionPosition(event.target.value)}
+                    onChange={(event) => {
+                      setOpinionPosition(event.target.value);
+                      clearOpinionFieldError('opinionPosition');
+                    }}
                   >
                     <MenuItem value="" disabled>
                       소명 입장 선택
@@ -920,13 +938,19 @@ export default function Opt({
                       </MenuItem>
                     ))}
                   </Select>
+                  {renderOpinionFieldError('opinionPosition')}
                 </FormControl>
                 <Stack gap={0.5}>
                   <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분 *</Typography>
                   <TextField
                     aria-label="인정하거나 이의를 제기하는 부분"
                     value={disputedParts}
-                    onChange={(event) => setDisputedParts(event.currentTarget.value)}
+                    onChange={(event) => {
+                      setDisputedParts(event.currentTarget.value);
+                      clearOpinionFieldError('disputedParts');
+                    }}
+                    error={Boolean(opinionFieldErrors.disputedParts)}
+                    helperText={opinionFieldErrors.disputedParts}
                     multiline
                     minRows={4}
                     fullWidth
@@ -944,6 +968,7 @@ export default function Opt({
                         onChange={(event) => {
                           const value = event.target.value;
                           setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                          clearOpinionFieldError(field.key);
                         }}
                       >
                         <MenuItem value="" disabled>{`${field.label} 선택`}</MenuItem>
@@ -954,18 +979,21 @@ export default function Opt({
                         ))}
                       </Select>
                       <Typography variant="caption">{field.helperText}</Typography>
+                      {renderOpinionFieldError(field.key)}
                     </FormControl>
                   ) : (
                     <Stack key={field.key} gap={0.5}>
                       <Typography variant="subtitle2">{field.label} *</Typography>
                       <TextField
                         aria-label={field.label}
-                        helperText={field.helperText}
                         value={opinionValues[field.key] ?? ''}
                         onChange={(event) => {
                           const value = event.currentTarget.value;
                           setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                          clearOpinionFieldError(field.key);
                         }}
+                        error={Boolean(opinionFieldErrors[field.key])}
+                        helperText={opinionFieldErrors[field.key] ?? field.helperText}
                         multiline
                         minRows={4}
                         fullWidth
@@ -980,7 +1008,10 @@ export default function Opt({
                     displayEmpty
                     size="small"
                     value={contentRequest}
-                    onChange={(event) => setContentRequest(event.target.value as ReportAppealContentRequest)}
+                    onChange={(event) => {
+                      setContentRequest(event.target.value as ReportAppealContentRequest);
+                      clearOpinionFieldError('contentRequest');
+                    }}
                   >
                     <MenuItem value="" disabled>
                       게시물 · 댓글 처리 요청 선택
@@ -991,6 +1022,7 @@ export default function Opt({
                       </MenuItem>
                     ))}
                   </Select>
+                  {renderOpinionFieldError('contentRequest')}
                 </FormControl>
                 {contentRequest === 'edit_and_review' ? (
                   <Stack gap={0.5}>
@@ -998,7 +1030,12 @@ export default function Opt({
                     <TextField
                       aria-label="수정 예정 내용"
                       value={modificationContent}
-                      onChange={(event) => setModificationContent(event.currentTarget.value)}
+                      onChange={(event) => {
+                        setModificationContent(event.currentTarget.value);
+                        clearOpinionFieldError('modificationContent');
+                      }}
+                      error={Boolean(opinionFieldErrors.modificationContent)}
+                      helperText={opinionFieldErrors.modificationContent}
                       multiline
                       minRows={4}
                       fullWidth
@@ -1026,6 +1063,7 @@ export default function Opt({
                           onChange={(event) => {
                             setOpinionFile(event.currentTarget.files?.[0] ?? null);
                             event.currentTarget.value = '';
+                            clearOpinionFieldError('opinionFile');
                           }}
                         />
                       </Button>
@@ -1035,6 +1073,7 @@ export default function Opt({
                     <WarningAmberRoundedIcon />
                     <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
                   </p>
+                  {renderOpinionFieldError('opinionFile')}
                 </Stack>
               </Stack>
             ) : null}
@@ -1116,7 +1155,10 @@ export default function Opt({
                     displayEmpty
                     value={opinionPosition}
                     size="small"
-                    onChange={(event) => setOpinionPosition(event.target.value)}
+                    onChange={(event) => {
+                      setOpinionPosition(event.target.value);
+                      clearOpinionFieldError('opinionPosition');
+                    }}
                   >
                     <MenuItem value="" disabled>
                       소명 입장 선택
@@ -1127,13 +1169,19 @@ export default function Opt({
                       </MenuItem>
                     ))}
                   </Select>
+                  {renderOpinionFieldError('opinionPosition')}
                 </FormControl>
                 <Stack gap={0.5}>
                   <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분 *</Typography>
                   <TextField
                     aria-label="인정하거나 이의를 제기하는 부분"
                     value={disputedParts}
-                    onChange={(event) => setDisputedParts(event.currentTarget.value)}
+                    onChange={(event) => {
+                      setDisputedParts(event.currentTarget.value);
+                      clearOpinionFieldError('disputedParts');
+                    }}
+                    error={Boolean(opinionFieldErrors.disputedParts)}
+                    helperText={opinionFieldErrors.disputedParts}
                     multiline
                     minRows={4}
                     fullWidth
@@ -1151,6 +1199,7 @@ export default function Opt({
                         onChange={(event) => {
                           const value = event.target.value;
                           setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                          clearOpinionFieldError(field.key);
                         }}
                       >
                         <MenuItem value="" disabled>{`${field.label} 선택`}</MenuItem>
@@ -1161,18 +1210,21 @@ export default function Opt({
                         ))}
                       </Select>
                       <Typography variant="caption">{field.helperText}</Typography>
+                      {renderOpinionFieldError(field.key)}
                     </FormControl>
                   ) : (
                     <Stack key={field.key} gap={0.5}>
                       <Typography variant="subtitle2">{field.label} *</Typography>
                       <TextField
                         aria-label={field.label}
-                        helperText={field.helperText}
                         value={opinionValues[field.key] ?? ''}
                         onChange={(event) => {
                           const value = event.currentTarget.value;
                           setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                          clearOpinionFieldError(field.key);
                         }}
+                        error={Boolean(opinionFieldErrors[field.key])}
+                        helperText={opinionFieldErrors[field.key] ?? field.helperText}
                         multiline
                         minRows={4}
                         fullWidth
@@ -1187,7 +1239,10 @@ export default function Opt({
                     displayEmpty
                     size="small"
                     value={contentRequest}
-                    onChange={(event) => setContentRequest(event.target.value as ReportAppealContentRequest)}
+                    onChange={(event) => {
+                      setContentRequest(event.target.value as ReportAppealContentRequest);
+                      clearOpinionFieldError('contentRequest');
+                    }}
                   >
                     <MenuItem value="" disabled>
                       게시물 · 댓글 처리 요청 선택
@@ -1198,6 +1253,7 @@ export default function Opt({
                       </MenuItem>
                     ))}
                   </Select>
+                  {renderOpinionFieldError('contentRequest')}
                 </FormControl>
                 {contentRequest === 'edit_and_review' ? (
                   <Stack gap={0.5}>
@@ -1205,7 +1261,12 @@ export default function Opt({
                     <TextField
                       aria-label="수정 예정 내용"
                       value={modificationContent}
-                      onChange={(event) => setModificationContent(event.currentTarget.value)}
+                      onChange={(event) => {
+                        setModificationContent(event.currentTarget.value);
+                        clearOpinionFieldError('modificationContent');
+                      }}
+                      error={Boolean(opinionFieldErrors.modificationContent)}
+                      helperText={opinionFieldErrors.modificationContent}
                       multiline
                       minRows={4}
                       fullWidth
@@ -1233,6 +1294,7 @@ export default function Opt({
                           onChange={(event) => {
                             setOpinionFile(event.currentTarget.files?.[0] ?? null);
                             event.currentTarget.value = '';
+                            clearOpinionFieldError('opinionFile');
                           }}
                         />
                       </Button>
@@ -1242,6 +1304,7 @@ export default function Opt({
                     <WarningAmberRoundedIcon />
                     <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
                   </p>
+                  {renderOpinionFieldError('opinionFile')}
                 </Stack>
               </Stack>
             ) : null}
@@ -1322,6 +1385,20 @@ export default function Opt({
       </ResponsivePopup>
 
       <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog?.messages ?? []}
+        onClose={() => setErrorDialog(null)}
+      />
+      <ResponsivePopup
+        open={opinionSuccessOpen}
+        onClose={closeOpinionSuccess}
+        title="소명 의견서 제출 완료"
+        actions={[{ label: '확인', intent: 'submit', onClick: closeOpinionSuccess }]}
+      >
+        <Typography>소명 의견서가 제출되었습니다.</Typography>
+      </ResponsivePopup>
     </Stack>
   );
 }

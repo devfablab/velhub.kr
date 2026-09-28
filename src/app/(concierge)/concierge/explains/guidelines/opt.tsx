@@ -20,6 +20,7 @@ import {
   guidelineAppealMessageStatusLabels,
 } from '@/lib/reports/guidelineAppeals';
 import { formatDateTimeDetail, formatTimeAgo, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
@@ -216,6 +217,8 @@ export default function Opt({
   const [messageOpenedAt, setMessageOpenedAt] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
   const [messageSaving, setMessageSaving] = useState(false);
+  const [messageError, setMessageError] = useState('');
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(null);
   async function openContent(item: GuidelineAppealItem) {
     setContentItem(item);
     setContentResponse(null);
@@ -249,6 +252,7 @@ export default function Opt({
     setMessageItem(item);
     setMessageResponse(null);
     setMessageText('');
+    setMessageError('');
     setMessageOpenedAt(new Date().toISOString());
     setMessageLoading(true);
     setErrorMessage('');
@@ -285,12 +289,13 @@ export default function Opt({
     const message = messageText.trim();
 
     if (!messageItem || !message) {
-      setErrorMessage('소명 내용을 입력해 주세요.');
+      setMessageError('소명 내용을 입력해 주세요.');
+      setErrorDialog({ title: '입력 내용 확인', messages: ['소명 내용을 입력해 주세요.'] });
       return;
     }
 
     setMessageSaving(true);
-    setErrorMessage('');
+      setMessageError('');
 
     const response = await fetch(`/api/concierge/appeals/guidelines/${messageItem.reportId}/messages`, {
       method: 'POST',
@@ -307,7 +312,8 @@ export default function Opt({
     setMessageSaving(false);
 
     if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '소명 메시지를 보내지 못했습니다.');
+      if (response.status >= 500) setErrorDialog({ title: null, messages: [result.error ?? '소명 메시지를 보내지 못했습니다.'] });
+      else setErrorDialog({ title: '소명 메시지 확인', messages: [result.error ?? '소명 메시지를 보내지 못했습니다.'] });
       return;
     }
 
@@ -358,7 +364,12 @@ export default function Opt({
             aria-label="소명 내용"
             placeholder="소명하세요"
             value={messageText}
-            onChange={(event) => setMessageText(event.currentTarget.value)}
+            onChange={(event) => {
+              setMessageText(event.currentTarget.value);
+              setMessageError('');
+            }}
+            error={Boolean(messageError)}
+            helperText={messageError}
             multiline
             minRows={4}
             fullWidth
@@ -464,6 +475,12 @@ export default function Opt({
       </ResponsivePopup>
 
       <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
+      <FormErrorDialog
+        open={Boolean(errorDialog)}
+        title={errorDialog?.title ?? null}
+        messages={errorDialog?.messages ?? []}
+        onClose={() => setErrorDialog(null)}
+      />
     </Stack>
   );
 }

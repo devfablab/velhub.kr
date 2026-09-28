@@ -45,6 +45,7 @@ type ReportRow = {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const BUCKET = 'report-appeals';
+type FieldErrors = Record<string, string>;
 
 function normalizeUnknownText(value: unknown) {
   return typeof value === 'string' ? normalizeText(value) : '';
@@ -92,6 +93,7 @@ function validateOpinionData({
   context: AppealOpinionContext;
 }) {
   const normalizedValues: Record<string, string> = {};
+  const fieldErrors: FieldErrors = {};
 
   for (const field of appealOpinionFields[category]) {
     if (!isAppealOpinionFieldVisible(field, values, context)) {
@@ -101,17 +103,24 @@ function validateOpinionData({
     const value = normalizeUnknownText(values[field.key]);
 
     if (!value) {
-      throw new Error(`${field.label} 항목을 입력해 주세요.`);
+      fieldErrors[field.key] = `${field.label} 항목을 입력해 주세요.`;
+      continue;
     }
 
     if (field.type === 'select' && !field.options?.some((option) => option.value === value)) {
-      throw new Error(`${field.label} 항목이 올바르지 않습니다.`);
+      fieldErrors[field.key] = `${field.label} 항목이 올바르지 않습니다.`;
+      continue;
     }
 
     normalizedValues[field.key] = value;
   }
 
-  return normalizedValues;
+  return { normalizedValues, fieldErrors };
+}
+
+function validationError(fieldErrors: FieldErrors) {
+  const errors = [...new Set(Object.values(fieldErrors))];
+  return Response.json({ error: errors[0], errors, fieldErrors }, { status: 400 });
 }
 
 async function getContentAuthorId(report: ReportRow) {
@@ -213,30 +222,15 @@ export async function POST(request: Request, context: RouteContext) {
     const modificationContent = normalizeUnknownText(formData.get('modificationContent')) || null;
     const opinionData = parseOpinionData(formData.get('opinionData'));
     const fileValue = formData.get('file');
+    const opinionFile = fileValue instanceof File ? fileValue : null;
 
-    if (!disputedParts) {
-      return Response.json({ error: '인정하거나 이의를 제기하는 부분을 입력해 주세요.' }, { status: 400 });
-    }
-
-    if (!isReportAppealContentRequest(contentRequest)) {
-      return Response.json({ error: '게시물 · 댓글 처리 요청을 선택해 주세요.' }, { status: 400 });
-    }
-
-    if (contentRequest === 'edit_and_review' && !modificationContent) {
-      return Response.json({ error: '수정 예정 내용을 입력해 주세요.' }, { status: 400 });
-    }
-
-    if (!(fileValue instanceof File) || fileValue.size <= 0) {
-      return Response.json({ error: '첨부자료 PDF를 선택해 주세요.' }, { status: 400 });
-    }
-
-    if (fileValue.type !== 'application/pdf' || !fileValue.name.toLowerCase().endsWith('.pdf')) {
-      return Response.json({ error: '첨부자료는 PDF 파일만 등록할 수 있습니다.' }, { status: 400 });
-    }
-
-    if (fileValue.size >= MAX_FILE_SIZE) {
-      return Response.json({ error: '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.' }, { status: 400 });
-    }
+    const fieldErrors: FieldErrors = {};
+    if (!disputedParts) fieldErrors.disputedParts = '인정하거나 이의를 제기하는 부분을 입력해 주세요.';
+    if (!isReportAppealContentRequest(contentRequest)) fieldErrors.contentRequest = '게시물 · 댓글 처리 요청을 선택해 주세요.';
+    if (contentRequest === 'edit_and_review' && !modificationContent) fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
+    if (!opinionFile || opinionFile.size <= 0) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
+    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf')) fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
+    else if (opinionFile.size >= MAX_FILE_SIZE) fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
 
     const supabaseAdmin = getSupabaseAdmin();
     const appealResult = await supabaseAdmin
@@ -288,21 +282,27 @@ export async function POST(request: Request, context: RouteContext) {
     });
 
     if (!category || !appealOpinionPositionOptions[category].some((option) => option.value === opinionPosition)) {
-      return Response.json({ error: '소명 입장을 선택해 주세요.' }, { status: 400 });
+      fieldErrors.opinionPosition = '소명 입장을 선택해 주세요.';
     }
 
     if (!opinionData) {
-      return Response.json({ error: '소명 의견서 내용이 올바르지 않습니다.' }, { status: 400 });
+      fieldErrors.opinionData = '소명 의견서 내용이 올바르지 않습니다.';
     }
 
-    const normalizedOpinionData = validateOpinionData({
+    const opinionValidation = opinionData && category ? validateOpinionData({
       category,
       values: opinionData,
       context: getOpinionContext(report),
-    });
+    }) : null;
+    Object.assign(fieldErrors, opinionValidation?.fieldErrors);
+
+    if (Object.keys(fieldErrors).length > 0) return validationError(fieldErrors);
+
+    const normalizedOpinionData = opinionValidation!.normalizedValues;
+    const validOpinionFile = opinionFile!;
     const now = new Date().toISOString();
     uploadedPath = `${appeal.id}/${randomUUID()}.pdf`;
-    const uploadResult = await supabaseAdmin.storage.from(BUCKET).upload(uploadedPath, fileValue, {
+    const uploadResult = await supabaseAdmin.storage.from(BUCKET).upload(uploadedPath, validOpinionFile, {
       contentType: 'application/pdf',
       upsert: false,
     });
@@ -328,8 +328,8 @@ export async function POST(request: Request, context: RouteContext) {
         opinion_file: {
           bucket: BUCKET,
           path: uploadedPath,
-          name: fileValue.name,
-          size: fileValue.size,
+          name: validOpinionFile.name,
+          size: validOpinionFile.size,
           type: 'application/pdf',
         },
         content_request: contentRequest,

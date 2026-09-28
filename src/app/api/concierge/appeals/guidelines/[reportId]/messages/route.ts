@@ -75,7 +75,14 @@ export async function POST(request: Request, routeContext: RouteContext) {
     }
 
     if (!message) {
-      return Response.json({ error: '소명 내용을 입력해 주세요.' }, { status: 400 });
+      return Response.json(
+        {
+          error: '소명 내용을 입력해 주세요.',
+          errors: ['소명 내용을 입력해 주세요.'],
+          fieldErrors: { message: '소명 내용을 입력해 주세요.' },
+        },
+        { status: 400 },
+      );
     }
 
     const context = await getAuthorizedContext(reportId, session.stigmaId);
