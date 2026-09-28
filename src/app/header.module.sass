@@ -598,6 +598,14 @@ header.header
     border-top-left-radius: ds.rem(17)
     border-bottom-left-radius: ds.rem(17)
 
+    &::-webkit-scrollbar
+      width: 3px
+      background: ds.$hex-tertiary
+
+    &::-webkit-scrollbar-thumb
+      background: ds.$hex-accent
+      border-radius: 3px
+
     @include ds.mq(maxExtraSmall)
       width: 100%
       border-radius: 0

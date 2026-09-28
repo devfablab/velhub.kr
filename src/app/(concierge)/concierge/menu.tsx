@@ -27,8 +27,10 @@ import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import {
   Avatar,
+  Box,
   Drawer,
   IconButton,
+  List,
   ListItemIcon,
   ListItemText,
   ListSubheader,
@@ -213,201 +215,207 @@ export default function Container({ children }: ContainerProps) {
                 onClose={handleCloseProfileDrawer}
                 className={styles.VhiDrawer}
               >
-                <li className={styles['VhiDrawer-header']}>
-                  <strong>마이 메뉴</strong>
-                  <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                    <CloseRoundedIcon />
-                  </IconButton>
-                </li>
+                <Box role="presentation">
+                  <List>
+                    <li className={styles['VhiDrawer-header']}>
+                      <strong>마이 메뉴</strong>
+                      <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
+                        <CloseRoundedIcon />
+                      </IconButton>
+                    </li>
 
-                {userProfile.isLoggedIn ? (
-                  <li className={styles['VhiMenu-profile']}>
-                    <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                    <div className={styles['VhiMenu-profile-info']}>
-                      <em>{userProfile.name}</em>
-                      <span>{userProfile.email}</span>
+                    {userProfile.isLoggedIn ? (
+                      <li className={styles['VhiMenu-profile']}>
+                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                        <div className={styles['VhiMenu-profile-info']}>
+                          <em>{userProfile.name}</em>
+                          <span>{userProfile.email}</span>
+                        </div>
+                      </li>
+                    ) : (
+                      <li className={styles['VhiMenu-profile']}>
+                        <Avatar src="" alt="" />
+                        <div className={styles['VhiMenu-profile-info']}>
+                          <em>로그인이 필요합니다</em>
+                        </div>
+                      </li>
+                    )}
+
+                    <ListSubheader className={styles['VhiDrawer-subheader']}>화면모드 설정</ListSubheader>
+                    <div className={styles['theme-buttons']}>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectThemeMode('light')}
+                        className={themeMode === 'light' ? styles.active : undefined}
+                      >
+                        {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
+                        <span>라이트 모드</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectThemeMode('system')}
+                        className={themeMode === 'system' ? styles.active : undefined}
+                      >
+                        {themeMode === 'system' ? <SettingsBrightnessIcon /> : <SettingsBrightnessOutlinedIcon />}
+                        <span>시스템</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectThemeMode('dark')}
+                        className={themeMode === 'dark' ? styles.active : undefined}
+                      >
+                        {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
+                        <span>다크 모드</span>
+                      </button>
                     </div>
-                  </li>
-                ) : (
-                  <li className={styles['VhiMenu-profile']}>
-                    <Avatar src="" alt="" />
-                    <div className={styles['VhiMenu-profile-info']}>
-                      <em>로그인이 필요합니다</em>
-                    </div>
-                  </li>
-                )}
 
-                <ListSubheader className={styles['VhiDrawer-subheader']}>화면모드 설정</ListSubheader>
-                <div className={styles['theme-buttons']}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectThemeMode('light')}
-                    className={themeMode === 'light' ? styles.active : undefined}
-                  >
-                    {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
-                    <span>라이트 모드</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectThemeMode('system')}
-                    className={themeMode === 'system' ? styles.active : undefined}
-                  >
-                    {themeMode === 'system' ? <SettingsBrightnessIcon /> : <SettingsBrightnessOutlinedIcon />}
-                    <span>시스템</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectThemeMode('dark')}
-                    className={themeMode === 'dark' ? styles.active : undefined}
-                  >
-                    {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
-                    <span>다크 모드</span>
-                  </button>
-                </div>
-
-                <ListSubheader className={styles['VhiDrawer-subheader']}>컨시어지</ListSubheader>
-                <MenuItem key="home" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge">
-                    <SupportAgentOutlinedIcon fontSize="small" />
-                    <span>컨시어지 홈</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="faqs" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/faqs">
-                    <QuestionAnswerOutlinedIcon fontSize="small" />
-                    <span>자주하는 질문</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="guideline" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/guideline">
-                    <GavelOutlinedIcon fontSize="small" />
-                    <span>가이드라인</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="help" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/help">
-                    <ReportOutlinedIcon fontSize="small" />
-                    <span>신고센터</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="contact" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/contact">
-                    <MailOutlineIcon fontSize="small" />
-                    <span>문의하기</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="partnerships" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/partnerships">
-                    <BusinessCenterOutlinedIcon fontSize="small" />
-                    <span>제휴 제안</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="rights" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/rights">
-                    <ShieldOutlinedIcon fontSize="small" />
-                    <span>권리보호센터</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="explains" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/explains">
-                    <BalanceOutlinedIcon fontSize="small" />
-                    <span>소명센터</span>
-                  </Anchor>
-                </MenuItem>
-                {userProfile.globalRole === 'admin' ? (
-                  <>
-                    <MenuItem key="inquiries" onClick={handleCloseProfileDrawer}>
-                      <Anchor href="/concierge/inquiries">
+                    <ListSubheader className={styles['VhiDrawer-subheader']}>컨시어지</ListSubheader>
+                    <MenuItem key="home" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge">
                         <SupportAgentOutlinedIcon fontSize="small" />
-                        <span>문의 내역</span>
+                        <span>컨시어지 홈</span>
                       </Anchor>
                     </MenuItem>
-                    <MenuItem key="reports" onClick={handleCloseProfileDrawer}>
-                      <Anchor href="/concierge/reports">
+                    <MenuItem key="faqs" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/faqs">
+                        <QuestionAnswerOutlinedIcon fontSize="small" />
+                        <span>자주하는 질문</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="guideline" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/guideline">
+                        <GavelOutlinedIcon fontSize="small" />
+                        <span>가이드라인</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="help" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/help">
                         <ReportOutlinedIcon fontSize="small" />
-                        <span>신고 내역</span>
+                        <span>신고센터</span>
                       </Anchor>
                     </MenuItem>
-                  </>
-                ) : null}
-                <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                {userProfile.isLoggedIn
-                  ? [
-                      ...(userProfile.isAuthor
-                        ? [
-                            <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
-                              <Anchor
-                                href={
-                                  userProfile.creatorHandleName
-                                    ? `/creator/${userProfile.creatorHandleName}`
-                                    : '/creator/settings'
-                                }
-                              >
-                                <MenuBookRoundedIcon fontSize="small" />
-                                <span>작가의 서재</span>
-                              </Anchor>
-                            </MenuItem>,
-                          ]
-                        : []),
-                      ...(userProfile.hasAffettoMyPosts
-                        ? [
-                            <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
-                              <Anchor
-                                href={
-                                  userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'
-                                }
-                              >
-                                <InterestsOutlinedIcon fontSize="small" />
-                                <span>독자의 서재</span>
-                              </Anchor>
-                            </MenuItem>,
-                          ]
-                        : []),
-                      <MenuItem key="settings" onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/settings">
-                          <SettingsOutlinedIcon fontSize="small" />
-                          <span>개인 설정</span>
-                        </Anchor>
-                      </MenuItem>,
-                      <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                        <ListItemIcon className={styles['MenuItem-icon']}>
-                          <LogoutOutlinedIcon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                      </MenuItem>,
-                      <MenuItem key="hub" onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/hub">
-                          <HubOutlinedIcon fontSize="small" />
-                          <span>마이허브</span>
-                        </Anchor>
-                      </MenuItem>,
-                    ]
-                  : [
-                      <MenuItem key="signin" onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/auth/sign-in">
-                          <LoginOutlinedIcon fontSize="small" />
-                          <span>로그인</span>
-                        </Anchor>
-                      </MenuItem>,
-                      <MenuItem key="signup" onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/auth/sign-up">
-                          <InterestsOutlinedIcon fontSize="small" />
-                          <span>회원가입</span>
-                        </Anchor>
-                      </MenuItem>,
-                    ]}
-                <MenuItem key="lounge" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/">
-                    <HomeOutlinedIcon fontSize="small" />
-                    <span>라운지 이동</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="heart2hearts" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/luvelhub">
-                    <LightbulbOutlinedIcon fontSize="small" />
-                    <span>이용안내</span>
-                  </Anchor>
-                </MenuItem>
+                    <MenuItem key="contact" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/contact">
+                        <MailOutlineIcon fontSize="small" />
+                        <span>문의하기</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="partnerships" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/partnerships">
+                        <BusinessCenterOutlinedIcon fontSize="small" />
+                        <span>제휴 제안</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="rights" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/rights">
+                        <ShieldOutlinedIcon fontSize="small" />
+                        <span>권리보호센터</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="explains" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/explains">
+                        <BalanceOutlinedIcon fontSize="small" />
+                        <span>소명센터</span>
+                      </Anchor>
+                    </MenuItem>
+                    {userProfile.globalRole === 'admin' ? (
+                      <>
+                        <MenuItem key="inquiries" onClick={handleCloseProfileDrawer}>
+                          <Anchor href="/concierge/inquiries">
+                            <SupportAgentOutlinedIcon fontSize="small" />
+                            <span>문의 내역</span>
+                          </Anchor>
+                        </MenuItem>
+                        <MenuItem key="reports" onClick={handleCloseProfileDrawer}>
+                          <Anchor href="/concierge/reports">
+                            <ReportOutlinedIcon fontSize="small" />
+                            <span>신고 내역</span>
+                          </Anchor>
+                        </MenuItem>
+                      </>
+                    ) : null}
+                    <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
+                    {userProfile.isLoggedIn
+                      ? [
+                          ...(userProfile.isAuthor
+                            ? [
+                                <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
+                                  <Anchor
+                                    href={
+                                      userProfile.creatorHandleName
+                                        ? `/creator/${userProfile.creatorHandleName}`
+                                        : '/creator/settings'
+                                    }
+                                  >
+                                    <MenuBookRoundedIcon fontSize="small" />
+                                    <span>작가의 서재</span>
+                                  </Anchor>
+                                </MenuItem>,
+                              ]
+                            : []),
+                          ...(userProfile.hasAffettoMyPosts
+                            ? [
+                                <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
+                                  <Anchor
+                                    href={
+                                      userProfile.userHandleName
+                                        ? `/user/${userProfile.userHandleName}`
+                                        : '/user/settings'
+                                    }
+                                  >
+                                    <InterestsOutlinedIcon fontSize="small" />
+                                    <span>독자의 서재</span>
+                                  </Anchor>
+                                </MenuItem>,
+                              ]
+                            : []),
+                          <MenuItem key="settings" onClick={handleCloseProfileDrawer}>
+                            <Anchor href="/settings">
+                              <SettingsOutlinedIcon fontSize="small" />
+                              <span>개인 설정</span>
+                            </Anchor>
+                          </MenuItem>,
+                          <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                            <ListItemIcon className={styles['MenuItem-icon']}>
+                              <LogoutOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
+                          </MenuItem>,
+                          <MenuItem key="hub" onClick={handleCloseProfileDrawer}>
+                            <Anchor href="/hub">
+                              <HubOutlinedIcon fontSize="small" />
+                              <span>마이허브</span>
+                            </Anchor>
+                          </MenuItem>,
+                        ]
+                      : [
+                          <MenuItem key="signin" onClick={handleCloseProfileDrawer}>
+                            <Anchor href="/auth/sign-in">
+                              <LoginOutlinedIcon fontSize="small" />
+                              <span>로그인</span>
+                            </Anchor>
+                          </MenuItem>,
+                          <MenuItem key="signup" onClick={handleCloseProfileDrawer}>
+                            <Anchor href="/auth/sign-up">
+                              <InterestsOutlinedIcon fontSize="small" />
+                              <span>회원가입</span>
+                            </Anchor>
+                          </MenuItem>,
+                        ]}
+                    <MenuItem key="lounge" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/">
+                        <HomeOutlinedIcon fontSize="small" />
+                        <span>라운지 이동</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="heart2hearts" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/luvelhub">
+                        <LightbulbOutlinedIcon fontSize="small" />
+                        <span>이용안내</span>
+                      </Anchor>
+                    </MenuItem>
+                  </List>
+                </Box>
               </Drawer>
             </div>
           </div>
