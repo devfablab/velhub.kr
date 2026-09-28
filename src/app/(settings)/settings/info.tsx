@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, isValidActivityName } from '@/lib/auth/emailSignUp';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
@@ -68,6 +69,12 @@ export default function UserInfo({
   const [isSubmittingUserName, setIsSubmittingUserName] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [userNameError, setUserNameError] = useState('');
+  const [avatarError, setAvatarError] = useState('');
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] }>({
+    title: null,
+    messages: [],
+  });
   const [successMessage, setSuccessMessage] = useState('');
 
   function getAvatarDisplayUrl() {
@@ -92,6 +99,13 @@ export default function UserInfo({
 
   function handleUserNameChange(event: InputChangeEvent) {
     setUserNameDraft(event.currentTarget.value);
+    setUserNameError('');
+  }
+
+  function openErrorDialog(title: string | null, messages: string[]) {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setErrorDialog({ title, messages });
   }
 
   async function saveInfo(nextUserName: string, nextAvatar: string, nextBio: string) {
@@ -108,18 +122,23 @@ export default function UserInfo({
       }),
     });
 
-    const result = await response.json();
+    const result = await response.json().catch(() => null);
 
     if (!response.ok) {
-      throw new Error(result.error ?? '기본정보 수정에 실패했습니다.');
+      throw new Error(
+        response.status >= 500 || !result || typeof result !== 'object' || typeof (result as { error?: unknown }).error !== 'string'
+          ? ''
+          : (result as { error: string }).error,
+      );
     }
 
-    setUserName(result.userName ?? '');
-    setAvatar(result.avatar ?? '');
-    setAvatarUrl(result.avatarUrl ?? '');
-    setBio(result.bio ?? '');
+    const savedInfo = result as { userName?: string; avatar?: string; avatarUrl?: string; bio?: string };
+    setUserName(savedInfo.userName ?? '');
+    setAvatar(savedInfo.avatar ?? '');
+    setAvatarUrl(savedInfo.avatarUrl ?? '');
+    setBio(savedInfo.bio ?? '');
 
-    setUserNameDraft(result.userName ?? '');
+    setUserNameDraft(savedInfo.userName ?? '');
   }
 
   async function handleSubmitUserName(event: FormSubmitEvent) {
@@ -132,8 +151,10 @@ export default function UserInfo({
     const trimmedUserName = userNameDraft.trim();
 
     if (!isValidActivityName(trimmedUserName)) {
-      setErrorMessage('활동명은 2자 이상 10자 이하로 입력해 주세요.');
-      setSuccessMessage('');
+      const message = '활동명은 2자 이상 10자 이하로 입력해 주세요.';
+      setUserNameError(message);
+      (event.currentTarget as HTMLFormElement).reportValidity();
+      openErrorDialog('활동명 수정', [message]);
       return;
     }
 
@@ -146,11 +167,9 @@ export default function UserInfo({
       setIsEditingUserName(false);
       setSuccessMessage('활동명이 수정되었습니다.');
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '활동명 수정에 실패했습니다.');
-      } else {
-        setErrorMessage('활동명 수정에 실패했습니다.');
-      }
+      const message = unknownError instanceof Error ? unknownError.message : '';
+      setUserNameError(message || '활동명 수정에 실패했습니다.');
+      openErrorDialog(message ? '활동명 수정' : null, [message || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.']);
     } finally {
       setIsSubmittingUserName(false);
     }
@@ -166,18 +185,23 @@ export default function UserInfo({
     }
 
     if (!ALLOWED_AVATAR_FILE_TYPES.has(selectedFile.type)) {
-      setErrorMessage('JPG, PNG, GIF, WEBP 형식의 이미지 파일만 업로드할 수 있습니다.');
+      const message = 'JPG, PNG, GIF, WEBP 형식의 이미지 파일만 업로드할 수 있습니다.';
+      setAvatarError(message);
+      openErrorDialog('아바타 수정', [message]);
       inputElement.value = '';
       return;
     }
 
     if (selectedFile.size <= 0 || selectedFile.size > MAX_AVATAR_FILE_SIZE) {
-      setErrorMessage('아바타 이미지는 5MB 이하로 업로드해 주세요.');
+      const message = '아바타 이미지는 5MB 이하로 업로드해 주세요.';
+      setAvatarError(message);
+      openErrorDialog('아바타 수정', [message]);
       inputElement.value = '';
       return;
     }
 
     setErrorMessage('');
+    setAvatarError('');
     setSuccessMessage('');
     setIsSubmittingAvatar(true);
 
@@ -193,13 +217,20 @@ export default function UserInfo({
         body: formData,
       });
 
-      const addResult = await addResponse.json();
+      const addResult = await addResponse.json().catch(() => null);
 
       if (!addResponse.ok) {
-        throw new Error(addResult.error ?? '아바타 업로드에 실패했습니다.');
+        throw new Error(
+          addResponse.status >= 500 || !addResult || typeof addResult !== 'object' || typeof (addResult as { error?: unknown }).error !== 'string'
+            ? ''
+            : (addResult as { error: string }).error,
+        );
       }
 
-      const nextAvatar = typeof addResult.avatar === 'string' && addResult.avatar.trim() ? addResult.avatar.trim() : '';
+      const nextAvatar =
+        addResult && typeof addResult === 'object' && typeof (addResult as { avatar?: unknown }).avatar === 'string'
+          ? (addResult as { avatar: string }).avatar.trim()
+          : '';
 
       if (!nextAvatar) {
         throw new Error('업로드된 아바타 정보를 확인하지 못했습니다.');
@@ -221,11 +252,9 @@ export default function UserInfo({
       }
       setSuccessMessage('아바타가 수정되었습니다.');
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '아바타 수정에 실패했습니다.');
-      } else {
-        setErrorMessage('아바타 수정에 실패했습니다.');
-      }
+      const message = unknownError instanceof Error ? unknownError.message : '';
+      setAvatarError(message || '아바타 수정에 실패했습니다.');
+      openErrorDialog(message ? '아바타 수정' : null, [message || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.']);
     } finally {
       setIsSubmittingAvatar(false);
       inputElement.value = '';
@@ -307,6 +336,12 @@ export default function UserInfo({
               >
                 아바타 수정
               </button>
+              {avatarError ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{avatarError}</span>
+                </p>
+              ) : null}
             </Stack>
 
             <Stack gap={1.5}>
@@ -323,14 +358,16 @@ export default function UserInfo({
                   </button>
                 </Stack>
               ) : (
-                <Box component="form" onSubmit={handleSubmitUserName}>
+                <Box component="form" noValidate onSubmit={handleSubmitUserName}>
                   <Stack gap={1} direction="row">
                     <TextField
                       size="small"
                       value={userNameDraft}
                       onChange={handleUserNameChange}
-                      inputProps={{ minLength: ACTIVITY_NAME_MIN_LENGTH, maxLength: ACTIVITY_NAME_MAX_LENGTH }}
+                      inputProps={{ required: true, minLength: ACTIVITY_NAME_MIN_LENGTH, maxLength: ACTIVITY_NAME_MAX_LENGTH }}
                       fullWidth
+                      error={Boolean(userNameError)}
+                      helperText={userNameError || '활동명은 2자 이상 10자 이하로 입력해 주세요.'}
                     />
 
                     <button
@@ -359,6 +396,12 @@ export default function UserInfo({
               open={Boolean(successMessage)}
               message={successMessage}
               onClose={() => setSuccessMessage('')}
+            />
+            <FormErrorDialog
+              open={Boolean(errorDialog.messages.length)}
+              title={errorDialog.title}
+              messages={errorDialog.messages}
+              onClose={() => setErrorDialog({ title: null, messages: [] })}
             />
           </Stack>
         </AccordionDetails>

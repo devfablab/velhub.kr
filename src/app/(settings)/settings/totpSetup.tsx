@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
@@ -57,6 +58,12 @@ export default function TotpSetup({
   const [resetVerifyCode, setResetVerifyCode] = useState('');
   const [isResetVerificationOpen, setIsResetVerificationOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [verifyCodeError, setVerifyCodeError] = useState('');
+  const [resetVerifyCodeError, setResetVerifyCodeError] = useState('');
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] }>({
+    title: null,
+    messages: [],
+  });
   const [successMessage, setSuccessMessage] = useState('');
 
   const qrCodeImageSource = useMemo(() => {
@@ -109,6 +116,13 @@ export default function TotpSetup({
 
   function handleVerifyCodeChange(event: InputChangeEvent) {
     setVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6));
+    setVerifyCodeError('');
+  }
+
+  function openFormError(title: string | null, messages: string[]) {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setErrorDialog({ title, messages });
   }
 
   async function removeFactor(targetFactorId: string) {
@@ -192,12 +206,16 @@ export default function TotpSetup({
     if (isSetting || isVerifying || !verifiedFactor) return;
 
     if (!/^\d{6}$/.test(resetVerifyCode)) {
-      setErrorMessage('인증 코드는 숫자 6자리로 입력해 주세요.');
+      const message = '인증 코드는 숫자 6자리로 입력해 주세요.';
+      setResetVerifyCodeError(message);
+      (event.currentTarget as HTMLFormElement).reportValidity();
+      openFormError('인증 코드 확인', [message]);
       return;
     }
 
     setIsVerifying(true);
     setErrorMessage('');
+    setResetVerifyCodeError('');
 
     try {
       const challengeResult = await supabase.auth.mfa.challenge({ factorId: verifiedFactor.id });
@@ -213,10 +231,10 @@ export default function TotpSetup({
       setResetVerifyCode('');
       setIsResetVerificationOpen(false);
       await handleSetOrReset(true);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message || '인증 코드 확인에 실패했습니다.' : '인증 코드 확인에 실패했습니다.',
-      );
+    } catch {
+      const message = '인증 코드가 올바르지 않습니다.';
+      setResetVerifyCodeError(message);
+      openFormError('인증 코드 확인', [message]);
     } finally {
       setIsVerifying(false);
     }
@@ -230,18 +248,20 @@ export default function TotpSetup({
     }
 
     if (!pendingSetup?.factorId) {
-      setErrorMessage('먼저 앱 기반 2단계 인증을 설정해주세요.');
-      setSuccessMessage('');
+      openFormError('2단계 인증 설정', ['먼저 앱 기반 2단계 인증을 설정해 주세요.']);
       return;
     }
 
     if (!/^\d{6}$/.test(verifyCode)) {
-      setErrorMessage('인증 코드는 숫자 6자리로 입력해 주세요.');
-      setSuccessMessage('');
+      const message = '인증 코드는 숫자 6자리로 입력해 주세요.';
+      setVerifyCodeError(message);
+      (event.currentTarget as HTMLFormElement).reportValidity();
+      openFormError('인증 코드 확인', [message]);
       return;
     }
 
     setErrorMessage('');
+    setVerifyCodeError('');
     setSuccessMessage('');
     setIsVerifying(true);
 
@@ -282,12 +302,10 @@ export default function TotpSetup({
         '앱 기반 2단계 인증 설정이 완료되었습니다.\n앞으로 인증 앱의 6자리 코드 또는 이메일로 전송된 복구 코드로 2단계 인증할 수 있습니다.',
       );
       await loadTotpState();
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '인증 코드 확인에 실패했습니다.');
-      } else {
-        setErrorMessage('인증 코드 확인에 실패했습니다.');
-      }
+    } catch {
+      const message = '인증 코드가 올바르지 않거나 요청을 처리하지 못했습니다.';
+      setVerifyCodeError(message);
+      openFormError('인증 코드 확인', [message]);
     } finally {
       setIsVerifying(false);
     }
@@ -342,7 +360,7 @@ export default function TotpSetup({
         <AccordionDetails>
           <Stack gap={2.5}>
             {isResetVerificationOpen && verifiedFactor ? (
-              <Box component="form" onSubmit={handleResetVerification}>
+              <Box component="form" noValidate onSubmit={handleResetVerification}>
                 <Stack gap={1}>
                   <Typography variant="subtitle2">현재 인증 앱 코드 확인</Typography>
                   <TextField
@@ -350,7 +368,10 @@ export default function TotpSetup({
                     type="text"
                     value={resetVerifyCode}
                     onChange={(event: InputChangeEvent) =>
-                      setResetVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6))
+                      {
+                        setResetVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6));
+                        setResetVerifyCodeError('');
+                      }
                     }
                     inputProps={{
                       inputMode: 'numeric',
@@ -361,6 +382,8 @@ export default function TotpSetup({
                     }}
                     fullWidth
                     size="small"
+                    error={Boolean(resetVerifyCodeError)}
+                    helperText={resetVerifyCodeError || '인증 앱의 숫자 6자리를 입력해 주세요.'}
                   />
                   <Stack direction="row" justifyContent="flex-end" gap={1}>
                     <button
@@ -410,7 +433,7 @@ export default function TotpSetup({
                   </span>
                 </p>
 
-                <Box component="form" onSubmit={handleVerify}>
+                <Box component="form" noValidate onSubmit={handleVerify}>
                   <Stack gap={2.5}>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">인증코드 입력</Typography>
@@ -423,6 +446,8 @@ export default function TotpSetup({
                         inputProps={{ inputMode: 'numeric', pattern: '[0-9]{6}', minLength: 6, maxLength: 6 }}
                         size="small"
                         fullWidth
+                        error={Boolean(verifyCodeError)}
+                        helperText={verifyCodeError || '인증 앱의 숫자 6자리를 입력해 주세요.'}
                       />
                     </Stack>
 
@@ -453,6 +478,12 @@ export default function TotpSetup({
               open={Boolean(successMessage)}
               message={successMessage}
               onClose={() => setSuccessMessage('')}
+            />
+            <FormErrorDialog
+              open={Boolean(errorDialog.messages.length)}
+              title={errorDialog.title}
+              messages={errorDialog.messages}
+              onClose={() => setErrorDialog({ title: null, messages: [] })}
             />
           </Stack>
         </AccordionDetails>

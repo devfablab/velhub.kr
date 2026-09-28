@@ -5,12 +5,17 @@ import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Stack, TextField, Typography } from '@mui/material';
+import { isValidPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
+type FieldErrors = { currentPassword: string; nextPassword: string; nextPasswordConfirm: string };
+
+const EMPTY_FIELD_ERRORS: FieldErrors = { currentPassword: '', nextPassword: '', nextPasswordConfirm: '' };
 
 export default function PasswordChange({
   initialHasPassword,
@@ -28,23 +33,54 @@ export default function PasswordChange({
   const [nextPassword, setNextPassword] = useState('');
   const [nextPasswordConfirm, setNextPasswordConfirm] = useState('');
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>(EMPTY_FIELD_ERRORS);
+  const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] }>({
+    title: null,
+    messages: [],
+  });
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleCurrentPasswordChange(event: InputChangeEvent) {
     setCurrentPassword(event.currentTarget.value);
+    setFieldErrors((previousValue) => ({ ...previousValue, currentPassword: '' }));
   }
 
   function handleNextPasswordChange(event: InputChangeEvent) {
     setNextPassword(event.currentTarget.value);
+    setFieldErrors((previousValue) => ({ ...previousValue, nextPassword: '' }));
   }
 
   function handleNextPasswordConfirmChange(event: InputChangeEvent) {
     setNextPasswordConfirm(event.currentTarget.value);
+    setFieldErrors((previousValue) => ({ ...previousValue, nextPasswordConfirm: '' }));
   }
 
   function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
     setIsExpanded(expanded);
+  }
+
+  function openErrorDialog(title: string | null, messages: string[], nextFieldErrors = EMPTY_FIELD_ERRORS) {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setFieldErrors(nextFieldErrors);
+    setErrorDialog({ title, messages });
+  }
+
+  function getFieldErrors() {
+    const errors: FieldErrors = {
+      currentPassword: currentPassword ? '' : '현재 비밀번호를 입력해 주세요.',
+      nextPassword: !nextPassword ? '새 비밀번호를 입력해 주세요.' : !isValidPassword(nextPassword) ? PASSWORD_REQUIREMENTS : '',
+      nextPasswordConfirm: !nextPasswordConfirm
+        ? '새 비밀번호 확인을 입력해 주세요.'
+        : nextPassword !== nextPasswordConfirm
+          ? '새 비밀번호가 일치하지 않습니다.'
+          : currentPassword === nextPassword
+            ? '현재 비밀번호와 다른 비밀번호를 입력해 주세요.'
+            : '',
+    };
+
+    return { errors, messages: Object.values(errors).filter(Boolean) };
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -54,33 +90,11 @@ export default function PasswordChange({
       return;
     }
 
-    if (!currentPassword) {
-      setErrorMessage('현재 비밀번호를 입력해주세요.');
-      setSuccessMessage('');
-      return;
-    }
+    const validation = getFieldErrors();
 
-    if (!nextPassword) {
-      setErrorMessage('새 비밀번호를 입력해주세요.');
-      setSuccessMessage('');
-      return;
-    }
-
-    if (!nextPasswordConfirm) {
-      setErrorMessage('새 비밀번호 확인을 입력해주세요.');
-      setSuccessMessage('');
-      return;
-    }
-
-    if (nextPassword !== nextPasswordConfirm) {
-      setErrorMessage('새 비밀번호가 일치하지 않습니다.');
-      setSuccessMessage('');
-      return;
-    }
-
-    if (currentPassword === nextPassword) {
-      setErrorMessage('현재 비밀번호와 다른 비밀번호를 입력해주세요.');
-      setSuccessMessage('');
+    if (validation.messages.length > 0) {
+      (event.currentTarget as HTMLFormElement).reportValidity();
+      openErrorDialog('비밀번호 변경', validation.messages, validation.errors);
       return;
     }
 
@@ -95,10 +109,18 @@ export default function PasswordChange({
         credentials: 'include',
         body: JSON.stringify({ currentPassword, nextPassword, nextPasswordConfirm }),
       });
-      const result = (await response.json().catch(() => null)) as { ok?: boolean; errors?: string[] } | null;
+      const result = (await response.json().catch(() => null)) as
+        | { ok?: boolean; title?: string; errors?: string[]; fieldErrors?: FieldErrors }
+        | null;
 
       if (!response.ok || !result?.ok) {
-        throw new Error(result?.errors?.[0] ?? '비밀번호 변경 중 오류가 발생했습니다.');
+        if (response.status >= 500 || !result?.errors?.length) {
+          openErrorDialog(null, ['요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.']);
+        } else {
+          openErrorDialog(result.title ?? '비밀번호 변경', result.errors, result.fieldErrors ?? EMPTY_FIELD_ERRORS);
+        }
+        setIsSubmitting(false);
+        return;
       }
 
       setCurrentPassword('');
@@ -107,12 +129,8 @@ export default function PasswordChange({
       setSuccessMessage('비밀번호가 변경되어 모든 디바이스에서 로그아웃되었습니다.');
 
       router.replace('/');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '비밀번호 변경 중 오류가 발생했습니다.');
-      } else {
-        setErrorMessage('비밀번호 변경 중 오류가 발생했습니다.');
-      }
+    } catch {
+      openErrorDialog(null, ['요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.']);
       setIsSubmitting(false);
     }
   }
@@ -155,7 +173,7 @@ export default function PasswordChange({
         </AccordionSummary>
 
         <AccordionDetails>
-          <Box component="form" onSubmit={handleSubmit}>
+          <Box component="form" noValidate onSubmit={handleSubmit}>
             <Stack gap={2.5}>
               <Stack gap={1}>
                 <Typography variant="subtitle2">현재 비밀번호</Typography>
@@ -167,6 +185,9 @@ export default function PasswordChange({
                   onChange={handleCurrentPasswordChange}
                   size="small"
                   fullWidth
+                  error={Boolean(fieldErrors.currentPassword)}
+                  helperText={fieldErrors.currentPassword}
+                  slotProps={{ htmlInput: { required: true } }}
                 />
               </Stack>
 
@@ -180,6 +201,9 @@ export default function PasswordChange({
                   onChange={handleNextPasswordChange}
                   size="small"
                   fullWidth
+                  error={Boolean(fieldErrors.nextPassword)}
+                  helperText={fieldErrors.nextPassword || PASSWORD_REQUIREMENTS}
+                  slotProps={{ htmlInput: { required: true } }}
                 />
               </Stack>
 
@@ -193,6 +217,9 @@ export default function PasswordChange({
                   onChange={handleNextPasswordConfirmChange}
                   size="small"
                   fullWidth
+                  error={Boolean(fieldErrors.nextPasswordConfirm)}
+                  helperText={fieldErrors.nextPasswordConfirm}
+                  slotProps={{ htmlInput: { required: true } }}
                 />
               </Stack>
 
@@ -215,6 +242,12 @@ export default function PasswordChange({
                 open={Boolean(successMessage)}
                 message={successMessage}
                 onClose={() => setSuccessMessage('')}
+              />
+              <FormErrorDialog
+                open={Boolean(errorDialog.messages.length)}
+                title={errorDialog.title}
+                messages={errorDialog.messages}
+                onClose={() => setErrorDialog({ title: null, messages: [] })}
               />
             </Stack>
           </Box>
