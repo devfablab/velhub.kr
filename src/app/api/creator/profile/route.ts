@@ -4,6 +4,8 @@ import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type CreatorLinkInput = { label?: unknown; url?: unknown; sortOrder?: unknown };
+const INTRODUCTION_MIN_LENGTH = 2;
+const INTRODUCTION_MAX_LENGTH = 72;
 
 function toText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -104,6 +106,10 @@ export async function PUT(request: Request) {
     );
   }
 
+  if (introduction && (introduction.length < INTRODUCTION_MIN_LENGTH || introduction.length > INTRODUCTION_MAX_LENGTH)) {
+    return NextResponse.json({ message: '소개글은 2자 이상 72자 이하로 입력해 주세요.' }, { status: 400 });
+  }
+
   const supabaseAdmin = getSupabaseAdmin();
   const [existingResult, sameHandleResult] = await Promise.all([
     supabaseAdmin.from('creators').select('id').eq('user_id', currentStigma.stigmaId).maybeSingle(),
@@ -143,13 +149,14 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: '작가 프로필을 저장하지 못했습니다.' }, { status: 500 });
 
   if (hasBranding) {
-    const nextLinks = (body?.links ?? [])
-      .map((link, index) => ({
-        label: toText(link.label),
-        url: normalizeUrl(link.url),
-        sort_order: index,
-      }))
-      .filter((link) => link.label && link.url);
+    const rawLinks = body?.links ?? [];
+    const incompleteLink = rawLinks.find((link) => Boolean(toText(link.label)) !== Boolean(toText(link.url)));
+    if (incompleteLink) return NextResponse.json({ message: '링크 이름과 주소를 모두 입력해 주세요.' }, { status: 400 });
+    const invalidLink = rawLinks.find((link) => Boolean(toText(link.url)) && !normalizeUrl(link.url));
+    if (invalidLink) return NextResponse.json({ message: '링크 주소를 올바른 형식으로 입력해 주세요.' }, { status: 400 });
+    const nextLinks = rawLinks
+      .map((link, index) => ({ label: toText(link.label), url: normalizeUrl(link.url), sort_order: index }))
+      .filter((link): link is { label: string; url: string; sort_order: number } => Boolean(link.label && link.url));
 
     if (nextLinks.length > 5)
       return NextResponse.json({ message: '링크는 최대 5개까지 등록할 수 있습니다.' }, { status: 400 });

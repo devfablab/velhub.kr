@@ -25,6 +25,7 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
@@ -99,6 +100,8 @@ function applyThemeMode(themeMode: ThemeMode) {
 }
 
 const MAX_FILE_SIZE = 1024 * 1024;
+const INTRODUCTION_MIN_LENGTH = 2;
+const INTRODUCTION_MAX_LENGTH = 72;
 
 function withProtocol(value: string) {
   const text = value.trim();
@@ -208,6 +211,7 @@ function ProfileForm({
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [introductionError, setIntroductionError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const updateLink = (index: number, key: keyof CreatorLink, value: string) =>
@@ -244,6 +248,12 @@ function ProfileForm({
   };
 
   const save = async () => {
+    const normalizedIntroduction = introduction.trim();
+    if (normalizedIntroduction && (normalizedIntroduction.length < INTRODUCTION_MIN_LENGTH || normalizedIntroduction.length > INTRODUCTION_MAX_LENGTH)) {
+      setIntroductionError('소개글은 2자 이상 72자 이하로 입력해 주세요.');
+      setMessage('소개글을 확인해 주세요.');
+      return;
+    }
     setSaving(true);
     setMessage('');
     try {
@@ -328,7 +338,13 @@ function ProfileForm({
           multiline
           minRows={4}
           value={introduction}
-          onChange={(event) => setIntroduction(event.target.value)}
+          onChange={(event) => {
+            setIntroduction(event.target.value);
+            setIntroductionError('');
+          }}
+          error={Boolean(introductionError)}
+          helperText={introductionError || '2자 이상 72자 이하로 입력해 주세요.'}
+          slotProps={{ htmlInput: { maxLength: INTRODUCTION_MAX_LENGTH } }}
         />
       </Stack>
       <Stack gap={2}>
@@ -365,6 +381,12 @@ function ProfileForm({
           <span>{message}</span>
         </p>
       ) : null}
+      <FormErrorDialog
+        open={Boolean(message)}
+        title={message === '소개글을 확인해 주세요.' ? '입력 내용 확인' : null}
+        messages={[message]}
+        onClose={() => setMessage('')}
+      />
       <Stack direction="row" justifyContent="flex-end" gap={1}>
         <button type="button" className="button medium close" disabled={saving} onClick={onCancel}>
           취소

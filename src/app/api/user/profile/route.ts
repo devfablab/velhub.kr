@@ -3,6 +3,9 @@ import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+const INTRODUCTION_MIN_LENGTH = 2;
+const INTRODUCTION_MAX_LENGTH = 72;
+
 function toText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -58,6 +61,10 @@ export async function PUT(request: Request) {
       { message: '핸들네임은 영문 소문자, 숫자, 하이픈으로 3~15자 입력해 주세요.' },
       { status: 400 },
     );
+  }
+
+  if (introduction && (introduction.length < INTRODUCTION_MIN_LENGTH || introduction.length > INTRODUCTION_MAX_LENGTH)) {
+    return NextResponse.json({ message: '소개글은 2자 이상 72자 이하로 입력해 주세요.' }, { status: 400 });
   }
 
   const supabaseAdmin = getSupabaseAdmin();
