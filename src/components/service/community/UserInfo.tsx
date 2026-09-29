@@ -9,6 +9,7 @@ import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
@@ -89,7 +90,7 @@ export default function UserInfo() {
       return false;
     }
 
-    if (!trimmedNickname) {
+    if (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10) {
       return false;
     }
 
@@ -171,6 +172,11 @@ export default function UserInfo() {
 
   async function handleSubmit() {
     if (!canSubmit || isSubmitting) {
+      return;
+    }
+
+    if (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10) {
+      setDialogErrorMessage('별명은 2자 이상 10자 이하로 입력해주세요.');
       return;
     }
 
@@ -343,8 +349,19 @@ export default function UserInfo() {
                 {userInfo.activityName} <span>(데브허브 활동명)</span>
               </cite>
               <div className={styles['form-control']}>
-                <input type="text" value={nickname} onChange={handleNicknameChange} placeholder="별명을 입력하세요" />
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={handleNicknameChange}
+                  placeholder="별명을 입력하세요"
+                  minLength={2}
+                  maxLength={10}
+                  aria-invalid={Boolean(dialogErrorMessage)}
+                />
               </div>
+              <p className={dialogErrorMessage ? 'field-error' : ''}>
+                {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+              </p>
               <div className={styles.misc}>
                 <div className={styles.role}>
                   <span>{roleLabel}</span>
@@ -403,8 +420,19 @@ export default function UserInfo() {
                 {userInfo.activityName} <span>(데브허브 활동명)</span>
               </cite>
               <div className={styles['form-control']}>
-                <input type="text" value={nickname} onChange={handleNicknameChange} placeholder="별명을 입력하세요" />
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={handleNicknameChange}
+                  placeholder="별명을 입력하세요"
+                  minLength={2}
+                  maxLength={10}
+                  aria-invalid={Boolean(dialogErrorMessage)}
+                />
               </div>
+              <p className={dialogErrorMessage ? 'field-error' : ''}>
+                {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+              </p>
               <div className={styles.misc}>
                 <div className={styles.role}>
                   <span>{roleLabel}</span>
@@ -565,6 +593,15 @@ export default function UserInfo() {
           </DialogActions>
         </Dialog>
       )}
+      <FormErrorDialog
+        open={Boolean(dialogErrorMessage || withdrawErrorMessage)}
+        title={dialogErrorMessage.includes('별명') || dialogErrorMessage.includes('수정할 내용') ? '별명 확인' : null}
+        messages={[dialogErrorMessage || withdrawErrorMessage]}
+        onClose={() => {
+          setDialogErrorMessage('');
+          setWithdrawErrorMessage('');
+        }}
+      />
     </div>
   );
 }

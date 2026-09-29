@@ -115,6 +115,15 @@ export default function InviteAcceptance({
     event.preventDefault();
     if (isSubmitting) return;
 
+    const trimmedNickname = nickname.trim();
+
+    if (trimmedNickname && (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10)) {
+      const message = '별명은 2자 이상 10자 이하로 입력해주세요.';
+      setNicknameError(message);
+      showError(message);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -126,7 +135,7 @@ export default function InviteAcceptance({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ nickname: nickname.trim() }),
+        body: JSON.stringify({ nickname: trimmedNickname }),
       });
       const result = (await response.json().catch(() => null)) as { siteName?: string; error?: string } | null;
 
@@ -200,9 +209,10 @@ export default function InviteAcceptance({
                 setNicknameError('');
               }}
               error={Boolean(nicknameError)}
-              helperText={nicknameError}
+              helperText={nicknameError || '입력하지 않으면 활동명이 사용됩니다. 입력하는 경우 2자 이상 10자 이하입니다.'}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
             />
             <Stack direction="row" justifyContent="flex-end">
               <button type="submit" className="button medium submit" disabled={isSubmitting}>

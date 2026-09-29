@@ -21,6 +21,7 @@ import {
   type MemberRestrictionMessagesResponse,
 } from '@/lib/users/memberRestrictionMessages';
 import { formatTimeAgo } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 
@@ -97,16 +98,23 @@ export default function MemberRestrictionMessageDialog({
     setMessageText('');
     setErrorMessage('');
     setOpenedAt(new Date().toISOString());
-    const fetchResponse = await fetch(endpoint, { credentials: 'include' });
-    const result = (await fetchResponse.json().catch(() => ({
-      error: '소명 메시지 응답을 확인하지 못했습니다.',
-    }))) as MemberRestrictionMessagesResponse;
-    setLoading(false);
-    if (!fetchResponse.ok || result.error) {
-      setErrorMessage(result.error ?? '소명 메시지를 불러오지 못했습니다.');
-      return;
+    try {
+      const fetchResponse = await fetch(endpoint, { credentials: 'include' });
+      const result = (await fetchResponse.json().catch(() => ({
+        error: '소명 메시지 응답을 확인하지 못했습니다.',
+      }))) as MemberRestrictionMessagesResponse;
+
+      if (!fetchResponse.ok || result.error) {
+        setErrorMessage(result.error ?? '소명 메시지를 불러오지 못했습니다.');
+        return;
+      }
+
+      setResponse(result);
+    } catch {
+      setErrorMessage('소명 메시지를 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
     }
-    setResponse(result);
   }
 
   function closeDialog() {
@@ -128,32 +136,36 @@ export default function MemberRestrictionMessageDialog({
     setSaving(true);
     setErrorMessage('');
 
-    const fetchResponse = await fetch(endpoint, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...postBody,
-        message,
-      }),
-    });
-    const result = (await fetchResponse.json().catch(() => ({
-      error: '메시지 전송 응답을 확인하지 못했습니다.',
-    }))) as MemberRestrictionMessagesResponse;
+    try {
+      const fetchResponse = await fetch(endpoint, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...postBody,
+          message,
+        }),
+      });
+      const result = (await fetchResponse.json().catch(() => ({
+        error: '메시지 전송 응답을 확인하지 못했습니다.',
+      }))) as MemberRestrictionMessagesResponse;
 
-    setSaving(false);
+      if (!fetchResponse.ok || result.error) {
+        setErrorMessage(result.error ?? '메시지를 보내지 못했습니다.');
+        return;
+      }
 
-    if (!fetchResponse.ok || result.error) {
-      setErrorMessage(result.error ?? '메시지를 보내지 못했습니다.');
-      return;
+      setResponse(result);
+      setMessageText('');
+      setSnackbarMessage(successMessage);
+      onSent?.();
+    } catch {
+      setErrorMessage('메시지를 보내지 못했습니다.');
+    } finally {
+      setSaving(false);
     }
-
-    setResponse(result);
-    setMessageText('');
-    setSnackbarMessage(successMessage);
-    onSent?.();
   }
 
   const content = (
@@ -197,6 +209,8 @@ export default function MemberRestrictionMessageDialog({
             minRows={4}
             fullWidth
             size="small"
+            error={Boolean(errorMessage)}
+            helperText={errorMessage || '소명 내용을 입력해주세요.'}
           />
         </>
       ) : null}
@@ -262,6 +276,12 @@ export default function MemberRestrictionMessageDialog({
       )}
 
       <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
+      <FormErrorDialog
+        open={Boolean(errorMessage)}
+        title={errorMessage.includes('입력') ? '소명 내용 확인' : null}
+        messages={[errorMessage]}
+        onClose={() => setErrorMessage('')}
+      />
     </>
   );
 }

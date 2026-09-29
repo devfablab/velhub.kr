@@ -225,6 +225,10 @@ export async function POST(request: Request, context: RouteContext) {
     };
     const nickname = normalizeText(requestBody.nickname);
 
+    if (nickname && (Array.from(nickname).length < 2 || Array.from(nickname).length > 10)) {
+      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    }
+
     if (!normalizedToken) {
       return Response.json({ error: 'token이 유효하지 않습니다.' }, { status: 400 });
     }
