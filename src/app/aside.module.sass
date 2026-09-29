@@ -212,10 +212,20 @@
   display: flex
   flex-direction: row
   padding: ds.rem(17)
+  gap: ds.rem(17)
+  overflow: hidden
+
+  @include ds.mq(maxMedium)
+    width: ds.rem(230)
+    align-items: center
+
+  @include ds.mq(maxSmall)
+    @include ds.col
 
   .avatar
     width: ds.rem(58)
     height: ds.rem(58)
+    flex: 0 0 ds.rem(58)
 
     div
       width: ds.rem(58)
@@ -224,12 +234,31 @@
   .info
     display: flex
     flex-direction: column
+    width: calc(100% - ds.rem(75))
+    flex: 0 1 calc(100% - ds.rem(75))
+    min-width: 0
+
+    @include ds.mq(maxMedium)
+      justify-content: center
+
+    @include ds.mq(maxSmall)
+      justify-content: flex-start
 
     .info-detail
       display: flex
       flex-direction: column
       font-size: ds.rem(12)
       letter-spacing: -.05em
+      width: 100%
+      min-width: 0
+      overflow: hidden
+
+      em, cite
+        display: block
+        max-width: 100%
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
 
       em
         font-style: normal
@@ -608,6 +637,15 @@
   gap: ds.rem(12)
   flex-direction: column
   @include ds.col
+
+  @include ds.mq(minSmall)
+    display: grid
+    grid-column: span 2
+    grid-template-columns: subgrid
+
+  @include ds.mq(minMedium)
+    display: flex
+    flex-direction: column
 
 .new
   .buttons

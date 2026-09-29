@@ -22,8 +22,9 @@
     flex-direction: column
     gap: ds.rem(12)
 
-    @include ds.mq(minMedium)
-      flex-direction: row
+    @include ds.mq(minSmall)
+      display: grid
+      grid-template-columns: repeat(3, 1fr)
 
   .slider
     margin-top: ds.rem(-32)
