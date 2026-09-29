@@ -258,6 +258,34 @@ function normalizeDrawEndsAt(value: unknown) {
   return date.toISOString();
 }
 
+function getEditorImagePaths(value: string | null | undefined) {
+  if (!value) {
+    return new Set<string>();
+  }
+
+  const matches = value.matchAll(/(?:src|href)=["']([^"']+)["']/gi);
+  const paths = new Set<string>();
+
+  for (const match of matches) {
+    const source = match[1];
+
+    try {
+      const pathname = new URL(source).pathname;
+      const marker = '/storage/v1/object/public/post/';
+      const markerIndex = pathname.indexOf(marker);
+      const path = markerIndex >= 0 ? decodeURIComponent(pathname.slice(markerIndex + marker.length)) : '';
+
+      if (path.startsWith('editor/')) {
+        paths.add(path);
+      }
+    } catch {
+      // 에디터 본문에 포함된 외부 URL과 상대 URL은 저장소 정리 대상이 아니다.
+    }
+  }
+
+  return paths;
+}
+
 function normalizeHashtags(value: unknown) {
   if (!Array.isArray(value)) {
     return [];
@@ -657,7 +685,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, published_at, poll, is_comment, draw_type',
+        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, published_at, poll, is_comment, draw_type, content_html, content_markdown, preview_html, preview_markdown',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
@@ -945,6 +973,10 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
         }
 
+        if (!finalContentHtml || !finalContentMarkdown) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+
         if (!finalImages || finalImages.length < 2) {
           return Response.json({ error: '갤러리 이미지를 두 개 이상 등록해주세요.' }, { status: 400 });
         }
@@ -1159,6 +1191,28 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (updatePost.error || !updatePost.data) {
       return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    const previousEditorImagePaths = new Set([
+      ...getEditorImagePaths(currentPost.data.content_html),
+      ...getEditorImagePaths(currentPost.data.content_markdown),
+      ...getEditorImagePaths(currentPost.data.preview_html),
+      ...getEditorImagePaths(currentPost.data.preview_markdown),
+    ]);
+    const nextEditorImagePaths = new Set([
+      ...getEditorImagePaths(finalContentHtml),
+      ...getEditorImagePaths(finalContentMarkdown),
+      ...getEditorImagePaths(finalPreviewHtml),
+      ...getEditorImagePaths(finalPreviewMarkdown),
+    ]);
+    const removedEditorImagePaths = [...previousEditorImagePaths].filter((path) => !nextEditorImagePaths.has(path));
+
+    if (removedEditorImagePaths.length > 0) {
+      const removeResult = await supabaseAdmin.storage.from('post').remove(removedEditorImagePaths);
+
+      if (removeResult.error) {
+        console.error('[boards/edit] editor image cleanup failed', removeResult.error);
+      }
     }
 
     if (

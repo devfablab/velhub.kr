@@ -41,6 +41,7 @@ import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import NumberField from '@/components/custom-ui/NumberField';
 import ToastEditor from '@/components/editor/ToastEditor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -1702,6 +1703,41 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
       return;
     }
 
+    if (action === 'publish' && isGalleryBoard && images.length + galleryBlobImages.length < 2) {
+      setErrorMessage('갤러리 이미지를 두 개 이상 등록해주세요.');
+      return;
+    }
+
+    if (action === 'publish' && isGalleryBoard && !normalizeText(contentMarkdown)) {
+      setErrorMessage('내용을 입력해주세요.');
+      return;
+    }
+
+    if (action === 'publish' && !isFeedBoard && !normalizeText(subject)) {
+      setErrorMessage('제목을 입력해주세요.');
+      return;
+    }
+
+    if (action === 'publish' && isBasicBoard && !normalizeText(contentMarkdown)) {
+      setErrorMessage('내용을 입력해주세요.');
+      return;
+    }
+
+    if (action === 'publish' && isFeedBoard && !normalizeText(contentSimple)) {
+      setErrorMessage('내용을 입력해주세요.');
+      return;
+    }
+
+    if (action === 'publish' && isYoutubeBoard && !normalizeText(summary)) {
+      setErrorMessage('간단 설명을 입력해주세요.');
+      return;
+    }
+
+    if (action === 'publish' && isYoutubeBoard && (!youtubeId || !youtubeCreatedAt)) {
+      setErrorMessage(!youtubeId ? '유튜브 영상 주소가 올바르지 않습니다.' : '유튜브 업로드 날짜를 입력해주세요.');
+      return;
+    }
+
     try {
       setErrorMessage('');
 
@@ -1954,6 +1990,7 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
                           <input
                             type="text"
                             value={subject}
+                            required={!isFeedBoard}
                             placeholder="제목을 입력해 주세요 (필수)"
                             style={{ paddingLeft: subjectPaddingLeft }}
                             onChange={(event) => setSubject(event.currentTarget.value)}
@@ -1987,6 +2024,7 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
                           <input
                             type="text"
                             value={youtubeUrl}
+                            required={isYoutubeBoard}
                             placeholder="유튜브 영상 주소를 입력해주세요 (필수)"
                             style={{ paddingLeft: 12 }}
                             onChange={(event) => handleYoutubeUrlChange(event.currentTarget.value)}
@@ -2067,6 +2105,7 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
                     <textarea
                       className={`${styles['content-simple']} ${styles['content-simple-feed']}`}
                       value={contentSimple}
+                      required={isFeedBoard}
                       placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
                       onChange={(event) => setContentSimple(event.currentTarget.value)}
                     />
@@ -2084,6 +2123,7 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
                         ref={youtubeSummaryReference}
                         className={`${styles['content-simple']} ${styles['content-simple-youtube']}`}
                         value={summary}
+                        required={isYoutubeBoard}
                         placeholder="영상설명을 간단히 입력해주세요"
                         onChange={(event) => setSummary(event.currentTarget.value)}
                       />
@@ -3193,6 +3233,12 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
           message={alertMessage}
           kind="error"
           onClose={() => setAlertMessage('')}
+        />
+        <FormErrorDialog
+          open={Boolean(errorMessage)}
+          title="글 작성 오류"
+          messages={errorMessage ? [errorMessage] : []}
+          onClose={() => setErrorMessage('')}
         />
       </div>
     </div>

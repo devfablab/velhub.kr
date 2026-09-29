@@ -44,6 +44,7 @@ import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import NumberField from '@/components/custom-ui/NumberField';
 import ToastEditor from '@/components/editor/ToastEditor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -799,6 +800,97 @@ export default function Opt({
   const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
   const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;
+  const hasPostChanges = useMemo(
+    () =>
+      JSON.stringify({
+        subject,
+        summary,
+        contentHtml,
+        contentMarkdown,
+        paidPreviewHtml,
+        paidPreviewMarkdown,
+        contentSimple,
+        youtubeUrl,
+        youtubeCreatedAt,
+        thumbnailImage,
+        images,
+        selectedPrefixId,
+        selectedSeriesKey,
+        isComment,
+        isPin,
+        isPollEnabled,
+        poll,
+        isDrawEnabled,
+        draw,
+        hasThumbnailUpload: Boolean(thumbnailBlobFile),
+        galleryUploadIds: galleryBlobImages.map((image) => image.id),
+      }) !==
+      JSON.stringify({
+        subject: initialContent?.content?.subject ?? '',
+        summary: initialContent?.content?.summary ?? '',
+        contentHtml: initialContent?.content?.content_html ?? '',
+        contentMarkdown: initialContent?.content?.content_markdown ?? '',
+        paidPreviewHtml: initialContent?.content?.paid_preview_html ?? '',
+        paidPreviewMarkdown: initialContent?.content?.paid_preview_markdown ?? '',
+        contentSimple: initialContent?.content?.content_simple ?? '',
+        youtubeUrl: initialContent?.content?.youtube_url ?? '',
+        youtubeCreatedAt: formatDateValue(parseDateValue(initialContent?.content?.youtube_created_at)),
+        thumbnailImage: initialContent?.content?.thumbnail_image ?? '',
+        images: initialContent?.content?.images ?? [],
+        selectedPrefixId: initialPrefixId,
+        selectedSeriesKey: initialSeriesKey,
+        isComment: initialContent?.content?.is_comment !== false,
+        isPin: initialContent?.content?.is_pin === true,
+        isPollEnabled: Boolean(initialContent?.content?.poll),
+        poll: initialPoll,
+        isDrawEnabled: Boolean(initialContent?.content?.draw_type),
+        draw: initialDraw,
+        hasThumbnailUpload: false,
+        galleryUploadIds: [],
+      }),
+    [
+      contentHtml,
+      contentMarkdown,
+      contentSimple,
+      draw,
+      galleryBlobImages,
+      images,
+      isComment,
+      isDrawEnabled,
+      isPin,
+      isPollEnabled,
+      paidPreviewHtml,
+      paidPreviewMarkdown,
+      poll,
+      selectedPrefixId,
+      selectedSeriesKey,
+      subject,
+      summary,
+      thumbnailBlobFile,
+      thumbnailImage,
+      youtubeCreatedAt,
+      youtubeUrl,
+      initialContent?.content?.content_html,
+      initialContent?.content?.content_markdown,
+      initialContent?.content?.content_simple,
+      initialContent?.content?.draw_type,
+      initialContent?.content?.images,
+      initialContent?.content?.is_comment,
+      initialContent?.content?.is_pin,
+      initialContent?.content?.paid_preview_html,
+      initialContent?.content?.paid_preview_markdown,
+      initialContent?.content?.poll,
+      initialContent?.content?.subject,
+      initialContent?.content?.summary,
+      initialContent?.content?.thumbnail_image,
+      initialContent?.content?.youtube_created_at,
+      initialContent?.content?.youtube_url,
+      initialDraw,
+      initialPoll,
+      initialPrefixId,
+      initialSeriesKey,
+    ],
+  );
 
   function handleYoutubeUrlChange(nextValue: string) {
     setYoutubeUrl(nextValue);
@@ -1711,6 +1803,36 @@ export default function Opt({
       return;
     }
 
+    if (action !== 'draft' && isGalleryBoard && !normalizeText(contentMarkdown)) {
+      setErrorMessage('내용을 입력해주세요.');
+      return;
+    }
+
+    if (action !== 'draft' && !isFeedBoard && !normalizeText(subject)) {
+      setErrorMessage('제목을 입력해주세요.');
+      return;
+    }
+
+    if (action !== 'draft' && isBasicBoard && !normalizeText(contentMarkdown)) {
+      setErrorMessage('내용을 입력해주세요.');
+      return;
+    }
+
+    if (action !== 'draft' && isFeedBoard && !normalizeText(contentSimple)) {
+      setErrorMessage('내용을 입력해주세요.');
+      return;
+    }
+
+    if (action !== 'draft' && isYoutubeBoard && !normalizeText(summary)) {
+      setErrorMessage('간단 설명을 입력해주세요.');
+      return;
+    }
+
+    if (action !== 'draft' && isYoutubeBoard && (!youtubeId || !youtubeCreatedAt)) {
+      setErrorMessage(!youtubeId ? '유튜브 영상 주소가 올바르지 않습니다.' : '유튜브 업로드 날짜를 입력해주세요.');
+      return;
+    }
+
     try {
       setErrorMessage('');
 
@@ -1944,6 +2066,7 @@ export default function Opt({
                             <input
                               type="text"
                               value={subject}
+                              required={!isFeedBoard}
                               placeholder="제목을 입력해 주세요"
                               style={{ paddingLeft: subjectPaddingLeft }}
                               onChange={(event) => setSubject(event.currentTarget.value)}
@@ -1978,6 +2101,7 @@ export default function Opt({
                               id="youtube-url"
                               type="text"
                               value={youtubeUrl}
+                              required={isYoutubeBoard}
                               placeholder="유튜브 영상 주소를 입력해주세요"
                               style={{ paddingLeft: 12 }}
                               onChange={(event) => handleYoutubeUrlChange(event.currentTarget.value)}
@@ -2062,6 +2186,7 @@ export default function Opt({
                       <textarea
                         className={`${styles['content-simple']} ${styles['content-simple-feed-edit']}`}
                         value={contentSimple}
+                        required={isFeedBoard}
                         placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
                         onChange={(event) => setContentSimple(event.currentTarget.value)}
                       />
@@ -2079,6 +2204,7 @@ export default function Opt({
                           ref={youtubeSummaryReference}
                           className={`${styles['content-simple']} ${styles['content-simple-youtube-edit']}`}
                           value={summary}
+                          required={isYoutubeBoard}
                           placeholder="영상설명을 간단히 입력해주세요"
                           onChange={(event) => setSummary(event.currentTarget.value)}
                         />
@@ -2178,7 +2304,7 @@ export default function Opt({
               {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
               {isMobile ? (
                 <div className={styles['button-top']}>
-                  <button type="submit" className={`button ${styles.button}`}>
+                  <button type="submit" disabled={publishedStatus === 'published' && !hasPostChanges} className={`button ${styles.button}`}>
                     저장
                   </button>
                 </div>
@@ -2199,7 +2325,7 @@ export default function Opt({
                 ) : null}
                 <button
                   type="submit"
-                  disabled={isSubmittingDraft || isSubmittingPublish}
+                  disabled={isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)}
                   className={`${styles.submit} button`}
                 >
                   저장
@@ -3192,6 +3318,12 @@ export default function Opt({
             message={alertMessage}
             kind="error"
             onClose={() => setAlertMessage('')}
+          />
+          <FormErrorDialog
+            open={Boolean(errorMessage)}
+            title="글 수정 오류"
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setErrorMessage('')}
           />
         </div>
       </div>

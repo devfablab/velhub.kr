@@ -28,6 +28,7 @@ import {
   guidelineReportItemsByTargetType,
   type ReportTargetType,
 } from '@/lib/reports/guidelines';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import styles from '@/app/reports.module.sass';
 
 type ReportButtonProps = {
@@ -188,34 +189,38 @@ export default function ReportButton({
     setSubmitting(true);
     setErrorMessage('');
 
-    const response = await fetch('/api/reports/new', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        targetType,
-        siteName,
-        boardName,
-        contentId,
-        commentId,
-        reportCategory: selectedCategory,
-      }),
-    });
+    try {
+      const response = await fetch('/api/reports/new', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          targetType,
+          siteName,
+          boardName,
+          contentId,
+          commentId,
+          reportCategory: selectedCategory,
+        }),
+      });
 
-    const result = (await response.json().catch(() => ({
-      error: '신고 처리 중 응답을 확인하지 못했습니다.',
-    }))) as ReportResponse;
+      const result = (await response.json().catch(() => ({
+        error: '신고 처리 중 응답을 확인하지 못했습니다.',
+      }))) as ReportResponse;
 
-    setSubmitting(false);
+      if (!response.ok || result.error) {
+        setErrorMessage(result.error ?? '신고를 접수하지 못했습니다.');
+        return;
+      }
 
-    if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '신고를 접수하지 못했습니다.');
-      return;
+      setCompleted(true);
+    } catch {
+      setErrorMessage('네트워크 연결을 확인한 뒤 다시 시도해주세요.');
+    } finally {
+      setSubmitting(false);
     }
-
-    setCompleted(true);
   }
 
   function renderReportItems() {
@@ -338,6 +343,12 @@ export default function ReportButton({
           </DialogActions>
         </Dialog>
       )}
+      <FormErrorDialog
+        open={Boolean(errorMessage)}
+        title={null}
+        messages={errorMessage ? [errorMessage] : []}
+        onClose={() => setErrorMessage('')}
+      />
     </>
   );
 }

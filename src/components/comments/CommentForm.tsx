@@ -12,6 +12,7 @@ type Props = {
   avatarUrl: string;
   pollChoiceLabel?: string;
   isSubmitting?: boolean;
+  externalErrorMessage?: string;
   getYoutubeCurrentTime?: () => number | null;
   onSubmit: (content: string) => Promise<void>;
   onCancel?: () => void;
@@ -26,6 +27,7 @@ export default function CommentForm({
   replyTargetName,
   avatarUrl,
   isSubmitting = false,
+  externalErrorMessage = '',
   getYoutubeCurrentTime,
   onSubmit,
   onCancel,
@@ -109,7 +111,7 @@ export default function CommentForm({
     <form onSubmit={handleSubmit} className="form">
       <fieldset>
         <legend>댓글쓰기 폼</legend>
-        {errorMessage ? <p>{errorMessage}</p> : null}
+        {errorMessage || externalErrorMessage ? <p className="helper error">{errorMessage || externalErrorMessage}</p> : null}
         <div className={styles.textarea}>
           <Avatar src={avatarUrl} alt="" sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }} />
 
@@ -121,6 +123,8 @@ export default function CommentForm({
             placeholder={placeholder}
             disabled={isSubmitting}
             rows={1}
+            required
+            aria-invalid={Boolean(errorMessage || externalErrorMessage)}
             className={replyTargetName ? styles['reply-textarea'] : undefined}
             onChange={handleContentChange}
           />

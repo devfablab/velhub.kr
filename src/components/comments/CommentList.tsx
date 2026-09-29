@@ -6,6 +6,7 @@ import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import { Avatar } from '@mui/material';
 import CommentForm from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import Anchor from '../Anchor';
 import styles from '@/app/comments.module.sass';
 
@@ -371,6 +372,7 @@ export default function CommentList({
           avatarUrl={mySelfAvatarUrl}
           pollChoiceLabel={myPollChoice?.label}
           isSubmitting={isSubmitting}
+          externalErrorMessage={errorMessage}
           getYoutubeCurrentTime={getYoutubeCurrentTime}
           onSubmit={(content) => createComment(content, null)}
         />
@@ -437,6 +439,12 @@ export default function CommentList({
           </p>
         )}
       </div>
+      <FormErrorDialog
+        open={Boolean(errorMessage)}
+        title={null}
+        messages={errorMessage ? [errorMessage] : []}
+        onClose={() => setErrorMessage('')}
+      />
     </section>
   );
 }

@@ -856,6 +856,10 @@ export async function POST(request: Request, context: RouteContext) {
           return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
         }
 
+        if (!finalContentHtml || !finalContentMarkdown) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+
         if (!finalImages || finalImages.length < 2) {
           return Response.json({ error: '갤러리 이미지를 두 개 이상 등록해주세요.' }, { status: 400 });
         }
