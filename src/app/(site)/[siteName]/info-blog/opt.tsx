@@ -26,6 +26,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
 import { formatDate } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import styles from '@/app/blogInfo.module.sass';
 
@@ -357,6 +358,7 @@ export default function Opt({
   const [itemManageDialogType, setItemManageDialogType] = useState<ItemType | null>(null);
   const [itemFormDialogType, setItemFormDialogType] = useState<ItemType | null>(null);
   const [editingItem, setEditingItem] = useState<TeamBlogItem | null>(null);
+  const [deletingItem, setDeletingItem] = useState<TeamBlogItem | null>(null);
 
   const [generalFormValue, setGeneralFormValue] = useState(createEmptyGeneralFormValue());
   const [itemFormValue, setItemFormValue] = useState(createEmptyItemFormValue());
@@ -365,6 +367,7 @@ export default function Opt({
   const [errorMessage, setErrorMessage] = useState('');
   const [nicknameErrorMessage, setNicknameErrorMessage] = useState('');
   const [itemErrorMessage, setItemErrorMessage] = useState('');
+  const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNicknameSubmitting, setIsNicknameSubmitting] = useState(false);
@@ -382,6 +385,10 @@ export default function Opt({
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+
+  function showFormError(title: string | null, messages: string[]) {
+    setFormErrorDialog({ title, messages: messages.filter(Boolean) });
+  }
 
   async function handleToggleFavorite() {
     if (isFavoriteSubmitting) {
@@ -637,7 +644,9 @@ export default function Opt({
     }
 
     if (!generalFormValue.nameKo.trim() && !generalFormValue.nameEn.trim()) {
-      setErrorMessage('국문명 또는 영문명 중 하나는 입력해주세요.');
+      const message = '국문명 또는 영문명 중 하나는 입력해주세요.';
+      setErrorMessage(message);
+      showFormError('기본정보 확인', [message]);
       return;
     }
 
@@ -691,9 +700,13 @@ export default function Opt({
       setIsGeneralDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '팀원 기본 정보 저장에 실패했습니다.');
+        const message = unknownError.message || '팀원 기본 정보 저장에 실패했습니다.';
+        setErrorMessage(message);
+        showFormError(null, [message]);
       } else {
-        setErrorMessage('팀원 기본 정보 저장에 실패했습니다.');
+        const message = '팀원 기본 정보 저장에 실패했습니다.';
+        setErrorMessage(message);
+        showFormError(null, [message]);
       }
     } finally {
       setIsSubmitting(false);
@@ -706,7 +719,16 @@ export default function Opt({
     }
 
     if (!nicknameValue.trim()) {
-      setNicknameErrorMessage('별명을 입력해주세요.');
+      const message = '별명을 입력해주세요.';
+      setNicknameErrorMessage(message);
+      showFormError('별명 확인', [message]);
+      return;
+    }
+
+    if (Array.from(nicknameValue.trim()).length < 2 || Array.from(nicknameValue.trim()).length > 10) {
+      const message = '별명은 2자 이상 10자 이하로 입력해주세요.';
+      setNicknameErrorMessage(message);
+      showFormError('별명 확인', [message]);
       return;
     }
 
@@ -747,9 +769,13 @@ export default function Opt({
       setIsNicknameDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setNicknameErrorMessage(unknownError.message || '별명 수정에 실패했습니다.');
+        const message = unknownError.message || '별명 수정에 실패했습니다.';
+        setNicknameErrorMessage(message);
+        showFormError(null, [message]);
       } else {
-        setNicknameErrorMessage('별명 수정에 실패했습니다.');
+        const message = '별명 수정에 실패했습니다.';
+        setNicknameErrorMessage(message);
+        showFormError(null, [message]);
       }
     } finally {
       setIsNicknameSubmitting(false);
@@ -757,6 +783,9 @@ export default function Opt({
   }
 
   function validateItemForm(itemType: ItemType) {
+    const hasInvalidDateRange = (startDate: string, endDate: string) =>
+      Boolean(startDate && endDate && new Date(startDate).getTime() > new Date(endDate).getTime());
+
     if (itemType === 'educations' && !itemFormValue.school.trim()) {
       return '학교명을 입력해주세요.';
     }
@@ -775,6 +804,28 @@ export default function Opt({
       return '프로젝트명을 입력해주세요.';
     }
 
+    if (itemType === 'projects') {
+      if (hasInvalidDateRange(itemFormValue.workStartDate, itemFormValue.workEndDate)) {
+        return '종료일은 시작일보다 과거일 수 없습니다.';
+      }
+
+      if (itemFormValue.siteUrl.trim()) {
+        try {
+          const url = new URL(itemFormValue.siteUrl.trim());
+
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            return '사이트 URL은 http 또는 https 주소로 입력해주세요.';
+          }
+        } catch {
+          return '사이트 URL은 http 또는 https 주소로 입력해주세요.';
+        }
+      }
+    }
+
+    if (itemType === 'educations' && hasInvalidDateRange(itemFormValue.startDate, itemFormValue.endDate)) {
+      return '졸업일은 입학일보다 과거일 수 없습니다.';
+    }
+
     if (itemType === 'careers') {
       if (!itemFormValue.organization.trim()) {
         return '소속 단체를 입력해주세요.';
@@ -786,6 +837,10 @@ export default function Opt({
 
       if (!itemFormValue.roleJob.trim()) {
         return '역할 또는 직무를 입력해주세요.';
+      }
+
+      if (hasInvalidDateRange(itemFormValue.workStartDate, itemFormValue.workEndDate)) {
+        return '퇴사일은 입사일보다 과거일 수 없습니다.';
       }
     }
 
@@ -801,6 +856,7 @@ export default function Opt({
 
     if (validationMessage) {
       setItemErrorMessage(validationMessage);
+      showFormError(`${itemFormDialogType ? getItemTypeLabel(itemFormDialogType) : '항목'} 확인`, [validationMessage]);
       return;
     }
 
@@ -847,9 +903,13 @@ export default function Opt({
       handleCloseItemFormDialog();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setItemErrorMessage(unknownError.message || '항목 저장에 실패했습니다.');
+        const message = unknownError.message || '항목 저장에 실패했습니다.';
+        setItemErrorMessage(message);
+        showFormError(null, [message]);
       } else {
-        setItemErrorMessage('항목 저장에 실패했습니다.');
+        const message = '항목 저장에 실패했습니다.';
+        setItemErrorMessage(message);
+        showFormError(null, [message]);
       }
     } finally {
       setIsItemSubmitting(false);
@@ -880,6 +940,41 @@ export default function Opt({
       } else {
         setItemErrorMessage('정렬 저장에 실패했습니다.');
       }
+    }
+  }
+
+  async function handleDeleteItem() {
+    if (!deletingItem || !itemManageDialogType || isItemSubmitting) {
+      return;
+    }
+
+    try {
+      setIsItemSubmitting(true);
+      setItemErrorMessage('');
+
+      const response = await fetch(`/api/team-blog/delete/${itemManageDialogType}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ siteName, itemId: deletingItem.id }),
+      });
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '항목 삭제에 실패했습니다.');
+      }
+
+      setItems(
+        itemManageDialogType,
+        getItems(itemManageDialogType).filter((item) => item.id !== deletingItem.id),
+      );
+      setDeletingItem(null);
+    } catch (unknownError) {
+      const message = unknownError instanceof Error ? unknownError.message || '항목 삭제에 실패했습니다.' : '항목 삭제에 실패했습니다.';
+      setItemErrorMessage(message);
+      showFormError(null, [message]);
+    } finally {
+      setIsItemSubmitting(false);
     }
   }
 
@@ -1284,6 +1379,9 @@ export default function Opt({
         <button type="button" className="button small action" onClick={() => handleOpenItemFormDialog(itemType, item)}>
           수정
         </button>
+        <button type="button" className="button small danger" onClick={() => setDeletingItem(item)}>
+          삭제
+        </button>
       </div>
     );
   }
@@ -1671,6 +1769,32 @@ export default function Opt({
         </Dialog>
       )}
 
+      <Dialog
+        open={Boolean(deletingItem)}
+        onClose={() => !isItemSubmitting && setDeletingItem(null)}
+        fullWidth
+        maxWidth="xs"
+        className="vh-dialog vh-alert-dialog"
+      >
+        <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 삭제` : '항목 삭제'}</DialogTitle>
+        <DialogContent>삭제한 항목은 복구할 수 없습니다.</DialogContent>
+        <DialogActions>
+          <button type="button" className="cancel-button" onClick={() => setDeletingItem(null)} disabled={isItemSubmitting}>
+            취소
+          </button>
+          <button type="button" className="delete-button" onClick={() => void handleDeleteItem()} disabled={isItemSubmitting}>
+            삭제
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <FormErrorDialog
+        open={Boolean(formErrorDialog)}
+        title={formErrorDialog?.title ?? null}
+        messages={formErrorDialog?.messages ?? []}
+        onClose={() => setFormErrorDialog(null)}
+      />
+
       {isMobile ? (
         <Drawer
           anchor="bottom"
@@ -1696,6 +1820,9 @@ export default function Opt({
                 onChange={handleChangeNickname}
                 fullWidth
                 size="small"
+                slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                error={Boolean(nicknameErrorMessage)}
+                helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
               />
 
               {nicknameErrorMessage ? (
@@ -1748,6 +1875,9 @@ export default function Opt({
                 onChange={handleChangeNickname}
                 fullWidth
                 size="small"
+                slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                error={Boolean(nicknameErrorMessage)}
+                helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
               />
 
               {nicknameErrorMessage ? (

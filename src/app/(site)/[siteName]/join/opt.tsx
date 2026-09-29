@@ -18,6 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import FormErrorDialog from '@/components/FormErrorDialog';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -138,6 +139,14 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
       return;
     }
 
+    if (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10) {
+      setNicknameErrorMessage('별명은 2자 이상 10자 이하로 입력해주세요.');
+      setNicknameSuccessMessage('');
+      setIsNicknameChecked(false);
+      setCheckedNickname('');
+      return;
+    }
+
     try {
       setIsCheckingNickname(true);
       setNicknameErrorMessage('');
@@ -218,24 +227,17 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
       return;
     }
 
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setErrorMessage('답변 이미지는 5MB 이하만 업로드할 수 있습니다.');
+      inputElement.value = '';
+      return;
+    }
+
     try {
       setErrorMessage('');
       setUploadingQuestionId(questionId);
 
       const previousAnswerImage = answers[questionId]?.answer_image ?? '';
-
-      if (previousAnswerImage) {
-        await fetch('/api/attachment/delete/community-answer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: previousAnswerImage,
-          }),
-        });
-      }
 
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -254,6 +256,19 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
 
       if (!result.answerImage || !result.url) {
         throw new Error('이미지 업로드에 실패했습니다.');
+      }
+
+      if (previousAnswerImage) {
+        const deleteResponse = await fetch('/api/attachment/delete/community-answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ path: previousAnswerImage }),
+        });
+
+        if (!deleteResponse.ok) {
+          throw new Error('기존 이미지 삭제에 실패했습니다.');
+        }
       }
 
       setAnswers((previousAnswers) => ({
@@ -469,9 +484,8 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
         }
         fullWidth
         size="small"
-        error={Boolean(nicknameErrorMessage)}
-        helperText={nicknameErrorMessage || nicknameSuccessMessage || ' '}
         slotProps={{
+          htmlInput: { minLength: 2, maxLength: 10 },
           input: {
             endAdornment: (
               <InputAdornment position="end">
@@ -487,6 +501,8 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
             ),
           },
         }}
+        error={Boolean(nicknameErrorMessage)}
+        helperText={nicknameErrorMessage || nicknameSuccessMessage || ' '}
       />
 
       {joinQuestionStatus === 'enabled' ? (
@@ -584,6 +600,13 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
           가입하기
         </button>
       </Stack>
+
+      <FormErrorDialog
+        open={Boolean(errorMessage)}
+        title="가입 내용 확인"
+        messages={[errorMessage]}
+        onClose={() => setErrorMessage('')}
+      />
     </Stack>
   );
 }

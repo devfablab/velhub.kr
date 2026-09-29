@@ -319,7 +319,7 @@ export async function POST(request: Request) {
         today.getDate(),
       ).padStart(2, '0')}`;
 
-      if (startDay && endDay && todayValue >= startDay && todayValue <= endDay) {
+      if (!startDay || !endDay || todayValue < startDay || todayValue > endDay) {
         return Response.json({ error: '현재는 가입이 불가능한 기간입니다.' }, { status: 403 });
       }
     }
@@ -345,6 +345,10 @@ export async function POST(request: Request) {
     const fallbackNickname = stigma.data.user_name ? decrypt(stigma.data.user_name as string) : '';
     const isAutoNickname = !nickname;
     let finalNickname = nickname || fallbackNickname || null;
+
+    if (nickname && (Array.from(nickname).length < 2 || Array.from(nickname).length > 10)) {
+      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    }
 
     if (finalNickname) {
       if (isAutoNickname) {

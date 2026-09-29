@@ -21,6 +21,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '별명을 입력해주세요.' }, { status: 400 });
     }
 
+    if (Array.from(nickname).length < 2 || Array.from(nickname).length > 10) {
+      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();

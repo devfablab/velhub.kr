@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 const COMMUNITY_ANSWER_BUCKET = 'community_answer';
 const ALLOWED_MIME_TYPES = ['image/webp', 'image/jpeg', 'image/png'];
 const ALLOWED_EXTENSIONS = ['.webp', '.jpg', '.jpeg', '.png'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function getSafeExtension(fileName: string) {
   const extension = path.extname(fileName).toLowerCase();
@@ -44,6 +45,10 @@ export async function POST(request: Request) {
 
     if (!safeMimeType || !safeExtension) {
       return Response.json({ error: 'webp, jpg, png 파일만 업로드할 수 있습니다.' }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return Response.json({ error: '답변 이미지는 5MB 이하만 업로드할 수 있습니다.' }, { status: 400 });
     }
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());

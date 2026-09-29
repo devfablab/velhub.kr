@@ -53,6 +53,15 @@ function validateDateRange(startDate: string | null, endDate: string | null) {
   return new Date(startDate).getTime() <= new Date(endDate).getTime();
 }
 
+function isValidHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function buildPayload(itemType: ItemType, requestBody: RequestBody) {
   if (itemType === 'educations') {
     const school = normalizeText(requestBody.school);
@@ -111,6 +120,12 @@ function buildPayload(itemType: ItemType, requestBody: RequestBody) {
       return { error: '종료일은 시작일보다 과거일 수 없습니다.' } as const;
     }
 
+    const siteUrl = normalizeText(requestBody.siteUrl);
+
+    if (siteUrl && !isValidHttpUrl(siteUrl)) {
+      return { error: '사이트 URL은 http 또는 https 주소로 입력해주세요.' } as const;
+    }
+
     return {
       payload: {
         work_start_date: workStartDate,
@@ -120,7 +135,7 @@ function buildPayload(itemType: ItemType, requestBody: RequestBody) {
         client: normalizeText(requestBody.client) || null,
         agency: normalizeText(requestBody.agency) || null,
         site_name: normalizeText(requestBody.siteNameValue) || null,
-        site_url: normalizeText(requestBody.siteUrl) || null,
+        site_url: siteUrl || null,
       },
     } as const;
   }
