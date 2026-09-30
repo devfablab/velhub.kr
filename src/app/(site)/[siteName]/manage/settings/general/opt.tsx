@@ -34,9 +34,11 @@ import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -117,6 +119,10 @@ const MAX_SITE_OG_FILE_SIZE = 1024 * 1024;
 const SITE_OG_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const MAX_PROMOTION_FILE_SIZE = 1024 * 1024;
 const PROMOTION_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const MAX_SITE_AVATAR_FILE_SIZE = 1024 * 1024;
+const SITE_AVATAR_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
+const MAX_SITE_LOGO_FILE_SIZE = 100 * 1024;
+const SITE_LOGO_IMAGE_TYPES = new Set(['image/png', 'image/webp', 'image/svg+xml']);
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -178,8 +184,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [siteOgImageUrl, setSiteOgImageUrl] = useState(initialData?.siteOgImageUrl ?? '');
   const [promotionImageUrl, setPromotionImageUrl] = useState(initialData?.promotionImageUrl ?? '');
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<EditableField, string>>>({});
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '사이트 설정' : null);
   const [successMessage, setSuccessMessage] = useState('');
   const [isTeamMemberBlogTypeDialogOpen, setIsTeamMemberBlogTypeDialogOpen] = useState(false);
+  const [isTeamConversionConfirmOpen, setIsTeamConversionConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -206,6 +216,22 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = !isNotMobile;
+
+  function showError(message: string, field?: EditableField, title: string | null = '사이트 설정') {
+    setErrorMessage(message);
+    if (field) {
+      setFieldErrors((previousErrors) => ({ ...previousErrors, [field]: message }));
+    }
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
+
+  function clearFieldError(field?: EditableField) {
+    if (field) {
+      setFieldErrors((previousErrors) => ({ ...previousErrors, [field]: '' }));
+    }
+    setErrorMessage('');
+  }
 
   useEffect(() => {
     if (initialData?.siteInfo) {
@@ -235,7 +261,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   function startEdit(field: EditableField, value: string | boolean | null) {
     setEditingField(field);
     setDraftValue(typeof value === 'boolean' ? value : (value ?? ''));
-    setErrorMessage('');
+    clearFieldError(field);
     setSuccessMessage('');
     resetSiteKeyCheck();
     resetSiteLabelCheck();
@@ -265,7 +291,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
 
     setEditingField(null);
-    setErrorMessage('');
+    clearFieldError(editingField ?? undefined);
     setSuccessMessage('');
     resetSiteKeyCheck();
     resetSiteLabelCheck();
@@ -273,6 +299,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   function handleTextChange(event: InputChangeEvent | TextAreaChangeEvent) {
+    clearFieldError(editingField ?? undefined);
     setDraftValue(event.currentTarget.value.slice(0, editingField === 'summary' ? 52 : 10));
   }
 
@@ -280,14 +307,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
     const normalizedValue = normalizeSiteKey(event.currentTarget.value).slice(0, 15);
 
     setDraftValue(normalizedValue);
-    setErrorMessage('');
+    clearFieldError('site_key');
     setSuccessMessage('');
     resetSiteKeyCheck();
   }
 
   function handleSiteLabelChange(event: InputChangeEvent) {
     setDraftValue(event.currentTarget.value.slice(0, 10));
-    setErrorMessage('');
+    clearFieldError('site_label');
     setSuccessMessage('');
     resetSiteLabelCheck();
   }
@@ -316,12 +343,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
     resetSiteKeyCheck();
 
     if (!normalizedSiteKey) {
-      setErrorMessage('사이트 주소를 입력해주세요.');
+      showError('사이트 주소를 입력해주세요.', 'site_key');
       return;
     }
 
     if (hasInvalidCharacters(normalizedSiteKey)) {
-      setErrorMessage("영소문자, 하이픈('-'), 숫자만 사용 가능합니다.");
+      showError("영소문자, 하이픈('-'), 숫자만 사용 가능합니다.", 'site_key');
       return;
     }
 
@@ -355,7 +382,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       if (!response.ok || !result.ok) {
         setCheckedSiteKey(result.normalizedSiteKey ?? normalizedSiteKey);
         setIsSiteKeyAvailable(false);
-        setErrorMessage(result.error ?? '사용할 수 없는 사이트 주소입니다.');
+        showError(result.error ?? '사용할 수 없는 사이트 주소입니다.', 'site_key');
         return;
       }
 
@@ -364,9 +391,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSiteKeyCheckMessage('사용 가능한 사이트 주소입니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '사이트 주소 확인에 실패했습니다.');
+        showError(unknownError.message || '사이트 주소 확인에 실패했습니다.', 'site_key', null);
       } else {
-        setErrorMessage('사이트 주소 확인에 실패했습니다.');
+        showError('사이트 주소 확인에 실패했습니다.', 'site_key', null);
       }
       resetSiteKeyCheck();
     } finally {
@@ -386,7 +413,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     resetSiteLabelCheck();
 
     if (!trimmedSiteLabel) {
-      setErrorMessage('사이트명을 입력해주세요.');
+      showError('사이트명을 입력해주세요.', 'site_label');
       return;
     }
 
@@ -420,7 +447,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       if (!response.ok || !result.ok) {
         setCheckedSiteLabel(result.normalizedSiteLabel ?? trimmedSiteLabel);
         setIsSiteLabelAvailable(false);
-        setErrorMessage(result.error ?? '사용할 수 없는 사이트명입니다.');
+        showError(result.error ?? '사용할 수 없는 사이트명입니다.', 'site_label');
         return;
       }
 
@@ -429,9 +456,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSiteLabelCheckMessage('사용 가능한 사이트명입니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '사이트명 확인에 실패했습니다.');
+        showError(unknownError.message || '사이트명 확인에 실패했습니다.', 'site_label', null);
       } else {
-        setErrorMessage('사이트명 확인에 실패했습니다.');
+        showError('사이트명 확인에 실패했습니다.', 'site_label', null);
       }
       resetSiteLabelCheck();
     } finally {
@@ -463,15 +490,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
       if (!response.ok || !result.ok) {
         setCheckedCustomDomain(normalizedDomain);
         setCustomDomainCheckError(true);
+        showError(result.error ?? '사용하실 수 없는 도메인입니다.', 'custom_domain');
         return;
       }
 
       setCheckedCustomDomain(normalizedDomain);
       setIsCustomDomainAvailable(true);
       setCustomDomainCheckMessage('사용 가능한 커스텀 도메인입니다.');
-    } catch (unknownError) {
+    } catch {
       setCustomDomainCheckError(true);
       resetCustomDomainCheck();
+      showError('커스텀 도메인 확인에 실패했습니다.', 'custom_domain', null);
     } finally {
       setIsCheckingCustomDomain(false);
     }
@@ -502,7 +531,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setPromotionImageUrl(result.promotionImageUrl ?? '');
   }
 
-  async function saveField(field: EditableField, value?: string | boolean) {
+  async function saveField(field: EditableField, value?: string | boolean, confirmTeamConversion = false) {
     if (!siteInfo || isSubmitting) {
       return false;
     }
@@ -513,7 +542,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const normalizedSiteKey = normalizeSiteKey(String(nextValue));
 
       if (!isSiteKeyAvailable || checkedSiteKey !== normalizedSiteKey) {
-        setErrorMessage('사이트 주소 중복 확인을 해주세요.');
+        showError('사이트 주소 중복 확인을 해주세요.', 'site_key');
         setSuccessMessage('');
         return false;
       }
@@ -523,7 +552,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const trimmedSiteLabel = String(nextValue).trim();
 
       if (trimmedSiteLabel && (!isSiteLabelAvailable || checkedSiteLabel !== trimmedSiteLabel)) {
-        setErrorMessage('사이트명 중복 확인을 해주세요.');
+        showError('사이트명 중복 확인을 해주세요.', 'site_label');
         setSuccessMessage('');
         return false;
       }
@@ -533,7 +562,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const customDomain = normalizeCustomDomain(String(nextValue));
 
       if (customDomain && (!isCustomDomainAvailable || checkedCustomDomain !== customDomain)) {
-        setErrorMessage('커스텀 도메인 중복 확인을 해주세요.');
+        showError('커스텀 도메인 중복 확인을 해주세요.', 'custom_domain');
         setSuccessMessage('');
         return false;
       }
@@ -553,6 +582,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         body: JSON.stringify({
           field,
           value: nextValue,
+          confirmTeamConversion,
         }),
       });
 
@@ -569,7 +599,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
           return false;
         }
 
-        throw new Error(result.error ?? '사이트 정보 수정에 실패했습니다.');
+        if (field === 'blog_type' && result.requiresTeamConversionConfirmation) {
+          setIsTeamConversionConfirmOpen(true);
+          setIsSubmitting(false);
+          return false;
+        }
+
+        const message = result.error ?? '사이트 정보 수정에 실패했습니다.';
+        showError(message, field, response.status >= 500 ? null : '사이트 설정');
+        setIsSubmitting(false);
+        return false;
       }
 
       await refreshInfo(result.siteName);
@@ -588,13 +627,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return true;
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '사이트 정보 수정에 실패했습니다.');
+        showError(unknownError.message || '사이트 정보 수정에 실패했습니다.', field, null);
       } else {
-        setErrorMessage('사이트 정보 수정에 실패했습니다.');
+        showError('사이트 정보 수정에 실패했습니다.', field, null);
       }
       setIsSubmitting(false);
       return false;
     }
+  }
+
+  function handleBlogTypeSave() {
+    void saveField('blog_type');
   }
 
   async function handleProfilePictureFileChange(event: InputChangeEvent) {
@@ -606,32 +649,26 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return;
     }
 
+    if (!SITE_AVATAR_IMAGE_TYPES.has(selectedFile.type.toLowerCase())) {
+      showError('PNG, JPEG, WEBP, SVG 이미지만 업로드할 수 있습니다.', 'profile_picture');
+      inputElement.value = '';
+      return;
+    }
+
+    if (selectedFile.size >= MAX_SITE_AVATAR_FILE_SIZE) {
+      showError('사이트 아바타 이미지는 1MB 미만만 업로드할 수 있습니다.', 'profile_picture');
+      inputElement.value = '';
+      return;
+    }
+
     setErrorMessage('');
     setSuccessMessage('');
     setIsUploadingAvatar(true);
 
     try {
-      if (siteInfo.profile_picture) {
-        const deleteResponse = await fetch('/api/attachment/delete/avatar/site', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: siteInfo.profile_picture,
-          }),
-        });
-
-        const deleteResult = await deleteResponse.json();
-
-        if (!deleteResponse.ok) {
-          throw new Error(deleteResult.error ?? '기존 아바타 삭제에 실패했습니다.');
-        }
-      }
-
       const formData = new FormData();
       formData.append('file', selectedFile);
+      formData.append('siteName', siteName);
 
       const addResponse = await fetch('/api/attachment/add/avatar/site', {
         method: 'POST',
@@ -652,13 +689,36 @@ export default function Opt({ initialData, initialError }: OptProps) {
         throw new Error('업로드된 아바타 정보를 확인하지 못했습니다.');
       }
 
-      await saveField('profile_picture', nextProfilePicture);
+      const isSaved = await saveField('profile_picture', nextProfilePicture);
+      if (!isSaved) {
+        await fetch('/api/attachment/delete/avatar/site', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ path: nextProfilePicture, siteName }),
+        }).catch(() => undefined);
+        return;
+      }
+
+      if (siteInfo.profile_picture && siteInfo.profile_picture !== nextProfilePicture) {
+        const deleteResponse = await fetch('/api/attachment/delete/avatar/site', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ path: siteInfo.profile_picture, siteName }),
+        });
+        const deleteResult = await deleteResponse.json();
+        if (!deleteResponse.ok) {
+          showError(deleteResult.error ?? '기존 아바타 삭제에 실패했습니다.', 'profile_picture', null);
+          return;
+        }
+      }
       setSuccessMessage('아바타가 저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '아바타 저장에 실패했습니다.');
+        showError(unknownError.message || '아바타 저장에 실패했습니다.', 'profile_picture', null);
       } else {
-        setErrorMessage('아바타 저장에 실패했습니다.');
+        showError('아바타 저장에 실패했습니다.', 'profile_picture', null);
       }
     } finally {
       setIsUploadingAvatar(false);
@@ -675,6 +735,18 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return;
     }
 
+    if (!SITE_LOGO_IMAGE_TYPES.has(selectedFile.type.toLowerCase())) {
+      showError('PNG, WEBP, SVG 이미지만 업로드할 수 있습니다.', 'profile_logo');
+      inputElement.value = '';
+      return;
+    }
+
+    if (selectedFile.size > MAX_SITE_LOGO_FILE_SIZE) {
+      showError('사이트 로고는 최대 100KB까지 업로드할 수 있습니다.', 'profile_logo');
+      inputElement.value = '';
+      return;
+    }
+
     setErrorMessage('');
     setSuccessMessage('');
     setIsUploadingLogo(true);
@@ -682,6 +754,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
+      formData.append('siteName', siteName);
 
       const addResponse = await fetch('/api/attachment/add/site-logo', {
         method: 'POST',
@@ -701,13 +774,22 @@ export default function Opt({ initialData, initialError }: OptProps) {
         throw new Error('업로드된 사이트 로고 정보를 확인하지 못했습니다.');
       }
 
-      await saveField('profile_logo', nextProfileLogo);
+      const previousProfileLogo = normalizeText(siteInfo.profile_logo);
+      const isSaved = await saveField('profile_logo', nextProfileLogo);
+      if (!isSaved) {
+        await deleteSiteLogo(nextProfileLogo).catch(() => undefined);
+        return;
+      }
+
+      if (previousProfileLogo && previousProfileLogo !== nextProfileLogo) {
+        await deleteSiteLogo(previousProfileLogo).catch(() => undefined);
+      }
       setSuccessMessage('사이트 로고가 저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '사이트 로고 저장에 실패했습니다.');
+        showError(unknownError.message || '사이트 로고 저장에 실패했습니다.', 'profile_logo', null);
       } else {
-        setErrorMessage('사이트 로고 저장에 실패했습니다.');
+        showError('사이트 로고 저장에 실패했습니다.', 'profile_logo', null);
       }
     } finally {
       setIsUploadingLogo(false);
@@ -729,6 +811,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
 
     logoInputReference.current?.click();
+  }
+
+  async function deleteSiteLogo(path: string) {
+    const response = await fetch('/api/attachment/delete/site-logo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ siteName, path }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error ?? '사이트 로고 삭제에 실패했습니다.');
+    }
   }
 
   async function deleteSiteOgImage(path: string) {
@@ -788,14 +883,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
 
     if (!PROMOTION_IMAGE_TYPES.has(selectedFile.type.toLowerCase())) {
-      setErrorMessage('PNG, JPEG, WEBP 이미지만 업로드할 수 있습니다.');
+      showError('PNG, JPEG, WEBP 이미지만 업로드할 수 있습니다.', 'promotion_image');
       setSuccessMessage('');
       inputElement.value = '';
       return;
     }
 
     if (selectedFile.size >= MAX_PROMOTION_FILE_SIZE) {
-      setErrorMessage('프로모션 이미지는 1MB 미만만 업로드할 수 있습니다.');
+      showError('프로모션 이미지는 1MB 미만만 업로드할 수 있습니다.', 'promotion_image');
       setSuccessMessage('');
       inputElement.value = '';
       return;
@@ -840,10 +935,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setPromotionImageUrl(uploadResult.url ?? '');
       setSuccessMessage('프로모션 이미지가 저장되었습니다.');
     } catch (unknownError) {
-      setErrorMessage(
+      showError(
         unknownError instanceof Error
           ? unknownError.message || '프로모션 이미지 저장에 실패했습니다.'
           : '프로모션 이미지 저장에 실패했습니다.',
+        'promotion_image',
+        null,
       );
     } finally {
       setIsUploadingPromotion(false);
@@ -871,10 +968,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setPromotionImageUrl('');
       setSuccessMessage('프로모션 이미지가 삭제되었습니다.');
     } catch (unknownError) {
-      setErrorMessage(
+      showError(
         unknownError instanceof Error
           ? unknownError.message || '프로모션 이미지 삭제에 실패했습니다.'
           : '프로모션 이미지 삭제에 실패했습니다.',
+        'promotion_image',
+        null,
       );
     } finally {
       setIsUploadingPromotion(false);
@@ -891,14 +990,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
 
     if (!SITE_OG_IMAGE_TYPES.has(selectedFile.type.toLowerCase())) {
-      setErrorMessage('PNG, JPEG, WEBP 이미지만 업로드할 수 있습니다.');
+      showError('PNG, JPEG, WEBP 이미지만 업로드할 수 있습니다.', 'og_image');
       setSuccessMessage('');
       inputElement.value = '';
       return;
     }
 
     if (selectedFile.size >= MAX_SITE_OG_FILE_SIZE) {
-      setErrorMessage('오픈그래프 이미지는 1MB 미만만 업로드할 수 있습니다.');
+      showError('오픈그래프 이미지는 1MB 미만만 업로드할 수 있습니다.', 'og_image');
       setSuccessMessage('');
       inputElement.value = '';
       return;
@@ -945,9 +1044,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSuccessMessage('오픈그래프 이미지가 저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '오픈그래프 이미지 저장에 실패했습니다.');
+        showError(unknownError.message || '오픈그래프 이미지 저장에 실패했습니다.', 'og_image', null);
       } else {
-        setErrorMessage('오픈그래프 이미지 저장에 실패했습니다.');
+        showError('오픈그래프 이미지 저장에 실패했습니다.', 'og_image', null);
       }
     } finally {
       setIsUploadingSiteOg(false);
@@ -977,9 +1076,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSuccessMessage('오픈그래프 이미지가 삭제되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '오픈그래프 이미지 삭제에 실패했습니다.');
+        showError(unknownError.message || '오픈그래프 이미지 삭제에 실패했습니다.', 'og_image', null);
       } else {
-        setErrorMessage('오픈그래프 이미지 삭제에 실패했습니다.');
+        showError('오픈그래프 이미지 삭제에 실패했습니다.', 'og_image', null);
       }
     } finally {
       setIsUploadingSiteOg(false);
@@ -995,7 +1094,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
       <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <div className={`paper paper-error ${styles.paper}`}>사이트 정보를 불러오지 못했습니다</div>
+            <ScreenState kind="error">{initialError || '사이트 정보를 불러오지 못했습니다.'}</ScreenState>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorDialogTitle}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
           </div>
         </div>
       </Container>
@@ -1011,7 +1116,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
       >
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <div className={`paper paper-error ${styles.paper}`}>업데이트 정보를 불러오지 못했습니다</div>
+            <ScreenState kind="error">{initialError || '업데이트 정보를 불러오지 못했습니다.'}</ScreenState>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorDialogTitle}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
           </div>
         </div>
       </Container>
@@ -1052,6 +1163,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
             >
               {profilePictureUrl ? '사이트 아바타 이미지 교체' : '사이트 아바타 이미지 추가'}
             </button>
+            {fieldErrors.profile_picture ? (
+              <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.profile_picture}</span></p>
+            ) : null}
           </Stack>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">사이트 로고</Typography>
@@ -1088,6 +1202,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 {profileLogoUrl ? '로고 교체' : '로고 추가'}
               </button>
             </Stack>
+            {fieldErrors.profile_logo ? (
+              <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.profile_logo}</span></p>
+            ) : null}
           </div>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">사이트 주소</Typography>
@@ -1100,7 +1217,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSiteKey, isCheckingSiteKey)}
                     fullWidth
                     size="small"
-                    helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`}
+                    error={Boolean(fieldErrors.site_key)}
+                    helperText={fieldErrors.site_key || `영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`}
                     slotProps={{
                       htmlInput: { maxLength: 15 },
                       input: {
@@ -1183,8 +1301,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     fullWidth
                     size="small"
                     disabled={!hasOwnerDomainFeature}
+                    error={Boolean(fieldErrors.custom_domain)}
                     helperText={
-                      !hasOwnerDomainFeature
+                      fieldErrors.custom_domain || !hasOwnerDomainFeature
                         ? '커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.'
                         : '프로토콜 없이 입력해주세요. 예: example.com'
                     }
@@ -1231,6 +1350,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     수정 완료
                   </button>
                 </Stack>
+                {fieldErrors.blog_type ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.blog_type}</span></p> : null}
                 {customDomainCheckMessage ? (
                   <PopupMessage
                     open={Boolean(customDomainCheckMessage)}
@@ -1322,8 +1442,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <button
                       type="button"
                       className={`button ${isMobile ? 'small' : 'medium'} submit`}
-                      onClick={() => void saveField('blog_type')}
-                      disabled={isSubmitting}
+                      onClick={handleBlogTypeSave}
+                      disabled={isSubmitting || (draftValue === (blogType === 'team' ? 'team' : 'personal'))}
                     >
                       수정 완료
                     </button>
@@ -1354,7 +1474,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSiteLabel, isCheckingSiteLabel)}
                     fullWidth
                     size="small"
-                    helperText={`${String(draftValue).length} / 10`}
+                    error={Boolean(fieldErrors.site_label)}
+                    helperText={fieldErrors.site_label || `${String(draftValue).length} / 10`}
                     slotProps={{
                       htmlInput: { maxLength: 10 },
                       input: {
@@ -1422,7 +1543,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   multiline
                   size="small"
                   minRows={4}
-                  helperText={`${String(draftValue).length} / 52`}
+                  error={Boolean(fieldErrors.summary)}
+                  helperText={fieldErrors.summary || `${String(draftValue).length} / 52`}
                   slotProps={{ htmlInput: { maxLength: 52 } }}
                 />
                 <Stack
@@ -1445,6 +1567,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     수정 완료
                   </button>
                 </Stack>
+                {fieldErrors.theme_type ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.theme_type}</span></p> : null}
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
@@ -1518,6 +1641,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 {siteOgImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
+            {fieldErrors.og_image ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.og_image}</span></p> : null}
           </div>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">프로모션 이미지</Typography>
@@ -1577,6 +1701,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 {promotionImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
+            {fieldErrors.promotion_image ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.promotion_image}</span></p> : null}
           </div>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">테마</Typography>
@@ -1614,6 +1739,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     변경 완료
                   </button>
                 </Stack>
+                {fieldErrors.visibility_type ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.visibility_type}</span></p> : null}
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
@@ -1702,6 +1828,38 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </div>
         </div>
       </div>
+      <FormErrorDialog
+        open={isErrorDialogOpen}
+        title={errorDialogTitle}
+        messages={errorMessage ? [errorMessage] : []}
+        onClose={() => setIsErrorDialogOpen(false)}
+      />
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isTeamConversionConfirmOpen}
+          onClose={() => setIsTeamConversionConfirmOpen(false)}
+          className="VhiDrawer-bottom"
+        >
+          <h2>블로그 타입 변경</h2>
+          <div className="VhiDrawer-bottom-content">
+            팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button medium cancel" onClick={() => setIsTeamConversionConfirmOpen(false)}>취소</button>
+            <button type="button" className="button medium warning" onClick={() => { setIsTeamConversionConfirmOpen(false); void saveField('blog_type', undefined, true); }}>변경</button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog open={isTeamConversionConfirmOpen} onClose={() => setIsTeamConversionConfirmOpen(false)} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
+          <DialogTitle>블로그 타입 변경</DialogTitle>
+          <DialogContent>팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?</DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium cancel" onClick={() => setIsTeamConversionConfirmOpen(false)}>취소</button>
+            <button type="button" className="button medium warning" onClick={() => { setIsTeamConversionConfirmOpen(false); void saveField('blog_type', undefined, true); }}>변경</button>
+          </DialogActions>
+        </Dialog>
+      )}
       {isMobile ? (
         <Drawer
           anchor="bottom"

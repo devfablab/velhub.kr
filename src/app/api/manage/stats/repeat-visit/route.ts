@@ -174,11 +174,11 @@ function getCustomRange(startDate: string, endDate: string) {
     return null;
   }
 
-  const endExclusive = addDays(end, 1);
-
-  if (start.getTime() >= endExclusive.getTime()) {
+  if (end.getTime() > getKstStartOfToday().getTime() || start.getTime() > end.getTime()) {
     return null;
   }
+
+  const endExclusive = addDays(end, 1);
 
   const dayCount = Math.floor((endExclusive.getTime() - start.getTime()) / ONE_DAY_MS);
 

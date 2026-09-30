@@ -52,8 +52,8 @@ function getKstStartOfToday() {
   return new Date(utcTime);
 }
 
-function getDateBefore(days: number) {
-  return new Date(Date.now() - days * ONE_DAY_MS);
+function getKstDateBefore(days: number) {
+  return new Date(getKstStartOfToday().getTime() - days * ONE_DAY_MS);
 }
 
 function getNumber(value: number | string | null | undefined) {
@@ -160,8 +160,8 @@ export async function GET(request: Request) {
     }
 
     const todayStart = getKstStartOfToday();
-    const weekStart = getDateBefore(7);
-    const monthStart = getDateBefore(30);
+    const weekStart = getKstDateBefore(6);
+    const monthStart = getKstDateBefore(29);
 
     const siteStatsResult = await access.supabaseAdmin
       .from('sites')

@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Box,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -23,8 +22,10 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -36,9 +37,6 @@ type TeamRow = {
   name: string;
   approval_at: string | null;
   role: TeamRole;
-  is_block: boolean;
-  blocked_at: string | null;
-  block_count: number;
   is_self: boolean;
 };
 
@@ -71,9 +69,6 @@ type PatchResponse = {
   team: {
     id: string;
     role: TeamRole;
-    is_block: boolean;
-    blocked_at: string | null;
-    block_count: number;
   };
 };
 
@@ -147,8 +142,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   const [teams, setTeams] = useState<TeamRow[]>(initialTeams?.teams ?? []);
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites?.invites ?? []);
   const [selectedTeam, setSelectedTeam] = useState<TeamRow | null>(null);
-  const [targetTeam, setTargetTeam] = useState<TeamRow | null>(null);
-  const [nextBlockState, setNextBlockState] = useState<boolean | null>(null);
   const [targetRoleTeam, setTargetRoleTeam] = useState<TeamRow | null>(null);
   const [nextRole, setNextRole] = useState<'manager' | 'member' | 'observer' | null>(null);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
@@ -163,13 +156,14 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   const [isOwnerTransferSubmitting, setIsOwnerTransferSubmitting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'manager' | 'member'>('manager');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRoleSubmitting, setIsRoleSubmitting] = useState(false);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isInviteListDialogOpen, setIsInviteListDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '팀원 관리' : null);
   const [inviteErrorMessage, setInviteErrorMessage] = useState('');
   const [inviteEmailError, setInviteEmailError] = useState('');
   const [pendingInviteEmailError, setPendingInviteEmailError] = useState('');
@@ -182,6 +176,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+
+  function showError(message: string, title: string | null) {
+    setErrorMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
 
   const sortedTeams = useMemo(() => {
     return [...teams].sort((a, b) => {
@@ -203,22 +203,26 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
     setSelectedTeam(team);
   }
 
+  if (!initialTeams || !initialInvites) {
+    return (
+      <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`} menu="team">
+        <div className={`container ${styles.container}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']}`}>
+            <ScreenState kind="error">{initialError || '팀원 관리 정보를 불러오지 못했습니다.'}</ScreenState>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              onClose={() => setIsErrorDialogOpen(false)}
+              title={errorDialogTitle}
+              messages={[initialError || '팀원 관리 정보를 불러오지 못했습니다.']}
+            />
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
   function handleCloseDetail() {
     setSelectedTeam(null);
-  }
-
-  function handleOpenBlockDialog(team: TeamRow, isBlock: boolean) {
-    setTargetTeam(team);
-    setNextBlockState(isBlock);
-  }
-
-  function handleCloseBlockDialog() {
-    if (isSubmitting) {
-      return;
-    }
-
-    setTargetTeam(null);
-    setNextBlockState(null);
   }
 
   function handleOpenRoleDialog(team: TeamRow) {
@@ -324,7 +328,8 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       const result = (await response.json()) as { ok?: boolean; error?: string };
 
       if (!response.ok) {
-        throw new Error(result.error || '운영자 교체 요청에 실패했습니다.');
+        showError(result.error || '운영자 교체 요청에 실패했습니다.', response.status >= 500 ? null : '운영자 교체');
+        return;
       }
 
       setCanRequestOwnerTransfer(false);
@@ -333,9 +338,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       setOwnerTransferTargetId('');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '운영자 교체 요청에 실패했습니다.');
+        showError(unknownError.message || '운영자 교체 요청에 실패했습니다.', null);
       } else {
-        setErrorMessage('운영자 교체 요청에 실패했습니다.');
+        showError('운영자 교체 요청에 실패했습니다.', null);
       }
     } finally {
       setIsOwnerTransferSubmitting(false);
@@ -367,7 +372,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       const result = (await response.json()) as PatchResponse | { error?: string };
 
       if (!response.ok) {
-        throw new Error('error' in result ? result.error || '역할 변경에 실패했습니다.' : '역할 변경에 실패했습니다.');
+        showError(
+          'error' in result ? result.error || '역할 변경에 실패했습니다.' : '역할 변경에 실패했습니다.',
+          response.status >= 500 ? null : nextRole === 'observer' ? '팀원 차단' : '역할 변경',
+        );
+        return;
       }
 
       if (!('team' in result) || !result.team) {
@@ -380,9 +389,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             ? {
                 ...team,
                 role: result.team.role,
-                is_block: result.team.is_block,
-                blocked_at: result.team.blocked_at,
-                block_count: Number(result.team.block_count ?? 0),
               }
             : team,
         ),
@@ -393,9 +399,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
           ? {
               ...previousSelectedTeam,
               role: result.team.role,
-              is_block: result.team.is_block,
-              blocked_at: result.team.blocked_at,
-              block_count: Number(result.team.block_count ?? 0),
             }
           : previousSelectedTeam,
       );
@@ -404,85 +407,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       setNextRole(null);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '역할 변경에 실패했습니다.');
+        showError(unknownError.message || '역할 변경에 실패했습니다.', null);
       } else {
-        setErrorMessage('역할 변경에 실패했습니다.');
+        showError('역할 변경에 실패했습니다.', null);
       }
     } finally {
       setIsRoleSubmitting(false);
-    }
-  }
-
-  async function handleSubmitBlock() {
-    if (!targetTeam || typeof nextBlockState !== 'boolean') {
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      setErrorMessage('');
-
-      const response = await fetch('/api/manage/team/members', {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          siteName,
-          teamId: targetTeam.id,
-          isBlock: nextBlockState,
-        }),
-      });
-
-      const result = (await response.json()) as PatchResponse | { error?: string };
-
-      if (!response.ok) {
-        throw new Error(
-          'error' in result ? result.error || '차단 상태 변경에 실패했습니다.' : '차단 상태 변경에 실패했습니다.',
-        );
-      }
-
-      if (!('team' in result) || !result.team) {
-        throw new Error('차단 상태 변경에 실패했습니다.');
-      }
-
-      setTeams((previousTeams) =>
-        previousTeams.map((team) =>
-          team.id === result.team.id
-            ? {
-                ...team,
-                role: result.team.role,
-                is_block: result.team.is_block,
-                blocked_at: result.team.blocked_at,
-                block_count: Number(result.team.block_count ?? 0),
-              }
-            : team,
-        ),
-      );
-
-      setSelectedTeam((previousSelectedTeam) =>
-        previousSelectedTeam && previousSelectedTeam.id === result.team.id
-          ? {
-              ...previousSelectedTeam,
-              role: result.team.role,
-              is_block: result.team.is_block,
-              blocked_at: result.team.blocked_at,
-              block_count: Number(result.team.block_count ?? 0),
-            }
-          : previousSelectedTeam,
-      );
-
-      setTargetTeam(null);
-      setNextBlockState(null);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '차단 상태 변경에 실패했습니다.');
-      } else {
-        setErrorMessage('차단 상태 변경에 실패했습니다.');
-      }
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -565,7 +495,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       const result = (await response.json()) as CancelInviteResponse | { error?: string };
 
       if (!response.ok) {
-        throw new Error('error' in result ? result.error || '초대 취소에 실패했습니다.' : '초대 취소에 실패했습니다.');
+        showError(
+          'error' in result ? result.error || '초대 취소에 실패했습니다.' : '초대 취소에 실패했습니다.',
+          response.status >= 500 ? null : '초대 취소',
+        );
+        return;
       }
 
       if (!('invite' in result) || !result.invite) {
@@ -579,9 +513,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
       setTargetInvite(null);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '초대 취소에 실패했습니다.');
+        showError(unknownError.message || '초대 취소에 실패했습니다.', null);
       } else {
-        setErrorMessage('초대 취소에 실패했습니다.');
+        showError('초대 취소에 실패했습니다.', null);
       }
     } finally {
       setIsCancelSubmitting(false);
@@ -624,7 +558,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   <TableCell>별명</TableCell>
                   <TableCell>가입일</TableCell>
                   <TableCell>역할</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>차단 여부</TableCell>
                   <TableCell />
                 </TableRow>
               </TableHead>
@@ -635,13 +568,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{team.name}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(team.approval_at)}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(team.role)}</TableCell>
-                    <TableCell>
-                      {team.is_block ? (
-                        <Chip color="error" label="차단됨" size="small" />
-                      ) : (
-                        <Chip label="정상" size="small" />
-                      )}
-                    </TableCell>
                     <TableCell onClick={(event) => event.stopPropagation()}>
                       {!team.is_self ? (
                         <Stack direction="row" gap={1}>
@@ -660,16 +586,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                               className="button small action"
                               onClick={() => handleOpenObserverDialog(team)}
                             >
-                              {team.role === 'observer' ? '팀원으로 변경' : '옵저버 변경'}
+                              {team.role === 'observer' ? '팀원으로 변경' : '차단'}
                             </button>
                           ) : null}
-                          <button
-                            type="button"
-                            className={`button small ${team.is_block ? 'action' : 'warning'}`}
-                            onClick={() => handleOpenBlockDialog(team, !team.is_block)}
-                          >
-                            {team.is_block ? '차단풀기' : '차단하기'}
-                          </button>
                         </Stack>
                       ) : null}
                     </TableCell>
@@ -715,7 +634,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     </MenuItem>
                     {sortedTeams
                       .filter(
-                        (team) => !team.is_self && !team.is_block && team.role !== 'owner' && team.role !== 'observer',
+                        (team) => !team.is_self && team.role !== 'owner' && team.role !== 'observer',
                       )
                       .map((team) => (
                         <MenuItem key={team.id} value={team.id}>
@@ -785,7 +704,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       {sortedTeams
                         .filter(
                           (team) =>
-                            !team.is_self && !team.is_block && team.role !== 'owner' && team.role !== 'observer',
+                            !team.is_self && team.role !== 'owner' && team.role !== 'observer',
                         )
                         .map((team) => (
                           <MenuItem key={team.id} value={team.id}>
@@ -937,23 +856,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
                     </Box>
 
-                    <Box>
-                      <Typography variant="subtitle2">차단 여부</Typography>
-                      <Typography variant="body2">{selectedTeam.is_block ? '차단됨' : '정상'}</Typography>
-                    </Box>
-
-                    {selectedTeam.is_block ? (
-                      <Box>
-                        <Typography variant="subtitle2">차단일</Typography>
-                        <Typography variant="body2">{formatDateTimeFull(selectedTeam.blocked_at)}</Typography>
-                      </Box>
-                    ) : null}
-                    {selectedTeam.block_count >= 1 ? (
-                      <Box>
-                        <Typography variant="subtitle2">차단 횟수</Typography>
-                        <Typography variant="body2">{selectedTeam.block_count}회 차단</Typography>
-                      </Box>
-                    ) : null}
                   </Stack>
                 ) : null}
               </div>
@@ -1003,23 +905,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
                     </Box>
 
-                    <Box>
-                      <Typography variant="subtitle2">차단 여부</Typography>
-                      <Typography variant="body2">{selectedTeam.is_block ? '차단됨' : '정상'}</Typography>
-                    </Box>
-
-                    {selectedTeam.is_block ? (
-                      <Box>
-                        <Typography variant="subtitle2">차단일</Typography>
-                        <Typography variant="body2">{formatDateTimeFull(selectedTeam.blocked_at)}</Typography>
-                      </Box>
-                    ) : null}
-                    {selectedTeam.block_count >= 1 ? (
-                      <Box>
-                        <Typography variant="subtitle2">차단 횟수</Typography>
-                        <Typography variant="body2">{selectedTeam.block_count}회 차단</Typography>
-                      </Box>
-                    ) : null}
                   </Stack>
                 ) : null}
               </DialogContent>
@@ -1040,7 +925,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             >
               <h2>
                 {nextRole === 'observer'
-                  ? '옵저버로 변경'
+                  ? '팀원 차단'
                   : targetRoleTeam?.role === 'observer'
                     ? '팀원으로 변경'
                     : '역할 변경'}
@@ -1058,9 +943,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <Typography>
                   {nextRole === 'observer' ? (
                     <>
-                      이 팀원을 옵저버로 변경합니다.
+                      차단 시 보기만 가능한 옵저버 등급이 됩니다.
                       <br />
-                      옵저버로 변경시 글을 읽을 수만 있습니다.
+                      차단하시겠습니까?
                     </>
                   ) : targetRoleTeam?.role === 'observer' ? (
                     <>
@@ -1088,7 +973,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleSubmitRole}
                   disabled={isRoleSubmitting}
                 >
-                  {nextRole === 'observer' || targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
+                  {nextRole === 'observer' ? '차단' : targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                 </button>
               </div>
             </Drawer>
@@ -1102,7 +987,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             >
               <DialogTitle>
                 {nextRole === 'observer'
-                  ? '옵저버로 변경'
+                  ? '팀원 차단'
                   : targetRoleTeam?.role === 'observer'
                     ? '팀원으로 변경'
                     : '역할 변경'}
@@ -1120,9 +1005,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <Typography>
                   {nextRole === 'observer' ? (
                     <>
-                      이 팀원을 옵저버로 변경합니다.
+                      차단 시 보기만 가능한 옵저버 등급이 됩니다.
                       <br />
-                      옵저버로 변경시 글을 읽을 수만 있습니다.
+                      차단하시겠습니까?
                     </>
                   ) : targetRoleTeam?.role === 'observer' ? (
                     <>
@@ -1145,127 +1030,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   취소
                 </button>
                 <button type="button" onClick={handleSubmitRole} disabled={isRoleSubmitting}>
-                  {nextRole === 'observer' || targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
-                </button>
-              </DialogActions>
-            </Dialog>
-          )}
-
-          {isMobile ? (
-            <Drawer
-              anchor="bottom"
-              open={Boolean(targetTeam)}
-              onClose={handleCloseBlockDialog}
-              className="VhiDrawer-bottom VhiDrawer-bottom-service"
-            >
-              <h2>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseBlockDialog}
-                disabled={isSubmitting}
-                aria-label={nextBlockState ? '팀원 차단 창 닫기' : '팀원 차단 해제 창 닫기'}
-              >
-                <CloseRoundedIcon />
-              </button>
-              <div className="VhiDrawer-bottom-content">
-                <Typography>
-                  {nextBlockState ? (
-                    <>
-                      정말로{' '}
-                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
-                        {targetTeam?.name} 님
-                      </strong>
-                      을 차단하시겠습니까?
-                      <br />
-                      차단된 팀원은 더 이상 글을 쓰실 수 없습니다.
-                    </>
-                  ) : (
-                    <>
-                      정말로{' '}
-                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
-                        {targetTeam?.name} 님
-                      </strong>
-                      의 차단을 해제하시겠습니까?
-                      <br />
-                      차단이 해제되면 다시 글을 쓰실 수 있습니다.
-                    </>
-                  )}
-                </Typography>
-              </div>
-              <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button small cancel"
-                  onClick={handleCloseBlockDialog}
-                  disabled={isSubmitting}
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  className="button small warning"
-                  onClick={handleSubmitBlock}
-                  disabled={isSubmitting}
-                >
-                  {nextBlockState ? '차단' : '차단 해제'}
-                </button>
-              </div>
-            </Drawer>
-          ) : (
-            <Dialog
-              open={Boolean(targetTeam)}
-              onClose={handleCloseBlockDialog}
-              fullWidth
-              maxWidth="xs"
-              className="vh-dialog vh-alert-dialog"
-            >
-              <DialogTitle>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseBlockDialog}
-                disabled={isSubmitting}
-                aria-label={nextBlockState ? '팀원 차단 창 닫기' : '팀원 차단 해제 창 닫기'}
-              >
-                <CloseRoundedIcon />
-              </button>
-              <DialogContent>
-                <Typography>
-                  {nextBlockState ? (
-                    <>
-                      정말로{' '}
-                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
-                        {targetTeam?.name} 님
-                      </strong>
-                      을 차단하시겠습니까?
-                      <br />
-                      차단된 팀원은 더 이상 글을 쓰실 수 없습니다.
-                    </>
-                  ) : (
-                    <>
-                      정말로{' '}
-                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
-                        {targetTeam?.name} 님
-                      </strong>
-                      의 차단을 해제하시겠습니까?
-                      <br />
-                      차단이 해제되면 다시 글을 쓰실 수 있습니다.
-                    </>
-                  )}
-                </Typography>
-              </DialogContent>
-              <DialogActions>
-                <button
-                  type="button"
-                  className="cancel-button"
-                  onClick={handleCloseBlockDialog}
-                  disabled={isSubmitting}
-                >
-                  취소
-                </button>
-                <button type="button" className="warning-button" onClick={handleSubmitBlock} disabled={isSubmitting}>
-                  {nextBlockState ? '차단' : '차단 해제'}
+                  {nextRole === 'observer' ? '차단' : targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                 </button>
               </DialogActions>
             </Dialog>
@@ -1664,6 +1429,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
           )}
         </div>
       </div>
+      <FormErrorDialog
+        open={isErrorDialogOpen}
+        onClose={() => setIsErrorDialogOpen(false)}
+        title={errorDialogTitle}
+        messages={errorMessage ? errorMessage.split('\n') : []}
+      />
     </Container>
   );
 }

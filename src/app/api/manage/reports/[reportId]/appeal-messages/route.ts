@@ -66,7 +66,7 @@ export async function GET(request: Request, routeContext: RouteContext) {
 
 export async function POST(request: Request, routeContext: RouteContext) {
   try {
-    const requestBody = (await request.json()) as RequestBody;
+    const requestBody = (await request.json().catch(() => ({}))) as RequestBody;
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const message = normalizeText(requestBody.message);
     const { reportId: reportIdParam } = await routeContext.params;
@@ -81,6 +81,11 @@ export async function POST(request: Request, routeContext: RouteContext) {
     }
 
     const { context, stigmaId } = await getAuthorizedContext(reportId, siteName);
+
+    if (context.report.status === 'completed' || context.report.status === 'dismissed') {
+      return Response.json({ error: '처리가 완료된 신고에는 답변을 보낼 수 없습니다.' }, { status: 409 });
+    }
+
     const insertResult = await getSupabaseAdmin()
       .from('report_guideline_messages')
       .insert({

@@ -16,6 +16,8 @@ type RequestBody = {
   googleSearch?: string | null;
 };
 
+const GOOGLE_ANALYTICS_MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/;
+
 function normalizeSearchKeywords(rawValue: string) {
   const cleanedValue = rawValue.replace(/[^\p{L}\p{N}\s,]/gu, '');
 
@@ -24,6 +26,14 @@ function normalizeSearchKeywords(rawValue: string) {
     .map((keyword) => keyword.trim().replace(/\s+/g, ' '))
     .filter(Boolean)
     .join(', ');
+}
+
+function hasInvalidSearchKeywordCharacters(rawValue: string) {
+  return /[^\p{L}\p{N}\s,]/u.test(rawValue);
+}
+
+function normalizeGoogleAnalyticsMeasurementId(rawValue: string) {
+  return rawValue.trim().toUpperCase();
 }
 
 function getGoogleLogMessage(isGoogleAnalyticsChanged: boolean, isGoogleSearchChanged: boolean) {
@@ -158,15 +168,27 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const requestBody = (await request.json()) as RequestBody;
+    const requestBody = (await request.json().catch(() => null)) as RequestBody | null;
+    if (!requestBody) {
+      return Response.json({ error: '요청 내용을 확인할 수 없습니다.' }, { status: 400 });
+    }
 
     const visibilityMember = normalizeText(requestBody.visibilityMember);
-    const normalizedSearchKeywords = normalizeSearchKeywords(normalizeText(requestBody.searchKeywords));
-    const googleAnalytics = normalizeText(requestBody.googleAnalytics);
+    const rawSearchKeywords = normalizeText(requestBody.searchKeywords);
+    const normalizedSearchKeywords = normalizeSearchKeywords(rawSearchKeywords);
+    const googleAnalytics = normalizeGoogleAnalyticsMeasurementId(normalizeText(requestBody.googleAnalytics));
     const googleSearch = normalizeText(requestBody.googleSearch);
 
     if (visibilityMember !== 'public' && visibilityMember !== 'private') {
       return Response.json({ error: '멤버 목록 공개여부 값이 올바르지 않습니다.' }, { status: 400 });
+    }
+
+    if (hasInvalidSearchKeywordCharacters(rawSearchKeywords)) {
+      return Response.json({ error: '검색엔진 등록 키워드는 글자, 숫자, 쉼표만 입력해 주세요.' }, { status: 400 });
+    }
+
+    if (googleAnalytics && !GOOGLE_ANALYTICS_MEASUREMENT_ID_PATTERN.test(googleAnalytics)) {
+      return Response.json({ error: 'Google Analytics 측정 ID는 G-로 시작하는 값으로 입력해 주세요.' }, { status: 400 });
     }
 
     const access = await checkAccess(normalizedSiteName);

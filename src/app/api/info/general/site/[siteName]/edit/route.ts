@@ -1,3 +1,4 @@
+import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getCustomDomainError, normalizeCustomDomain } from '@/lib/customDomain';
 import { hasMembershipFeature } from '@/lib/memberships/features';
@@ -30,6 +31,7 @@ type UpdateField =
 type RequestBody = {
   field: UpdateField;
   value: string | boolean | null;
+  confirmTeamConversion?: boolean;
 };
 
 type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
@@ -217,7 +219,11 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const requestBody = (await request.json()) as RequestBody;
+    const requestBody = (await request.json().catch(() => null)) as RequestBody | null;
+
+    if (!requestBody) {
+      return Response.json({ error: '요청 내용을 확인할 수 없습니다.' }, { status: 400 });
+    }
 
     const updatableFields: UpdateField[] = [
       'site_key',
@@ -302,11 +308,34 @@ export async function POST(request: Request, context: RouteContext) {
     } else if (requestBody.field === 'site_label') {
       const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
 
-      if (normalizedValue && (normalizedValue.length < 4 || normalizedValue.length > 10)) {
-        return Response.json({ error: '사이트명은 4자 이상 10자 이하여야 합니다.' }, { status: 400 });
+      if (normalizedValue && !isValidActivityName(normalizedValue)) {
+        return Response.json({ error: '사이트명은 2자 이상 10자 이하여야 합니다.' }, { status: 400 });
       }
 
-      nextValue = normalizedValue || null;
+      if (!normalizedValue) {
+        if (access.rhizome.site_key.length > 10) {
+          return Response.json({ error: '사이트 주소가 10자를 초과하면 사이트명을 입력해야 합니다.' }, { status: 400 });
+        }
+
+        nextValue = access.rhizome.site_key;
+      } else {
+        const duplicateSiteLabel = await access.supabaseAdmin
+          .from('rhizomes')
+          .select('id')
+          .eq('site_label', normalizedValue)
+          .neq('id', access.rhizome.id)
+          .maybeSingle();
+
+        if (duplicateSiteLabel.error) {
+          return Response.json({ error: '사이트명 확인에 실패했습니다.' }, { status: 500 });
+        }
+
+        if (duplicateSiteLabel.data) {
+          return Response.json({ error: '이미 사용 중인 사이트명입니다.' }, { status: 400 });
+        }
+
+        nextValue = normalizedValue;
+      }
     } else if (requestBody.field === 'summary') {
       const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
 
@@ -363,6 +392,24 @@ export async function POST(request: Request, context: RouteContext) {
         return Response.json({ error: '블로그 타입 값이 올바르지 않습니다.' }, { status: 400 });
       }
       nextValue = requestBody.value;
+    } else if (requestBody.field === 'profile_picture') {
+      const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
+      if (normalizedValue && !normalizedValue.startsWith(`site/${access.rhizome.id}/`)) {
+        return Response.json({ error: '사이트 아바타 이미지 정보가 올바르지 않습니다.' }, { status: 400 });
+      }
+      nextValue = normalizedValue || null;
+    } else if (requestBody.field === 'profile_logo') {
+      const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
+      if (normalizedValue && !normalizedValue.startsWith(`${access.rhizome.id}/`)) {
+        return Response.json({ error: '사이트 로고 정보가 올바르지 않습니다.' }, { status: 400 });
+      }
+      nextValue = normalizedValue || null;
+    } else if (requestBody.field === 'og_image' || requestBody.field === 'promotion_image') {
+      const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
+      if (normalizedValue && !normalizedValue.startsWith(`${access.rhizome.id}/`)) {
+        return Response.json({ error: '이미지 정보가 올바르지 않습니다.' }, { status: 400 });
+      }
+      nextValue = normalizedValue || null;
     } else {
       nextValue = typeof requestBody.value === 'string' ? requestBody.value.trim() || null : null;
     }
@@ -414,6 +461,12 @@ export async function POST(request: Request, context: RouteContext) {
           .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
 
         if (activeSubs.data && activeSubs.data.length > 0) {
+          if (requestBody.confirmTeamConversion !== true) {
+            return Response.json(
+              { error: '팀 블로그 전환 전 구독 취소 및 환불에 동의해 주세요.', requiresTeamConversionConfirmation: true },
+              { status: 400 },
+            );
+          }
           const paymentIds = activeSubs.data.map((sub) => sub.last_payment_id).filter(Boolean);
           if (paymentIds.length > 0) {
             const payments = await access.supabaseAdmin

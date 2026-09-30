@@ -75,7 +75,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   try {
     const { reportId: reportIdParam } = await routeContext.params;
     const reportId = normalizeText(reportIdParam);
-    const requestBody = (await request.json()) as RequestBody;
+    const requestBody = (await request.json().catch(() => ({}))) as RequestBody;
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const decision = normalizeText(requestBody.decision);
 

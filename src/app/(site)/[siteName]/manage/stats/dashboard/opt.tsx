@@ -2,9 +2,11 @@
 
 import { type ReactNode, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -101,17 +103,22 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [errorMessage, setErrorMessage] = useState(initialError);
-  const [dashboard, setDashboard] = useState<DashboardResponse | null>(initialData);
+  const [errorMessage] = useState(initialError);
+  const [dashboard] = useState<DashboardResponse | null>(initialData);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
 
-  if (errorMessage || !dashboard?.site || !dashboard.visits) {
+  if (!dashboard?.site || !dashboard.visits) {
     return (
       <Container pageTitle="통계" pageBack={`/${siteName}/manage`}>
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <div className={`paper paper-error ${styles.paper}`}>
-              {errorMessage || '통계 정보를 불러오지 못했습니다.'}
-            </div>
+            <ScreenState kind="error">{errorMessage || '통계 정보를 불러오지 못했습니다.'}</ScreenState>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              onClose={() => setIsErrorDialogOpen(false)}
+              title={errorMessage ? '통계' : null}
+              messages={[errorMessage || '통계 정보를 불러오지 못했습니다.']}
+            />
           </div>
         </div>
       </Container>

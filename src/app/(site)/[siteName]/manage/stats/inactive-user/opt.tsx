@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { type SelectChangeEvent, Typography } from '@mui/material';
+import { FormHelperText, type SelectChangeEvent, Typography } from '@mui/material';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -59,6 +61,7 @@ type DateSelectGroupProps = {
   value: DateValue;
   yearOptions: string[];
   onChange: (nextValue: DateValue) => void;
+  error?: string;
 };
 
 type InactiveAreaChartProps = {
@@ -82,25 +85,16 @@ function formatNumber(value: number | null | undefined) {
   return Number(value ?? 0).toLocaleString('ko-KR');
 }
 
-function getTodayDateValue() {
-  const now = new Date();
+function getKstDateValue(daysBefore = 0) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)));
+  date.setUTCDate(date.getUTCDate() - daysBefore);
 
   return {
-    year: String(now.getFullYear()),
-    month: String(now.getMonth() + 1),
-    day: String(now.getDate()),
-  };
-}
-
-function getDateBefore(days: number) {
-  const date = new Date();
-
-  date.setDate(date.getDate() - days);
-
-  return {
-    year: String(date.getFullYear()),
-    month: String(date.getMonth() + 1),
-    day: String(date.getDate()),
+    year: String(date.getUTCFullYear()),
+    month: String(date.getUTCMonth() + 1),
+    day: String(date.getUTCDate()),
   };
 }
 
@@ -132,7 +126,7 @@ function createNumberOptions(start: number, end: number) {
 function createYearOptions() {
   const currentYear = new Date().getFullYear();
 
-  return createNumberOptions(currentYear - 5, currentYear + 1);
+  return createNumberOptions(currentYear - 5, currentYear);
 }
 
 function getChartColor(dataKey: InactiveAreaChartProps['dataKey']) {
@@ -147,7 +141,7 @@ function getGradientId(dataKey: InactiveAreaChartProps['dataKey']) {
   return `${dataKey}-gradient`;
 }
 
-function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGroupProps) {
+function DateSelectGroup({ title, value, yearOptions, onChange, error }: DateSelectGroupProps) {
   const monthOptions = createNumberOptions(1, 12);
   const dayOptions = createNumberOptions(1, getDaysInMonth(value.year, value.month));
 
@@ -211,6 +205,7 @@ function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGrou
           ))}
         </Select>
       </div>
+      {error ? <FormHelperText error>{error}</FormHelperText> : null}
     </>
   );
 }
@@ -261,12 +256,29 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [startDateError, setStartDateError] = useState('');
+  const [endDateError, setEndDateError] = useState('');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '비활동 유저 통계' : null);
   const [selectedRange, setSelectedRange] = useState<RangeType>('week');
-  const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
-  const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
+  const [startDate, setStartDate] = useState<DateValue>(() => getKstDateValue(29));
+  const [endDate, setEndDate] = useState<DateValue>(() => getKstDateValue());
   const [inactiveStats, setInactiveStats] = useState<InactiveStatsResponse | null>(initialData);
 
+  function showError(message: string, title: string | null, errors?: { startDate?: string; endDate?: string }) {
+    setErrorMessage(message);
+    setStartDateError(errors?.startDate ?? '');
+    setEndDateError(errors?.endDate ?? '');
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
+
   async function loadInactiveStats(request: AppliedRequest) {
+    if (!siteName) {
+      showError('사이트 주소가 유효하지 않습니다.', '비활동 유저 통계');
+      return;
+    }
+
     try {
       const isFirstLoad = !inactiveStats;
 
@@ -277,6 +289,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
       }
 
       setErrorMessage('');
+      setStartDateError('');
+      setEndDateError('');
 
       const query = new URLSearchParams({
         siteName,
@@ -296,7 +310,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const result = (await response.json()) as InactiveStatsResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '비활동 유저 통계를 불러오지 못했습니다.');
+        showError(result.error ?? '비활동 유저 통계를 불러오지 못했습니다.', response.status >= 500 ? null : '비활동 유저 통계');
+        return;
       }
 
       setInactiveStats((prevInactiveStats) => {
@@ -312,19 +327,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
       });
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '비활동 유저 통계를 불러오지 못했습니다.');
+        showError(unknownError.message || '비활동 유저 통계를 불러오지 못했습니다.', null);
       } else {
-        setErrorMessage('비활동 유저 통계를 불러오지 못했습니다.');
+        showError('비활동 유저 통계를 불러오지 못했습니다.', null);
       }
     } finally {
       setIsInitialLoading(false);
       setIsChartLoading(false);
-    }
-    if (!siteName) {
-      setErrorMessage('siteName이 유효하지 않습니다.');
-      setIsInitialLoading(false);
-      setIsChartLoading(false);
-      return;
     }
   }
 
@@ -338,10 +347,30 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   function handleApplyCustomRange() {
+    const formattedStartDate = formatDateValue(startDate);
+    const formattedEndDate = formatDateValue(endDate);
+    const today = formatDateValue(getKstDateValue());
+
+    if (formattedStartDate > formattedEndDate) {
+      showError('시작일은 종료일보다 늦을 수 없습니다.', '기간 조회', {
+        startDate: '시작일을 확인해 주세요.',
+        endDate: '종료일을 확인해 주세요.',
+      });
+      return;
+    }
+
+    if (formattedStartDate > today || formattedEndDate > today) {
+      showError('오늘 이후의 날짜는 조회할 수 없습니다.', '기간 조회', {
+        startDate: formattedStartDate > today ? '오늘 이전 날짜를 선택해 주세요.' : '',
+        endDate: formattedEndDate > today ? '오늘 이전 날짜를 선택해 주세요.' : '',
+      });
+      return;
+    }
+
     void loadInactiveStats({
       range: 'custom',
-      startDate: formatDateValue(startDate),
-      endDate: formatDateValue(endDate),
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
     });
   }
 
@@ -361,14 +390,18 @@ export default function Opt({ initialData, initialError }: OptProps) {
     );
   }
 
-  if (errorMessage || !inactiveStats?.summary || !inactiveStats.chart) {
+  if (!inactiveStats?.summary || !inactiveStats.chart) {
     return (
       <Container pageTitle="비활동 유저" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <div className={`paper paper-error ${styles.paper}`}>
-              {errorMessage || '비활동 유저 통계를 불러오지 못했습니다.'}
-            </div>
+            <ScreenState kind="error">{errorMessage || '비활동 유저 통계를 불러오지 못했습니다.'}</ScreenState>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              onClose={() => setIsErrorDialogOpen(false)}
+              title={errorDialogTitle}
+              messages={[errorMessage || '비활동 유저 통계를 불러오지 못했습니다.']}
+            />
           </div>
         </div>
       </Container>
@@ -382,6 +415,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
           <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
             비활동 유저 요약
           </Typography>
+
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <div className={`paper ${styles['stack-paper']}`}>
             <div className={`paper ${styles.paper}`}>
@@ -424,8 +459,28 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             {selectedRange === 'custom' ? (
               <>
-                <DateSelectGroup title="시작일" value={startDate} yearOptions={yearOptions} onChange={setStartDate} />
-                <DateSelectGroup title="종료일" value={endDate} yearOptions={yearOptions} onChange={setEndDate} />
+                <DateSelectGroup
+                  title="시작일"
+                  value={startDate}
+                  yearOptions={yearOptions}
+                  error={startDateError}
+                  onChange={(value) => {
+                    setStartDate(value);
+                    setStartDateError('');
+                    setEndDateError('');
+                  }}
+                />
+                <DateSelectGroup
+                  title="종료일"
+                  value={endDate}
+                  yearOptions={yearOptions}
+                  error={endDateError}
+                  onChange={(value) => {
+                    setEndDate(value);
+                    setStartDateError('');
+                    setEndDateError('');
+                  }}
+                />
                 <button type="button" className="button medium action" onClick={handleApplyCustomRange}>
                   조회
                 </button>
@@ -462,6 +517,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
           )}
         </div>
       </div>
+      <FormErrorDialog
+        open={isErrorDialogOpen}
+        onClose={() => setIsErrorDialogOpen(false)}
+        title={errorDialogTitle}
+        messages={errorMessage ? errorMessage.split('\n') : []}
+      />
     </Container>
   );
 }

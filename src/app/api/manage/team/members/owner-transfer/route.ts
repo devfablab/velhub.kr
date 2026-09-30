@@ -13,7 +13,6 @@ type MembershipRow = {
   user_id: string;
   role: string | null;
   is_approval: boolean;
-  is_block: boolean;
   kicked_at: string | null;
   banned_at: string | null;
   withdrawn_at: string | null;
@@ -24,7 +23,6 @@ const OWNER_TRANSFER_WAIT_MS = 30 * 24 * 60 * 60 * 1000;
 function isActiveMembership(membership: MembershipRow) {
   return (
     membership.is_approval &&
-    !membership.is_block &&
     !membership.kicked_at &&
     !membership.banned_at &&
     !membership.withdrawn_at
@@ -79,13 +77,13 @@ export async function POST(request: Request) {
     const [requesterResult, targetResult, pendingResult] = await Promise.all([
       supabaseAdmin
         .from('rhizome_stigmas')
-        .select('id, user_id, role, is_approval, is_block, kicked_at, banned_at, withdrawn_at')
+        .select('id, user_id, role, is_approval, kicked_at, banned_at, withdrawn_at')
         .eq('id', session.rhizomeStigmaId)
         .eq('site_id', siteResult.data.id)
         .maybeSingle(),
       supabaseAdmin
         .from('rhizome_stigmas')
-        .select('id, user_id, role, is_approval, is_block, kicked_at, banned_at, withdrawn_at')
+        .select('id, user_id, role, is_approval, kicked_at, banned_at, withdrawn_at')
         .eq('id', targetMemberId)
         .eq('site_id', siteResult.data.id)
         .maybeSingle(),

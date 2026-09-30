@@ -14,6 +14,7 @@ import {
   DialogTitle,
   Drawer,
   FormControl,
+  FormHelperText,
   Stack,
   Table,
   TableBody,
@@ -39,6 +40,7 @@ import {
   type ReportStatus,
 } from '@/lib/reports/manage';
 import { formatTimeAgo } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -434,21 +436,32 @@ export default function ReportManage({ targetType, initialData, initialError }: 
   const [showPast, setShowPast] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '신고 목록' : null);
   const [isListError, setIsListError] = useState(Boolean(initialError));
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [nextStatus, setNextStatus] = useState<ReportStatus | ''>('');
+  const [statusError, setStatusError] = useState('');
   const [saving, setSaving] = useState(false);
   const [messageReport, setMessageReport] = useState<ReportItem | null>(null);
   const [messageData, setMessageData] = useState<AppealMessagesResponse | null>(null);
   const [messageText, setMessageText] = useState('');
+  const [messageError, setMessageError] = useState('');
   const [messageOpenedAt, setMessageOpenedAt] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
   const [messageSaving, setMessageSaving] = useState(false);
   const [finalReport, setFinalReport] = useState<ReportItem | null>(null);
   const [finalSaving, setFinalSaving] = useState(false);
+  const [isCompletionConfirmOpen, setIsCompletionConfirmOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const statusOptions = useMemo(() => getStatusOptions(targetType), [targetType]);
+
+  function showError(message: string, title: string | null = '신고 관리') {
+    setErrorMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
 
   const loadReports = useCallback(
     async (nextShowPast = showPast) => {
@@ -462,24 +475,30 @@ export default function ReportManage({ targetType, initialData, initialError }: 
         mode: nextShowPast ? 'past' : 'current',
       });
 
-      const response = await fetch(`/api/manage/reports?${searchParams.toString()}`, {
-        credentials: 'include',
-      });
+      try {
+        const response = await fetch(`/api/manage/reports?${searchParams.toString()}`, {
+          credentials: 'include',
+        });
 
-      const result = (await response.json().catch(() => ({
-        error: '신고 목록 응답을 확인하지 못했습니다.',
-      }))) as ReportListResponse;
+        const result = (await response.json().catch(() => ({
+          error: '신고 목록 응답을 확인하지 못했습니다.',
+        }))) as ReportListResponse;
 
-      setLoading(false);
+        if (!response.ok || result.error) {
+          showError(result.error ?? '신고 목록을 불러오지 못했습니다.', '신고 목록');
+          setIsListError(true);
+          setReports([]);
+          return;
+        }
 
-      if (!response.ok || result.error) {
-        setErrorMessage(result.error ?? '신고 목록을 불러오지 못했습니다.');
+        setReports(result.reports ?? []);
+      } catch {
+        showError('신고 목록을 불러오지 못했습니다.', null);
         setIsListError(true);
         setReports([]);
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      setReports(result.reports ?? []);
     },
     [showPast, siteName, targetType],
   );
@@ -487,6 +506,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
   function handleOpen(report: ReportItem) {
     setSelectedReport(report);
     setNextStatus('');
+    setStatusError('');
     setErrorMessage('');
   }
 
@@ -497,6 +517,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
 
     setSelectedReport(null);
     setNextStatus('');
+    setStatusError('');
   }
 
   function handleModeChange() {
@@ -511,6 +532,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     setMessageReport(report);
     setMessageData(null);
     setMessageText('');
+    setMessageError('');
     setMessageOpenedAt(new Date().toISOString());
     setMessageLoading(true);
     setErrorMessage('');
@@ -526,7 +548,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     setMessageLoading(false);
 
     if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '소명 메시지를 불러오지 못했습니다.');
+      showError(result.error ?? '소명 메시지를 불러오지 못했습니다.', '소명 메시지');
       setMessageReport(null);
       return;
     }
@@ -542,18 +564,21 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     setMessageReport(null);
     setMessageData(null);
     setMessageText('');
+    setMessageError('');
   }
 
   async function handleSendReply() {
     const message = messageText.trim();
 
     if (!messageReport || !message) {
-      setErrorMessage('답변 내용을 입력해 주세요.');
+      setMessageError('답변 내용을 입력해 주세요.');
+      showError('답변 내용을 입력해 주세요.', '소명 메시지');
       return;
     }
 
     setMessageSaving(true);
     setErrorMessage('');
+    setMessageError('');
 
     const response = await fetch(`/api/manage/reports/${messageReport.id}/appeal-messages`, {
       method: 'POST',
@@ -570,7 +595,9 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     setMessageSaving(false);
 
     if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '답변을 보내지 못했습니다.');
+      const messageErrorText = result.error ?? '답변을 보내지 못했습니다.';
+      setMessageError(messageErrorText);
+      showError(messageErrorText, '소명 메시지');
       return;
     }
 
@@ -586,16 +613,19 @@ export default function ReportManage({ targetType, initialData, initialError }: 
 
   function handleStatusChange(changeEvent: SelectChangeEvent) {
     setNextStatus(changeEvent.target.value as ReportStatus);
+    setStatusError('');
   }
 
-  async function handleSave() {
+  async function saveStatus() {
     if (!selectedReport || !nextStatus) {
-      setErrorMessage('처리 상태를 선택해 주세요.');
+      setStatusError('처리 상태를 선택해 주세요.');
+      showError('처리 상태를 선택해 주세요.', '상태 변경');
       return;
     }
 
     setSaving(true);
     setErrorMessage('');
+    setStatusError('');
 
     const response = await fetch(`/api/manage/reports/${selectedReport.id}`, {
       method: 'PATCH',
@@ -616,13 +646,29 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     setSaving(false);
 
     if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '신고 처리 상태를 저장하지 못했습니다.');
+      const statusErrorText = result.error ?? '신고 처리 상태를 저장하지 못했습니다.';
+      setStatusError(statusErrorText);
+      showError(statusErrorText, '상태 변경');
       return;
     }
 
     setSelectedReport(null);
     setNextStatus('');
     await loadReports();
+  }
+
+  function handleSave() {
+    if (selectedReport?.targetType === 'board' && nextStatus === 'completed') {
+      setIsCompletionConfirmOpen(true);
+      return;
+    }
+
+    void saveStatus();
+  }
+
+  function handleConfirmCompletion() {
+    setIsCompletionConfirmOpen(false);
+    void saveStatus();
   }
 
   function handleOpenFinal(report: ReportItem) {
@@ -661,7 +707,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     setFinalSaving(false);
 
     if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '최종 판단을 저장하지 못했습니다.');
+      showError(result.error ?? '최종 판단을 저장하지 못했습니다.', '최종 판단');
       return;
     }
 
@@ -756,7 +802,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
           </Box>
         </Stack>
       ) : canFinalize(selectedReport) ? null : (
-        <FormControl fullWidth>
+        <FormControl fullWidth error={Boolean(statusError)}>
           <Select
             displayEmpty
             value={nextStatus}
@@ -779,6 +825,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               </MenuItem>
             ))}
           </Select>
+          <FormHelperText>{statusError}</FormHelperText>
         </FormControl>
       )}
     </Stack>
@@ -809,16 +856,25 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             />
           ))}
 
-          <TextField
-            aria-label="답변 내용"
-            placeholder="답변하세요"
-            value={messageText}
-            onChange={(event) => setMessageText(event.currentTarget.value)}
-            multiline
-            minRows={4}
-            fullWidth
-            size="small"
-          />
+          {messageReport?.status === 'completed' || messageReport?.status === 'dismissed' ? (
+            <ScreenState>해당 건은 처리가 완료되었습니다.</ScreenState>
+          ) : (
+            <TextField
+              aria-label="답변 내용"
+              placeholder="답변하세요"
+              value={messageText}
+              onChange={(event) => {
+                setMessageText(event.currentTarget.value);
+                setMessageError('');
+              }}
+              multiline
+              minRows={4}
+              fullWidth
+              size="small"
+              error={Boolean(messageError)}
+              helperText={messageError}
+            />
+          )}
         </>
       ) : null}
     </Stack>
@@ -1078,6 +1134,53 @@ export default function ReportManage({ targetType, initialData, initialError }: 
         {isMobile ? (
           <Drawer
             anchor="bottom"
+            open={isCompletionConfirmOpen}
+            onClose={() => setIsCompletionConfirmOpen(false)}
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          >
+            <h2>상태 변경</h2>
+            <div className="VhiDrawer-bottom-content">
+              <Typography variant="subtitle2" sx={{ whiteSpace: 'pre-line' }}>
+                {'처리완료는 발견된 문제가 해결됐음을 의미합니다.\n정말로 처리완료로 변경하시겠어요?'}
+              </Typography>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button type="button" className="button small cancel" onClick={() => setIsCompletionConfirmOpen(false)}>
+                취소
+              </button>
+              <button type="button" className="button small submit" onClick={handleConfirmCompletion} disabled={saving}>
+                변경
+              </button>
+            </div>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={isCompletionConfirmOpen}
+            onClose={() => setIsCompletionConfirmOpen(false)}
+            fullWidth
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
+          >
+            <DialogTitle>상태 변경</DialogTitle>
+            <DialogContent>
+              <Typography variant="subtitle2" sx={{ whiteSpace: 'pre-line' }}>
+                {'처리완료는 발견된 문제가 해결됐음을 의미합니다.\n정말로 처리완료로 변경하시겠어요?'}
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <button type="button" className="cancel-button" onClick={() => setIsCompletionConfirmOpen(false)}>
+                취소
+              </button>
+              <button type="button" onClick={handleConfirmCompletion} disabled={saving}>
+                변경
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
+
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
             open={Boolean(messageReport)}
             onClose={handleCloseMessages}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
@@ -1106,7 +1209,13 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 type="button"
                 className="button small submit"
                 onClick={() => void handleSendReply()}
-                disabled={messageSaving || messageLoading || !messageText.trim()}
+                disabled={
+                  messageSaving ||
+                  messageLoading ||
+                  !messageText.trim() ||
+                  messageReport?.status === 'completed' ||
+                  messageReport?.status === 'dismissed'
+                }
               >
                 보내기
               </button>
@@ -1138,7 +1247,13 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               <button
                 type="button"
                 onClick={() => void handleSendReply()}
-                disabled={messageSaving || messageLoading || !messageText.trim()}
+                disabled={
+                  messageSaving ||
+                  messageLoading ||
+                  !messageText.trim() ||
+                  messageReport?.status === 'completed' ||
+                  messageReport?.status === 'dismissed'
+                }
               >
                 보내기
               </button>
@@ -1232,6 +1347,12 @@ export default function ReportManage({ targetType, initialData, initialError }: 
           open={Boolean(snackbarMessage)}
           message={snackbarMessage}
           onClose={() => setSnackbarMessage('')}
+        />
+        <FormErrorDialog
+          open={isErrorDialogOpen}
+          title={errorDialogTitle}
+          messages={errorMessage ? [errorMessage] : []}
+          onClose={() => setIsErrorDialogOpen(false)}
         />
       </div>
     </div>

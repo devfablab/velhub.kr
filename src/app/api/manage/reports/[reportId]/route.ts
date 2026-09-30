@@ -148,7 +148,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: 'reportId가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const requestBody = (await request.json()) as PatchRequestBody;
+    const requestBody = (await request.json().catch(() => ({}))) as PatchRequestBody;
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const nextStatus = normalizeText(requestBody.status);
 
@@ -206,6 +206,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!isAllowedReportStatus(report.target_type, nextStatus)) {
       return Response.json({ error: '이 신고 대상에 사용할 수 없는 처리 상태입니다.' }, { status: 400 });
+    }
+
+    if (report.handling_result || report.status === 'dismissed') {
+      return Response.json({ error: '이미 처리 완료된 신고입니다.' }, { status: 409 });
+    }
+
+    if (report.target_type !== 'board' && report.status === 'completed') {
+      return Response.json({ error: '최종 판단이 필요한 신고입니다.' }, { status: 409 });
     }
 
     const nowIsoString = new Date().toISOString();

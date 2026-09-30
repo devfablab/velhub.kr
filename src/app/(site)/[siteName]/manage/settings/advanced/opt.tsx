@@ -3,9 +3,6 @@
 import { type JSX, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  FormControlLabel,
-  Radio,
-  RadioGroup,
   Stack,
   TextField,
   Typography,
@@ -13,7 +10,9 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -59,6 +58,15 @@ type EditResponse = {
 };
 
 type VisibilityMember = 'public' | 'private';
+type AdvancedField = 'searchKeywords' | 'googleAnalytics' | 'googleSearch';
+type FieldErrors = Record<AdvancedField, string>;
+
+const EMPTY_FIELD_ERRORS: FieldErrors = {
+  searchKeywords: '',
+  googleAnalytics: '',
+  googleSearch: '',
+};
+const GOOGLE_ANALYTICS_MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/;
 
 type OptProps = {
   initialInfo: AdvancedInfoResponse | null;
@@ -86,7 +94,17 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
   const [googleSearch, setGoogleSearch] = useState(initialSites?.sites?.google_search ?? '');
 
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>(EMPTY_FIELD_ERRORS);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '고급 설정' : null);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  function showError(message: string, nextFieldErrors: Partial<FieldErrors> = {}, title: string | null = '고급 설정') {
+    setErrorMessage(message);
+    setFieldErrors({ ...EMPTY_FIELD_ERRORS, ...nextFieldErrors });
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
 
   async function loadSites() {
     const response = await fetch(`/api/info/advanced/site/${siteName}`, {
@@ -110,25 +128,19 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
     setGoogleSearch(result.sites.google_search ?? '');
   }
 
-  function handleVisibilityMemberChange(event: InputChangeEvent) {
-    const nextValue = event.currentTarget.value;
-    if (nextValue !== 'public' && nextValue !== 'private') {
-      return;
-    }
-
-    setVisibilityMember(nextValue);
-  }
-
   function handleSearchKeywordsChange(event: InputChangeEvent) {
     setSearchKeywords(event.currentTarget.value);
+    setFieldErrors((previousErrors) => ({ ...previousErrors, searchKeywords: '' }));
   }
 
   function handleGoogleAnalyticsChange(event: InputChangeEvent) {
     setGoogleAnalytics(event.currentTarget.value);
+    setFieldErrors((previousErrors) => ({ ...previousErrors, googleAnalytics: '' }));
   }
 
   function handleGoogleSearchChange(event: InputChangeEvent) {
     setGoogleSearch(event.currentTarget.value);
+    setFieldErrors((previousErrors) => ({ ...previousErrors, googleSearch: '' }));
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -138,8 +150,25 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
       return;
     }
 
+    const nextFieldErrors: FieldErrors = {
+      searchKeywords: /[^\p{L}\p{N}\s,]/u.test(searchKeywords)
+        ? '검색엔진 등록 키워드는 글자, 숫자, 쉼표만 입력해 주세요.'
+        : '',
+      googleAnalytics:
+        googleAnalytics.trim() && !GOOGLE_ANALYTICS_MEASUREMENT_ID_PATTERN.test(googleAnalytics.trim().toUpperCase())
+          ? 'Google Analytics 측정 ID는 G-로 시작하는 값으로 입력해 주세요.'
+          : '',
+      googleSearch: '',
+    };
+    const validationMessages = Object.values(nextFieldErrors).filter(Boolean);
+    if (validationMessages.length > 0) {
+      showError(validationMessages.join('\n'), nextFieldErrors);
+      return;
+    }
+
     try {
       setErrorMessage('');
+      setFieldErrors(EMPTY_FIELD_ERRORS);
       setIsSubmitting(true);
 
       const response = await fetch(`/api/info/advanced/site/${siteName}/edit`, {
@@ -159,16 +188,23 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
       const result = (await response.json()) as EditResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? 'sites 정보 저장에 실패했습니다.');
+        const message = result.error ?? '사이트 설정 저장에 실패했습니다.';
+        const matchingFieldErrors: Partial<FieldErrors> = message.includes('Analytics')
+          ? { googleAnalytics: message }
+          : message.includes('키워드')
+            ? { searchKeywords: message }
+            : {};
+        showError(message, matchingFieldErrors, response.status >= 500 ? null : '고급 설정');
+        return;
       }
 
       await loadSites();
       setSnackbarMessage('저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || 'sites 정보 저장에 실패했습니다.');
+        showError(unknownError.message || '사이트 설정 저장에 실패했습니다.', {}, null);
       } else {
-        setErrorMessage('sites 정보 저장에 실패했습니다.');
+        showError('사이트 설정 저장에 실패했습니다.', {}, null);
       }
     } finally {
       setIsSubmitting(false);
@@ -180,7 +216,31 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
       <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <div className={`paper paper-error ${styles.paper}`}>사이트 정보를 불러오지 못했습니다</div>
+            <ScreenState kind="error">{initialError || '사이트 정보를 불러오지 못했습니다.'}</ScreenState>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorDialogTitle}
+              messages={errorMessage ? errorMessage.split('\n') : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (!initialSites?.sites) {
+    return (
+      <Container pageTitle="고급 설정" pageBack={`/${siteName}/manage`} menu="settings">
+        <div className={`container ${styles.container}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']}`}>
+            <ScreenState kind="error">{initialError || '고급 설정을 불러오지 못했습니다.'}</ScreenState>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorDialogTitle}
+              messages={errorMessage ? errorMessage.split('\n') : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
           </div>
         </div>
       </Container>
@@ -203,7 +263,8 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
                 onChange={handleSearchKeywordsChange}
                 fullWidth
                 size="small"
-                helperText="쉼표(,)로 구분해서 입력"
+                error={Boolean(fieldErrors.searchKeywords)}
+                helperText={fieldErrors.searchKeywords || '쉼표(,)로 구분해서 입력'}
               />
             </div>
 
@@ -214,6 +275,8 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
                 onChange={handleGoogleAnalyticsChange}
                 fullWidth
                 size="small"
+                error={Boolean(fieldErrors.googleAnalytics)}
+                helperText={fieldErrors.googleAnalytics || 'G-로 시작하는 Google Analytics 측정 ID를 입력하세요.'}
                 placeholder="G-XXXXXXXXXX"
               />
             </div>
@@ -225,7 +288,8 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
                 onChange={handleGoogleSearchChange}
                 fullWidth
                 size="small"
-                helperText="meta 태그의 content 값만 입력하세요"
+                error={Boolean(fieldErrors.googleSearch)}
+                helperText={fieldErrors.googleSearch || 'meta 태그의 content 값만 입력하세요'}
               />
             </div>
 
@@ -250,6 +314,12 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
             open={Boolean(snackbarMessage)}
             message={snackbarMessage}
             onClose={() => setSnackbarMessage('')}
+          />
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorDialogTitle}
+            messages={errorMessage ? errorMessage.split('\n') : []}
+            onClose={() => setIsErrorDialogOpen(false)}
           />
         </div>
       </div>
