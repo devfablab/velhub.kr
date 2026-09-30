@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -55,6 +55,11 @@ type UserInfoResponse = {
   error?: string;
 };
 
+type ErrorPopup = {
+  title: string | null;
+  messages: string[];
+};
+
 export default function UserInfo() {
   const params = useParams();
   const router = useRouter();
@@ -70,6 +75,7 @@ export default function UserInfo() {
   const inviteHref = initialResponse?.inviteHref ?? '';
   const errorMessage = '';
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
+  const [errorPopup, setErrorPopup] = useState<ErrorPopup | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [nickname, setNickname] = useState(
     initialResponse?.status === 'active' ? (initialResponse.userInfo?.nickname ?? '') : '',
@@ -104,6 +110,7 @@ export default function UserInfo() {
 
     setNickname(userInfo.nickname);
     setDialogErrorMessage('');
+    setErrorPopup(null);
     setIsDialogOpen(true);
   }
 
@@ -114,11 +121,13 @@ export default function UserInfo() {
 
     setNickname(userInfo?.nickname ?? '');
     setDialogErrorMessage('');
+    setErrorPopup(null);
     setIsDialogOpen(false);
   }
 
   function handleOpenWithdrawDialog() {
     setWithdrawErrorMessage('');
+    setErrorPopup(null);
     setIsWithdrawDialogOpen(true);
   }
 
@@ -128,6 +137,7 @@ export default function UserInfo() {
     }
 
     setWithdrawErrorMessage('');
+    setErrorPopup(null);
     setIsWithdrawDialogOpen(false);
   }
 
@@ -145,10 +155,16 @@ export default function UserInfo() {
         credentials: 'include',
       });
 
-      const result = (await response.json()) as UserInfoResponse;
+      const result = (await response.json().catch(() => null)) as UserInfoResponse | null;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '커뮤니티 탈퇴에 실패했습니다.');
+        const message = result?.error ?? '커뮤니티 탈퇴에 실패했습니다.';
+        setWithdrawErrorMessage(message);
+        setErrorPopup({
+          title: response.status < 500 ? '커뮤니티 탈퇴' : null,
+          messages: [message],
+        });
+        return;
       }
 
       setIsWithdrawDialogOpen(false);
@@ -156,11 +172,10 @@ export default function UserInfo() {
       setStatus('not_joined');
       router.replace(`/${siteName}`);
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setWithdrawErrorMessage(unknownError.message || '커뮤니티 탈퇴에 실패했습니다.');
-      } else {
-        setWithdrawErrorMessage('커뮤니티 탈퇴에 실패했습니다.');
-      }
+      const message = unknownError instanceof Error ? unknownError.message || '커뮤니티 탈퇴에 실패했습니다.' : '커뮤니티 탈퇴에 실패했습니다.';
+      setWithdrawErrorMessage(message);
+      setErrorPopup({ title: null, messages: [message] });
+    } finally {
       setIsWithdrawSubmitting(false);
     }
   }
@@ -170,13 +185,43 @@ export default function UserInfo() {
     setDialogErrorMessage('');
   }
 
-  async function handleSubmit() {
-    if (!canSubmit || isSubmitting) {
-      return;
+  function showNicknameError(message: string, title: string | null = '별명 확인') {
+    setDialogErrorMessage(message);
+    setErrorPopup({ title, messages: [message] });
+  }
+
+  function getNicknameValidationMessage() {
+    if (!trimmedNickname) {
+      return '별명을 입력해주세요.';
     }
 
     if (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10) {
-      setDialogErrorMessage('별명은 2자 이상 10자 이하로 입력해주세요.');
+      return '별명은 2자 이상 10자 이하로 입력해주세요.';
+    }
+
+    return '';
+  }
+
+  function handleNicknameInvalid(event: FormEvent<HTMLInputElement>) {
+    event.preventDefault();
+    showNicknameError(getNicknameValidationMessage() || '별명을 확인해주세요.');
+  }
+
+  async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
+
+    const validationMessage = getNicknameValidationMessage();
+
+    if (validationMessage) {
+      showNicknameError(validationMessage);
+      return;
+    }
+
+    if (!canSubmit) {
       return;
     }
 
@@ -196,10 +241,12 @@ export default function UserInfo() {
         }),
       });
 
-      const result = (await response.json()) as UserInfoResponse;
+      const result = (await response.json().catch(() => null)) as UserInfoResponse | null;
 
-      if (!response.ok || !result.userInfo) {
-        throw new Error(result.error ?? '프로필 수정에 실패했습니다.');
+      if (!response.ok || !result?.userInfo) {
+        const message = result?.error ?? '프로필 수정에 실패했습니다.';
+        showNicknameError(message, response.status < 500 ? '별명 확인' : null);
+        return;
       }
 
       setStatus(result.status ?? 'active');
@@ -207,11 +254,8 @@ export default function UserInfo() {
       setNickname(result.userInfo.nickname);
       setIsDialogOpen(false);
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '프로필 수정에 실패했습니다.');
-      } else {
-        setDialogErrorMessage('프로필 수정에 실패했습니다.');
-      }
+      const message = unknownError instanceof Error ? unknownError.message || '프로필 수정에 실패했습니다.' : '프로필 수정에 실패했습니다.';
+      showNicknameError(message, null);
     } finally {
       setIsSubmitting(false);
     }
@@ -343,19 +387,23 @@ export default function UserInfo() {
             <CloseRoundedIcon />
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
-            {dialogErrorMessage ? <p>{dialogErrorMessage}</p> : null}
-            <div className={styles['form-group']}>
+            <form id="community-profile-form-mobile" onSubmit={handleSubmit}>
+              {dialogErrorMessage ? <p className="field-error">{dialogErrorMessage}</p> : null}
+              <div className={styles['form-group']}>
               <cite>
                 {userInfo.activityName} <span>(데브허브 활동명)</span>
               </cite>
               <div className={styles['form-control']}>
                 <input
                   type="text"
+                  name="nickname"
                   value={nickname}
                   onChange={handleNicknameChange}
+                  onInvalid={handleNicknameInvalid}
                   placeholder="별명을 입력하세요"
                   minLength={2}
                   maxLength={10}
+                  required
                   aria-invalid={Boolean(dialogErrorMessage)}
                 />
               </div>
@@ -369,31 +417,32 @@ export default function UserInfo() {
                 </div>
                 <time>({formatDate(userInfo.joinedAt)} 가입)</time>
               </div>
-            </div>
-            <dl className={styles['info-user-detail']}>
-              <div>
-                <dt>방문</dt>
-                <dd>{userInfo.checkinCount.toLocaleString()} 회</dd>
               </div>
+              <dl className={styles['info-user-detail']}>
+                <div>
+                  <dt>방문</dt>
+                  <dd>{userInfo.checkinCount.toLocaleString()} 회</dd>
+                </div>
 
-              <div>
-                <dt>작성글</dt>
-                <dd>{userInfo.postCount.toLocaleString()} 개</dd>
-              </div>
+                <div>
+                  <dt>작성글</dt>
+                  <dd>{userInfo.postCount.toLocaleString()} 개</dd>
+                </div>
 
-              <div>
-                <dt>작성댓글</dt>
-                <dd>{userInfo.commentCount.toLocaleString()} 개</dd>
-              </div>
-            </dl>
+                <div>
+                  <dt>작성댓글</dt>
+                  <dd>{userInfo.commentCount.toLocaleString()} 개</dd>
+                </div>
+              </dl>
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button small cancel">
               취소
             </button>
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
+              form="community-profile-form-mobile"
               disabled={!canSubmit || isSubmitting}
               className="button small submit"
             >
@@ -414,19 +463,23 @@ export default function UserInfo() {
             <CloseRoundedIcon />
           </button>
           <DialogContent className={styles['info-content']}>
-            {dialogErrorMessage ? <p>{dialogErrorMessage}</p> : null}
-            <div className={styles['form-group']}>
+            <form id="community-profile-form-desktop" onSubmit={handleSubmit}>
+              {dialogErrorMessage ? <p className="field-error">{dialogErrorMessage}</p> : null}
+              <div className={styles['form-group']}>
               <cite>
                 {userInfo.activityName} <span>(데브허브 활동명)</span>
               </cite>
               <div className={styles['form-control']}>
                 <input
                   type="text"
+                  name="nickname"
                   value={nickname}
                   onChange={handleNicknameChange}
+                  onInvalid={handleNicknameInvalid}
                   placeholder="별명을 입력하세요"
                   minLength={2}
                   maxLength={10}
+                  required
                   aria-invalid={Boolean(dialogErrorMessage)}
                 />
               </div>
@@ -440,29 +493,30 @@ export default function UserInfo() {
                 </div>
                 <time>({formatDate(userInfo.joinedAt)} 가입)</time>
               </div>
-            </div>
-            <dl className={styles['info-user-detail']}>
-              <div>
-                <dt>방문</dt>
-                <dd>{userInfo.checkinCount.toLocaleString()} 회</dd>
               </div>
+              <dl className={styles['info-user-detail']}>
+                <div>
+                  <dt>방문</dt>
+                  <dd>{userInfo.checkinCount.toLocaleString()} 회</dd>
+                </div>
 
-              <div>
-                <dt>작성글</dt>
-                <dd>{userInfo.postCount.toLocaleString()} 개</dd>
-              </div>
+                <div>
+                  <dt>작성글</dt>
+                  <dd>{userInfo.postCount.toLocaleString()} 개</dd>
+                </div>
 
-              <div>
-                <dt>작성댓글</dt>
-                <dd>{userInfo.commentCount.toLocaleString()} 개</dd>
-              </div>
-            </dl>
+                <div>
+                  <dt>작성댓글</dt>
+                  <dd>{userInfo.commentCount.toLocaleString()} 개</dd>
+                </div>
+              </dl>
+            </form>
           </DialogContent>
           <DialogActions>
             <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="cancel-button">
               취소
             </button>
-            <button type="button" onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
+            <button type="submit" form="community-profile-form-desktop" disabled={!canSubmit || isSubmitting}>
               확인
             </button>
           </DialogActions>
@@ -594,13 +648,10 @@ export default function UserInfo() {
         </Dialog>
       )}
       <FormErrorDialog
-        open={Boolean(dialogErrorMessage || withdrawErrorMessage)}
-        title={dialogErrorMessage.includes('별명') || dialogErrorMessage.includes('수정할 내용') ? '별명 확인' : null}
-        messages={[dialogErrorMessage || withdrawErrorMessage]}
-        onClose={() => {
-          setDialogErrorMessage('');
-          setWithdrawErrorMessage('');
-        }}
+        open={Boolean(errorPopup)}
+        title={errorPopup?.title ?? null}
+        messages={errorPopup?.messages ?? []}
+        onClose={() => setErrorPopup(null)}
       />
     </div>
   );

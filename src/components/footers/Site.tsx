@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../Anchor';
+import FormErrorDialog from '../FormErrorDialog';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/footer.module.sass';
@@ -34,6 +35,11 @@ type OwnerTransferResponse = {
   ok?: boolean;
   transfer?: OwnerTransferItem | null;
   error?: string;
+};
+
+type ErrorPopup = {
+  title: string | null;
+  messages: string[];
 };
 
 function openTerms(url: string) {
@@ -73,6 +79,7 @@ export default function FooterSite() {
   const [isInvitePromptOpen, setIsInvitePromptOpen] = useState(Boolean(inviteHref && !isInvitePage));
   const [isResponding, setIsResponding] = useState(false);
   const [ownerTransferError, setOwnerTransferError] = useState('');
+  const [ownerTransferErrorPopup, setOwnerTransferErrorPopup] = useState<ErrorPopup | null>(null);
 
   async function handleOwnerTransferDecision(decision: 'accepted' | 'rejected') {
     if (!ownerTransfer || isResponding) {
@@ -81,6 +88,7 @@ export default function FooterSite() {
 
     try {
       setOwnerTransferError('');
+      setOwnerTransferErrorPopup(null);
       setIsResponding(true);
 
       const response = await fetch('/api/site/owner-transfer', {
@@ -95,10 +103,16 @@ export default function FooterSite() {
           decision,
         }),
       });
-      const result = (await response.json()) as OwnerTransferResponse;
+      const result = (await response.json().catch(() => null)) as OwnerTransferResponse | null;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '운영자 교체 요청을 처리하지 못했습니다.');
+        const message = result?.error ?? '운영자 교체 요청을 처리하지 못했습니다.';
+        setOwnerTransferError(message);
+        setOwnerTransferErrorPopup({
+          title: response.status < 500 ? '운영자 교체' : null,
+          messages: [message],
+        });
+        return;
       }
 
       setOwnerTransfer(null);
@@ -107,11 +121,10 @@ export default function FooterSite() {
         window.location.reload();
       }
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setOwnerTransferError(unknownError.message || '운영자 교체 요청을 처리하지 못했습니다.');
-      } else {
-        setOwnerTransferError('운영자 교체 요청을 처리하지 못했습니다.');
-      }
+      const message =
+        unknownError instanceof Error ? unknownError.message || '운영자 교체 요청을 처리하지 못했습니다.' : '운영자 교체 요청을 처리하지 못했습니다.';
+      setOwnerTransferError(message);
+      setOwnerTransferErrorPopup({ title: null, messages: [message] });
     } finally {
       setIsResponding(false);
     }
@@ -312,6 +325,13 @@ export default function FooterSite() {
           </DialogActions>
         </Dialog>
       )}
+
+      <FormErrorDialog
+        open={Boolean(ownerTransferErrorPopup)}
+        title={ownerTransferErrorPopup?.title ?? null}
+        messages={ownerTransferErrorPopup?.messages ?? []}
+        onClose={() => setOwnerTransferErrorPopup(null)}
+      />
 
       {isMobile ? (
         <Drawer

@@ -684,7 +684,14 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function PATCH(request: Request) {
   try {
-    const requestBody = (await request.json()) as PatchRequestBody;
+    let requestBody: PatchRequestBody;
+
+    try {
+      requestBody = (await request.json()) as PatchRequestBody;
+    } catch {
+      return Response.json({ error: '별명 입력값이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const nickname = normalizeText(requestBody.nickname);
 
@@ -841,7 +848,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     const membershipResult = await supabaseAdmin
       .from('rhizome_stigmas')
-      .select('id, is_approval, withdrawn_at')
+      .select('id, role, is_approval, withdrawn_at')
       .eq('site_id', siteResult.data.id)
       .eq('user_id', stigmaResult.data.id)
       .maybeSingle();
@@ -852,6 +859,27 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     if (!membershipResult.data.is_approval || membershipResult.data.withdrawn_at) {
       return Response.json({ error: '탈퇴할 수 없는 상태입니다.' }, { status: 400 });
+    }
+
+    const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', siteResult.data.id).maybeSingle();
+
+    if (communityResult.error || !communityResult.data) {
+      return Response.json({ error: '커뮤니티 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const managerRoleResult = await supabaseAdmin
+      .from('community_manage_role')
+      .select('role')
+      .eq('community_id', communityResult.data.id)
+      .eq('manager_id', membershipResult.data.id)
+      .limit(1);
+
+    if (managerRoleResult.error) {
+      return Response.json({ error: '매니저 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (membershipResult.data.role === 'owner' || (managerRoleResult.data ?? []).length > 0) {
+      return Response.json({ error: '매니저는 탈퇴하실 수 없습니다.' }, { status: 403 });
     }
 
     await cancelMemberSiteSubscriptions({

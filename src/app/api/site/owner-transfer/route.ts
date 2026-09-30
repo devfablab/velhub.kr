@@ -166,7 +166,14 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const body = (await request.json()) as OwnerTransferResponseBody;
+    let body: OwnerTransferResponseBody;
+
+    try {
+      body = (await request.json()) as OwnerTransferResponseBody;
+    } catch {
+      return Response.json({ error: '운영자 교체 응답이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const siteName = normalizeText(body.siteName).toLowerCase();
     const transferId = normalizeText(body.transferId);
     const decision = body.decision;
