@@ -124,7 +124,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const currentBoard = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_type, post_type, post_per_page, write_permission')
+      .select('id, board_key, board_type, post_type, post_per_page, write_permission, is_active')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -158,6 +158,25 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (currentBoard.data.board_type !== 'basic' && currentBoard.data.board_type !== 'gallery' && postType !== 'none') {
       return Response.json({ error: '해당 게시판 종류에서는 말머리와 연재를 설정할 수 없습니다.' }, { status: 400 });
+    }
+
+    if (!isActive) {
+      const subscriptionSeries = await supabaseAdmin
+        .from('board_series')
+        .select('id')
+        .eq('site_id', rhizome.data.id)
+        .eq('board_id', currentBoard.data.id)
+        .eq('is_subscription', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (subscriptionSeries.error) {
+        return Response.json({ error: '구독 연재 정보를 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      if (subscriptionSeries.data) {
+        return Response.json({ error: '구독 연재가 있는 게시판은 비활성으로 변경할 수 없습니다.' }, { status: 400 });
+      }
     }
 
     const denylist = await supabaseAdmin.from('denylist_other').select('word').eq('word', boardKey).maybeSingle();
@@ -203,6 +222,18 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (updateBoard.error || !updateBoard.data) {
       return Response.json({ error: '게시판 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (!isActive) {
+      const hideHomeOrder = await supabaseAdmin
+        .from('community_home_orders')
+        .update({ is_show: false })
+        .eq('site_id', rhizome.data.id)
+        .eq('board_id', currentBoard.data.id);
+
+      if (hideHomeOrder.error) {
+        return Response.json({ error: '홈 노출 상태를 변경하지 못했습니다.' }, { status: 500 });
+      }
     }
 
     return Response.json({

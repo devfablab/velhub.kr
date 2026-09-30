@@ -139,7 +139,11 @@ async function getHomeItems(siteId: string) {
   const homeOrderMap = new Map(homeOrdersResult.homeOrders.map((homeOrder) => [homeOrder.board_id, homeOrder]));
   const hasHomeOrders = homeOrdersResult.homeOrders.length > 0;
 
-  const items = boardsResult.boards
+  const visibleBoards = hasHomeOrders
+    ? boardsResult.boards.filter((board) => homeOrderMap.has(board.id))
+    : boardsResult.boards.filter((board) => board.is_active);
+
+  const items = visibleBoards
     .map((board) => serializeItem(board, homeOrderMap.get(board.id) ?? null))
     .sort((a, b) => {
       if (hasHomeOrders) {
@@ -242,9 +246,11 @@ export async function POST(request: Request) {
       return Response.json({ error: boardsResult.error }, { status: 500 });
     }
 
-    if (boardsResult.boards.length > 0) {
+    const activeBoards = boardsResult.boards.filter((board) => board.is_active);
+
+    if (activeBoards.length > 0) {
       const insertResult = await supabaseAdmin.from('community_home_orders').insert(
-        boardsResult.boards.map((board, index) => ({
+        activeBoards.map((board, index) => ({
           site_id: siteId,
           board_id: board.id,
           order: index + 1,
@@ -312,6 +318,24 @@ export async function PATCH(request: Request) {
 
     if (invalidItem) {
       return Response.json({ error: '저장할 수 없는 항목이 포함되어 있습니다.' }, { status: 400 });
+    }
+
+    const boardStatusResult = await supabaseAdmin
+      .from('boards')
+      .select('id, is_active')
+      .eq('site_id', siteId)
+      .in('id', currentOrdersResult.homeOrders.map((homeOrder) => homeOrder.board_id));
+
+    if (boardStatusResult.error) {
+      return Response.json({ error: '게시판 상태를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const inactiveBoardIds = new Set(
+      (boardStatusResult.data ?? []).filter((board) => board.is_active === false).map((board) => board.id),
+    );
+
+    if (items.some((item) => item.isShow && currentOrdersResult.homeOrders.some((homeOrder) => homeOrder.id === item.id && inactiveBoardIds.has(homeOrder.board_id)))) {
+      return Response.json({ error: '비활성 게시판은 노출하실 수 없습니다.' }, { status: 400 });
     }
 
     for (const item of items) {

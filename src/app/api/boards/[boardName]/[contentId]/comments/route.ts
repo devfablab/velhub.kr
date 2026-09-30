@@ -1,3 +1,4 @@
+import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
@@ -1046,6 +1047,21 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: target.data.siteId,
       stigmaId: session.stigmaId,
     });
+
+    const membershipResult = await supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('id')
+      .eq('site_id', target.data.siteId)
+      .eq('user_id', session.stigmaId)
+      .maybeSingle();
+
+    if (membershipResult.data) {
+      await refreshCommunityMemberLevel({
+        supabaseAdmin,
+        siteId: target.data.siteId,
+        membershipId: membershipResult.data.id,
+      });
+    }
 
     if (target.data.postAuthorId !== session.stigmaId) {
       const notificationResult = await supabaseAdmin.from('notifications').insert({

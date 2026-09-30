@@ -6,6 +6,7 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Box, Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -120,13 +121,15 @@ export default function Opt({
   const [isAuthor] = useState(initialContent?.isAuthor ?? false);
   const [isStaff] = useState(initialContent?.isStaff ?? false);
   const [errorMessage] = useState(initialError || '');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
 
   if (!board || !content) {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper paper-error ${styles.paper}`}>콘텐츠를 찾을 수 없습니다.</div>
+            <div className={`paper paper-error ${styles.paper}`}>{errorMessage || '콘텐츠를 찾을 수 없습니다.'}</div>
+            <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
             <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
               <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
                 목록
@@ -143,6 +146,7 @@ export default function Opt({
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
 
           {content.is_closed ? <div className={`paper paper-error ${styles.paper}`}>삭제된 글입니다.</div> : null}
 

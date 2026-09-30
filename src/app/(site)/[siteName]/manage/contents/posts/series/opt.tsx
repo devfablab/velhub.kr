@@ -31,6 +31,7 @@ import {
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -232,6 +233,7 @@ export default function Opt({
   const [isUserSearching, setIsUserSearching] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState(initialError ?? '');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [dialogHelperMessage, setDialogHelperMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -865,6 +867,7 @@ export default function Opt({
           </Stack>
 
           {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
+          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
 
           {sortedSeries.length === 0 ? (
             <ScreenState>등록된 연재가 없습니다.</ScreenState>

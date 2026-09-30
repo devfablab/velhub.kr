@@ -21,6 +21,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -131,12 +132,27 @@ export default function Opt({
   const [isBoardLabelAvailable, setIsBoardLabelAvailable] = useState(false);
   const [boardLabelCheckMessage, setBoardLabelCheckMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
   const [maxBoardCount] = useState(initialData?.limit?.maxBoardCount ?? 0);
   const [currentBoardCount] = useState(initialData?.limit?.currentBoardCount ?? 0);
   const [canCreateBoard] = useState(initialData?.limit?.canCreateBoard ?? false);
+
+  const boardLabelError = errorMessage.includes('게시판 이름');
+  const boardKeyError = errorMessage.includes('게시판 식별자');
+
+  function showError(message: string) {
+    setErrorMessage(message);
+    setIsErrorDialogOpen(true);
+  }
+
+  useEffect(() => {
+    if (errorMessage) {
+      setIsErrorDialogOpen(true);
+    }
+  }, [errorMessage]);
 
   const canUsePostType = useMemo(() => {
     return boardType === 'basic' || boardType === 'gallery';
@@ -237,6 +253,7 @@ export default function Opt({
       } else {
         setErrorMessage('게시판 이름 확인에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
 
       resetBoardLabelCheck();
     } finally {
@@ -328,31 +345,31 @@ export default function Opt({
     const normalizedBoardKey = normalizeBoardKey(boardKey);
 
     if (!canCreateBoard) {
-      setErrorMessage('더 이상 게시판을 생성할 수 없습니다.');
+      showError('더 이상 게시판을 생성할 수 없습니다.');
       setSuccessMessage('');
       return;
     }
 
     if (!normalizedBoardLabel) {
-      setErrorMessage('게시판 이름을 입력해주세요.');
+      showError('게시판 이름을 입력해주세요.');
       setSuccessMessage('');
       return;
     }
 
     if (!isBoardLabelAvailable || checkedBoardLabel !== normalizedBoardLabel) {
-      setErrorMessage('게시판 이름 중복 확인을 해주세요.');
+      showError('게시판 이름 중복 확인을 해주세요.');
       setSuccessMessage('');
       return;
     }
 
     if (!normalizedBoardKey) {
-      setErrorMessage('게시판 식별자를 입력해주세요.');
+      showError('게시판 식별자를 입력해주세요.');
       setSuccessMessage('');
       return;
     }
 
     if (!isChecked || !isAvailable || checkedBoardKey !== normalizedBoardKey) {
-      setErrorMessage('게시판 식별자 중복 체크를 해주세요.');
+      showError('게시판 식별자 중복 체크를 해주세요.');
       setSuccessMessage('');
       return;
     }
@@ -394,9 +411,9 @@ export default function Opt({
       router.replace(`/${siteName}/manage/contents/posts/c/${result.boardName}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '게시판 개설에 실패했습니다.');
+        showError(unknownError.message || '게시판 개설에 실패했습니다.');
       } else {
-        setErrorMessage('게시판 개설에 실패했습니다.');
+        showError('게시판 개설에 실패했습니다.');
       }
       setIsSubmitting(false);
     }
@@ -487,12 +504,15 @@ export default function Opt({
                     <TextField
                       value={boardKey}
                       onChange={handleBoardKeyChange}
+                      required
+                      inputProps={{ minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' }}
                       onKeyDown={(event) =>
                         runInputAdornmentAction(event, handleCheckBoardKey, isChecking || !canCreateBoard)
                       }
+                      error={boardKeyError}
+                      helperText={boardKeyError ? errorMessage : `스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
                       fullWidth
                       size="small"
-                      helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
                       slotProps={{
                         input: {
                           startAdornment: (
@@ -522,6 +542,9 @@ export default function Opt({
                     <TextField
                       value={boardLabel}
                       onChange={handleBoardLabelChange}
+                      required
+                      error={boardLabelError}
+                      helperText={boardLabelError ? errorMessage : undefined}
                       onKeyDown={(event) =>
                         runInputAdornmentAction(event, handleCheckBoardLabel, isCheckingBoardLabel || !canCreateBoard)
                       }
@@ -551,6 +574,7 @@ export default function Opt({
                     message={boardLabelCheckMessage}
                     onClose={() => setBoardLabelCheckMessage('')}
                   />
+                  <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
 
                   <Stack gap={1}>
                     <Typography variant="subtitle2">목록 표시 개수 *</Typography>

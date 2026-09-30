@@ -173,6 +173,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   const [inviteErrorMessage, setInviteErrorMessage] = useState('');
   const [inviteEmailError, setInviteEmailError] = useState('');
   const [pendingInviteEmailError, setPendingInviteEmailError] = useState('');
+  const inviteErrorTitle =
+    pendingInviteEmailError === '이미 초대된 멤버입니다.' || pendingInviteEmailError === '이미 가입한 팀원입니다.'
+      ? '멤버 확인'
+      : pendingInviteEmailError
+        ? '초대 정보 확인'
+        : null;
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -820,7 +826,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               }}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
             >
-              {pendingInviteEmailError ? <h2>초대 정보 확인</h2> : null}
+              {inviteErrorTitle ? <h2>{inviteErrorTitle}</h2> : null}
               <button
                 type="button"
                 className="close-button"
@@ -861,7 +867,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               maxWidth="xs"
               className="vh-dialog vh-alert-dialog"
             >
-              {pendingInviteEmailError ? <DialogTitle>초대 정보 확인</DialogTitle> : null}
+              {inviteErrorTitle ? <DialogTitle>{inviteErrorTitle}</DialogTitle> : null}
               <button
                 type="button"
                 className="close-button"
@@ -1350,7 +1356,12 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 >
                   취소
                 </button>
-                <button type="button" className="button small submit" disabled={isInviteSubmitting}>
+                <button
+                  type="submit"
+                  form="team-invite-form"
+                  className="button small submit"
+                  disabled={isInviteSubmitting}
+                >
                   초대하기
                 </button>
               </div>

@@ -25,6 +25,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import Container from '../../../../../../menu';
@@ -87,6 +88,7 @@ export type ContentResponse = {
     id: string;
     series_key: string;
     series_label: string;
+    is_subscription?: boolean | null;
   } | null;
   prefixes?: Array<{
     id: string;
@@ -104,6 +106,7 @@ export type SeriesListResponse = {
     series_key: string;
     series_label: string;
     is_completed: boolean;
+    is_subscription?: boolean | null;
   }>;
   error?: string;
 };
@@ -316,9 +319,11 @@ export default function Opt({
     initialPrefixList.push(currentPrefix);
   }
   const [seriesList, setSeriesList] =
-    useState<Array<{ id: string; series_key: string; series_label: string; is_completed: boolean }>>(initialSeriesList);
+    useState<Array<{ id: string; series_key: string; series_label: string; is_completed: boolean; is_subscription?: boolean | null }>>(initialSeriesList);
   const [prefixList] = useState<Array<{ id: string; prefix_label: string }>>(initialPrefixList);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
+  const initialSeriesKey = initialContent?.series?.series_key ?? '';
+  const initialSeriesIsSubscription = initialContent?.series?.is_subscription === true;
   const [selectedPrefixId, setSelectedPrefixId] = useState(initialContent?.content?.prefix_id ?? '');
   const [isClosed, setIsClosed] = useState(initialContent?.content?.is_closed || false);
   const [isLocked, setIsLocked] = useState(initialContent?.content?.is_locked || false);
@@ -363,12 +368,61 @@ export default function Opt({
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError || '');
+  const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
+    initialError ? { title: null, messages: [initialError] } : null,
+  );
 
   const isBasicBoard = boardType === 'basic';
   const isGalleryBoard = boardType === 'gallery';
   const isYoutubeBoard = boardType === 'youtube';
   const isFeedBoard = boardType === 'feed';
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
+  const hasChanges = useMemo(() => {
+    const initial = initialContent?.content;
+
+    if (!initial) {
+      return false;
+    }
+
+    const initialYoutubeDate = initial.youtube_created_at ? new Date(initial.youtube_created_at).toISOString().slice(0, 10) : '';
+    const currentYoutubeDate = youtubeCreatedAt ? youtubeCreatedAt.toISOString().slice(0, 10) : '';
+
+    return (
+      subject !== initial.subject ||
+      summary !== (initial.summary ?? '') ||
+      contentHtml !== (initial.content_html ?? '') ||
+      contentMarkdown !== (initial.content_markdown ?? '') ||
+      contentSimple !== (initial.content_simple ?? '') ||
+      youtubeUrl !== (initial.youtube_url ?? '') ||
+      currentYoutubeDate !== initialYoutubeDate ||
+      thumbnailImage !== (initial.thumbnail_image ?? '') ||
+      selectedSeriesKey !== initialSeriesKey ||
+      selectedPrefixId !== (initial.prefix_id ?? '') ||
+      isComment !== (initial.is_comment ?? true) ||
+      isPin !== (initial.is_pin ?? false) ||
+      JSON.stringify(images.map((image) => image.path)) !== JSON.stringify((initial.images ?? []).map((image) => image.path))
+    );
+  }, [
+    contentHtml,
+    contentMarkdown,
+    contentSimple,
+    images,
+    initialContent,
+    initialSeriesKey,
+    isComment,
+    isPin,
+    selectedPrefixId,
+    selectedSeriesKey,
+    subject,
+    summary,
+    thumbnailImage,
+    youtubeCreatedAt,
+    youtubeUrl,
+  ]);
+
+  function hasEditorContent(value: string) {
+    return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(value);
+  }
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -690,8 +744,24 @@ export default function Opt({
     }
 
     if (action !== 'draft' && isGalleryBoard && images.length < 2) {
-      setErrorMessage('갤러리 이미지를 두 개 이상 등록해주세요.');
+      setFormErrorDialog({ title: '글 수정', messages: ['갤러리 이미지를 두 개 이상 등록해주세요.'] });
       return;
+    }
+
+    if (action !== 'draft') {
+      const messages = [
+        ...(!isFeedBoard && !subject.trim() ? ['제목을 입력해주세요.'] : []),
+        ...(isBasicBoard || isGalleryBoard ? (!hasEditorContent(contentHtml) ? ['내용을 입력해주세요.'] : []) : []),
+        ...(isFeedBoard && !contentSimple.trim() ? ['내용을 입력해주세요.'] : []),
+        ...(isFeedBoard && images.length < 1 ? ['피드 이미지를 한 개 이상 등록해주세요.'] : []),
+        ...(isYoutubeBoard && !summary.trim() ? ['간단 설명을 입력해주세요.'] : []),
+        ...(isYoutubeBoard && !youtubeId ? ['유효한 유튜브 영상 주소를 입력해주세요.'] : []),
+        ...(isYoutubeBoard && !youtubeCreatedAt ? ['유튜브 업로드 날짜를 선택해주세요.'] : []),
+      ];
+      if (messages.length > 0) {
+        setFormErrorDialog({ title: '글 수정', messages });
+        return;
+      }
     }
 
     try {
@@ -758,6 +828,8 @@ export default function Opt({
 
       router.replace(`/${siteName}/manage/contents/posts/c/${boardName}/${result.slug}`);
     } catch (unknownError) {
+      const message = unknownError instanceof Error ? unknownError.message || '글 수정에 실패했습니다.' : '글 수정에 실패했습니다.';
+      setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '글 수정', messages: [message] });
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '글 수정에 실패했습니다.');
       } else {
@@ -815,7 +887,15 @@ export default function Opt({
                 {!isFeedBoard ? (
                   <Stack gap={1}>
                     <Typography variant="subtitle2">제목 *</Typography>
-                    <TextField value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+                    <TextField
+                      value={subject}
+                      onChange={handleSubjectChange}
+                      required
+                      error={Boolean(formErrorDialog?.messages.includes('제목을 입력해주세요.'))}
+                      helperText={formErrorDialog?.messages.includes('제목을 입력해주세요.') ? '제목을 입력해주세요.' : undefined}
+                      fullWidth
+                      size="small"
+                    />
                   </Stack>
                 ) : null}
 
@@ -833,6 +913,9 @@ export default function Opt({
                       <TextField
                         value={summary}
                         onChange={handleSummaryChange}
+                        required
+                        error={Boolean(formErrorDialog?.messages.includes('간단 설명을 입력해주세요.'))}
+                        helperText={formErrorDialog?.messages.includes('간단 설명을 입력해주세요.') ? '간단 설명을 입력해주세요.' : undefined}
                         fullWidth
                         multiline
                         rows={5}
@@ -841,7 +924,15 @@ export default function Opt({
                     </Stack>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">유튜브 영상 주소 *</Typography>
-                      <TextField value={youtubeUrl} onChange={handleYoutubeUrlChange} fullWidth size="small" />
+                      <TextField
+                        value={youtubeUrl}
+                        onChange={handleYoutubeUrlChange}
+                        required
+                        error={Boolean(formErrorDialog?.messages.includes('유효한 유튜브 영상 주소를 입력해주세요.'))}
+                        helperText={formErrorDialog?.messages.includes('유효한 유튜브 영상 주소를 입력해주세요.') ? '유효한 유튜브 영상 주소를 입력해주세요.' : undefined}
+                        fullWidth
+                        size="small"
+                      />
                       <input type="hidden" value={youtubeId} />
                     </Stack>
                     <Stack gap={1}>
@@ -853,6 +944,9 @@ export default function Opt({
                           textField: {
                             fullWidth: true,
                             size: 'small',
+                            required: true,
+                            error: Boolean(formErrorDialog?.messages.includes('유튜브 업로드 날짜를 선택해주세요.')),
+                            helperText: formErrorDialog?.messages.includes('유튜브 업로드 날짜를 선택해주세요.') ? '유튜브 업로드 날짜를 선택해주세요.' : undefined,
                           },
                         }}
                       />
@@ -893,11 +987,17 @@ export default function Opt({
                         value={selectedSeriesKey}
                         onChange={handleSeriesChange}
                       >
-                        <MenuItem value="">
-                          <ListItemText primary="선택 안함" />
-                        </MenuItem>
+                        {!initialSeriesKey ? (
+                          <MenuItem value="">
+                            <ListItemText primary="선택 안함" />
+                          </MenuItem>
+                        ) : null}
                         {seriesList
-                          .filter((series) => !series.is_completed || series.series_key === selectedSeriesKey)
+                          .filter(
+                            (series) =>
+                              (!initialSeriesKey || Boolean(series.is_subscription) === initialSeriesIsSubscription) &&
+                              (!series.is_completed || series.series_key === selectedSeriesKey),
+                          )
                           .map((series) => (
                             <MenuItem key={series.id} value={series.series_key}>
                               <ListItemText primary={series.series_label} />
@@ -907,7 +1007,7 @@ export default function Opt({
                     </FormControl>
                     <p className="alert warning">
                       <WarningAmberRoundedIcon />
-                      <span>연재는 한번 설정되면 변경하실 수 없습니다. 주의하세요.</span>
+                      <span>연재가 연결된 글은 같은 구독 연결 상태의 연재로만 변경할 수 있습니다.</span>
                     </p>
                   </>
                 ) : null}
@@ -975,6 +1075,11 @@ export default function Opt({
                         <InfoOutlineRoundedIcon />
                         <span>{isGalleryBoard ? '2개 이상' : '1개 이상'} 등록해야 하며, 순서 변경은 불가능합니다.</span>
                       </p>
+                      {formErrorDialog?.messages.some((message) => message.includes('이미지')) ? (
+                        <p className="alert error">
+                          {formErrorDialog.messages.find((message) => message.includes('이미지'))}
+                        </p>
+                      ) : null}
                       <p className="alert info">
                         <InfoOutlineRoundedIcon />
                         <span>이미지는 업로드한 순서대로 정렬되고, 마지막에 등록한 이미지가 가장 앞에 표시됩니다.</span>
@@ -1022,6 +1127,9 @@ export default function Opt({
                     <TextField
                       value={contentSimple}
                       onChange={handleContentSimpleChange}
+                      required
+                      error={Boolean(formErrorDialog?.messages.includes('내용을 입력해주세요.'))}
+                      helperText={formErrorDialog?.messages.includes('내용을 입력해주세요.') ? '내용을 입력해주세요.' : undefined}
                       fullWidth
                       multiline
                       minRows={6}
@@ -1046,6 +1154,9 @@ export default function Opt({
                       onMarkdownChange={setContentMarkdown}
                       onUploadImage={handleUploadEditorImage}
                     />
+                    {formErrorDialog?.messages.includes('내용을 입력해주세요.') ? (
+                      <p className="alert error">내용을 입력해주세요.</p>
+                    ) : null}
                   </Box>
                 ) : null}
 
@@ -1075,7 +1186,7 @@ export default function Opt({
                     <button
                       type="button"
                       className="button medium action"
-                      disabled={isSubmittingDraft || isSubmittingSave}
+                      disabled={isSubmittingDraft || isSubmittingSave || !hasChanges}
                       onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
                     >
                       임시 저장
@@ -1086,7 +1197,7 @@ export default function Opt({
                       <button
                         type="submit"
                         className={`button ${styles.button}`}
-                        disabled={isSubmittingDraft || isSubmittingSave}
+                        disabled={isSubmittingDraft || isSubmittingSave || !hasChanges}
                       >
                         {publishedStatus === 'draft' ? '저장' : '수정'}
                       </button>
@@ -1095,7 +1206,7 @@ export default function Opt({
                     <button
                       type="submit"
                       className="button medium submit"
-                      disabled={isSubmittingDraft || isSubmittingSave}
+                      disabled={isSubmittingDraft || isSubmittingSave || !hasChanges}
                     >
                       {publishedStatus === 'draft' ? '저장' : '수정'}
                     </button>
@@ -1103,6 +1214,7 @@ export default function Opt({
                 </Stack>
 
                 {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+                <FormErrorDialog open={Boolean(formErrorDialog)} title={formErrorDialog?.title ?? null} messages={formErrorDialog?.messages ?? []} onClose={() => setFormErrorDialog(null)} />
               </Stack>
             </div>
           </div>

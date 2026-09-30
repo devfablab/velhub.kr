@@ -53,6 +53,8 @@ type DrawType = 'first_come' | 'random' | null;
 type GiscusSettings = {
   repo: string;
   repoId: string;
+  category: string;
+  categoryId: string;
   strict: GiscusFlag;
   reactionsEnabled: GiscusFlag;
   emitMetadata: GiscusFlag;
@@ -209,6 +211,8 @@ function normalizeGiscusSettings(value: unknown): GiscusSettings | null {
   const rawValue = value as {
     repo?: unknown;
     repoId?: unknown;
+    category?: unknown;
+    categoryId?: unknown;
     strict?: unknown;
     reactionsEnabled?: unknown;
     emitMetadata?: unknown;
@@ -217,12 +221,16 @@ function normalizeGiscusSettings(value: unknown): GiscusSettings | null {
 
   const repo = typeof rawValue.repo === 'string' ? normalizeText(rawValue.repo) : '';
   const repoId = typeof rawValue.repoId === 'string' ? normalizeText(rawValue.repoId) : '';
+  const category = typeof rawValue.category === 'string' ? normalizeText(rawValue.category) : '';
+  const categoryId = typeof rawValue.categoryId === 'string' ? normalizeText(rawValue.categoryId) : '';
   const inputPositionValue =
     typeof rawValue.inputPosition === 'string' ? normalizeText(rawValue.inputPosition).toLowerCase() : '';
 
   return {
     repo,
     repoId,
+    category,
+    categoryId,
     strict: normalizeGiscusFlag(rawValue.strict),
     reactionsEnabled: normalizeGiscusFlag(rawValue.reactionsEnabled),
     emitMetadata: normalizeGiscusFlag(rawValue.emitMetadata),

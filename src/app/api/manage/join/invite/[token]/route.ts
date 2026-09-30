@@ -212,7 +212,7 @@ export async function POST(request: Request, context: RouteContext) {
     const normalizedToken = normalizeText(token);
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
-    const requestBody = (await request.json()) as {
+    const requestBody = (await request.json().catch(() => ({}))) as {
       nickname?: string | null;
     };
     const nickname = normalizeText(requestBody.nickname);
@@ -301,6 +301,10 @@ export async function POST(request: Request, context: RouteContext) {
     const isAutoNickname = !nickname;
     let finalNickname = nickname || fallbackNickname || null;
 
+    if (!finalNickname || Array.from(finalNickname).length < 2 || Array.from(finalNickname).length > 10) {
+      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    }
+
     if (finalNickname) {
       if (isAutoNickname) {
         try {
@@ -336,6 +340,10 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
+    if (!finalNickname || Array.from(finalNickname).length < 2 || Array.from(finalNickname).length > 10) {
+      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    }
+
     const currentRhizomeStigma = await supabaseAdmin
       .from('rhizome_stigmas')
       .select('id, is_approval')
@@ -352,27 +360,7 @@ export async function POST(request: Request, context: RouteContext) {
     const approvalAt = new Date().toISOString();
 
     if (currentRhizomeStigma.data) {
-      rhizomeStigmaId = currentRhizomeStigma.data.id;
-
-      const updateRhizomeStigma = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .update({
-          role: 'member',
-          is_approval: true,
-          approval_at: approvalAt,
-          is_block: false,
-          block_count: 0,
-          nickname: finalNickname,
-          post_count: 0,
-          comment_count: 0,
-          checkin_count: 0,
-          last_checkin_at: approvalAt,
-        })
-        .eq('id', currentRhizomeStigma.data.id);
-
-      if (updateRhizomeStigma.error) {
-        return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
-      }
+      return Response.json({ error: '이미 가입한 멤버입니다.' }, { status: 400 });
     } else {
       const insertRhizomeStigma = await supabaseAdmin
         .from('rhizome_stigmas')

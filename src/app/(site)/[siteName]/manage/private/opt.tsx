@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -23,6 +23,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -43,6 +45,8 @@ type Notice = {
   message: string;
 };
 
+type FormSubmitEvent = FormEvent<HTMLFormElement>;
+
 type OptProps = { initialData: BoardResponse | null; initialError: string };
 
 export default function Opt({ initialData, initialError }: OptProps) {
@@ -51,7 +55,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [isSaving, setIsSaving] = useState(false);
-  const [isCommunity, setIsCommunity] = useState(initialData?.siteType === 'community');
+  const [isCommunity] = useState(initialData?.siteType === 'community');
   const [isInstalled, setIsInstalled] = useState(Boolean(initialData?.board));
   const [boardLabel, setBoardLabel] = useState(initialData?.board?.board_label ?? '');
   const [isImageEnabled, setIsImageEnabled] = useState(initialData?.board?.is_image_enabled ?? true);
@@ -61,19 +65,100 @@ export default function Opt({ initialData, initialError }: OptProps) {
       : [{ id: null, label: '분류없음' }],
   );
   const [notice, setNotice] = useState<Notice | null>(
-    initialError ? { title: '불러오기 실패', message: initialError } : null,
+    null,
   );
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '불러오기 실패' : null);
+  const [boardLabelError, setBoardLabelError] = useState('');
+  const [categoryErrors, setCategoryErrors] = useState<Record<number, string>>({});
+  const [pendingCategoryIndex, setPendingCategoryIndex] = useState<number | null>(null);
+
+  function showError(message: string, title: string | null = '비공개 게시판 설정') {
+    setErrorMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
 
   function changeCategory(index: number, label: string) {
+    setCategoryErrors((previousErrors) => {
+      const nextErrors = { ...previousErrors };
+      delete nextErrors[index];
+      return nextErrors;
+    });
     setCategories((previous) =>
       previous.map((category, categoryIndex) => (categoryIndex === index ? { ...category, label } : category)),
     );
   }
 
-  async function handleSave() {
+  function getCategoryValidationErrors() {
+    const nextErrors: Record<number, string> = {};
+    const labels = new Map<string, number>();
+
+    categories.forEach((category, index) => {
+      const label = normalizeText(category.label);
+
+      if (!label) {
+        nextErrors[index] = '카테고리 이름을 입력해주세요.';
+        return;
+      }
+
+      const existingIndex = labels.get(label);
+
+      if (existingIndex !== undefined) {
+        nextErrors[index] = '카테고리 이름은 중복해서 입력할 수 없습니다.';
+        nextErrors[existingIndex] = '카테고리 이름은 중복해서 입력할 수 없습니다.';
+        return;
+      }
+
+      labels.set(label, index);
+    });
+
+    return nextErrors;
+  }
+
+  function handleRequestCategoryDelete(index: number) {
+    if (categories.length === 1) {
+      return;
+    }
+
+    setPendingCategoryIndex(index);
+  }
+
+  function handleConfirmCategoryDelete() {
+    if (pendingCategoryIndex === null) {
+      return;
+    }
+
+    setCategories((previous) => previous.filter((_, categoryIndex) => categoryIndex !== pendingCategoryIndex));
+    setCategoryErrors({});
+    setPendingCategoryIndex(null);
+  }
+
+  const categoryMoveTargetLabel =
+    pendingCategoryIndex === 0 ? categories[1]?.label || '기본' : categories[0]?.label || '기본';
+
+  async function handleSave(event: FormSubmitEvent) {
+    event.preventDefault();
+
     if (isSaving) return;
 
+    const normalizedBoardLabel = normalizeText(boardLabel);
+    const nextCategoryErrors = getCategoryValidationErrors();
+
+    setBoardLabelError(normalizedBoardLabel ? '' : '게시판 이름을 입력해주세요.');
+    setCategoryErrors(nextCategoryErrors);
+
+    if (!normalizedBoardLabel || Object.keys(nextCategoryErrors).length > 0) {
+      showError(
+        !normalizedBoardLabel ? '게시판 이름을 입력해주세요.' : Object.values(nextCategoryErrors)[0],
+        '입력 내용 확인',
+      );
+      return;
+    }
+
     setIsSaving(true);
+    setErrorMessage('');
 
     try {
       const response = await fetch('/api/private-board/manage', {
@@ -82,7 +167,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         credentials: 'include',
         body: JSON.stringify({
           siteName,
-          boardLabel,
+          boardLabel: normalizedBoardLabel,
           isImageEnabled,
           categories: categories.map((category) => ({ id: category.id, label: category.label })),
         }),
@@ -107,14 +192,35 @@ export default function Opt({ initialData, initialError }: OptProps) {
         message: `비공개 게시판을 ${isInstalled ? '수정' : '설치'}했습니다.`,
       });
     } catch (error) {
-      setNotice({
-        title: isInstalled ? '수정 실패' : '설치 실패',
-        message:
-          error instanceof Error ? error.message : `비공개 게시판 ${isInstalled ? '수정' : '설치'}에 실패했습니다.`,
-      });
+      const message =
+        error instanceof Error ? error.message : `비공개 게시판 ${isInstalled ? '수정' : '설치'}에 실패했습니다.`;
+
+      if (message.includes('카테고리')) {
+        setCategoryErrors({ 0: message });
+      } else {
+        setBoardLabelError(message);
+      }
+
+      showError(message, error instanceof TypeError ? null : isInstalled ? '수정 실패' : '설치 실패');
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (initialError) {
+    return (
+      <Container pageTitle="비공개 게시판" pageBack={`/${siteName}/manage`}>
+        <div className={`container ${styles.container}`}>
+          <ScreenState kind="error">{initialError}</ScreenState>
+        </div>
+        <FormErrorDialog
+          open={isErrorDialogOpen}
+          title={errorDialogTitle}
+          messages={[initialError]}
+          onClose={() => setIsErrorDialogOpen(false)}
+        />
+      </Container>
+    );
   }
 
   if (!isCommunity) {
@@ -138,6 +244,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <InfoOutlineRoundedIcon />
             <span>비공개 게시판의 기본 설정을 관리합니다.</span>
           </p>
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <form onSubmit={(event) => void handleSave(event)}>
           <div className={`paper ${styles.paper}`}>
             <Stack gap={2}>
               <Typography variant="h6">게시판 설정</Typography>
@@ -146,6 +254,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onChange={(event) => setBoardLabel(event.target.value)}
                 placeholder="게시판 이름"
                 required
+                error={Boolean(boardLabelError)}
+                helperText={boardLabelError}
                 fullWidth
                 size="small"
               />
@@ -178,13 +288,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     placeholder={index === 0 ? '기본 카테고리' : '카테고리'}
                     fullWidth
                     size="small"
+                    required
+                    error={Boolean(categoryErrors[index])}
+                    helperText={categoryErrors[index]}
                   />
                   <IconButton
                     aria-label="카테고리 삭제"
                     disabled={categories.length === 1}
-                    onClick={() =>
-                      setCategories((previous) => previous.filter((_, categoryIndex) => categoryIndex !== index))
-                    }
+                    onClick={() => handleRequestCategoryDelete(index)}
                   >
                     <DeleteOutlineRoundedIcon />
                   </IconButton>
@@ -194,14 +305,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </div>
           <Stack direction="row" justifyContent="flex-end">
             <button
-              type="button"
+              type="submit"
               className="button medium submit"
               disabled={isSaving}
-              onClick={() => void handleSave()}
             >
               {isInstalled ? '수정 완료' : '설치 완료'}
             </button>
           </Stack>
+          </form>
         </div>
       </div>
       {isMobile ? (
@@ -246,6 +357,58 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </DialogActions>
         </Dialog>
       )}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={pendingCategoryIndex !== null}
+          onClose={() => setPendingCategoryIndex(null)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
+          <h2>카테고리 삭제</h2>
+          <div className="VhiDrawer-bottom-content">
+            <Typography variant="subtitle2">
+              해당 카테고리의 글은 {categoryMoveTargetLabel} 카테고리로 이동합니다.
+            </Typography>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={() => setPendingCategoryIndex(null)}>
+              취소
+            </button>
+            <button type="button" className="button small danger" onClick={handleConfirmCategoryDelete}>
+              삭제
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={pendingCategoryIndex !== null}
+          onClose={() => setPendingCategoryIndex(null)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
+          <DialogTitle>카테고리 삭제</DialogTitle>
+          <DialogContent>
+            <Typography variant="subtitle2">
+              해당 카테고리의 글은 {categoryMoveTargetLabel} 카테고리로 이동합니다.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="cancel-button" onClick={() => setPendingCategoryIndex(null)}>
+              취소
+            </button>
+            <button type="button" className="delete-button" onClick={handleConfirmCategoryDelete}>
+              삭제
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+      <FormErrorDialog
+        open={isErrorDialogOpen}
+        title={errorDialogTitle}
+        messages={errorMessage ? [errorMessage] : []}
+        onClose={() => setIsErrorDialogOpen(false)}
+      />
     </Container>
   );
 }

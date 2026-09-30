@@ -22,6 +22,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import Container from '../../../menu';
@@ -92,6 +93,7 @@ function SortableItem({
   onImageChange,
   onImageRemove,
   onRemove,
+  hasError,
 }: {
   item: LinkItem;
   onServiceChange: (localId: string, service: ServiceValue | '') => void;
@@ -99,6 +101,7 @@ function SortableItem({
   onImageChange: (localId: string, event: InputChangeEvent) => void;
   onImageRemove: (localId: string) => void;
   onRemove: (localId: string) => void;
+  hasError: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.localId });
   const serviceMeta = getServiceMeta(item.service);
@@ -144,6 +147,9 @@ function SortableItem({
             <TextField
               value={item.account}
               onChange={(event) => onAccountChange(item.localId, event.target.value)}
+              required
+              error={hasError}
+              helperText={hasError ? '서비스와 계정 정보를 모두 입력해주세요.' : undefined}
               fullWidth
               size="small"
               slotProps={{
@@ -240,6 +246,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const previewUrlsRef = useRef(new Set<string>());
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -307,12 +314,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
     if (!ACCEPTED_IMAGE_TYPES.has(file.type.toLowerCase())) {
       setErrorMessage('PNG, JPEG, WEBP 이미지만 업로드할 수 있습니다.');
+      setIsErrorDialogOpen(true);
       input.value = '';
       return;
     }
 
     if (file.size >= MAX_FILE_SIZE) {
       setErrorMessage('이미지는 1MB 미만만 업로드할 수 있습니다.');
+      setIsErrorDialogOpen(true);
       input.value = '';
       return;
     }
@@ -371,6 +380,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   async function handleSave() {
     if (items.some((item) => !item.service || !item.account.trim())) {
       setErrorMessage('빈 데이터가 있습니다.');
+      setIsErrorDialogOpen(true);
       return;
     }
 
@@ -424,6 +434,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } catch (unknownError) {
       const error = unknownError instanceof Error ? unknownError.message : '';
       setErrorMessage(error || '커뮤니티 링크 저장에 실패했습니다.');
+      setIsErrorDialogOpen(true);
     } finally {
       setIsSaving(false);
     }
@@ -434,6 +445,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorMessage === '빈 데이터가 있습니다.' ? '커뮤니티 링크' : null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           <p className="alert info" style={{ paddingTop: 23 }}>
             <InfoOutlineRoundedIcon />
@@ -452,6 +469,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onImageChange={handleImageChange}
                     onImageRemove={handleImageRemove}
                     onRemove={handleRemove}
+                    hasError={Boolean(errorMessage) && (!item.service || !item.account.trim())}
                   />
                 ))}
               </Stack>

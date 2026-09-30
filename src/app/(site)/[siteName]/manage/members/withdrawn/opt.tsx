@@ -35,6 +35,7 @@ import {
   type MemberRestrictionType,
 } from '@/lib/users/memberRestrictionMessages';
 import { formatDate, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import Container from '../../menu';
@@ -98,9 +99,26 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [actionTerm, setActionTerm] = useState<Date | null>(null);
 
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogMessage, setErrorDialogMessage] = useState(initialError);
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '멤버 관리' : null);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [messageUser, setMessageUser] = useState<WithdrawnUserRow | null>(null);
+
+  function showError(message: string, title: string | null = '멤버 관리') {
+    setErrorMessage(message);
+    setErrorDialogMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
+
+  function showDialogError(message: string, title: string | null) {
+    setDialogErrorMessage(message);
+    setErrorDialogMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -204,7 +222,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   async function handleOpenActionDialog(nextActionType: Exclude<ActionType, null>) {
     if (selectedUserIds.length === 0) {
-      setErrorMessage('멤버를 선택해주세요.');
+      showError('멤버를 선택해주세요.');
       return;
     }
 
@@ -265,7 +283,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
     const trimmedReason = normalizeText(actionReason);
 
     if (!trimmedReason) {
-      setDialogErrorMessage(`${getActionReasonLabel()}를 입력해주세요.`);
+      showDialogError(`${getActionReasonLabel()}를 입력해주세요.`, getActionTitle());
+
+      return;
+    }
+
+    if (actionType === 'ban' && actionTerm && actionTerm.getTime() <= Date.now()) {
+      showDialogError('가입불가 해제 날짜는 오늘 이후로 선택해주세요.', getActionTitle());
 
       return;
     }
@@ -348,9 +372,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSnackbarMessage(`${completedActionTitle} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`);
+        showDialogError(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`, unknownError instanceof TypeError ? null : getActionTitle());
       } else {
-        setDialogErrorMessage(`${getActionTitle()} 처리에 실패했습니다.`);
+        showDialogError(`${getActionTitle()} 처리에 실패했습니다.`, null);
       }
     } finally {
       setIsActionSubmitting(false);
@@ -544,6 +568,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
               multiline
               minRows={4}
               size="small"
+              error={Boolean(dialogErrorMessage)}
+              helperText={dialogErrorMessage}
             />
             {actionType === 'ban' ? (
               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
@@ -553,6 +579,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     value={actionTerm}
                     onChange={setActionTerm}
                     format="yyyy년 MM월 dd일"
+                    minDate={new Date()}
                     disabled={isActionSubmitting}
                     slotProps={{
                       textField: {
@@ -628,6 +655,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 multiline
                 minRows={4}
                 size="small"
+                error={Boolean(dialogErrorMessage)}
+                helperText={dialogErrorMessage}
               />
 
               {actionType === 'ban' ? (
@@ -638,6 +667,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       value={actionTerm}
                       onChange={setActionTerm}
                       format="yyyy년 MM월 dd일"
+                      minDate={new Date()}
                       disabled={isActionSubmitting}
                       slotProps={{
                         textField: {
@@ -701,6 +731,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       />
 
       <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
+      <FormErrorDialog
+        open={isErrorDialogOpen}
+        title={errorDialogTitle}
+        messages={errorDialogMessage ? [errorDialogMessage] : []}
+        onClose={() => setIsErrorDialogOpen(false)}
+      />
     </Container>
   );
 }

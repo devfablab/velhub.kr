@@ -1,5 +1,6 @@
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
+import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
 import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
@@ -931,6 +932,10 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '예약 출간 시간을 입력해주세요.' }, { status: 400 });
     }
 
+    if (action === 'unknown' && requestedPublishedAt && new Date(requestedPublishedAt).getTime() <= Date.now()) {
+      return Response.json({ error: '예약 출간 시간은 현재 시각 이후로 설정해주세요.' }, { status: 400 });
+    }
+
     const lastPost = await supabaseAdmin
       .from('posts')
       .select('idx, slug')
@@ -1032,6 +1037,12 @@ export async function POST(request: Request, context: RouteContext) {
 
           if (rhizomeStigmaUpdateResult.error) {
             console.error(rhizomeStigmaUpdateResult.error);
+          } else if (rhizomeData.site_type === 'community') {
+            await refreshCommunityMemberLevel({
+              supabaseAdmin,
+              siteId: rhizomeData.id,
+              membershipId: rhizomeStigmaResult.data.id,
+            });
           }
         }
       }

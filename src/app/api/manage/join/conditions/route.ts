@@ -336,6 +336,13 @@ export async function POST(request: Request) {
       return Response.json({ error: '가입 질문을 1개 이상 입력해주세요.' }, { status: 400 });
     }
 
+    if (
+      joinQuestionStatus === 'enabled' &&
+      (!Array.isArray(requestBody.joinQuestions) || joinQuestions.length !== requestBody.joinQuestions.length)
+    ) {
+      return Response.json({ error: '가입 질문과 선택지 내용을 모두 입력해주세요.' }, { status: 400 });
+    }
+
     const hasInvalidObjectiveQuestion = joinQuestions.some(
       (question) => question.type === 'objective' && question.allow_image,
     );

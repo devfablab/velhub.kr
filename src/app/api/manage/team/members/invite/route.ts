@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (duplicatePendingInvite.data) {
-      return Response.json({ error: '이미 대기 중인 초대가 있습니다.' }, { status: 400 });
+      return Response.json({ error: '이미 초대된 멤버입니다.' }, { status: 400 });
     }
 
     const invitedUserResult = await access.supabaseAdmin
@@ -326,6 +326,23 @@ export async function POST(request: NextRequest) {
       }
 
       invitedStigmaId = invitedStigmaResult.data?.id ?? null;
+
+      if (invitedStigmaId) {
+        const existingTeamMemberResult = await access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id')
+          .eq('site_id', access.siteId)
+          .eq('user_id', invitedStigmaId)
+          .maybeSingle();
+
+        if (existingTeamMemberResult.error) {
+          return Response.json({ error: '멤버 정보를 확인하지 못했습니다.' }, { status: 500 });
+        }
+
+        if (existingTeamMemberResult.data) {
+          return Response.json({ error: '이미 가입한 팀원입니다.' }, { status: 400 });
+        }
+      }
     }
 
     const token = randomUUID();

@@ -133,6 +133,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '예약 출간 시간을 입력해주세요.' }, { status: 400 });
     }
 
+    if (action === 'unknown' && requestedPublishedAt && new Date(requestedPublishedAt).getTime() <= Date.now()) {
+      return Response.json({ error: '예약 출간 시간은 현재 시각 이후로 설정해주세요.' }, { status: 400 });
+    }
+
     const nowIsoString = new Date().toISOString();
     const publishedAt = action === 'unknown' ? requestedPublishedAt : nowIsoString;
     const publishedStatus = action === 'unknown' ? 'unknown' : 'published';

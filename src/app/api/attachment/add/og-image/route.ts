@@ -3,6 +3,9 @@ import sharp from 'sharp';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+const MAX_OG_IMAGE_FILE_SIZE = 1024 * 1024;
+const ACCEPTED_OG_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
 export async function POST(request: Request) {
   try {
     const sessionClaims = await getSessionClaims();
@@ -16,6 +19,14 @@ export async function POST(request: Request) {
 
     if (!(file instanceof File)) {
       return Response.json({ error: '파일이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!ACCEPTED_OG_IMAGE_TYPES.has(file.type)) {
+      return Response.json({ error: 'PNG, JPEG, WEBP 이미지만 등록할 수 있습니다.' }, { status: 400 });
+    }
+
+    if (file.size > MAX_OG_IMAGE_FILE_SIZE) {
+      return Response.json({ error: '오픈그래프 이미지는 1MB 이하로 등록해주세요.' }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();

@@ -17,6 +17,7 @@ import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import { Box, IconButton, InputAdornment, Stack, TextField, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import Container from '../../../menu';
@@ -69,11 +70,13 @@ function SortableItem({
   onServiceChange,
   onAccountChange,
   onRemove,
+  hasError,
 }: {
   item: LinkItem;
   onServiceChange: (localId: string, service: ServiceValue | '') => void;
   onAccountChange: (localId: string, account: string) => void;
   onRemove: (localId: string) => void;
+  hasError: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: item.localId,
@@ -139,6 +142,9 @@ function SortableItem({
           <TextField
             value={item.account}
             onChange={(event) => onAccountChange(item.localId, event.target.value)}
+            required
+            error={hasError}
+            helperText={hasError ? '서비스와 계정 정보를 모두 입력해주세요.' : undefined}
             fullWidth
             size="small"
             slotProps={{
@@ -177,6 +183,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -256,6 +263,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     try {
       if (items.some((item) => !item.service || !item.account.trim())) {
         setErrorMessage('빈 데이터가 있습니다.');
+        setIsErrorDialogOpen(true);
         return;
       }
 
@@ -303,6 +311,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('소셜 링크 저장에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setIsSaving(false);
     }
@@ -313,6 +322,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorMessage === '빈 데이터가 있습니다.' ? '소셜 링크' : null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           <p className="alert info" style={{ paddingTop: 23 }}>
             <InfoOutlineRoundedIcon />
@@ -329,6 +344,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onServiceChange={handleServiceChange}
                     onAccountChange={handleAccountChange}
                     onRemove={handleRemove}
+                    hasError={Boolean(errorMessage) && (!item.service || !item.account.trim())}
                   />
                 ))}
               </Stack>

@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   Dialog,
@@ -21,6 +19,8 @@ import {
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -55,8 +55,6 @@ export type InitialPageDetail = {
   content?: ContentRow | null;
 };
 
-type ContentResponse = InitialPageDetail;
-
 type ActionResponse = {
   ok?: boolean;
   error?: string;
@@ -73,11 +71,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [content, setContent] = useState<ContentRow | null>(initialData?.content ?? null);
-  const [boardName, setBoardName] = useState<string | null>(initialData?.boardName ?? null);
-  const [profileImageUrl, setProfileImageUrl] = useState(initialData?.content?.og_image_url ?? '');
+  const [content] = useState<ContentRow | null>(initialData?.content ?? null);
+  const [boardName] = useState<string | null>(initialData?.boardName ?? null);
+  const [profileImageUrl] = useState(initialData?.content?.og_image_url ?? '');
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,6 +147,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setDialogErrorMessage('페이지 삭제에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
       setIsSubmitting(false);
     }
   }
@@ -186,25 +186,31 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setDialogErrorMessage('페이지 복구에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
       setIsSubmitting(false);
     }
   }
 
   if (!content) {
-    return errorMessage ? (
+    return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div>
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            <ScreenState>{errorMessage || '페이지를 찾을 수 없습니다.'}</ScreenState>
             <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
-              <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
-                목록
-              </Anchor>
+              <Anchor href={`/${siteName}/manage/contents/pages`} className="button medium cancel">목록</Anchor>
             </Stack>
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={null}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
           </div>
         </div>
       </Container>
-    ) : null;
+    );
   }
 
   return (
@@ -305,6 +311,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
 
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={null}
+            messages={dialogErrorMessage || errorMessage ? [dialogErrorMessage || errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           {isMobile ? (
             <Drawer

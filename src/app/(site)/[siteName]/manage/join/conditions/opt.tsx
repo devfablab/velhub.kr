@@ -25,6 +25,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -143,7 +144,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
   );
 
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [questionErrors, setQuestionErrors] = useState<Record<string, string>>({});
+  const [joinPeriodErrors, setJoinPeriodErrors] = useState({ start: '', end: '' });
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  function showError(message: string) {
+    setErrorMessage(message);
+    setIsErrorDialogOpen(true);
+  }
 
   async function loadJoinConditions() {
     const response = await fetch(`/api/manage/join/conditions?siteName=${siteName}`, {
@@ -372,8 +381,34 @@ export default function Opt({ initialData, initialError }: OptProps) {
       .filter((question) => question.question);
 
     if (joinQuestionStatus === 'enabled') {
+      const nextQuestionErrors: Record<string, string> = {};
+
+      joinQuestions.forEach((question) => {
+        if (!normalizeQuestionText(question.question)) {
+          nextQuestionErrors[`question-${question.id}`] = '질문 내용을 입력해주세요.';
+        }
+
+        if (question.type === 'objective') {
+          if (question.options.length === 0) {
+            nextQuestionErrors[`options-${question.id}`] = '객관식 문항의 선택지를 1개 이상 입력해주세요.';
+          }
+
+          question.options.forEach((option, optionIndex) => {
+            if (!normalizeQuestionText(option)) {
+              nextQuestionErrors[`option-${question.id}-${optionIndex}`] = '선택지 내용을 입력해주세요.';
+            }
+          });
+        }
+      });
+
+      if (Object.keys(nextQuestionErrors).length > 0) {
+        setQuestionErrors(nextQuestionErrors);
+        showError(Object.values(nextQuestionErrors)[0]);
+        return;
+      }
+
       if (normalizedQuestions.length === 0) {
-        setErrorMessage('가입 질문을 1개 이상 입력해주세요.');
+        showError('가입 질문을 1개 이상 입력해주세요.');
         return;
       }
 
@@ -382,25 +417,32 @@ export default function Opt({ initialData, initialError }: OptProps) {
       );
 
       if (hasInvalidObjectiveQuestion) {
-        setErrorMessage('객관식 문항의 선택지는 1개 이상 입력해주세요.');
+        showError('객관식 문항의 선택지는 1개 이상 입력해주세요.');
         return;
       }
     }
 
     if (joinAcceptStatus === 'period') {
       if (!joinAcceptStartDay || !joinAcceptEndDay) {
-        setErrorMessage('가입불가 기간을 입력해주세요.');
+        setJoinPeriodErrors({
+          start: joinAcceptStartDay ? '' : '시작일을 선택해주세요.',
+          end: joinAcceptEndDay ? '' : '종료일을 선택해주세요.',
+        });
+        showError('가입불가 기간을 입력해주세요.');
         return;
       }
 
       if (joinAcceptStartDay > joinAcceptEndDay) {
-        setErrorMessage('종료일은 시작일보다 빠를 수 없습니다.');
+        setJoinPeriodErrors({ start: '', end: '종료일은 시작일보다 빠를 수 없습니다.' });
+        showError('종료일은 시작일보다 빠를 수 없습니다.');
         return;
       }
     }
 
     try {
       setErrorMessage('');
+      setQuestionErrors({});
+      setJoinPeriodErrors({ start: '', end: '' });
       setIsSubmitting(true);
 
       const response = await fetch('/api/manage/join/conditions', {
@@ -433,9 +475,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSnackbarMessage('저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '가입 정보 저장에 실패했습니다.');
+        showError(unknownError.message || '가입 정보 저장에 실패했습니다.');
       } else {
-        setErrorMessage('가입 정보 저장에 실패했습니다.');
+        showError('가입 정보 저장에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
@@ -449,6 +491,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <Stack component="form" gap={3} onSubmit={handleSubmit}>
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+              <FormErrorDialog
+                open={isErrorDialogOpen}
+                title={errorMessage.includes('가입 질문') || errorMessage.includes('질문 내용') || errorMessage.includes('선택지') ? '가입 질문 확인' : errorMessage.includes('기간') || errorMessage.includes('시작일') || errorMessage.includes('종료일') ? '가입 기간 확인' : null}
+                messages={errorMessage ? [errorMessage] : []}
+                onClose={() => setIsErrorDialogOpen(false)}
+              />
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">가입 안내 문구</Typography>
                 <TextField
@@ -567,6 +615,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           textField: {
                             fullWidth: true,
                             size: 'small',
+                            error: Boolean(joinPeriodErrors.start),
+                            helperText: joinPeriodErrors.start,
                           },
                         }}
                       />
@@ -580,6 +630,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           textField: {
                             fullWidth: true,
                             size: 'small',
+                            error: Boolean(joinPeriodErrors.end),
+                            helperText: joinPeriodErrors.end,
                           },
                         }}
                       />
@@ -668,7 +720,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               <Typography variant="subtitle2">질문 내용</Typography>
                               <TextField
                                 value={question.question}
-                                onChange={(event) => handleQuestionTextChange(question.id, event)}
+                                onChange={(event) => {
+                                  handleQuestionTextChange(question.id, event);
+                                  setQuestionErrors((previousErrors) => {
+                                    const nextErrors = { ...previousErrors };
+                                    delete nextErrors[`question-${question.id}`];
+                                    return nextErrors;
+                                  });
+                                }}
+                                error={Boolean(questionErrors[`question-${question.id}`])}
+                                helperText={questionErrors[`question-${question.id}`]}
                                 fullWidth
                                 multiline
                                 minRows={2}
@@ -707,7 +768,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                     <TextField
                                       placeholder={`문항 ${optionIndex + 1}`}
                                       value={option}
-                                      onChange={(event) => handleOptionChange(question.id, optionIndex, event)}
+                                      onChange={(event) => {
+                                        handleOptionChange(question.id, optionIndex, event);
+                                        setQuestionErrors((previousErrors) => {
+                                          const nextErrors = { ...previousErrors };
+                                          delete nextErrors[`option-${question.id}-${optionIndex}`];
+                                          delete nextErrors[`options-${question.id}`];
+                                          return nextErrors;
+                                        });
+                                      }}
+                                      error={Boolean(questionErrors[`option-${question.id}-${optionIndex}`] || questionErrors[`options-${question.id}`])}
+                                      helperText={questionErrors[`option-${question.id}-${optionIndex}`] || questionErrors[`options-${question.id}`]}
                                       fullWidth
                                       size="small"
                                     />

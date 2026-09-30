@@ -15,9 +15,20 @@ type RequestBody = {
 };
 
 function normalizeCategories(categories: CategoryInput[] | null | undefined) {
-  const labels = (categories ?? []).map((category) => normalizeText(category.label)).filter(Boolean);
+  if (!Array.isArray(categories)) {
+    return [];
+  }
 
-  return [...new Set(labels)];
+  return categories.map((category) => normalizeText(category?.label)).filter(Boolean);
+}
+
+function hasDuplicateCategories(categories: CategoryInput[] | null | undefined) {
+  const labels = normalizeCategories(categories);
+  return new Set(labels).size !== labels.length;
+}
+
+function hasEmptyCategory(categories: CategoryInput[] | null | undefined) {
+  return !Array.isArray(categories) || categories.length === 0 || categories.some((category) => !normalizeText(category?.label));
 }
 
 async function getManageAccess(siteName: string) {
@@ -123,7 +134,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as RequestBody;
+  const body = (await request.json().catch(() => ({}))) as RequestBody;
   const siteName = normalizeText(body.siteName).toLowerCase();
   const boardLabel = normalizeText(body.boardLabel);
   const categories = normalizeCategories(body.categories);
@@ -132,10 +143,22 @@ export async function POST(request: Request) {
     return Response.json({ error: '게시판 이름과 카테고리를 입력해 주세요.' }, { status: 400 });
   }
 
+  if (hasEmptyCategory(body.categories)) {
+    return Response.json({ error: '카테고리 이름을 모두 입력해 주세요.' }, { status: 400 });
+  }
+
+  if (hasDuplicateCategories(body.categories)) {
+    return Response.json({ error: '카테고리 이름은 중복해서 입력할 수 없습니다.' }, { status: 400 });
+  }
+
   const access = await getManageAccess(siteName);
 
   if (!access.ok) {
     return Response.json({ error: access.error }, { status: access.status });
+  }
+
+  if (access.site.site_type !== 'community') {
+    return Response.json({ error: '비공개 게시판은 커뮤니티에서만 사용할 수 있습니다.' }, { status: 400 });
   }
 
   const existing = await access.supabaseAdmin
@@ -187,7 +210,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const body = (await request.json()) as RequestBody;
+  const body = (await request.json().catch(() => ({}))) as RequestBody;
   const siteName = normalizeText(body.siteName).toLowerCase();
   const boardLabel = normalizeText(body.boardLabel);
   const categories = normalizeCategories(body.categories);
@@ -196,10 +219,22 @@ export async function PATCH(request: Request) {
     return Response.json({ error: '게시판 이름과 카테고리를 입력해 주세요.' }, { status: 400 });
   }
 
+  if (hasEmptyCategory(body.categories)) {
+    return Response.json({ error: '카테고리 이름을 모두 입력해 주세요.' }, { status: 400 });
+  }
+
+  if (hasDuplicateCategories(body.categories)) {
+    return Response.json({ error: '카테고리 이름은 중복해서 입력할 수 없습니다.' }, { status: 400 });
+  }
+
   const access = await getManageAccess(siteName);
 
   if (!access.ok) {
     return Response.json({ error: access.error }, { status: access.status });
+  }
+
+  if (access.site.site_type !== 'community') {
+    return Response.json({ error: '비공개 게시판은 커뮤니티에서만 사용할 수 있습니다.' }, { status: 400 });
   }
 
   const board = await access.supabaseAdmin

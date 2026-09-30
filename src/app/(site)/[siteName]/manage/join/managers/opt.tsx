@@ -27,6 +27,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
@@ -203,7 +204,6 @@ export default function Opt({
     initialData?.ownerTransfer || null,
   );
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchedKeyword, setSearchedKeyword] = useState('');
   const [searchResults, setSearchResults] = useState<MemberSearchItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedSearchMemberId, setSelectedSearchMemberId] = useState('');
@@ -216,7 +216,7 @@ export default function Opt({
   );
   const [moveRole, setMoveRole] = useState<ManagerRole>('community-manager');
   const [moveBoardId, setMoveBoardId] = useState('');
-  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [errorMessage] = useState(initialError);
   const [searchDialogErrorMessage, setSearchDialogErrorMessage] = useState('');
   const [managerEditErrorMessage, setManagerEditErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -234,6 +234,7 @@ export default function Opt({
   const [isLoadingIcons, setIsLoadingIcons] = useState(false);
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [deletingIconId, setDeletingIconId] = useState('');
+  const [dismissedActionError, setDismissedActionError] = useState('');
   const selectedManager = useMemo(
     () => managers.find((manager) => manager.manageRoleId === selectedManagerRoleId) ?? null,
     [managers, selectedManagerRoleId],
@@ -243,6 +244,15 @@ export default function Opt({
     () => searchResults.find((member) => member.rhizomeStigmaId === selectedSearchMemberId) ?? null,
     [searchResults, selectedSearchMemberId],
   );
+
+  const activeActionError = iconErrorMessage || managerEditErrorMessage || searchDialogErrorMessage || errorMessage;
+  const actionErrorTitle = iconErrorMessage
+    ? '아이콘 확인'
+    : managerEditErrorMessage
+      ? '매니저 설정 확인'
+      : searchDialogErrorMessage
+        ? '멤버 확인'
+        : null;
 
   const selectedAssignBoard = useMemo(
     () => boards.find((board) => board.boardId === assignBoardId) ?? null,
@@ -358,6 +368,19 @@ export default function Opt({
     const selectedFile = inputElement.files?.[0];
 
     if (!selectedFile || !targetIconId || isUploadingIcon) {
+      inputElement.value = '';
+      return;
+    }
+
+    const fileName = selectedFile.name.toLowerCase();
+    const isSupportedImage =
+      selectedFile.type === 'image/png' ||
+      selectedFile.type === 'image/jpeg' ||
+      selectedFile.type === 'image/svg+xml' ||
+      /\.(png|jpe?g|svg)$/.test(fileName);
+
+    if (!isSupportedImage) {
+      setIconErrorMessage('png, jpg, svg 파일만 업로드할 수 있습니다.');
       inputElement.value = '';
       return;
     }
@@ -496,7 +519,6 @@ export default function Opt({
     setIsOwnerTransferConfirmOpen(false);
     setSearchMode('manager');
     setSearchKeyword('');
-    setSearchedKeyword('');
     setSearchResults([]);
     setSelectedSearchMemberId('');
     setAssignManagerGroup('common');
@@ -516,7 +538,13 @@ export default function Opt({
 
     const trimmedKeyword = searchKeyword.trim();
 
-    if (!trimmedKeyword || isSearching) {
+    if (isSearching) {
+      return;
+    }
+
+    if (!trimmedKeyword) {
+      setSearchDialogErrorMessage('별명을 입력해주세요.');
+      setDismissedActionError('');
       return;
     }
 
@@ -539,7 +567,6 @@ export default function Opt({
         throw new Error(result.error ?? '멤버 검색에 실패했습니다.');
       }
 
-      setSearchedKeyword(trimmedKeyword);
       setSearchResults(Array.isArray(result.members) ? result.members : []);
       setSelectedSearchMemberId('');
     } catch (unknownError) {
@@ -937,6 +964,12 @@ export default function Opt({
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog
+            open={Boolean(activeActionError) && activeActionError !== dismissedActionError}
+            title={actionErrorTitle}
+            messages={activeActionError ? [activeActionError] : []}
+            onClose={() => setDismissedActionError(activeActionError)}
+          />
 
           <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end" sx={{ p: 1 }}>
             {ownerTransfer?.canRequest ? (

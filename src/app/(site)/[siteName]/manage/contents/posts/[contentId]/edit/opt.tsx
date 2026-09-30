@@ -19,6 +19,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import Container from '../../../../menu';
@@ -261,6 +262,10 @@ export default function Opt({
   const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
   const [isSeriesLocked, setIsSeriesLocked] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError || '');
+  const [fieldErrors, setFieldErrors] = useState<{ subject?: string; content?: string }>({});
+  const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
+    initialError ? { title: null, messages: [initialError] } : null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
@@ -279,10 +284,15 @@ export default function Opt({
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
+    setFieldErrors((current) => ({ ...current, subject: undefined }));
   }
 
   function handleSummaryChange(event: InputChangeEvent) {
     setSummary(event.currentTarget.value);
+  }
+
+  function hasEditorContent(value: string) {
+    return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(value);
   }
 
   function handleCategoryChange(event: SelectChangeEvent<string[]>) {
@@ -461,12 +471,14 @@ export default function Opt({
       return {
         contentHtml,
         contentMarkdown,
+        uploadedPaths: [] as string[],
       };
     }
 
     let nextContentHtml = contentHtml;
     let nextContentMarkdown = contentMarkdown;
     const usedPreviewUrls = new Set<string>();
+    const uploadedPaths: string[] = [];
 
     for (const image of currentEditorBlobImages) {
       const isUsedInHtml = nextContentHtml.includes(image.previewUrl);
@@ -479,6 +491,7 @@ export default function Opt({
 
       const webpFile = await convertImageToWebpFile(image.file, '이미지는 1MB 이하로 등록해주세요.');
       const uploadedImage = await uploadPostImage(webpFile, 'editor');
+      uploadedPaths.push(uploadedImage.path);
 
       nextContentHtml = replaceAllImageUrl(nextContentHtml, image.previewUrl, uploadedImage.url);
       nextContentMarkdown = replaceAllImageUrl(nextContentMarkdown, image.previewUrl, uploadedImage.url);
@@ -497,7 +510,14 @@ export default function Opt({
     return {
       contentHtml: nextContentHtml,
       contentMarkdown: nextContentMarkdown,
+      uploadedPaths,
     };
+  }
+
+  async function deleteUploadedEditorImages(paths: string[]) {
+    await Promise.all(paths.map((path) => fetch('/api/attachment/delete/post', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ siteName, path }),
+    }).catch(() => undefined)));
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -512,11 +532,23 @@ export default function Opt({
       return;
     }
 
+    const nextErrors: { subject?: string; content?: string } = {};
+    if (!subject.trim()) nextErrors.subject = '제목을 입력해주세요.';
+    if (!hasEditorContent(contentHtml)) nextErrors.content = '내용을 입력해주세요.';
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      setFormErrorDialog({ title: '글 수정', messages: Object.values(nextErrors) });
+      return;
+    }
+
     setErrorMessage('');
+    setFieldErrors({});
     setIsSubmitting(true);
+    let uploadedEditorPaths: string[] = [];
 
     try {
       const uploadedEditorContent = await uploadEditorImagesIfNeeded();
+      uploadedEditorPaths = uploadedEditorContent.uploadedPaths;
 
       const editResponse = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
         method: 'PATCH',
@@ -549,6 +581,11 @@ export default function Opt({
       if (ti === 'i') router.replace(`/${siteName}/manage/contents/posts/${contentId}`);
       else router.replace(`/${siteName}/b/${contentId}`);
     } catch (unknownError) {
+      await deleteUploadedEditorImages(uploadedEditorPaths);
+      const message = unknownError instanceof Error ? unknownError.message || '블로그 글 수정에 실패했습니다.' : '블로그 글 수정에 실패했습니다.';
+      if (message.includes('제목')) setFieldErrors((current) => ({ ...current, subject: message }));
+      if (message.includes('내용')) setFieldErrors((current) => ({ ...current, content: message }));
+      setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '글 수정', messages: [message] });
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '블로그 글 수정에 실패했습니다.');
       } else {
@@ -593,6 +630,9 @@ export default function Opt({
                   placeholder="제목 (필수)"
                   value={subject}
                   onChange={handleSubjectChange}
+                  required
+                  error={Boolean(fieldErrors.subject)}
+                  helperText={fieldErrors.subject}
                   fullWidth
                   size="small"
                 />
@@ -651,7 +691,7 @@ export default function Opt({
                   <VisuallyHiddenInput
                     ref={fileInputReference}
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/webp"
                     onChange={handleThumbnailFileChange}
                   />
                   <Stack direction="column">
@@ -690,6 +730,7 @@ export default function Opt({
                   onMarkdownChange={setContentMarkdown}
                   onUploadImage={handleUploadEditorImage}
                 />
+                {fieldErrors.content ? <p className="alert error"><span>{fieldErrors.content}</span></p> : null}
               </Stack>
 
               {commentProvider !== 'none' ? (
@@ -717,6 +758,7 @@ export default function Opt({
               </Stack>
 
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+              <FormErrorDialog open={Boolean(formErrorDialog)} title={formErrorDialog?.title ?? null} messages={formErrorDialog?.messages ?? []} onClose={() => setFormErrorDialog(null)} />
             </Stack>
           </div>
         </div>

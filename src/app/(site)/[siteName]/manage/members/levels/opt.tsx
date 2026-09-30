@@ -20,6 +20,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -99,7 +100,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [deletingIconLevelId, setDeletingIconLevelId] = useState('');
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '등급 설정' : null);
+  const [levelErrors, setLevelErrors] = useState<Record<string, string>>({});
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  function showError(message: string, title: string | null = '등급 설정') {
+    setErrorMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
 
   function handleOpenIconDialog() {
     setIsIconDialogOpen(true);
@@ -148,6 +158,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   function handleRequirementTypeChange(levelId: string, value: RequirementType) {
+    setLevelErrors((previousErrors) => {
+      const nextErrors = { ...previousErrors };
+      delete nextErrors[levelId];
+      return nextErrors;
+    });
     setLevels((previousLevels) =>
       previousLevels.map((level) =>
         level.id === levelId
@@ -249,6 +264,31 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return;
     }
 
+    const nextErrors: Record<string, string> = {};
+
+    levels.forEach((level) => {
+      if (level.lv !== 1 && level.requirement_type === 'automatic') {
+        const requirements = [
+          level.required_posts,
+          level.required_comments,
+          level.required_checkins,
+          level.required_days,
+          level.required_likes,
+        ];
+
+        if (requirements.every((value) => Number(value) === 0)) {
+          nextErrors[level.id] = '자동등업 조건을 하나 이상 입력해주세요.';
+        }
+      }
+    });
+
+    setLevelErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      showError(Object.values(nextErrors)[0], '등급 설정');
+      return;
+    }
+
     try {
       setErrorMessage('');
       setIsSubmitting(true);
@@ -289,9 +329,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSnackbarMessage('저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '등급 저장에 실패했습니다.');
+        showError(unknownError.message || '등급 저장에 실패했습니다.', unknownError instanceof TypeError ? null : '등급 설정');
       } else {
-        setErrorMessage('등급 저장에 실패했습니다.');
+        showError('등급 저장에 실패했습니다.', null);
       }
     } finally {
       setIsSubmitting(false);
@@ -518,6 +558,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 onChange={(event) => handleNumericChange(level.id, 'required_posts', event)}
                                 size="small"
                                 sx={{ width: 60 }}
+                                error={Boolean(levelErrors[level.id])}
+                                helperText={levelErrors[level.id] ?? ''}
                               />
                               <Typography variant="body2">개,</Typography>
                             </Stack>
@@ -533,6 +575,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 onChange={(event) => handleNumericChange(level.id, 'required_comments', event)}
                                 size="small"
                                 sx={{ width: 60 }}
+                                error={Boolean(levelErrors[level.id])}
                               />
                               <Typography variant="body2">개,</Typography>
                             </Stack>
@@ -548,6 +591,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 onChange={(event) => handleNumericChange(level.id, 'required_checkins', event)}
                                 size="small"
                                 sx={{ width: 60 }}
+                                error={Boolean(levelErrors[level.id])}
                               />
                               <Typography variant="body2">회,</Typography>
                             </Stack>
@@ -563,6 +607,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 onChange={(event) => handleNumericChange(level.id, 'required_likes', event)}
                                 size="small"
                                 sx={{ width: 60 }}
+                                error={Boolean(levelErrors[level.id])}
                               />
                               <Typography variant="body2">회,</Typography>
                             </Stack>
@@ -578,6 +623,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 onChange={(event) => handleNumericChange(level.id, 'required_days', event)}
                                 size="small"
                                 sx={{ width: 60 }}
+                                error={Boolean(levelErrors[level.id])}
                               />
                               <Typography variant="body2">일 후 만족 시 자동등업</Typography>
                             </Stack>
@@ -791,6 +837,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
             open={Boolean(snackbarMessage)}
             message={snackbarMessage}
             onClose={() => setSnackbarMessage('')}
+          />
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorDialogTitle}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
           />
         </div>
       </div>

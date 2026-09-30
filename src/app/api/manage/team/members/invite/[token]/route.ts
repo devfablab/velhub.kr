@@ -220,7 +220,7 @@ export async function POST(request: Request, context: RouteContext) {
     const normalizedToken = normalizeText(token);
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
-    const requestBody = (await request.json()) as {
+    const requestBody = (await request.json().catch(() => ({}))) as {
       nickname?: string | null;
     };
     const nickname = normalizeText(requestBody.nickname);
@@ -314,39 +314,49 @@ export async function POST(request: Request, context: RouteContext) {
     const isAutoNickname = !nickname;
     let finalNickname = nickname || fallbackNickname || null;
 
-    if (finalNickname) {
-      if (isAutoNickname) {
-        try {
-          finalNickname = await getNextAutoNickname({
-            siteId: invite.data.site_id,
-            stigmaId: stigma.data.id,
-            baseNickname: finalNickname,
-          });
-        } catch (error) {
-          if (error instanceof Error) {
-            return Response.json({ error: error.message }, { status: 500 });
-          }
+    if (!finalNickname) {
+      return Response.json({ error: '별명을 입력해주세요.' }, { status: 400 });
+    }
 
-          return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
-        }
-      } else {
-        const duplicateNicknameResult = await supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('id')
-          .eq('site_id', invite.data.site_id)
-          .eq('nickname', finalNickname)
-          .neq('user_id', stigma.data.id)
-          .limit(1)
-          .maybeSingle();
+    if (Array.from(finalNickname).length < 2 || Array.from(finalNickname).length > 10) {
+      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    }
 
-        if (duplicateNicknameResult.error) {
-          return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
+    if (isAutoNickname) {
+      try {
+        finalNickname = await getNextAutoNickname({
+          siteId: invite.data.site_id,
+          stigmaId: stigma.data.id,
+          baseNickname: finalNickname,
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          return Response.json({ error: error.message }, { status: 500 });
         }
 
-        if (duplicateNicknameResult.data) {
-          return Response.json({ error: '이미 사용 중인 닉네임입니다.' }, { status: 400 });
-        }
+        return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
       }
+    } else {
+      const duplicateNicknameResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('id')
+        .eq('site_id', invite.data.site_id)
+        .eq('nickname', finalNickname)
+        .neq('user_id', stigma.data.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (duplicateNicknameResult.error) {
+        return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      if (duplicateNicknameResult.data) {
+        return Response.json({ error: '이미 사용 중인 닉네임입니다.' }, { status: 400 });
+      }
+    }
+
+    if (!finalNickname || Array.from(finalNickname).length < 2 || Array.from(finalNickname).length > 10) {
+      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
     }
 
     const currentRhizomeStigma = await supabaseAdmin
@@ -364,24 +374,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (currentRhizomeStigma.data) {
-      acceptedUserId = currentRhizomeStigma.data.id;
-
-      const updateRhizomeStigma = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .update({
-          role: invite.data.role,
-          is_approval: true,
-          approval_at: joinedAt,
-          is_block: false,
-          block_count: 0,
-          nickname: finalNickname,
-          last_checkin_at: joinedAt,
-        })
-        .eq('id', currentRhizomeStigma.data.id);
-
-      if (updateRhizomeStigma.error) {
-        return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
-      }
+      return Response.json({ error: '이미 가입한 팀원입니다.' }, { status: 400 });
     } else {
       const insertRhizomeStigma = await supabaseAdmin
         .from('rhizome_stigmas')

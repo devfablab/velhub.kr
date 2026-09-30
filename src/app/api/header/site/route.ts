@@ -1,3 +1,4 @@
+import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getLibraryStatus } from '@/lib/session/libraryStatus';
@@ -450,24 +451,33 @@ export async function GET(request: Request) {
     let membership: MembershipRow | null = null;
     let checkin: CheckinRow | null = null;
 
-    if (rhizomeStigmaResult?.data) {
+    if (rhizomeStigmaResult?.data && session.rhizomeStigmaId) {
+      const membershipId = session.rhizomeStigmaId;
       membership = rhizomeStigmaResult.data as MembershipRow;
       checkin = rhizomeStigmaResult.data as CheckinRow;
 
       if (session.case === 'staff' || session.case === 'member') {
         const nowIsoString = new Date().toISOString();
-        const nextCheckinCount = shouldIncreaseCheckin(checkin.last_checkin_at)
+        const isNewCheckin = shouldIncreaseCheckin(checkin.last_checkin_at);
+        const nextCheckinCount = isNewCheckin
           ? (Number(checkin.checkin_count ?? 0) || 0) + 1
           : Number(checkin.checkin_count ?? 0) || 0;
 
-        supabaseAdmin
+        const checkinUpdateResult = await supabaseAdmin
           .from('rhizome_stigmas')
           .update({
             last_checkin_at: nowIsoString,
             checkin_count: nextCheckinCount,
           })
-          .eq('id', session.rhizomeStigmaId)
-          .then();
+          .eq('id', session.rhizomeStigmaId);
+
+        if (!checkinUpdateResult.error && isNewCheckin) {
+          await refreshCommunityMemberLevel({
+            supabaseAdmin,
+            siteId: site.id,
+            membershipId,
+          });
+        }
       }
     }
 

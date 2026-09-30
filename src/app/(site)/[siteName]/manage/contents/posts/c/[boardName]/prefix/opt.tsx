@@ -29,6 +29,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
@@ -94,6 +95,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -308,6 +310,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
 
           {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
+          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
 
           {sortedPrefixes.length === 0 ? (
             <ScreenState>등록된 말머리가 없습니다.</ScreenState>
@@ -370,6 +373,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     placeholder="말머리명"
                     value={prefixLabel}
                     onChange={handlePrefixLabelChange}
+                    required
+                    error={Boolean(dialogErrorMessage)}
+                    helperText={dialogErrorMessage || undefined}
                     fullWidth
                     size="small"
                   />
@@ -420,6 +426,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     placeholder="말머리명"
                     value={prefixLabel}
                     onChange={handlePrefixLabelChange}
+                    required
+                    error={Boolean(dialogErrorMessage)}
+                    helperText={dialogErrorMessage || undefined}
                     fullWidth
                     size="small"
                   />

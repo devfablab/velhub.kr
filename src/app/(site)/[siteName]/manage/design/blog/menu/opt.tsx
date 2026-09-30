@@ -36,6 +36,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -134,6 +135,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [successMessage, setSuccessMessage] = useState('');
   const [renameTarget, setRenameTarget] = useState<MenuRow | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -194,6 +196,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('메뉴 설정 저장에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -221,6 +224,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   async function handleRename() {
     if (!renameTarget || isRenaming) {
+      return;
+    }
+
+    if (!renameValue.trim()) {
+      setErrorMessage('게시판 이름을 입력해주세요.');
+      setIsErrorDialogOpen(true);
       return;
     }
 
@@ -269,6 +278,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('게시판 이름 변경에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setIsRenaming(false);
     }
@@ -358,6 +368,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
             )}
 
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorMessage.includes('게시판 이름') ? '게시판 이름 변경' : null}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
             <PopupMessage
               open={Boolean(successMessage)}
               message={successMessage}
@@ -387,6 +403,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   placeholder="게시판 이름"
                   value={renameValue}
                   onChange={handleRenameValueChange}
+                  required
+                  error={errorMessage.includes('게시판 이름')}
+                  helperText={errorMessage.includes('게시판 이름') ? errorMessage : undefined}
                   fullWidth
                   size="small"
                   sx={{ mt: 1 }}
@@ -434,6 +453,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   placeholder="게시판 이름"
                   value={renameValue}
                   onChange={handleRenameValueChange}
+                  required
+                  error={errorMessage.includes('게시판 이름')}
+                  helperText={errorMessage.includes('게시판 이름') ? errorMessage : undefined}
                   fullWidth
                   size="small"
                   sx={{ mt: 1 }}

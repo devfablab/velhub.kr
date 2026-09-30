@@ -151,6 +151,8 @@ type GiscusFlag = '0' | '1';
 type GiscusSettings = {
   repo: string;
   repoId: string;
+  category: string;
+  categoryId: string;
   strict: GiscusFlag;
   reactionsEnabled: GiscusFlag;
   emitMetadata: GiscusFlag;

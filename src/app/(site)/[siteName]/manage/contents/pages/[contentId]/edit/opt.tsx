@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -20,6 +20,8 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
+import FormErrorDialog from '@/components/FormErrorDialog';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -100,6 +102,10 @@ function normalizeSlug(rawValue: string) {
 
 function normalizeBoardName(rawValue: string | null) {
   return rawValue?.trim().toLowerCase() ?? '';
+}
+
+function hasEditorContent(html: string) {
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(html);
 }
 
 function loadImageFromFile(file: File) {
@@ -210,10 +216,28 @@ export default function Opt({
   const [slugMessage, setSlugMessage] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState(initialError || '');
+  const [fieldErrors, setFieldErrors] = useState<{ slug?: string; subject?: string; content?: string; ogImage?: string }>({});
+  const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
+    initialError ? { title: null, messages: [initialError] } : null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
+
+  const hasChanges = useMemo(() => {
+    const originalContent = initialContent?.content;
+    return Boolean(
+      originalContent &&
+        (slug !== originalContent.slug ||
+          subject !== originalContent.subject ||
+          summary !== (originalContent.summary ?? '') ||
+          contentHtml !== originalContent.content_html ||
+          contentMarkdown !== (originalContent.content_markdown ?? '') ||
+          ogImage !== (originalContent.og_image ?? '') ||
+          isComment !== originalContent.is_comment),
+    );
+  }, [contentHtml, contentMarkdown, initialContent, isComment, ogImage, slug, subject, summary]);
 
   useEffect(() => {
     return () => {
@@ -228,10 +252,17 @@ export default function Opt({
     setSlug(normalizedValue);
     setSlugMessage('');
     setIsSlugAvailable(null);
+    setFieldErrors((current) => ({ ...current, slug: undefined }));
   }
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
+    setFieldErrors((current) => ({ ...current, subject: undefined }));
+  }
+
+  function handleInputInvalid(field: 'slug' | 'subject', message: string) {
+    setFieldErrors((current) => ({ ...current, [field]: message }));
+    setFormErrorDialog({ title: '페이지 수정', messages: [message] });
   }
 
   function handleSummaryChange(event: InputChangeEvent) {
@@ -311,23 +342,13 @@ export default function Opt({
     setIsUploadingOgImage(true);
 
     try {
-      if (ogImage) {
-        await fetch('/api/attachment/delete/og-image/page', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: ogImage,
-          }),
-        });
-      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(selectedFile.type)) throw new Error('PNG, JPEG, WEBP 이미지만 등록할 수 있습니다.');
+      if (selectedFile.size > MAX_EDITOR_IMAGE_FILE_SIZE) throw new Error('오픈그래프 이미지는 1MB 이하로 등록해주세요.');
 
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('/api/attachment/add/og-image/page', {
+      const response = await fetch('/api/attachment/add/og-image', {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -342,6 +363,9 @@ export default function Opt({
       setOgImage(result.ogImage ?? '');
       setOgImageUrl(result.url ?? '');
     } catch (unknownError) {
+      const message = unknownError instanceof Error ? unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.' : '오픈그래프 이미지 업로드에 실패했습니다.';
+      setFieldErrors((current) => ({ ...current, ogImage: message }));
+      setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '오픈그래프 이미지', messages: [message] });
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.');
       } else {
@@ -424,12 +448,14 @@ export default function Opt({
       return {
         contentHtml,
         contentMarkdown,
+        uploadedPaths: [] as string[],
       };
     }
 
     let nextContentHtml = contentHtml;
     let nextContentMarkdown = contentMarkdown;
     const usedPreviewUrls = new Set<string>();
+    const uploadedPaths: string[] = [];
 
     for (const image of currentEditorBlobImages) {
       const isUsedInHtml = nextContentHtml.includes(image.previewUrl);
@@ -442,6 +468,7 @@ export default function Opt({
 
       const webpFile = await convertImageToWebpFile(image.file, '이미지는 1MB 이하로 등록해주세요.');
       const uploadedImage = await uploadPostImage(webpFile);
+      uploadedPaths.push(uploadedImage.path);
 
       nextContentHtml = replaceAllImageUrl(nextContentHtml, image.previewUrl, uploadedImage.url);
       nextContentMarkdown = replaceAllImageUrl(nextContentMarkdown, image.previewUrl, uploadedImage.url);
@@ -460,7 +487,14 @@ export default function Opt({
     return {
       contentHtml: nextContentHtml,
       contentMarkdown: nextContentMarkdown,
+      uploadedPaths,
     };
+  }
+
+  async function deleteUploadedEditorImages(paths: string[]) {
+    await Promise.all(paths.map((path) => fetch('/api/attachment/delete/post', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ siteName, path }),
+    }).catch(() => undefined)));
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -470,8 +504,20 @@ export default function Opt({
       return;
     }
 
+    const nextFieldErrors: { slug?: string; subject?: string; content?: string } = {};
+    if (!slug) nextFieldErrors.slug = '페이지 식별자를 입력해주세요.';
+    if (!subject.trim()) nextFieldErrors.subject = '페이지 제목을 입력해주세요.';
+    if (!hasEditorContent(contentHtml)) nextFieldErrors.content = '페이지 내용을 입력해주세요.';
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      setFormErrorDialog({ title: '페이지 수정', messages: Object.values(nextFieldErrors) });
+      return;
+    }
+
     setErrorMessage('');
+    setFieldErrors({});
     setIsSubmitting(true);
+    let uploadedEditorPaths: string[] = [];
 
     try {
       const slugCheckResponse = await fetch(
@@ -499,6 +545,7 @@ export default function Opt({
       setSlugMessage('사용 가능한 페이지 식별자입니다.');
 
       const uploadedEditorContent = await uploadEditorImagesIfNeeded();
+      uploadedEditorPaths = uploadedEditorContent.uploadedPaths;
 
       const response = await fetch(`/api/manage/contents/pages/${contentId}/edit`, {
         method: 'PATCH',
@@ -528,6 +575,21 @@ export default function Opt({
 
       router.replace(`/${siteName}/manage/contents/pages/${result.slug}`);
     } catch (unknownError) {
+      await deleteUploadedEditorImages(uploadedEditorPaths);
+      const originalOgImage = initialContent?.content?.og_image ?? '';
+      if (ogImage && ogImage !== originalOgImage) {
+        await fetch('/api/attachment/delete/og-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ path: ogImage }),
+        }).catch(() => undefined);
+      }
+      const message = unknownError instanceof Error ? unknownError.message || '페이지 수정에 실패했습니다.' : '페이지 수정에 실패했습니다.';
+      if (message.includes('식별자')) setFieldErrors((current) => ({ ...current, slug: message }));
+      if (message.includes('제목')) setFieldErrors((current) => ({ ...current, subject: message }));
+      if (message.includes('내용')) setFieldErrors((current) => ({ ...current, content: message }));
+      setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '페이지 수정', messages: [message] });
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '페이지 수정에 실패했습니다.');
       } else {
@@ -540,6 +602,19 @@ export default function Opt({
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
+
+  if (initialError || !initialStatus?.boardName || !initialContent?.content) {
+    const message = initialError || '페이지를 불러오지 못했습니다.';
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">
+        <div className={`container ${styles.container}`}><div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
+          <div className={`paper paper-error ${styles.paper}`}>{message}</div>
+          <ScreenState>{message}</ScreenState>
+          <FormErrorDialog open={Boolean(formErrorDialog)} title={null} messages={[message]} onClose={() => setFormErrorDialog(null)} />
+        </div></div>
+      </Container>
+    );
+  }
 
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">
@@ -558,10 +633,14 @@ export default function Opt({
                 <TextField
                   value={slug}
                   onChange={handleSlugChange}
+                  required
+                  inputProps={{ pattern: '[a-z][a-z0-9-]*' }}
+                  error={Boolean(fieldErrors.slug)}
+                  onInvalid={() => handleInputInvalid('slug', '페이지 식별자를 영소문자로 시작해 입력해주세요.')}
                   onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSlug, isCheckingSlug)}
                   fullWidth
                   size="small"
-                  helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
+                  helperText={fieldErrors.slug || `관리 화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -593,7 +672,16 @@ export default function Opt({
               </Stack>
               <Stack gap={1}>
                 <Typography variant="subtitle2">페이지 제목 *</Typography>
-                <TextField value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+                <TextField
+                  value={subject}
+                  onChange={handleSubjectChange}
+                  required
+                  error={Boolean(fieldErrors.subject)}
+                  helperText={fieldErrors.subject}
+                  onInvalid={() => handleInputInvalid('subject', '페이지 제목을 입력해주세요.')}
+                  fullWidth
+                  size="small"
+                />
               </Stack>
               <Stack gap={1}>
                 <Typography variant="subtitle2">페이지 부제목</Typography>
@@ -606,7 +694,7 @@ export default function Opt({
                   <VisuallyHiddenInput
                     ref={fileInputReference}
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/webp"
                     onChange={handleOgImageFileChange}
                   />
                   <button
@@ -644,6 +732,7 @@ export default function Opt({
                   onMarkdownChange={setContentMarkdown}
                   onUploadImage={handleUploadEditorImage}
                 />
+                {fieldErrors.content ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.content}</span></p> : null}
               </Box>
 
               <FormControlLabel
@@ -657,18 +746,19 @@ export default function Opt({
                 </Anchor>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting || !boardName}>
+                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting || !boardName || !hasChanges}>
                       저장
                     </button>
                   </div>
                 ) : (
-                  <button type="submit" className="button medium submit" disabled={isSubmitting || !boardName}>
+                  <button type="submit" className="button medium submit" disabled={isSubmitting || !boardName || !hasChanges}>
                     저장
                   </button>
                 )}
               </Stack>
 
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+              <FormErrorDialog open={Boolean(formErrorDialog)} title={formErrorDialog?.title ?? null} messages={formErrorDialog?.messages ?? []} onClose={() => setFormErrorDialog(null)} />
             </Stack>
           </div>
         </div>

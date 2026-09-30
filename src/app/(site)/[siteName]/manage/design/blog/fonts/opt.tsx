@@ -17,6 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -138,6 +139,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     MARGIN_OPTIONS.some((option) => option.value === initialDescriptionMargin) ? initialDescriptionMargin : 16,
   );
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const theme = useTheme();
@@ -224,6 +226,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('기본 서체 설정 저장에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -233,6 +236,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
     <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
           <Stack gap={3}>
             <div className={`paper ${styles.paper}`}>
               <FormControl>

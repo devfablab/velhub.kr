@@ -5,10 +5,13 @@ import { normalizeText } from '@/lib/utils';
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 type GiscusInputPosition = 'top' | 'bottom';
 type GiscusFlag = '0' | '1';
+const GISCUS_CATEGORIES = new Set(['Announcements', 'General', 'Ideas', 'Polls', 'Q&A', 'Show and tell']);
 
 type GiscusSettings = {
   repo: string;
   repoId: string;
+  category: string;
+  categoryId: string;
   strict: GiscusFlag;
   reactionsEnabled: GiscusFlag;
   emitMetadata: GiscusFlag;
@@ -36,11 +39,15 @@ function normalizeGiscusFlag(value: unknown): GiscusFlag {
 function normalizeGiscusSettings(value: Partial<GiscusSettings> | null | undefined): GiscusSettings {
   const repo = normalizeText(value?.repo);
   const repoId = normalizeText(value?.repoId);
+  const category = normalizeText(value?.category);
+  const categoryId = normalizeText(value?.categoryId);
   const inputPositionValue = normalizeText(value?.inputPosition).toLowerCase();
 
   return {
     repo,
     repoId,
+    category,
+    categoryId,
     strict: normalizeGiscusFlag(value?.strict),
     reactionsEnabled: normalizeGiscusFlag(value?.reactionsEnabled),
     emitMetadata: normalizeGiscusFlag(value?.emitMetadata),
@@ -145,8 +152,19 @@ export async function POST(request: Request) {
 
     const giscusSettings = normalizeGiscusSettings(requestBody.giscusSettings);
 
-    if (commentProvider === 'giscus' && (!giscusSettings.repo || !giscusSettings.repoId)) {
+    if (
+      commentProvider === 'giscus' &&
+      (!giscusSettings.repo || !giscusSettings.repoId || !giscusSettings.category || !giscusSettings.categoryId)
+    ) {
       return Response.json({ error: 'Giscus 설정값을 입력해주세요.' }, { status: 400 });
+    }
+
+    if (commentProvider === 'giscus' && !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(giscusSettings.repo)) {
+      return Response.json({ error: 'Giscus repo는 owner/repository 형식으로 입력해주세요.' }, { status: 400 });
+    }
+
+    if (commentProvider === 'giscus' && !GISCUS_CATEGORIES.has(giscusSettings.category)) {
+      return Response.json({ error: 'Giscus category를 선택해주세요.' }, { status: 400 });
     }
 
     const access = await checkAccess(siteName);

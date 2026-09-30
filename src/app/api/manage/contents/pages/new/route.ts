@@ -37,6 +37,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '페이지 식별자를 입력해주세요.' }, { status: 400 });
     }
 
+    if (!/^[a-z][a-z0-9-]*$/.test(slug)) {
+      return Response.json({ error: "페이지 식별자는 영소문자로 시작하고 영소문자, 숫자, 하이픈(-)만 사용할 수 있습니다." }, { status: 400 });
+    }
+
     if (!subject) {
       return Response.json({ error: '페이지 제목을 입력해주세요.' }, { status: 400 });
     }

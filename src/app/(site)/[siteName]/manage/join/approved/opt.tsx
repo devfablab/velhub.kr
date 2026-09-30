@@ -26,6 +26,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -96,11 +97,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [confirmActionType, setConfirmActionType] = useState<ActionType>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+
+  function showError(message: string) {
+    setErrorMessage(message);
+    setIsErrorDialogOpen(true);
+  }
 
   async function loadUsers() {
     const response = await fetch(`/api/manage/join/approved?siteName=${siteName}`, {
@@ -174,7 +181,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   function handleOpenConfirmAction(nextActionType: Exclude<ActionType, null>) {
     if (selectedUserIds.length === 0) {
-      setErrorMessage(
+      showError(
         nextActionType === 'approve' ? '가입 승인할 멤버를 선택해주세요.' : '가입 거절할 멤버를 선택해주세요.',
       );
       return;
@@ -230,7 +237,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   async function handleSubmitAction(action: 'approve' | 'reject') {
     if (selectedUserIds.length === 0) {
-      setErrorMessage(action === 'approve' ? '가입 승인할 멤버를 선택해주세요.' : '가입 거절할 멤버를 선택해주세요.');
+      showError(action === 'approve' ? '가입 승인할 멤버를 선택해주세요.' : '가입 거절할 멤버를 선택해주세요.');
       return;
     }
 
@@ -265,12 +272,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSnackbarMessage(action === 'approve' ? '가입 승인되었습니다.' : '가입 거절되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(
+        showError(
           unknownError.message ||
             (action === 'approve' ? '가입 승인 처리에 실패했습니다.' : '가입 거절 처리에 실패했습니다.'),
         );
       } else {
-        setErrorMessage(action === 'approve' ? '가입 승인 처리에 실패했습니다.' : '가입 거절 처리에 실패했습니다.');
+        showError(action === 'approve' ? '가입 승인 처리에 실패했습니다.' : '가입 거절 처리에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
@@ -282,6 +289,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorMessage.includes('선택') ? '가입 신청 확인' : null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" gap={1.5} alignItems="center">

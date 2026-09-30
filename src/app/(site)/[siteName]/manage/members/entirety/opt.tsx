@@ -34,6 +34,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -246,9 +247,26 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
   const [actionReason, setActionReason] = useState('');
 
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+  const [errorDialogMessage, setErrorDialogMessage] = useState(initialError);
+  const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '멤버 관리' : null);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  function showError(message: string, title: string | null = '멤버 관리') {
+    setErrorMessage(message);
+    setErrorDialogMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
+
+  function showDialogError(message: string, title: string | null) {
+    setDialogErrorMessage(message);
+    setErrorDialogMessage(message);
+    setErrorDialogTitle(title);
+    setIsErrorDialogOpen(true);
+  }
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -488,12 +506,12 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
   function handleSearchDetail() {
     if (detailSearchType === 'date') {
       if (!dateStartDate || !dateEndDate) {
-        setErrorMessage('시작 날짜와 종료 날짜를 입력해주세요.');
+        showError('시작 날짜와 종료 날짜를 입력해주세요.', '상세 검색');
         return;
       }
 
       if (toDayStart(dateStartDate).getTime() > toDayEnd(dateEndDate).getTime()) {
-        setErrorMessage('종료 날짜는 시작 날짜보다 빠를 수 없습니다.');
+        showError('종료 날짜는 시작 날짜보다 빠를 수 없습니다.', '상세 검색');
         return;
       }
 
@@ -512,12 +530,12 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
 
     if (countPeriod === 'custom') {
       if (!countStartDate || !countEndDate) {
-        setErrorMessage('시작 날짜와 종료 날짜를 입력해주세요.');
+        showError('시작 날짜와 종료 날짜를 입력해주세요.', '상세 검색');
         return;
       }
 
       if (toDayStart(countStartDate).getTime() > toDayEnd(countEndDate).getTime()) {
-        setErrorMessage('종료 날짜는 시작 날짜보다 빠를 수 없습니다.');
+        showError('종료 날짜는 시작 날짜보다 빠를 수 없습니다.', '상세 검색');
         return;
       }
     }
@@ -540,12 +558,12 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
 
   async function handleChangeLevel() {
     if (selectedUserIds.length === 0) {
-      setErrorMessage('멤버를 선택해주세요.');
+      showError('멤버를 선택해주세요.');
       return;
     }
 
     if (!selectedLevelId) {
-      setErrorMessage('등급을 선택해주세요.');
+      showError('등급을 선택해주세요.', '등급 변경');
       return;
     }
 
@@ -577,9 +595,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
       setSnackbarMessage('등급이 변경되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '등급 변경에 실패했습니다.');
+        showError(unknownError.message || '등급 변경에 실패했습니다.', unknownError instanceof TypeError ? null : '등급 변경');
       } else {
-        setErrorMessage('등급 변경에 실패했습니다.');
+        showError('등급 변경에 실패했습니다.', null);
       }
     } finally {
       setIsLevelChanging(false);
@@ -588,7 +606,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
 
   async function handleOpenActionDialog(nextActionType: Exclude<ActionType, null>) {
     if (selectedUserIds.length === 0) {
-      setErrorMessage('멤버를 선택해주세요.');
+      showError('멤버를 선택해주세요.');
       return;
     }
 
@@ -666,7 +684,12 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
     const trimmedReason = normalizeText(actionReason);
 
     if (!trimmedReason) {
-      setDialogErrorMessage(`${getActionReasonLabel()}를 입력해주세요.`);
+      showDialogError(`${getActionReasonLabel()}를 입력해주세요.`, getActionTitle());
+      return;
+    }
+
+    if (actionTerm && actionTerm.getTime() <= Date.now()) {
+      showDialogError(`${getActionTermLabel()}는 오늘 이후로 선택해주세요.`, getActionTitle());
       return;
     }
 
@@ -705,9 +728,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
       setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`);
+        showDialogError(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`, unknownError instanceof TypeError ? null : getActionTitle());
       } else {
-        setDialogErrorMessage(`${getActionTitle()} 처리에 실패했습니다.`);
+        showDialogError(`${getActionTitle()} 처리에 실패했습니다.`, null);
       }
     } finally {
       setIsActionSubmitting(false);
@@ -980,6 +1003,11 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       </MenuItem>
                     ))}
                   </Select>
+                  {errorMessage === '등급을 선택해주세요.' ? (
+                    <Typography variant="caption" color="error">
+                      등급을 선택해주세요.
+                    </Typography>
+                  ) : null}
                   <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                     (으)로
                   </Typography>
@@ -988,12 +1016,12 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     className="button medium action"
                     onClick={() => {
                       if (selectedUserIds.length === 0) {
-                        setErrorMessage('멤버를 선택해주세요.');
+                        showError('멤버를 선택해주세요.');
                         return;
                       }
 
                       if (!selectedLevelId) {
-                        setErrorMessage('등급을 선택해주세요.');
+                        showError('등급을 선택해주세요.', '등급 변경');
                         return;
                       }
 
@@ -1195,6 +1223,8 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         multiline
                         minRows={4}
                         size="small"
+                        error={Boolean(dialogErrorMessage)}
+                        helperText={dialogErrorMessage}
                       />
                     </Stack>
                     {actionType ? (
@@ -1205,6 +1235,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                             value={actionTerm}
                             onChange={setActionTerm}
                             format="yyyy년 MM월 dd일"
+                            minDate={new Date()}
                             disabled={isActionSubmitting}
                             slotProps={{
                               textField: {
@@ -1278,6 +1309,8 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         multiline
                         minRows={4}
                         size="small"
+                        error={Boolean(dialogErrorMessage)}
+                        helperText={dialogErrorMessage}
                       />
                     </Stack>
                     {actionType ? (
@@ -1288,6 +1321,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                             value={actionTerm}
                             onChange={setActionTerm}
                             format="yyyy년 MM월 dd일"
+                            minDate={new Date()}
                             disabled={isActionSubmitting}
                             slotProps={{
                               textField: {
@@ -1333,6 +1367,12 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
               open={Boolean(snackbarMessage)}
               message={snackbarMessage}
               onClose={() => setSnackbarMessage('')}
+            />
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorDialogTitle}
+              messages={errorDialogMessage ? [errorDialogMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
             />
           </div>
         </div>

@@ -1,5 +1,7 @@
 import path from 'path';
 import sharp from 'sharp';
+import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
+import { refreshCommunitySiteMemberLevels } from '@/lib/community/community-levels/refreshMemberLevel';
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -330,6 +332,24 @@ export async function POST(request: Request) {
       if (!isAllowedRequirementType(requirementType)) {
         return Response.json({ error: '등업방식이 올바르지 않습니다.' }, { status: 400 });
       }
+
+      if (normalizedLv === 1 && requirementType !== 'manual') {
+        return Response.json({ error: 'lv.1은 자동등업으로 설정할 수 없습니다.' }, { status: 400 });
+      }
+
+      if (requirementType === 'automatic') {
+        const requirements = [
+          normalizeNumericValue(level.required_posts),
+          normalizeNumericValue(level.required_comments),
+          normalizeNumericValue(level.required_checkins),
+          normalizeNumericValue(level.required_days),
+          normalizeNumericValue(level.required_likes),
+        ];
+
+        if (requirements.every((value) => value === 0)) {
+          return Response.json({ error: `lv.${normalizedLv}의 자동등업 조건을 하나 이상 입력해주세요.` }, { status: 400 });
+        }
+      }
     }
 
     for (const level of nextLevels) {
@@ -338,6 +358,7 @@ export async function POST(request: Request) {
       const nextRequirementType = normalizeText(level.requirement_type).toLowerCase();
       const nextLv = normalizeNumericValue(level.lv);
 
+      const isAutomatic = nextRequirementType === 'automatic';
       const updateResult = await access.supabaseAdmin
         .from('community_levels')
         .update({
@@ -345,11 +366,11 @@ export async function POST(request: Request) {
           name: normalizeNullableText(level.name) ?? `lv.${nextLv}`,
           description: normalizeNullableText(level.description),
           requirement_type: isAllowedRequirementType(nextRequirementType) ? nextRequirementType : 'manual',
-          required_posts: normalizeNumericValue(level.required_posts),
-          required_comments: normalizeNumericValue(level.required_comments),
-          required_checkins: normalizeNumericValue(level.required_checkins),
-          required_days: normalizeNumericValue(level.required_days),
-          required_likes: normalizeNumericValue(level.required_likes),
+          required_posts: isAutomatic ? normalizeNumericValue(level.required_posts) : 0,
+          required_comments: isAutomatic ? normalizeNumericValue(level.required_comments) : 0,
+          required_checkins: isAutomatic ? normalizeNumericValue(level.required_checkins) : 0,
+          required_days: isAutomatic ? normalizeNumericValue(level.required_days) : 0,
+          required_likes: isAutomatic ? normalizeNumericValue(level.required_likes) : 0,
         })
         .eq('id', level.id)
         .eq('site_id', access.siteId);
@@ -362,6 +383,11 @@ export async function POST(request: Request) {
         await deleteStorageFile(currentLevel.icon);
       }
     }
+
+    await refreshCommunitySiteMemberLevels({
+      supabaseAdmin: access.supabaseAdmin,
+      siteId: access.siteId,
+    });
 
     const levelsResult = await getLevels(access.siteId);
 
@@ -446,7 +472,10 @@ export async function PUT(request: Request) {
     let uploadContentType = file.type || 'application/octet-stream';
     let uploadExtension = extension === '.jpeg' ? '.jpg' : extension;
 
-    if (!isSvg) {
+    if (isSvg) {
+      uploadBuffer = sanitizeSvg(fileBuffer);
+      uploadContentType = 'image/svg+xml';
+    } else {
       uploadBuffer = Buffer.from(
         await sharp(inputBuffer)
           .resize(25, 25, {

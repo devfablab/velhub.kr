@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -175,6 +176,27 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (countResult.error) {
       return NextResponse.json({ error: '좋아요 수를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (targetPost.postAuthorId !== userStigmaId) {
+      const authorMembershipResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('id, like_count')
+        .eq('site_id', targetPost.siteId)
+        .eq('user_id', targetPost.postAuthorId)
+        .maybeSingle();
+
+      if (authorMembershipResult.data) {
+        await supabaseAdmin
+          .from('rhizome_stigmas')
+          .update({ like_count: Math.max(0, Number(authorMembershipResult.data.like_count ?? 0) + (isLiked ? -1 : 1)) })
+          .eq('id', authorMembershipResult.data.id);
+        await refreshCommunityMemberLevel({
+          supabaseAdmin,
+          siteId: targetPost.siteId,
+          membershipId: authorMembershipResult.data.id,
+        });
+      }
     }
 
     return NextResponse.json({

@@ -20,6 +20,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -31,6 +32,8 @@ type GiscusFlag = '0' | '1';
 type GiscusSettings = {
   repo: string;
   repoId: string;
+  category: string;
+  categoryId: string;
   strict: GiscusFlag;
   reactionsEnabled: GiscusFlag;
   emitMetadata: GiscusFlag;
@@ -86,11 +89,15 @@ function isGiscusInputPosition(value: string): value is GiscusInputPosition {
 const DEFAULT_GISCUS_SETTINGS: GiscusSettings = {
   repo: '',
   repoId: '',
+  category: '',
+  categoryId: '',
   strict: '0',
   reactionsEnabled: '0',
   emitMetadata: '0',
   inputPosition: 'bottom',
 };
+
+const GISCUS_CATEGORY_OPTIONS = ['Announcements', 'General', 'Ideas', 'Polls', 'Q&A', 'Show and tell'];
 
 type OptProps = { initialData: BlogCommentResponse | null; initialError: string };
 
@@ -105,6 +112,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -119,10 +127,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return false;
     }
 
-    return !giscusSettings.repo.trim() || !giscusSettings.repoId.trim() || !giscusSettings.inputPosition;
+    return (
+      !giscusSettings.repo.trim() ||
+      !giscusSettings.repoId.trim() ||
+      !giscusSettings.category.trim() ||
+      !giscusSettings.categoryId.trim() ||
+      !giscusSettings.inputPosition
+    );
   }, [commentProvider, giscusSettings, isSubmitting]);
 
-  function handleChangeGiscusTextField(key: 'repo' | 'repoId', value: string) {
+  function handleChangeGiscusTextField(key: 'repo' | 'repoId' | 'category' | 'categoryId', value: string) {
     setGiscusSettings((previousValue) => ({
       ...previousValue,
       [key]: value,
@@ -159,6 +173,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   async function handleSubmit() {
     if (isSubmitDisabled) {
+      if (commentProvider === 'giscus') {
+        setErrorMessage('Giscus 설정값을 모두 입력해주세요.');
+        setIsErrorDialogOpen(true);
+      }
       return;
     }
 
@@ -179,6 +197,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
           giscusSettings: {
             repo: giscusSettings.repo.trim(),
             repoId: giscusSettings.repoId.trim(),
+            category: giscusSettings.category.trim(),
+            categoryId: giscusSettings.categoryId.trim(),
             strict: giscusSettings.strict || '0',
             reactionsEnabled: giscusSettings.reactionsEnabled || '0',
             emitMetadata: giscusSettings.emitMetadata || '0',
@@ -202,6 +222,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('댓글 설정 저장에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -261,6 +282,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <TextField
                       value={giscusSettings.repo}
                       onChange={(event) => handleChangeGiscusTextField('repo', event.target.value)}
+                      error={errorMessage.includes('Giscus') || errorMessage.includes('repo')}
+                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('repo') ? errorMessage : undefined}
                       fullWidth
                       size="small"
                       required
@@ -273,6 +296,43 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <TextField
                       value={giscusSettings.repoId}
                       onChange={(event) => handleChangeGiscusTextField('repoId', event.target.value)}
+                      error={errorMessage.includes('Giscus') || errorMessage.includes('repoId')}
+                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('repoId') ? errorMessage : undefined}
+                      fullWidth
+                      size="small"
+                      required
+                    />
+                  </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      category
+                    </Typography>
+                    <TextField
+                      select
+                      value={giscusSettings.category}
+                      onChange={(event) => handleChangeGiscusTextField('category', event.target.value)}
+                      error={errorMessage.includes('Giscus') || errorMessage.includes('category')}
+                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('category') ? errorMessage : undefined}
+                      fullWidth
+                      size="small"
+                      required
+                    >
+                      {GISCUS_CATEGORY_OPTIONS.map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      categoryId
+                    </Typography>
+                    <TextField
+                      value={giscusSettings.categoryId}
+                      onChange={(event) => handleChangeGiscusTextField('categoryId', event.target.value)}
+                      error={errorMessage.includes('Giscus') || errorMessage.includes('categoryId')}
+                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('categoryId') ? errorMessage : undefined}
                       fullWidth
                       size="small"
                       required
@@ -403,6 +463,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </div>
             ) : null}
           </div>
+
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorMessage.includes('Giscus') ? 'Giscus 설정' : null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           {isMobile ? (
             <div className={styles['button-top']}>

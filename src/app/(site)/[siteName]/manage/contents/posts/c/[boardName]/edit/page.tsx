@@ -33,5 +33,20 @@ export default async function Page(context: RouteContext) {
     '게시판 정보를 불러오지 못했습니다.',
   );
 
-  return <Opt initialData={initial.data} initialError={initial.error} />;
+  const boardId = initial.data?.board?.id;
+  const subscriptionSeries = boardId
+    ? await supabaseAdmin
+        .from('board_series')
+        .select('id')
+        .eq('board_id', boardId)
+        .eq('is_subscription', true)
+        .limit(1)
+        .maybeSingle()
+    : null;
+
+  return <Opt
+    initialData={initial.data}
+    initialError={initial.error}
+    hasSubscriptionSeries={Boolean(subscriptionSeries?.data)}
+  />;
 }

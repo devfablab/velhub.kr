@@ -32,6 +32,7 @@ import {
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -293,6 +294,7 @@ export default function Opt({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError ?? '');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [dialogSuccessMessage, setDialogSuccessMessage] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
@@ -871,6 +873,7 @@ export default function Opt({
           </Stack>
 
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
 
           {isOrderChanged ? (
             <p className="alert info">

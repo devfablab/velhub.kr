@@ -680,6 +680,7 @@ export default function Opt({
   const [postType] = useState<'none' | 'prefix' | 'series'>(initialPostType);
   const initialPrefixId = initialContent?.content?.prefix_id ?? '';
   const initialSeriesKey = initialContent?.series?.series_key ?? '';
+  const initialSeriesIsSubscription = initialContent?.series?.is_subscription === true;
   const initialPrefixList = [...(initialPrefixes?.prefixes ?? initialContent?.prefixes ?? [])];
   const currentPrefix = initialContent?.prefixes?.find((prefix) => prefix.id === initialPrefixId);
   if (currentPrefix && !initialPrefixList.some((prefix) => prefix.id === currentPrefix.id)) {
@@ -1969,11 +1970,12 @@ export default function Opt({
                                 onChange={(event: SelectChangeEvent) => setSelectedSeriesKey(event.target.value)}
                                 className={styles['MuiInputBase-root']}
                               >
-                                <MenuItem value="">연재 선택</MenuItem>
+                                {!initialSeriesKey ? <MenuItem value="">연재 선택</MenuItem> : null}
                                 {seriesList
                                   .filter(
                                     (seriesItem) =>
-                                      !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey,
+                                      (!initialSeriesKey || Boolean(seriesItem.is_subscription) === initialSeriesIsSubscription) &&
+                                      (!seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey),
                                   )
                                   .map((seriesItem) => (
                                     <MenuItem key={seriesItem.id} value={seriesItem.series_key}>

@@ -300,7 +300,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (duplicatePendingInvite.data) {
-      return Response.json({ error: '이미 초대장을 받은 대상자입니다.' }, { status: 400 });
+      return Response.json({ error: '이미 초대된 멤버입니다.' }, { status: 400 });
     }
 
     const token = randomUUID();

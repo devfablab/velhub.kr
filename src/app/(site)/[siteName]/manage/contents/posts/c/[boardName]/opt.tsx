@@ -32,6 +32,7 @@ import {
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
@@ -148,6 +149,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [hasLoaded, setHasLoaded] = useState(Boolean(initialData || initialError));
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
   const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>(
@@ -215,6 +217,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('게시판을 불러오지 못했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setHasLoaded(true);
       setIsFetching(false);
@@ -568,6 +571,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
 
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
 
           <Box sx={{ position: 'relative' }}>
             <div className={`paper paper-p0 ${styles.paper}`}>

@@ -378,6 +378,21 @@ export async function PATCH(request: Request) {
     }
 
     const nowIsoString = new Date().toISOString();
+    const uniqueUserIds = [...new Set(userIds)];
+    const pendingMembershipResult = await access.supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('user_id')
+      .eq('site_id', access.rhizome.id)
+      .eq('is_approval', false)
+      .in('user_id', uniqueUserIds);
+
+    if (pendingMembershipResult.error) {
+      return Response.json({ error: '가입 대기 멤버를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if ((pendingMembershipResult.data ?? []).length !== uniqueUserIds.length) {
+      return Response.json({ error: '가입 대기 상태가 아닌 멤버가 포함되어 있습니다.' }, { status: 400 });
+    }
 
     if (action === 'approve') {
       const approvalCountResult = await access.supabaseAdmin
@@ -493,13 +508,6 @@ export async function PATCH(request: Request) {
       console.error(deleteMembershipResult.error);
       return Response.json({ error: '가입 신청 정보 삭제에 실패했습니다.' }, { status: 500 });
     }
-
-    await createJoinRejectedNotifications({
-      supabaseAdmin: access.supabaseAdmin,
-      siteId: access.rhizome.id,
-      recipientStigmaIds: userIds,
-      actorStigmaId: access.actor.stigmaId,
-    });
 
     await createJoinRejectedNotifications({
       supabaseAdmin: access.supabaseAdmin,

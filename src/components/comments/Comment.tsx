@@ -13,6 +13,8 @@ type GiscusFlag = '0' | '1';
 type GiscusSettings = {
   repo: string;
   repoId: string;
+  category: string;
+  categoryId: string;
   strict: GiscusFlag;
   reactionsEnabled: GiscusFlag;
   emitMetadata: GiscusFlag;
@@ -77,7 +79,7 @@ export default function Comment({
     }
 
     if (commentProvider === 'giscus') {
-      if (!giscusSettings?.repo || !giscusSettings.repoId) {
+      if (!giscusSettings?.repo || !giscusSettings.repoId || !giscusSettings.category || !giscusSettings.categoryId) {
         return null;
       }
 
@@ -87,8 +89,8 @@ export default function Comment({
             id="comments"
             repo={giscusSettings.repo as `${string}/${string}`}
             repoId={giscusSettings.repoId}
-            category="Q&A"
-            categoryId="DIC_kwDORtqOzM4C5BNp"
+            category={giscusSettings.category}
+            categoryId={giscusSettings.categoryId}
             mapping="pathname"
             strict={giscusSettings.strict}
             reactionsEnabled={giscusSettings.reactionsEnabled}

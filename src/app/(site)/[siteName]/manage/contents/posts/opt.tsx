@@ -39,6 +39,7 @@ import {
 } from '@mui/material';
 import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
@@ -280,6 +281,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isOrderingBoards, setIsOrderingBoards] = useState(false);
   const [isBoardOrderChanged, setIsBoardOrderChanged] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
   const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>(initialData?.filter ?? 'all');
@@ -452,6 +454,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('목록을 불러오지 못했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setHasLoaded(true);
       setIsFetching(false);
@@ -933,6 +936,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         ) : null}
 
         {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
+        <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
 
         {posts.length === 0 ? (
           <ScreenState>

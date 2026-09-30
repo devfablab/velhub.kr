@@ -3,10 +3,7 @@
 import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Checkbox,
   Dialog,
@@ -25,6 +22,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -66,6 +64,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
+
+  function showPageError(message: string) {
+    setErrorMessage(message);
+    setIsErrorDialogOpen(true);
+  }
+
+  function showDialogError(message: string) {
+    setDialogErrorMessage(message);
+    setIsErrorDialogOpen(true);
+  }
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -136,7 +145,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   function handleOpenDialog() {
     if (selectedUserIds.length === 0) {
-      setErrorMessage('멤버를 선택해주세요.');
+      showPageError('멤버를 선택해주세요.');
       return;
     }
 
@@ -159,7 +168,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     const trimmedReason = normalizeText(clearReason);
 
     if (!trimmedReason) {
-      setDialogErrorMessage('가입불가 해제 사유를 입력해주세요.');
+      showDialogError('가입불가 해제 사유를 입력해주세요.');
       return;
     }
 
@@ -194,9 +203,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSnackbarMessage('가입불가 해제 처리되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '가입불가 해제에 실패했습니다.');
+        showDialogError(unknownError.message || '가입불가 해제에 실패했습니다.');
       } else {
-        setDialogErrorMessage('가입불가 해제에 실패했습니다.');
+        showDialogError('가입불가 해제에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
@@ -208,6 +217,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorMessage === '멤버를 선택해주세요.' ? '멤버 확인' : dialogErrorMessage ? '가입불가 해제' : null}
+            messages={[dialogErrorMessage || errorMessage].filter(Boolean)}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" gap={1.5} alignItems="center">
@@ -296,19 +311,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <TextField
                     placeholder="가입불가 해제 사유"
                     value={clearReason}
-                    onChange={(event) => setClearReason(event.currentTarget.value)}
+                    onChange={(event) => {
+                      setClearReason(event.currentTarget.value);
+                      setDialogErrorMessage('');
+                    }}
+                    error={Boolean(dialogErrorMessage)}
+                    helperText={dialogErrorMessage}
                     fullWidth
                     multiline
                     minRows={4}
                     size="small"
                   />
-
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
                 </Stack>
               </div>
               <div className="drawer-dialog-actions">
@@ -348,19 +361,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <TextField
                     placeholder="가입불가 해제 사유"
                     value={clearReason}
-                    onChange={(event) => setClearReason(event.currentTarget.value)}
+                    onChange={(event) => {
+                      setClearReason(event.currentTarget.value);
+                      setDialogErrorMessage('');
+                    }}
+                    error={Boolean(dialogErrorMessage)}
+                    helperText={dialogErrorMessage}
                     fullWidth
                     multiline
                     minRows={4}
                     size="small"
                   />
-
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
                 </Stack>
               </DialogContent>
               <DialogActions>

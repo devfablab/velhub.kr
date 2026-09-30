@@ -18,11 +18,11 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { Box, FormControlLabel, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -50,6 +50,7 @@ export type HomeOrderResponse = {
 type SortableHomeOrderItemProps = {
   item: HomeOrderItem;
   onChangeShow: (id: string, checked: boolean) => void;
+  onUnavailableShow: () => void;
 };
 
 function getBoardTypeLabel(boardType: string) {
@@ -72,7 +73,7 @@ function getBoardTypeLabel(boardType: string) {
   return boardType;
 }
 
-function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProps) {
+function SortableHomeOrderItem({ item, onChangeShow, onUnavailableShow }: SortableHomeOrderItemProps) {
   const { attributes, listeners, setNodeRef } = useSortable({
     id: item.id,
   });
@@ -109,16 +110,26 @@ function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProp
           ) : null}
         </Stack>
 
-        <FormControlLabel
-          control={
-            <IOSSwitch
-              sx={{ m: 1 }}
-              checked={item.isShow}
-              onChange={(event) => onChangeShow(item.id, event.currentTarget.checked)}
-            />
-          }
-          label={item.isShow ? '노출' : '숨김'}
-        />
+        <Box
+          onClickCapture={() => {
+            if (!item.isActive) {
+              onUnavailableShow();
+            }
+          }}
+          sx={!item.isActive ? { cursor: 'not-allowed' } : undefined}
+        >
+          <FormControlLabel
+            control={
+              <IOSSwitch
+                sx={{ m: 1 }}
+                checked={item.isActive && item.isShow}
+                disabled={!item.isActive}
+                onChange={(event) => onChangeShow(item.id, event.currentTarget.checked)}
+              />
+            }
+            label={item.isActive && item.isShow ? '노출' : '숨김'}
+          />
+        </Box>
       </Stack>
     </div>
   );
@@ -139,6 +150,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const sensors = useSensors(
@@ -151,19 +163,27 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const sortableIds = useMemo(() => items.map((item) => item.id), [items]);
 
   async function loadHomeOrders() {
-    const response = await fetch(`/api/manage/design/community/home?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
+    try {
+      const response = await fetch(`/api/manage/design/community/home?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-    const result = (await response.json()) as HomeOrderResponse;
+      const result = (await response.json()) as HomeOrderResponse;
 
-    if (!response.ok) {
-      throw new Error(result.error ?? '커뮤니티 홈 설정을 불러오지 못했습니다.');
+      if (!response.ok) {
+        throw new Error(result.error ?? '커뮤니티 홈 설정을 불러오지 못했습니다.');
+      }
+
+      setHasHomeOrders(Boolean(result.hasHomeOrders));
+      setItems(Array.isArray(result.items) ? result.items : []);
+      setErrorMessage('');
+    } catch (unknownError) {
+      setErrorMessage(
+        unknownError instanceof Error ? unknownError.message || '커뮤니티 홈 설정을 불러오지 못했습니다.' : '커뮤니티 홈 설정을 불러오지 못했습니다.',
+      );
+      setIsErrorDialogOpen(true);
     }
-
-    setHasHomeOrders(Boolean(result.hasHomeOrders));
-    setItems(Array.isArray(result.items) ? result.items : []);
   }
 
   async function handleInitialize() {
@@ -202,6 +222,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('커뮤니티 홈 초기 세팅에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setIsInitializing(false);
     }
@@ -247,6 +268,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       } else {
         setErrorMessage('커뮤니티 홈 순서 저장에 실패했습니다.');
       }
+      setIsErrorDialogOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -287,11 +309,22 @@ export default function Opt({ initialData, initialError }: OptProps) {
     );
   }
 
+  function handleUnavailableShow() {
+    setErrorMessage('비활성 게시판은 노출하실 수 없습니다.');
+    setIsErrorDialogOpen(true);
+  }
+
   return (
     <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={errorMessage === '비활성 게시판은 노출하실 수 없습니다.' ? '노출 불가' : null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           {!hasHomeOrders ? (
             <div className={`paper ${styles.paper}`}>
@@ -317,7 +350,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
                     <Stack gap={1.5}>
                       {items.map((item) => (
-                        <SortableHomeOrderItem key={item.id} item={item} onChangeShow={handleChangeShow} />
+                        <SortableHomeOrderItem
+                          key={item.id}
+                          item={item}
+                          onChangeShow={handleChangeShow}
+                          onUnavailableShow={handleUnavailableShow}
+                        />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -335,7 +373,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`}>
+                    <button
+                      type="button"
+                      className={`button ${styles.button}`}
+                      onClick={() => void handleSave()}
+                      disabled={isSubmitting}
+                    >
                       저장
                     </button>
                   </div>

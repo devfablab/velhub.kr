@@ -685,7 +685,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, published_at, poll, is_comment, draw_type, content_html, content_markdown, preview_html, preview_markdown',
+        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, published_at, poll, is_comment, draw_type, content_html, content_markdown, preview_html, preview_markdown, thumbnail_image',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
@@ -862,6 +862,21 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     let seriesId: string | null = currentPost.data.series_id ?? null;
     let isSubscriptionSeries = false;
+    let currentSeriesIsSubscription: boolean | null = null;
+
+    if (currentPost.data.series_id) {
+      const currentSeriesResult = await supabaseAdmin
+        .from('board_series')
+        .select('is_subscription')
+        .eq('id', currentPost.data.series_id)
+        .maybeSingle();
+
+      if (currentSeriesResult.error || !currentSeriesResult.data) {
+        return Response.json({ error: '기존 연재 정보를 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      currentSeriesIsSubscription = currentSeriesResult.data.is_subscription === true;
+    }
 
     if (board.data.post_type === 'series' || board.data.post_type === 'both') {
       if (seriesKey) {
@@ -895,9 +910,19 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
         }
 
+        if (
+          currentSeriesIsSubscription !== null &&
+          currentSeriesIsSubscription !== (seriesResult.data.is_subscription === true)
+        ) {
+          return Response.json({ error: '구독 연재와 일반 연재 사이에서는 변경할 수 없습니다.' }, { status: 400 });
+        }
+
         seriesId = seriesResult.data.id;
         isSubscriptionSeries = seriesResult.data.is_subscription === true;
       } else {
+        if (currentSeriesIsSubscription !== null) {
+          return Response.json({ error: '연재가 연결된 글은 같은 유형의 다른 연재로만 변경할 수 있습니다.' }, { status: 400 });
+        }
         seriesId = null;
       }
     } else {
@@ -1215,6 +1240,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
+    if (currentPost.data.thumbnail_image && currentPost.data.thumbnail_image !== finalThumbnailImage) {
+      const removeResult = await supabaseAdmin.storage.from('og-image').remove([currentPost.data.thumbnail_image]);
+      if (removeResult.error) console.error('[boards/edit] thumbnail cleanup failed', removeResult.error);
+    }
+
     if (
       action === 'publish' &&
       rhizomeData.site_type === 'community' &&
@@ -1279,6 +1309,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (action === 'unknown' && !requestedPublishedAt) {
       return Response.json({ error: '예약 출간 시간을 입력해주세요.' }, { status: 400 });
+    }
+
+    if (action === 'unknown' && requestedPublishedAt && new Date(requestedPublishedAt).getTime() <= Date.now()) {
+      return Response.json({ error: '예약 출간 시간은 현재 시각 이후로 설정해주세요.' }, { status: 400 });
     }
 
     return Response.json({

@@ -38,6 +38,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '가입불가 해제 날짜가 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (parsedBanTerm && parsedBanTerm.getTime() <= Date.now()) {
+      return Response.json({ error: '가입불가 해제 날짜는 오늘 이후로 선택해주세요.' }, { status: 400 });
+    }
+
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
