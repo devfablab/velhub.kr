@@ -90,7 +90,7 @@ async function sendInviteEmail(params: {
                 </tr>
               </table>
               <p style="text-align:center"><a href="${inviteUrl}" style="background-color:#eeb400;color:#181818;display:inline-block;padding:12px 23px;border-radius:12px;font-weight:bolder;text-decoration:none">가입하러 가기</a></p>
-              <p><strong style="font-size: 12px">Everyday, Everywhere, Everymoments - Velhub</strong></p>
+              <p><strong style="font-size: 12px">Everyday, Everywhere, Everymoments - velhub</strong></p>
             </div>
           </td>
         </tr>

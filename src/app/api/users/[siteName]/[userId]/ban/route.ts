@@ -169,7 +169,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           from: getMailFrom(),
           to: emailResult.data.email,
           subject: `[데브허브] ${siteLabel} 가입불가 안내`,
-          html: `<table style="width:100%;border-collapse:collapse"><tr><td style="background:#181818;padding:23px"><img src="https://velhub.xyz/velhub-1-webmail.png" alt="데브허브" width="106" height="24"></td></tr><tr><td style="padding:23px;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color:#181818"><h2>가입불가 안내</h2><p>콘텐츠에 가치를 더하는 복합 허브 서비스, 데브허브입니다.</p><table style="width:100%;border-collapse:collapse">${rows}</table><p><strong style="font-size:12px">Everyday, Everywhere, Everymoments - Velhub</strong></p></td></tr></table>`,
+          html: `<table style="width:100%;border-collapse:collapse"><tr><td style="background:#181818;padding:23px"><img src="https://velhub.xyz/velhub-1-webmail.png" alt="데브허브" width="106" height="24"></td></tr><tr><td style="padding:23px;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color:#181818"><h2>가입불가 안내</h2><p>콘텐츠에 가치를 더하는 복합 허브 서비스, 데브허브입니다.</p><table style="width:100%;border-collapse:collapse">${rows}</table><p><strong style="font-size:12px">Everyday, Everywhere, Everymoments - velhub</strong></p></td></tr></table>`,
         });
       } catch (emailError) {
         console.error('[users/ban] email error', emailError);
