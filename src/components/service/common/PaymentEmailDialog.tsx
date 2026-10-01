@@ -1,8 +1,7 @@
 'use client';
 
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Dialog,
   DialogActions,
@@ -15,6 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import FormErrorDialog from '@/components/FormErrorDialog';
 
 type PaymentEmailDialogProps = {
   open: boolean;
@@ -30,6 +30,11 @@ type PaymentEmailResponse = {
   error?: string;
 };
 
+type ErrorPopup = {
+  title: string | null;
+  messages: string[];
+};
+
 const PAYMENT_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function PaymentEmailDialog({
@@ -41,7 +46,9 @@ export default function PaymentEmailDialog({
 }: PaymentEmailDialogProps) {
   const [paymentEmail, setPaymentEmail] = useState('');
   const [paymentPhone, setPaymentPhone] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [errorPopup, setErrorPopup] = useState<ErrorPopup | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -51,30 +58,70 @@ export default function PaymentEmailDialog({
 
     setPaymentEmail('');
     setPaymentPhone('');
-    setErrorMessage('');
+    setEmailError('');
+    setPhoneError('');
+    setErrorPopup(null);
     onClose();
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     setPaymentEmail(event.target.value);
-    setErrorMessage('');
+    setEmailError('');
   }
 
-  async function handleSave() {
+  function showValidationErrors(nextEmailError: string, nextPhoneError: string) {
+    setEmailError(nextEmailError);
+    setPhoneError(nextPhoneError);
+    setErrorPopup({
+      title: '결제 정보 확인',
+      messages: [nextEmailError, nextPhoneError].filter(Boolean),
+    });
+  }
+
+  function getValidationErrors() {
+    const normalizedPaymentEmail = normalizeText(paymentEmail).toLowerCase();
+    const normalizedPaymentPhone = paymentPhone.replace(/\D/g, '');
+
+    return {
+      normalizedPaymentEmail,
+      normalizedPaymentPhone,
+      email: requireEmail
+        ? !normalizedPaymentEmail
+          ? '결제용 이메일 주소를 입력해주세요.'
+          : !PAYMENT_EMAIL_PATTERN.test(normalizedPaymentEmail)
+            ? '이메일 형식이 올바르지 않습니다.'
+            : ''
+        : '',
+      phone: requirePhone
+        ? !normalizedPaymentPhone
+          ? '결제용 휴대폰 번호를 입력해주세요.'
+          : !/^01[0-9]{8,9}$/.test(normalizedPaymentPhone)
+            ? '휴대폰 번호 형식이 올바르지 않습니다.'
+            : ''
+        : '',
+    };
+  }
+
+  function handleInvalid(event: FormEvent<HTMLInputElement>) {
+    event.preventDefault();
+    const validation = getValidationErrors();
+    showValidationErrors(validation.email, validation.phone);
+  }
+
+  async function handleSave(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+
     try {
-      const normalizedPaymentEmail = normalizeText(paymentEmail).toLowerCase();
-      const normalizedPaymentPhone = paymentPhone.replace(/\D/g, '');
-
-      if (requireEmail && !PAYMENT_EMAIL_PATTERN.test(normalizedPaymentEmail)) {
-        throw new Error('이메일 형식이 올바르지 않습니다.');
-      }
-
-      if (requirePhone && !/^01[0-9]{8,9}$/.test(normalizedPaymentPhone)) {
-        throw new Error('휴대폰 번호 형식이 올바르지 않습니다.');
+      const validation = getValidationErrors();
+      if (validation.email || validation.phone) {
+        showValidationErrors(validation.email, validation.phone);
+        return;
       }
 
       setIsSaving(true);
-      setErrorMessage('');
+      setEmailError('');
+      setPhoneError('');
+      setErrorPopup(null);
 
       const response = await fetch('/api/payments/portone/payment-email', {
         method: 'POST',
@@ -83,41 +130,49 @@ export default function PaymentEmailDialog({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...(requireEmail ? { paymentEmail: normalizedPaymentEmail } : {}),
-          ...(requirePhone ? { paymentPhone: normalizedPaymentPhone } : {}),
+          ...(requireEmail ? { paymentEmail: validation.normalizedPaymentEmail } : {}),
+          ...(requirePhone ? { paymentPhone: validation.normalizedPaymentPhone } : {}),
         }),
       });
-      const result = (await response.json()) as PaymentEmailResponse;
+      const result = (await response.json().catch(() => null)) as PaymentEmailResponse | null;
 
-      if (!response.ok || (requireEmail && !result.paymentEmail) || (requirePhone && !result.paymentPhone)) {
-        throw new Error(result.error ?? '결제 정보를 저장하지 못했습니다.');
+      if (!response.ok || (requireEmail && !result?.paymentEmail) || (requirePhone && !result?.paymentPhone)) {
+        const message = result?.error ?? '결제 정보를 저장하지 못했습니다.';
+        const isKnownError = response.status < 500;
+        setEmailError(requireEmail && isKnownError ? message : '');
+        setPhoneError(requirePhone && isKnownError ? message : '');
+        setErrorPopup({ title: isKnownError ? '결제 정보 확인' : null, messages: [message] });
+        return;
       }
 
       setPaymentEmail('');
       setPaymentPhone('');
       onClose();
-      await onSaved(result.paymentEmail ?? '', result.paymentPhone ?? '');
+      await onSaved(result?.paymentEmail ?? '', result?.paymentPhone ?? '');
     } catch (unknownError) {
-      setErrorMessage(
-        unknownError instanceof Error
-          ? unknownError.message || '결제 정보를 저장하지 못했습니다.'
-          : '결제 정보를 저장하지 못했습니다.',
-      );
+      const message = unknownError instanceof Error ? unknownError.message || '결제 정보를 저장하지 못했습니다.' : '결제 정보를 저장하지 못했습니다.';
+      setErrorPopup({ title: null, messages: [message] });
     } finally {
       setIsSaving(false);
     }
   }
 
-  function renderContent() {
+  function renderContent(formId: string) {
     return (
-      <Stack gap={2}>
+      <form id={formId} onSubmit={handleSave}>
+        <Stack gap={2}>
         {requireEmail ? (
           <TextField
             type="email"
+            name="paymentEmail"
             value={paymentEmail}
             placeholder="결제용 이메일 주소"
             onChange={handleChange}
+            onInvalid={handleInvalid}
             disabled={isSaving}
+            required
+            error={Boolean(emailError)}
+            helperText={emailError}
             fullWidth
             size="small"
           />
@@ -125,63 +180,79 @@ export default function PaymentEmailDialog({
         {requirePhone ? (
           <TextField
             type="tel"
+            name="paymentPhone"
             value={paymentPhone}
             placeholder="결제용 휴대폰 번호"
             onChange={(event) => {
               setPaymentPhone(event.target.value);
-              setErrorMessage('');
+              setPhoneError('');
             }}
+            onInvalid={handleInvalid}
             disabled={isSaving}
+            required
+            error={Boolean(phoneError)}
+            helperText={phoneError}
             inputMode="tel"
             fullWidth
             size="small"
           />
         ) : null}
-        {errorMessage ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
-      </Stack>
+        </Stack>
+      </form>
     );
   }
 
   if (isMobile) {
     return (
-      <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-        <h2>결제 정보 입력</h2>
-        <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
-          <CloseRoundedIcon />
-        </button>
-        <div className="VhiDrawer-bottom-content">{renderContent()}</div>
-        <div className="drawer-dialog-actions">
-          <button type="button" className="button small cancel" onClick={handleClose} disabled={isSaving}>
-            취소
+      <>
+        <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
+          <h2>결제 정보 입력</h2>
+          <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
+            <CloseRoundedIcon />
           </button>
-          <button type="button" className="button small submit" onClick={() => void handleSave()} disabled={isSaving}>
-            저장하고 계속
-          </button>
-        </div>
-      </Drawer>
+          <div className="VhiDrawer-bottom-content">{renderContent('payment-email-form-mobile')}</div>
+          <div className="drawer-dialog-actions">
+            <button type="button" className="button small cancel" onClick={handleClose} disabled={isSaving}>
+              취소
+            </button>
+            <button type="submit" form="payment-email-form-mobile" className="button small submit" disabled={isSaving}>
+              저장하고 계속
+            </button>
+          </div>
+        </Drawer>
+        <FormErrorDialog
+          open={Boolean(errorPopup)}
+          title={errorPopup?.title ?? null}
+          messages={errorPopup?.messages ?? []}
+          onClose={() => setErrorPopup(null)}
+        />
+      </>
     );
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
-      <DialogTitle>결제 정보 입력</DialogTitle>
-      <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
-      <DialogContent>{renderContent()}</DialogContent>
-      <DialogActions>
-        <button type="button" className="cancel-button" onClick={handleClose} disabled={isSaving}>
-          취소
+    <>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
+        <DialogTitle>결제 정보 입력</DialogTitle>
+        <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
+          <CloseRoundedIcon />
         </button>
-        <button type="button" onClick={() => void handleSave()} disabled={isSaving}>
-          저장하고 계속
-        </button>
-      </DialogActions>
-    </Dialog>
+        <DialogContent>{renderContent('payment-email-form-desktop')}</DialogContent>
+        <DialogActions>
+          <button type="button" className="cancel-button" onClick={handleClose} disabled={isSaving}>
+            취소
+          </button>
+          <button type="submit" form="payment-email-form-desktop" disabled={isSaving}>
+            저장하고 계속
+          </button>
+        </DialogActions>
+      </Dialog>
+      <FormErrorDialog
+        open={Boolean(errorPopup)}
+        title={errorPopup?.title ?? null}
+        messages={errorPopup?.messages ?? []}
+        onClose={() => setErrorPopup(null)}
+      />
+    </>
   );
 }

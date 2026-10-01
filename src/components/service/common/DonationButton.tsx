@@ -18,7 +18,7 @@ import {
 import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
-import PopupMessage from '@/components/PopupMessage';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
 import PaymentEmailDialog from './PaymentEmailDialog';
@@ -179,6 +179,8 @@ export default function DonationButton(props: Props) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [donationAmount, setDonationAmount] = useState('1,000');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const canShowDonationButton = Boolean(initialStatus?.isEnabled);
   const hasIdentity = Boolean(identityStatus?.exists);
@@ -216,6 +218,8 @@ export default function DonationButton(props: Props) {
 
     setDonationAmount('1,000');
     setErrorMessage('');
+    setErrorTitle(null);
+    setAmountError('');
     setIsDialogOpen(true);
   }
 
@@ -252,6 +256,8 @@ export default function DonationButton(props: Props) {
     setPaymentPhone(savedPaymentPhone);
     setDonationAmount('1,000');
     setErrorMessage('');
+    setErrorTitle(null);
+    setAmountError('');
     setIsDialogOpen(true);
   }
 
@@ -264,6 +270,8 @@ export default function DonationButton(props: Props) {
 
     setDonationAmount(formatCurrencyInput(nextAmount));
     setErrorMessage('');
+    setErrorTitle(null);
+    setAmountError('');
   }
 
   async function handleDonate(guardianIdentityVerificationId?: string) {
@@ -274,7 +282,11 @@ export default function DonationButton(props: Props) {
       const amount = parseCurrencyInput(donationAmount);
 
       if (!isValidDonationAmount(amount)) {
-        throw new Error('후원금액은 1,000 원부터 100,000 원까지 1,000 원 단위로 입력해 주세요.');
+        const message = '후원금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해주세요.';
+        setAmountError(message);
+        setErrorTitle('후원금액 확인');
+        setErrorMessage(message);
+        return;
       }
 
       const response = await fetch('/api/payments/portone/donation/start', {
@@ -295,6 +307,7 @@ export default function DonationButton(props: Props) {
           await handleDonate(verifiedId);
           return;
         }
+        setErrorTitle(response.status < 500 ? donationTitle : null);
         throw new Error(result.error ?? '후원을 시작하지 못했습니다.');
       }
 
@@ -309,6 +322,7 @@ export default function DonationButton(props: Props) {
         !result.paymentPhone ||
         !result.redirectUrl
       ) {
+        setErrorTitle(null);
         throw new Error('후원 결제 정보가 올바르지 않습니다.');
       }
 
@@ -330,6 +344,7 @@ export default function DonationButton(props: Props) {
       });
 
       if (paymentResult?.code) {
+        setErrorTitle(donationTitle);
         throw new Error(paymentResult.message || paymentResult.pgMessage || '결제 창을 열지 못했습니다.');
       }
     } catch (unknownError) {
@@ -350,14 +365,18 @@ export default function DonationButton(props: Props) {
           value={donationAmount}
           onChange={handleDonationAmountChange}
           disabled={isProcessing}
+          required
+          error={Boolean(amountError)}
+          helperText={amountError || '1,000원부터 100,000원까지 1,000원 단위로 입력해주세요.'}
           inputMode="numeric"
-          fullWidth
-          size="small"
           slotProps={{
+            htmlInput: { min: 1000, max: 100000, step: 1000 },
             input: {
               endAdornment: <InputAdornment position="end">원</InputAdornment>,
             },
           }}
+          fullWidth
+          size="small"
         />
 
         {minorControlMode === 'guardian_auth_required' && (
@@ -375,12 +394,6 @@ export default function DonationButton(props: Props) {
 
         <PaymentTerms type="donation" disabled={isProcessing} />
 
-        <PopupMessage
-          open={Boolean(errorMessage)}
-          message={errorMessage}
-          onClose={() => setErrorMessage('')}
-          kind="error"
-        />
       </Stack>
     );
   }
@@ -400,11 +413,14 @@ export default function DonationButton(props: Props) {
         )}
       </MinorPaymentControl>
 
-      <PopupMessage
+      <FormErrorDialog
         open={Boolean(errorMessage) && !isDialogOpen}
-        message={errorMessage}
-        onClose={() => setErrorMessage('')}
-        kind="error"
+        title={errorTitle}
+        messages={errorMessage ? [errorMessage] : []}
+        onClose={() => {
+          setErrorMessage('');
+          setErrorTitle(null);
+        }}
       />
 
       <PaymentEmailDialog
@@ -513,6 +529,15 @@ export default function DonationButton(props: Props) {
           </DialogActions>
         </Dialog>
       )}
+      <FormErrorDialog
+        open={Boolean(errorMessage) && isDialogOpen}
+        title={errorTitle}
+        messages={errorMessage ? [errorMessage] : []}
+        onClose={() => {
+          setErrorMessage('');
+          setErrorTitle(null);
+        }}
+      />
     </>
   );
 }

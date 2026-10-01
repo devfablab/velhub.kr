@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
@@ -269,6 +270,7 @@ export default function SubscriptionButton({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const purchaseAvailable = siteInitialData?.purchaseAvailable ?? false;
@@ -296,6 +298,7 @@ export default function SubscriptionButton({
     }
 
     setErrorMessage('');
+    setErrorTitle(null);
     setIsDialogOpen(true);
   }
 
@@ -303,6 +306,7 @@ export default function SubscriptionButton({
     setMinorControlMode(result.mode);
 
     if (result.isBlocked) {
+      setErrorTitle('연재 구독');
       setErrorMessage('이 계정은 만 19세가 될 때까지 결제 · 구매 · 후원을 이용할 수 없습니다.');
       return;
     }
@@ -331,11 +335,13 @@ export default function SubscriptionButton({
     setPaymentEmail(savedPaymentEmail);
     setPaymentPhone(savedPaymentPhone);
     setErrorMessage('');
+    setErrorTitle(null);
     setIsDialogOpen(true);
   }
 
   function handleOpenCancelDialog() {
     setErrorMessage('');
+    setErrorTitle(null);
     setIsCancelDialogOpen(true);
   }
 
@@ -383,6 +389,7 @@ export default function SubscriptionButton({
           await handleStartSubscription(await requestGuardianIdentityVerification());
           return;
         }
+        setErrorTitle(response.status < 500 ? '연재 구독' : null);
         throw new Error('error' in result ? result.error : '구독을 시작하지 못했습니다.');
       }
 
@@ -482,6 +489,7 @@ export default function SubscriptionButton({
       const successResult = (await successResponse.json()) as SubscriptionActionResponse;
 
       if (!successResponse.ok) {
+        setErrorTitle(successResponse.status < 500 ? '연재 구독' : null);
         throw new Error('error' in successResult ? successResult.error : '구독을 완료하지 못했습니다.');
       }
 
@@ -523,6 +531,7 @@ export default function SubscriptionButton({
       const result = (await response.json()) as SubscriptionActionResponse;
 
       if (!response.ok) {
+        setErrorTitle(response.status < 500 ? '연재 구독' : null);
         throw new Error('error' in result ? result.error : '구독을 취소하지 못했습니다.');
       }
 
@@ -575,6 +584,7 @@ export default function SubscriptionButton({
       const result = (await response.json()) as SubscriptionActionResponse;
 
       if (!response.ok) {
+        setErrorTitle(response.status < 500 ? '연재 구독' : null);
         throw new Error('error' in result ? result.error : '구독 취소를 철회하지 못했습니다.');
       }
 
@@ -666,11 +676,14 @@ export default function SubscriptionButton({
       ) : null}
 
       {errorMessage ? (
-        <PopupMessage
+        <FormErrorDialog
           open={Boolean(errorMessage)}
-          message={errorMessage}
-          onClose={() => setErrorMessage('')}
-          kind="error"
+          title={errorTitle}
+          messages={[errorMessage]}
+          onClose={() => {
+            setErrorMessage('');
+            setErrorTitle(null);
+          }}
         />
       ) : null}
 

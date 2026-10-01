@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Snackbar } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
-import PopupMessage from '@/components/PopupMessage';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import DuplicateBillingMethodDialog from './DuplicateBillingMethodDialog';
 import PaymentEmailDialog from './PaymentEmailDialog';
 
@@ -223,11 +222,11 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
         onConfirm={() => window.location.reload()}
       />
 
-      <PopupMessage
+      <FormErrorDialog
         open={Boolean(normalizeText(errorMessage))}
-        message={errorMessage}
+        title={errorMessage ? '결제수단 추가' : null}
+        messages={errorMessage ? [errorMessage] : []}
         onClose={() => setErrorMessage('')}
-        kind="error"
       />
     </>
   );

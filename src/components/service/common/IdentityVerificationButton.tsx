@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import PortOne from '@portone/browser-sdk/v2';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
@@ -28,6 +29,12 @@ function getMessage(error: unknown) {
   return error instanceof Error ? error.message : '요청 처리에 실패했습니다.';
 }
 
+function getErrorTitle(error: unknown) {
+  return typeof error === 'object' && error !== null && 'status' in error && typeof error.status === 'number' && error.status < 500
+    ? '본인인증'
+    : null;
+}
+
 function isMessageResponse(value: unknown): value is { message: string } {
   return (
     typeof value === 'object' &&
@@ -47,7 +54,9 @@ async function sendJson<T>(url: string, body?: unknown) {
   const data = (await response.json().catch(() => null)) as T | { message?: string } | null;
 
   if (!response.ok) {
-    throw new Error(isMessageResponse(data) ? data.message : '요청 처리에 실패했습니다.');
+    const error = new Error(isMessageResponse(data) ? data.message : '요청 처리에 실패했습니다.');
+    Object.assign(error, { status: response.status });
+    throw error;
   }
 
   return data as T;
@@ -62,6 +71,7 @@ export default function IdentityVerificationButton({
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState<'info' | 'error'>('info');
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
   const [bypassModalOpen, setBypassModalOpen] = useState(false);
   const [pendingRequest, setPendingRequest] = useState<IdentityVerificationRequest | null>(null);
 
@@ -79,6 +89,7 @@ export default function IdentityVerificationButton({
       }
     } catch (error) {
       setMessageKind('error');
+      setErrorTitle(getErrorTitle(error));
       setMessage(getMessage(error));
     } finally {
       setIsProcessing(false);
@@ -109,6 +120,7 @@ export default function IdentityVerificationButton({
       }
     } catch (error) {
       setMessageKind('error');
+      setErrorTitle(getErrorTitle(error));
       setMessage(getMessage(error));
     } finally {
       setIsProcessing(false);
@@ -149,6 +161,7 @@ export default function IdentityVerificationButton({
       await handleVerify();
     } catch (error) {
       setMessageKind('error');
+      setErrorTitle(getErrorTitle(error));
       setMessage(getMessage(error));
     }
   };
@@ -172,7 +185,16 @@ export default function IdentityVerificationButton({
         }}
         onConfirm={(bypass, mockTxId) => void handleBypassConfirm(bypass, mockTxId)}
       />
-      <PopupMessage open={Boolean(message)} message={message} kind={messageKind} onClose={() => setMessage('')} />
+      {messageKind === 'error' ? (
+        <FormErrorDialog
+          open={Boolean(message)}
+          title={errorTitle}
+          messages={message ? [message] : []}
+          onClose={() => setMessage('')}
+        />
+      ) : (
+        <PopupMessage open={Boolean(message)} message={message} kind="info" onClose={() => setMessage('')} />
+      )}
     </>
   );
 }

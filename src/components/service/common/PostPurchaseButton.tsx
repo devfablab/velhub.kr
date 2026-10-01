@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
-import PopupMessage from '@/components/PopupMessage';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import MinorPaymentControl, { type MinorPaymentControlResult } from './MinorPaymentControl';
 import PaymentEmailDialog from './PaymentEmailDialog';
@@ -150,6 +150,7 @@ export default function PostPurchaseButton(props: Props) {
   } = props;
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const hasIdentity = Boolean(identityStatus?.exists);
@@ -180,6 +181,7 @@ export default function PostPurchaseButton(props: Props) {
       return;
     }
     setErrorMessage('');
+    setErrorTitle(null);
     setIsConfirmOpen(true);
   }
 
@@ -187,6 +189,7 @@ export default function PostPurchaseButton(props: Props) {
     setMinorControlMode(result.mode);
 
     if (result.isBlocked) {
+      setErrorTitle('포스팅 구매');
       setErrorMessage('이 계정은 만 19세가 될 때까지 결제 · 구매 · 후원을 이용할 수 없습니다.');
       return;
     }
@@ -219,6 +222,7 @@ export default function PostPurchaseButton(props: Props) {
   async function handlePurchase(guardianIdentityVerificationId?: string) {
     try {
       setErrorMessage('');
+      setErrorTitle(null);
 
       updateProcessing(true);
 
@@ -238,10 +242,10 @@ export default function PostPurchaseButton(props: Props) {
         }),
       });
 
-      const result = (await response.json()) as PostPurchaseStartResponse;
+      const result = (await response.json().catch(() => null)) as PostPurchaseStartResponse | null;
 
       if (!response.ok) {
-        if (result.paymentCustomerRequired) {
+        if (result?.paymentCustomerRequired) {
           updateProcessing(false);
           setIsConfirmOpen(false);
           setNeedsPaymentEmail(Boolean(result.paymentEmailRequired));
@@ -249,21 +253,22 @@ export default function PostPurchaseButton(props: Props) {
           setIsPaymentCustomerDialogOpen(true);
           return;
         }
-        if (result.guardianAuthRequired && !guardianIdentityVerificationId) {
+        if (result?.guardianAuthRequired && !guardianIdentityVerificationId) {
           updateProcessing(false);
           await handlePurchase(await requestGuardianIdentityVerification());
           return;
         }
-        throw new Error(result.error ?? '포스팅 구매를 시작하지 못했습니다.');
+        setErrorTitle(response.status < 500 ? '포스팅 구매' : null);
+        throw new Error(result?.error ?? '포스팅 구매를 시작하지 못했습니다.');
       }
 
-      if (result.alreadyPurchased) {
+      if (result?.alreadyPurchased) {
         window.location.reload();
         return;
       }
 
       if (
-        !result.storeId ||
+        !result?.storeId ||
         !result.channelKey ||
         !result.paymentId ||
         !result.orderName ||
@@ -273,6 +278,7 @@ export default function PostPurchaseButton(props: Props) {
         !result.customerName ||
         !result.redirectUrl
       ) {
+        setErrorTitle(null);
         throw new Error('포스팅 구매 결제 정보가 올바르지 않습니다.');
       }
 
@@ -438,11 +444,11 @@ export default function PostPurchaseButton(props: Props) {
         </Dialog>
       )}
 
-      <PopupMessage
+      <FormErrorDialog
         open={Boolean(errorMessage)}
-        message={errorMessage}
+        title={errorTitle}
+        messages={errorMessage ? [errorMessage] : []}
         onClose={() => setErrorMessage('')}
-        kind="error"
       />
       {isMobile ? (
         <Drawer

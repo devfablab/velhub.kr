@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
 import FolderModals, { type FolderActionError } from './folderModals';
 import styles from '@/app/hub.module.sass';
@@ -44,6 +45,7 @@ export default function FavoriteBlogs({
   const [blogs, setBlogs] = useState<FavoriteBlogRow[]>(initialBlogs?.blogs ?? []);
   const [folders, setFolders] = useState<Folder[]>(initialFolders?.folders ?? []);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [actionError, setActionError] = useState<FolderActionError | null>(null);
 
   const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
   const [editFolder, setEditFolder] = useState<Folder | null>(null);
@@ -198,11 +200,22 @@ export default function FavoriteBlogs({
     setDraggedItem(null);
     setDragOverItem(null);
 
-    await fetch('/api/hub/blog-favorites/move', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ updates }),
-    });
+    try {
+      const response = await fetch('/api/hub/blog-favorites/move', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      });
+      const nextActionError = await getFolderActionError(response);
+
+      if (nextActionError) {
+        setActionError(nextActionError);
+        await loadData();
+      }
+    } catch {
+      setActionError({ message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true });
+      await loadData();
+    }
   };
 
   const renderSite = (blog: FavoriteBlogRow) => (
@@ -349,6 +362,12 @@ export default function FavoriteBlogs({
         }
       `,
         }}
+      />
+      <FormErrorDialog
+        open={Boolean(actionError)}
+        title={actionError?.isUnknown ? null : '즐겨찾기 이동'}
+        messages={actionError ? [actionError.message] : []}
+        onClose={() => setActionError(null)}
       />
     </section>
   );

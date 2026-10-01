@@ -26,6 +26,7 @@ import {
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import FormErrorDialog from '@/components/FormErrorDialog';
 import DonationButton from '@/components/service/common/DonationButton';
 import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
@@ -250,6 +251,7 @@ export default function SiteProfile() {
   const [isBlogSubscriptionDialogOpen, setIsBlogSubscriptionDialogOpen] = useState(false);
   const [isBlogSubscriptionCancelDialogOpen, setIsBlogSubscriptionCancelDialogOpen] = useState(false);
   const [blogSubscriptionErrorMessage, setBlogSubscriptionErrorMessage] = useState('');
+  const [blogSubscriptionErrorTitle, setBlogSubscriptionErrorTitle] = useState<string | null>(null);
   const [isBlogSubscriptionProcessing, setIsBlogSubscriptionProcessing] = useState(false);
   const isDonationEnabled = Boolean(initialProfile?.donation?.isEnabled);
   const hasIdentity = Boolean(initialProfile?.identity?.exists);
@@ -280,6 +282,7 @@ export default function SiteProfile() {
 
   function handleOpenBlogSubscriptionDialog() {
     setBlogSubscriptionErrorMessage('');
+    setBlogSubscriptionErrorTitle(null);
     setIsBlogSubscriptionDialogOpen(true);
   }
 
@@ -293,6 +296,7 @@ export default function SiteProfile() {
 
   function handleOpenBlogSubscriptionCancelDialog() {
     setBlogSubscriptionErrorMessage('');
+    setBlogSubscriptionErrorTitle(null);
     setIsBlogSubscriptionCancelDialogOpen(true);
   }
 
@@ -332,6 +336,7 @@ export default function SiteProfile() {
       }
 
       if (!response.ok) {
+        setBlogSubscriptionErrorTitle(response.status < 500 ? '블로그 구독' : null);
         throw new Error(result.error ?? '블로그 구독 가입을 시작하지 못했습니다.');
       }
 
@@ -404,6 +409,7 @@ export default function SiteProfile() {
       const successResult = (await successResponse.json()) as BlogSubscriptionActionResponse;
 
       if (!successResponse.ok) {
+        setBlogSubscriptionErrorTitle(successResponse.status < 500 ? '블로그 구독' : null);
         throw new Error(successResult.error ?? '블로그 구독 가입을 완료하지 못했습니다.');
       }
 
@@ -442,6 +448,7 @@ export default function SiteProfile() {
       const result = (await response.json()) as BlogSubscriptionActionResponse;
 
       if (!response.ok) {
+        setBlogSubscriptionErrorTitle(response.status < 500 ? '블로그 구독' : null);
         throw new Error(result.error ?? '블로그 구독 취소를 처리하지 못했습니다.');
       }
 
@@ -481,6 +488,7 @@ export default function SiteProfile() {
       const result = (await response.json()) as BlogSubscriptionActionResponse;
 
       if (!response.ok) {
+        setBlogSubscriptionErrorTitle(response.status < 500 ? '블로그 구독' : null);
         throw new Error(result.error ?? '블로그 구독 유지를 처리하지 못했습니다.');
       }
 
@@ -611,6 +619,13 @@ export default function SiteProfile() {
           <span>{blogSubscriptionErrorMessage}</span>
         </p>
       ) : null}
+
+      <FormErrorDialog
+        open={Boolean(blogSubscriptionErrorMessage)}
+        title={blogSubscriptionErrorTitle}
+        messages={blogSubscriptionErrorMessage ? [blogSubscriptionErrorMessage] : []}
+        onClose={() => setBlogSubscriptionErrorMessage('')}
+      />
 
       <PaymentEmailDialog
         open={isPaymentEmailDialogOpen}

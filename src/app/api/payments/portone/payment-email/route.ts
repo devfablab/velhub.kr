@@ -19,7 +19,13 @@ export async function POST(request: Request) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    const requestBody = (await request.json()) as PaymentEmailRequestBody;
+    let requestBody: PaymentEmailRequestBody;
+
+    try {
+      requestBody = (await request.json()) as PaymentEmailRequestBody;
+    } catch {
+      return Response.json({ error: '결제 정보 입력값이 유효하지 않습니다.' }, { status: 400 });
+    }
     const paymentEmail = normalizeText(requestBody.paymentEmail).toLowerCase();
     const paymentPhone = String(requestBody.paymentPhone ?? '').replace(/\D/g, '');
 
