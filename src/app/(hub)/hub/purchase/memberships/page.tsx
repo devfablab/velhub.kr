@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { formatDateTimeDetail } from '@/lib/utils';
 import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
@@ -26,14 +27,7 @@ type Result = {
 };
 
 const money = (value: number) => `${value.toLocaleString('ko-KR')} 원`;
-const dateTime = (value: string) =>
-  new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
+const dateTime = (value: string) => formatDateTimeDetail(value) || '날짜 알 수 없음';
 
 async function getMemberships() {
   const cookieHeader = (await cookies()).toString();

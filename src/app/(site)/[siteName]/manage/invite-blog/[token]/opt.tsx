@@ -6,7 +6,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Box, Paper, Stack, TextField, Typography } from '@mui/material';
-import { maskEmail } from '@/lib/utils';
+import { formatDateTimeDetail, maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 
@@ -50,23 +50,7 @@ function getRoleLabel(role: string) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hour = String(date.getHours()).padStart(2, '0');
-  const minute = String(date.getMinutes()).padStart(2, '0');
-
-  return `${year}.${month}.${day} ${hour}:${minute}`;
+  return formatDateTimeDetail(value);
 }
 
 type OptProps = Props & {

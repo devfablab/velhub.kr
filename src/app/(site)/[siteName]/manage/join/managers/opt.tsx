@@ -2,6 +2,7 @@
 
 import { type JSX, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDateTimeDetail } from '@/lib/utils';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
@@ -159,20 +160,7 @@ function getRoleLabel(role: ManagerRole) {
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(
-    2,
-    '0',
-  )} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return formatDateTimeDetail(value);
 }
 
 function isBoardRole(role: ManagerRole) {

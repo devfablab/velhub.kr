@@ -10,6 +10,7 @@ import {
   type InquiryStatus,
   type InquiryType,
 } from '@/lib/concierge/inquiries';
+import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/concierge.module.sass';
@@ -76,7 +77,7 @@ export default function Opt({
                   inquiryTypeLabels[inquiry.inquiry_type]}{' '}
                 / {inquiryStatusLabels[inquiry.status]}
               </span>
-              <time>{new Date(inquiry.created_at).toLocaleDateString('ko-KR')}</time>
+              <time>{formatTimeAgo(inquiry.created_at)}</time>
             </Anchor>
           ))}
         </div>

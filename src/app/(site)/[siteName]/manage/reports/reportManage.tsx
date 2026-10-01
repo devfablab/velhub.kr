@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { formatDateTimeDetail } from '@/lib/utils';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -212,11 +213,7 @@ function canFinalize(report: ReportItem) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) {
-    return '-';
-  }
-
-  return new Date(value).toLocaleString('ko-KR');
+  return formatDateTimeDetail(value) || '날짜 알 수 없음';
 }
 
 function MessageBubble({

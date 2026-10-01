@@ -14,6 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { formatDateTimeDetail } from '@/lib/utils';
 import { ACCOUNT_WITHDRAWAL_GRACE_MS } from '@/lib/users/accountWithdrawal.shared';
 
 type WithdrawalStatusResponse = {
@@ -27,12 +28,7 @@ function getWithdrawalCompletionDate(requestedAt: string | null) {
   const requestedAtTime = new Date(requestedAt).getTime();
   if (Number.isNaN(requestedAtTime)) return null;
 
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'Asia/Seoul',
-  }).format(new Date(requestedAtTime + ACCOUNT_WITHDRAWAL_GRACE_MS));
+  return formatDateTimeDetail(new Date(requestedAtTime + ACCOUNT_WITHDRAWAL_GRACE_MS));
 }
 
 export default function WithdrawalGuard({

@@ -2,6 +2,7 @@
 
 import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDateTimeDetail } from '@/lib/utils';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -65,21 +66,7 @@ export type JoinApprovedResponse = {
 type ActionType = 'approve' | 'reject' | null;
 
 function formatDateKorean(value: string | null | undefined) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date);
+  return formatDateTimeDetail(value);
 }
 
 type OptProps = { initialData: JoinApprovedResponse | null; initialError: string };

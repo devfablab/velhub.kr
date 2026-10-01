@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
+import { formatDateTimeDetail } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ResponsivePopup from './ResponsivePopup';
 import styles from '@/app/hub.module.sass';
@@ -52,17 +53,7 @@ function formatAmount(value: number) {
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) {
-    return '-';
-  }
-
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
+  return formatDateTimeDetail(value) || '날짜 알 수 없음';
 }
 
 function getAmountLabel(detail: BillingPopupDetail) {

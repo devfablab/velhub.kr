@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { Chip, Stack, TextField, Typography } from '@mui/material';
 import type { PartnershipProposalDetail } from '@/lib/partnerships';
+import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
@@ -85,7 +86,7 @@ export default function Opt({
         <Stack gap={3}>
           <Stack gap={1}>
             <Typography variant="subtitle2">{proposal.subject}</Typography>
-            <Typography variant="body2">{new Date(proposal.created_at).toLocaleString('ko-KR')}</Typography>
+            <Typography variant="body2">{formatDateTimeDetail(proposal.created_at)}</Typography>
             <div>
               <Chip label={proposal.category_label} />
             </div>
@@ -103,7 +104,7 @@ export default function Opt({
                 <Typography variant="subtitle2">
                   {message.author_type === 'admin' ? '관리자 답변' : '추가 내용'}
                 </Typography>
-                <Typography variant="body2">{new Date(message.created_at).toLocaleString('ko-KR')}</Typography>
+                <Typography variant="body2">{formatDateTimeDetail(message.created_at)}</Typography>
                 <Typography sx={{ whiteSpace: 'pre-wrap' }}>{message.content}</Typography>
               </Stack>
             </div>

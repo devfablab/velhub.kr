@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { formatDateTimeDetail } from '@/lib/utils';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
@@ -94,7 +95,7 @@ export default function Opt({
                   </button>
                 </TableCell>
                 <TableCell>{post.siteLabel}</TableCell>
-                <TableCell>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ko-KR') : '-'}</TableCell>
+                <TableCell>{post.publishedAt ? formatDateTimeDetail(post.publishedAt) : '날짜 알 수 없음'}</TableCell>
               </TableRow>
             ))}
           </TableBody>

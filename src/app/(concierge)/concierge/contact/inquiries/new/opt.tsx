@@ -24,6 +24,7 @@ import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } fr
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { MEMBERSHIP_FEATURES, type MembershipFeatureKey, type MembershipType } from '@/lib/memberships/catalog';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
+import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
@@ -183,7 +184,7 @@ export default function Opt({
   const isCancellationBlocked =
     isMinorCancellation && !!cancellationAvailableAt && new Date(cancellationAvailableAt).getTime() > Date.now();
   const cancellationAvailableAtLabel = cancellationAvailableAt
-    ? new Date(cancellationAvailableAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+    ? formatDateTimeDetail(cancellationAvailableAt)
     : '';
   const selectedCancellationPayment = cancellationPayments.find((payment) => payment.id === paymentId) ?? null;
   const inquiryUnavailableReason = isMinorCancellation
@@ -826,7 +827,7 @@ export default function Opt({
                               key={post.id}
                               value={post.id}
                               control={<Radio />}
-                              label={`${post.label}${post.description ? ` / ${new Date(post.description).toLocaleDateString('ko-KR')}` : ''}`}
+                              label={`${post.label}${post.description ? ` / ${formatDateTimeDetail(post.description)}` : ''}`}
                             />
                           ))}
                         </RadioGroup>

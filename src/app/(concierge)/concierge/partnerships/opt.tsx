@@ -2,6 +2,7 @@
 
 import { Stack, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import type { PartnershipProposalRow } from '@/lib/partnerships';
+import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
 
@@ -47,7 +48,7 @@ export default function Opt({
                         ? '신규 답변'
                         : '답변 확인'}
                   </TableCell>
-                  <TableCell sx={cellSx}>{new Date(proposal.created_at).toLocaleDateString('ko-KR')}</TableCell>
+                  <TableCell sx={cellSx}>{formatTimeAgo(proposal.created_at)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
