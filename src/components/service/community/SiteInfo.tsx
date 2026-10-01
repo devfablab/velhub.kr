@@ -229,7 +229,7 @@ export default function SiteInfo() {
           </button>
           <DialogContent className={styles['info-content']}>{infoContent}</DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={() => setIsDialogOpen(false)}>
+            <button type="button" className="button medium submit" onClick={() => setIsDialogOpen(false)}>
               닫기
             </button>
           </DialogActions>

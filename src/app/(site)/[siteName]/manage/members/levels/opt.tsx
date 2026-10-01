@@ -823,7 +823,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <DialogActions>
                 <button
                   type="button"
-                  className="cancel-button"
                   onClick={handleCloseIconDialog}
                   disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
                 >

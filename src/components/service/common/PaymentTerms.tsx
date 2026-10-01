@@ -115,7 +115,7 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={() => setOpen(false)}>
+          <button type="button" className="button medium submit" onClick={() => setOpen(false)}>
               닫기
             </button>
           </DialogActions>

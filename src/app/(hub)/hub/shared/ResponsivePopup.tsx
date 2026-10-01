@@ -94,11 +94,15 @@ export default function ResponsivePopup({
             key={index}
             type="button"
             className={
-              variant === 'content'
-                ? action.label === '닫기'
-                  ? 'button medium close'
-                  : `button small ${action.intent ?? 'action'}`
-                : getDialogActionClass(action.intent)
+              actions.length === 1
+                ? variant === 'content'
+                  ? 'button medium submit'
+                  : undefined
+                : variant === 'content'
+                  ? action.label === '닫기'
+                    ? 'button medium close'
+                    : `button small ${action.intent ?? 'action'}`
+                  : getDialogActionClass(action.intent)
             }
             onClick={action.onClick}
             disabled={action.disabled}

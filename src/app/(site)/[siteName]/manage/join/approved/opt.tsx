@@ -540,7 +540,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </div>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="button medium close" onClick={() => setSelectedUser(null)}>
+              <button type="button" className="button medium submit" onClick={() => setSelectedUser(null)}>
                   닫기
                 </button>
               </DialogActions>

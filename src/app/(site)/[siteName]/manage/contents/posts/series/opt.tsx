@@ -1620,8 +1620,7 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="cancel-button"
-                  onClick={handleCloseUserDialog}
+                onClick={handleCloseUserDialog}
                   disabled={isUserSearching}
                 >
                   닫기

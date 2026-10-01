@@ -151,7 +151,7 @@ function PrivacyAgreement({
             <PrivacyContent />
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={() => setOpen(false)}>
+            <button type="button" className="button medium submit" onClick={() => setOpen(false)}>
               확인
             </button>
           </div>
@@ -166,7 +166,7 @@ function PrivacyAgreement({
             <PrivacyContent />
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button small cancel" onClick={() => setOpen(false)}>
+            <button type="button" className="button medium submit" onClick={() => setOpen(false)}>
               확인
             </button>
           </DialogActions>

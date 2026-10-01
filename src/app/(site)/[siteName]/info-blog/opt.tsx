@@ -2017,7 +2017,7 @@ export default function Opt({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handleCloseItemManageDialog}>
+            <button type="button" className="button medium submit" onClick={handleCloseItemManageDialog}>
               닫기
             </button>
           </DialogActions>

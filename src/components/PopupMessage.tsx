@@ -36,7 +36,7 @@ export default function PopupMessage({ open, message, onClose, kind = 'info' }: 
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
       <DialogContent>{messageContent}</DialogContent>
       <DialogActions>
-        <button type="button" className="button medium submit" onClick={onClose}>
+        <button type="button" onClick={onClose}>
           확인
         </button>
       </DialogActions>

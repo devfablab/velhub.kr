@@ -374,7 +374,7 @@ export default function FooterSite() {
             <Typography variant="body2">초대에 응하시겠어요?</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="cancel-button" onClick={() => setIsInvitePromptOpen(false)}>
+          <button type="button" onClick={() => setIsInvitePromptOpen(false)}>
               둘러보기
             </button>
             {inviteHref ? <Anchor href={inviteHref}>가입하기</Anchor> : null}

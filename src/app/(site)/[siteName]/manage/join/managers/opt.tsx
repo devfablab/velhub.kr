@@ -1258,7 +1258,6 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="cancel-button"
                   onClick={closeIconDialog}
                   disabled={isUploadingIcon || Boolean(deletingIconId)}
                 >
@@ -1715,7 +1714,6 @@ export default function Opt({
               <DialogActions>
                 <button
                   type="button"
-                  className="cancel-button"
                   onClick={closeSearchDialog}
                   disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
                 >
@@ -1861,7 +1859,6 @@ export default function Opt({
                   <DialogActions>
                     <button
                       type="button"
-                      className="cancel-button"
                       onClick={closeManagerEdit}
                       disabled={isSubmittingDelete || isSubmittingMove}
                     >

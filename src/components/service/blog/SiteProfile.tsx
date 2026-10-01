@@ -793,7 +793,7 @@ export default function SiteProfile() {
           </DialogContent>
 
           <DialogActions>
-            <button type="button" className="cancel-button" onClick={handleCloseIdentityDialog}>
+            <button type="button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </DialogActions>

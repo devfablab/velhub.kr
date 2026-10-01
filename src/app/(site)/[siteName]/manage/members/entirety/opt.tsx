@@ -938,7 +938,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 </button>
                 <DialogContent>{searchContent}</DialogContent>
                 <DialogActions>
-                  <button type="button" className="cancel-button" onClick={() => setIsSearchOpen(false)}>
+                <button type="button" onClick={() => setIsSearchOpen(false)}>
                     닫기
                   </button>
                 </DialogActions>

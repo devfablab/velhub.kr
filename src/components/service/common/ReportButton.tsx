@@ -336,7 +336,7 @@ export default function ReportButton({
           <DialogContent>{renderContent()}</DialogContent>
 
           <DialogActions>
-            <button type="button" className="cancel-button" onClick={handleClose} disabled={submitting}>
+            <button type="button" onClick={handleClose} disabled={submitting}>
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}

@@ -252,7 +252,7 @@ export default function Opt() {
         >
           {renderPopupContents(false)}
           <DialogActions>
-            <button type="button" className="button medium close" onClick={handlePopupClose}>
+          <button type="button" onClick={handlePopupClose}>
               확인
             </button>
           </DialogActions>

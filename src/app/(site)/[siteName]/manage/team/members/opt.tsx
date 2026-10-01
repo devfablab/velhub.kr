@@ -909,7 +909,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 ) : null}
               </DialogContent>
               <DialogActions>
-                <button type="button" className="button medium close" onClick={handleCloseDetail}>
+                <button type="button" className="button medium submit" onClick={handleCloseDetail}>
                   닫기
                 </button>
               </DialogActions>
@@ -1333,7 +1333,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </div>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="button medium close" onClick={handleCloseInviteListDialog}>
+                <button type="button" className="button medium submit" onClick={handleCloseInviteListDialog}>
                   닫기
                 </button>
               </DialogActions>
