@@ -1,6 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { formatDateTimeDetail } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
@@ -65,8 +65,24 @@ function formatAmount(value: number) {
   return `${value.toLocaleString('ko-KR')} 원`;
 }
 
-function formatDateTime(value: string | null) {
-  return formatDateTimeDetail(value) || '날짜 알 수 없음';
+function formatServicePeriod(startValue: string | null | undefined, endValue?: string | null | undefined) {
+  if (!startValue) return '날짜 알 수 없음';
+  const startDate = new Date(startValue);
+  if (Number.isNaN(startDate.getTime())) return '날짜 알 수 없음';
+
+  let endDate: Date;
+  if (endValue) {
+    const parsedEnd = new Date(endValue);
+    endDate = Number.isNaN(parsedEnd.getTime()) ? new Date(startDate) : parsedEnd;
+    if (Number.isNaN(parsedEnd.getTime())) {
+      endDate.setMonth(endDate.getMonth() + 1);
+    }
+  } else {
+    endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 1);
+  }
+
+  return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
 }
 
 function getPaymentTypeLabel(payment: SubscriptionPayment) {
@@ -214,7 +230,7 @@ export default async function Page() {
                         금액
                       </TableCell>
                       <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
-                        일시
+                        서비스 이용 기간
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -231,7 +247,12 @@ export default async function Page() {
                             </BillingPopup>
                           </TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAmount(payment.historyAmount)}</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTime(payment.historyAt)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            {formatServicePeriod(
+                              payment.subscription?.currentPeriodStart ?? payment.historyAt,
+                              payment.subscription?.currentPeriodEnd,
+                            )}
+                          </TableCell>
                         </TableRow>
                       );
                     })}

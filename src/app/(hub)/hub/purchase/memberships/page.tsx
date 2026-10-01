@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { formatDateTimeDetail } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
@@ -27,7 +27,26 @@ type Result = {
 };
 
 const money = (value: number) => `${value.toLocaleString('ko-KR')} 원`;
-const dateTime = (value: string) => formatDateTimeDetail(value) || '날짜 알 수 없음';
+
+function formatServicePeriod(startValue: string | null | undefined, endValue?: string | null | undefined) {
+  if (!startValue) return '날짜 알 수 없음';
+  const startDate = new Date(startValue);
+  if (Number.isNaN(startDate.getTime())) return '날짜 알 수 없음';
+
+  let endDate: Date;
+  if (endValue) {
+    const parsedEnd = new Date(endValue);
+    endDate = Number.isNaN(parsedEnd.getTime()) ? new Date(startDate) : parsedEnd;
+    if (Number.isNaN(parsedEnd.getTime())) {
+      endDate.setMonth(endDate.getMonth() + 1);
+    }
+  } else {
+    endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 1);
+  }
+
+  return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
+}
 
 async function getMemberships() {
   const cookieHeader = (await cookies()).toString();
@@ -112,7 +131,7 @@ export default async function Page() {
                       <TableCell>기능</TableCell>
                       <TableCell>상태</TableCell>
                       <TableCell>금액</TableCell>
-                      <TableCell>일시</TableCell>
+                      <TableCell>서비스 이용 기간</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -122,7 +141,7 @@ export default async function Page() {
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.features.join(' / ')}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.historyStatusLabel}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{money(payment.historyAmount)}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{dateTime(payment.historyAt)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatServicePeriod(payment.historyAt)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
