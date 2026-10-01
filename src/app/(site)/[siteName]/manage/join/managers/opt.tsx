@@ -26,7 +26,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { normalizeText } from '@/lib/utils';
+import { maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -246,6 +246,7 @@ export default function Opt({
   );
 
   const activeActionError = iconErrorMessage || managerEditErrorMessage || searchDialogErrorMessage || errorMessage;
+  const isEmailSearch = normalizeText(searchKeyword).includes('@');
   const actionErrorTitle = iconErrorMessage
     ? '아이콘 확인'
     : managerEditErrorMessage
@@ -1022,7 +1023,7 @@ export default function Opt({
                         sx={{ cursor: 'pointer' }}
                       >
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {manager.nickname || manager.userName || manager.email}
+                          {manager.nickname || manager.userName || maskEmail(manager.email)}
                         </TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(manager.role)}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{manager.boardLabel ?? ''}</TableCell>
@@ -1333,9 +1334,9 @@ export default function Opt({
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname || member.userName || member.email}
+                                {member.nickname || member.userName || (isEmailSearch ? member.email : maskEmail(member.email))}
                               </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.email}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{isEmailSearch ? member.email : maskEmail(member.email)}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
                                   ? '운영자'
@@ -1561,9 +1562,9 @@ export default function Opt({
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname || member.userName || member.email}
+                                {member.nickname || member.userName || (isEmailSearch ? member.email : maskEmail(member.email))}
                               </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.email}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{isEmailSearch ? member.email : maskEmail(member.email)}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
                                   ? '운영자'

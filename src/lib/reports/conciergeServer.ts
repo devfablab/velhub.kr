@@ -27,7 +27,7 @@ import {
   reportStatusLabels,
 } from '@/lib/reports/manage';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
+import { maskEmail, normalizeText } from '@/lib/utils';
 
 type RawReport = {
   id: string;
@@ -301,7 +301,7 @@ function getLegalDetails(report: RawReport, reportUrl: string | null): ReportDet
       value: null,
       links: reportUrl ? [{ label: reportUrl, href: reportUrl }] : [],
     },
-    { label: '이메일', value: report.email ?? null },
+    { label: '이메일', value: report.email ? maskEmail(report.email) : null },
     { label: '전화번호', value: report.phone ?? null },
     getFileDetails('첨부 파일', report.attachments),
   ];
@@ -381,7 +381,7 @@ function getRightsDetails(report: RawReport, reportUrl: string | null): ReportDe
       value: null,
       links: reportUrl ? [{ label: reportUrl, href: reportUrl }] : [],
     },
-    { label: '이메일', value: report.email ?? null },
+    { label: '이메일', value: report.email ? maskEmail(report.email) : null },
     { label: '전화번호', value: report.phone ?? null },
     { label: '처리결과 SMS 안내', value: report.is_sms === true ? '받음' : report.is_sms === false ? '안 받음' : null },
     { label: '권리 소유자', value: getLabel(report.rights_owner_type) },

@@ -25,7 +25,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
@@ -139,6 +139,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return email.includes(keyword) || userName.includes(keyword) || nickname.includes(keyword);
     });
   }, [appliedKeyword, users]);
+  const isEmailSearch = normalizeText(appliedKeyword).includes('@');
 
   const allFilteredSelected =
     filteredUsers.length > 0 && filteredUsers.every((user) => selectedUserIds.includes(user.userId));
@@ -358,7 +359,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         />
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.nickname || user.userName || user.email}
+                        {user.nickname || user.userName || (isEmailSearch ? user.email : maskEmail(user.email))}
                         {user.isReApproval ? ' (재신청)' : ''}
                       </TableCell>
                       <TableCell>

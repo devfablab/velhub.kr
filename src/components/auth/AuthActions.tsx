@@ -2,6 +2,7 @@
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { Avatar, useMediaQuery, useTheme } from '@mui/material';
+import { maskEmail } from '@/lib/utils';
 import Anchor from '../Anchor';
 import styles from '@/app/aside.module.sass';
 
@@ -28,7 +29,7 @@ export default function AuthActions({ initialProfile }: { initialProfile: AuthAc
           <div className={styles.info}>
             <div className={styles['info-detail']}>
               <em>{initialProfile.userName}</em>
-              <cite>{initialProfile.email}</cite>
+              <cite>{maskEmail(initialProfile.email ?? '')}</cite>
             </div>
             <div className={styles.button}>
               <Anchor href="/settings" className="button small cancel">

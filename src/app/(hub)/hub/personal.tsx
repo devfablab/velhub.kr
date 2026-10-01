@@ -1,4 +1,5 @@
 import { Avatar } from '@mui/material';
+import { maskEmail } from '@/lib/utils';
 import styles from '@/app/hub.module.sass';
 
 type PersonalProps = {
@@ -15,7 +16,7 @@ export default function Personal({ avatarUrl, email, userName, bio }: PersonalPr
         <Avatar src={avatarUrl || '/avatar.png'} alt={userName || ''} sx={{ width: 72, height: 72 }} />
         <div className={styles.meta}>
           <cite>{userName}</cite>
-          {email ? <span>{email}</span> : null}
+          {email ? <span>{maskEmail(email)}</span> : null}
         </div>
       </div>
 

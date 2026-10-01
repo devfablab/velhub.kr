@@ -33,7 +33,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -150,8 +150,8 @@ type AppliedSearch =
     }
   | null;
 
-function getDisplayNickname(user: UserRow) {
-  return user.membership.nickname || user.userName || user.email || '';
+function getDisplayNickname(user: UserRow, showEmail = false) {
+  return user.membership.nickname || user.userName || (user.email ? (showEmail ? user.email : maskEmail(user.email)) : '');
 }
 
 function getNormalizedKeyword(value: string) {
@@ -314,6 +314,8 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
       return selectableLevels[0].id;
     });
   }, [selectableLevels]);
+
+  const isEmailSearch = Boolean(appliedSearch?.method === 'nickname' && appliedSearch.keyword.includes('@'));
 
   const filteredUsers = useMemo(() => {
     if (!appliedSearch) {
@@ -1151,8 +1153,8 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" gap={1.5} alignItems="center">
-                          <Avatar src={user.avatar ?? '/default-avatar.png'} alt={getDisplayNickname(user)} />
-                          <Typography>{getDisplayNickname(user)}</Typography>
+                          <Avatar src={user.avatar ?? '/default-avatar.png'} alt={getDisplayNickname(user, isEmailSearch)} />
+                          <Typography>{getDisplayNickname(user, isEmailSearch)}</Typography>
                         </Stack>
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>

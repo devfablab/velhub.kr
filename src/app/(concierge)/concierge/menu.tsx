@@ -39,6 +39,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SecondaryMenu from '@/components/header-groups/concierge/SecondaryMenu';
 import NotificationButton from '@/components/service/common/NotificationButton';
@@ -229,7 +230,7 @@ export default function Container({ children }: ContainerProps) {
                         <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                         <div className={styles['VhiMenu-profile-info']}>
                           <em>{userProfile.name}</em>
-                          <span>{userProfile.email}</span>
+                          <span>{maskEmail(userProfile.email ?? '')}</span>
                         </div>
                       </li>
                     ) : (

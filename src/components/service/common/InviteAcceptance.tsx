@@ -17,7 +17,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { normalizeText } from '@/lib/utils';
+import { maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -171,7 +171,7 @@ export default function InviteAcceptance({
         </Stack>
       ) : !isLoggedIn ? (
         <Stack gap={2.5}>
-          <Typography variant="subtitle2">{inviteEmail}</Typography>
+          <Typography variant="subtitle2">{maskEmail(inviteEmail)}</Typography>
           <p className="alert info">
             <InfoOutlineRoundedIcon />
             <span>초대받은 이메일 계정으로 로그인하거나 회원가입해 주세요.</span>

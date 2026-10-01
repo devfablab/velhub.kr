@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, styled } from '@mui/material';
 import type { PartnershipFormInfo } from '@/lib/partnerships';
+import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
@@ -266,7 +267,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
           <Stack gap={0.5}>
             <Typography variant="subtitle2">이메일 주소 *</Typography>
             {formInfo.isLoggedIn && formInfo.paymentEmail ? (
-              <Typography variant="body2">{formInfo.paymentEmail}</Typography>
+              <Typography variant="body2">{maskEmail(formInfo.paymentEmail)}</Typography>
             ) : (
               <TextField
                 required

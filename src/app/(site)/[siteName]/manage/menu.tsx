@@ -36,7 +36,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
+import { maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
@@ -752,7 +752,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                         <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                         <div className={styles['VhiMenu-profile-info']}>
                           <em>{userProfile.name}</em>
-                          <span>{userProfile.email}</span>
+                          <span>{maskEmail(userProfile.email ?? '')}</span>
                         </div>
                       </li>
                     ) : (

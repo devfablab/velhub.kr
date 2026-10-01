@@ -21,7 +21,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDateTimeFull, normalizeText } from '@/lib/utils';
+import { formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
@@ -564,7 +564,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <TableBody>
                 {sortedTeams.map((team) => (
                   <TableRow key={team.id} hover onClick={() => handleOpenDetail(team)} sx={{ cursor: 'pointer' }}>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{team.email}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{maskEmail(team.email)}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{team.name}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(team.approval_at)}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(team.role)}</TableCell>
@@ -838,7 +838,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Box>
                       <Typography variant="subtitle2">이메일</Typography>
-                      <Typography variant="body2">{selectedTeam.email}</Typography>
+                      <Typography variant="body2">{maskEmail(selectedTeam.email)}</Typography>
                     </Box>
 
                     <Box>
@@ -887,7 +887,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Box>
                       <Typography variant="subtitle2">이메일</Typography>
-                      <Typography variant="body2">{selectedTeam.email}</Typography>
+                      <Typography variant="body2">{maskEmail(selectedTeam.email)}</Typography>
                     </Box>
 
                     <Box>
@@ -1252,7 +1252,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     <TableBody>
                       {sortedInvites.map((invite) => (
                         <TableRow key={invite.id}>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{maskEmail(invite.email)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(invite.role)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
@@ -1311,7 +1311,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     <TableBody>
                       {sortedInvites.map((invite) => (
                         <TableRow key={invite.id}>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{maskEmail(invite.email)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(invite.role)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>

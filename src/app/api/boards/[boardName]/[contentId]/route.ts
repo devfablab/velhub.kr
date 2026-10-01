@@ -724,7 +724,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
 
   const stigmaByIdResult = await supabaseAdmin
     .from('stigmas')
-    .select('id, user_id, user_name, email, avatar')
+    .select('id, user_id, user_name, email, payment_email, avatar')
     .eq('id', normalizedUserId)
     .maybeSingle();
 
@@ -732,7 +732,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     ? null
     : await supabaseAdmin
         .from('stigmas')
-        .select('id, user_id, user_name, email, avatar')
+        .select('id, user_id, user_name, email, payment_email, avatar')
         .eq('user_id', normalizedUserId)
         .maybeSingle();
 
@@ -860,9 +860,11 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   if (stigma) {
     avatarUrl = getAvatarUrl(stigma.avatar ?? null);
 
-    if (stigma.email) {
+    const encryptedEmail = stigma.payment_email || stigma.email;
+
+    if (encryptedEmail) {
       try {
-        email = decrypt(stigma.email as string);
+        email = decrypt(encryptedEmail as string);
       } catch {
         email = '';
       }

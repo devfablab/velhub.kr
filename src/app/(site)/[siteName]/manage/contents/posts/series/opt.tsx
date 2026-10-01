@@ -30,7 +30,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
-import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import { formatDateTimeDetail, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
@@ -230,6 +230,7 @@ export default function Opt({
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [userSearchKeyword, setUserSearchKeyword] = useState('');
   const [searchedUsers, setSearchedUsers] = useState<SeriesUserSearchRow[]>([]);
+  const isUserEmailSearch = normalizeText(userSearchKeyword).includes('@');
   const [isUserSearching, setIsUserSearching] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState(initialError ?? '');
@@ -1050,7 +1051,7 @@ export default function Opt({
                         <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">{selectedUser.email || selectedUser.stigmaId}</Typography>
+                            <Typography variant="body2">{selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}</Typography>
                           </Box>
                           {selectedUser.userName ? (
                             <Box>
@@ -1273,7 +1274,7 @@ export default function Opt({
                         <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">{selectedUser.email || selectedUser.stigmaId}</Typography>
+                            <Typography variant="body2">{selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}</Typography>
                           </Box>
                           {selectedUser.userName ? (
                             <Box>
@@ -1500,7 +1501,7 @@ export default function Opt({
                       <TableBody>
                         {searchedUsers.map((user) => (
                           <TableRow key={user.stigmaId}>
-                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{isUserEmailSearch ? user.email : maskEmail(user.email)}</TableCell>
                             <TableCell>{user.userName}</TableCell>
                             <TableCell>{user.nickname}</TableCell>
                             <TableCell align="right">
@@ -1589,7 +1590,7 @@ export default function Opt({
                       <TableBody>
                         {searchedUsers.map((user) => (
                           <TableRow key={user.stigmaId}>
-                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{isUserEmailSearch ? user.email : maskEmail(user.email)}</TableCell>
                             <TableCell>{user.userName}</TableCell>
                             <TableCell>{user.nickname}</TableCell>
                             <TableCell align="right">

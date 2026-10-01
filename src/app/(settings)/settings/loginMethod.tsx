@@ -15,6 +15,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { maskEmail } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
@@ -148,7 +149,7 @@ export default function LoginMethod({
 
         <AccordionDetails>
           <Stack gap={2.5}>
-            {email ? <Typography variant="body2">이메일 {email}</Typography> : null}
+            {email ? <Typography variant="body2">이메일 {maskEmail(email)}</Typography> : null}
 
             <RadioGroup name="defaultLoginMethod" value={selectedLoginMethod}>
               <FormControlLabel

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Stack, Typography } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
+import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
@@ -306,7 +307,7 @@ export default function Opt({
           )}
           <Stack gap={1}>
             <Typography variant="subtitle2">정산 안내 이메일</Typography>
-            <Typography variant="body2">{paymentEmail}</Typography>
+            <Typography variant="body2">{maskEmail(paymentEmail)}</Typography>
           </Stack>
           <Stack gap={1}>
             <Typography variant="subtitle2">정산 정보</Typography>

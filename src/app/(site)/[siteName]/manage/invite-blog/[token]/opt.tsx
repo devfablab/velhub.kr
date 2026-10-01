@@ -6,6 +6,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Box, Paper, Stack, TextField, Typography } from '@mui/material';
+import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 
@@ -192,7 +193,7 @@ export default function Opt({
 
             <Box>
               <Typography variant="subtitle2">초대 이메일</Typography>
-              <Typography variant="body2">{invite.invite.email}</Typography>
+              <Typography variant="body2">{maskEmail(invite.invite.email)}</Typography>
             </Box>
 
             <Box>

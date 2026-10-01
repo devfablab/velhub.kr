@@ -9,12 +9,16 @@ const parseDate = (value: DateInput): Date | null => {
 };
 
 export function maskEmail(email: string): string {
-  if (!email || !email.includes('@')) return email;
-  const [localPart, domainPart] = email.split('@');
-  if (localPart.length <= 2) {
-    return `${localPart.charAt(0)}*@${domainPart}`;
-  }
-  const maskedLocal = localPart.slice(0, 2) + '*'.repeat(localPart.length - 2);
+  const normalizedEmail = email.trim();
+  const separatorIndex = normalizedEmail.indexOf('@');
+
+  if (separatorIndex <= 0 || separatorIndex === normalizedEmail.length - 1) return email;
+
+  const localPart = normalizedEmail.slice(0, separatorIndex);
+  const domainPart = normalizedEmail.slice(separatorIndex + 1);
+  const visibleLength = localPart.length >= 5 ? 3 : Math.max(localPart.length - 1, 0);
+  const maskedLocal = `${localPart.slice(0, visibleLength)}${'*'.repeat(localPart.length - visibleLength)}`;
+
   return `${maskedLocal}@${domainPart}`;
 }
 

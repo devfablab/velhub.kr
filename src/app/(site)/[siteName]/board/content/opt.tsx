@@ -32,7 +32,7 @@ import {
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
-import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
+import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
 import type { CommentsResponse } from '@/components/comments/CommentList';
@@ -1322,7 +1322,7 @@ export default function Opt({
                                       <Avatar src={winner.author_avatar_url} alt={winner.author_name} />
                                       <cite>
                                         {winner.author_name}
-                                        {winner.author_email ? ` (${winner.author_email})` : null}
+                                        {winner.author_email ? ` (${maskEmail(winner.author_email)})` : null}
                                       </cite>
                                     </div>
                                   </td>

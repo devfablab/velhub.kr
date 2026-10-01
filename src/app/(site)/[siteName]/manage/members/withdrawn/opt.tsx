@@ -34,7 +34,7 @@ import {
   memberRestrictionMessageStatusLabels,
   type MemberRestrictionType,
 } from '@/lib/users/memberRestrictionMessages';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
@@ -80,6 +80,14 @@ function getUserSelectionType(user: WithdrawnUserRow): Exclude<SelectionType, nu
 }
 
 type OptProps = { initialData: WithdrawnUsersResponse | null; initialError: string };
+
+function getMaskedDisplayName(value: string, showEmail: boolean) {
+  if (showEmail) {
+    return value;
+  }
+
+  return value.replace(/^([^\s()]+@[^\s()]+)/, (email) => maskEmail(email));
+}
 
 export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
@@ -147,6 +155,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
     return users.filter((user) => normalizeText(user.displayName).toLowerCase().includes(keyword));
   }, [appliedKeyword, users]);
+  const isEmailSearch = normalizeText(appliedKeyword).includes('@');
 
   const selectionType = useMemo<SelectionType>(() => {
     const firstSelectedUserId = selectedUserIds[0];
@@ -490,7 +499,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           }
                         />
                       </TableCell>
-                      <TableCell>{user.displayName}</TableCell>
+                      <TableCell>{getMaskedDisplayName(user.displayName, isEmailSearch)}</TableCell>
                       <TableCell sx={{ whiteSpace: 'pre-line' }}>{user.reason}</TableCell>
                       <TableCell>
                         {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}

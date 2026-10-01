@@ -21,7 +21,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDateTimeFull, normalizeText } from '@/lib/utils';
+import { formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
@@ -278,7 +278,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <TableBody>
                   {sortedInvites.map((invite) => (
                     <TableRow key={invite.id}>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{maskEmail(invite.email)}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
                       <TableCell align="right">

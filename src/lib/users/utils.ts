@@ -2,7 +2,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
-import { normalizeText } from '@/lib/utils';
+import { maskEmail, normalizeText } from '@/lib/utils';
 
 type SiteType = 'community';
 
@@ -572,5 +572,5 @@ export function getStigmaDisplayName(stigma: StigmaRow | null | undefined) {
     return userName;
   }
 
-  return decryptNullable(stigma?.payment_email ?? null) || decryptNullable(stigma?.email ?? null) || '';
+  return maskEmail(decryptNullable(stigma?.payment_email ?? null) || decryptNullable(stigma?.email ?? null) || '');
 }

@@ -13,6 +13,7 @@ import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { maskEmail } from '@/lib/utils';
 import Anchor from '../Anchor';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
@@ -264,7 +265,7 @@ export default function HeaderHub() {
                     <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                     <div className={styles['VhiMenu-profile-info']}>
                       <em>{userProfile.name}</em>
-                      <span>{userProfile.email}</span>
+                      <span>{maskEmail(userProfile.email ?? '')}</span>
                     </div>
                   </li>
                   <MenuItem key="lounge" onClick={handleCloseProfileMenu}>

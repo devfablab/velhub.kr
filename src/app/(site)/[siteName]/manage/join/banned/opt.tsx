@@ -21,7 +21,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
@@ -46,6 +46,14 @@ export type BannedUsersResponse = {
 };
 
 type OptProps = { initialData: BannedUsersResponse | null; initialError: string };
+
+function getMaskedDisplayName(value: string, showEmail: boolean) {
+  if (showEmail) {
+    return value;
+  }
+
+  return value.replace(/^([^\s()]+@[^\s()]+)/, (email) => maskEmail(email));
+}
 
 export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
@@ -103,6 +111,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
     return users.filter((user) => normalizeText(user.displayName).toLowerCase().includes(keyword));
   }, [appliedKeyword, users]);
+  const isEmailSearch = normalizeText(appliedKeyword).includes('@');
 
   const allFilteredSelected =
     filteredUsers.length > 0 && filteredUsers.every((user) => selectedUserIds.includes(user.userId));
@@ -268,7 +277,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                         />
                       </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.displayName}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{getMaskedDisplayName(user.displayName, isEmailSearch)}</TableCell>
                       <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{user.reason}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}

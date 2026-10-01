@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
+import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -554,7 +555,7 @@ export default function SettlementForm({
           )}
           <Stack gap={1}>
             <Typography variant="subtitle2">정산 안내 이메일</Typography>
-            <Typography variant="body2">{paymentEmail}</Typography>
+            <Typography variant="body2">{maskEmail(paymentEmail)}</Typography>
           </Stack>
           <Stack gap={1}>
             <Typography variant="subtitle2">정산 정보</Typography>
