@@ -38,6 +38,7 @@ import {
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
 import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
@@ -511,6 +512,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
 
   const { themeMode, setThemeMode } = useThemeMode();
   const initialHeader = useSiteHeader();
+  const { isAuthenticated, isAuthServiceUnavailable } = useAuthState();
   const [siteLabel, setSiteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
   const [isAdult] = useState<boolean>(initialHeader?.isAdult ?? false);
@@ -534,6 +536,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     userHandleName: initialHeader?.userHandleName ?? null,
     hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
   });
+  const isLoggedIn = userProfile.isLoggedIn && isAuthenticated;
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -584,6 +587,10 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   }
 
   async function handleLogout() {
+    if (isAuthServiceUnavailable) {
+      return;
+    }
+
     handleCloseProfileDrawer();
 
     const supabase = getSupabaseBrowser();
@@ -747,7 +754,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                       </IconButton>
                     </li>
 
-                    {userProfile.isLoggedIn ? (
+                    {isLoggedIn ? (
                       <li className={styles['VhiMenu-profile']}>
                         <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                         <div className={styles['VhiMenu-profile-info']}>
@@ -763,7 +770,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                         </div>
                       </li>
                     )}
-                    {userProfile.isLoggedIn && userProfile.join ? (
+                    {isLoggedIn && userProfile.join ? (
                       <li className={styles['VhiMenu-profile']}>
                         <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
                         <div className={styles['VhiMenu-profile-info']}>
@@ -783,7 +790,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                         </div>
                       </li>
                     ) : null}
-                    {userProfile.isLoggedIn && userProfile.join === false && siteType === 'community' ? (
+                    {isLoggedIn && userProfile.join === false && siteType === 'community' ? (
                       <li className={styles['VhiMenu-profile']}>
                         <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
                         <div className={styles['VhiMenu-profile-info']}>
@@ -856,7 +863,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                       </>
                     ) : null}
 
-                    {userProfile.isLoggedIn ? (
+                    {isLoggedIn ? (
                       <>
                         <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
                         <MenuItem onClick={handleCloseProfileDrawer}>

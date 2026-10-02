@@ -41,6 +41,7 @@ import {
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import SecondaryMenu from '@/components/header-groups/concierge/SecondaryMenu';
 import NotificationButton from '@/components/service/common/NotificationButton';
 import { ServiceLogo } from '@/components/Svgs';
@@ -98,6 +99,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 export default function Container({ children }: ContainerProps) {
   const initialHeader = useConciergeHeader();
+  const { isAuthenticated, isAuthServiceUnavailable } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -116,6 +118,7 @@ export default function Container({ children }: ContainerProps) {
     userHandleName: initialHeader?.userHandleName ?? null,
     hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
   };
+  const isLoggedIn = userProfile.isLoggedIn && isAuthenticated;
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -159,6 +162,10 @@ export default function Container({ children }: ContainerProps) {
   }
 
   async function handleLogout() {
+    if (isAuthServiceUnavailable) {
+      return;
+    }
+
     handleCloseProfileDrawer();
 
     const supabase = getSupabaseBrowser();
@@ -225,7 +232,7 @@ export default function Container({ children }: ContainerProps) {
                       </IconButton>
                     </li>
 
-                    {userProfile.isLoggedIn ? (
+                    {isLoggedIn ? (
                       <li className={styles['VhiMenu-profile']}>
                         <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                         <div className={styles['VhiMenu-profile-info']}>
@@ -336,7 +343,7 @@ export default function Container({ children }: ContainerProps) {
                       </>
                     ) : null}
                     <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                    {userProfile.isLoggedIn
+                    {isLoggedIn
                       ? [
                           ...(userProfile.isAuthor
                             ? [

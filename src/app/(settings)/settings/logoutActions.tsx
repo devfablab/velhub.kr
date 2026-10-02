@@ -21,11 +21,13 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import styles from '@/app/settings.module.sass';
 
 export default function LogoutActions() {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
+  const { isAuthServiceUnavailable } = useAuthState();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -41,7 +43,7 @@ export default function LogoutActions() {
   }
 
   async function handleLogoutCurrentDevice() {
-    if (isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
+    if (isAuthServiceUnavailable || isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
       return;
     }
 
@@ -69,7 +71,7 @@ export default function LogoutActions() {
   }
 
   function handleOpenConfirm() {
-    if (isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
+    if (isAuthServiceUnavailable || isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
       return;
     }
 
@@ -85,7 +87,7 @@ export default function LogoutActions() {
   }
 
   async function handleLogoutAllDevices() {
-    if (isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
+    if (isAuthServiceUnavailable || isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
       return;
     }
 

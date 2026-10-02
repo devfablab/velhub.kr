@@ -229,7 +229,7 @@ export default function HeaderSite() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const { isReady } = useAuthState();
+  const { isAuthenticated, isAuthServiceUnavailable, isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
 
   const [isMounted, setIsMounted] = useState(false);
@@ -257,6 +257,7 @@ export default function HeaderSite() {
   const [siteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
   const [profilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
   const [profileLogoUrl] = useState<string | null>(initialHeader?.profileLogoUrl ?? null);
+  const isLoggedIn = userProfile.isLoggedIn && isAuthenticated;
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -347,6 +348,10 @@ export default function HeaderSite() {
   }
 
   async function handleLogout() {
+    if (isAuthServiceUnavailable) {
+      return;
+    }
+
     handleCloseProfileMenu();
 
     const supabase = getSupabaseBrowser();
@@ -556,7 +561,7 @@ export default function HeaderSite() {
             onClose={handleCloseProfileMenu}
             className={styles.VhiMenu}
           >
-            {userProfile.isLoggedIn ? (
+            {isLoggedIn ? (
               <li className={styles['VhiMenu-profile']}>
                 <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                 <div className={styles['VhiMenu-profile-info']}>
@@ -572,7 +577,7 @@ export default function HeaderSite() {
                 </div>
               </li>
             )}
-            {userProfile.isLoggedIn && userProfile.join ? (
+            {isLoggedIn && userProfile.join ? (
               <li className={styles['VhiMenu-profile']}>
                 <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
                 <div className={styles['VhiMenu-profile-info']}>
@@ -594,7 +599,7 @@ export default function HeaderSite() {
                 </div>
               </li>
             ) : null}
-            {userProfile.isLoggedIn && userProfile.join === false && siteType === 'community' ? (
+            {isLoggedIn && userProfile.join === false && siteType === 'community' ? (
               <li className={styles['VhiMenu-profile']}>
                 <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
                 <div className={styles['VhiMenu-profile-info']}>
@@ -627,7 +632,7 @@ export default function HeaderSite() {
                   </MenuItem>,
                 ]}
 
-            {userProfile.isLoggedIn
+            {isLoggedIn
               ? [
                   <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
                     <Anchor href="/">

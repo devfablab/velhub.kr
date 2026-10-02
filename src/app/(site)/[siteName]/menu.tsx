@@ -244,7 +244,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const { isReady } = useAuthState();
+  const { isAuthenticated, isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
   const initialHeader = useSiteHeader();
   const profileLogoUrl = initialHeader?.profileLogoUrl ?? null;
@@ -273,6 +273,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
     userHandleName: initialHeader?.userHandleName ?? null,
     hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
   };
+  const isLoggedIn = userProfile.isLoggedIn && isAuthenticated;
 
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
@@ -514,7 +515,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                       </IconButton>
                     </li>
 
-                    {userProfile.isLoggedIn ? (
+                    {isLoggedIn ? (
                       <li className={styles['VhiMenu-profile']}>
                         <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                         <div className={styles['VhiMenu-profile-info']}>
@@ -530,7 +531,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                         </div>
                       </li>
                     )}
-                    {userProfile.isLoggedIn && userProfile.join ? (
+                    {isLoggedIn && userProfile.join ? (
                       <ListSubheader className={styles['VhiMenu-profile']}>
                         <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
                         <div className={styles['VhiMenu-profile-info']}>
@@ -550,7 +551,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                         </div>
                       </ListSubheader>
                     ) : null}
-                    {userProfile.isLoggedIn && userProfile.join === false && siteType === 'community' ? (
+                    {isLoggedIn && userProfile.join === false && siteType === 'community' ? (
                       <ListSubheader className={styles['VhiMenu-profile']}>
                         <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
                         <div className={styles['VhiMenu-profile-info']}>
@@ -625,7 +626,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                       </>
                     ) : null}
 
-                    {userProfile.isLoggedIn ? (
+                    {isLoggedIn ? (
                       <>
                         <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
                         <MenuItem onClick={handleCloseProfileDrawer}>

@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createHash } from 'crypto';
+import { getSupabaseAuthHealth, isSupabaseAuthOutage } from '@/lib/auth/health.server';
 import { hasTotpRecoveryAccess as getTotpRecoveryAccess } from '@/lib/auth/totpRecovery.server';
 import { redis } from '@/lib/redis';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -223,6 +224,15 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  const authHealth = await getSupabaseAuthHealth();
+
+  if (isSupabaseAuthOutage(authHealth)) {
+    return {
+      response,
+      sessionClaims: null,
+    };
+  }
+
   const cachedSessionClaims = await getCachedSessionClaims(request.cookies.getAll());
 
   if (cachedSessionClaims) {
@@ -292,6 +302,12 @@ export async function getSessionClaims() {
   const cookieStore = await cookies();
   const cookieItems = cookieStore.getAll();
 
+  const authHealth = await getSupabaseAuthHealth();
+
+  if (isSupabaseAuthOutage(authHealth)) {
+    return null;
+  }
+
   const cachedSessionClaims = await getCachedSessionClaims(cookieItems);
 
   if (cachedSessionClaims) {
@@ -337,6 +353,11 @@ export async function getSessionClaims() {
   }
 
   return buildSessionClaimsFromAuthClaims(claims, cookieFingerprint);
+}
+
+export async function hasCurrentAuthSessionCookie() {
+  const cookieStore = await cookies();
+  return Boolean(getAuthCookieFingerprint(cookieStore.getAll()));
 }
 
 export async function clearSessionClaimsCache(sessionId: string | null) {

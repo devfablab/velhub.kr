@@ -41,6 +41,7 @@ import {
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import { useHubHeader } from './shared/HubHeaderContext';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
@@ -95,6 +96,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 export default function Container({ pageTitle, pageBack, children }: ContainerProps) {
   const initialHeader = useHubHeader();
+  const { isAuthServiceUnavailable } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -154,6 +156,10 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
   }
 
   async function handleLogout() {
+    if (isAuthServiceUnavailable) {
+      return;
+    }
+
     handleCloseProfileDrawer();
 
     const supabase = getSupabaseBrowser();

@@ -3,8 +3,9 @@ import type { Metadata, Viewport } from 'next';
 import { Hahmlet, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google';
 import localFont from 'next/font/local';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
+import { getSupabaseAuthHealth } from '@/lib/auth/health.server';
 import { getChannelWorksMember } from '@/lib/channelWorks/member.server';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims, hasCurrentAuthSessionCookie } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import TotpGuard from '@/components/auth/TotpGuard';
@@ -74,7 +75,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const sessionClaims = await getSessionClaims();
+  const [authHealth, hasSessionCookie, sessionClaims] = await Promise.all([
+    getSupabaseAuthHealth(),
+    hasCurrentAuthSessionCookie(),
+    getSessionClaims(),
+  ]);
   const channelWorksMember = await getChannelWorksMember();
   const needsTotp = Boolean(
     sessionClaims?.userId &&
@@ -105,7 +110,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <div id="__app">
           <ChannelWorksMemberProvider member={channelWorksMember}>
-            <AuthStateProvider>
+            <AuthStateProvider initialAuthHealth={authHealth.status} initialSessionCookie={hasSessionCookie}>
               <AppRouterCacheProvider>
                 <ThemeProviderClient>
                   <WithdrawalGuard initialStatus={withdrawalStatus} initialRequestedAt={withdrawalRequestedAt}>

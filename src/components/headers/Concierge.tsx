@@ -16,6 +16,7 @@ import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMedi
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import PrimaryMenu from '../header-groups/concierge/PrimaryMenu';
 import SecondaryMenu from '../header-groups/concierge/SecondaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
@@ -70,6 +71,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 export default function HeaderConcierge() {
   const initialHeader = useConciergeHeader();
+  const { isAuthenticated, isAuthServiceUnavailable } = useAuthState();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -94,6 +96,7 @@ export default function HeaderConcierge() {
     userHandleName: initialHeader?.userHandleName ?? null,
     hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
   };
+  const isLoggedIn = userProfile.isLoggedIn && isAuthenticated;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -181,6 +184,10 @@ export default function HeaderConcierge() {
   }
 
   async function handleLogout() {
+    if (isAuthServiceUnavailable) {
+      return;
+    }
+
     handleCloseProfileMenu();
     handleCloseProfileDrawer();
 
@@ -313,7 +320,7 @@ export default function HeaderConcierge() {
             onClose={handleCloseProfileMenu}
             className={styles.VhiMenu}
           >
-            {userProfile.isLoggedIn ? (
+            {isLoggedIn ? (
               <li className={styles['VhiMenu-profile']}>
                 <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                 <div className={styles['VhiMenu-profile-info']}>
@@ -329,7 +336,7 @@ export default function HeaderConcierge() {
                 </div>
               </li>
             )}
-            {userProfile.isLoggedIn
+            {isLoggedIn
               ? [
                   <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
                     <Anchor href="/">

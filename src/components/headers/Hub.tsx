@@ -14,6 +14,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail } from '@/lib/utils';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
@@ -66,6 +67,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 export default function HeaderHub() {
   const initialHeader = useHubHeader();
+  const { isAuthenticated, isAuthServiceUnavailable } = useAuthState();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -166,6 +168,10 @@ export default function HeaderHub() {
   }
 
   async function handleLogout() {
+    if (isAuthServiceUnavailable) {
+      return;
+    }
+
     handleCloseProfileMenu();
     handleCloseProfileDrawer();
 
@@ -249,8 +255,8 @@ export default function HeaderHub() {
 
                 <IconButton onClick={handleOpenProfileMenu}>
                   <Avatar
-                    src={userProfile.avatarUrl || '/broken-image.jpg'}
-                    alt={userProfile.name || ''}
+                    src={isAuthenticated ? userProfile.avatarUrl || '/broken-image.jpg' : ''}
+                    alt={isAuthenticated ? userProfile.name || '' : ''}
                     sx={{ width: 24, height: 24 }}
                   />
                 </IconButton>
@@ -261,55 +267,65 @@ export default function HeaderHub() {
                   onClose={handleCloseProfileMenu}
                   className={styles.VhiMenu}
                 >
-                  <li className={styles['VhiMenu-profile']}>
-                    <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                    <div className={styles['VhiMenu-profile-info']}>
-                      <em>{userProfile.name}</em>
-                      <span>{maskEmail(userProfile.email ?? '')}</span>
-                    </div>
-                  </li>
-                  <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
-                    <Anchor href="/">
-                      <HomeOutlinedIcon fontSize="small" />
-                      <span>라운지 이동</span>
-                    </Anchor>
-                  </MenuItem>
-                  {userProfile.isAuthor ? (
-                    <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
-                      <Anchor
-                        href={
-                          userProfile.creatorHandleName
-                            ? `/creator/${userProfile.creatorHandleName}`
-                            : '/creator/settings'
-                        }
-                      >
-                        <MenuBookRoundedIcon fontSize="small" />
-                        <span>작가의 서재</span>
+                  {isAuthenticated ? (
+                    <>
+                      <li className={styles['VhiMenu-profile']}>
+                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                        <div className={styles['VhiMenu-profile-info']}>
+                          <em>{userProfile.name}</em>
+                          <span>{maskEmail(userProfile.email ?? '')}</span>
+                        </div>
+                      </li>
+                      <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
+                        <Anchor href="/">
+                          <HomeOutlinedIcon fontSize="small" />
+                          <span>라운지 이동</span>
+                        </Anchor>
+                      </MenuItem>
+                      {userProfile.isAuthor ? (
+                        <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
+                          <Anchor
+                            href={
+                              userProfile.creatorHandleName
+                                ? `/creator/${userProfile.creatorHandleName}`
+                                : '/creator/settings'
+                            }
+                          >
+                            <MenuBookRoundedIcon fontSize="small" />
+                            <span>작가의 서재</span>
+                          </Anchor>
+                        </MenuItem>
+                      ) : null}
+                      {userProfile.hasAffettoMyPosts ? (
+                        <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
+                          <Anchor
+                            href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
+                          >
+                            <InterestsOutlinedIcon fontSize="small" />
+                            <span>독자의 서재</span>
+                          </Anchor>
+                        </MenuItem>
+                      ) : null}
+                      <MenuItem key="settings" onClick={handleCloseProfileMenu}>
+                        <Anchor href="/settings">
+                          <SettingsOutlinedIcon fontSize="small" />
+                          <span>개인 설정</span>
+                        </Anchor>
+                      </MenuItem>
+                      <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                        <ListItemIcon className={styles['MenuItem-icon']}>
+                          <LogoutOutlinedIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
+                      </MenuItem>
+                    </>
+                  ) : (
+                    <MenuItem key="sign-in" onClick={handleCloseProfileMenu}>
+                      <Anchor href="/auth/sign-in">
+                        <span>로그인</span>
                       </Anchor>
                     </MenuItem>
-                  ) : null}
-                  {userProfile.hasAffettoMyPosts ? (
-                    <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
-                      <Anchor
-                        href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
-                      >
-                        <InterestsOutlinedIcon fontSize="small" />
-                        <span>독자의 서재</span>
-                      </Anchor>
-                    </MenuItem>
-                  ) : null}
-                  <MenuItem key="settings" onClick={handleCloseProfileMenu}>
-                    <Anchor href="/settings">
-                      <SettingsOutlinedIcon fontSize="small" />
-                      <span>개인 설정</span>
-                    </Anchor>
-                  </MenuItem>
-                  <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                    <ListItemIcon className={styles['MenuItem-icon']}>
-                      <LogoutOutlinedIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                  </MenuItem>
+                  )}
                 </Menu>
               </div>
             </div>

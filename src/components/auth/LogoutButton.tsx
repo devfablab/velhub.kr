@@ -2,12 +2,18 @@
 
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { useAuthState } from './AuthStateProvider';
 
 export default function LogoutButton() {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
+  const { isAuthServiceUnavailable } = useAuthState();
 
   async function handleLogout() {
+    if (isAuthServiceUnavailable) {
+      return;
+    }
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {

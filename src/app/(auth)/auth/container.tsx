@@ -77,6 +77,8 @@ export default function Container({ children }: ContainerProps) {
                           ? '비밀번호 재설정'
                           : pathname === '/auth/reset-password'
                             ? '새 비밀번호 설정'
+                            : pathname === '/auth/health'
+                              ? '인증 서버 상태'
                             : ''}
                   </h1>
                   {pathname === '/auth/sign-in' || pathname === '/auth/sign-up' ? (

@@ -14,8 +14,9 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { formatDateTimeDetail } from '@/lib/utils';
 import { ACCOUNT_WITHDRAWAL_GRACE_MS } from '@/lib/users/accountWithdrawal.shared';
+import { formatDateTimeDetail } from '@/lib/utils';
+import { useAuthState } from './AuthStateProvider';
 
 type WithdrawalStatusResponse = {
   status?: string | null;
@@ -41,6 +42,7 @@ export default function WithdrawalGuard({
   initialRequestedAt: string | null;
 }) {
   const router = useRouter();
+  const { isAuthServiceUnavailable } = useAuthState();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [status, setStatus] = useState<string | null>(initialStatus);
@@ -51,14 +53,14 @@ export default function WithdrawalGuard({
   useEffect(() => {
     setStatus(initialStatus);
 
-    if (initialStatus === 'completed') {
+    if (initialStatus === 'completed' && !isAuthServiceUnavailable) {
       const supabase = getSupabaseBrowser();
       void supabase.auth.signOut({ scope: 'global' }).then(() => router.replace('/'));
     }
-  }, [initialStatus, router]);
+  }, [initialStatus, isAuthServiceUnavailable, router]);
 
   async function handleCancelWithdrawal() {
-    if (isCanceling || isLoggingOut) {
+    if (isAuthServiceUnavailable || isCanceling || isLoggingOut) {
       return;
     }
 
@@ -90,7 +92,7 @@ export default function WithdrawalGuard({
   }
 
   async function handleLogout() {
-    if (isCanceling || isLoggingOut) {
+    if (isAuthServiceUnavailable || isCanceling || isLoggingOut) {
       return;
     }
 
@@ -139,7 +141,7 @@ export default function WithdrawalGuard({
               type="button"
               className="button small cancel"
               onClick={handleLogout}
-              disabled={isCanceling || isLoggingOut}
+              disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
               로그아웃하기
             </button>
@@ -147,7 +149,7 @@ export default function WithdrawalGuard({
               type="button"
               className="button small submit"
               onClick={handleCancelWithdrawal}
-              disabled={isCanceling || isLoggingOut}
+              disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
               탈퇴신청 취소
             </button>
@@ -170,11 +172,15 @@ export default function WithdrawalGuard({
               type="button"
               className="cancel-button"
               onClick={handleLogout}
-              disabled={isCanceling || isLoggingOut}
+              disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
               로그아웃하기
             </button>
-            <button type="button" onClick={handleCancelWithdrawal} disabled={isCanceling || isLoggingOut}>
+            <button
+              type="button"
+              onClick={handleCancelWithdrawal}
+              disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
+            >
               탈퇴신청 취소
             </button>
           </DialogActions>

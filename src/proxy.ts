@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { getSupabaseAuthHealth, isSupabaseAuthOutage } from '@/lib/auth/health.server';
 import { updateSession } from '@/lib/session';
 import { normalizeText } from '@/lib/utils';
 
@@ -559,9 +560,34 @@ function getSecondaryRedirectPath({
 }
 
 export async function proxy(request: NextRequest) {
+  let pathname = request.nextUrl.pathname;
+
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname === '/favicon.ico' ||
+    pathname.startsWith('/favicon/') ||
+    pathname === '/broken-image.jpg' ||
+    pathname === '/dummy.webp' ||
+    pathname === '/together.webp'
+  ) {
+    return NextResponse.next();
+  }
+
+  const authHealth = await getSupabaseAuthHealth();
+
+  if (
+    isSupabaseAuthOutage(authHealth) &&
+    !['GET', 'HEAD', 'OPTIONS'].includes(request.method) &&
+    pathname !== '/api/auth/health'
+  ) {
+    return NextResponse.json(
+      { error: '현재 인증 서버 장애로 읽기만 가능합니다.' },
+      { status: 503, headers: { 'Cache-Control': 'no-store, max-age=0' } },
+    );
+  }
+
   const { response, sessionClaims } = await updateSession(request);
 
-  let pathname = request.nextUrl.pathname;
   let customDomainSiteName: string | null = null;
 
   const hostname = getRequestHostname(request);
@@ -590,6 +616,10 @@ export async function proxy(request: NextRequest) {
   const isLoggedIn = Boolean(sessionClaims?.userId);
   const isAal1 = sessionClaims?.authenticationLevel === 'aal1';
   const hasTotp = sessionClaims?.hasTotp === true;
+
+  if (isSupabaseAuthOutage(authHealth) && pathname === '/auth/sign-in') {
+    return redirectWithPath(request, '/auth/health');
+  }
 
   if (pathname === '/auth/sign-in' || pathname === '/auth/sign-up' || pathname === '/auth') {
     if (isLoggedIn) {

@@ -3,6 +3,7 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { Avatar, useMediaQuery, useTheme } from '@mui/material';
 import { maskEmail } from '@/lib/utils';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 import styles from '@/app/aside.module.sass';
 
@@ -14,11 +15,12 @@ export type AuthActionsProfile = {
 };
 
 export default function AuthActions({ initialProfile }: { initialProfile: AuthActionsProfile | null }) {
+  const { isAuthenticated } = useAuthState();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  if (initialProfile?.isLoggedIn) {
+  if (initialProfile?.isLoggedIn && isAuthenticated) {
     return (
       <>
         <div className={`${styles['user-info']} paper`}>
