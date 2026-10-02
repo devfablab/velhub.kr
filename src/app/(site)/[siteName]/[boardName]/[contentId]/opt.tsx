@@ -1563,7 +1563,7 @@ export default function Opt({
               boardName={boardName}
               contentId={content.id}
               postAuthorId={content.user_id}
-              isCommentEnabled={content.is_comment}
+              isCommentEnabled={content.is_comment !== false}
               commentProvider={content.comment_provider}
               giscusSettings={content.giscus_settings}
               themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}

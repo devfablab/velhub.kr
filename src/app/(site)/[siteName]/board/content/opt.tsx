@@ -1357,7 +1357,7 @@ export default function Opt({
               boardName={boardName}
               contentId={content.id}
               postAuthorId={content.user_id}
-              isCommentEnabled={content.is_comment}
+              isCommentEnabled={content.is_comment !== false}
               getYoutubeCurrentTime={
                 isYoutubeBoard && content.youtube_id
                   ? () => youtubePlayerReference.current?.getCurrentTime() ?? null

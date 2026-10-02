@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import { Avatar } from '@mui/material';
@@ -42,6 +42,12 @@ export type CommentsResponse = {
 type CommentActionResponse = {
   ok?: boolean;
   comment?: CommentData;
+  error?: string;
+};
+
+type CommentPinResponse = {
+  ok?: boolean;
+  isPinned?: boolean;
   error?: string;
 };
 
@@ -115,13 +121,14 @@ export default function CommentList({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  async function loadComments() {
+  const loadComments = useCallback(async () => {
     try {
       setErrorMessage('');
 
       const response = await fetch(`/api/boards/${boardName}/${contentId}/comments?siteName=${siteName}`, {
         method: 'GET',
         credentials: 'include',
+        cache: 'no-store',
       });
 
       const result = (await response.json()) as CommentsResponse;
@@ -144,7 +151,11 @@ export default function CommentList({
         setErrorMessage('댓글 목록을 불러오지 못했습니다.');
       }
     }
-  }
+  }, [boardName, contentId, siteName]);
+
+  useEffect(() => {
+    void loadComments();
+  }, [loadComments]);
 
   async function createComment(content: string, parentId: string | null) {
     try {
@@ -351,7 +362,39 @@ export default function CommentList({
     }
   }
 
+  async function pinComment(commentId: string, isPinned: boolean) {
+    try {
+      setIsSubmitting(true);
+      setErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments/${commentId}/pin`, {
+        method: isPinned ? 'PATCH' : 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ siteName }),
+      });
+      const result = (await response.json()) as CommentPinResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '댓글 고정 상태를 변경하지 못했습니다.');
+      }
+
+      await loadComments();
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '댓글 고정 상태를 변경하지 못했습니다.');
+      } else {
+        setErrorMessage('댓글 고정 상태를 변경하지 못했습니다.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   const commentCount = getCommentCount(comments);
+  const pinnedCommentId = comments.find((comment) => comment.is_pinned)?.id ?? '';
 
   return (
     <section className={`${styles['comment-section']} paper`}>
@@ -430,6 +473,8 @@ export default function CommentList({
               onBlind={blindComment}
               onUnblind={unblindComment}
               onLike={likeComment}
+              pinnedCommentId={pinnedCommentId}
+              onPin={pinComment}
             />
           ))
         ) : (

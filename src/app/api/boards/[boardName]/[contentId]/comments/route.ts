@@ -58,6 +58,7 @@ type CommentRow = {
   blinded_at: string | null;
   blinded_by: string | null;
   blinded_message: string | null;
+  is_pinned: boolean;
 };
 
 type CommentItem = {
@@ -76,6 +77,7 @@ type CommentItem = {
   blinded_at: string | null;
   blinded_by: string | null;
   blinded_message: string | null;
+  is_pinned: boolean;
   author_name: string;
   author_avatar_url: string;
   author_level: AuthorLevel | null;
@@ -88,6 +90,7 @@ type CommentItem = {
   can_delete: boolean;
   can_blind: boolean;
   can_unblind: boolean;
+  can_pin: boolean;
   poll_choice: PollChoice | null;
   like_count: number;
   is_liked: boolean;
@@ -457,7 +460,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
 
   const rhizome = await supabaseAdmin
     .from('rhizomes')
-    .select('id, visibility_type, is_shutdown')
+    .select('id, visibility_type, is_shutdown, site_type')
     .eq('site_key', siteName)
     .maybeSingle();
 
@@ -527,6 +530,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
       drawEndsAt: typeof post.data.draw_ends_at === 'string' ? post.data.draw_ends_at : null,
       visibilityType: rhizome.data.visibility_type as string,
       isShutdown: rhizome.data.is_shutdown === true,
+      siteType: rhizome.data.site_type as string,
     },
   };
 }
@@ -607,6 +611,7 @@ async function buildCommentItem({
   postAuthorId,
   stigmaId,
   canManageComment,
+  canPinComment,
   pollChoiceMap,
   commentLikeCountMap,
   likedCommentIdSet,
@@ -619,6 +624,7 @@ async function buildCommentItem({
   postAuthorId: string;
   stigmaId: string | null;
   canManageComment: boolean;
+  canPinComment: boolean;
   pollChoiceMap: Map<string, PollChoice>;
   commentLikeCountMap: Map<string, number>;
   likedCommentIdSet: Set<string>;
@@ -675,6 +681,7 @@ async function buildCommentItem({
     blinded_at: comment.blinded_at,
     blinded_by: comment.blinded_by,
     blinded_message: comment.blinded_message,
+    is_pinned: comment.is_pinned === true,
     author_name: author.name,
     author_avatar_url: author.avatarUrl,
     author_level: author.level,
@@ -687,6 +694,7 @@ async function buildCommentItem({
     can_delete: isMe && !isDeleted,
     can_blind: canManageComment && !isDeleted && !isBlinded,
     can_unblind: canManageComment && !isDeleted && isBlinded,
+    can_pin: canPinComment && !comment.parent_id && !isDeleted && !isBlinded,
     poll_choice: pollChoiceMap.get(comment.user_id) ?? null,
     like_count: commentLikeCountMap.get(comment.id) ?? 0,
     is_liked: likedCommentIdSet.has(comment.id),
@@ -697,7 +705,13 @@ async function buildCommentItem({
 function groupComments(comments: CommentItem[]) {
   const rootComments = comments
     .filter((comment) => !comment.parent_id)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    .sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) {
+        return a.is_pinned ? -1 : 1;
+      }
+
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   const repliesByParentId = new Map<string, CommentItem[]>();
 
@@ -755,6 +769,10 @@ export async function GET(request: Request, context: RouteContext) {
       session.stigmaId ?? null,
       session.case,
     );
+    const canPinComment =
+      target.data.siteType === 'community' &&
+      Boolean(session.stigmaId) &&
+      (session.stigmaId === target.data.postAuthorId || canManageComment);
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -776,7 +794,7 @@ export async function GET(request: Request, context: RouteContext) {
     const commentsResult = await supabaseAdmin
       .from('post_comments')
       .select(
-        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message, is_locked',
+        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message, is_locked, is_pinned',
       )
       .eq('site_id', target.data.siteId)
       .eq('board_id', target.data.boardId)
@@ -863,6 +881,7 @@ export async function GET(request: Request, context: RouteContext) {
           postAuthorId: target.data.postAuthorId,
           stigmaId: session.stigmaId ?? null,
           canManageComment,
+          canPinComment,
           pollChoiceMap,
           commentLikeCountMap,
           likedCommentIdSet,
@@ -1086,6 +1105,9 @@ export async function POST(request: Request, context: RouteContext) {
       session.stigmaId,
       session.case,
     );
+    const canPinComment =
+      target.data.siteType === 'community' &&
+      (session.stigmaId === target.data.postAuthorId || canManageComment);
 
     const commentMap = new Map([[insertResult.data.id, insertResult.data as CommentRow]]);
     const authorMap = new Map<string, Awaited<ReturnType<typeof getUserDisplayInfo>>>();
@@ -1099,6 +1121,7 @@ export async function POST(request: Request, context: RouteContext) {
       postAuthorId: target.data.postAuthorId,
       stigmaId: session.stigmaId,
       canManageComment,
+      canPinComment,
       pollChoiceMap: new Map(),
       commentLikeCountMap: new Map(),
       likedCommentIdSet: new Set(),

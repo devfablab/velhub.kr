@@ -11,6 +11,10 @@ type RhizomeStigmaPolicyRow = {
   approval_at: string | null;
 };
 
+type CommunityManageRoleRow = {
+  role: string | null;
+};
+
 function getPostPolicyRequiredCommentCount(policyPost: string | null | undefined) {
   if (policyPost === 'comment_1') {
     return 1;
@@ -49,6 +53,43 @@ function canBypassCommunityPolicy(sessionCase: SessionCase, role: string | null 
   }
 
   return role === 'owner';
+}
+
+async function canBypassCommunityCommentPolicy({
+  communityId,
+  membershipId,
+  role,
+  sessionCase,
+  supabaseAdmin,
+}: {
+  communityId: string;
+  membershipId: string;
+  role: string | null | undefined;
+  sessionCase: SessionCase;
+  supabaseAdmin: SupabaseAdminClient;
+}) {
+  if (canBypassCommunityPolicy(sessionCase, role)) {
+    return true;
+  }
+
+  const managerRoleResult = await supabaseAdmin
+    .from('community_manage_role')
+    .select('role')
+    .eq('community_id', communityId)
+    .eq('manager_id', membershipId);
+
+  if (managerRoleResult.error) {
+    throw new Error('커뮤니티 매니저 권한을 확인하지 못했습니다.');
+  }
+
+  return (managerRoleResult.data as CommunityManageRoleRow[]).some((managerRole) =>
+    [
+      'community-manager',
+      'board-manager',
+      'board-general-manager',
+      'board-assistant-manager',
+    ].includes(managerRole.role ?? ''),
+  );
 }
 
 async function getRhizomeStigmaForPolicy({
@@ -134,7 +175,7 @@ export async function assertCommunityCommentWritePolicy({
 
   const communityResult = await supabaseAdmin
     .from('communities')
-    .select('policy_comment')
+    .select('id, policy_comment')
     .eq('site_id', siteId)
     .maybeSingle();
 
@@ -162,7 +203,15 @@ export async function assertCommunityCommentWritePolicy({
     throw new Error('커뮤니티 가입 후 댓글을 작성할 수 있습니다.');
   }
 
-  if (canBypassCommunityPolicy(sessionCase, rhizomeStigma.role)) {
+  if (
+    await canBypassCommunityCommentPolicy({
+      supabaseAdmin,
+      communityId: communityResult.data.id,
+      membershipId: rhizomeStigma.id,
+      role: rhizomeStigma.role,
+      sessionCase,
+    })
+  ) {
     return;
   }
 

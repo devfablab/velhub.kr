@@ -46,7 +46,7 @@ type AuthorLevel = {
   iconUrl: string;
 };
 
-type ConfirmAction = 'delete' | 'blind' | 'unblind' | null;
+type ConfirmAction = 'delete' | 'blind' | 'unblind' | 'pin' | 'unpin' | null;
 
 type PollChoice = {
   option_index: number;
@@ -65,6 +65,7 @@ export type CommentData = {
   deleted_at: string | null;
   deleted_by: string | null;
   is_blinded: boolean;
+  is_pinned: boolean;
   is_locked: boolean;
   blinded_at: string | null;
   blinded_by: string | null;
@@ -81,6 +82,7 @@ export type CommentData = {
   can_delete: boolean;
   can_blind: boolean;
   can_unblind: boolean;
+  can_pin: boolean;
   poll_choice: PollChoice | null;
   like_count: number;
   is_liked: boolean;
@@ -108,6 +110,8 @@ type Props = {
   onBlind: (commentId: string) => Promise<void>;
   onUnblind: (commentId: string) => Promise<void>;
   onLike: (commentId: string) => Promise<void>;
+  pinnedCommentId: string;
+  onPin: (commentId: string, isPinned: boolean) => Promise<void>;
 };
 
 function formatDateTime(value: string) {
@@ -159,6 +163,8 @@ export default function CommentItem({
   onBlind,
   onUnblind,
   onLike,
+  pinnedCommentId,
+  onPin,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
@@ -176,6 +182,7 @@ export default function CommentItem({
       return {
         title: '댓글 삭제',
         content: '정말로 댓글을 삭제하시겠습니까?\n삭제된 댓글은 매니저만 복구할 수 있습니다.',
+        cancelLabel: '취소',
         confirmLabel: '삭제',
         confirmClassName: 'delete-button',
         onConfirm: async () => {
@@ -189,6 +196,7 @@ export default function CommentItem({
       return {
         title: '댓글 숨김',
         content: '정말로 댓글을 숨김 처리하시겠습니까?',
+        cancelLabel: '취소',
         confirmLabel: '숨김',
         confirmClassName: '',
         onConfirm: async () => {
@@ -202,6 +210,7 @@ export default function CommentItem({
       return {
         title: '댓글 숨김 취소',
         content: '정말로 댓글 숨김을 취소하시겠습니까?',
+        cancelLabel: '취소',
         confirmLabel: '숨김 취소',
         confirmClassName: '',
         onConfirm: async () => {
@@ -211,9 +220,41 @@ export default function CommentItem({
       };
     }
 
+    if (confirmAction === 'pin') {
+      return {
+        title: '댓글 고정',
+        content:
+          pinnedCommentId && pinnedCommentId !== comment.id
+            ? '이미 고정된 댓글이 있습니다.\n기존 댓글을 내리고 이 댓글을 상단에 고정하시겠어요?'
+            : '해당 댓글을 상단에 고정하시겠어요?',
+        cancelLabel: '취소',
+        confirmLabel: '고정',
+        confirmClassName: '',
+        onConfirm: async () => {
+          setConfirmAction(null);
+          await onPin(comment.id, true);
+        },
+      };
+    }
+
+    if (confirmAction === 'unpin') {
+      return {
+        title: '댓글 고정 취소',
+        content: '댓글 고정이 취소됩니다.\n고정을 취소하시겠어요?',
+        cancelLabel: '닫기',
+        confirmLabel: '고정 취소',
+        confirmClassName: '',
+        onConfirm: async () => {
+          setConfirmAction(null);
+          await onPin(comment.id, false);
+        },
+      };
+    }
+
     return {
       title: '',
       content: '',
+      cancelLabel: '취소',
       confirmLabel: '',
       confirmClassName: '',
       onConfirm: async () => undefined,
@@ -271,6 +312,7 @@ export default function CommentItem({
 
           {comment.is_author ? <span className={styles['author-type']}>글 작성자</span> : null}
           {comment.is_me ? <span className={styles['author-type']}>본인</span> : null}
+          {comment.is_pinned ? <span className={styles['author-type']}>댓글 고정됨</span> : null}
 
           {isStaff ? (
             <>
@@ -300,7 +342,9 @@ export default function CommentItem({
           />
         ) : (
           <div className={styles['comment-content']}>
-            {depth === 1 && comment.reply_to_author_name ? <strong>{comment.reply_to_author_name} </strong> : null}
+            {comment.parent_id && comment.reply_to_author_name ? (
+              <strong>{comment.reply_to_author_name} </strong>
+            ) : null}
             <p>
               {onYoutubeTimestampClick ? (
                 <YoutubeTimestampText value={comment.content} onTimestampClick={onYoutubeTimestampClick} />
@@ -335,6 +379,16 @@ export default function CommentItem({
           {comment.can_edit ? (
             <button type="button" onClick={() => setIsEditing(true)} disabled={isSubmitting || isEditing}>
               수정
+            </button>
+          ) : null}
+
+          {comment.can_pin ? (
+            <button
+              type="button"
+              onClick={() => setConfirmAction(comment.is_pinned ? 'unpin' : 'pin')}
+              disabled={isSubmitting}
+            >
+              {comment.is_pinned ? '댓글 고정취소' : '댓글 고정'}
             </button>
           ) : null}
 
@@ -379,6 +433,8 @@ export default function CommentItem({
                 onBlind={onBlind}
                 onUnblind={onUnblind}
                 onLike={onLike}
+                pinnedCommentId={pinnedCommentId}
+                onPin={onPin}
                 avatarUrl={avatarUrl}
                 myPollChoiceLabel={myPollChoiceLabel}
                 getYoutubeCurrentTime={getYoutubeCurrentTime}
@@ -410,7 +466,7 @@ export default function CommentItem({
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" onClick={() => setConfirmAction(null)} className="button small cancel">
-              취소
+              {confirmDialog.cancelLabel}
             </button>
             <button
               type="button"
@@ -448,7 +504,7 @@ export default function CommentItem({
           </DialogContent>
           <DialogActions>
             <button type="button" onClick={() => setConfirmAction(null)} className="cancel-button">
-              취소
+              {confirmDialog.cancelLabel}
             </button>
             <button
               type="button"
