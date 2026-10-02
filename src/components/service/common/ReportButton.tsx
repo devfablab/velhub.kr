@@ -5,6 +5,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import {
   Accordion,
   AccordionDetails,
@@ -17,6 +18,8 @@ import {
   Drawer,
   FormControlLabel,
   IconButton,
+  ListItemIcon,
+  ListItemText,
   Menu,
   MenuItem,
   Typography,
@@ -297,17 +300,22 @@ export default function ReportButton({
       </IconButton>
 
       <Menu anchorEl={menuAnchorElement} open={menuOpen} onClose={handleMenuClose}>
-        <MenuItem onClick={handleOpen}>
-          {targetType === 'board'
-            ? '게시판'
-            : targetType === 'comment'
-              ? '댓글'
-              : targetType === 'post'
-                ? '게시물'
-                : targetType === 'site'
-                  ? '사이트'
-                  : null}{' '}
-          신고하기
+        <MenuItem dense onClick={handleOpen}>
+          <ListItemIcon>
+            <ReportOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>
+            {targetType === 'board'
+              ? '게시판'
+              : targetType === 'comment'
+                ? '댓글'
+                : targetType === 'post'
+                  ? '게시물'
+                  : targetType === 'site'
+                    ? '사이트'
+                    : null}{' '}
+            신고하기
+          </ListItemText>
         </MenuItem>
       </Menu>
 

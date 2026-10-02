@@ -16,6 +16,7 @@ import Anchor from '@/components/Anchor';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import FabNew from '@/components/service/common/FabNew';
+import CommunityMemberMenu from '@/components/service/community/CommunityMemberMenu';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
@@ -131,6 +132,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
 
   const initialPage = parsePage(searchParams.get('page'));
   const initialKeyword = normalizeText(searchParams.get('keyword'));
+  const authorName = normalizeText(searchParams.get('author'));
 
   const [contents] = useState<PostItem[]>(initialData?.contents ?? []);
   const [keywordInput, setKeywordInput] = useState(initialKeyword);
@@ -160,6 +162,10 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
 
     if (nextKeyword) {
       queryParams.set('keyword', nextKeyword);
+    }
+
+    if (authorName) {
+      queryParams.set('author', authorName);
     }
 
     const queryString = queryParams.toString();
@@ -197,6 +203,17 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
   const pageNumbers = getPageNumbers(currentPage, totalPage);
   const hasPreviousPager = pageNumbers[0] > 1;
   const hasNextPager = pageNumbers[pageNumbers.length - 1] < totalPage;
+
+  function renderAuthorName(content: PostItem, ariaLabel?: string) {
+    return (
+      <cite aria-label={ariaLabel}>
+          <CommunityMemberMenu
+            siteName={siteName}
+            name={content.author_name}
+        />
+      </cite>
+    );
+  }
 
   if (errorMessage) {
     return (
@@ -345,7 +362,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                         ) : null}
                       </div>
                       <div className="tail">
-                        <cite aria-label="작성자">{content.author_name}</cite>
+                        {renderAuthorName(content, '작성자')}
                         <time aria-label="작성일">{formatTimeAgo(content.created_at)}</time>
                       </div>
                     </Anchor>
@@ -412,7 +429,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                         ) : null}
                       </td>
                       <td className="long-cell">
-                        <cite>{content.author_name}</cite>
+                        {renderAuthorName(content)}
                       </td>
                       <td>{formatTimeAgo(content.created_at)}</td>
                     </tr>
@@ -464,7 +481,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                         </div>
                       </div>
                       <div className="tail">
-                        <cite aria-label="작성자">{content.author_name}</cite>
+                        {renderAuthorName(content, '작성자')}
                         <time aria-label="작성일">
                           {formatTimeAgo(
                             content.published_status === 'published' ? content.published_at : content.created_at,
@@ -537,7 +554,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                         </div>
                       </td>
                       <td className="long-cell">
-                        <cite>{content.author_name}</cite>
+                        {renderAuthorName(content)}
                       </td>
                       <td>
                         {formatTimeAgo(

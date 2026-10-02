@@ -14,7 +14,6 @@ type Props = {
   siteName: string;
   boardName: string;
   contentId: string;
-  postAuthorId: string;
   isCommentEnabled: boolean;
   getYoutubeCurrentTime?: () => number | null;
   onYoutubeTimestampClick?: (seconds: number) => void;
@@ -31,6 +30,8 @@ export type CommentsResponse = {
   mySelfAvatarUrl?: string;
   myPollChoice?: PollChoice | null;
   isStaff: string;
+  isCommunity?: boolean;
+  boardLabel?: string;
   actions?: {
     canWrite?: boolean;
     canManageComment?: boolean;
@@ -117,6 +118,8 @@ export default function CommentList({
     initialData?.actions?.canWriteReason ?? null,
   );
   const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? '');
+  const [isCommunity, setIsCommunity] = useState(initialData?.isCommunity === true);
+  const [boardLabel, setBoardLabel] = useState(initialData?.boardLabel ?? '');
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -138,6 +141,8 @@ export default function CommentList({
       }
 
       setIsStaff(result.isStaff);
+      setIsCommunity(result.isCommunity === true);
+      setBoardLabel(result.boardLabel ?? '');
 
       setComments(Array.isArray(result.comments) ? result.comments : []);
       setMySelfAvatarUrl(result.mySelfAvatarUrl ?? '');
@@ -458,6 +463,8 @@ export default function CommentList({
               boardName={boardName}
               contentId={contentId}
               isStaff={isStaff}
+              isCommunity={isCommunity}
+              boardLabel={boardLabel}
               comment={comment}
               avatarUrl={mySelfAvatarUrl}
               myPollChoiceLabel={myPollChoice?.label ?? ''}

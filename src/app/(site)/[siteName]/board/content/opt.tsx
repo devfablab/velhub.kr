@@ -41,6 +41,7 @@ import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
+import CommunityMemberMenu from '@/components/service/community/CommunityMemberMenu';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import RecentTableList from '@/components/service/community/RecentTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -164,7 +165,6 @@ type PostContent = {
   hashtags: unknown;
   idx: number;
   series_idx: number | null;
-  user_id: string;
   created_at: string;
   is_closed: boolean;
   is_locked?: boolean;
@@ -202,7 +202,6 @@ type SeriesItem = {
 type DrawWinner = {
   id: string;
   comment_id: string;
-  user_id: string;
   draw_order: number;
   author_name: string;
   author_email: string;
@@ -963,7 +962,14 @@ export default function Opt({
                   </div>
                   <div className={styles.info}>
                     <div className={styles.name}>
-                      <cite>{content.author_name}</cite>
+                      <cite>
+                          <CommunityMemberMenu
+                            siteName={siteName}
+                            name={content.author_name}
+                          boardName={board?.board_key}
+                          boardLabel={board?.board_label}
+                        />
+                      </cite>
                       {authorRoleLabel ? (
                         <em>
                           <span>{authorRoleLabel}</span>
@@ -1356,7 +1362,6 @@ export default function Opt({
               siteName={siteName}
               boardName={boardName}
               contentId={content.id}
-              postAuthorId={content.user_id}
               isCommentEnabled={content.is_comment !== false}
               getYoutubeCurrentTime={
                 isYoutubeBoard && content.youtube_id

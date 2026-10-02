@@ -7,6 +7,7 @@ import {
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { findUserIdsByDisplayName } from '@/lib/users/findUsersByDisplayName';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -256,6 +257,7 @@ async function getSeriesFilteredPostList({
   sort,
   includePin,
   selectedSeries,
+  authorIds,
 }: {
   siteId: string;
   siteType: string;
@@ -268,10 +270,15 @@ async function getSeriesFilteredPostList({
   sort: 'latest' | 'post_count';
   includePin: boolean;
   selectedSeries: SeriesRow;
+  authorIds: string[] | null;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
   const from = (page - 1) * size;
   const to = from + size - 1;
+
+  if (authorIds !== null && authorIds.length === 0) {
+    return { contents: [], totalCount: 0, totalPage: 1 };
+  }
 
   let postsQuery = supabaseAdmin
     .from('posts')
@@ -282,6 +289,10 @@ async function getSeriesFilteredPostList({
     .eq('site_id', siteId)
     .eq('board_id', board.id)
     .eq('series_id', selectedSeries.id);
+
+  if (authorIds !== null) {
+    postsQuery = postsQuery.in('user_id', authorIds);
+  }
 
   if (filter === 'deleted') {
     postsQuery = postsQuery.eq('is_closed', true);
@@ -415,6 +426,7 @@ export async function GET(request: Request, context: RouteContext) {
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
     const seriesName = normalizeText(requestUrl.searchParams.get('seriesName')).toLowerCase();
+    const authorName = normalizeText(requestUrl.searchParams.get('author'));
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -435,6 +447,8 @@ export async function GET(request: Request, context: RouteContext) {
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
+
+    const authorIds = authorName ? await findUserIdsByDisplayName(rhizome.data.id, authorName) : null;
 
     const session = await verifySession({
       siteId: rhizome.data.id,
@@ -566,6 +580,7 @@ export async function GET(request: Request, context: RouteContext) {
           sort,
           includePin,
           selectedSeries,
+          authorIds,
         })
       : await getPostList({
           siteId: rhizome.data.id,
@@ -580,6 +595,7 @@ export async function GET(request: Request, context: RouteContext) {
           keyword,
           sort,
           includePin,
+          authorIds,
         });
 
     const seriesLabels = Array.from(

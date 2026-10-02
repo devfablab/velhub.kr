@@ -1,6 +1,7 @@
 import { getPostList } from '@/lib/board/getPostList';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { findUserIdsByDisplayName } from '@/lib/users/findUsersByDisplayName';
 import { normalizeText } from '@/lib/utils';
 
 function parsePositiveInt(value: string | null, fallbackValue: number) {
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
     const size = parsePositiveInt(requestUrl.searchParams.get('size'), 10);
     const filter = normalizeText(requestUrl.searchParams.get('filter')).toLowerCase() === 'deleted' ? 'deleted' : 'all';
     const keyword = normalizeText(requestUrl.searchParams.get('keyword'));
+    const authorName = normalizeText(requestUrl.searchParams.get('author'));
     const sort = normalizeSort(requestUrl.searchParams.get('sort'));
     const includePin = parseIncludePin(requestUrl.searchParams.get('includePin'));
 
@@ -59,6 +61,8 @@ export async function GET(request: Request) {
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
+
+    const authorIds = authorName ? await findUserIdsByDisplayName(rhizome.data.id, authorName) : null;
 
     const session = await verifySession({
       siteId: rhizome.data.id,
@@ -88,6 +92,7 @@ export async function GET(request: Request) {
       keyword,
       sort,
       includePin,
+      authorIds,
     });
 
     return Response.json({

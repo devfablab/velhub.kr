@@ -25,7 +25,6 @@ type Props = {
   siteName: string;
   boardName: string;
   contentId: string;
-  postAuthorId: string;
   isCommentEnabled: boolean;
   commentProvider?: CommentProvider | null;
   giscusSettings?: GiscusSettings | null;
@@ -43,7 +42,6 @@ export default function Comment({
   siteName,
   boardName,
   contentId,
-  postAuthorId,
   isCommentEnabled,
   commentProvider,
   giscusSettings,
@@ -69,7 +67,6 @@ export default function Comment({
           siteName={siteName}
           boardName={boardName}
           contentId={contentId}
-          postAuthorId={postAuthorId}
           isCommentEnabled={isCommentEnabled}
           getYoutubeCurrentTime={getYoutubeCurrentTime}
           onYoutubeTimestampClick={onYoutubeTimestampClick}
@@ -130,7 +127,6 @@ export default function Comment({
       siteName={siteName}
       boardName={boardName}
       contentId={contentId}
-      postAuthorId={postAuthorId}
       isCommentEnabled={isCommentEnabled}
       getYoutubeCurrentTime={getYoutubeCurrentTime}
       onYoutubeTimestampClick={onYoutubeTimestampClick}

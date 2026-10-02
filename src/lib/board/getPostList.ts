@@ -19,6 +19,7 @@ type GetPostListOptions = {
   sort?: PostListSort;
   includePin?: boolean;
   categoryId?: string | null;
+  authorIds?: string[] | null;
 };
 
 type PostImage = {
@@ -81,7 +82,6 @@ export type PostListItem = {
   series_idx: number | null;
   board_id: string;
   site_id: string;
-  user_id: string;
   author_name: string;
   is_closed: boolean;
   closed_by: string | null;
@@ -254,6 +254,7 @@ export async function getPostList({
   sort = 'latest',
   includePin = true,
   categoryId = null,
+  authorIds = null,
 }: GetPostListOptions): Promise<GetPostListResult> {
   const supabaseAdmin = getSupabaseAdmin();
   const isStaff = sessionCase === 'staff';
@@ -261,8 +262,18 @@ export async function getPostList({
   const from = (page - 1) * size;
   const to = from + size - 1;
   const searchKeyword = normalizeText(keyword);
+  const normalizedAuthorIds = Array.from(new Set((authorIds ?? []).map(normalizeText).filter(Boolean)));
+  const hasAuthorFilter = authorIds !== null;
   const shouldUsePinnedPosts = filter === 'all' && sort === 'latest' && includePin;
   const isAllBoardList = !boardId;
+
+  if (hasAuthorFilter && normalizedAuthorIds.length === 0) {
+    return {
+      contents: [],
+      totalCount: 0,
+      totalPage: 1,
+    };
+  }
 
   let pinnedPosts: RawPostRow[] = [];
 
@@ -287,6 +298,10 @@ export async function getPostList({
       pinnedQuery = pinnedQuery.contains('categories', [categoryId]);
     }
 
+    if (hasAuthorFilter) {
+      pinnedQuery = pinnedQuery.in('user_id', normalizedAuthorIds);
+    }
+
     if (searchKeyword) {
       pinnedQuery = applySearchFilter(pinnedQuery, searchKeyword);
     }
@@ -308,6 +323,10 @@ export async function getPostList({
 
   if (categoryId) {
     postsQuery = postsQuery.contains('categories', [categoryId]);
+  }
+
+  if (hasAuthorFilter) {
+    postsQuery = postsQuery.in('user_id', normalizedAuthorIds);
   }
 
   if (filter === 'deleted') {
@@ -508,7 +527,6 @@ export async function getPostList({
       series_idx: post.series_idx,
       board_id: post.board_id,
       site_id: post.site_id,
-      user_id: post.user_id,
       author_name: nicknameMap.get(post.user_id) || userNameMap.get(post.user_id) || '',
       is_closed: post.is_closed,
       is_locked: post.is_locked,

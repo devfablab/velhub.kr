@@ -48,6 +48,7 @@ import type { SubscriptionStatusResponse } from '@/components/service/common/Sub
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import BoardRecentTableList, { type BoardRecentResponse } from '@/components/service/community/BoardRecentTableList';
+import CommunityMemberMenu from '@/components/service/community/CommunityMemberMenu';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
@@ -168,7 +169,6 @@ type AdjacentPost = {
 type DrawWinner = {
   id: string;
   comment_id: string;
-  user_id: string;
   draw_order: number;
   author_name: string;
   author_email: string;
@@ -220,7 +220,6 @@ type PostContent = {
   hashtags: unknown;
   idx: number;
   series_idx: number | null;
-  user_id: string;
   created_at: string;
   is_closed: boolean;
   is_locked: boolean;
@@ -1159,7 +1158,18 @@ export default function Opt({
                     </div>
                     <div className={styles.info}>
                       <div className={styles.name}>
-                        <cite>{content.author_name}</cite>
+                        <cite>
+                          {isCommunity ? (
+                              <CommunityMemberMenu
+                                siteName={siteName}
+                                name={content.author_name}
+                              boardName={board?.board_key}
+                              boardLabel={board?.board_label}
+                            />
+                          ) : (
+                            content.author_name
+                          )}
+                        </cite>
                         {isCommunity ? (
                           <>
                             {authorRoleLabel ? (
@@ -1562,7 +1572,6 @@ export default function Opt({
               siteName={siteName}
               boardName={boardName}
               contentId={content.id}
-              postAuthorId={content.user_id}
               isCommentEnabled={content.is_comment !== false}
               commentProvider={content.comment_provider}
               giscusSettings={content.giscus_settings}

@@ -77,7 +77,6 @@ type DrawWinnerRow = {
 type DrawWinner = {
   id: string;
   comment_id: string;
-  user_id: string;
   draw_order: number;
   author_name: string;
   author_email: string;
@@ -1018,7 +1017,6 @@ async function getDrawWinners({
       return {
         id: draw.id,
         comment_id: draw.comment_id,
-        user_id: draw.user_id,
         draw_order: draw.draw_order,
         author_name: author.name,
         author_email: author.email,
@@ -1129,11 +1127,13 @@ export async function GET(request: Request, context: RouteContext) {
 
       const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, page.data.user_id);
       const isAuthor = Boolean(session.stigmaId) && page.data.user_id === session.stigmaId;
+      const publicPageData = { ...page.data };
+      delete publicPageData.user_id;
 
       return NextResponse.json({
         board: boardData,
         content: {
-          ...page.data,
+          ...publicPageData,
           slug: String(page.data.slug),
           author_name: author.name,
           author_avatar_url: author.avatarUrl,
@@ -1523,6 +1523,9 @@ export async function GET(request: Request, context: RouteContext) {
 
     const postCount = typeof postData.post_count === 'number' ? Number(postData.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(postData.thumbnail_image);
+    const publicPostData = { ...postData };
+    delete publicPostData.user_id;
+    delete publicPostData.closed_by;
     const isPostDonationAvailable =
       !isYoutubeCommunityBoard &&
       (rhizomeData.site_type === 'blog' || (boardSeriesCount >= 2 && Boolean(postData.series_id)));
@@ -1530,7 +1533,7 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({
       board: boardData,
       content: {
-        ...postData,
+        ...publicPostData,
         summary: shouldShowPaidPreview ? paidContentPreviewText : post.data.summary,
         content_html: shouldShowPaidPreview
           ? registeredPaidPreview

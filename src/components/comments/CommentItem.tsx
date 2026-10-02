@@ -17,6 +17,7 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import CommentForm from '@/components/comments/CommentForm';
 import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
 import ReportButton from '../service/common/ReportButton';
+import CommunityMemberMenu from '../service/community/CommunityMemberMenu';
 import styles from '@/app/comments.module.sass';
 
 type AuthorRole =
@@ -56,19 +57,16 @@ type PollChoice = {
 export type CommentData = {
   id: string;
   created_at: string;
-  user_id: string;
   parent_id: string | null;
   reply_to_id: string | null;
   reply_to_author_name: string;
   content: string;
   is_deleted: boolean;
   deleted_at: string | null;
-  deleted_by: string | null;
   is_blinded: boolean;
   is_pinned: boolean;
   is_locked: boolean;
   blinded_at: string | null;
-  blinded_by: string | null;
   blinded_message: string | null;
   author_name: string;
   author_avatar_url: string;
@@ -94,6 +92,8 @@ type Props = {
   boardName: string;
   contentId: string;
   isStaff: string;
+  isCommunity: boolean;
+  boardLabel: string;
   comment: CommentData;
   depth?: 0 | 1;
   activeReplyTargetId: string;
@@ -147,6 +147,8 @@ export default function CommentItem({
   boardName,
   contentId,
   isStaff,
+  isCommunity,
+  boardLabel,
   comment,
   depth = 0,
   activeReplyTargetId,
@@ -292,7 +294,18 @@ export default function CommentItem({
       />
       <div className={styles['comment-detail']}>
         <div className={styles['comment-author-info']}>
-          <cite>{comment.author_name}</cite>
+          <cite>
+            {isCommunity ? (
+                <CommunityMemberMenu
+                  siteName={siteName}
+                  name={comment.author_name}
+                boardName={boardName}
+                boardLabel={boardLabel}
+              />
+            ) : (
+              comment.author_name
+            )}
+          </cite>
 
           {roleLabel ? (
             <span className={styles['author-manager']}>
@@ -420,6 +433,8 @@ export default function CommentItem({
                 boardName={boardName}
                 contentId={contentId}
                 isStaff={isStaff}
+                isCommunity={isCommunity}
+                boardLabel={boardLabel}
                 key={reply.id}
                 comment={reply}
                 depth={1}

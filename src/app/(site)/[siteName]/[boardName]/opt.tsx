@@ -31,6 +31,7 @@ import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
+import CommunityMemberMenu from '@/components/service/community/CommunityMemberMenu';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import TableListMobile from '@/components/service/community/TableListMobile';
@@ -290,6 +291,7 @@ export default function Opt({
 
   const initialPage = parsePage(searchParams.get('page'));
   const initialKeyword = normalizeText(searchParams.get('keyword'));
+  const authorName = normalizeText(searchParams.get('author'));
 
   const [board] = useState<BoardItem | null>(initialData?.board ?? null);
   const [contents] = useState<PostItem[]>(initialData?.contents ?? []);
@@ -313,6 +315,23 @@ export default function Opt({
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
 
+  function renderAuthorName(content: PostItem, ariaLabel?: string) {
+    return (
+      <cite aria-label={ariaLabel}>
+        {isCommunity ? (
+            <CommunityMemberMenu
+              siteName={siteName}
+              name={content.author_name}
+            boardName={boardName}
+            boardLabel={board?.board_label ?? content.board_label}
+          />
+        ) : (
+          content.author_name
+        )}
+      </cite>
+    );
+  }
+
   function updateRoute(nextPage: number, nextKeyword: string, nextSeriesName = '', nextPageSize = pageSize) {
     const queryParams = new URLSearchParams();
 
@@ -328,6 +347,10 @@ export default function Opt({
 
     if (nextSeriesName) {
       queryParams.set('seriesName', nextSeriesName);
+    }
+
+    if (authorName) {
+      queryParams.set('author', authorName);
     }
 
     const queryString = queryParams.toString();
@@ -652,7 +675,7 @@ export default function Opt({
                           ) : null}
                         </div>
                         <div className="tail">
-                          <cite aria-label="작성자">{content.author_name}</cite>
+                          {renderAuthorName(content, '작성자')}
                           <time aria-label={isCommunity ? '작성일' : '게시일'}>
                             {formatTimeAgo(content.published_at ?? content.created_at)}
                           </time>
@@ -730,7 +753,7 @@ export default function Opt({
                           ) : null}
                         </td>
                         <td className="long-cell">
-                          <cite>{content.author_name}</cite>
+                          {renderAuthorName(content)}
                         </td>
                         <td>{formatTimeAgo(content.published_at ?? content.created_at)}</td>
                       </tr>
@@ -772,7 +795,7 @@ export default function Opt({
                           </strong>
                         </div>
                         <div className={styles.author}>
-                          <cite>{content.author_name}</cite>
+                          {renderAuthorName(content)}
                         </div>
                         <div className={styles.tail}>
                           <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
@@ -811,7 +834,7 @@ export default function Opt({
                         </strong>
                       </div>
                       <div className={styles.author}>
-                        <cite>{content.author_name}</cite>
+                        {renderAuthorName(content)}
                       </div>
                       <div className={styles.tail}>
                         <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
@@ -840,7 +863,7 @@ export default function Opt({
                         )}
                         {content.published_status === 'draft' ? <em>(임시글)</em> : null}
                       </span>
-                      <cite>{content.author_name}</cite>
+                      {renderAuthorName(content)}
                       <time className={styles.item}>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                       {content.comment_count > 0 ? (
                         <span className={styles.item}>댓글 {content.comment_count}</span>
@@ -884,7 +907,7 @@ export default function Opt({
                         <span>{content.summary}</span>
                       </div>
                       <div className={styles.author}>
-                        <cite>{content.author_name}</cite>
+                        {renderAuthorName(content)}
                       </div>
                       <div className={styles.tail}>
                         <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
@@ -933,7 +956,7 @@ export default function Opt({
                           </div>
                         </div>
                         <div className="tail">
-                          <cite aria-label="작성자">{content.author_name}</cite>
+                          {renderAuthorName(content, '작성자')}
                           <time aria-label={isCommunity ? '작성일' : '게시일'}>
                             {formatTimeAgo(content.published_at ?? content.created_at)}
                           </time>
@@ -1004,7 +1027,7 @@ export default function Opt({
                           </div>
                         </td>
                         <td className="long-cell">
-                          <cite>{content.author_name}</cite>
+                          {renderAuthorName(content)}
                         </td>
                         <td>{formatTimeAgo(content.published_at ?? content.created_at)}</td>
                         <td>{content.post_count}</td>

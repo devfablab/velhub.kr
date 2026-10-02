@@ -64,7 +64,6 @@ type CommentRow = {
 type CommentItem = {
   id: string;
   created_at: string;
-  user_id: string;
   parent_id: string | null;
   reply_to_id: string | null;
   reply_to_author_name: string;
@@ -72,10 +71,8 @@ type CommentItem = {
   is_deleted: boolean;
   is_locked: boolean;
   deleted_at: string | null;
-  deleted_by: string | null;
   is_blinded: boolean;
   blinded_at: string | null;
-  blinded_by: string | null;
   blinded_message: string | null;
   is_pinned: boolean;
   author_name: string;
@@ -473,7 +470,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
 
   const board = await supabaseAdmin
     .from('boards')
-    .select('id, board_key, board_type')
+    .select('id, board_key, board_label, board_type')
     .eq('site_id', rhizome.data.id)
     .eq('board_key', boardName)
     .maybeSingle();
@@ -514,6 +511,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
     data: {
       siteId: rhizome.data.id as string,
       boardId: board.data.id as string,
+      boardLabel: board.data.board_label as string,
       postId: post.data.id as string,
       postAuthorId: post.data.user_id as string,
       isClosed: post.data.is_closed === true,
@@ -668,18 +666,15 @@ async function buildCommentItem({
   return {
     id: comment.id,
     created_at: comment.created_at,
-    user_id: comment.user_id,
     parent_id: comment.parent_id,
     reply_to_id: comment.reply_to_id,
     reply_to_author_name: replyToAuthorName,
     content,
     is_deleted: isDeleted,
     deleted_at: comment.deleted_at,
-    deleted_by: comment.deleted_by,
     is_locked: comment.is_locked,
     is_blinded: isBlinded,
     blinded_at: comment.blinded_at,
-    blinded_by: comment.blinded_by,
     blinded_message: comment.blinded_message,
     is_pinned: comment.is_pinned === true,
     author_name: author.name,
@@ -933,6 +928,8 @@ export async function GET(request: Request, context: RouteContext) {
       mySelfAvatarUrl,
       myPollChoice,
       isStaff,
+      isCommunity: target.data.siteType === 'community',
+      boardLabel: target.data.boardLabel,
       actions: {
         canWrite,
         canWriteReason,

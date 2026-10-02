@@ -2135,3 +2135,26 @@
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-light
+
+.member-menu-trigger
+  cursor: pointer
+
+.member-info-dialog
+  min-height: ds.rem(160)
+
+.member-info-detail
+  display: grid
+  gap: ds.rem(12)
+  margin: 0
+
+  > div
+    display: grid
+    grid-template-columns: ds.rem(112) minmax(0, 1fr)
+    gap: ds.rem(12)
+
+  dt
+    color: ds.$hex-secondary
+
+  dd
+    margin: 0
+    overflow-wrap: anywhere

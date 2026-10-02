@@ -54,10 +54,11 @@ function getMembershipRoleLabel(role: string | null | undefined, manageRole: str
   return '멤버';
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     const { siteName: rawSiteName } = await context.params;
     const siteName = normalizeText(rawSiteName).toLowerCase();
+    const memberName = normalizeText(new URL(request.url).searchParams.get('memberName'));
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -118,6 +119,49 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const stigmaMap = new Map(stigmaResult.stigmas.map((stigma) => [stigma.id, stigma]));
     const levelMap = new Map(levelResult.levels.map((level) => [level.id, level]));
+
+    if (memberName) {
+      const membership = membershipsResult.memberships.find((item) => {
+        const memberResponse = buildMemberResponse(item, stigmaMap, levelMap);
+        return normalizeText(item.nickname) === memberName || memberResponse.userName === memberName;
+      });
+
+      if (!membership) {
+        return Response.json({ error: '멤버 정보를 불러오지 못했습니다.' }, { status: 404 });
+      }
+
+      const stigma = stigmaMap.get(membership.user_id);
+
+      if (!stigma) {
+        return Response.json({ error: '멤버 정보를 불러오지 못했습니다.' }, { status: 404 });
+      }
+
+      const authIdentityResult = await access.supabaseAdmin
+        .from('stigmas')
+        .select('user_id')
+        .eq('id', membership.user_id)
+        .maybeSingle();
+
+      if (authIdentityResult.error || !authIdentityResult.data) {
+        return Response.json({ error: '멤버 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const authUserResult = await access.supabaseAdmin.auth.admin.getUserById(authIdentityResult.data.user_id);
+
+      return Response.json({
+        member: {
+          activityName: buildMemberResponse(membership, stigmaMap, levelMap).userName,
+          nickname: normalizeText(membership.nickname),
+          joinedAt: membership.created_at ?? '',
+          approvedAt: membership.approval_at,
+          lastLoginAt: authUserResult.data.user?.last_sign_in_at ?? null,
+          visitCount: Number(membership.checkin_count ?? 0),
+          postCount: Number(membership.post_count ?? 0),
+          commentCount: Number(membership.comment_count ?? 0),
+        },
+      });
+    }
+
     const manageRoleMap = new Map(
       ((manageRoleResult.data ?? []) as ManageRoleRow[]).map((manageRole) => [manageRole.manager_id, manageRole.role]),
     );
