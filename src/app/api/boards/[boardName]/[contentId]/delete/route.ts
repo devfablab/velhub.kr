@@ -162,7 +162,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin.from('posts').select('*').eq('board_id', board.data.id);
 
     const post = isNumericSlug(normalizedContentId)
-      ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
+      ? await postQuery.eq('slug', normalizedContentId).maybeSingle()
       : await postQuery.eq('id', normalizedContentId).maybeSingle();
 
     if (post.error || !post.data) {

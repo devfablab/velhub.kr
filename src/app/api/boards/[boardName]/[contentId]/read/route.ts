@@ -51,7 +51,7 @@ async function getTargetPost({
     .select('id, site_id, board_id, published_status, is_closed')
     .eq('site_id', rhizomeResult.data.id)
     .eq('board_id', boardResult.data.id)
-    .eq('slug', Number(contentId))
+    .eq('slug', contentId)
     .maybeSingle();
 
   if (postResult.error || !postResult.data) {

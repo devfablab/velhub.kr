@@ -619,6 +619,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                         <DrawerManage
                           siteName={siteName}
                           siteType={siteType}
+                          blogType={initialHeader?.blogType}
                           siteRole={userProfile.siteRole}
                           globalRole={userProfile.globalRole}
                           onClose={handleCloseProfileDrawer}

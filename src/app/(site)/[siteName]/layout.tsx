@@ -107,6 +107,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     siteMenu,
     unreadNotifications,
     ownerTransfer,
+    blogCommunity,
   ] = await Promise.all([
     getSiteApiData<{
       boards?: Array<{
@@ -209,6 +210,12 @@ export default async function SiteLayout({ children, params }: RouteContext) {
       `/api/site/owner-transfer?siteName=${siteName}`,
       '운영자 교체 요청을 불러오지 못했습니다.',
     ),
+    header.data?.siteType === 'blog'
+      ? getSiteApiData<{ feature?: { isPersonalBlog?: boolean; isEnabled?: boolean } }>(
+          `/api/site/${siteName}/community-on-blog?summary=1`,
+          '블로그 커뮤니티 정보를 불러오지 못했습니다.',
+        )
+      : Promise.resolve({ data: null }),
   ]);
 
   return (
@@ -241,6 +248,8 @@ export default async function SiteLayout({ children, params }: RouteContext) {
             purchaseAvailable: Boolean(siteMenu.data?.siteInfo?.purchase_available),
             hasCategories: Boolean(siteMenu.data?.siteInfo?.has_categories),
             hasSeries: Boolean(siteMenu.data?.siteInfo?.has_series),
+            hasBlogCommunity:
+              blogCommunity.data?.feature?.isPersonalBlog === true && blogCommunity.data?.feature?.isEnabled === true,
           }}
         >
           <HeaderSite />

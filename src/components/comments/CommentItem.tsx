@@ -13,6 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import type { ReportTargetType } from '@/lib/reports/guidelines';
 import { formatDateTimeDetail } from '@/lib/utils';
 import CommentForm from '@/components/comments/CommentForm';
 import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
@@ -94,6 +95,8 @@ type Props = {
   isStaff: string;
   isCommunity: boolean;
   boardLabel: string;
+  reportTargetType?: ReportTargetType;
+  isCommentLikeEnabled?: boolean;
   comment: CommentData;
   depth?: 0 | 1;
   activeReplyTargetId: string;
@@ -149,6 +152,8 @@ export default function CommentItem({
   isStaff,
   isCommunity,
   boardLabel,
+  reportTargetType = 'comment',
+  isCommentLikeEnabled = true,
   comment,
   depth = 0,
   activeReplyTargetId,
@@ -296,9 +301,9 @@ export default function CommentItem({
         <div className={styles['comment-author-info']}>
           <cite>
             {isCommunity ? (
-                <CommunityMemberMenu
-                  siteName={siteName}
-                  name={comment.author_name}
+              <CommunityMemberMenu
+                siteName={siteName}
+                name={comment.author_name}
                 boardName={boardName}
                 boardLabel={boardLabel}
               />
@@ -334,7 +339,7 @@ export default function CommentItem({
             </>
           ) : null}
           <ReportButton
-            targetType="comment"
+            targetType={reportTargetType}
             siteName={siteName}
             boardName={boardName}
             contentId={contentId}
@@ -376,14 +381,14 @@ export default function CommentItem({
         <div className={styles.options}>
           <time>{formatDateTime(comment.created_at)}</time>
 
-          {!comment.is_deleted && !comment.is_blinded ? (
+          {isCommentLikeEnabled && !comment.is_deleted && !comment.is_blinded ? (
             <button type="button" onClick={() => void handleLike()} disabled={isSubmitting || isLiking}>
               {comment.is_liked ? '좋아요 취소' : '좋아요'}
               {comment.like_count > 0 ? ` ${comment.like_count}` : null}
             </button>
           ) : null}
 
-          {!comment.is_deleted && !comment.is_blinded ? (
+          {depth === 0 && !comment.is_deleted && !comment.is_blinded ? (
             <button type="button" onClick={() => onReplyClick(comment)} disabled={isSubmitting}>
               답글 달기
             </button>
@@ -425,7 +430,7 @@ export default function CommentItem({
           />
         ) : null}
 
-        {depth === 0 && comment.replies.length > 0 && comment.can_edit ? (
+        {depth === 0 && comment.replies.length > 0 ? (
           <div className={styles['comment-replies']}>
             {comment.replies.map((reply) => (
               <CommentItem
@@ -435,6 +440,8 @@ export default function CommentItem({
                 isStaff={isStaff}
                 isCommunity={isCommunity}
                 boardLabel={boardLabel}
+                reportTargetType={reportTargetType}
+                isCommentLikeEnabled={isCommentLikeEnabled}
                 key={reply.id}
                 comment={reply}
                 depth={1}

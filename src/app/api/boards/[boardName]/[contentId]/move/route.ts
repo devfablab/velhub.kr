@@ -104,7 +104,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .select('id, slug, user_id, series_id, is_closed')
       .eq('board_id', sourceBoard.id);
     const postResult = isNumericSlug(normalizedContentId)
-      ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
+      ? await postQuery.eq('slug', normalizedContentId).maybeSingle()
       : await postQuery.eq('id', normalizedContentId).maybeSingle();
 
     if (postResult.error || !postResult.data) {

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import { Avatar } from '@mui/material';
+import type { ReportTargetType } from '@/lib/reports/guidelines';
 import CommentForm from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -15,6 +16,10 @@ type Props = {
   boardName: string;
   contentId: string;
   isCommentEnabled: boolean;
+  apiBasePath?: string;
+  includeSiteNameInApiPath?: boolean;
+  reportTargetType?: ReportTargetType;
+  isCommentLikeEnabled?: boolean;
   getYoutubeCurrentTime?: () => number | null;
   onYoutubeTimestampClick?: (seconds: number) => void;
   initialData?: CommentsResponse | null;
@@ -106,6 +111,10 @@ export default function CommentList({
   boardName,
   contentId,
   isCommentEnabled,
+  apiBasePath = `/api/boards/${boardName}/${contentId}/comments`,
+  includeSiteNameInApiPath = true,
+  reportTargetType = 'comment',
+  isCommentLikeEnabled = true,
   getYoutubeCurrentTime,
   onYoutubeTimestampClick,
   initialData,
@@ -124,11 +133,21 @@ export default function CommentList({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  function getApiUrl(path = '') {
+    const url = `${apiBasePath}${path}`;
+
+    if (!includeSiteNameInApiPath) {
+      return url;
+    }
+
+    return `${url}${url.includes('?') ? '&' : '?'}siteName=${encodeURIComponent(siteName)}`;
+  }
+
   const loadComments = useCallback(async () => {
     try {
       setErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments?siteName=${siteName}`, {
+      const response = await fetch(getApiUrl(), {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -156,7 +175,7 @@ export default function CommentList({
         setErrorMessage('댓글 목록을 불러오지 못했습니다.');
       }
     }
-  }, [boardName, contentId, siteName]);
+  }, [apiBasePath, includeSiteNameInApiPath, siteName]);
 
   useEffect(() => {
     void loadComments();
@@ -167,7 +186,7 @@ export default function CommentList({
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments`, {
+      const response = await fetch(getApiUrl(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,6 +196,7 @@ export default function CommentList({
           siteName,
           content,
           parentId,
+          replyToId: parentId,
         }),
       });
 
@@ -204,7 +224,7 @@ export default function CommentList({
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments/${commentId}`, {
+      const response = await fetch(getApiUrl(`/${commentId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -239,7 +259,7 @@ export default function CommentList({
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments/${commentId}?siteName=${siteName}`, {
+      const response = await fetch(getApiUrl(`/${commentId}`), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -267,7 +287,7 @@ export default function CommentList({
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments/${commentId}`, {
+      const response = await fetch(getApiUrl(`/${commentId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -302,7 +322,7 @@ export default function CommentList({
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments/${commentId}`, {
+      const response = await fetch(getApiUrl(`/${commentId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -336,13 +356,10 @@ export default function CommentList({
     try {
       setErrorMessage('');
 
-      const response = await fetch(
-        `/api/boards/${boardName}/${contentId}/comments/${commentId}/like?siteName=${siteName}`,
-        {
-          method: 'PATCH',
-          credentials: 'include',
-        },
-      );
+      const response = await fetch(getApiUrl(`/${commentId}/like`), {
+        method: 'PATCH',
+        credentials: 'include',
+      });
 
       const result = (await response.json()) as CommentLikeResponse;
 
@@ -372,7 +389,7 @@ export default function CommentList({
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/comments/${commentId}/pin`, {
+      const response = await fetch(getApiUrl(`/${commentId}/pin`), {
         method: isPinned ? 'PATCH' : 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -465,6 +482,8 @@ export default function CommentList({
               isStaff={isStaff}
               isCommunity={isCommunity}
               boardLabel={boardLabel}
+              reportTargetType={reportTargetType}
+              isCommentLikeEnabled={isCommentLikeEnabled}
               comment={comment}
               avatarUrl={mySelfAvatarUrl}
               myPollChoiceLabel={myPollChoice?.label ?? ''}

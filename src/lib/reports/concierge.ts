@@ -87,6 +87,8 @@ export const conciergeTargetTypeLabels: Record<ReportTargetType, string> = {
   board: '게시판 신고',
   post: '게시물 신고',
   comment: '댓글 신고',
+  blog_community_post: '블로그 커뮤니티 게시물 신고',
+  blog_community_comment: '블로그 커뮤니티 댓글 신고',
 };
 
 export const legalTypeLabels: Record<string, string> = {

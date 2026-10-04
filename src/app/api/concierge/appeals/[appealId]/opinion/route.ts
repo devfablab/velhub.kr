@@ -29,9 +29,11 @@ type AppealRow = {
 
 type ReportRow = {
   id: string;
-  target_type: 'post' | 'comment';
+  target_type: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
   post_id: string | null;
   comment_id: string | null;
+  blog_community_post_id: string | null;
+  blog_community_comment_id: string | null;
   created_at: string;
   reporter_user_id: string;
   site_id: string | null;
@@ -140,6 +142,24 @@ async function getContentAuthorId(report: ReportRow) {
     return result.error ? null : normalizeText(result.data?.user_id);
   }
 
+  if (report.target_type === 'blog_community_post' && report.blog_community_post_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_posts')
+      .select('user_id')
+      .eq('id', report.blog_community_post_id)
+      .maybeSingle();
+    return result.error ? null : normalizeText(result.data?.user_id);
+  }
+
+  if (report.target_type === 'blog_community_comment' && report.blog_community_comment_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_comments')
+      .select('user_id')
+      .eq('id', report.blog_community_comment_id)
+      .maybeSingle();
+    return result.error ? null : normalizeText(result.data?.user_id);
+  }
+
   return null;
 }
 
@@ -176,6 +196,10 @@ async function setEditPermission(report: ReportRow, expAt: string) {
     return;
   }
 
+  if (report.target_type === 'blog_community_post' || report.target_type === 'blog_community_comment') {
+    return;
+  }
+
   throw new Error('수정할 콘텐츠가 없습니다.');
 }
 
@@ -188,7 +212,7 @@ async function sendReporterResultNotification(report: ReportRow) {
     send_site_id: report.site_id,
     send_board_id: report.board_id,
     send_series_id: null,
-    send_post_id: report.post_id,
+    send_post_id: report.post_id ?? report.blog_community_post_id,
     notification_type: NOTIFICATION_TYPE.REPORT_RESULT,
     is_read: false,
   });
@@ -252,8 +276,8 @@ export async function POST(request: Request, context: RouteContext) {
     const reportTable = appeal.report_type === 'legal' ? 'report_legals' : 'report_rights';
     const reportColumns =
       appeal.report_type === 'legal'
-        ? 'id, target_type, post_id, comment_id, created_at, reporter_user_id, site_id, board_id, legal_type, request_type, false_manipulated_info_categories, filming_reason_types'
-        : 'id, target_type, post_id, comment_id, created_at, reporter_user_id, site_id, board_id, reason_type';
+        ? 'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, created_at, reporter_user_id, site_id, board_id, legal_type, request_type, false_manipulated_info_categories, filming_reason_types'
+        : 'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, created_at, reporter_user_id, site_id, board_id, reason_type';
     const reportResult = await supabaseAdmin
       .from(reportTable)
       .select(reportColumns)

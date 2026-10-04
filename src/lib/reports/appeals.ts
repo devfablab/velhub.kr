@@ -106,7 +106,7 @@ export type AppealCenterItem = {
   reportType: 'legal' | 'rights';
   reportName: string;
   category: ReportAppealCategory;
-  targetType: 'post' | 'comment';
+  targetType: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
   reportUrl: string;
   reportedAt: string;
   deadlineStartedOn: string;
@@ -305,10 +305,11 @@ export function getAppealTreatmentMessage({
 }: {
   category: ReportAppealCategory;
   deletionReason: string;
-  targetType: 'post' | 'comment';
+  targetType: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
 }) {
-  const targetLabel = targetType === 'post' ? '게시물' : '댓글';
-  const authorLabel = targetType === 'post' ? '게시자' : '작성자';
+  const isPost = targetType === 'post' || targetType === 'blog_community_post';
+  const targetLabel = isPost ? '게시물' : '댓글';
+  const authorLabel = isPost ? '게시자' : '작성자';
 
   if (deletionReason === 'review_required') {
     return `신고 내용과 제출 자료를 검토하고 ${authorLabel}의 소명을 확인하기 위해 ${targetLabel}을 삭제했습니다.`;

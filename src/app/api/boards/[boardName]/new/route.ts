@@ -938,7 +938,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const lastPost = await supabaseAdmin
       .from('posts')
-      .select('idx, slug')
+      .select('idx')
       .eq('board_id', board.data.id)
       .order('idx', { ascending: false })
       .limit(1)
@@ -949,7 +949,6 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const nextIdx = typeof lastPost.data?.idx === 'number' ? Number(lastPost.data.idx) + 1 : 1;
-    const nextSlug = typeof lastPost.data?.slug === 'number' ? Number(lastPost.data.slug) + 1 : Date.now();
     const nowIsoString = new Date().toISOString();
     const publishedAt = action === 'publish' ? nowIsoString : action === 'unknown' ? requestedPublishedAt : null;
     const seriesIdx =
@@ -970,7 +969,6 @@ export async function POST(request: Request, context: RouteContext) {
     const insertPost = await supabaseAdmin
       .from('posts')
       .insert({
-        slug: nextSlug,
         subject: finalSubject || null,
         summary: finalSummary,
         content_html: finalContentHtml,

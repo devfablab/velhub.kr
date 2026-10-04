@@ -37,6 +37,8 @@ type RawReport = {
   board_id: string | null;
   post_id: string | null;
   comment_id: string | null;
+  blog_community_post_id: string | null;
+  blog_community_comment_id: string | null;
   reporter_user_id: string;
   status: string;
   handling_result: string | null;
@@ -113,6 +115,18 @@ type CommentRow = {
   content: string | null;
 };
 
+type BlogCommunityPostRow = {
+  id: string;
+  slug: string;
+  content: string;
+};
+
+type BlogCommunityCommentRow = {
+  id: string;
+  post_id: string;
+  content: string;
+};
+
 type StigmaRow = {
   user_id: string;
   user_name: string | null;
@@ -147,6 +161,8 @@ const commonColumns = [
   'board_id',
   'post_id',
   'comment_id',
+  'blog_community_post_id',
+  'blog_community_comment_id',
   'reporter_user_id',
   'status',
   'handling_result',
@@ -513,9 +529,15 @@ export async function loadConciergeReports({
   const commentIds = [
     ...new Set(reports.map((report) => report.comment_id).filter((value): value is string => Boolean(value))),
   ];
+  const blogCommunityPostIds = [
+    ...new Set(reports.map((report) => report.blog_community_post_id).filter((value): value is string => Boolean(value))),
+  ];
+  const blogCommunityCommentIds = [
+    ...new Set(reports.map((report) => report.blog_community_comment_id).filter((value): value is string => Boolean(value))),
+  ];
   const reportKeys = new Set(reports.map((report) => `${report.reportType}:${report.id}`));
 
-  const [sitesResult, boardsResult, postsResult, commentsResult, messagesResult, appealsResult] = await Promise.all([
+  const [sitesResult, boardsResult, postsResult, commentsResult, blogPostsResult, blogCommentsResult, messagesResult, appealsResult] = await Promise.all([
     siteIds.length
       ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label, is_blocked').in('id', siteIds)
       : Promise.resolve({ data: [], error: null }),
@@ -527,6 +549,12 @@ export async function loadConciergeReports({
       : Promise.resolve({ data: [], error: null }),
     commentIds.length
       ? supabaseAdmin.from('post_comments').select('id, post_id, content').in('id', commentIds)
+      : Promise.resolve({ data: [], error: null }),
+    blogCommunityPostIds.length
+      ? supabaseAdmin.from('blog_community_posts').select('id, slug, content').in('id', blogCommunityPostIds)
+      : Promise.resolve({ data: [], error: null }),
+    blogCommunityCommentIds.length
+      ? supabaseAdmin.from('blog_community_comments').select('id, post_id, content').in('id', blogCommunityCommentIds)
       : Promise.resolve({ data: [], error: null }),
     reports.length
       ? supabaseAdmin
@@ -556,6 +584,8 @@ export async function loadConciergeReports({
     boardsResult.error ??
     postsResult.error ??
     commentsResult.error ??
+    blogPostsResult.error ??
+    blogCommentsResult.error ??
     messagesResult.error ??
     appealsResult.error;
 
@@ -618,6 +648,12 @@ export async function loadConciergeReports({
   const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
   const postById = new Map(((postsResult.data ?? []) as PostRow[]).map((post) => [post.id, post]));
   const commentById = new Map(((commentsResult.data ?? []) as CommentRow[]).map((comment) => [comment.id, comment]));
+  const blogPostById = new Map(
+    ((blogPostsResult.data ?? []) as BlogCommunityPostRow[]).map((post) => [post.id, post]),
+  );
+  const blogCommentById = new Map(
+    ((blogCommentsResult.data ?? []) as BlogCommunityCommentRow[]).map((comment) => [comment.id, comment]),
+  );
   const messagesByReport = new Map<string, ReportMessage[]>();
 
   messages.forEach((message) => {
@@ -649,15 +685,26 @@ export async function loadConciergeReports({
     const comment = report.comment_id ? commentById.get(report.comment_id) : null;
     const postId = report.post_id ?? comment?.post_id ?? null;
     const post = postId ? postById.get(postId) : null;
+    const blogComment = report.blog_community_comment_id
+      ? blogCommentById.get(report.blog_community_comment_id)
+      : null;
+    const blogPostId = report.blog_community_post_id ?? blogComment?.post_id ?? null;
+    const blogPost = blogPostId ? blogPostById.get(blogPostId) : null;
     const isPending = status === 'received' || status === 'reviewing';
     const createdAtTime = new Date(report.created_at).getTime();
     const elapsedMilliseconds = Number.isFinite(createdAtTime) ? now - createdAtTime : 0;
     const hasThreeDaysPassed = elapsedMilliseconds >= 3 * 24 * 60 * 60 * 1000;
     const hasThirtyDaysPassed = elapsedMilliseconds >= 30 * 24 * 60 * 60 * 1000;
-    const isContentTarget = targetTypeValue === 'post' || targetTypeValue === 'comment';
+    const isContentTarget =
+      targetTypeValue === 'post' ||
+      targetTypeValue === 'comment' ||
+      targetTypeValue === 'blog_community_post' ||
+      targetTypeValue === 'blog_community_comment';
     const internalTargetPath =
       site && board && post
         ? `/${site.site_key}/${board.board_key}/${post.slug}`
+        : site && blogPost
+          ? `/${site.site_key}/community-on-blog/${blogPost.slug}`
         : site && board
           ? `/${site.site_key}/${board.board_key}`
           : site
@@ -713,13 +760,24 @@ export async function loadConciergeReports({
               title: post.subject || '제목 없음',
               href: `/${site.site_key}/${board.board_key}/${post.slug}`,
             }
-          : null,
+          : site && blogPost
+            ? {
+                id: blogPost.id,
+                title: '커뮤니티 글',
+                href: `/${site.site_key}/community-on-blog/${blogPost.slug}`,
+              }
+            : null,
       comment: comment
         ? {
             id: comment.id,
             content: comment.content ?? '',
           }
-        : null,
+        : blogComment
+          ? {
+              id: blogComment.id,
+              content: blogComment.content ?? '',
+            }
+          : null,
       details: getDetails(report, targetTypeValue, resolvedReportUrl),
       messages: messagesByReport.get(`${report.reportType}:${report.id}`) ?? [],
       appealCategory,

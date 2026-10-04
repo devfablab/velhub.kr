@@ -17,6 +17,7 @@ type SiteType = 'blog' | 'community';
 type Props = {
   siteName: string;
   siteType: SiteType | null;
+  blogType?: string | null;
   siteRole: string | null;
   globalRole: string | null;
   onClose: () => void;
@@ -38,7 +39,7 @@ function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | n
   return false;
 }
 
-export default function DrawerManage({ siteName, siteType, siteRole, globalRole, onClose }: Props) {
+export default function DrawerManage({ siteName, siteType, blogType, siteRole, globalRole, onClose }: Props) {
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
 
   return (
@@ -87,6 +88,15 @@ export default function DrawerManage({ siteName, siteType, siteRole, globalRole,
           <span>콘텐츠 관리</span>
         </Anchor>
       </MenuItem>
+
+      {showAllManageMenus && siteType === 'blog' && blogType !== 'team' ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/community-on-blog`}>
+            <InterestsRoundedIcon fontSize="small" />
+            <span>커뮤니티 관리</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
       {showAllManageMenus && siteType === 'community' ? (
         <MenuItem onClick={onClose}>

@@ -26,6 +26,8 @@ type ReportRow = {
   target_type: string | null;
   post_id: string | null;
   comment_id: string | null;
+  blog_community_post_id?: string | null;
+  blog_community_comment_id?: string | null;
   status: string;
   legal_type?: string | null;
   reason_type?: string | null;
@@ -52,12 +54,32 @@ type CommentState = {
   deleted_at: string | null;
 };
 
+type BlogCommunityPostState = {
+  id: string;
+  is_deleted: boolean;
+  deleted_message: string | null;
+  deleted_by: string | null;
+  deleted_at: string | null;
+};
+
+type BlogCommunityCommentState = BlogCommunityPostState;
+
 const reportTableByType = {
   legal: 'report_legals',
   rights: 'report_rights',
 } as const;
 
-async function restoreContentState({ post, comment }: { post: PostState | null; comment: CommentState | null }) {
+async function restoreContentState({
+  post,
+  comment,
+  blogCommunityPost,
+  blogCommunityComment,
+}: {
+  post: PostState | null;
+  comment: CommentState | null;
+  blogCommunityPost: BlogCommunityPostState | null;
+  blogCommunityComment: BlogCommunityCommentState | null;
+}) {
   const supabaseAdmin = getSupabaseAdmin();
 
   if (post) {
@@ -85,6 +107,30 @@ async function restoreContentState({ post, comment }: { post: PostState | null; 
       })
       .eq('id', comment.id);
   }
+
+  if (blogCommunityPost) {
+    await supabaseAdmin
+      .from('blog_community_posts')
+      .update({
+        is_deleted: blogCommunityPost.is_deleted,
+        deleted_message: blogCommunityPost.deleted_message,
+        deleted_by: blogCommunityPost.deleted_by,
+        deleted_at: blogCommunityPost.deleted_at,
+      })
+      .eq('id', blogCommunityPost.id);
+  }
+
+  if (blogCommunityComment) {
+    await supabaseAdmin
+      .from('blog_community_comments')
+      .update({
+        is_deleted: blogCommunityComment.is_deleted,
+        deleted_message: blogCommunityComment.deleted_message,
+        deleted_by: blogCommunityComment.deleted_by,
+        deleted_at: blogCommunityComment.deleted_at,
+      })
+      .eq('id', blogCommunityComment.id);
+  }
 }
 
 async function loadContentState(report: ReportRow) {
@@ -101,7 +147,7 @@ async function loadContentState(report: ReportRow) {
       throw new Error('신고 대상 게시물을 찾을 수 없습니다.');
     }
 
-    return { post: result.data as PostState, comment: null };
+    return { post: result.data as PostState, comment: null, blogCommunityPost: null, blogCommunityComment: null };
   }
 
   if (report.target_type === 'comment' && report.comment_id) {
@@ -115,7 +161,27 @@ async function loadContentState(report: ReportRow) {
       throw new Error('신고 대상 댓글을 찾을 수 없습니다.');
     }
 
-    return { post: null, comment: result.data as CommentState };
+    return { post: null, comment: result.data as CommentState, blogCommunityPost: null, blogCommunityComment: null };
+  }
+
+  if (report.target_type === 'blog_community_post' && report.blog_community_post_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_posts')
+      .select('id, is_deleted, deleted_message, deleted_by, deleted_at')
+      .eq('id', report.blog_community_post_id)
+      .maybeSingle();
+    if (result.error || !result.data) throw new Error('신고 대상 게시물을 찾을 수 없습니다.');
+    return { post: null, comment: null, blogCommunityPost: result.data as BlogCommunityPostState, blogCommunityComment: null };
+  }
+
+  if (report.target_type === 'blog_community_comment' && report.blog_community_comment_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_comments')
+      .select('id, is_deleted, deleted_message, deleted_by, deleted_at')
+      .eq('id', report.blog_community_comment_id)
+      .maybeSingle();
+    if (result.error || !result.data) throw new Error('신고 대상 댓글을 찾을 수 없습니다.');
+    return { post: null, comment: null, blogCommunityPost: null, blogCommunityComment: result.data as BlogCommunityCommentState };
   }
 
   throw new Error('소명 요청서를 작성할 수 없는 신고 대상입니다.');
@@ -156,6 +222,17 @@ async function deleteContent({
     return;
   }
 
+  if (report.target_type === 'blog_community_post' && report.blog_community_post_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_posts')
+      .update({ is_deleted: true, deleted_message: violationMessage, deleted_by: handlerUserId, deleted_at: now })
+      .eq('id', report.blog_community_post_id)
+      .select('id')
+      .maybeSingle();
+    if (result.error || !result.data) throw new Error('게시물을 삭제 처리하지 못했습니다.');
+    return;
+  }
+
   if (report.target_type === 'comment' && report.comment_id) {
     const result = await supabaseAdmin
       .from('post_comments')
@@ -174,6 +251,17 @@ async function deleteContent({
       throw new Error('댓글을 삭제 처리하지 못했습니다.');
     }
 
+    return;
+  }
+
+  if (report.target_type === 'blog_community_comment' && report.blog_community_comment_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_comments')
+      .update({ is_deleted: true, deleted_message: violationMessage, deleted_by: handlerUserId, deleted_at: now })
+      .eq('id', report.blog_community_comment_id)
+      .select('id')
+      .maybeSingle();
+    if (result.error || !result.data) throw new Error('댓글을 삭제 처리하지 못했습니다.');
     return;
   }
 
@@ -204,6 +292,17 @@ async function restoreDeletedContent(report: ReportRow) {
     return;
   }
 
+  if (report.target_type === 'blog_community_post' && report.blog_community_post_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_posts')
+      .update({ is_deleted: false, deleted_message: '소명됨', deleted_by: null, deleted_at: null })
+      .eq('id', report.blog_community_post_id)
+      .select('id')
+      .maybeSingle();
+    if (result.error || !result.data) throw new Error('게시물을 복구하지 못했습니다.');
+    return;
+  }
+
   if (report.target_type === 'comment' && report.comment_id) {
     const result = await supabaseAdmin
       .from('post_comments')
@@ -225,6 +324,17 @@ async function restoreDeletedContent(report: ReportRow) {
     return;
   }
 
+  if (report.target_type === 'blog_community_comment' && report.blog_community_comment_id) {
+    const result = await supabaseAdmin
+      .from('blog_community_comments')
+      .update({ is_deleted: false, deleted_message: '소명됨', deleted_by: null, deleted_at: null })
+      .eq('id', report.blog_community_comment_id)
+      .select('id')
+      .maybeSingle();
+    if (result.error || !result.data) throw new Error('댓글을 복구하지 못했습니다.');
+    return;
+  }
+
   throw new Error('복구할 신고 대상이 없습니다.');
 }
 
@@ -241,7 +351,7 @@ async function sendReporterResultNotification(report: ReportRow) {
     send_site_id: report.site_id ?? null,
     send_board_id: report.board_id ?? null,
     send_series_id: null,
-    send_post_id: report.post_id ?? null,
+    send_post_id: report.post_id ?? report.blog_community_post_id ?? null,
     notification_type: NOTIFICATION_TYPE.REPORT_RESULT,
     is_read: false,
   });
@@ -292,8 +402,8 @@ export async function POST(request: Request, context: RouteContext) {
     const reportTable = reportTableByType[reportType];
     const reportColumns =
       reportType === 'legal'
-        ? 'id, target_type, post_id, comment_id, status, legal_type'
-        : 'id, target_type, post_id, comment_id, status, reason_type';
+        ? 'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, status, legal_type'
+        : 'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, status, reason_type';
     const reportResult = await supabaseAdmin.from(reportTable).select(reportColumns).eq('id', reportId).maybeSingle();
 
     if (reportResult.error || !reportResult.data) {
@@ -303,7 +413,13 @@ export async function POST(request: Request, context: RouteContext) {
     const report = reportResult.data as unknown as ReportRow;
     const category = getCategory(reportType, report);
 
-    if (!category || (report.target_type !== 'post' && report.target_type !== 'comment')) {
+    if (
+      !category ||
+      (report.target_type !== 'post' &&
+        report.target_type !== 'comment' &&
+        report.target_type !== 'blog_community_post' &&
+        report.target_type !== 'blog_community_comment')
+    ) {
       return Response.json({ error: '소명 요청서를 작성할 수 없는 신고입니다.' }, { status: 400 });
     }
 
@@ -425,7 +541,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const reportTable = reportTableByType[reportType];
     const reportResult = await supabaseAdmin
       .from(reportTable)
-      .select('id, target_type, post_id, comment_id, reporter_user_id, site_id, board_id')
+      .select('id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, reporter_user_id, site_id, board_id')
       .eq('id', reportId)
       .maybeSingle();
 

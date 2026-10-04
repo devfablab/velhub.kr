@@ -44,8 +44,13 @@ type SeriesRow = {
 
 type PostRow = {
   id: string;
-  slug: number;
+  slug: string;
   subject: string | null;
+};
+
+type BlogCommunityPostRow = {
+  id: string;
+  slug: string;
 };
 
 type ReportMessageRow = {
@@ -68,11 +73,13 @@ function getNotificationHref({
   site,
   board,
   post,
+  blogCommunityPost,
   notificationType,
 }: {
   site: SiteRow | null;
   board: BoardRow | null;
   post: PostRow | null;
+  blogCommunityPost: BlogCommunityPostRow | null;
   notificationType: string;
 }) {
   if (notificationType === NOTIFICATION_TYPE.MEMBERSHIP_PAYMENT_FAILED) {
@@ -85,6 +92,10 @@ function getNotificationHref({
 
   if (board && post) {
     return `/${site.site_key}/${board.board_key}/${post.slug}`;
+  }
+
+  if (blogCommunityPost) {
+    return `/${site.site_key}/community-on-blog/${blogCommunityPost.slug}`;
   }
 
   if (board) {
@@ -179,7 +190,7 @@ export async function GET() {
       ),
     ];
 
-    const [stigmasResult, sitesResult, boardsResult, seriesResult, postsResult, reportMessagesResult] =
+    const [stigmasResult, sitesResult, boardsResult, seriesResult, postsResult, blogCommunityPostsResult, reportMessagesResult] =
       await Promise.all([
         notificationUserIds.length > 0
           ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', notificationUserIds)
@@ -196,6 +207,9 @@ export async function GET() {
         postIds.length > 0
           ? supabaseAdmin.from('posts').select('id, slug, subject').in('id', postIds)
           : Promise.resolve({ data: [], error: null }),
+        postIds.length > 0
+          ? supabaseAdmin.from('blog_community_posts').select('id, slug').in('id', postIds)
+          : Promise.resolve({ data: [], error: null }),
         reportMessageIds.length > 0
           ? supabaseAdmin
               .from('report_messages')
@@ -210,6 +224,7 @@ export async function GET() {
       boardsResult.error ||
       seriesResult.error ||
       postsResult.error ||
+      blogCommunityPostsResult.error ||
       reportMessagesResult.error
     ) {
       console.error(
@@ -218,6 +233,7 @@ export async function GET() {
           boardsResult.error ??
           seriesResult.error ??
           postsResult.error ??
+          blogCommunityPostsResult.error ??
           reportMessagesResult.error,
       );
 
@@ -238,6 +254,10 @@ export async function GET() {
     const seriesMap = new Map(((seriesResult.data ?? []) as SeriesRow[]).map((series) => [series.id, series]));
 
     const postMap = new Map(((postsResult.data ?? []) as PostRow[]).map((post) => [post.id, post]));
+
+    const blogCommunityPostMap = new Map(
+      ((blogCommunityPostsResult.data ?? []) as BlogCommunityPostRow[]).map((post) => [post.id, post]),
+    );
 
     const reportMessageMap = new Map(
       ((reportMessagesResult.data ?? []) as ReportMessageRow[]).map((reportMessage) => [
@@ -292,13 +312,17 @@ export async function GET() {
 
       const post = notification.send_post_id ? (postMap.get(notification.send_post_id) ?? null) : null;
 
+      const blogCommunityPost = notification.send_post_id
+        ? (blogCommunityPostMap.get(notification.send_post_id) ?? null)
+        : null;
+
       const text = getNotificationText(notification.notification_type, {
         sendUserName: notification.send_user_id ? (stigmaMap.get(notification.send_user_id) ?? '') : '',
         targetUserName: notification.target_id ? (stigmaMap.get(notification.target_id) ?? '') : '',
         siteLabel: site?.site_label ?? null,
         boardLabel: board?.board_label ?? null,
         seriesLabel: series?.series_label ?? null,
-        postSubject: post?.subject ?? null,
+        postSubject: post?.subject ?? (blogCommunityPost ? '커뮤니티 글' : null),
         reportMessage: notification.target_id ? (reportMessageMap.get(notification.target_id) ?? null) : null,
         reportMessageCount: notification.target_id ? (reportMessageCountMap.get(notification.target_id) ?? 0) : 0,
       });
@@ -314,6 +338,7 @@ export async function GET() {
             site,
             board,
             post,
+            blogCommunityPost,
             notificationType: notification.notification_type,
           }),
           isRead: notification.is_read,

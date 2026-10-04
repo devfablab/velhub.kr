@@ -26,7 +26,7 @@ export type RightsReportCategory = (typeof rightsReportCategories)[number];
 
 export type GuidelineReportCategory = GuidelineBaseReportCategory | LegalReportCategory | RightsReportCategory;
 
-export type ReportTargetType = 'site' | 'board' | 'post' | 'comment';
+export type ReportTargetType = 'site' | 'board' | 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
 
 export type LegalType = 'illegal_info' | 'illegal_filming' | 'privacy';
 
@@ -56,6 +56,10 @@ function getTargetLabel(targetType: ReportTargetType) {
   }
 
   if (targetType === 'comment') {
+    return '댓글';
+  }
+
+  if (targetType === 'blog_community_comment') {
     return '댓글';
   }
 
@@ -413,6 +417,8 @@ export const guidelineReportItemsByTargetType = {
   board: boardGuidelineReportItems,
   post: postGuidelineReportItems,
   comment: commentGuidelineReportItems,
+  blog_community_post: postGuidelineReportItems,
+  blog_community_comment: commentGuidelineReportItems,
 } satisfies Record<ReportTargetType, GuidelineReportItem[]>;
 
 export function isGuidelineReportCategory(value: unknown): value is GuidelineBaseReportCategory {
@@ -428,5 +434,5 @@ export function isRightsReportCategory(value: unknown): value is RightsReportCat
 }
 
 export function isReportTargetType(value: unknown): value is ReportTargetType {
-  return value === 'site' || value === 'board' || value === 'post' || value === 'comment';
+  return value === 'site' || value === 'board' || value === 'post' || value === 'comment' || value === 'blog_community_post' || value === 'blog_community_comment';
 }

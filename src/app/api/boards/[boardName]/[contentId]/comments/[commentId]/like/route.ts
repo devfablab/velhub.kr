@@ -55,7 +55,7 @@ async function getTargetComment({
     .eq('board_id', boardResult.data.id);
 
   const postResult = isNumericSlug(contentId)
-    ? await postQuery.eq('slug', Number(contentId)).maybeSingle()
+    ? await postQuery.eq('slug', contentId).maybeSingle()
     : await postQuery.eq('id', contentId).maybeSingle();
 
   if (postResult.error || !postResult.data) {

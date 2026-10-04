@@ -64,6 +64,7 @@ export default function Opt({
   const [globalRole, setGlobalRole] = useState<string | null>(siteHeader?.globalRole ?? null);
 
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
+  const isPersonalBlog = siteType === 'blog' && siteHeader?.blogType !== 'team';
   const menuItems = [
     ...(showAllManageMenus
       ? [{ href: `/${siteName}/manage/settings`, label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보' }]
@@ -85,6 +86,7 @@ export default function Opt({
       : []),
     ...(showAllManageMenus
       ? [
+          ...(isPersonalBlog ? [{ href: `/${siteName}/manage/community-on-blog`, label: '커뮤니티 관리' }] : []),
           { href: `/${siteName}/manage/reports`, label: '신고 관리' },
           {
             href:

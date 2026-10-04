@@ -47,24 +47,15 @@ type CommentResult = {
   error: string | null;
 };
 
+type BlogCommunityPostRow = { id: string; site_id: string };
+type BlogCommunityCommentRow = { id: string; site_id: string; post_id: string };
+
 function getStringValue(value: string | null | undefined) {
   return value?.trim() || null;
 }
 
 function getPostSlugValue(value: string | number | null | undefined) {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    const numberValue = Number(value);
-
-    if (Number.isFinite(numberValue)) {
-      return numberValue;
-    }
-  }
-
-  return null;
+  return typeof value === 'number' ? String(value) : normalizeText(value);
 }
 
 function getUuidValue(value: string | number | null | undefined) {
@@ -106,7 +97,7 @@ async function getPost(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   siteId: string,
   boardId: string,
-  postSlug: number,
+  postSlug: string,
 ): Promise<PostResult> {
   const result = await supabase
     .from('posts')
@@ -166,6 +157,8 @@ function getTargetInsertValues(
   boardId: string | null,
   postId: string | null,
   commentId: string | null,
+  blogCommunityPostId: string | null = null,
+  blogCommunityCommentId: string | null = null,
 ) {
   if (targetType === 'site') {
     return {
@@ -205,6 +198,14 @@ function getTargetInsertValues(
       post_id: postId,
       comment_id: commentId,
     };
+  }
+
+  if (targetType === 'blog_community_post' && blogCommunityPostId) {
+    return { target_id: blogCommunityPostId, site_id: siteId, board_id: null, post_id: null, comment_id: null, blog_community_post_id: blogCommunityPostId, blog_community_comment_id: null };
+  }
+
+  if (targetType === 'blog_community_comment' && blogCommunityPostId && blogCommunityCommentId) {
+    return { target_id: blogCommunityCommentId, site_id: siteId, board_id: null, post_id: null, comment_id: null, blog_community_post_id: blogCommunityPostId, blog_community_comment_id: blogCommunityCommentId };
   }
 
   return null;
@@ -393,6 +394,8 @@ export async function POST(request: Request) {
   const boardName = getStringValue(body.boardName);
   const postSlug = body.targetType === 'post' ? getPostSlugValue(body.contentId) : null;
   const commentId = body.targetType === 'comment' ? getUuidValue(body.commentId) : null;
+  const blogCommunityPostSlug = body.targetType === 'blog_community_post' || body.targetType === 'blog_community_comment' ? getPostSlugValue(body.contentId) : null;
+  const blogCommunityCommentId = body.targetType === 'blog_community_comment' ? getUuidValue(body.commentId) : null;
   const boardId =
     body.targetType === 'board' || body.targetType === 'post' || body.targetType === 'comment'
       ? boardName
@@ -409,6 +412,12 @@ export async function POST(request: Request) {
   }
 
   if (body.targetType === 'comment' && !commentId) {
+    return Response.json({ error: '댓글 정보가 없습니다.' }, { status: 400 });
+  }
+  if ((body.targetType === 'blog_community_post' || body.targetType === 'blog_community_comment') && blogCommunityPostSlug === null) {
+    return Response.json({ error: '게시물 정보가 없습니다.' }, { status: 400 });
+  }
+  if (body.targetType === 'blog_community_comment' && !blogCommunityCommentId) {
     return Response.json({ error: '댓글 정보가 없습니다.' }, { status: 400 });
   }
 
@@ -438,12 +447,28 @@ export async function POST(request: Request) {
     return Response.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
   }
 
+  const blogCommunityPostResult =
+    blogCommunityPostSlug !== null
+      ? await supabase.from('blog_community_posts').select('id, site_id').eq('slug', blogCommunityPostSlug).eq('site_id', site.id).maybeSingle()
+      : { data: null, error: null };
+  if (blogCommunityPostResult.error) return Response.json({ error: '게시물을 확인하지 못했습니다.' }, { status: 500 });
+  if (blogCommunityPostSlug !== null && !blogCommunityPostResult.data) return Response.json({ error: '게시물을 찾을 수 없습니다.' }, { status: 404 });
+
+  const blogCommunityCommentResult =
+    blogCommunityCommentId
+      ? await supabase.from('blog_community_comments').select('id, site_id, post_id').eq('id', blogCommunityCommentId).eq('post_id', blogCommunityPostResult.data?.id).eq('site_id', site.id).maybeSingle()
+      : { data: null, error: null };
+  if (blogCommunityCommentResult.error) return Response.json({ error: '댓글을 확인하지 못했습니다.' }, { status: 500 });
+  if (blogCommunityCommentId && !blogCommunityCommentResult.data) return Response.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
+
   const targetValues = getTargetInsertValues(
     body.targetType,
     site.id,
     boardId,
     postResult.data?.id ?? commentResult.data?.post_id ?? null,
     commentResult.data?.id ?? null,
+    (blogCommunityPostResult.data as BlogCommunityPostRow | null)?.id ?? null,
+    (blogCommunityCommentResult.data as BlogCommunityCommentRow | null)?.id ?? null,
   );
 
   if (!targetValues) {
@@ -457,6 +482,8 @@ export async function POST(request: Request) {
     board_id: targetValues.board_id,
     post_id: targetValues.post_id,
     comment_id: targetValues.comment_id,
+    blog_community_post_id: targetValues.blog_community_post_id ?? null,
+    blog_community_comment_id: targetValues.blog_community_comment_id ?? null,
     reporter_user_id: currentStigma.stigmaId,
     report_category: body.reportCategory,
   });
@@ -472,7 +499,7 @@ export async function POST(request: Request) {
     siteType: site.site_type,
     reporterAuthUserId: sessionClaims.userId,
     boardId: targetValues.board_id,
-    postId: targetValues.post_id,
+    postId: targetValues.post_id ?? targetValues.blog_community_post_id ?? null,
   });
 
   return Response.json({ ok: true });

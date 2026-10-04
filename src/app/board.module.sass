@@ -2002,6 +2002,13 @@
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
 
+      button
+        padding: 0
+        background-color: transparent
+        @include ds.fw(pre, 600)
+        color: ds.$hex-action
+        font-size: ds.rem(12)
+
     .info
       display: flex
       align-items: center
@@ -2067,6 +2074,47 @@
           background-color: ds.$hex-secondary
           border-radius: ds.rem(2)
 
+    > .content-header
+      .author-profile
+        .info
+          flex-direction: column
+          align-items: flex-start
+
+.blog-community-items
+  display: flex
+  flex-direction: column
+  gap: ds.rem(23)
+
+  .feed-item
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+
+    .content-simple
+      display: flex
+      flex-direction: column
+      gap: ds.rem(12)
+
+      p
+        white-space: pre-wrap
+        overflow-wrap: anywhere
+        font-size: ds.rem(14)
+        line-height: 1.25
+        color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
+
+      button
+        padding: 0
+        background-color: transparent
+        @include ds.fw(pre, 600)
+        color: ds.$hex-action
+        font-size: ds.rem(12)
+
+    .options
+      padding: 0
+
 .vh-accordion
   h3
     button
@@ -2083,6 +2131,7 @@
       a
         @include ds.fw(pre, 600)
         font-size: ds.rem(14)
+
         color: ds.$hex-secondary
 
         html[data-theme="yellow-dark"] &

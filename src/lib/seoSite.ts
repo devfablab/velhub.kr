@@ -307,7 +307,7 @@ export async function getPostPageMetadata({
     .eq('board_id', boardResult.data.id);
 
   if (isNumericSlug(normalizedContentId)) {
-    postQuery = postQuery.eq('slug', Number(normalizedContentId));
+    postQuery = postQuery.eq('slug', normalizedContentId);
   } else {
     postQuery = postQuery.eq('id', normalizedContentId);
   }

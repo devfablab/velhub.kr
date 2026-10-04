@@ -89,7 +89,7 @@ type PollData = {
 };
 
 type ContentResponse = {
-  targetType: 'post' | 'comment';
+  targetType: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
   canEdit: boolean;
   site: { name: string; label: string };
   board: {
@@ -214,7 +214,7 @@ function getDeletionReasonLabel(item: AppealCenterItem) {
 function ContentViewer({ response }: { response: ContentResponse }) {
   const theme = useTheme();
 
-  if (response.targetType === 'comment') {
+  if (response.targetType === 'comment' || response.targetType === 'blog_community_comment') {
     return (
       <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
         {response.comment?.content || '댓글 내용이 없습니다.'}
@@ -291,7 +291,7 @@ function ContentEditor({
     setForm((current) => (current ? { ...current, [key]: value } : current));
   }
 
-  if (response.targetType === 'comment') {
+  if (response.targetType === 'comment' || response.targetType === 'blog_community_comment') {
     return (
       <Stack gap={0.5}>
         <Typography variant="subtitle2">댓글 내용</Typography>
@@ -875,7 +875,7 @@ export default function Opt({
                   <Typography variant="subtitle2">신고 대상 URL</Typography>
                   <Typography sx={{ wordBreak: 'break-all' }}>{opinionItem.reportUrl}</Typography>
                 </Stack>
-                {opinionItem.targetType === 'comment' ? (
+                {opinionItem.targetType === 'comment' || opinionItem.targetType === 'blog_community_comment' ? (
                   <Stack gap={0.5}>
                     <Typography variant="subtitle2">댓글 내용</Typography>
                     <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
@@ -1106,7 +1106,7 @@ export default function Opt({
                   <Typography variant="subtitle2">신고 대상 URL</Typography>
                   <Typography sx={{ wordBreak: 'break-all' }}>{opinionItem.reportUrl}</Typography>
                 </Stack>
-                {opinionItem.targetType === 'comment' ? (
+                {opinionItem.targetType === 'comment' || opinionItem.targetType === 'blog_community_comment' ? (
                   <Stack gap={0.5}>
                     <Typography variant="subtitle2">댓글 내용</Typography>
                     <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>

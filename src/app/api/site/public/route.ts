@@ -122,6 +122,13 @@ export async function GET(request: Request) {
               .maybeSingle();
           })()
         : Promise.resolve(null);
+    const blogCommunityPromise =
+      siteType === 'blog'
+        ? Promise.all([
+            supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteId).maybeSingle(),
+            supabaseAdmin.from('blog_communities').select('is_enabled').eq('site_id', siteId).maybeSingle(),
+          ])
+        : Promise.resolve(null);
     const privateBoardPromise =
       siteType === 'community'
         ? (async () => {
@@ -156,6 +163,7 @@ export async function GET(request: Request) {
       privateBoardRes,
       siteLimitResult,
       hasOwnerDomainFeature,
+      blogCommunityResult,
     ] = await Promise.all([
       chorogonPromise,
       boardsPromise,
@@ -165,7 +173,10 @@ export async function GET(request: Request) {
       privateBoardPromise,
       siteLimitPromise,
       hasOwnerDomainPromise,
+      blogCommunityPromise,
     ]);
+
+    const [blogResult, blogCommunityConfigResult] = blogCommunityResult ?? [null, null];
 
     const [hasUnlimitedSites, ownerSitesResult] = siteLimitResult ?? [false, null];
     const ownerSiteIds = ownerSitesResult?.data?.map((site) => site.id) ?? [];
@@ -233,6 +244,8 @@ export async function GET(request: Request) {
         join_accept_end_day: joinAcceptEndDay,
         has_categories: !categoriesRes.error && Number(categoriesRes.count ?? 0) > 0,
         has_series: !seriesRes.error && Number(seriesRes.count ?? 0) > 0,
+        blog_type: blogResult?.data?.blog_type ?? null,
+        is_blog_community_enabled: blogCommunityConfigResult?.data?.is_enabled === true,
       },
       menus: boardRows.map((board) => ({
         id: board.id,

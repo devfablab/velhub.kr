@@ -20,6 +20,8 @@ type RawReport = {
   board_id: string | null;
   post_id: string | null;
   comment_id: string | null;
+  blog_community_post_id: string | null;
+  blog_community_comment_id: string | null;
   report_url: string | null;
   created_at: string;
   legal_type?: string | null;
@@ -68,6 +70,28 @@ type CommentRow = {
   exp_at: string | null;
 };
 
+type BlogCommunityPostRow = {
+  id: string;
+  site_id: string;
+  slug: string;
+  user_id: string;
+  content: string | null;
+  is_deleted: boolean;
+  deleted_message: string | null;
+  edited_at: string | null;
+};
+
+type BlogCommunityCommentRow = {
+  id: string;
+  site_id: string;
+  post_id: string;
+  user_id: string;
+  content: string | null;
+  is_deleted: boolean;
+  deleted_message: string | null;
+  updated_at: string | null;
+};
+
 type SiteRow = {
   id: string;
   site_key: string;
@@ -84,10 +108,10 @@ const appealColumns =
   'id, report_type, report_id, admin_status, appellant_status, submission_summary, deletion_reason, appeal_request, request_submitted_at, opinion_position, disputed_parts, opinion_data, opinion_file, content_request, modification_content, opinion_submitted_at, edit_completed_at, final_decision, final_handled_at, created_at, updated_at';
 
 const legalColumns =
-  'id, target_type, site_id, board_id, post_id, comment_id, report_url, created_at, legal_type, request_type, illegal_info_categories, false_manipulated_info_categories, report_content, report_reason, report_basis, filming_request_types, filming_reason_types, filming_target, privacy_report_type, exposed_information, privacy_request_reason';
+  'id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_url, created_at, legal_type, request_type, illegal_info_categories, false_manipulated_info_categories, report_content, report_reason, report_basis, filming_request_types, filming_reason_types, filming_target, privacy_report_type, exposed_information, privacy_request_reason';
 
 const rightsColumns =
-  'id, target_type, site_id, board_id, post_id, comment_id, report_url, created_at, reason_type, rights_owner_type, reporter_capacity, rights_holder_name, infringement_reason';
+  'id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_url, created_at, reason_type, rights_owner_type, reporter_capacity, rights_holder_name, infringement_reason';
 
 function normalizeStringArray(value: unknown) {
   return Array.isArray(value) ? value.map((item) => normalizeText(item)).filter(Boolean) : [];
@@ -164,12 +188,27 @@ function getOpinionContext(report: RawReport): AppealOpinionContext {
   };
 }
 
-async function loadReportsForTargets({ postIds, commentIds }: { postIds: string[]; commentIds: string[] }) {
+async function loadReportsForTargets({
+  postIds,
+  commentIds,
+  blogCommunityPostIds,
+  blogCommunityCommentIds,
+}: {
+  postIds: string[];
+  commentIds: string[];
+  blogCommunityPostIds: string[];
+  blogCommunityCommentIds: string[];
+}) {
   const supabaseAdmin = getSupabaseAdmin();
   const requests: Promise<{ data: unknown[] | null; error: { message?: string } | null; reportType: ReportType }>[] =
     [];
 
-  function addRequest(reportType: ReportType, column: 'post_id' | 'comment_id', ids: string[]) {
+  function addRequest(
+    reportType: ReportType,
+    column: 'post_id' | 'comment_id' | 'blog_community_post_id' | 'blog_community_comment_id',
+    targetType: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment',
+    ids: string[],
+  ) {
     if (ids.length === 0) {
       return;
     }
@@ -185,7 +224,7 @@ async function loadReportsForTargets({ postIds, commentIds }: { postIds: string[
         const result = await supabaseAdmin
           .from(table)
           .select(columns)
-          .eq('target_type', column === 'post_id' ? 'post' : 'comment')
+          .eq('target_type', targetType)
           .in(column, ids)
           .in(subtypeColumn, allowedTypes);
 
@@ -198,10 +237,14 @@ async function loadReportsForTargets({ postIds, commentIds }: { postIds: string[
     );
   }
 
-  addRequest('legal', 'post_id', postIds);
-  addRequest('legal', 'comment_id', commentIds);
-  addRequest('rights', 'post_id', postIds);
-  addRequest('rights', 'comment_id', commentIds);
+  addRequest('legal', 'post_id', 'post', postIds);
+  addRequest('legal', 'comment_id', 'comment', commentIds);
+  addRequest('legal', 'blog_community_post_id', 'blog_community_post', blogCommunityPostIds);
+  addRequest('legal', 'blog_community_comment_id', 'blog_community_comment', blogCommunityCommentIds);
+  addRequest('rights', 'post_id', 'post', postIds);
+  addRequest('rights', 'comment_id', 'comment', commentIds);
+  addRequest('rights', 'blog_community_post_id', 'blog_community_post', blogCommunityPostIds);
+  addRequest('rights', 'blog_community_comment_id', 'blog_community_comment', blogCommunityCommentIds);
 
   const results = await Promise.all(requests);
   const error = results.find((result) => result.error)?.error;
@@ -225,23 +268,34 @@ async function loadReportsForTargets({ postIds, commentIds }: { postIds: string[
 
 export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: string; origin: string }) {
   const supabaseAdmin = getSupabaseAdmin();
-  const [ownPostsResult, ownCommentsResult] = await Promise.all([
+  const [ownPostsResult, ownCommentsResult, ownBlogPostsResult, ownBlogCommentsResult] = await Promise.all([
     supabaseAdmin.from('posts').select('id').eq('user_id', stigmaId),
     supabaseAdmin
       .from('post_comments')
       .select('id, site_id, board_id, post_id, user_id, content, is_deleted, deleted_message, updated_at, exp_at')
       .eq('user_id', stigmaId),
+    supabaseAdmin.from('blog_community_posts').select('id').eq('user_id', stigmaId),
+    supabaseAdmin
+      .from('blog_community_comments')
+      .select('id, site_id, post_id, user_id, content, is_deleted, deleted_message, updated_at')
+      .eq('user_id', stigmaId),
   ]);
 
-  if (ownPostsResult.error || ownCommentsResult.error) {
-    console.error('[concierge/appeals] owned content query error', ownPostsResult.error ?? ownCommentsResult.error);
+  if (ownPostsResult.error || ownCommentsResult.error || ownBlogPostsResult.error || ownBlogCommentsResult.error) {
+    console.error('[concierge/appeals] owned content query error', ownPostsResult.error ?? ownCommentsResult.error ?? ownBlogPostsResult.error ?? ownBlogCommentsResult.error);
     throw new Error('소명 대상 콘텐츠를 불러오지 못했습니다.');
   }
 
   const ownPostIds = (ownPostsResult.data ?? []).map((row) => row.id as string);
   const comments = (ownCommentsResult.data ?? []) as CommentRow[];
   const ownCommentIds = comments.map((comment) => comment.id);
-  const reports = await loadReportsForTargets({ postIds: ownPostIds, commentIds: ownCommentIds });
+  const blogComments = (ownBlogCommentsResult.data ?? []) as BlogCommunityCommentRow[];
+  const reports = await loadReportsForTargets({
+    postIds: ownPostIds,
+    commentIds: ownCommentIds,
+    blogCommunityPostIds: (ownBlogPostsResult.data ?? []).map((row) => row.id as string),
+    blogCommunityCommentIds: blogComments.map((comment) => comment.id),
+  });
 
   if (reports.length === 0) {
     return [];
@@ -255,22 +309,36 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
         .filter((value): value is string => Boolean(value)),
     ),
   ];
-  const [postsResult, appealsResult] = await Promise.all([
+  const blogPostIds = [
+    ...new Set(
+      reports
+        .map((report) => report.blog_community_post_id ?? blogComments.find((comment) => comment.id === report.blog_community_comment_id)?.post_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ];
+  const [postsResult, blogPostsResult, appealsResult] = await Promise.all([
     supabaseAdmin
       .from('posts')
       .select('id, site_id, board_id, slug, subject, user_id, is_closed, closed_message, updated_at, exp_at')
       .in('id', postIds),
+    supabaseAdmin
+      .from('blog_community_posts')
+      .select('id, site_id, slug, user_id, content, is_deleted, deleted_message, edited_at')
+      .in('id', blogPostIds),
     supabaseAdmin.from('report_appeals').select(appealColumns).in('report_id', reportIds),
   ]);
 
-  if (postsResult.error || appealsResult.error) {
-    console.error('[concierge/appeals] related query error', postsResult.error ?? appealsResult.error);
+  if (postsResult.error || blogPostsResult.error || appealsResult.error) {
+    console.error('[concierge/appeals] related query error', postsResult.error ?? blogPostsResult.error ?? appealsResult.error);
     throw new Error('소명 관련 정보를 불러오지 못했습니다.');
   }
 
   const posts = (postsResult.data ?? []) as PostRow[];
+  const blogPosts = (blogPostsResult.data ?? []) as BlogCommunityPostRow[];
   const postById = new Map(posts.map((post) => [post.id, post]));
+  const blogPostById = new Map(blogPosts.map((post) => [post.id, post]));
   const commentById = new Map(comments.map((comment) => [comment.id, comment]));
+  const blogCommentById = new Map(blogComments.map((comment) => [comment.id, comment]));
   const siteIds = [
     ...new Set(reports.map((report) => report.site_id).filter((value): value is string => Boolean(value))),
   ];
@@ -301,16 +369,23 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
   return reports.flatMap((report): AppealCenterItem[] => {
     const comment = report.comment_id ? commentById.get(report.comment_id) : null;
     const post = postById.get(report.post_id ?? comment?.post_id ?? '');
+    const blogComment = report.blog_community_comment_id ? blogCommentById.get(report.blog_community_comment_id) : null;
+    const blogPost = blogPostById.get(report.blog_community_post_id ?? blogComment?.post_id ?? '');
     const site = report.site_id ? siteById.get(report.site_id) : null;
     const board = report.board_id ? boardById.get(report.board_id) : null;
 
-    if (!post || !site || !board) {
+    if (!site || (!post && !blogPost) || (!blogPost && !board)) {
       return [];
     }
 
-    const isDeletedForViolation =
-      report.target_type === 'post'
-        ? post.is_closed === true && Boolean(normalizeText(post.closed_message))
+    const isBlogTarget = report.target_type === 'blog_community_post' || report.target_type === 'blog_community_comment';
+    const isCommentTarget = report.target_type === 'comment' || report.target_type === 'blog_community_comment';
+    const isDeletedForViolation = isBlogTarget
+      ? isCommentTarget
+        ? blogComment?.is_deleted === true && Boolean(normalizeText(blogComment.deleted_message))
+        : blogPost?.is_deleted === true && Boolean(normalizeText(blogPost.deleted_message))
+      : report.target_type === 'post'
+        ? post!.is_closed === true && Boolean(normalizeText(post!.closed_message))
         : comment?.is_deleted === true && Boolean(normalizeText(comment.deleted_message));
 
     if (!isDeletedForViolation) {
@@ -331,12 +406,14 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
 
     const appeal = appealByReport.get(`${report.reportType}:${report.id}`) ?? null;
     const deadline = getReportAppealDeadline(report.created_at);
-    const targetUpdatedAt = comment?.updated_at ?? post.updated_at;
-    const targetExpAt = comment?.exp_at ?? post.exp_at;
+    const targetUpdatedAt = isBlogTarget ? blogComment?.updated_at ?? blogPost?.edited_at ?? null : comment?.updated_at ?? post?.updated_at ?? null;
+    const targetExpAt = isBlogTarget ? null : comment?.exp_at ?? post?.exp_at ?? null;
     const hasEditedAfterPermission = Boolean(
       targetUpdatedAt && targetExpAt && new Date(targetUpdatedAt).getTime() > new Date(targetExpAt).getTime(),
     );
-    const internalPath = `/${site.site_key}/${board.board_key}/${post.slug}`;
+    const internalPath = blogPost
+      ? `/${site.site_key}/community-on-blog/${blogPost.slug}`
+      : `/${site.site_key}/${board!.board_key}/${post!.slug}`;
     const reportUrl = normalizeText(report.report_url) || new URL(internalPath, origin).toString();
 
     return [
@@ -348,7 +425,7 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
             ? (legalTypeLabels[category] ?? category)
             : (rightsReasonTypeLabels[category] ?? category),
         category,
-        targetType: report.target_type as 'post' | 'comment',
+        targetType: report.target_type as AppealCenterItem['targetType'],
         reportUrl,
         reportedAt: report.created_at,
         deadlineStartedOn: deadline.startedOn,
@@ -356,13 +433,13 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
         isExpired: deadline.isExpired,
         siteName: site.site_key,
         siteLabel: site.site_label || site.site_key,
-        boardName: board.board_key,
-        boardLabel: board.board_label || board.board_key,
-        contentId: String(post.slug),
-        postId: post.id,
-        postTitle: post.subject || '제목 없음',
-        commentId: comment?.id ?? null,
-        commentContent: comment?.content ?? null,
+        boardName: blogPost ? 'community-on-blog' : board!.board_key,
+        boardLabel: blogPost ? '커뮤니티' : board!.board_label || board!.board_key,
+        contentId: String(blogPost?.slug ?? post!.slug),
+        postId: blogPost?.id ?? post!.id,
+        postTitle: blogPost ? '커뮤니티 글' : post!.subject || '제목 없음',
+        commentId: blogComment?.id ?? comment?.id ?? null,
+        commentContent: blogComment?.content ?? comment?.content ?? null,
         adminStatusLabel: appeal?.adminStatusLabel ?? '소명 요청서 제출 전',
         appellantStatusLabel: appeal?.appellantStatusLabel ?? '소명 요청서 도착 전',
         appeal,

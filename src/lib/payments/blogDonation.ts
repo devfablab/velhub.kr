@@ -1,3 +1,4 @@
+import { getPastDueGraceDays } from '@/lib/payments/refunds';
 import { SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE, PAYMENT_TARGET_TYPE } from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -7,6 +8,7 @@ type BlogSubscriptionRow = {
   status: string;
   current_period_end: string | null;
   expired_at: string | null;
+  past_due_started_at: string | null;
 };
 
 type SeriesSubscriptionRow = BlogSubscriptionRow;
@@ -22,7 +24,7 @@ export async function hasValidBlogSubscription({
 }) {
   const subscriptionResult = await supabaseAdmin
     .from('subscriptions')
-    .select('status, current_period_end, expired_at')
+    .select('status, current_period_end, expired_at, past_due_started_at')
     .eq('subscriber_user_id', subscriberId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
     .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
@@ -40,11 +42,21 @@ export async function hasValidBlogSubscription({
     return false;
   }
 
-  if (subscription.status !== SUBSCRIPTION_STATUS.TRIALING && subscription.status !== SUBSCRIPTION_STATUS.ACTIVE) {
-    return false;
+  const now = Date.now();
+  const periodEnd = new Date(subscription.current_period_end).getTime();
+
+  if (subscription.status === SUBSCRIPTION_STATUS.TRIALING || subscription.status === SUBSCRIPTION_STATUS.ACTIVE) {
+    return periodEnd > now;
   }
 
-  return new Date(subscription.current_period_end).getTime() > Date.now();
+  // 자동결제 오류는 결제 수단을 고칠 수 있도록 7일간만 구독 권한을 유지합니다.
+  if (subscription.status === SUBSCRIPTION_STATUS.PAST_DUE && subscription.past_due_started_at) {
+    const startedAt = new Date(subscription.past_due_started_at).getTime();
+    return Number.isFinite(startedAt) && startedAt + getPastDueGraceDays() * 24 * 60 * 60 * 1000 > now;
+  }
+
+  // 환불 없이 해지한 구독은 이미 결제한 회차가 끝날 때까지 이용할 수 있습니다.
+  return subscription.status === SUBSCRIPTION_STATUS.CANCELED && periodEnd > now;
 }
 
 export async function hasValidSeriesSubscription({

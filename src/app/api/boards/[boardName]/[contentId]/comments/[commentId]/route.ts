@@ -815,7 +815,7 @@ export async function GET(request: Request, context: RouteContext) {
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id)
-      .eq('slug', Number(normalizedContentId))
+      .eq('slug', normalizedContentId)
       .maybeSingle();
 
     if (post.error || !post.data) {

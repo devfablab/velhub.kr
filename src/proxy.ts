@@ -30,6 +30,7 @@ type SessionRouteResult = {
   hasCreatorLounge?: boolean;
   hasCreatorPosts?: boolean;
   hasOwnerLounge?: boolean;
+  feature?: { canUse?: boolean };
 };
 
 type RhizomeStateResult = {
@@ -48,6 +49,8 @@ type RhizomeStateResult = {
     join_accept_end_day?: string | null;
     has_categories?: boolean;
     has_series?: boolean;
+    blog_type?: string | null;
+    is_blog_community_enabled?: boolean;
   };
 };
 
@@ -96,6 +99,14 @@ function isPrivateBoardPath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
 
   return segments.length >= 2 && segments[1] === 'private';
+}
+
+function isBlogCommunityPath(pathname: string, siteName: string) {
+  return pathname === `/${siteName}/community-on-blog` || pathname.startsWith(`/${siteName}/community-on-blog/`);
+}
+
+function isBlogCommunityManagePath(pathname: string, siteName: string) {
+  return pathname === `/${siteName}/manage/community-on-blog` || pathname.startsWith(`/${siteName}/manage/community-on-blog/`);
 }
 
 function isJoinPath(pathname: string) {
@@ -916,6 +927,14 @@ export async function proxy(request: NextRequest) {
     if (redirectPath && pathname !== redirectPath) {
       return redirectWithPath(request, redirectPath);
     }
+
+    if (isBlogCommunityManagePath(pathname, siteName)) {
+      const rhizomeState = await fetchRhizomeState(request, { siteName });
+      const siteInfo = rhizomeState.result?.siteInfo;
+      if (siteInfo?.site_type !== 'blog' || siteInfo.blog_type === 'team') {
+        return redirectWithPath(request, `/${siteName}/manage`);
+      }
+    }
   }
 
   if (isJoinPath(pathname) || isRejoinPath(pathname)) {
@@ -985,10 +1004,23 @@ export async function proxy(request: NextRequest) {
 
     if (siteName) {
       const rhizomeState = await fetchRhizomeState(request, { siteName });
+      const siteInfo = rhizomeState.result?.siteInfo;
+      if (
+        isBlogCommunityPath(pathname, siteName) &&
+        (siteInfo?.site_type !== 'blog' || siteInfo.blog_type === 'team' || siteInfo.is_blog_community_enabled !== true)
+      ) {
+        return redirectWithPath(request, `/${siteName}`);
+      }
+      if (isBlogCommunityPath(pathname, siteName)) {
+        const communityAccess = await fetchSessionRoute(request, `/api/site/${siteName}/community-on-blog`, { summary: '1' });
+        if (!communityAccess.response.ok || communityAccess.result?.feature?.canUse !== true) {
+          return redirectWithPath(request, `/${siteName}`);
+        }
+      }
       const redirectPath = getSecondaryRedirectPath({
         pathname,
         siteName,
-        siteType: rhizomeState.result?.siteInfo?.site_type,
+        siteType: siteInfo?.site_type,
       });
 
       if (rhizomeState.response.ok && redirectPath && pathname !== redirectPath) {

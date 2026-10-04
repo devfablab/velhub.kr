@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
@@ -48,7 +49,34 @@ type TargetValues = {
   boardId: string | null;
   postId: string | null;
   commentId: string | null;
+  blogCommunityPostId: string | null;
+  blogCommunityCommentId: string | null;
 };
+
+async function notifyReportReceived({ siteId, reporterId, boardId, postId }: { siteId: string | null; reporterId: string; boardId: string | null; postId: string | null }) {
+  if (!siteId) return;
+  const supabaseAdmin = getSupabaseAdmin();
+  const ownersResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('user_id')
+    .eq('site_id', siteId)
+    .eq('role', 'owner')
+    .eq('is_approval', true)
+    .eq('is_block', false);
+  if (ownersResult.error || !ownersResult.data?.length) return;
+  const recipientIds = [...new Set(ownersResult.data.map((owner) => owner.user_id).filter(Boolean))];
+  const result = await supabaseAdmin.from('notifications').insert(recipientIds.map((user_id) => ({
+    user_id,
+    send_user_id: reporterId,
+    send_site_id: siteId,
+    send_board_id: boardId,
+    send_series_id: null,
+    send_post_id: postId,
+    notification_type: NOTIFICATION_TYPE.REPORT_RECEIVED,
+    is_read: false,
+  })));
+  if (result.error) console.error('[reports/rights/new] notification error', result.error);
+}
 
 type UploadedCopyrightProofFile = {
   bucket: 'report-rights';
@@ -133,17 +161,7 @@ function getFormStringArray(formData: FormData, key: string) {
 }
 
 function getPostSlugValue(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const numberValue = Number(value);
-
-  if (!Number.isFinite(numberValue)) {
-    return null;
-  }
-
-  return numberValue;
+  return value?.trim() || null;
 }
 
 function getCopyrightProofFiles(formData: FormData) {
@@ -311,7 +329,7 @@ async function getBoardId(siteId: string, boardName: string) {
   return (result.data as BoardRow | null)?.id ?? null;
 }
 
-async function getPostId(siteId: string, boardId: string, contentId: number) {
+async function getPostId(siteId: string, boardId: string, contentId: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
   const result = await supabaseAdmin
@@ -359,7 +377,7 @@ async function resolveTargetValues({
   targetType: ReportTargetType | null;
   siteName: string | null;
   boardName: string | null;
-  contentId: number | null;
+  contentId: string | null;
   commentId: string | null;
 }): Promise<TargetValues | { error: string; status: number }> {
   if (!targetType) {
@@ -370,6 +388,8 @@ async function resolveTargetValues({
       boardId: null,
       postId: null,
       commentId: null,
+      blogCommunityPostId: null,
+      blogCommunityCommentId: null,
     };
   }
 
@@ -391,6 +411,55 @@ async function resolveTargetValues({
       boardId: null,
       postId: null,
       commentId: null,
+      blogCommunityPostId: null,
+      blogCommunityCommentId: null,
+    };
+  }
+
+  if (targetType === 'blog_community_post' || targetType === 'blog_community_comment') {
+    if (!contentId) return { error: '게시물 정보가 없습니다.', status: 400 };
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const postResult = await supabaseAdmin
+      .from('blog_community_posts')
+      .select('id')
+      .eq('site_id', siteId)
+      .eq('slug', contentId)
+      .maybeSingle();
+    if (postResult.error || !postResult.data) return { error: '게시물을 찾을 수 없습니다.', status: 404 };
+
+    if (targetType === 'blog_community_post') {
+      return {
+        targetType,
+        targetId: postResult.data.id,
+        siteId,
+        boardId: null,
+        postId: null,
+        commentId: null,
+        blogCommunityPostId: postResult.data.id,
+        blogCommunityCommentId: null,
+      };
+    }
+
+    if (!commentId) return { error: '댓글 정보가 없습니다.', status: 400 };
+    const commentResult = await supabaseAdmin
+      .from('blog_community_comments')
+      .select('id')
+      .eq('id', commentId)
+      .eq('site_id', siteId)
+      .eq('post_id', postResult.data.id)
+      .maybeSingle();
+    if (commentResult.error || !commentResult.data) return { error: '댓글을 찾을 수 없습니다.', status: 404 };
+
+    return {
+      targetType,
+      targetId: commentResult.data.id,
+      siteId,
+      boardId: null,
+      postId: null,
+      commentId: null,
+      blogCommunityPostId: postResult.data.id,
+      blogCommunityCommentId: commentResult.data.id,
     };
   }
 
@@ -412,6 +481,8 @@ async function resolveTargetValues({
       boardId,
       postId: null,
       commentId: null,
+      blogCommunityPostId: null,
+      blogCommunityCommentId: null,
     };
   }
 
@@ -433,6 +504,8 @@ async function resolveTargetValues({
       boardId,
       postId,
       commentId: null,
+      blogCommunityPostId: null,
+      blogCommunityCommentId: null,
     };
   }
 
@@ -453,6 +526,8 @@ async function resolveTargetValues({
     boardId,
     postId: comment.post_id,
     commentId: comment.id,
+    blogCommunityPostId: null,
+    blogCommunityCommentId: null,
   };
 }
 
@@ -682,6 +757,8 @@ export async function POST(request: Request) {
         board_id: targetValues.boardId,
         post_id: targetValues.postId,
         comment_id: targetValues.commentId,
+        blog_community_post_id: targetValues.blogCommunityPostId,
+        blog_community_comment_id: targetValues.blogCommunityCommentId,
 
         report_url: reportUrl,
         reporter_user_id: currentStigma.stigmaId,
@@ -746,7 +823,27 @@ export async function POST(request: Request) {
                 deleted_at: now,
               })
               .eq('id', targetValues.commentId)
-          : null;
+          : targetValues.targetType === 'blog_community_post' && targetValues.blogCommunityPostId
+            ? await supabaseAdmin
+                .from('blog_community_posts')
+                .update({
+                  is_deleted: true,
+                  deleted_message: '권리침해 위반',
+                  deleted_by: currentStigma.stigmaId,
+                  deleted_at: now,
+                })
+                .eq('id', targetValues.blogCommunityPostId)
+            : targetValues.targetType === 'blog_community_comment' && targetValues.blogCommunityCommentId
+              ? await supabaseAdmin
+                  .from('blog_community_comments')
+                  .update({
+                    is_deleted: true,
+                    deleted_message: '권리침해 위반',
+                    deleted_by: currentStigma.stigmaId,
+                    deleted_at: now,
+                  })
+                  .eq('id', targetValues.blogCommunityCommentId)
+              : null;
 
     if (contentUpdateResult?.error) {
       console.error('[reports/rights/new] content hide error', contentUpdateResult.error);
@@ -762,6 +859,13 @@ export async function POST(request: Request) {
 
       return Response.json({ error: '신고 대상을 숨김 처리하지 못했습니다.' }, { status: 500 });
     }
+
+    await notifyReportReceived({
+      siteId: targetValues.siteId,
+      reporterId: currentStigma.stigmaId,
+      boardId: targetValues.boardId,
+      postId: targetValues.postId ?? targetValues.blogCommunityPostId,
+    });
 
     return Response.json({ ok: true });
   } catch (unknownError) {

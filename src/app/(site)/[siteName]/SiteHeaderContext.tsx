@@ -6,6 +6,7 @@ export type SiteHeaderData = {
   siteName: string | null;
   siteLabel: string | null;
   siteType: 'blog' | 'community' | null;
+  blogType?: string | null;
   themeType: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;

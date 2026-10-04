@@ -9,6 +9,7 @@ type SiteType = 'blog' | 'community';
 type NavManageProps = {
   siteName: string;
   siteType: SiteType;
+  blogType?: string | null;
   siteRole: string | null;
   globalRole: string | null;
   isSiteStaff: boolean;
@@ -40,7 +41,7 @@ function canAccessAllManageMenus(siteType: SiteType, siteRole: string | null, gl
   return siteRole === 'owner' || siteRole === 'community-manager';
 }
 
-export default function NavManage({ siteName, siteType, siteRole, globalRole, isSiteStaff }: NavManageProps) {
+export default function NavManage({ siteName, siteType, blogType, siteRole, globalRole, isSiteStaff }: NavManageProps) {
   const pathname = usePathname();
 
   if (!isSiteStaff) {
@@ -82,6 +83,9 @@ export default function NavManage({ siteName, siteType, siteRole, globalRole, is
       href: `/${siteName}/manage/contents`,
       startsWith: true,
     },
+    ...(showAllManageMenus && siteType === 'blog' && blogType !== 'team'
+      ? [{ label: '커뮤니티 관리', href: `/${siteName}/manage/community-on-blog`, startsWith: true }]
+      : []),
     ...(showAllManageMenus && siteType === 'community'
       ? [
           {

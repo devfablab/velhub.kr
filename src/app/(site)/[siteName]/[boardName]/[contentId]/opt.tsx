@@ -1160,9 +1160,9 @@ export default function Opt({
                       <div className={styles.name}>
                         <cite>
                           {isCommunity ? (
-                              <CommunityMemberMenu
-                                siteName={siteName}
-                                name={content.author_name}
+                            <CommunityMemberMenu
+                              siteName={siteName}
+                              name={content.author_name}
                               boardName={board?.board_key}
                               boardLabel={board?.board_label}
                             />
@@ -1591,6 +1591,33 @@ export default function Opt({
               initialData={initialComments}
             />
           ) : null}
+
+          {!isPage ? (
+            <>
+              {isMobile ? null : (
+                <div className={styles['top-buttons']}>
+                  <Anchor href={listHref} className={`${styles.button} button`}>
+                    <span>목록</span>
+                  </Anchor>
+                  <div className={styles.buttons}>
+                    {previousPost ? (
+                      <Anchor href={previousPost.href} className="button">
+                        <ArrowBackIosRoundedIcon />
+                        <span>이전글</span>
+                      </Anchor>
+                    ) : null}
+                    {nextPost ? (
+                      <Anchor href={nextPost.href} className="button">
+                        <span>다음글</span>
+                        <ArrowForwardIosRoundedIcon />
+                      </Anchor>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : null}
+
           {isMobile ? (
             <Drawer
               anchor="bottom"

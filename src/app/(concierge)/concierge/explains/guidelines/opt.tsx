@@ -55,7 +55,7 @@ type PollData = {
 };
 
 type ContentResponse = {
-  targetType: 'post' | 'comment';
+  targetType: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
   site: { name: string; label: string };
   board: {
     name: string;
@@ -128,7 +128,7 @@ function MessageBubble({
 function ContentViewer({ response }: { response: ContentResponse }) {
   const theme = useTheme();
 
-  if (response.targetType === 'comment') {
+  if (response.targetType === 'comment' || response.targetType === 'blog_community_comment') {
     return (
       <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
         {response.comment?.content || '댓글 내용이 없습니다.'}

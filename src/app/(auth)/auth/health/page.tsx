@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
+import { Stack, Typography } from '@mui/material';
 import { getSupabaseAuthHealth } from '@/lib/auth/health.server';
 import Anchor from '@/components/Anchor';
 import Container from '../container';
-import { Stack, Typography } from '@mui/material';
 
 export const dynamic = 'force-dynamic';
 

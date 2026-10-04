@@ -450,6 +450,7 @@ export default function HeaderSite() {
                     <NavManage
                       siteName={siteName}
                       siteType={siteType}
+                      blogType={initialHeader?.blogType}
                       isSiteStaff={isSiteStaff}
                       siteRole={userProfile.siteRole}
                       globalRole={userProfile.globalRole}
@@ -499,6 +500,7 @@ export default function HeaderSite() {
                         <NavManage
                           siteName={siteName}
                           siteType={siteType}
+                          blogType={initialHeader?.blogType}
                           isSiteStaff={isSiteStaff}
                           siteRole={userProfile.siteRole}
                           globalRole={userProfile.globalRole}

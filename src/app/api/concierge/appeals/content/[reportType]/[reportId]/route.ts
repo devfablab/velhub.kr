@@ -11,9 +11,11 @@ type ContentRouteContext = {
 
 type ReportRow = {
   id: string;
-  target_type: 'post' | 'comment';
+  target_type: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
   post_id: string | null;
   comment_id: string | null;
+  blog_community_post_id: string | null;
+  blog_community_comment_id: string | null;
   report_category?: string | null;
   status?: string | null;
   legal_type?: string | null;
@@ -26,6 +28,7 @@ type AppealRow = {
   appellant_status: string;
   content_request: string | null;
   edit_completed_at: string | null;
+  opinion_submitted_at: string | null;
 };
 
 type PostRow = {
@@ -111,10 +114,10 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
   const supabaseAdmin = getSupabaseAdmin();
   const reportColumns =
     reportType === 'guideline'
-      ? 'id, target_type, post_id, comment_id, report_category, status'
+      ? 'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_category, status'
       : reportType === 'legal'
-        ? 'id, target_type, post_id, comment_id, legal_type'
-        : 'id, target_type, post_id, comment_id, reason_type';
+        ? 'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, legal_type'
+        : 'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, reason_type';
   const reportResult = await supabaseAdmin
     .from(reportTableByType[reportType])
     .select(reportColumns)
@@ -135,7 +138,13 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
           reasonType: report.reason_type,
         });
 
-  if (!category || (report.target_type !== 'post' && report.target_type !== 'comment')) {
+  if (
+    !category ||
+    (report.target_type !== 'post' &&
+      report.target_type !== 'comment' &&
+      report.target_type !== 'blog_community_post' &&
+      report.target_type !== 'blog_community_comment')
+  ) {
     throw new Error('소명 대상이 아닌 신고입니다.');
   }
 
@@ -155,13 +164,59 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
       ? { data: null, error: null }
       : await supabaseAdmin
           .from('report_appeals')
-          .select('id, admin_status, appellant_status, content_request, edit_completed_at')
+          .select('id, admin_status, appellant_status, content_request, edit_completed_at, opinion_submitted_at')
           .eq('report_type', reportType)
           .eq('report_id', report.id)
           .maybeSingle();
 
   if (appealResult.error) {
     throw new Error('소명 정보를 불러오지 못했습니다.');
+  }
+
+  if (report.target_type === 'blog_community_post' || report.target_type === 'blog_community_comment') {
+    let blogComment: CommentRow | null = null;
+    let blogPostId = report.blog_community_post_id;
+
+    if (report.target_type === 'blog_community_comment') {
+      if (!report.blog_community_comment_id) throw new Error('신고 대상 댓글 정보가 없습니다.');
+      const commentResult = await supabaseAdmin
+        .from('blog_community_comments')
+        .select('id, post_id, user_id, content, is_deleted, deleted_message, updated_at')
+        .eq('id', report.blog_community_comment_id)
+        .maybeSingle();
+      if (commentResult.error || !commentResult.data) throw new Error('신고 대상 댓글을 찾을 수 없습니다.');
+      blogComment = { ...(commentResult.data as Omit<CommentRow, 'exp_at'>), exp_at: null };
+      blogPostId = blogComment.post_id;
+    }
+
+    if (!blogPostId) throw new Error('신고 대상 게시물 정보가 없습니다.');
+    const postResult = await supabaseAdmin
+      .from('blog_community_posts')
+      .select('id, site_id, slug, user_id, content, is_deleted, deleted_message, edited_at')
+      .eq('id', blogPostId)
+      .maybeSingle();
+    if (postResult.error || !postResult.data) throw new Error('신고 대상 게시물을 찾을 수 없습니다.');
+    const blogPost = postResult.data as {
+      id: string; site_id: string; slug: string; user_id: string; content: string | null;
+      is_deleted: boolean; deleted_message: string | null; edited_at: string | null;
+    };
+    const siteResult = await supabaseAdmin.from('rhizomes').select('site_key, site_label').eq('id', blogPost.site_id).maybeSingle();
+    if (siteResult.error || !siteResult.data) throw new Error('사이트 정보를 불러오지 못했습니다.');
+
+    return {
+      report,
+      appeal: (appealResult.data as AppealRow | null) ?? null,
+      isBlogCommunity: true,
+      post: {
+        id: blogPost.id, site_id: blogPost.site_id, board_id: '', slug: blogPost.slug, user_id: blogPost.user_id,
+        subject: null, summary: null, content_html: null, content_markdown: null, content_simple: blogPost.content,
+        thumbnail_image: null, youtube_url: null, youtube_created_at: null, images: [], poll: null,
+        is_closed: blogPost.is_deleted, closed_message: blogPost.deleted_message, updated_at: blogPost.edited_at, exp_at: null,
+      } as PostRow,
+      comment: blogComment,
+      site: siteResult.data,
+      board: { board_key: 'community-on-blog', board_label: '커뮤니티', board_type: 'feed', markdown_status: null },
+    };
   }
 
   let comment: CommentRow | null = null;
@@ -219,6 +274,7 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
     comment,
     site: siteResult.data,
     board: boardResult.data,
+    isBlogCommunity: false,
   };
 }
 
@@ -384,11 +440,13 @@ export async function GET(_request: Request, context: ContentRouteContext) {
 
     if (reportType === 'guideline') {
       const deletionMessage =
-        result.report.target_type === 'comment'
+        result.report.target_type === 'comment' || result.report.target_type === 'blog_community_comment'
           ? normalizeText(result.comment?.deleted_message)
           : normalizeText(result.post.closed_message);
       const isDeleted =
-        result.report.target_type === 'comment' ? result.comment?.is_deleted === true : result.post.is_closed === true;
+        result.report.target_type === 'comment' || result.report.target_type === 'blog_community_comment'
+          ? result.comment?.is_deleted === true
+          : result.post.is_closed === true;
 
       if (!isDeleted || !deletionMessage) {
         return Response.json({ error: '소명할 수 있는 삭제 내역이 아닙니다.' }, { status: 403 });
@@ -456,7 +514,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
     const now = new Date().toISOString();
     const supabaseAdmin = getSupabaseAdmin();
 
-    if (result.report.target_type === 'comment' && result.comment) {
+    if ((result.report.target_type === 'comment' || result.report.target_type === 'blog_community_comment') && result.comment) {
       const content = normalizeText(body.commentContent);
 
       if (!content) {
@@ -464,7 +522,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
       }
 
       const updateResult = await supabaseAdmin
-        .from('post_comments')
+        .from(result.isBlogCommunity ? 'blog_community_comments' : 'post_comments')
         .update({ content, updated_at: now })
         .eq('id', result.comment.id)
         .eq('user_id', session.stigmaId ?? '')
@@ -491,6 +549,20 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
     const images = requestedImages.filter((image) => existingImagePaths.has(normalizeUnknownText(image.path)));
     const thumbnailImage = normalizeText(body.thumbnailImage);
     const poll = normalizePollUpdate(normalizePoll(result.post.poll), body.poll);
+    if (result.isBlogCommunity) {
+      const content = normalizeText(body.contentSimple);
+      if (!content) return Response.json({ error: '내용을 입력해 주세요.' }, { status: 400 });
+      const updateResult = await supabaseAdmin
+        .from('blog_community_posts')
+        .update({ content, edited_at: now })
+        .eq('id', result.post.id)
+        .eq('user_id', session.stigmaId)
+        .select('id')
+        .maybeSingle();
+      if (updateResult.error || !updateResult.data) return Response.json({ error: '게시물을 수정하지 못했습니다.' }, { status: 500 });
+      return Response.json({ ok: true });
+    }
+
     const updateResult = await supabaseAdmin
       .from('posts')
       .update({
@@ -554,7 +626,7 @@ export async function POST(_request: Request, context: ContentRouteContext) {
     }
 
     const updatedAt = result.comment?.updated_at ?? result.post.updated_at;
-    const expAt = result.comment?.exp_at ?? result.post.exp_at;
+    const expAt = result.isBlogCommunity ? result.appeal.opinion_submitted_at : result.comment?.exp_at ?? result.post.exp_at;
 
     if (!updatedAt || !expAt || new Date(updatedAt).getTime() <= new Date(expAt).getTime()) {
       return Response.json({ error: '콘텐츠를 수정한 뒤 확인을 요청해 주세요.' }, { status: 409 });

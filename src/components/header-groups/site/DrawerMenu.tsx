@@ -15,6 +15,7 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import WysiwygOutlinedIcon from '@mui/icons-material/WysiwygOutlined';
 import { MenuItem } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 
 type Props = {
@@ -73,16 +74,19 @@ function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
 
 export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
   const initialData = useSiteInitialData();
+  const siteHeader = useSiteHeader();
   const menus = (initialData?.siteMenus ?? []) as MenuRow[];
   const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
   const hasCategories = isBlog && initialData?.hasCategories === true;
   const hasSeries = initialData?.hasSeries === true;
+  const hasBlogCommunity = isBlog && initialData?.hasBlogCommunity === true;
 
   const allHref = `/${siteName}/board`;
   const hasCommunityBoard = menus.some((menu) => menu.board_type !== 'page');
   const infoHref = `/${siteName}/info-blog`;
   const categoryHref = `/${siteName}/c`;
   const seriesHref = `/${siteName}/s`;
+  const blogCommunityLabel = `${siteHeader?.siteLabel || siteName} 커뮤니티`;
 
   return (
     <>
@@ -149,6 +153,14 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
           </MenuItem>
         );
       })}
+      {isBlog && menus.length > 1 && hasBlogCommunity ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/community-on-blog`}>
+            <InterestsRoundedIcon fontSize="small" />
+            <span>{blogCommunityLabel}</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
       {!isBlog && privateBoardLabel ? (
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/private`}>

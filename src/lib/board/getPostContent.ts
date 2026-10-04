@@ -34,10 +34,6 @@ export class BoardContentError extends Error {
   }
 }
 
-function isNumericSlug(value: string) {
-  return /^\d+$/.test(value);
-}
-
 function getPublicPostImageUrl(path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
 
@@ -139,9 +135,7 @@ export async function getPostContent({
     .eq('site_id', siteId)
     .eq('board_id', boardId);
 
-  const post = isNumericSlug(normalizedContentId)
-    ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
-    : await postQuery.eq('id', normalizedContentId).maybeSingle();
+  const post = await postQuery.eq('slug', normalizedContentId).maybeSingle();
 
   if (post.error || !post.data) {
     throw new BoardContentError('글을 찾을 수 없습니다.', 404);

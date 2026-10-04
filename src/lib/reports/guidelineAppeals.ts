@@ -17,7 +17,7 @@ export type GuidelineAppealMessageStatus =
 export type GuidelineAppealItem = {
   reportId: string;
   reportName: string;
-  targetType: 'post' | 'comment';
+  targetType: 'post' | 'comment' | 'blog_community_post' | 'blog_community_comment';
   targetLabel: string;
   reportUrl: string;
   reportedAt: string;

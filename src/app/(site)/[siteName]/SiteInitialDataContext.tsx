@@ -52,6 +52,7 @@ type InitialData = {
   purchaseAvailable: boolean;
   hasCategories: boolean;
   hasSeries: boolean;
+  hasBlogCommunity: boolean;
 };
 
 const SiteInitialDataContext = createContext<InitialData | null>(null);

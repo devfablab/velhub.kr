@@ -185,7 +185,7 @@ async function getPurchaseTarget({
     .select('id, slug, subject, site_id, board_id, user_id, series_id, published_status, is_closed')
     .eq('site_id', site.id)
     .eq('board_id', board.id)
-    .eq('slug', Number(contentId))
+    .eq('slug', contentId)
     .maybeSingle();
 
   if (postResult.error) {

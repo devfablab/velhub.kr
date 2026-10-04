@@ -496,7 +496,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
     .eq('board_id', board.data.id);
 
   const post = isNumericSlug(contentId)
-    ? await postQuery.eq('slug', Number(contentId)).maybeSingle()
+    ? await postQuery.eq('slug', contentId).maybeSingle()
     : await postQuery.eq('id', contentId).maybeSingle();
 
   if (post.error || !post.data) {

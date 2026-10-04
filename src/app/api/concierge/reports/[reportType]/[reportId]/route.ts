@@ -1,4 +1,5 @@
 import { type ConciergeReportType, isConciergeReportType } from '@/lib/reports/concierge';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isReportStatus, type ReportStatus } from '@/lib/reports/manage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -20,6 +21,10 @@ type ReportRow = {
   target_type: string | null;
   post_id: string | null;
   comment_id: string | null;
+  blog_community_post_id: string | null;
+  blog_community_comment_id: string | null;
+  reporter_user_id: string | null;
+  site_id: string | null;
   status: string;
   created_at: string;
 };
@@ -130,6 +135,70 @@ async function updateComment({
   }
 }
 
+async function updateBlogCommunityPost({
+  postId,
+  reportType,
+  status,
+  handlerUserId,
+  now,
+}: {
+  postId: string;
+  reportType: ConciergeReportType;
+  status: ReportStatus;
+  handlerUserId: string;
+  now: string;
+}) {
+  const restore = reportType === 'rights' && status === 'dismissed';
+  const result = await getSupabaseAdmin()
+    .from('blog_community_posts')
+    .update(
+      restore
+        ? { is_deleted: false, deleted_message: '소명됨', deleted_by: null, deleted_at: null }
+        : {
+            is_deleted: true,
+            deleted_message: getViolationMessage(reportType),
+            deleted_by: handlerUserId,
+            deleted_at: now,
+          },
+    )
+    .eq('id', postId)
+    .select('id')
+    .maybeSingle();
+  if (result.error || !result.data) throw new Error(restore ? '게시물을 복구하지 못했습니다.' : '게시물을 처리하지 못했습니다.');
+}
+
+async function updateBlogCommunityComment({
+  commentId,
+  reportType,
+  status,
+  handlerUserId,
+  now,
+}: {
+  commentId: string;
+  reportType: ConciergeReportType;
+  status: ReportStatus;
+  handlerUserId: string;
+  now: string;
+}) {
+  const restore = reportType === 'rights' && status === 'dismissed';
+  const result = await getSupabaseAdmin()
+    .from('blog_community_comments')
+    .update(
+      restore
+        ? { is_deleted: false, deleted_message: '소명됨', deleted_by: null, deleted_at: null }
+        : {
+            is_deleted: true,
+            deleted_message: getViolationMessage(reportType),
+            deleted_by: handlerUserId,
+            deleted_at: now,
+          },
+    )
+    .eq('id', commentId)
+    .select('id')
+    .maybeSingle();
+  if (result.error || !result.data) throw new Error(restore ? '댓글을 복구하지 못했습니다.' : '댓글을 처리하지 못했습니다.');
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const session = await verifySession({ siteId: null });
@@ -160,7 +229,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const table = reportTableByType[reportType];
     const reportResult = await supabaseAdmin
       .from(table)
-      .select('id, target_type, post_id, comment_id, status, created_at')
+      .select('id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, reporter_user_id, site_id, status, created_at')
       .eq('id', reportId)
       .maybeSingle();
 
@@ -174,7 +243,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '이미 처리가 끝난 신고입니다.' }, { status: 409 });
     }
 
-    if (report.target_type !== 'post' && report.target_type !== 'comment') {
+    if (
+      report.target_type !== 'post' &&
+      report.target_type !== 'comment' &&
+      report.target_type !== 'blog_community_post' &&
+      report.target_type !== 'blog_community_comment'
+    ) {
       return Response.json({ error: '이 신고는 상태 변경 대상이 아닙니다.' }, { status: 400 });
     }
 
@@ -227,6 +301,28 @@ export async function PATCH(request: Request, context: RouteContext) {
       });
     }
 
+    if (shouldUpdateContent && report.target_type === 'blog_community_post') {
+      if (!report.blog_community_post_id) return Response.json({ error: '게시물 정보가 없습니다.' }, { status: 400 });
+      await updateBlogCommunityPost({
+        postId: report.blog_community_post_id,
+        reportType,
+        status: nextStatus,
+        handlerUserId: session.stigmaId,
+        now,
+      });
+    }
+
+    if (shouldUpdateContent && report.target_type === 'blog_community_comment') {
+      if (!report.blog_community_comment_id) return Response.json({ error: '댓글 정보가 없습니다.' }, { status: 400 });
+      await updateBlogCommunityComment({
+        commentId: report.blog_community_comment_id,
+        reportType,
+        status: nextStatus,
+        handlerUserId: session.stigmaId,
+        now,
+      });
+    }
+
     const updateResult = await supabaseAdmin
       .from(table)
       .update({
@@ -244,6 +340,21 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (updateResult.error || !updateResult.data) {
       console.error('[concierge/reports] status update error', updateResult.error);
       return Response.json({ error: '신고 처리 상태를 저장하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (report.reporter_user_id) {
+      const notificationResult = await supabaseAdmin.from('notifications').insert({
+        user_id: report.reporter_user_id,
+        send_user_id: null,
+        target_id: null,
+        send_site_id: report.site_id,
+        send_board_id: null,
+        send_series_id: null,
+        send_post_id: report.post_id ?? report.blog_community_post_id,
+        notification_type: NOTIFICATION_TYPE.REPORT_RESULT,
+        is_read: false,
+      });
+      if (notificationResult.error) console.error('[concierge/reports] reporter notification error', notificationResult.error);
     }
 
     return Response.json({ ok: true, report: updateResult.data });

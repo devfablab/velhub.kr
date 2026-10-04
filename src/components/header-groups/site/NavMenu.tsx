@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
 import ReportButton from '@/components/service/common/ReportButton';
+import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/header.module.sass';
 
@@ -32,11 +33,13 @@ function isCurrentPath(pathname: string, href: string) {
 export default function NavMenu({ siteName, isBlog }: Props) {
   const pathname = usePathname();
   const initialData = useSiteInitialData();
+  const siteHeader = useSiteHeader();
 
   const menus = (initialData?.siteMenus ?? []) as MenuRow[];
   const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
   const hasCategories = isBlog && initialData?.hasCategories === true;
   const hasSeries = initialData?.hasSeries === true;
+  const hasBlogCommunity = isBlog && initialData?.hasBlogCommunity === true;
 
   const homeHref = `/${siteName}`;
   const isHomeCurrent = pathname === homeHref;
@@ -54,6 +57,9 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const isCategoryHrefCurrent = pathname === categoryHref || pathname.startsWith(`${categoryHref}/`);
 
   const seriesHref = `/${siteName}/s`;
+  const blogCommunityHref = `/${siteName}/community-on-blog`;
+  const blogCommunityLabel = `${siteHeader?.siteLabel || siteName} 커뮤니티`;
+  const isBlogCommunityCurrent = isCurrentPath(pathname, blogCommunityHref);
   const isSeriesHrefCurrent = pathname === seriesHref || pathname.startsWith(`${seriesHref}/`);
 
   return (
@@ -143,6 +149,14 @@ export default function NavMenu({ siteName, isBlog }: Props) {
               </li>
             );
           })}
+          {isBlog && menus.length > 1 && hasBlogCommunity ? (
+            <li className={isBlogCommunityCurrent ? styles.current : undefined} aria-current={isBlogCommunityCurrent ? 'page' : false}>
+              <Anchor href={blogCommunityHref}>
+                <span>{blogCommunityLabel}</span>
+                <i />
+              </Anchor>
+            </li>
+          ) : null}
           {!isBlog && privateBoardLabel ? (
             <li
               className={isPrivateBoardCurrent ? styles.current : undefined}
