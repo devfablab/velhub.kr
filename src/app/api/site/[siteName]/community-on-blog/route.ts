@@ -1,5 +1,9 @@
 import sharp from 'sharp';
-import { getBlogCommunityContext, getBlogCommunityEnablement, assertBlogCommunityUse } from '@/lib/blogCommunity/access';
+import {
+  getBlogCommunityContext,
+  getBlogCommunityEnablement,
+  assertBlogCommunityUse,
+} from '@/lib/blogCommunity/access';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -42,15 +46,22 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
   const userIds = [...new Set(posts.map((post) => post.user_id))];
   const [imagesResult, stigmasResult, commentsResult] = await Promise.all([
     postIds.length
-      ? supabaseAdmin.from('blog_community_post_images').select('post_id, image_url, sort_order').in('post_id', postIds).order('sort_order')
+      ? supabaseAdmin
+          .from('blog_community_post_images')
+          .select('post_id, image_url, sort_order')
+          .in('post_id', postIds)
+          .order('sort_order')
       : Promise.resolve({ data: [], error: null }),
-    userIds.length ? supabaseAdmin.from('stigmas').select('id, user_name, avatar').in('id', userIds) : Promise.resolve({ data: [], error: null }),
+    userIds.length
+      ? supabaseAdmin.from('stigmas').select('id, user_name, avatar').in('id', userIds)
+      : Promise.resolve({ data: [], error: null }),
     postIds.length
       ? supabaseAdmin.from('blog_community_comments').select('post_id, is_deleted').in('post_id', postIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
 
-  if (imagesResult.error || stigmasResult.error || commentsResult.error) throw new Error('커뮤니티 글을 불러오지 못했습니다.');
+  if (imagesResult.error || stigmasResult.error || commentsResult.error)
+    throw new Error('커뮤니티 글을 불러오지 못했습니다.');
   const imageMap = new Map<string, string[]>();
   for (const image of imagesResult.data ?? []) {
     const images = imageMap.get(image.post_id) ?? [];
@@ -95,7 +106,12 @@ async function getOperatorDeletedPosts(siteId: string, ownerId: string) {
     .eq('deleted_by', ownerId)
     .order('deleted_at', { ascending: false });
   if (result.error) throw new Error('삭제된 글을 불러오지 못했습니다.');
-  return (result.data ?? []).map((post) => ({ slug: String(post.slug), content: post.content, createdAt: post.created_at, deletedAt: post.deleted_at }));
+  return (result.data ?? []).map((post) => ({
+    slug: String(post.slug),
+    content: post.content,
+    createdAt: post.created_at,
+    deletedAt: post.deleted_at,
+  }));
 }
 
 export async function GET(request: Request, context: RouteContext) {
@@ -109,12 +125,14 @@ export async function GET(request: Request, context: RouteContext) {
     const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
     const isSummary = url.searchParams.get('summary') === '1';
     const isManage = url.searchParams.get('manage') === '1';
-    const list = !isSummary && feature.canUse
-      ? await getPosts(feature.siteId, page, feature.stigmaId, feature.isOwner)
-      : { posts: [], totalCount: 0 };
-    const deletedPosts = isManage && feature.isOwner && feature.hasStarted
-      ? await getOperatorDeletedPosts(feature.siteId, feature.ownerId)
-      : [];
+    const list =
+      !isSummary && feature.canUse
+        ? await getPosts(feature.siteId, page, feature.stigmaId, feature.isOwner)
+        : { posts: [], totalCount: 0 };
+    const deletedPosts =
+      isManage && feature.isOwner && feature.hasStarted
+        ? await getOperatorDeletedPosts(feature.siteId, feature.ownerId)
+        : [];
 
     return Response.json({
       feature: {
@@ -138,7 +156,10 @@ export async function GET(request: Request, context: RouteContext) {
       deletedPosts,
     });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : '커뮤니티 정보를 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : '커뮤니티 정보를 불러오지 못했습니다.' },
+      { status: 500 },
+    );
   }
 }
 
@@ -148,26 +169,39 @@ export async function PATCH(request: Request, context: RouteContext) {
     const feature = await getBlogCommunityEnablement(siteName);
     if (!feature) return Response.json({ error: '블로그를 찾을 수 없습니다.' }, { status: 404 });
     if (!feature.isOwner) return Response.json({ error: '블로그 운영자만 변경할 수 있습니다.' }, { status: 403 });
-    if (!feature.isPersonalBlog) return Response.json({ error: '개인 블로그에서만 사용할 수 있습니다.' }, { status: 400 });
-    if (!feature.isEligible) return Response.json({ error: '개설 후 15일이 지나고 연재글을 5개 이상 작성한 뒤 사용할 수 있습니다.' }, { status: 400 });
-    if (!feature.isIdentityVerified) return Response.json({ error: '본인인증 후 사용할 수 있습니다.' }, { status: 400 });
-    if (!feature.isAtLeastAge14) return Response.json({ error: '만 14세 미만은 커뮤니티를 생성할 수 없어요' }, { status: 400 });
+    if (!feature.isPersonalBlog)
+      return Response.json({ error: '개인 블로그에서만 사용할 수 있습니다.' }, { status: 400 });
+    if (!feature.isEligible)
+      return Response.json(
+        { error: '개설 후 15일이 지나고 연재글을 5개 이상 작성한 뒤 사용할 수 있습니다.' },
+        { status: 400 },
+      );
+    if (!feature.isIdentityVerified)
+      return Response.json({ error: '본인인증 후 사용할 수 있습니다.' }, { status: 400 });
+    if (!feature.isAtLeastAge14)
+      return Response.json({ error: '만 14세 미만은 커뮤니티를 생성할 수 없어요' }, { status: 400 });
 
     const body = (await request.json().catch(() => null)) as { isEnabled?: unknown } | null;
-    if (typeof body?.isEnabled !== 'boolean') return Response.json({ error: '사용 여부가 올바르지 않습니다.' }, { status: 400 });
+    if (typeof body?.isEnabled !== 'boolean')
+      return Response.json({ error: '사용 여부가 올바르지 않습니다.' }, { status: 400 });
 
     const now = new Date().toISOString();
-    const result = await getSupabaseAdmin().from('blog_communities').upsert({
-      site_id: feature.siteId,
-      is_enabled: body.isEnabled,
-      enabled_at: body.isEnabled ? now : null,
-      disabled_at: body.isEnabled ? null : now,
-      updated_at: now,
-    });
+    const result = await getSupabaseAdmin()
+      .from('blog_communities')
+      .upsert({
+        site_id: feature.siteId,
+        is_enabled: body.isEnabled,
+        enabled_at: body.isEnabled ? now : null,
+        disabled_at: body.isEnabled ? null : now,
+        updated_at: now,
+      });
     if (result.error) throw new Error('커뮤니티 사용 여부를 저장하지 못했습니다.');
     return Response.json({ ok: true, isEnabled: body.isEnabled });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : '커뮤니티 사용 여부를 저장하지 못했습니다.' }, { status: 500 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : '커뮤니티 사용 여부를 저장하지 못했습니다.' },
+      { status: 500 },
+    );
   }
 }
 
@@ -184,11 +218,15 @@ export async function POST(request: Request, context: RouteContext) {
     const content = normalizeText(typeof rawContent === 'string' ? rawContent : '');
     const files = formData.getAll('images').filter((value): value is File => value instanceof File);
     if (!content) return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
-    if (content.length > MAX_CONTENT_LENGTH) return Response.json({ error: '내용은 10,000자 이하로 입력해주세요.' }, { status: 400 });
-    if (files.length > MAX_IMAGE_COUNT) return Response.json({ error: '이미지는 최대 9장까지 등록할 수 있습니다.' }, { status: 400 });
+    if (content.length > MAX_CONTENT_LENGTH)
+      return Response.json({ error: '내용은 10,000자 이하로 입력해주세요.' }, { status: 400 });
+    if (files.length > MAX_IMAGE_COUNT)
+      return Response.json({ error: '이미지는 최대 9장까지 등록할 수 있습니다.' }, { status: 400 });
     for (const file of files) {
-      if (!IMAGE_MIME_TYPES.has(file.type)) return Response.json({ error: 'JPG, PNG, WEBP 이미지만 등록할 수 있습니다.' }, { status: 400 });
-      if (file.size > MAX_IMAGE_SIZE) return Response.json({ error: '이미지 한 장은 1MB 이하만 등록할 수 있습니다.' }, { status: 400 });
+      if (!IMAGE_MIME_TYPES.has(file.type))
+        return Response.json({ error: 'JPG, PNG, WEBP 이미지만 등록할 수 있습니다.' }, { status: 400 });
+      if (file.size > MAX_IMAGE_SIZE)
+        return Response.json({ error: '이미지 한 장은 1MB 이하만 등록할 수 있습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -213,7 +251,9 @@ export async function POST(request: Request, context: RouteContext) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const webp = await sharp(buffer).webp({ quality: 90 }).toBuffer();
         const path = getStoragePath(feature.siteId, postResult.data.id, index);
-        const upload = await supabaseAdmin.storage.from('blog-community').upload(path, webp, { contentType: 'image/webp', upsert: false });
+        const upload = await supabaseAdmin.storage
+          .from('blog-community')
+          .upload(path, webp, { contentType: 'image/webp', upsert: false });
         if (upload.error) throw upload.error;
         const url = supabaseAdmin.storage.from('blog-community').getPublicUrl(path).data.publicUrl;
         uploadedImages.push({ post_id: postResult.data.id, image_url: url, sort_order: index });

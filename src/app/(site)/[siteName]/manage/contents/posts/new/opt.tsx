@@ -299,7 +299,12 @@ export default function Opt({
   }
 
   function hasEditorContent(value: string) {
-    return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(value);
+    return (
+      value
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .trim().length > 0 || /<img\b/i.test(value)
+    );
   }
 
   function handleCategoryChange(event: SelectChangeEvent<string[]>) {
@@ -504,9 +509,16 @@ export default function Opt({
   }
 
   async function deleteUploadedEditorImages(paths: string[]) {
-    await Promise.all(paths.map((path) => fetch('/api/attachment/delete/post', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ siteName, path }),
-    }).catch(() => undefined)));
+    await Promise.all(
+      paths.map((path) =>
+        fetch('/api/attachment/delete/post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ siteName, path }),
+        }).catch(() => undefined),
+      ),
+    );
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -606,7 +618,10 @@ export default function Opt({
       await deleteUploadedEditorImages(uploadedEditorPaths);
       if (thumbnailImage) {
         await fetch('/api/attachment/delete/og-image', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ path: thumbnailImage }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ path: thumbnailImage }),
         }).catch(() => undefined);
       }
       if (unknownError instanceof Error) {
@@ -614,7 +629,10 @@ export default function Opt({
       } else {
         setErrorMessage('블로그 글 개설에 실패했습니다.');
       }
-      const message = unknownError instanceof Error ? unknownError.message || '블로그 글 개설에 실패했습니다.' : '블로그 글 개설에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '블로그 글 개설에 실패했습니다.'
+          : '블로그 글 개설에 실패했습니다.';
       if (message.includes('제목')) setFieldErrors((current) => ({ ...current, subject: message }));
       if (message.includes('내용')) setFieldErrors((current) => ({ ...current, content: message }));
       if (message.includes('예약')) setFieldErrors((current) => ({ ...current, scheduled: message }));
@@ -758,7 +776,11 @@ export default function Opt({
                   onMarkdownChange={setContentMarkdown}
                   onUploadImage={handleUploadEditorImage}
                 />
-                {fieldErrors.content ? <p className="alert error"><span>{fieldErrors.content}</span></p> : null}
+                {fieldErrors.content ? (
+                  <p className="alert error">
+                    <span>{fieldErrors.content}</span>
+                  </p>
+                ) : null}
               </Stack>
 
               <Stack gap={1}>
@@ -784,7 +806,11 @@ export default function Opt({
                         },
                       }}
                     />
-                    {fieldErrors.scheduled ? <p className="alert error"><span>{fieldErrors.scheduled}</span></p> : null}
+                    {fieldErrors.scheduled ? (
+                      <p className="alert error">
+                        <span>{fieldErrors.scheduled}</span>
+                      </p>
+                    ) : null}
                   </LocalizationProvider>
                 </Stack>
               ) : null}
@@ -814,7 +840,12 @@ export default function Opt({
               </Stack>
 
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-              <FormErrorDialog open={Boolean(formErrorDialog)} title={formErrorDialog?.title ?? null} messages={formErrorDialog?.messages ?? []} onClose={() => setFormErrorDialog(null)} />
+              <FormErrorDialog
+                open={Boolean(formErrorDialog)}
+                title={formErrorDialog?.title ?? null}
+                messages={formErrorDialog?.messages ?? []}
+                onClose={() => setFormErrorDialog(null)}
+              />
             </Stack>
           </div>
         </div>

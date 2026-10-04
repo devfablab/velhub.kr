@@ -9,15 +9,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
-import {
-  Avatar,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Avatar, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import CommentList from '@/components/comments/CommentList';
@@ -166,7 +158,10 @@ export default function Opt({
               <div className={styles.buttons}>
                 <div className={styles['button-basics']}>
                   {post.isAuthor ? (
-                    <Anchor href={`/${siteName}/community-on-blog/${contentId}/edit?from=detail`} className={styles.button}>
+                    <Anchor
+                      href={`/${siteName}/community-on-blog/${contentId}/edit?from=detail`}
+                      className={styles.button}
+                    >
                       <EditNoteRoundedIcon />
                       <strong>수정</strong>
                     </Anchor>

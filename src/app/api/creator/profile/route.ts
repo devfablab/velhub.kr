@@ -106,7 +106,10 @@ export async function PUT(request: Request) {
     );
   }
 
-  if (introduction && (introduction.length < INTRODUCTION_MIN_LENGTH || introduction.length > INTRODUCTION_MAX_LENGTH)) {
+  if (
+    introduction &&
+    (introduction.length < INTRODUCTION_MIN_LENGTH || introduction.length > INTRODUCTION_MAX_LENGTH)
+  ) {
     return NextResponse.json({ message: '소개글은 2자 이상 72자 이하로 입력해 주세요.' }, { status: 400 });
   }
 
@@ -151,9 +154,11 @@ export async function PUT(request: Request) {
   if (hasBranding) {
     const rawLinks = body?.links ?? [];
     const incompleteLink = rawLinks.find((link) => Boolean(toText(link.label)) !== Boolean(toText(link.url)));
-    if (incompleteLink) return NextResponse.json({ message: '링크 이름과 주소를 모두 입력해 주세요.' }, { status: 400 });
+    if (incompleteLink)
+      return NextResponse.json({ message: '링크 이름과 주소를 모두 입력해 주세요.' }, { status: 400 });
     const invalidLink = rawLinks.find((link) => Boolean(toText(link.url)) && !normalizeUrl(link.url));
-    if (invalidLink) return NextResponse.json({ message: '링크 주소를 올바른 형식으로 입력해 주세요.' }, { status: 400 });
+    if (invalidLink)
+      return NextResponse.json({ message: '링크 주소를 올바른 형식으로 입력해 주세요.' }, { status: 400 });
     const nextLinks = rawLinks
       .map((link, index) => ({ label: toText(link.label), url: normalizeUrl(link.url), sort_order: index }))
       .filter((link): link is { label: string; url: string; sort_order: number } => Boolean(link.label && link.url));

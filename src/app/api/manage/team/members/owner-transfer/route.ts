@@ -21,12 +21,7 @@ type MembershipRow = {
 const OWNER_TRANSFER_WAIT_MS = 30 * 24 * 60 * 60 * 1000;
 
 function isActiveMembership(membership: MembershipRow) {
-  return (
-    membership.is_approval &&
-    !membership.kicked_at &&
-    !membership.banned_at &&
-    !membership.withdrawn_at
-  );
+  return membership.is_approval && !membership.kicked_at && !membership.banned_at && !membership.withdrawn_at;
 }
 
 export async function POST(request: Request) {

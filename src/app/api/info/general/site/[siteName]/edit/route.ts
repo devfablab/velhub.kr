@@ -463,7 +463,10 @@ export async function POST(request: Request, context: RouteContext) {
         if (activeSubs.data && activeSubs.data.length > 0) {
           if (requestBody.confirmTeamConversion !== true) {
             return Response.json(
-              { error: '팀 블로그 전환 전 구독 취소 및 환불에 동의해 주세요.', requiresTeamConversionConfirmation: true },
+              {
+                error: '팀 블로그 전환 전 구독 취소 및 환불에 동의해 주세요.',
+                requiresTeamConversionConfirmation: true,
+              },
               { status: 400 },
             );
           }

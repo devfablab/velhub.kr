@@ -148,7 +148,11 @@ export default function Opt({
 
       router.replace(`/${result.siteName}`);
     } catch (unknownError) {
-      showError(unknownError instanceof Error ? unknownError.message || '초대 처리에 실패했습니다.' : '초대 처리에 실패했습니다.');
+      showError(
+        unknownError instanceof Error
+          ? unknownError.message || '초대 처리에 실패했습니다.'
+          : '초대 처리에 실패했습니다.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -205,13 +209,20 @@ export default function Opt({
                     setNicknameError('');
                   }}
                   error={Boolean(nicknameError)}
-                  helperText={nicknameError || '입력하지 않으면 활동명을 사용합니다. 입력하는 경우 2자 이상 10자 이하입니다.'}
+                  helperText={
+                    nicknameError || '입력하지 않으면 활동명을 사용합니다. 입력하는 경우 2자 이상 10자 이하입니다.'
+                  }
                   fullWidth
                   size="small"
                   slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
                 />
                 <Box>
-                  <button type="button" className="button medium submit" onClick={() => void handleJoin()} disabled={isSubmitting}>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void handleJoin()}
+                    disabled={isSubmitting}
+                  >
                     초대 수락하기
                   </button>
                 </Box>

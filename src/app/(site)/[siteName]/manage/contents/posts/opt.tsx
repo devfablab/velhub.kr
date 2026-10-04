@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { type JSX, useEffect, useMemo, useState } from 'react';
@@ -936,7 +935,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
         ) : null}
 
         {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
-        <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
+        <FormErrorDialog
+          open={isErrorDialogOpen}
+          title={null}
+          messages={errorMessage ? [errorMessage] : []}
+          onClose={() => setIsErrorDialogOpen(false)}
+        />
 
         {posts.length === 0 ? (
           <ScreenState>

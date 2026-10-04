@@ -62,7 +62,12 @@ function normalizeBoardName(rawValue: string | null) {
 }
 
 function hasEditorContent(html: string) {
-  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(html);
+  return (
+    html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim().length > 0 || /<img\b/i.test(html)
+  );
 }
 
 function loadImageFromFile(file: File) {
@@ -163,7 +168,12 @@ export default function Opt() {
   const [slugMessage, setSlugMessage] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{ slug?: string; subject?: string; content?: string; ogImage?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    slug?: string;
+    subject?: string;
+    content?: string;
+    ogImage?: string;
+  }>({});
   const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
@@ -308,9 +318,15 @@ export default function Opt() {
       setOgImage(typeof result.ogImage === 'string' ? result.ogImage : '');
       setOgImageUrl(typeof result.url === 'string' ? result.url : '');
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.' : '오픈그래프 이미지 업로드에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.'
+          : '오픈그래프 이미지 업로드에 실패했습니다.';
       setFieldErrors((current) => ({ ...current, ogImage: message }));
-      setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '오픈그래프 이미지', messages: [message] });
+      setFormErrorDialog({
+        title: unknownError instanceof TypeError ? null : '오픈그래프 이미지',
+        messages: [message],
+      });
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.');
       } else {
@@ -543,10 +559,16 @@ export default function Opt() {
       await deleteUploadedEditorImages(uploadedEditorPaths);
       if (ogImage) {
         await fetch('/api/attachment/delete/og-image', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ path: ogImage }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ path: ogImage }),
         }).catch(() => undefined);
       }
-      const message = unknownError instanceof Error ? unknownError.message || '페이지 추가에 실패했습니다.' : '페이지 추가에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '페이지 추가에 실패했습니다.'
+          : '페이지 추가에 실패했습니다.';
       if (message.includes('식별자')) setFieldErrors((current) => ({ ...current, slug: message }));
       if (message.includes('제목')) setFieldErrors((current) => ({ ...current, subject: message }));
       if (message.includes('내용')) setFieldErrors((current) => ({ ...current, content: message }));
@@ -683,7 +705,12 @@ export default function Opt() {
                   onMarkdownChange={setContentMarkdown}
                   onUploadImage={handleUploadEditorImage}
                 />
-                {fieldErrors.content ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.content}</span></p> : null}
+                {fieldErrors.content ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{fieldErrors.content}</span>
+                  </p>
+                ) : null}
               </Stack>
 
               <Stack direction="row" gap={1.5} justifyContent="flex-end">

@@ -115,16 +115,31 @@ export default function Opt({ siteName }: Props) {
           </ul>
         </DialogContent>
         <DialogActions>
-          <button type="button" className="cancel-button" onClick={() => setIsResetConfirmOpen(false)} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="cancel-button"
+            onClick={() => setIsResetConfirmOpen(false)}
+            disabled={isSubmitting}
+          >
             취소
           </button>
-          <button type="button" className="delete-button" onClick={() => void handleRejoin('reset')} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="delete-button"
+            onClick={() => void handleRejoin('reset')}
+            disabled={isSubmitting}
+          >
             초기화 후 재가입
           </button>
         </DialogActions>
       </Dialog>
 
-      <FormErrorDialog open={Boolean(errorMessage)} title={null} messages={[errorMessage]} onClose={() => setErrorMessage('')} />
+      <FormErrorDialog
+        open={Boolean(errorMessage)}
+        title={null}
+        messages={[errorMessage]}
+        onClose={() => setErrorMessage('')}
+      />
     </Stack>
   );
 }

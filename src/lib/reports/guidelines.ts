@@ -434,5 +434,12 @@ export function isRightsReportCategory(value: unknown): value is RightsReportCat
 }
 
 export function isReportTargetType(value: unknown): value is ReportTargetType {
-  return value === 'site' || value === 'board' || value === 'post' || value === 'comment' || value === 'blog_community_post' || value === 'blog_community_comment';
+  return (
+    value === 'site' ||
+    value === 'board' ||
+    value === 'post' ||
+    value === 'comment' ||
+    value === 'blog_community_post' ||
+    value === 'blog_community_comment'
+  );
 }

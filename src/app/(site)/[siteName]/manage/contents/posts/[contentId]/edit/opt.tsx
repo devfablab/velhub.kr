@@ -292,7 +292,12 @@ export default function Opt({
   }
 
   function hasEditorContent(value: string) {
-    return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(value);
+    return (
+      value
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .trim().length > 0 || /<img\b/i.test(value)
+    );
   }
 
   function handleCategoryChange(event: SelectChangeEvent<string[]>) {
@@ -515,9 +520,16 @@ export default function Opt({
   }
 
   async function deleteUploadedEditorImages(paths: string[]) {
-    await Promise.all(paths.map((path) => fetch('/api/attachment/delete/post', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ siteName, path }),
-    }).catch(() => undefined)));
+    await Promise.all(
+      paths.map((path) =>
+        fetch('/api/attachment/delete/post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ siteName, path }),
+        }).catch(() => undefined),
+      ),
+    );
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -582,7 +594,10 @@ export default function Opt({
       else router.replace(`/${siteName}/b/${contentId}`);
     } catch (unknownError) {
       await deleteUploadedEditorImages(uploadedEditorPaths);
-      const message = unknownError instanceof Error ? unknownError.message || '블로그 글 수정에 실패했습니다.' : '블로그 글 수정에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '블로그 글 수정에 실패했습니다.'
+          : '블로그 글 수정에 실패했습니다.';
       if (message.includes('제목')) setFieldErrors((current) => ({ ...current, subject: message }));
       if (message.includes('내용')) setFieldErrors((current) => ({ ...current, content: message }));
       setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '글 수정', messages: [message] });
@@ -730,7 +745,11 @@ export default function Opt({
                   onMarkdownChange={setContentMarkdown}
                   onUploadImage={handleUploadEditorImage}
                 />
-                {fieldErrors.content ? <p className="alert error"><span>{fieldErrors.content}</span></p> : null}
+                {fieldErrors.content ? (
+                  <p className="alert error">
+                    <span>{fieldErrors.content}</span>
+                  </p>
+                ) : null}
               </Stack>
 
               {commentProvider !== 'none' ? (
@@ -758,7 +777,12 @@ export default function Opt({
               </Stack>
 
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-              <FormErrorDialog open={Boolean(formErrorDialog)} title={formErrorDialog?.title ?? null} messages={formErrorDialog?.messages ?? []} onClose={() => setFormErrorDialog(null)} />
+              <FormErrorDialog
+                open={Boolean(formErrorDialog)}
+                title={formErrorDialog?.title ?? null}
+                messages={formErrorDialog?.messages ?? []}
+                onClose={() => setFormErrorDialog(null)}
+              />
             </Stack>
           </div>
         </div>

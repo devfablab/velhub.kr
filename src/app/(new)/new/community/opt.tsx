@@ -329,7 +329,11 @@ export default function Opt() {
 
       const result: unknown = await response.json().catch(() => null);
 
-      if (result && typeof result === 'object' && typeof (result as { normalizedSiteKey?: unknown }).normalizedSiteKey === 'string') {
+      if (
+        result &&
+        typeof result === 'object' &&
+        typeof (result as { normalizedSiteKey?: unknown }).normalizedSiteKey === 'string'
+      ) {
         setSiteKey((result as { normalizedSiteKey: string }).normalizedSiteKey);
       }
 
@@ -342,7 +346,10 @@ export default function Opt() {
         if (response.status >= 500 || !message) {
           openUnknownErrorDialog();
         } else {
-          openErrorDialog(message, { title: '사이트 주소 확인', fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteKey: message } });
+          openErrorDialog(message, {
+            title: '사이트 주소 확인',
+            fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteKey: message },
+          });
         }
         return;
       }
@@ -401,7 +408,10 @@ export default function Opt() {
         if (response.status >= 500 || !message) {
           openUnknownErrorDialog();
         } else {
-          openErrorDialog(message, { title: '사이트명 확인', fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteLabel: message } });
+          openErrorDialog(message, {
+            title: '사이트명 확인',
+            fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, siteLabel: message },
+          });
         }
         return;
       }
@@ -566,7 +576,9 @@ export default function Opt() {
               onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSiteKey, isCheckingSiteKey)}
               fullWidth
               error={Boolean(fieldErrors.siteKey)}
-              helperText={fieldErrors.siteKey || `영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${siteKey.length} / 15`}
+              helperText={
+                fieldErrors.siteKey || `영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${siteKey.length} / 15`
+              }
               size="small"
               slotProps={{
                 htmlInput: { required: true, minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' },

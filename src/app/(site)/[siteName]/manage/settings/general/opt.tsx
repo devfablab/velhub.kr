@@ -1164,7 +1164,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {profilePictureUrl ? '사이트 아바타 이미지 교체' : '사이트 아바타 이미지 추가'}
             </button>
             {fieldErrors.profile_picture ? (
-              <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.profile_picture}</span></p>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.profile_picture}</span>
+              </p>
             ) : null}
           </Stack>
           <div className={`paper ${styles.paper}`}>
@@ -1203,7 +1206,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </button>
             </Stack>
             {fieldErrors.profile_logo ? (
-              <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.profile_logo}</span></p>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.profile_logo}</span>
+              </p>
             ) : null}
           </div>
           <div className={`paper ${styles.paper}`}>
@@ -1218,7 +1224,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     fullWidth
                     size="small"
                     error={Boolean(fieldErrors.site_key)}
-                    helperText={fieldErrors.site_key || `영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`}
+                    helperText={
+                      fieldErrors.site_key ||
+                      `영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`
+                    }
                     slotProps={{
                       htmlInput: { maxLength: 15 },
                       input: {
@@ -1350,7 +1359,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     수정 완료
                   </button>
                 </Stack>
-                {fieldErrors.blog_type ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.blog_type}</span></p> : null}
+                {fieldErrors.blog_type ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{fieldErrors.blog_type}</span>
+                  </p>
+                ) : null}
                 {customDomainCheckMessage ? (
                   <PopupMessage
                     open={Boolean(customDomainCheckMessage)}
@@ -1443,7 +1457,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       type="button"
                       className={`button ${isMobile ? 'small' : 'medium'} submit`}
                       onClick={handleBlogTypeSave}
-                      disabled={isSubmitting || (draftValue === (blogType === 'team' ? 'team' : 'personal'))}
+                      disabled={isSubmitting || draftValue === (blogType === 'team' ? 'team' : 'personal')}
                     >
                       수정 완료
                     </button>
@@ -1567,7 +1581,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     수정 완료
                   </button>
                 </Stack>
-                {fieldErrors.theme_type ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.theme_type}</span></p> : null}
+                {fieldErrors.theme_type ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{fieldErrors.theme_type}</span>
+                  </p>
+                ) : null}
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
@@ -1641,7 +1660,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 {siteOgImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
-            {fieldErrors.og_image ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.og_image}</span></p> : null}
+            {fieldErrors.og_image ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.og_image}</span>
+              </p>
+            ) : null}
           </div>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">프로모션 이미지</Typography>
@@ -1701,7 +1725,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 {promotionImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
-            {fieldErrors.promotion_image ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.promotion_image}</span></p> : null}
+            {fieldErrors.promotion_image ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.promotion_image}</span>
+              </p>
+            ) : null}
           </div>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">테마</Typography>
@@ -1739,7 +1768,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     변경 완료
                   </button>
                 </Stack>
-                {fieldErrors.visibility_type ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.visibility_type}</span></p> : null}
+                {fieldErrors.visibility_type ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{fieldErrors.visibility_type}</span>
+                  </p>
+                ) : null}
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
@@ -1846,17 +1880,55 @@ export default function Opt({ initialData, initialError }: OptProps) {
             팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium cancel" onClick={() => setIsTeamConversionConfirmOpen(false)}>취소</button>
-            <button type="button" className="button medium warning" onClick={() => { setIsTeamConversionConfirmOpen(false); void saveField('blog_type', undefined, true); }}>변경</button>
+            <button
+              type="button"
+              className="button medium cancel"
+              onClick={() => setIsTeamConversionConfirmOpen(false)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium warning"
+              onClick={() => {
+                setIsTeamConversionConfirmOpen(false);
+                void saveField('blog_type', undefined, true);
+              }}
+            >
+              변경
+            </button>
           </div>
         </Drawer>
       ) : (
-        <Dialog open={isTeamConversionConfirmOpen} onClose={() => setIsTeamConversionConfirmOpen(false)} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
+        <Dialog
+          open={isTeamConversionConfirmOpen}
+          onClose={() => setIsTeamConversionConfirmOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
           <DialogTitle>블로그 타입 변경</DialogTitle>
-          <DialogContent>팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?</DialogContent>
+          <DialogContent>
+            팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?
+          </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium cancel" onClick={() => setIsTeamConversionConfirmOpen(false)}>취소</button>
-            <button type="button" className="button medium warning" onClick={() => { setIsTeamConversionConfirmOpen(false); void saveField('blog_type', undefined, true); }}>변경</button>
+            <button
+              type="button"
+              className="button medium cancel"
+              onClick={() => setIsTeamConversionConfirmOpen(false)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium warning"
+              onClick={() => {
+                setIsTeamConversionConfirmOpen(false);
+                void saveField('blog_type', undefined, true);
+              }}
+            >
+              변경
+            </button>
           </DialogActions>
         </Dialog>
       )}

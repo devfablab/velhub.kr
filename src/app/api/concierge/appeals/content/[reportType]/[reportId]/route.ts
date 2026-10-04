@@ -197,10 +197,20 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
       .maybeSingle();
     if (postResult.error || !postResult.data) throw new Error('신고 대상 게시물을 찾을 수 없습니다.');
     const blogPost = postResult.data as {
-      id: string; site_id: string; slug: string; user_id: string; content: string | null;
-      is_deleted: boolean; deleted_message: string | null; edited_at: string | null;
+      id: string;
+      site_id: string;
+      slug: string;
+      user_id: string;
+      content: string | null;
+      is_deleted: boolean;
+      deleted_message: string | null;
+      edited_at: string | null;
     };
-    const siteResult = await supabaseAdmin.from('rhizomes').select('site_key, site_label').eq('id', blogPost.site_id).maybeSingle();
+    const siteResult = await supabaseAdmin
+      .from('rhizomes')
+      .select('site_key, site_label')
+      .eq('id', blogPost.site_id)
+      .maybeSingle();
     if (siteResult.error || !siteResult.data) throw new Error('사이트 정보를 불러오지 못했습니다.');
 
     return {
@@ -208,10 +218,25 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
       appeal: (appealResult.data as AppealRow | null) ?? null,
       isBlogCommunity: true,
       post: {
-        id: blogPost.id, site_id: blogPost.site_id, board_id: '', slug: blogPost.slug, user_id: blogPost.user_id,
-        subject: null, summary: null, content_html: null, content_markdown: null, content_simple: blogPost.content,
-        thumbnail_image: null, youtube_url: null, youtube_created_at: null, images: [], poll: null,
-        is_closed: blogPost.is_deleted, closed_message: blogPost.deleted_message, updated_at: blogPost.edited_at, exp_at: null,
+        id: blogPost.id,
+        site_id: blogPost.site_id,
+        board_id: '',
+        slug: blogPost.slug,
+        user_id: blogPost.user_id,
+        subject: null,
+        summary: null,
+        content_html: null,
+        content_markdown: null,
+        content_simple: blogPost.content,
+        thumbnail_image: null,
+        youtube_url: null,
+        youtube_created_at: null,
+        images: [],
+        poll: null,
+        is_closed: blogPost.is_deleted,
+        closed_message: blogPost.deleted_message,
+        updated_at: blogPost.edited_at,
+        exp_at: null,
       } as PostRow,
       comment: blogComment,
       site: siteResult.data,
@@ -514,7 +539,10 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
     const now = new Date().toISOString();
     const supabaseAdmin = getSupabaseAdmin();
 
-    if ((result.report.target_type === 'comment' || result.report.target_type === 'blog_community_comment') && result.comment) {
+    if (
+      (result.report.target_type === 'comment' || result.report.target_type === 'blog_community_comment') &&
+      result.comment
+    ) {
       const content = normalizeText(body.commentContent);
 
       if (!content) {
@@ -559,7 +587,8 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
         .eq('user_id', session.stigmaId)
         .select('id')
         .maybeSingle();
-      if (updateResult.error || !updateResult.data) return Response.json({ error: '게시물을 수정하지 못했습니다.' }, { status: 500 });
+      if (updateResult.error || !updateResult.data)
+        return Response.json({ error: '게시물을 수정하지 못했습니다.' }, { status: 500 });
       return Response.json({ ok: true });
     }
 
@@ -626,7 +655,9 @@ export async function POST(_request: Request, context: ContentRouteContext) {
     }
 
     const updatedAt = result.comment?.updated_at ?? result.post.updated_at;
-    const expAt = result.isBlogCommunity ? result.appeal.opinion_submitted_at : result.comment?.exp_at ?? result.post.exp_at;
+    const expAt = result.isBlogCommunity
+      ? result.appeal.opinion_submitted_at
+      : (result.comment?.exp_at ?? result.post.exp_at);
 
     if (!updatedAt || !expAt || new Date(updatedAt).getTime() <= new Date(expAt).getTime()) {
       return Response.json({ error: '콘텐츠를 수정한 뒤 확인을 요청해 주세요.' }, { status: 409 });

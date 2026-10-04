@@ -172,7 +172,10 @@ export default function UserInfo() {
       setStatus('not_joined');
       router.replace(`/${siteName}`);
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '커뮤니티 탈퇴에 실패했습니다.' : '커뮤니티 탈퇴에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '커뮤니티 탈퇴에 실패했습니다.'
+          : '커뮤니티 탈퇴에 실패했습니다.';
       setWithdrawErrorMessage(message);
       setErrorPopup({ title: null, messages: [message] });
     } finally {
@@ -254,7 +257,10 @@ export default function UserInfo() {
       setNickname(result.userInfo.nickname);
       setIsDialogOpen(false);
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '프로필 수정에 실패했습니다.' : '프로필 수정에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '프로필 수정에 실패했습니다.'
+          : '프로필 수정에 실패했습니다.';
       showNicknameError(message, null);
     } finally {
       setIsSubmitting(false);
@@ -390,33 +396,33 @@ export default function UserInfo() {
             <form id="community-profile-form-mobile" onSubmit={handleSubmit}>
               {dialogErrorMessage ? <p className="field-error">{dialogErrorMessage}</p> : null}
               <div className={styles['form-group']}>
-              <cite>
-                {userInfo.activityName} <span>(데브허브 활동명)</span>
-              </cite>
-              <div className={styles['form-control']}>
-                <input
-                  type="text"
-                  name="nickname"
-                  value={nickname}
-                  onChange={handleNicknameChange}
-                  onInvalid={handleNicknameInvalid}
-                  placeholder="별명을 입력하세요"
-                  minLength={2}
-                  maxLength={10}
-                  required
-                  aria-invalid={Boolean(dialogErrorMessage)}
-                />
-              </div>
-              <p className={dialogErrorMessage ? 'field-error' : ''}>
-                {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
-              </p>
-              <div className={styles.misc}>
-                <div className={styles.role}>
-                  <span>{roleLabel}</span>
-                  {roleIconUrl ? <img src={roleIconUrl} alt={roleLabel} /> : null}
+                <cite>
+                  {userInfo.activityName} <span>(데브허브 활동명)</span>
+                </cite>
+                <div className={styles['form-control']}>
+                  <input
+                    type="text"
+                    name="nickname"
+                    value={nickname}
+                    onChange={handleNicknameChange}
+                    onInvalid={handleNicknameInvalid}
+                    placeholder="별명을 입력하세요"
+                    minLength={2}
+                    maxLength={10}
+                    required
+                    aria-invalid={Boolean(dialogErrorMessage)}
+                  />
                 </div>
-                <time>({formatDate(userInfo.joinedAt)} 가입)</time>
-              </div>
+                <p className={dialogErrorMessage ? 'field-error' : ''}>
+                  {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+                </p>
+                <div className={styles.misc}>
+                  <div className={styles.role}>
+                    <span>{roleLabel}</span>
+                    {roleIconUrl ? <img src={roleIconUrl} alt={roleLabel} /> : null}
+                  </div>
+                  <time>({formatDate(userInfo.joinedAt)} 가입)</time>
+                </div>
               </div>
               <dl className={styles['info-user-detail']}>
                 <div>
@@ -466,33 +472,33 @@ export default function UserInfo() {
             <form id="community-profile-form-desktop" onSubmit={handleSubmit}>
               {dialogErrorMessage ? <p className="field-error">{dialogErrorMessage}</p> : null}
               <div className={styles['form-group']}>
-              <cite>
-                {userInfo.activityName} <span>(데브허브 활동명)</span>
-              </cite>
-              <div className={styles['form-control']}>
-                <input
-                  type="text"
-                  name="nickname"
-                  value={nickname}
-                  onChange={handleNicknameChange}
-                  onInvalid={handleNicknameInvalid}
-                  placeholder="별명을 입력하세요"
-                  minLength={2}
-                  maxLength={10}
-                  required
-                  aria-invalid={Boolean(dialogErrorMessage)}
-                />
-              </div>
-              <p className={dialogErrorMessage ? 'field-error' : ''}>
-                {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
-              </p>
-              <div className={styles.misc}>
-                <div className={styles.role}>
-                  <span>{roleLabel}</span>
-                  {roleIconUrl ? <img src={roleIconUrl} alt={roleLabel} /> : null}
+                <cite>
+                  {userInfo.activityName} <span>(데브허브 활동명)</span>
+                </cite>
+                <div className={styles['form-control']}>
+                  <input
+                    type="text"
+                    name="nickname"
+                    value={nickname}
+                    onChange={handleNicknameChange}
+                    onInvalid={handleNicknameInvalid}
+                    placeholder="별명을 입력하세요"
+                    minLength={2}
+                    maxLength={10}
+                    required
+                    aria-invalid={Boolean(dialogErrorMessage)}
+                  />
                 </div>
-                <time>({formatDate(userInfo.joinedAt)} 가입)</time>
-              </div>
+                <p className={dialogErrorMessage ? 'field-error' : ''}>
+                  {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+                </p>
+                <div className={styles.misc}>
+                  <div className={styles.role}>
+                    <span>{roleLabel}</span>
+                    {roleIconUrl ? <img src={roleIconUrl} alt={roleLabel} /> : null}
+                  </div>
+                  <time>({formatDate(userInfo.joinedAt)} 가입)</time>
+                </div>
               </div>
               <dl className={styles['info-user-detail']}>
                 <div>

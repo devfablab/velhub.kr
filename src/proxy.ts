@@ -106,7 +106,10 @@ function isBlogCommunityPath(pathname: string, siteName: string) {
 }
 
 function isBlogCommunityManagePath(pathname: string, siteName: string) {
-  return pathname === `/${siteName}/manage/community-on-blog` || pathname.startsWith(`/${siteName}/manage/community-on-blog/`);
+  return (
+    pathname === `/${siteName}/manage/community-on-blog` ||
+    pathname.startsWith(`/${siteName}/manage/community-on-blog/`)
+  );
 }
 
 function isJoinPath(pathname: string) {
@@ -1012,7 +1015,9 @@ export async function proxy(request: NextRequest) {
         return redirectWithPath(request, `/${siteName}`);
       }
       if (isBlogCommunityPath(pathname, siteName)) {
-        const communityAccess = await fetchSessionRoute(request, `/api/site/${siteName}/community-on-blog`, { summary: '1' });
+        const communityAccess = await fetchSessionRoute(request, `/api/site/${siteName}/community-on-blog`, {
+          summary: '1',
+        });
         if (!communityAccess.response.ok || communityAccess.result?.feature?.canUse !== true) {
           return redirectWithPath(request, `/${siteName}`);
         }

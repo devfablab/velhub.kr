@@ -319,9 +319,9 @@ export default function Opt({
     return (
       <cite aria-label={ariaLabel}>
         {isCommunity ? (
-            <CommunityMemberMenu
-              siteName={siteName}
-              name={content.author_name}
+          <CommunityMemberMenu
+            siteName={siteName}
+            name={content.author_name}
             boardName={boardName}
             boardLabel={board?.board_label ?? content.board_label}
           />
@@ -752,9 +752,7 @@ export default function Opt({
                             </div>
                           ) : null}
                         </td>
-                        <td className="long-cell">
-                          {renderAuthorName(content)}
-                        </td>
+                        <td className="long-cell">{renderAuthorName(content)}</td>
                         <td>{formatTimeAgo(content.published_at ?? content.created_at)}</td>
                       </tr>
                     ))}
@@ -794,9 +792,7 @@ export default function Opt({
                             {content.subject}
                           </strong>
                         </div>
-                        <div className={styles.author}>
-                          {renderAuthorName(content)}
-                        </div>
+                        <div className={styles.author}>{renderAuthorName(content)}</div>
                         <div className={styles.tail}>
                           <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                           {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
@@ -833,9 +829,7 @@ export default function Opt({
                           {content.subject}
                         </strong>
                       </div>
-                      <div className={styles.author}>
-                        {renderAuthorName(content)}
-                      </div>
+                      <div className={styles.author}>{renderAuthorName(content)}</div>
                       <div className={styles.tail}>
                         <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                         {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
@@ -906,9 +900,7 @@ export default function Opt({
                         </strong>
                         <span>{content.summary}</span>
                       </div>
-                      <div className={styles.author}>
-                        {renderAuthorName(content)}
-                      </div>
+                      <div className={styles.author}>{renderAuthorName(content)}</div>
                       <div className={styles.tail}>
                         <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                         {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
@@ -1026,9 +1018,7 @@ export default function Opt({
                             ) : null}
                           </div>
                         </td>
-                        <td className="long-cell">
-                          {renderAuthorName(content)}
-                        </td>
+                        <td className="long-cell">{renderAuthorName(content)}</td>
                         <td>{formatTimeAgo(content.published_at ?? content.created_at)}</td>
                         <td>{content.post_count}</td>
                       </tr>

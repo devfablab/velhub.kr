@@ -89,7 +89,11 @@ export async function POST(request: NextRequest) {
         : '',
     proposerName: !proposerName ? '제안자명을 입력해 주세요.' : '',
     proposerPhone: !proposerPhone ? '전화번호를 입력해 주세요.' : '',
-    proposerEmail: !proposerEmail ? '이메일 주소를 입력해 주세요.' : !isValidEmail(proposerEmail) ? '이메일 주소를 확인해 주세요.' : '',
+    proposerEmail: !proposerEmail
+      ? '이메일 주소를 입력해 주세요.'
+      : !isValidEmail(proposerEmail)
+        ? '이메일 주소를 확인해 주세요.'
+        : '',
     homepageUrl: !isValidHomepage(homepageUrl) ? '홈페이지 주소를 확인해 주세요.' : '',
     personalInfoAgreed: !personalInfoAgreed ? '개인정보 수집 및 이용에 동의해 주세요.' : '',
     noticeAgreed: !noticeAgreed ? '제휴 제안 유의사항을 확인해 주세요.' : '',

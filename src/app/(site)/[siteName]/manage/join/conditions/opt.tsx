@@ -493,7 +493,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
               <FormErrorDialog
                 open={isErrorDialogOpen}
-                title={errorMessage.includes('가입 질문') || errorMessage.includes('질문 내용') || errorMessage.includes('선택지') ? '가입 질문 확인' : errorMessage.includes('기간') || errorMessage.includes('시작일') || errorMessage.includes('종료일') ? '가입 기간 확인' : null}
+                title={
+                  errorMessage.includes('가입 질문') ||
+                  errorMessage.includes('질문 내용') ||
+                  errorMessage.includes('선택지')
+                    ? '가입 질문 확인'
+                    : errorMessage.includes('기간') ||
+                        errorMessage.includes('시작일') ||
+                        errorMessage.includes('종료일')
+                      ? '가입 기간 확인'
+                      : null
+                }
                 messages={errorMessage ? [errorMessage] : []}
                 onClose={() => setIsErrorDialogOpen(false)}
               />
@@ -511,13 +521,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">글 작성 정책</Typography>
-                <TextField
-                  select
-                  value={policyPost}
-                  onChange={handlePolicyPostChange}
-                  fullWidth
-                  size="small"
-                >
+                <TextField select value={policyPost} onChange={handlePolicyPostChange} fullWidth size="small">
                   <MenuItem value="comment_0">
                     {policyPost === 'comment_0' ? (
                       <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
@@ -555,13 +559,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">댓글 작성 정책</Typography>
-                <TextField
-                  select
-                  value={policyComment}
-                  onChange={handlePolicyCommentChange}
-                  fullWidth
-                  size="small"
-                >
+                <TextField select value={policyComment} onChange={handlePolicyCommentChange} fullWidth size="small">
                   <MenuItem value="estimate_0">
                     {policyComment === 'estimate_0' ? (
                       <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
@@ -777,8 +775,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                           return nextErrors;
                                         });
                                       }}
-                                      error={Boolean(questionErrors[`option-${question.id}-${optionIndex}`] || questionErrors[`options-${question.id}`])}
-                                      helperText={questionErrors[`option-${question.id}-${optionIndex}`] || questionErrors[`options-${question.id}`]}
+                                      error={Boolean(
+                                        questionErrors[`option-${question.id}-${optionIndex}`] ||
+                                        questionErrors[`options-${question.id}`],
+                                      )}
+                                      helperText={
+                                        questionErrors[`option-${question.id}-${optionIndex}`] ||
+                                        questionErrors[`options-${question.id}`]
+                                      }
                                       fullWidth
                                       size="small"
                                     />

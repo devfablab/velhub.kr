@@ -570,9 +570,8 @@ export default function Opt({
     }
 
     if (isOwnerDetailsCategory(reportCategory) && !reporterCapacity) {
-      errors.reporterCapacity = rightsOwnerType === 'organization'
-        ? '피해단체 대표자 정보를 선택해 주세요.'
-        : '피해자 정보를 선택해 주세요.';
+      errors.reporterCapacity =
+        rightsOwnerType === 'organization' ? '피해단체 대표자 정보를 선택해 주세요.' : '피해자 정보를 선택해 주세요.';
     }
 
     const requiresRightsHolderDetails =
@@ -580,17 +579,18 @@ export default function Opt({
       (rightsOwnerType === 'organization' || (rightsOwnerType === 'individual' && reporterCapacity === 'proxy'));
 
     if (requiresRightsHolderDetails && !rightsHolderName.trim()) {
-      errors.rightsHolderName = rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
+      errors.rightsHolderName =
+        rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
     }
 
     if (requiresRightsHolderDetails && !rightsHolderPhone.trim()) {
-      errors.rightsHolderPhone = rightsOwnerType === 'organization'
-        ? '피해단체 전화번호를 입력해 주세요.'
-        : '피해자 전화번호를 입력해 주세요.';
+      errors.rightsHolderPhone =
+        rightsOwnerType === 'organization' ? '피해단체 전화번호를 입력해 주세요.' : '피해자 전화번호를 입력해 주세요.';
     }
 
     if (requiresRightsHolderDetails && !rightsHolderProofFile) {
-      errors.rightsHolderProofFile = rightsOwnerType === 'organization' ? '단체 증빙서류를 첨부해 주세요.' : '피해자 신분증을 첨부해 주세요.';
+      errors.rightsHolderProofFile =
+        rightsOwnerType === 'organization' ? '단체 증빙서류를 첨부해 주세요.' : '피해자 신분증을 첨부해 주세요.';
     }
 
     if (
@@ -1565,11 +1565,7 @@ export default function Opt({
           </Stack>
         </Stack>
         <Stack direction="row" justifyContent="flex-end">
-          <button
-            type="submit"
-            className="button medium submit"
-            disabled={submitting || reporterLoading}
-          >
+          <button type="submit" className="button medium submit" disabled={submitting || reporterLoading}>
             {submitting ? '접수 중' : '신고 접수'}
           </button>
         </Stack>

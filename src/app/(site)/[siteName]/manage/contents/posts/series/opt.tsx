@@ -868,7 +868,12 @@ export default function Opt({
           </Stack>
 
           {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
-          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           {sortedSeries.length === 0 ? (
             <ScreenState>등록된 연재가 없습니다.</ScreenState>
@@ -1051,7 +1056,9 @@ export default function Opt({
                         <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">{selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}</Typography>
+                            <Typography variant="body2">
+                              {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
+                            </Typography>
                           </Box>
                           {selectedUser.userName ? (
                             <Box>
@@ -1274,7 +1281,9 @@ export default function Opt({
                         <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">{selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}</Typography>
+                            <Typography variant="body2">
+                              {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
+                            </Typography>
                           </Box>
                           {selectedUser.userName ? (
                             <Box>
@@ -1618,11 +1627,7 @@ export default function Opt({
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                onClick={handleCloseUserDialog}
-                  disabled={isUserSearching}
-                >
+                <button type="button" onClick={handleCloseUserDialog} disabled={isUserSearching}>
                   닫기
                 </button>
               </DialogActions>

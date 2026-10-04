@@ -283,7 +283,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       value={giscusSettings.repo}
                       onChange={(event) => handleChangeGiscusTextField('repo', event.target.value)}
                       error={errorMessage.includes('Giscus') || errorMessage.includes('repo')}
-                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('repo') ? errorMessage : undefined}
+                      helperText={
+                        errorMessage.includes('Giscus') || errorMessage.includes('repo') ? errorMessage : undefined
+                      }
                       fullWidth
                       size="small"
                       required
@@ -297,7 +299,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       value={giscusSettings.repoId}
                       onChange={(event) => handleChangeGiscusTextField('repoId', event.target.value)}
                       error={errorMessage.includes('Giscus') || errorMessage.includes('repoId')}
-                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('repoId') ? errorMessage : undefined}
+                      helperText={
+                        errorMessage.includes('Giscus') || errorMessage.includes('repoId') ? errorMessage : undefined
+                      }
                       fullWidth
                       size="small"
                       required
@@ -312,7 +316,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       value={giscusSettings.category}
                       onChange={(event) => handleChangeGiscusTextField('category', event.target.value)}
                       error={errorMessage.includes('Giscus') || errorMessage.includes('category')}
-                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('category') ? errorMessage : undefined}
+                      helperText={
+                        errorMessage.includes('Giscus') || errorMessage.includes('category') ? errorMessage : undefined
+                      }
                       fullWidth
                       size="small"
                       required
@@ -332,7 +338,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       value={giscusSettings.categoryId}
                       onChange={(event) => handleChangeGiscusTextField('categoryId', event.target.value)}
                       error={errorMessage.includes('Giscus') || errorMessage.includes('categoryId')}
-                      helperText={errorMessage.includes('Giscus') || errorMessage.includes('categoryId') ? errorMessage : undefined}
+                      helperText={
+                        errorMessage.includes('Giscus') || errorMessage.includes('categoryId')
+                          ? errorMessage
+                          : undefined
+                      }
                       fullWidth
                       size="small"
                       required

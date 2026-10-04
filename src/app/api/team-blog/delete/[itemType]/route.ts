@@ -38,7 +38,12 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const table = `member_${itemType}`;
-    const item = await db.from(table).select('id, member_id').eq('id', itemId).eq('site_id', site.data.id).maybeSingle();
+    const item = await db
+      .from(table)
+      .select('id, member_id')
+      .eq('id', itemId)
+      .eq('site_id', site.data.id)
+      .maybeSingle();
 
     if (item.error || !item.data) {
       return Response.json({ error: '삭제할 항목을 찾을 수 없습니다.' }, { status: 404 });

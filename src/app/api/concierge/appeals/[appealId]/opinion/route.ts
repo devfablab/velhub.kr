@@ -250,11 +250,15 @@ export async function POST(request: Request, context: RouteContext) {
 
     const fieldErrors: FieldErrors = {};
     if (!disputedParts) fieldErrors.disputedParts = '인정하거나 이의를 제기하는 부분을 입력해 주세요.';
-    if (!isReportAppealContentRequest(contentRequest)) fieldErrors.contentRequest = '게시물 · 댓글 처리 요청을 선택해 주세요.';
-    if (contentRequest === 'edit_and_review' && !modificationContent) fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
+    if (!isReportAppealContentRequest(contentRequest))
+      fieldErrors.contentRequest = '게시물 · 댓글 처리 요청을 선택해 주세요.';
+    if (contentRequest === 'edit_and_review' && !modificationContent)
+      fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
     if (!opinionFile || opinionFile.size <= 0) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
-    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf')) fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
-    else if (opinionFile.size >= MAX_FILE_SIZE) fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
+    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf'))
+      fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
+    else if (opinionFile.size >= MAX_FILE_SIZE)
+      fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
 
     const supabaseAdmin = getSupabaseAdmin();
     const appealResult = await supabaseAdmin
@@ -313,11 +317,14 @@ export async function POST(request: Request, context: RouteContext) {
       fieldErrors.opinionData = '소명 의견서 내용이 올바르지 않습니다.';
     }
 
-    const opinionValidation = opinionData && category ? validateOpinionData({
-      category,
-      values: opinionData,
-      context: getOpinionContext(report),
-    }) : null;
+    const opinionValidation =
+      opinionData && category
+        ? validateOpinionData({
+            category,
+            values: opinionData,
+            context: getOpinionContext(report),
+          })
+        : null;
     Object.assign(fieldErrors, opinionValidation?.fieldErrors);
 
     if (Object.keys(fieldErrors).length > 0) return validationError(fieldErrors);

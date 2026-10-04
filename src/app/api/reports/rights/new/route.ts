@@ -53,7 +53,17 @@ type TargetValues = {
   blogCommunityCommentId: string | null;
 };
 
-async function notifyReportReceived({ siteId, reporterId, boardId, postId }: { siteId: string | null; reporterId: string; boardId: string | null; postId: string | null }) {
+async function notifyReportReceived({
+  siteId,
+  reporterId,
+  boardId,
+  postId,
+}: {
+  siteId: string | null;
+  reporterId: string;
+  boardId: string | null;
+  postId: string | null;
+}) {
   if (!siteId) return;
   const supabaseAdmin = getSupabaseAdmin();
   const ownersResult = await supabaseAdmin
@@ -65,16 +75,18 @@ async function notifyReportReceived({ siteId, reporterId, boardId, postId }: { s
     .eq('is_block', false);
   if (ownersResult.error || !ownersResult.data?.length) return;
   const recipientIds = [...new Set(ownersResult.data.map((owner) => owner.user_id).filter(Boolean))];
-  const result = await supabaseAdmin.from('notifications').insert(recipientIds.map((user_id) => ({
-    user_id,
-    send_user_id: reporterId,
-    send_site_id: siteId,
-    send_board_id: boardId,
-    send_series_id: null,
-    send_post_id: postId,
-    notification_type: NOTIFICATION_TYPE.REPORT_RECEIVED,
-    is_read: false,
-  })));
+  const result = await supabaseAdmin.from('notifications').insert(
+    recipientIds.map((user_id) => ({
+      user_id,
+      send_user_id: reporterId,
+      send_site_id: siteId,
+      send_board_id: boardId,
+      send_series_id: null,
+      send_post_id: postId,
+      notification_type: NOTIFICATION_TYPE.REPORT_RECEIVED,
+      is_read: false,
+    })),
+  );
   if (result.error) console.error('[reports/rights/new] notification error', result.error);
 }
 
@@ -661,13 +673,18 @@ export async function POST(request: Request) {
       fieldErrors.reporterCapacity = '신고자와 권리 소유자의 관계를 선택해 주세요.';
     }
     if (requiresRightsHolderDetails && !rightsHolderName) {
-      fieldErrors.rightsHolderName = rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
+      fieldErrors.rightsHolderName =
+        rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
     }
     if (requiresRightsHolderDetails && !rightsHolderPhone) {
-      fieldErrors.rightsHolderPhone = rightsOwnerType === 'organization' ? '피해단체 전화번호를 입력해 주세요.' : '피해자 전화번호를 입력해 주세요.';
+      fieldErrors.rightsHolderPhone =
+        rightsOwnerType === 'organization' ? '피해단체 전화번호를 입력해 주세요.' : '피해자 전화번호를 입력해 주세요.';
     }
     if (requiresRightsHolderDetails) {
-      const proofFileError = validateRightsReportFile(rightsHolderProofFile, rightsOwnerType === 'organization' ? '단체 증빙서류' : '피해자 신분증');
+      const proofFileError = validateRightsReportFile(
+        rightsHolderProofFile,
+        rightsOwnerType === 'organization' ? '단체 증빙서류' : '피해자 신분증',
+      );
       if (proofFileError) fieldErrors.rightsHolderProofFile = proofFileError;
     }
     if (usesOwnerDetails && reporterCapacity === 'proxy') {
@@ -679,7 +696,8 @@ export async function POST(request: Request) {
       const attorneyFileError = validateRightsReportFile(powerOfAttorneyFile, '위임장');
       if (attorneyFileError) fieldErrors.powerOfAttorneyFile = attorneyFileError;
     }
-    if (usesOwnerDetails && !infringementReason) fieldErrors.infringementReason = '권리침해 내용 및 신고 사유를 입력해 주세요.';
+    if (usesOwnerDetails && !infringementReason)
+      fieldErrors.infringementReason = '권리침해 내용 및 신고 사유를 입력해 주세요.';
     if (usesOwnerDetails) {
       const evidenceFileError = validateRightsReportFile(infringementEvidenceFile, '권리침해 증빙자료');
       if (evidenceFileError) fieldErrors.infringementEvidenceFile = evidenceFileError;
@@ -687,12 +705,15 @@ export async function POST(request: Request) {
 
     // 저작권 선택지는 화면에서 임시로 숨겨 둔 상태입니다. 다시 노출할 때 아래 검증도 함께 사용합니다.
     if (reasonType === 'copyright') {
-      if (copyrightOriginalUrls.length > 10) fieldErrors.copyrightOriginalUrls = '저작물 원본 URL은 최대 10개까지 입력할 수 있습니다.';
-      if (copyrightOriginalUrls.some((url) => !isValidHttpUrl(url))) fieldErrors.copyrightOriginalUrls = '저작물 원본 URL을 올바른 주소 형식으로 입력해 주세요.';
+      if (copyrightOriginalUrls.length > 10)
+        fieldErrors.copyrightOriginalUrls = '저작물 원본 URL은 최대 10개까지 입력할 수 있습니다.';
+      if (copyrightOriginalUrls.some((url) => !isValidHttpUrl(url)))
+        fieldErrors.copyrightOriginalUrls = '저작물 원본 URL을 올바른 주소 형식으로 입력해 주세요.';
       const fileErrorMessage = validateCopyrightProofFiles(copyrightProofFiles);
       if (fileErrorMessage) fieldErrors.copyrightProofFiles = fileErrorMessage;
       if (copyrightOriginalUrls.length === 0 && copyrightProofFiles.length === 0) {
-        fieldErrors.copyrightEvidence = '저작물 원본 URL 또는 저작물 원본임을 증명할 수 있는 PDF 중 하나는 입력해 주세요.';
+        fieldErrors.copyrightEvidence =
+          '저작물 원본 URL 또는 저작물 원본임을 증명할 수 있는 PDF 중 하나는 입력해 주세요.';
       }
     }
 

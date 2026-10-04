@@ -82,7 +82,10 @@ export default function ChangePaymentMethodButton() {
         if (response.status === 401) {
           setErrorDialog({ title: '로그인 필요', message: '로그인 후 결제수단을 변경해 주세요.' });
         } else if (response.status === 400 && result.error?.includes('휴대전화')) {
-          setErrorDialog({ title: '본인인증 확인', message: '본인인증된 휴대전화 번호를 확인한 뒤 다시 시도해 주세요.' });
+          setErrorDialog({
+            title: '본인인증 확인',
+            message: '본인인증된 휴대전화 번호를 확인한 뒤 다시 시도해 주세요.',
+          });
         } else {
           setErrorDialog({ title: null, message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.' });
         }
@@ -99,7 +102,10 @@ export default function ChangePaymentMethodButton() {
         !result.orderName ||
         !result.successUrl
       ) {
-        setErrorDialog({ title: null, message: '결제수단 변경 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+        setErrorDialog({
+          title: null,
+          message: '결제수단 변경 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        });
         return;
       }
 
@@ -122,7 +128,10 @@ export default function ChangePaymentMethodButton() {
       })) as PortOneBillingKeyResponse | undefined;
 
       if (!billingKeyResponse) {
-        setErrorDialog({ title: null, message: '결제수단 변경 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+        setErrorDialog({
+          title: null,
+          message: '결제수단 변경 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        });
         return;
       }
 
@@ -132,7 +141,10 @@ export default function ChangePaymentMethodButton() {
       }
 
       if (!billingKeyResponse.billingKey) {
-        setErrorDialog({ title: null, message: '결제수단 변경 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+        setErrorDialog({
+          title: null,
+          message: '결제수단 변경 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        });
         return;
       }
 
@@ -155,7 +167,10 @@ export default function ChangePaymentMethodButton() {
         if (successResponse.status === 401) {
           setErrorDialog({ title: '로그인 필요', message: '로그인 후 결제수단을 변경해 주세요.' });
         } else if (successResponse.status === 400) {
-          setErrorDialog({ title: '결제수단 확인', message: '결제수단 정보를 확인하지 못했습니다. 다시 등록해 주세요.' });
+          setErrorDialog({
+            title: '결제수단 확인',
+            message: '결제수단 정보를 확인하지 못했습니다. 다시 등록해 주세요.',
+          });
         } else {
           setErrorDialog({ title: null, message: '결제수단을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
         }

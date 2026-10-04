@@ -180,7 +180,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setErrorMessage('');
     } catch (unknownError) {
       setErrorMessage(
-        unknownError instanceof Error ? unknownError.message || '커뮤니티 홈 설정을 불러오지 못했습니다.' : '커뮤니티 홈 설정을 불러오지 못했습니다.',
+        unknownError instanceof Error
+          ? unknownError.message || '커뮤니티 홈 설정을 불러오지 못했습니다.'
+          : '커뮤니티 홈 설정을 불러오지 못했습니다.',
       );
       setIsErrorDialogOpen(true);
     }

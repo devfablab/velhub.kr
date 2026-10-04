@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { formatDateTimeDetail } from '@/lib/utils';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -40,6 +39,7 @@ import {
   type ReportManageTargetType,
   type ReportStatus,
 } from '@/lib/reports/manage';
+import { formatDateTimeDetail } from '@/lib/utils';
 import { formatTimeAgo } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';

@@ -70,7 +70,11 @@ export default function PasswordChange({
   function getFieldErrors() {
     const errors: FieldErrors = {
       currentPassword: currentPassword ? '' : '현재 비밀번호를 입력해 주세요.',
-      nextPassword: !nextPassword ? '새 비밀번호를 입력해 주세요.' : !isValidPassword(nextPassword) ? PASSWORD_REQUIREMENTS : '',
+      nextPassword: !nextPassword
+        ? '새 비밀번호를 입력해 주세요.'
+        : !isValidPassword(nextPassword)
+          ? PASSWORD_REQUIREMENTS
+          : '',
       nextPasswordConfirm: !nextPasswordConfirm
         ? '새 비밀번호 확인을 입력해 주세요.'
         : nextPassword !== nextPasswordConfirm
@@ -109,9 +113,12 @@ export default function PasswordChange({
         credentials: 'include',
         body: JSON.stringify({ currentPassword, nextPassword, nextPasswordConfirm }),
       });
-      const result = (await response.json().catch(() => null)) as
-        | { ok?: boolean; title?: string; errors?: string[]; fieldErrors?: FieldErrors }
-        | null;
+      const result = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        title?: string;
+        errors?: string[];
+        fieldErrors?: FieldErrors;
+      } | null;
 
       if (!response.ok || !result?.ok) {
         if (response.status >= 500 || !result?.errors?.length) {

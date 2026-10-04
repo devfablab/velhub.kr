@@ -347,7 +347,10 @@ export async function POST(request: Request) {
         ];
 
         if (requirements.every((value) => value === 0)) {
-          return Response.json({ error: `lv.${normalizedLv}의 자동등업 조건을 하나 이상 입력해주세요.` }, { status: 400 });
+          return Response.json(
+            { error: `lv.${normalizedLv}의 자동등업 조건을 하나 이상 입력해주세요.` },
+            { status: 400 },
+          );
         }
       }
     }

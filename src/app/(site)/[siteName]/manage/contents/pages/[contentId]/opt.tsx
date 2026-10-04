@@ -199,7 +199,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
             <ScreenState>{errorMessage || '페이지를 찾을 수 없습니다.'}</ScreenState>
             <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
-              <Anchor href={`/${siteName}/manage/contents/pages`} className="button medium cancel">목록</Anchor>
+              <Anchor href={`/${siteName}/manage/contents/pages`} className="button medium cancel">
+                목록
+              </Anchor>
             </Stack>
             <FormErrorDialog
               open={isErrorDialogOpen}

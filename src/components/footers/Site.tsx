@@ -122,7 +122,9 @@ export default function FooterSite() {
       }
     } catch (unknownError) {
       const message =
-        unknownError instanceof Error ? unknownError.message || '운영자 교체 요청을 처리하지 못했습니다.' : '운영자 교체 요청을 처리하지 못했습니다.';
+        unknownError instanceof Error
+          ? unknownError.message || '운영자 교체 요청을 처리하지 못했습니다.'
+          : '운영자 교체 요청을 처리하지 못했습니다.';
       setOwnerTransferError(message);
       setOwnerTransferErrorPopup({ title: null, messages: [message] });
     } finally {
@@ -374,7 +376,7 @@ export default function FooterSite() {
             <Typography variant="body2">초대에 응하시겠어요?</Typography>
           </DialogContent>
           <DialogActions>
-          <button type="button" onClick={() => setIsInvitePromptOpen(false)}>
+            <button type="button" onClick={() => setIsInvitePromptOpen(false)}>
               둘러보기
             </button>
             {inviteHref ? <Anchor href={inviteHref}>가입하기</Anchor> : null}

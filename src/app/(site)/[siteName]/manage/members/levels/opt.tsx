@@ -329,7 +329,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSnackbarMessage('저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        showError(unknownError.message || '등급 저장에 실패했습니다.', unknownError instanceof TypeError ? null : '등급 설정');
+        showError(
+          unknownError.message || '등급 저장에 실패했습니다.',
+          unknownError instanceof TypeError ? null : '등급 설정',
+        );
       } else {
         showError('등급 저장에 실패했습니다.', null);
       }

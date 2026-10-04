@@ -282,7 +282,10 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
   ]);
 
   if (ownPostsResult.error || ownCommentsResult.error || ownBlogPostsResult.error || ownBlogCommentsResult.error) {
-    console.error('[concierge/appeals] owned content query error', ownPostsResult.error ?? ownCommentsResult.error ?? ownBlogPostsResult.error ?? ownBlogCommentsResult.error);
+    console.error(
+      '[concierge/appeals] owned content query error',
+      ownPostsResult.error ?? ownCommentsResult.error ?? ownBlogPostsResult.error ?? ownBlogCommentsResult.error,
+    );
     throw new Error('소명 대상 콘텐츠를 불러오지 못했습니다.');
   }
 
@@ -312,7 +315,11 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
   const blogPostIds = [
     ...new Set(
       reports
-        .map((report) => report.blog_community_post_id ?? blogComments.find((comment) => comment.id === report.blog_community_comment_id)?.post_id)
+        .map(
+          (report) =>
+            report.blog_community_post_id ??
+            blogComments.find((comment) => comment.id === report.blog_community_comment_id)?.post_id,
+        )
         .filter((value): value is string => Boolean(value)),
     ),
   ];
@@ -329,7 +336,10 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
   ]);
 
   if (postsResult.error || blogPostsResult.error || appealsResult.error) {
-    console.error('[concierge/appeals] related query error', postsResult.error ?? blogPostsResult.error ?? appealsResult.error);
+    console.error(
+      '[concierge/appeals] related query error',
+      postsResult.error ?? blogPostsResult.error ?? appealsResult.error,
+    );
     throw new Error('소명 관련 정보를 불러오지 못했습니다.');
   }
 
@@ -378,7 +388,8 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
       return [];
     }
 
-    const isBlogTarget = report.target_type === 'blog_community_post' || report.target_type === 'blog_community_comment';
+    const isBlogTarget =
+      report.target_type === 'blog_community_post' || report.target_type === 'blog_community_comment';
     const isCommentTarget = report.target_type === 'comment' || report.target_type === 'blog_community_comment';
     const isDeletedForViolation = isBlogTarget
       ? isCommentTarget
@@ -406,8 +417,10 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
 
     const appeal = appealByReport.get(`${report.reportType}:${report.id}`) ?? null;
     const deadline = getReportAppealDeadline(report.created_at);
-    const targetUpdatedAt = isBlogTarget ? blogComment?.updated_at ?? blogPost?.edited_at ?? null : comment?.updated_at ?? post?.updated_at ?? null;
-    const targetExpAt = isBlogTarget ? null : comment?.exp_at ?? post?.exp_at ?? null;
+    const targetUpdatedAt = isBlogTarget
+      ? (blogComment?.updated_at ?? blogPost?.edited_at ?? null)
+      : (comment?.updated_at ?? post?.updated_at ?? null);
+    const targetExpAt = isBlogTarget ? null : (comment?.exp_at ?? post?.exp_at ?? null);
     const hasEditedAfterPermission = Boolean(
       targetUpdatedAt && targetExpAt && new Date(targetUpdatedAt).getTime() > new Date(targetExpAt).getTime(),
     );

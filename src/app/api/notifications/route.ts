@@ -190,33 +190,40 @@ export async function GET() {
       ),
     ];
 
-    const [stigmasResult, sitesResult, boardsResult, seriesResult, postsResult, blogCommunityPostsResult, reportMessagesResult] =
-      await Promise.all([
-        notificationUserIds.length > 0
-          ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', notificationUserIds)
-          : Promise.resolve({ data: [], error: null }),
-        siteIds.length > 0
-          ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds)
-          : Promise.resolve({ data: [], error: null }),
-        boardIds.length > 0
-          ? supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
-          : Promise.resolve({ data: [], error: null }),
-        seriesIds.length > 0
-          ? supabaseAdmin.from('board_series').select('id, series_key, series_label').in('id', seriesIds)
-          : Promise.resolve({ data: [], error: null }),
-        postIds.length > 0
-          ? supabaseAdmin.from('posts').select('id, slug, subject').in('id', postIds)
-          : Promise.resolve({ data: [], error: null }),
-        postIds.length > 0
-          ? supabaseAdmin.from('blog_community_posts').select('id, slug').in('id', postIds)
-          : Promise.resolve({ data: [], error: null }),
-        reportMessageIds.length > 0
-          ? supabaseAdmin
-              .from('report_messages')
-              .select('id, message, report_type, report_id, created_at')
-              .in('id', reportMessageIds)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
+    const [
+      stigmasResult,
+      sitesResult,
+      boardsResult,
+      seriesResult,
+      postsResult,
+      blogCommunityPostsResult,
+      reportMessagesResult,
+    ] = await Promise.all([
+      notificationUserIds.length > 0
+        ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', notificationUserIds)
+        : Promise.resolve({ data: [], error: null }),
+      siteIds.length > 0
+        ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds)
+        : Promise.resolve({ data: [], error: null }),
+      boardIds.length > 0
+        ? supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
+        : Promise.resolve({ data: [], error: null }),
+      seriesIds.length > 0
+        ? supabaseAdmin.from('board_series').select('id, series_key, series_label').in('id', seriesIds)
+        : Promise.resolve({ data: [], error: null }),
+      postIds.length > 0
+        ? supabaseAdmin.from('posts').select('id, slug, subject').in('id', postIds)
+        : Promise.resolve({ data: [], error: null }),
+      postIds.length > 0
+        ? supabaseAdmin.from('blog_community_posts').select('id, slug').in('id', postIds)
+        : Promise.resolve({ data: [], error: null }),
+      reportMessageIds.length > 0
+        ? supabaseAdmin
+            .from('report_messages')
+            .select('id, message, report_type, report_id, created_at')
+            .in('id', reportMessageIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
     if (
       stigmasResult.error ||

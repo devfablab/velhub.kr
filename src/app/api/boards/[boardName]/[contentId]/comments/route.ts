@@ -1103,8 +1103,7 @@ export async function POST(request: Request, context: RouteContext) {
       session.case,
     );
     const canPinComment =
-      target.data.siteType === 'community' &&
-      (session.stigmaId === target.data.postAuthorId || canManageComment);
+      target.data.siteType === 'community' && (session.stigmaId === target.data.postAuthorId || canManageComment);
 
     const commentMap = new Map([[insertResult.data.id, insertResult.data as CommentRow]]);
     const authorMap = new Map<string, Awaited<ReturnType<typeof getUserDisplayInfo>>>();

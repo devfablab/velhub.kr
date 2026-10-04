@@ -62,7 +62,10 @@ export async function POST(request: Request) {
       outputExtension = '.svg';
     } else {
       try {
-        uploadBuffer = await sharp(fileBuffer).resize(72, 72, { fit: 'cover', position: 'centre' }).webp({ quality: 90 }).toBuffer();
+        uploadBuffer = await sharp(fileBuffer)
+          .resize(72, 72, { fit: 'cover', position: 'centre' })
+          .webp({ quality: 90 })
+          .toBuffer();
       } catch {
         return Response.json({ error: '이미지 파일이 올바르지 않습니다.' }, { status: 400 });
       }

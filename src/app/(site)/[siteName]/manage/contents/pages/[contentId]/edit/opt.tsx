@@ -105,7 +105,12 @@ function normalizeBoardName(rawValue: string | null) {
 }
 
 function hasEditorContent(html: string) {
-  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(html);
+  return (
+    html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim().length > 0 || /<img\b/i.test(html)
+  );
 }
 
 function loadImageFromFile(file: File) {
@@ -216,7 +221,12 @@ export default function Opt({
   const [slugMessage, setSlugMessage] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState(initialError || '');
-  const [fieldErrors, setFieldErrors] = useState<{ slug?: string; subject?: string; content?: string; ogImage?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    slug?: string;
+    subject?: string;
+    content?: string;
+    ogImage?: string;
+  }>({});
   const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
     initialError ? { title: null, messages: [initialError] } : null,
   );
@@ -229,13 +239,13 @@ export default function Opt({
     const originalContent = initialContent?.content;
     return Boolean(
       originalContent &&
-        (slug !== originalContent.slug ||
-          subject !== originalContent.subject ||
-          summary !== (originalContent.summary ?? '') ||
-          contentHtml !== originalContent.content_html ||
-          contentMarkdown !== (originalContent.content_markdown ?? '') ||
-          ogImage !== (originalContent.og_image ?? '') ||
-          isComment !== originalContent.is_comment),
+      (slug !== originalContent.slug ||
+        subject !== originalContent.subject ||
+        summary !== (originalContent.summary ?? '') ||
+        contentHtml !== originalContent.content_html ||
+        contentMarkdown !== (originalContent.content_markdown ?? '') ||
+        ogImage !== (originalContent.og_image ?? '') ||
+        isComment !== originalContent.is_comment),
     );
   }, [contentHtml, contentMarkdown, initialContent, isComment, ogImage, slug, subject, summary]);
 
@@ -342,8 +352,10 @@ export default function Opt({
     setIsUploadingOgImage(true);
 
     try {
-      if (!ACCEPTED_IMAGE_TYPES.includes(selectedFile.type)) throw new Error('PNG, JPEG, WEBP 이미지만 등록할 수 있습니다.');
-      if (selectedFile.size > MAX_EDITOR_IMAGE_FILE_SIZE) throw new Error('오픈그래프 이미지는 1MB 이하로 등록해주세요.');
+      if (!ACCEPTED_IMAGE_TYPES.includes(selectedFile.type))
+        throw new Error('PNG, JPEG, WEBP 이미지만 등록할 수 있습니다.');
+      if (selectedFile.size > MAX_EDITOR_IMAGE_FILE_SIZE)
+        throw new Error('오픈그래프 이미지는 1MB 이하로 등록해주세요.');
 
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -363,9 +375,15 @@ export default function Opt({
       setOgImage(result.ogImage ?? '');
       setOgImageUrl(result.url ?? '');
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.' : '오픈그래프 이미지 업로드에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.'
+          : '오픈그래프 이미지 업로드에 실패했습니다.';
       setFieldErrors((current) => ({ ...current, ogImage: message }));
-      setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '오픈그래프 이미지', messages: [message] });
+      setFormErrorDialog({
+        title: unknownError instanceof TypeError ? null : '오픈그래프 이미지',
+        messages: [message],
+      });
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.');
       } else {
@@ -492,9 +510,16 @@ export default function Opt({
   }
 
   async function deleteUploadedEditorImages(paths: string[]) {
-    await Promise.all(paths.map((path) => fetch('/api/attachment/delete/post', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ siteName, path }),
-    }).catch(() => undefined)));
+    await Promise.all(
+      paths.map((path) =>
+        fetch('/api/attachment/delete/post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ siteName, path }),
+        }).catch(() => undefined),
+      ),
+    );
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -585,7 +610,10 @@ export default function Opt({
           body: JSON.stringify({ path: ogImage }),
         }).catch(() => undefined);
       }
-      const message = unknownError instanceof Error ? unknownError.message || '페이지 수정에 실패했습니다.' : '페이지 수정에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '페이지 수정에 실패했습니다.'
+          : '페이지 수정에 실패했습니다.';
       if (message.includes('식별자')) setFieldErrors((current) => ({ ...current, slug: message }));
       if (message.includes('제목')) setFieldErrors((current) => ({ ...current, subject: message }));
       if (message.includes('내용')) setFieldErrors((current) => ({ ...current, content: message }));
@@ -607,11 +635,18 @@ export default function Opt({
     const message = initialError || '페이지를 불러오지 못했습니다.';
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">
-        <div className={`container ${styles.container}`}><div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-          <div className={`paper paper-error ${styles.paper}`}>{message}</div>
-          <ScreenState>{message}</ScreenState>
-          <FormErrorDialog open={Boolean(formErrorDialog)} title={null} messages={[message]} onClose={() => setFormErrorDialog(null)} />
-        </div></div>
+        <div className={`container ${styles.container}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
+            <div className={`paper paper-error ${styles.paper}`}>{message}</div>
+            <ScreenState>{message}</ScreenState>
+            <FormErrorDialog
+              open={Boolean(formErrorDialog)}
+              title={null}
+              messages={[message]}
+              onClose={() => setFormErrorDialog(null)}
+            />
+          </div>
+        </div>
       </Container>
     );
   }
@@ -732,7 +767,12 @@ export default function Opt({
                   onMarkdownChange={setContentMarkdown}
                   onUploadImage={handleUploadEditorImage}
                 />
-                {fieldErrors.content ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{fieldErrors.content}</span></p> : null}
+                {fieldErrors.content ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{fieldErrors.content}</span>
+                  </p>
+                ) : null}
               </Box>
 
               <FormControlLabel
@@ -746,19 +786,32 @@ export default function Opt({
                 </Anchor>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting || !boardName || !hasChanges}>
+                    <button
+                      type="submit"
+                      className={`button ${styles.button}`}
+                      disabled={isSubmitting || !boardName || !hasChanges}
+                    >
                       저장
                     </button>
                   </div>
                 ) : (
-                  <button type="submit" className="button medium submit" disabled={isSubmitting || !boardName || !hasChanges}>
+                  <button
+                    type="submit"
+                    className="button medium submit"
+                    disabled={isSubmitting || !boardName || !hasChanges}
+                  >
                     저장
                   </button>
                 )}
               </Stack>
 
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-              <FormErrorDialog open={Boolean(formErrorDialog)} title={formErrorDialog?.title ?? null} messages={formErrorDialog?.messages ?? []} onClose={() => setFormErrorDialog(null)} />
+              <FormErrorDialog
+                open={Boolean(formErrorDialog)}
+                title={formErrorDialog?.title ?? null}
+                messages={formErrorDialog?.messages ?? []}
+                onClose={() => setFormErrorDialog(null)}
+              />
             </Stack>
           </div>
         </div>

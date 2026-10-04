@@ -367,12 +367,10 @@ export default function TotpSetup({
                     placeholder="XXXXXX"
                     type="text"
                     value={resetVerifyCode}
-                    onChange={(event: InputChangeEvent) =>
-                      {
-                        setResetVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6));
-                        setResetVerifyCodeError('');
-                      }
-                    }
+                    onChange={(event: InputChangeEvent) => {
+                      setResetVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6));
+                      setResetVerifyCodeError('');
+                    }}
                     inputProps={{
                       inputMode: 'numeric',
                       pattern: '[0-9]{6}',

@@ -185,7 +185,10 @@ export default function Opt({
                             <strong>댓글 {post.commentCount}</strong>
                           </Anchor>
                           {post.isAuthor ? (
-                            <Anchor href={`/${siteName}/community-on-blog/${post.slug}/edit?from=list`} className={styles.button}>
+                            <Anchor
+                              href={`/${siteName}/community-on-blog/${post.slug}/edit?from=list`}
+                              className={styles.button}
+                            >
                               <EditNoteRoundedIcon />
                               <strong>수정</strong>
                             </Anchor>

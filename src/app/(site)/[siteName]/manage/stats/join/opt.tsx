@@ -99,7 +99,12 @@ function formatNumber(value: number | null | undefined) {
 }
 
 function getKstDateValue(daysBefore = 0) {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)));
   date.setUTCDate(date.getUTCDate() - daysBefore);
@@ -309,7 +314,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const result = (await response.json()) as JoinStatsResponse;
 
       if (!response.ok) {
-        showError(result.error ?? '가입자수 통계를 불러오지 못했습니다.', response.status >= 500 ? null : '가입자수 통계');
+        showError(
+          result.error ?? '가입자수 통계를 불러오지 못했습니다.',
+          response.status >= 500 ? null : '가입자수 통계',
+        );
         return;
       }
 
@@ -389,7 +397,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <ScreenState kind="error">{errorMessage || '가입자수 통계를 불러오지 못했습니다.'}</ScreenState>
-            <FormErrorDialog open={isErrorDialogOpen} title={errorDialogTitle} messages={errorMessage ? errorMessage.split('\n') : []} onClose={() => setIsErrorDialogOpen(false)} />
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorDialogTitle}
+              messages={errorMessage ? errorMessage.split('\n') : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
           </div>
         </div>
       </Container>
@@ -446,8 +459,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             {selectedRange === 'custom' ? (
               <>
-                <DateSelectGroup title="시작일" value={startDate} yearOptions={yearOptions} onChange={setStartDate} error={startDateError} />
-                <DateSelectGroup title="종료일" value={endDate} yearOptions={yearOptions} onChange={setEndDate} error={endDateError} />
+                <DateSelectGroup
+                  title="시작일"
+                  value={startDate}
+                  yearOptions={yearOptions}
+                  onChange={setStartDate}
+                  error={startDateError}
+                />
+                <DateSelectGroup
+                  title="종료일"
+                  value={endDate}
+                  yearOptions={yearOptions}
+                  onChange={setEndDate}
+                  error={endDateError}
+                />
                 <button type="button" className="button medium action" onClick={handleApplyCustomRange}>
                   조회
                 </button>
@@ -476,7 +501,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
           )}
         </div>
       </div>
-      <FormErrorDialog open={isErrorDialogOpen} title={errorDialogTitle} messages={errorMessage ? errorMessage.split('\n') : []} onClose={() => setIsErrorDialogOpen(false)} />
+      <FormErrorDialog
+        open={isErrorDialogOpen}
+        title={errorDialogTitle}
+        messages={errorMessage ? errorMessage.split('\n') : []}
+        onClose={() => setIsErrorDialogOpen(false)}
+      />
     </Container>
   );
 }

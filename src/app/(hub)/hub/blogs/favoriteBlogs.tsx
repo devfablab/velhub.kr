@@ -79,9 +79,10 @@ export default function FavoriteBlogs({
   const getFolderActionError = async (response: Response): Promise<FolderActionError | null> => {
     if (response.ok) return null;
 
-    const payload = (await response.json().catch(() => null)) as
-      | { error?: string; fieldErrors?: { label?: string } }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+      fieldErrors?: { label?: string };
+    } | null;
     if (response.status >= 500 || !payload?.error) {
       return { message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', isUnknown: true };
     }

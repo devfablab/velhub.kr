@@ -83,12 +83,9 @@ async function canBypassCommunityCommentPolicy({
   }
 
   return (managerRoleResult.data as CommunityManageRoleRow[]).some((managerRole) =>
-    [
-      'community-manager',
-      'board-manager',
-      'board-general-manager',
-      'board-assistant-manager',
-    ].includes(managerRole.role ?? ''),
+    ['community-manager', 'board-manager', 'board-general-manager', 'board-assistant-manager'].includes(
+      managerRole.role ?? '',
+    ),
   );
 }
 

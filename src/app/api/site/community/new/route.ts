@@ -74,10 +74,7 @@ function getFormText(formData: FormData, key: string) {
 }
 
 function getFieldErrorResponse(field: keyof typeof EMPTY_SITE_CREATE_FIELD_ERRORS, error: string) {
-  return Response.json(
-    { error, fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, [field]: error } },
-    { status: 400 },
-  );
+  return Response.json({ error, fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, [field]: error } }, { status: 400 });
 }
 
 function isAllowedProfilePictureFile(file: File) {

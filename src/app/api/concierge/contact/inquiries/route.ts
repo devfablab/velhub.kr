@@ -468,14 +468,19 @@ export async function POST(request: NextRequest) {
   if (!isBug && !isPaymentProblem) {
     const fieldErrors: InquiryFieldErrors = {
       title: !title ? '제목을 입력해 주세요.' : title.length > 120 ? '제목은 120자 이하로 입력해 주세요.' : '',
-      content: !content ? '문의 내용을 입력해 주세요.' : content.length > 10000 ? '문의 내용은 10,000자 이하로 입력해 주세요.' : '',
+      content: !content
+        ? '문의 내용을 입력해 주세요.'
+        : content.length > 10000
+          ? '문의 내용은 10,000자 이하로 입력해 주세요.'
+          : '',
     };
     if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
   }
   if (isBug) {
     const fieldErrors: InquiryFieldErrors = {
       pageUrl: !pageUrl ? '문제가 발생한 화면 주소를 입력해 주세요.' : '',
-      occurredAt: !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
+      occurredAt:
+        !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
       attemptedAction: !attemptedAction
         ? '하려고 했던 작업을 입력해 주세요.'
         : attemptedAction.length > 2000
@@ -486,13 +491,16 @@ export async function POST(request: NextRequest) {
         : actualBehavior.length > 5000
           ? '실제로 발생한 문제는 5,000자 이하로 입력해 주세요.'
           : '',
-      recurrence: !['always', 'often', 'sometimes', 'once'].includes(recurrence) ? '문제 발생 빈도를 선택해 주세요.' : '',
+      recurrence: !['always', 'often', 'sometimes', 'once'].includes(recurrence)
+        ? '문제 발생 빈도를 선택해 주세요.'
+        : '',
     };
     if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
   }
   if (isPaymentProblem) {
     const fieldErrors: InquiryFieldErrors = {
-      occurredAt: !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
+      occurredAt:
+        !occurredAtDate || Number.isNaN(occurredAtDate.getTime()) ? '문제가 발생한 날짜와 시간을 입력해 주세요.' : '',
       actualBehavior: !actualBehavior
         ? '실제로 발생한 상황을 입력해 주세요.'
         : actualBehavior.length > 5000
@@ -503,8 +511,10 @@ export async function POST(request: NextRequest) {
     };
     if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
   }
-  if (pageUrl.length > 2000) return validationError({ pageUrl: '문제가 발생한 화면 주소는 2,000자 이하로 입력해 주세요.' });
-  if (errorMessage.length > 5000) return validationError({ errorMessage: '오류 메시지는 5,000자 이하로 입력해 주세요.' });
+  if (pageUrl.length > 2000)
+    return validationError({ pageUrl: '문제가 발생한 화면 주소는 2,000자 이하로 입력해 주세요.' });
+  if (errorMessage.length > 5000)
+    return validationError({ errorMessage: '오류 메시지는 5,000자 이하로 입력해 주세요.' });
   if (displayedMessage.length > 5000)
     return validationError({ displayedMessage: '화면에 표시된 메시지는 5,000자 이하로 입력해 주세요.' });
   if (inquiryType === 'minor_purchase_cancellation' && !paymentId)
@@ -518,7 +528,9 @@ export async function POST(request: NextRequest) {
     try {
       attemptedPaymentTarget = await resolveAttemptedPayment(attemptedPayment);
     } catch (error) {
-      return validationError({ attemptedPayment: error instanceof Error ? error.message : '결제하려던 항목을 확인해 주세요.' });
+      return validationError({
+        attemptedPayment: error instanceof Error ? error.message : '결제하려던 항목을 확인해 주세요.',
+      });
     }
   }
   if (inquiryType === 'minor_purchase_cancellation') {

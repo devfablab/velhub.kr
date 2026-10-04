@@ -86,7 +86,12 @@ function formatNumber(value: number | null | undefined) {
 }
 
 function getKstDateValue(daysBefore = 0) {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)));
   date.setUTCDate(date.getUTCDate() - daysBefore);
@@ -310,7 +315,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const result = (await response.json()) as InactiveStatsResponse;
 
       if (!response.ok) {
-        showError(result.error ?? '비활동 유저 통계를 불러오지 못했습니다.', response.status >= 500 ? null : '비활동 유저 통계');
+        showError(
+          result.error ?? '비활동 유저 통계를 불러오지 못했습니다.',
+          response.status >= 500 ? null : '비활동 유저 통계',
+        );
         return;
       }
 

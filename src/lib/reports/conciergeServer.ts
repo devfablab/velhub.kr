@@ -530,14 +530,27 @@ export async function loadConciergeReports({
     ...new Set(reports.map((report) => report.comment_id).filter((value): value is string => Boolean(value))),
   ];
   const blogCommunityPostIds = [
-    ...new Set(reports.map((report) => report.blog_community_post_id).filter((value): value is string => Boolean(value))),
+    ...new Set(
+      reports.map((report) => report.blog_community_post_id).filter((value): value is string => Boolean(value)),
+    ),
   ];
   const blogCommunityCommentIds = [
-    ...new Set(reports.map((report) => report.blog_community_comment_id).filter((value): value is string => Boolean(value))),
+    ...new Set(
+      reports.map((report) => report.blog_community_comment_id).filter((value): value is string => Boolean(value)),
+    ),
   ];
   const reportKeys = new Set(reports.map((report) => `${report.reportType}:${report.id}`));
 
-  const [sitesResult, boardsResult, postsResult, commentsResult, blogPostsResult, blogCommentsResult, messagesResult, appealsResult] = await Promise.all([
+  const [
+    sitesResult,
+    boardsResult,
+    postsResult,
+    commentsResult,
+    blogPostsResult,
+    blogCommentsResult,
+    messagesResult,
+    appealsResult,
+  ] = await Promise.all([
     siteIds.length
       ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label, is_blocked').in('id', siteIds)
       : Promise.resolve({ data: [], error: null }),
@@ -648,9 +661,7 @@ export async function loadConciergeReports({
   const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
   const postById = new Map(((postsResult.data ?? []) as PostRow[]).map((post) => [post.id, post]));
   const commentById = new Map(((commentsResult.data ?? []) as CommentRow[]).map((comment) => [comment.id, comment]));
-  const blogPostById = new Map(
-    ((blogPostsResult.data ?? []) as BlogCommunityPostRow[]).map((post) => [post.id, post]),
-  );
+  const blogPostById = new Map(((blogPostsResult.data ?? []) as BlogCommunityPostRow[]).map((post) => [post.id, post]));
   const blogCommentById = new Map(
     ((blogCommentsResult.data ?? []) as BlogCommunityCommentRow[]).map((comment) => [comment.id, comment]),
   );
@@ -685,9 +696,7 @@ export async function loadConciergeReports({
     const comment = report.comment_id ? commentById.get(report.comment_id) : null;
     const postId = report.post_id ?? comment?.post_id ?? null;
     const post = postId ? postById.get(postId) : null;
-    const blogComment = report.blog_community_comment_id
-      ? blogCommentById.get(report.blog_community_comment_id)
-      : null;
+    const blogComment = report.blog_community_comment_id ? blogCommentById.get(report.blog_community_comment_id) : null;
     const blogPostId = report.blog_community_post_id ?? blogComment?.post_id ?? null;
     const blogPost = blogPostId ? blogPostById.get(blogPostId) : null;
     const isPending = status === 'received' || status === 'reviewing';
@@ -705,11 +714,11 @@ export async function loadConciergeReports({
         ? `/${site.site_key}/${board.board_key}/${post.slug}`
         : site && blogPost
           ? `/${site.site_key}/community-on-blog/${blogPost.slug}`
-        : site && board
-          ? `/${site.site_key}/${board.board_key}`
-          : site
-            ? `/${site.site_key}`
-            : null;
+          : site && board
+            ? `/${site.site_key}/${board.board_key}`
+            : site
+              ? `/${site.site_key}`
+              : null;
     const storedReportUrl = normalizeText(report.report_url) || null;
     const resolvedReportUrl =
       storedReportUrl ?? (internalTargetPath ? new URL(internalTargetPath, origin).toString() : null);

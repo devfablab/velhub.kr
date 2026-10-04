@@ -861,7 +861,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return Response.json({ error: '탈퇴할 수 없는 상태입니다.' }, { status: 400 });
     }
 
-    const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', siteResult.data.id).maybeSingle();
+    const communityResult = await supabaseAdmin
+      .from('communities')
+      .select('id')
+      .eq('site_id', siteResult.data.id)
+      .maybeSingle();
 
     if (communityResult.error || !communityResult.data) {
       return Response.json({ error: '커뮤니티 정보를 불러오지 못했습니다.' }, { status: 500 });

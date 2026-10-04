@@ -873,7 +873,12 @@ export default function Opt({
           </Stack>
 
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           {isOrderChanged ? (
             <p className="alert info">

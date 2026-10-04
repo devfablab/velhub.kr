@@ -1974,7 +1974,8 @@ export default function Opt({
                                 {seriesList
                                   .filter(
                                     (seriesItem) =>
-                                      (!initialSeriesKey || Boolean(seriesItem.is_subscription) === initialSeriesIsSubscription) &&
+                                      (!initialSeriesKey ||
+                                        Boolean(seriesItem.is_subscription) === initialSeriesIsSubscription) &&
                                       (!seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey),
                                   )
                                   .map((seriesItem) => (
@@ -1988,9 +1989,9 @@ export default function Opt({
 
                           <div className={styles['form-control']}>
                             <input
-                            type="text"
-                            value={subject}
-                            required={!isFeedBoard}
+                              type="text"
+                              value={subject}
+                              required={!isFeedBoard}
                               placeholder="제목을 입력해 주세요"
                               style={{ paddingLeft: subjectPaddingLeft }}
                               onChange={(event) => setSubject(event.currentTarget.value)}
@@ -2105,8 +2106,8 @@ export default function Opt({
                     <div className="paper paper-p0">
                       <textarea
                         className={`${styles['content-simple']} ${styles['content-simple-feed-edit']}`}
-                      value={contentSimple}
-                      required={isFeedBoard}
+                        value={contentSimple}
+                        required={isFeedBoard}
                         placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
                         onChange={(event) => setContentSimple(event.currentTarget.value)}
                       />
@@ -2224,7 +2225,11 @@ export default function Opt({
               {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
               {isMobile ? (
                 <div className={styles['button-top']}>
-                  <button type="submit" disabled={publishedStatus === 'published' && !hasPostChanges} className={`button ${styles.button}`}>
+                  <button
+                    type="submit"
+                    disabled={publishedStatus === 'published' && !hasPostChanges}
+                    className={`button ${styles.button}`}
+                  >
                     저장
                   </button>
                 </div>
@@ -2248,7 +2253,9 @@ export default function Opt({
                 ) : null}
                 <button
                   type="submit"
-                  disabled={isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)}
+                  disabled={
+                    isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)
+                  }
                   className={`${styles.submit} button`}
                 >
                   저장

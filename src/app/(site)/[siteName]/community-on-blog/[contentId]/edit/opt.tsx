@@ -116,7 +116,11 @@ export default function Opt({
                 <Anchor href={cancelHref} className={`${styles.link} link`}>
                   취소
                 </Anchor>
-                <button type="submit" className={`${styles.submit} button`} disabled={!hasChanged || isOverLimit || isSubmitting}>
+                <button
+                  type="submit"
+                  className={`${styles.submit} button`}
+                  disabled={!hasChanged || isOverLimit || isSubmitting}
+                >
                   {isSubmitting ? '수정 중' : '수정'}
                 </button>
               </div>

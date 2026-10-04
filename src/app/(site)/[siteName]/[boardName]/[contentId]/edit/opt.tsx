@@ -2052,7 +2052,8 @@ export default function Opt({
                                 {seriesList
                                   .filter(
                                     (seriesItem) =>
-                                      (!initialSeriesKey || Boolean(seriesItem.is_subscription) === initialSeriesIsSubscription) &&
+                                      (!initialSeriesKey ||
+                                        Boolean(seriesItem.is_subscription) === initialSeriesIsSubscription) &&
                                       (!seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey),
                                   )
                                   .map((seriesItem) => (
@@ -2306,7 +2307,11 @@ export default function Opt({
               {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
               {isMobile ? (
                 <div className={styles['button-top']}>
-                  <button type="submit" disabled={publishedStatus === 'published' && !hasPostChanges} className={`button ${styles.button}`}>
+                  <button
+                    type="submit"
+                    disabled={publishedStatus === 'published' && !hasPostChanges}
+                    className={`button ${styles.button}`}
+                  >
                     저장
                   </button>
                 </div>
@@ -2327,7 +2332,9 @@ export default function Opt({
                 ) : null}
                 <button
                   type="submit"
-                  disabled={isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)}
+                  disabled={
+                    isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)
+                  }
                   className={`${styles.submit} button`}
                 >
                   저장

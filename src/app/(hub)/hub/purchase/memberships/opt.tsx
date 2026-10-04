@@ -337,7 +337,9 @@ export default function MembershipPlan({
       const result = (await response.json()) as { error?: string; errors?: string[] };
 
       if (!response.ok) {
-        setErrorDialog(getResponseError(response, result, '멤버십 구독 확인', '멤버십 구독 상태를 변경하지 못했습니다.'));
+        setErrorDialog(
+          getResponseError(response, result, '멤버십 구독 확인', '멤버십 구독 상태를 변경하지 못했습니다.'),
+        );
         setIsChangingSubscription(false);
         return;
       }

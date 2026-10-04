@@ -94,7 +94,17 @@ async function getPinTarget({
   };
 }
 
-async function canPinComment({ siteName, boardId, postAuthorId, siteId }: { siteName: string; boardId: string; postAuthorId: string; siteId: string }) {
+async function canPinComment({
+  siteName,
+  boardId,
+  postAuthorId,
+  siteId,
+}: {
+  siteName: string;
+  boardId: string;
+  postAuthorId: string;
+  siteId: string;
+}) {
   const session = await verifySession({ siteId });
 
   if (!session.authUserId || !session.stigmaId) {

@@ -140,7 +140,9 @@ export async function loadGuidelineAppealContext(reportId: string): Promise<Guid
   const supabaseAdmin = getSupabaseAdmin();
   const reportResult = await supabaseAdmin
     .from('report_guidelines')
-    .select('id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_category, status, created_at')
+    .select(
+      'id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_category, status, created_at',
+    )
     .eq('id', reportId)
     .maybeSingle();
 
@@ -192,11 +194,24 @@ export async function loadGuidelineAppealContext(reportId: string): Promise<Guid
     const deletionMessage = normalizeText(
       report.target_type === 'blog_community_comment' ? comment?.deleted_message : post.deleted_message,
     );
-    const isDeleted = report.target_type === 'blog_community_comment' ? comment?.is_deleted === true : post.is_deleted === true;
+    const isDeleted =
+      report.target_type === 'blog_community_comment' ? comment?.is_deleted === true : post.is_deleted === true;
     if (!isDeleted || !deletionMessage) throw new Error('소명할 수 있는 삭제 내역이 아닙니다.');
-    const siteResult = await supabaseAdmin.from('rhizomes').select('id, site_key, site_label').eq('id', report.site_id).maybeSingle();
+    const siteResult = await supabaseAdmin
+      .from('rhizomes')
+      .select('id, site_key, site_label')
+      .eq('id', report.site_id)
+      .maybeSingle();
     if (siteResult.error || !siteResult.data) throw new Error('사이트 정보를 불러오지 못했습니다.');
-    return { report, post, comment, site: siteResult.data as SiteRow, board: null, authorStigmaId: comment?.user_id ?? post.user_id, deletionMessage };
+    return {
+      report,
+      post,
+      comment,
+      site: siteResult.data as SiteRow,
+      board: null,
+      authorStigmaId: comment?.user_id ?? post.user_id,
+      deletionMessage,
+    };
   }
 
   let comment: CommentRow | null = null;
@@ -314,40 +329,73 @@ async function loadBlogCommunityGuidelineAppealItems({ stigmaId, origin }: { sti
   const posts = (postsResult.data ?? []) as BlogCommunityPostRow[];
   const comments = (commentsResult.data ?? []) as BlogCommunityCommentRow[];
   const requests = [];
-  if (posts.length) requests.push(
-    supabaseAdmin
-      .from('report_guidelines')
-      .select('id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_category, status, created_at')
-      .eq('target_type', 'blog_community_post').eq('status', 'completed').in('blog_community_post_id', posts.map((post) => post.id)),
-  );
-  if (comments.length) requests.push(
-    supabaseAdmin
-      .from('report_guidelines')
-      .select('id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_category, status, created_at')
-      .eq('target_type', 'blog_community_comment').eq('status', 'completed').in('blog_community_comment_id', comments.map((comment) => comment.id)),
-  );
+  if (posts.length)
+    requests.push(
+      supabaseAdmin
+        .from('report_guidelines')
+        .select(
+          'id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_category, status, created_at',
+        )
+        .eq('target_type', 'blog_community_post')
+        .eq('status', 'completed')
+        .in(
+          'blog_community_post_id',
+          posts.map((post) => post.id),
+        ),
+    );
+  if (comments.length)
+    requests.push(
+      supabaseAdmin
+        .from('report_guidelines')
+        .select(
+          'id, target_type, site_id, board_id, post_id, comment_id, blog_community_post_id, blog_community_comment_id, report_category, status, created_at',
+        )
+        .eq('target_type', 'blog_community_comment')
+        .eq('status', 'completed')
+        .in(
+          'blog_community_comment_id',
+          comments.map((comment) => comment.id),
+        ),
+    );
   if (!requests.length) return [];
   const reportResults = await Promise.all(requests);
   const reportError = reportResults.find((result) => result.error)?.error;
   if (reportError) throw new Error('신고 내역을 불러오지 못했습니다.');
-  const reports = reportResults.flatMap((result) => (result.data ?? []) as GuidelineReportRow[])
+  const reports = reportResults
+    .flatMap((result) => (result.data ?? []) as GuidelineReportRow[])
     .filter((report) => isGuidelineAppealCategory(report.report_category));
   if (!reports.length) return [];
   const postById = new Map(posts.map((post) => [post.id, post]));
   const commentById = new Map(comments.map((comment) => [comment.id, comment]));
   const missingPostIds = [...new Set(comments.map((comment) => comment.post_id).filter((id) => !postById.has(id)))];
   const [sitesResult, messageResult, commentPostsResult] = await Promise.all([
-    supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', [...new Set(reports.map((report) => report.site_id))]),
-    supabaseAdmin.from('report_guideline_messages').select('report_id, sender_type, created_at').in('report_id', reports.map((report) => report.id)).order('created_at').order('id'),
+    supabaseAdmin
+      .from('rhizomes')
+      .select('id, site_key, site_label')
+      .in('id', [...new Set(reports.map((report) => report.site_id))]),
+    supabaseAdmin
+      .from('report_guideline_messages')
+      .select('report_id, sender_type, created_at')
+      .in(
+        'report_id',
+        reports.map((report) => report.id),
+      )
+      .order('created_at')
+      .order('id'),
     missingPostIds.length
-      ? supabaseAdmin.from('blog_community_posts').select('id, site_id, slug, user_id, content, is_deleted, deleted_message').in('id', missingPostIds)
+      ? supabaseAdmin
+          .from('blog_community_posts')
+          .select('id, site_id, slug, user_id, content, is_deleted, deleted_message')
+          .in('id', missingPostIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
-  if (sitesResult.error || messageResult.error || commentPostsResult.error) throw new Error('소명 관련 정보를 불러오지 못했습니다.');
+  if (sitesResult.error || messageResult.error || commentPostsResult.error)
+    throw new Error('소명 관련 정보를 불러오지 못했습니다.');
   for (const post of (commentPostsResult.data ?? []) as BlogCommunityPostRow[]) postById.set(post.id, post);
   const siteById = new Map(((sitesResult.data ?? []) as SiteRow[]).map((site) => [site.id, site]));
   const lastSenderByReport = new Map<string, GuidelineAppealSenderType>();
-  for (const message of (messageResult.data ?? []) as Pick<MessageRow, 'report_id' | 'sender_type'>[]) lastSenderByReport.set(message.report_id, message.sender_type);
+  for (const message of (messageResult.data ?? []) as Pick<MessageRow, 'report_id' | 'sender_type'>[])
+    lastSenderByReport.set(message.report_id, message.sender_type);
   return reports.flatMap((report): GuidelineAppealItem[] => {
     const comment = report.blog_community_comment_id ? commentById.get(report.blog_community_comment_id) : null;
     const post = postById.get(report.blog_community_post_id ?? comment?.post_id ?? '');
@@ -356,20 +404,22 @@ async function loadBlogCommunityGuidelineAppealItems({ stigmaId, origin }: { sti
     const isComment = report.target_type === 'blog_community_comment';
     const deletionMessage = normalizeText(isComment ? comment?.deleted_message : post.deleted_message);
     if (!deletionMessage) return [];
-    return [{
-      reportId: report.id,
-      reportName: getReportCategoryTitle(isComment ? 'comment' : 'post', report.report_category),
-      targetType: report.target_type,
-      targetLabel: isComment ? '댓글' : '커뮤니티 글',
-      reportUrl: new URL(`/${site.site_key}/community-on-blog/${post.slug}`, origin).toString(),
-      reportedAt: report.created_at,
-      siteName: site.site_key,
-      siteLabel: site.site_label || site.site_key,
-      boardName: 'community-on-blog',
-      boardLabel: '커뮤니티',
-      postTitle: '커뮤니티 글',
-      messageStatus: getAppellantMessageStatus(lastSenderByReport.get(report.id) ?? null),
-    }];
+    return [
+      {
+        reportId: report.id,
+        reportName: getReportCategoryTitle(isComment ? 'comment' : 'post', report.report_category),
+        targetType: report.target_type,
+        targetLabel: isComment ? '댓글' : '커뮤니티 글',
+        reportUrl: new URL(`/${site.site_key}/community-on-blog/${post.slug}`, origin).toString(),
+        reportedAt: report.created_at,
+        siteName: site.site_key,
+        siteLabel: site.site_label || site.site_key,
+        boardName: 'community-on-blog',
+        boardLabel: '커뮤니티',
+        postTitle: '커뮤니티 글',
+        messageStatus: getAppellantMessageStatus(lastSenderByReport.get(report.id) ?? null),
+      },
+    ];
   });
 }
 

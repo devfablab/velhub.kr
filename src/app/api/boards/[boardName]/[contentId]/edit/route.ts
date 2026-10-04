@@ -921,7 +921,10 @@ export async function PATCH(request: Request, context: RouteContext) {
         isSubscriptionSeries = seriesResult.data.is_subscription === true;
       } else {
         if (currentSeriesIsSubscription !== null) {
-          return Response.json({ error: '연재가 연결된 글은 같은 유형의 다른 연재로만 변경할 수 있습니다.' }, { status: 400 });
+          return Response.json(
+            { error: '연재가 연결된 글은 같은 유형의 다른 연재로만 변경할 수 있습니다.' },
+            { status: 400 },
+          );
         }
         seriesId = null;
       }

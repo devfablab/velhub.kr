@@ -45,9 +45,7 @@ async function loadSupabaseAuthHealth() {
     const authComponent = Array.isArray(summary.components)
       ? summary.components.find(
           (component): component is StatusPageComponent =>
-            Boolean(component) &&
-            typeof component === 'object' &&
-            (component as StatusPageComponent).name === 'Auth',
+            Boolean(component) && typeof component === 'object' && (component as StatusPageComponent).name === 'Auth',
         )
       : null;
     const providerStatus = typeof authComponent?.status === 'string' ? authComponent.status : null;

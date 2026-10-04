@@ -381,7 +381,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSnackbarMessage(`${completedActionTitle} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        showDialogError(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`, unknownError instanceof TypeError ? null : getActionTitle());
+        showDialogError(
+          unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`,
+          unknownError instanceof TypeError ? null : getActionTitle(),
+        );
       } else {
         showDialogError(`${getActionTitle()} 처리에 실패했습니다.`, null);
       }

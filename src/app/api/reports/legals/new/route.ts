@@ -44,7 +44,17 @@ type UploadedAttachment = {
   size: number;
 };
 
-async function notifyReportReceived({ siteId, reporterId, boardId, postId }: { siteId: string | null; reporterId: string; boardId: string | null; postId: string | null }) {
+async function notifyReportReceived({
+  siteId,
+  reporterId,
+  boardId,
+  postId,
+}: {
+  siteId: string | null;
+  reporterId: string;
+  boardId: string | null;
+  postId: string | null;
+}) {
   if (!siteId) return;
   const supabaseAdmin = getSupabaseAdmin();
   const ownersResult = await supabaseAdmin
@@ -56,16 +66,18 @@ async function notifyReportReceived({ siteId, reporterId, boardId, postId }: { s
     .eq('is_block', false);
   if (ownersResult.error || !ownersResult.data?.length) return;
   const recipientIds = [...new Set(ownersResult.data.map((owner) => owner.user_id).filter(Boolean))];
-  const result = await supabaseAdmin.from('notifications').insert(recipientIds.map((user_id) => ({
-    user_id,
-    send_user_id: reporterId,
-    send_site_id: siteId,
-    send_board_id: boardId,
-    send_series_id: null,
-    send_post_id: postId,
-    notification_type: NOTIFICATION_TYPE.REPORT_RECEIVED,
-    is_read: false,
-  })));
+  const result = await supabaseAdmin.from('notifications').insert(
+    recipientIds.map((user_id) => ({
+      user_id,
+      send_user_id: reporterId,
+      send_site_id: siteId,
+      send_board_id: boardId,
+      send_series_id: null,
+      send_post_id: postId,
+      notification_type: NOTIFICATION_TYPE.REPORT_RECEIVED,
+      is_read: false,
+    })),
+  );
   if (result.error) console.error('[reports/legals/new] notification error', result.error);
 }
 
@@ -453,9 +465,9 @@ async function resolveTargetValues({
     siteId,
     boardId,
     postId: comment.post_id,
-      commentId: comment.id,
-      blogCommunityPostId: null,
-      blogCommunityCommentId: null,
+    commentId: comment.id,
+    blogCommunityPostId: null,
+    blogCommunityCommentId: null,
   };
 }
 

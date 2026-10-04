@@ -277,7 +277,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                         />
                       </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{getMaskedDisplayName(user.displayName, isEmailSearch)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {getMaskedDisplayName(user.displayName, isEmailSearch)}
+                      </TableCell>
                       <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{user.reason}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}

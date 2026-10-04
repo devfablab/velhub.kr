@@ -963,9 +963,9 @@ export default function Opt({
                   <div className={styles.info}>
                     <div className={styles.name}>
                       <cite>
-                          <CommunityMemberMenu
-                            siteName={siteName}
-                            name={content.author_name}
+                        <CommunityMemberMenu
+                          siteName={siteName}
+                          name={content.author_name}
                           boardName={board?.board_key}
                           boardLabel={board?.board_label}
                         />

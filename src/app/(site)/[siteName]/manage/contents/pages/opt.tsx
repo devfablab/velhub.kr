@@ -131,7 +131,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
         }),
       );
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '페이지 정렬 저장에 실패했습니다.' : '페이지 정렬 저장에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '페이지 정렬 저장에 실패했습니다.'
+          : '페이지 정렬 저장에 실패했습니다.';
       setErrorMessage(message);
       setIsErrorDialogOpen(true);
     } finally {

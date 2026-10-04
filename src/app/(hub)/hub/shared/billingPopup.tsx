@@ -134,7 +134,10 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
         if (response.status >= 500) {
           setRefundError({ title: null, message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.' });
         } else {
-          setRefundError({ title: '후원 환불 확인', message: 'error' in result ? result.error : '환불 처리에 실패했습니다.' });
+          setRefundError({
+            title: '후원 환불 확인',
+            message: 'error' in result ? result.error : '환불 처리에 실패했습니다.',
+          });
         }
         return;
       }

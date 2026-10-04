@@ -129,7 +129,12 @@ export default function Opt({
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper paper-error ${styles.paper}`}>{errorMessage || '콘텐츠를 찾을 수 없습니다.'}</div>
-            <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={null}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
             <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
               <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
                 목록
@@ -146,7 +151,12 @@ export default function Opt({
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           {content.is_closed ? <div className={`paper paper-error ${styles.paper}`}>삭제된 글입니다.</div> : null}
 

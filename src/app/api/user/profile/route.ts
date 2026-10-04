@@ -63,7 +63,10 @@ export async function PUT(request: Request) {
     );
   }
 
-  if (introduction && (introduction.length < INTRODUCTION_MIN_LENGTH || introduction.length > INTRODUCTION_MAX_LENGTH)) {
+  if (
+    introduction &&
+    (introduction.length < INTRODUCTION_MIN_LENGTH || introduction.length > INTRODUCTION_MAX_LENGTH)
+  ) {
     return NextResponse.json({ message: '소개글은 2자 이상 72자 이하로 입력해 주세요.' }, { status: 400 });
   }
 

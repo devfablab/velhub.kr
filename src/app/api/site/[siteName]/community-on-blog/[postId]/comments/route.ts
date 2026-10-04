@@ -119,10 +119,12 @@ export async function GET(_request: Request, context: RouteContext) {
       };
     });
     const repliesByParentId = new Map<string, (typeof commentItems)[number][]>();
-    commentItems.filter((comment) => comment.parent_id).forEach((comment) => {
-      const parentId = comment.parent_id as string;
-      repliesByParentId.set(parentId, [...(repliesByParentId.get(parentId) ?? []), comment]);
-    });
+    commentItems
+      .filter((comment) => comment.parent_id)
+      .forEach((comment) => {
+        const parentId = comment.parent_id as string;
+        repliesByParentId.set(parentId, [...(repliesByParentId.get(parentId) ?? []), comment]);
+      });
     const comments = commentItems
       .filter((comment) => !comment.parent_id)
       .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
@@ -151,7 +153,10 @@ export async function GET(_request: Request, context: RouteContext) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : '댓글을 불러오지 못했습니다.';
-    return Response.json({ error: message }, { status: /구독자만|사용하지 않고|개인 블로그/.test(message) ? 403 : 500 });
+    return Response.json(
+      { error: message },
+      { status: /구독자만|사용하지 않고|개인 블로그/.test(message) ? 403 : 500 },
+    );
   }
 }
 
@@ -163,7 +168,11 @@ export async function POST(request: Request, context: RouteContext) {
     assertBlogCommunityUse(feature);
     if (!feature.stigmaId) return Response.json({ error: '로그인 후 댓글을 작성할 수 있습니다.' }, { status: 401 });
     const post = await assertPost(feature.siteId, postId);
-    const body = (await request.json().catch(() => null)) as { content?: unknown; parentId?: unknown; replyToId?: unknown } | null;
+    const body = (await request.json().catch(() => null)) as {
+      content?: unknown;
+      parentId?: unknown;
+      replyToId?: unknown;
+    } | null;
     const content = normalizeText(typeof body?.content === 'string' ? body.content : '');
     const parentId = normalizeText(typeof body?.parentId === 'string' ? body.parentId : '') || null;
     const replyToId = normalizeText(typeof body?.replyToId === 'string' ? body.replyToId : '') || null;
@@ -176,11 +185,19 @@ export async function POST(request: Request, context: RouteContext) {
         .eq('post_id', post.id)
         .eq('site_id', feature.siteId)
         .maybeSingle();
-      if (parent.error || !parent.data || parent.data.parent_id) return Response.json({ error: '답글을 작성할 수 없는 댓글입니다.' }, { status: 400 });
+      if (parent.error || !parent.data || parent.data.parent_id)
+        return Response.json({ error: '답글을 작성할 수 없는 댓글입니다.' }, { status: 400 });
     }
     const result = await getSupabaseAdmin()
       .from('blog_community_comments')
-      .insert({ site_id: feature.siteId, post_id: post.id, user_id: feature.stigmaId, content, parent_id: parentId, reply_to_id: replyToId })
+      .insert({
+        site_id: feature.siteId,
+        post_id: post.id,
+        user_id: feature.stigmaId,
+        content,
+        parent_id: parentId,
+        reply_to_id: replyToId,
+      })
       .select('id')
       .single();
     if (result.error) throw new Error('댓글을 등록하지 못했습니다.');

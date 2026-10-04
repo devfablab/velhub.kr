@@ -78,7 +78,8 @@ export async function GET(request: Request) {
       users: membershipResult.memberships.map((membership) => {
         const typedMembership = membership as MembershipRow;
         const targetUser = stigmaMap.get(typedMembership.user_id) ?? null;
-        const email = decryptNullable(targetUser?.payment_email ?? null) || decryptNullable(targetUser?.email ?? null) || '';
+        const email =
+          decryptNullable(targetUser?.payment_email ?? null) || decryptNullable(targetUser?.email ?? null) || '';
         const nickname = normalizeText(typedMembership.nickname);
         const emailWithNickname = nickname ? `${email} (${nickname})` : email;
 

@@ -2,7 +2,6 @@
 
 import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { formatDateTimeDetail } from '@/lib/utils';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -26,6 +25,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { formatDateTimeDetail } from '@/lib/utils';
 import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
@@ -169,9 +169,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   function handleOpenConfirmAction(nextActionType: Exclude<ActionType, null>) {
     if (selectedUserIds.length === 0) {
-      showError(
-        nextActionType === 'approve' ? '가입 승인할 멤버를 선택해주세요.' : '가입 거절할 멤버를 선택해주세요.',
-      );
+      showError(nextActionType === 'approve' ? '가입 승인할 멤버를 선택해주세요.' : '가입 거절할 멤버를 선택해주세요.');
       return;
     }
 
@@ -527,7 +525,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </div>
               </DialogContent>
               <DialogActions>
-              <button type="button" className="button medium submit" onClick={() => setSelectedUser(null)}>
+                <button type="button" className="button medium submit" onClick={() => setSelectedUser(null)}>
                   닫기
                 </button>
               </DialogActions>

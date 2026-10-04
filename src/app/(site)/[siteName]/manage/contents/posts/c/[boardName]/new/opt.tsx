@@ -291,7 +291,12 @@ export default function Opt({
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
 
   function hasEditorContent(value: string) {
-    return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0 || /<img\b/i.test(value);
+    return (
+      value
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .trim().length > 0 || /<img\b/i.test(value)
+    );
   }
 
   useEffect(() => {
@@ -659,7 +664,8 @@ export default function Opt({
 
       router.replace(`/${siteName}/manage/contents/posts/c/${boardName}/${result.slug}`);
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '글 작성에 실패했습니다.' : '글 작성에 실패했습니다.';
+      const message =
+        unknownError instanceof Error ? unknownError.message || '글 작성에 실패했습니다.' : '글 작성에 실패했습니다.';
       setFormErrorDialog({ title: unknownError instanceof TypeError ? null : '글 작성', messages: [message] });
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '글 작성에 실패했습니다.');
@@ -692,7 +698,9 @@ export default function Opt({
                       onChange={handleSubjectChange}
                       required
                       error={Boolean(formErrorDialog?.messages.includes('제목을 입력해주세요.'))}
-                      helperText={formErrorDialog?.messages.includes('제목을 입력해주세요.') ? '제목을 입력해주세요.' : undefined}
+                      helperText={
+                        formErrorDialog?.messages.includes('제목을 입력해주세요.') ? '제목을 입력해주세요.' : undefined
+                      }
                       fullWidth
                       size="small"
                     />
@@ -715,7 +723,11 @@ export default function Opt({
                         onChange={handleSummaryChange}
                         required
                         error={Boolean(formErrorDialog?.messages.includes('간단 설명을 입력해주세요.'))}
-                        helperText={formErrorDialog?.messages.includes('간단 설명을 입력해주세요.') ? '간단 설명을 입력해주세요.' : undefined}
+                        helperText={
+                          formErrorDialog?.messages.includes('간단 설명을 입력해주세요.')
+                            ? '간단 설명을 입력해주세요.'
+                            : undefined
+                        }
                         fullWidth
                         multiline
                         rows={5}
@@ -729,7 +741,11 @@ export default function Opt({
                         onChange={handleYoutubeUrlChange}
                         required
                         error={Boolean(formErrorDialog?.messages.includes('유효한 유튜브 영상 주소를 입력해주세요.'))}
-                        helperText={formErrorDialog?.messages.includes('유효한 유튜브 영상 주소를 입력해주세요.') ? '유효한 유튜브 영상 주소를 입력해주세요.' : undefined}
+                        helperText={
+                          formErrorDialog?.messages.includes('유효한 유튜브 영상 주소를 입력해주세요.')
+                            ? '유효한 유튜브 영상 주소를 입력해주세요.'
+                            : undefined
+                        }
                         fullWidth
                         size="small"
                       />
@@ -746,7 +762,9 @@ export default function Opt({
                             size: 'small',
                             required: true,
                             error: Boolean(formErrorDialog?.messages.includes('유튜브 업로드 날짜를 선택해주세요.')),
-                            helperText: formErrorDialog?.messages.includes('유튜브 업로드 날짜를 선택해주세요.') ? '유튜브 업로드 날짜를 선택해주세요.' : undefined,
+                            helperText: formErrorDialog?.messages.includes('유튜브 업로드 날짜를 선택해주세요.')
+                              ? '유튜브 업로드 날짜를 선택해주세요.'
+                              : undefined,
                           },
                         }}
                       />
@@ -917,7 +935,9 @@ export default function Opt({
                       onChange={handleContentSimpleChange}
                       required
                       error={Boolean(formErrorDialog?.messages.includes('내용을 입력해주세요.'))}
-                      helperText={formErrorDialog?.messages.includes('내용을 입력해주세요.') ? '내용을 입력해주세요.' : undefined}
+                      helperText={
+                        formErrorDialog?.messages.includes('내용을 입력해주세요.') ? '내용을 입력해주세요.' : undefined
+                      }
                       fullWidth
                       multiline
                       minRows={6}
@@ -1000,7 +1020,12 @@ export default function Opt({
                 </Stack>
 
                 {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-                <FormErrorDialog open={Boolean(formErrorDialog)} title={formErrorDialog?.title ?? null} messages={formErrorDialog?.messages ?? []} onClose={() => setFormErrorDialog(null)} />
+                <FormErrorDialog
+                  open={Boolean(formErrorDialog)}
+                  title={formErrorDialog?.title ?? null}
+                  messages={formErrorDialog?.messages ?? []}
+                  onClose={() => setFormErrorDialog(null)}
+                />
               </Stack>
             </div>
           </div>

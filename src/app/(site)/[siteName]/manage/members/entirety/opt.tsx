@@ -151,7 +151,9 @@ type AppliedSearch =
   | null;
 
 function getDisplayNickname(user: UserRow, showEmail = false) {
-  return user.membership.nickname || user.userName || (user.email ? (showEmail ? user.email : maskEmail(user.email)) : '');
+  return (
+    user.membership.nickname || user.userName || (user.email ? (showEmail ? user.email : maskEmail(user.email)) : '')
+  );
 }
 
 function getNormalizedKeyword(value: string) {
@@ -597,7 +599,10 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
       setSnackbarMessage('등급이 변경되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        showError(unknownError.message || '등급 변경에 실패했습니다.', unknownError instanceof TypeError ? null : '등급 변경');
+        showError(
+          unknownError.message || '등급 변경에 실패했습니다.',
+          unknownError instanceof TypeError ? null : '등급 변경',
+        );
       } else {
         showError('등급 변경에 실패했습니다.', null);
       }
@@ -730,7 +735,10 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
       setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        showDialogError(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`, unknownError instanceof TypeError ? null : getActionTitle());
+        showDialogError(
+          unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`,
+          unknownError instanceof TypeError ? null : getActionTitle(),
+        );
       } else {
         showDialogError(`${getActionTitle()} 처리에 실패했습니다.`, null);
       }
@@ -938,7 +946,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 </button>
                 <DialogContent>{searchContent}</DialogContent>
                 <DialogActions>
-                <button type="button" onClick={() => setIsSearchOpen(false)}>
+                  <button type="button" onClick={() => setIsSearchOpen(false)}>
                     닫기
                   </button>
                 </DialogActions>
@@ -1153,7 +1161,10 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" gap={1.5} alignItems="center">
-                          <Avatar src={user.avatar ?? '/default-avatar.png'} alt={getDisplayNickname(user, isEmailSearch)} />
+                          <Avatar
+                            src={user.avatar ?? '/default-avatar.png'}
+                            alt={getDisplayNickname(user, isEmailSearch)}
+                          />
                           <Typography>{getDisplayNickname(user, isEmailSearch)}</Typography>
                         </Stack>
                       </TableCell>

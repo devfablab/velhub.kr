@@ -249,7 +249,11 @@ function ProfileForm({
 
   const save = async () => {
     const normalizedIntroduction = introduction.trim();
-    if (normalizedIntroduction && (normalizedIntroduction.length < INTRODUCTION_MIN_LENGTH || normalizedIntroduction.length > INTRODUCTION_MAX_LENGTH)) {
+    if (
+      normalizedIntroduction &&
+      (normalizedIntroduction.length < INTRODUCTION_MIN_LENGTH ||
+        normalizedIntroduction.length > INTRODUCTION_MAX_LENGTH)
+    ) {
       setIntroductionError('소개글은 2자 이상 72자 이하로 입력해 주세요.');
       setMessage('소개글을 확인해 주세요.');
       return;

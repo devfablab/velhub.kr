@@ -150,7 +150,10 @@ export default function NavMenu({ siteName, isBlog }: Props) {
             );
           })}
           {isBlog && menus.length > 1 && hasBlogCommunity ? (
-            <li className={isBlogCommunityCurrent ? styles.current : undefined} aria-current={isBlogCommunityCurrent ? 'page' : false}>
+            <li
+              className={isBlogCommunityCurrent ? styles.current : undefined}
+              aria-current={isBlogCommunityCurrent ? 'page' : false}
+            >
               <Anchor href={blogCommunityHref}>
                 <span>{blogCommunityLabel}</span>
                 <i />

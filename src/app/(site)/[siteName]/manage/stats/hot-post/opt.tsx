@@ -310,7 +310,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
     const today = formatDateValue(getKstDateValue());
 
     if (formattedStartDate > formattedEndDate) {
-      showError('시작일은 종료일보다 늦을 수 없습니다.', '기간 조회', { startDate: '시작일을 확인해 주세요.', endDate: '종료일을 확인해 주세요.' });
+      showError('시작일은 종료일보다 늦을 수 없습니다.', '기간 조회', {
+        startDate: '시작일을 확인해 주세요.',
+        endDate: '종료일을 확인해 주세요.',
+      });
       return;
     }
     if (formattedStartDate > today || formattedEndDate > today) {
@@ -350,7 +353,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <ScreenState kind="error">{errorMessage || '인기글 순위를 불러오지 못했습니다.'}</ScreenState>
-            <FormErrorDialog open={isErrorDialogOpen} onClose={() => setIsErrorDialogOpen(false)} title={errorDialogTitle} messages={[errorMessage || '인기글 순위를 불러오지 못했습니다.']} />
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              onClose={() => setIsErrorDialogOpen(false)}
+              title={errorDialogTitle}
+              messages={[errorMessage || '인기글 순위를 불러오지 못했습니다.']}
+            />
           </div>
         </div>
       </Container>
@@ -392,8 +400,28 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             {selectedRange === 'custom' ? (
               <>
-                <DateSelectGroup title="시작일" value={startDate} yearOptions={yearOptions} error={startDateError} onChange={(value) => { setStartDate(value); setStartDateError(''); setEndDateError(''); }} />
-                <DateSelectGroup title="종료일" value={endDate} yearOptions={yearOptions} error={endDateError} onChange={(value) => { setEndDate(value); setStartDateError(''); setEndDateError(''); }} />
+                <DateSelectGroup
+                  title="시작일"
+                  value={startDate}
+                  yearOptions={yearOptions}
+                  error={startDateError}
+                  onChange={(value) => {
+                    setStartDate(value);
+                    setStartDateError('');
+                    setEndDateError('');
+                  }}
+                />
+                <DateSelectGroup
+                  title="종료일"
+                  value={endDate}
+                  yearOptions={yearOptions}
+                  error={endDateError}
+                  onChange={(value) => {
+                    setEndDate(value);
+                    setStartDateError('');
+                    setEndDateError('');
+                  }}
+                />
                 <button type="button" className="button medium action" onClick={handleApplyCustomRange}>
                   조회
                 </button>
@@ -465,7 +493,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
           )}
         </div>
       </div>
-      <FormErrorDialog open={isErrorDialogOpen} onClose={() => setIsErrorDialogOpen(false)} title={errorDialogTitle} messages={errorMessage ? errorMessage.split('\n') : []} />
+      <FormErrorDialog
+        open={isErrorDialogOpen}
+        onClose={() => setIsErrorDialogOpen(false)}
+        title={errorDialogTitle}
+        messages={errorMessage ? errorMessage.split('\n') : []}
+      />
     </Container>
   );
 }

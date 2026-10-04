@@ -295,7 +295,7 @@ export default function Opt({
     }
 
     setMessageSaving(true);
-      setMessageError('');
+    setMessageError('');
 
     const response = await fetch(`/api/concierge/appeals/guidelines/${messageItem.reportId}/messages`, {
       method: 'POST',
@@ -312,8 +312,10 @@ export default function Opt({
     setMessageSaving(false);
 
     if (!response.ok || result.error) {
-      if (response.status >= 500) setErrorDialog({ title: null, messages: [result.error ?? '소명 메시지를 보내지 못했습니다.'] });
-      else setErrorDialog({ title: '소명 메시지 확인', messages: [result.error ?? '소명 메시지를 보내지 못했습니다.'] });
+      if (response.status >= 500)
+        setErrorDialog({ title: null, messages: [result.error ?? '소명 메시지를 보내지 못했습니다.'] });
+      else
+        setErrorDialog({ title: '소명 메시지 확인', messages: [result.error ?? '소명 메시지를 보내지 못했습니다.'] });
       return;
     }
 

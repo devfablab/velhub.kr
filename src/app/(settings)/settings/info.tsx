@@ -126,7 +126,10 @@ export default function UserInfo({
 
     if (!response.ok) {
       throw new Error(
-        response.status >= 500 || !result || typeof result !== 'object' || typeof (result as { error?: unknown }).error !== 'string'
+        response.status >= 500 ||
+          !result ||
+          typeof result !== 'object' ||
+          typeof (result as { error?: unknown }).error !== 'string'
           ? ''
           : (result as { error: string }).error,
       );
@@ -169,7 +172,9 @@ export default function UserInfo({
     } catch (unknownError) {
       const message = unknownError instanceof Error ? unknownError.message : '';
       setUserNameError(message || '활동명 수정에 실패했습니다.');
-      openErrorDialog(message ? '활동명 수정' : null, [message || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.']);
+      openErrorDialog(message ? '활동명 수정' : null, [
+        message || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      ]);
     } finally {
       setIsSubmittingUserName(false);
     }
@@ -221,7 +226,10 @@ export default function UserInfo({
 
       if (!addResponse.ok) {
         throw new Error(
-          addResponse.status >= 500 || !addResult || typeof addResult !== 'object' || typeof (addResult as { error?: unknown }).error !== 'string'
+          addResponse.status >= 500 ||
+            !addResult ||
+            typeof addResult !== 'object' ||
+            typeof (addResult as { error?: unknown }).error !== 'string'
             ? ''
             : (addResult as { error: string }).error,
         );
@@ -254,7 +262,9 @@ export default function UserInfo({
     } catch (unknownError) {
       const message = unknownError instanceof Error ? unknownError.message : '';
       setAvatarError(message || '아바타 수정에 실패했습니다.');
-      openErrorDialog(message ? '아바타 수정' : null, [message || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.']);
+      openErrorDialog(message ? '아바타 수정' : null, [
+        message || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      ]);
     } finally {
       setIsSubmittingAvatar(false);
       inputElement.value = '';
@@ -364,7 +374,11 @@ export default function UserInfo({
                       size="small"
                       value={userNameDraft}
                       onChange={handleUserNameChange}
-                      inputProps={{ required: true, minLength: ACTIVITY_NAME_MIN_LENGTH, maxLength: ACTIVITY_NAME_MAX_LENGTH }}
+                      inputProps={{
+                        required: true,
+                        minLength: ACTIVITY_NAME_MIN_LENGTH,
+                        maxLength: ACTIVITY_NAME_MAX_LENGTH,
+                      }}
                       fullWidth
                       error={Boolean(userNameError)}
                       helperText={userNameError || '활동명은 2자 이상 10자 이하로 입력해 주세요.'}

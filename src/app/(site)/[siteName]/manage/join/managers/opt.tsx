@@ -2,7 +2,6 @@
 
 import { type JSX, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { formatDateTimeDetail } from '@/lib/utils';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
@@ -27,6 +26,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { formatDateTimeDetail } from '@/lib/utils';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
@@ -1244,11 +1244,7 @@ export default function Opt({
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button
-                  type="button"
-                  onClick={closeIconDialog}
-                  disabled={isUploadingIcon || Boolean(deletingIconId)}
-                >
+                <button type="button" onClick={closeIconDialog} disabled={isUploadingIcon || Boolean(deletingIconId)}>
                   닫기
                 </button>
               </DialogActions>
@@ -1321,9 +1317,13 @@ export default function Opt({
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname || member.userName || (isEmailSearch ? member.email : maskEmail(member.email))}
+                                {member.nickname ||
+                                  member.userName ||
+                                  (isEmailSearch ? member.email : maskEmail(member.email))}
                               </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{isEmailSearch ? member.email : maskEmail(member.email)}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                {isEmailSearch ? member.email : maskEmail(member.email)}
+                              </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
                                   ? '운영자'
@@ -1549,9 +1549,13 @@ export default function Opt({
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname || member.userName || (isEmailSearch ? member.email : maskEmail(member.email))}
+                                {member.nickname ||
+                                  member.userName ||
+                                  (isEmailSearch ? member.email : maskEmail(member.email))}
                               </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{isEmailSearch ? member.email : maskEmail(member.email)}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                {isEmailSearch ? member.email : maskEmail(member.email)}
+                              </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
                                   ? '운영자'
@@ -1845,11 +1849,7 @@ export default function Opt({
                   </button>
                   <DialogContent>{managerEditContent}</DialogContent>
                   <DialogActions>
-                    <button
-                      type="button"
-                      onClick={closeManagerEdit}
-                      disabled={isSubmittingDelete || isSubmittingMove}
-                    >
+                    <button type="button" onClick={closeManagerEdit} disabled={isSubmittingDelete || isSubmittingMove}>
                       닫기
                     </button>
                   </DialogActions>

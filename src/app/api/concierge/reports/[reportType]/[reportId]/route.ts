@@ -1,5 +1,5 @@
-import { type ConciergeReportType, isConciergeReportType } from '@/lib/reports/concierge';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { type ConciergeReportType, isConciergeReportType } from '@/lib/reports/concierge';
 import { isReportStatus, type ReportStatus } from '@/lib/reports/manage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -164,7 +164,8 @@ async function updateBlogCommunityPost({
     .eq('id', postId)
     .select('id')
     .maybeSingle();
-  if (result.error || !result.data) throw new Error(restore ? '게시물을 복구하지 못했습니다.' : '게시물을 처리하지 못했습니다.');
+  if (result.error || !result.data)
+    throw new Error(restore ? '게시물을 복구하지 못했습니다.' : '게시물을 처리하지 못했습니다.');
 }
 
 async function updateBlogCommunityComment({
@@ -196,7 +197,8 @@ async function updateBlogCommunityComment({
     .eq('id', commentId)
     .select('id')
     .maybeSingle();
-  if (result.error || !result.data) throw new Error(restore ? '댓글을 복구하지 못했습니다.' : '댓글을 처리하지 못했습니다.');
+  if (result.error || !result.data)
+    throw new Error(restore ? '댓글을 복구하지 못했습니다.' : '댓글을 처리하지 못했습니다.');
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -229,7 +231,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const table = reportTableByType[reportType];
     const reportResult = await supabaseAdmin
       .from(table)
-      .select('id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, reporter_user_id, site_id, status, created_at')
+      .select(
+        'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, reporter_user_id, site_id, status, created_at',
+      )
       .eq('id', reportId)
       .maybeSingle();
 
@@ -354,7 +358,8 @@ export async function PATCH(request: Request, context: RouteContext) {
         notification_type: NOTIFICATION_TYPE.REPORT_RESULT,
         is_read: false,
       });
-      if (notificationResult.error) console.error('[concierge/reports] reporter notification error', notificationResult.error);
+      if (notificationResult.error)
+        console.error('[concierge/reports] reporter notification error', notificationResult.error);
     }
 
     return Response.json({ ok: true, report: updateResult.data });

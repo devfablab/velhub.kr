@@ -188,7 +188,10 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (googleAnalytics && !GOOGLE_ANALYTICS_MEASUREMENT_ID_PATTERN.test(googleAnalytics)) {
-      return Response.json({ error: 'Google Analytics 측정 ID는 G-로 시작하는 값으로 입력해 주세요.' }, { status: 400 });
+      return Response.json(
+        { error: 'Google Analytics 측정 ID는 G-로 시작하는 값으로 입력해 주세요.' },
+        { status: 400 },
+      );
     }
 
     const access = await checkAccess(normalizedSiteName);

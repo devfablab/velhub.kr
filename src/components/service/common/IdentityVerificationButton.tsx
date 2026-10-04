@@ -30,7 +30,11 @@ function getMessage(error: unknown) {
 }
 
 function getErrorTitle(error: unknown) {
-  return typeof error === 'object' && error !== null && 'status' in error && typeof error.status === 'number' && error.status < 500
+  return typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    typeof error.status === 'number' &&
+    error.status < 500
     ? '본인인증'
     : null;
 }

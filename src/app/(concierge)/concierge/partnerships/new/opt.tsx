@@ -19,7 +19,22 @@ const acceptedFileMimeTypes = new Set([
   'application/zip',
   'application/x-zip-compressed',
 ]);
-type FieldErrors = Partial<Record<'categoryId' | 'subject' | 'content' | 'organizationName' | 'proposerName' | 'proposerPhone' | 'proposerEmail' | 'homepageUrl' | 'personalInfoAgreed' | 'noticeAgreed' | 'attachment', string>>;
+type FieldErrors = Partial<
+  Record<
+    | 'categoryId'
+    | 'subject'
+    | 'content'
+    | 'organizationName'
+    | 'proposerName'
+    | 'proposerPhone'
+    | 'proposerEmail'
+    | 'homepageUrl'
+    | 'personalInfoAgreed'
+    | 'noticeAgreed'
+    | 'attachment',
+    string
+  >
+>;
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -125,9 +140,18 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
           : '',
       proposerName: !proposerName.trim() ? '제안자명을 입력해 주세요.' : '',
       proposerPhone: !proposerPhone.trim() ? '전화번호를 입력해 주세요.' : '',
-      proposerEmail: !proposerEmail.trim() ? '이메일 주소를 입력해 주세요.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(proposerEmail.trim()) ? '이메일 주소를 확인해 주세요.' : '',
-      homepageUrl: homepageUrl && !/^https?:\/\//i.test(homepageUrl.trim()) ? 'http 또는 https 주소를 입력해 주세요.' : '',
-      subject: !subject.trim() ? '제목을 입력해 주세요.' : subject.trim().length > 200 ? '제목은 200자 이하로 입력해 주세요.' : '',
+      proposerEmail: !proposerEmail.trim()
+        ? '이메일 주소를 입력해 주세요.'
+        : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(proposerEmail.trim())
+          ? '이메일 주소를 확인해 주세요.'
+          : '',
+      homepageUrl:
+        homepageUrl && !/^https?:\/\//i.test(homepageUrl.trim()) ? 'http 또는 https 주소를 입력해 주세요.' : '',
+      subject: !subject.trim()
+        ? '제목을 입력해 주세요.'
+        : subject.trim().length > 200
+          ? '제목은 200자 이하로 입력해 주세요.'
+          : '',
       content: !content.trim() ? '내용을 입력해 주세요.' : '',
       personalInfoAgreed: !personalInfoAgreed ? '개인정보 수집 및 이용에 동의해 주세요.' : '',
       noticeAgreed: !noticeAgreed ? '제휴 제안 유의사항을 확인해 주세요.' : '',
@@ -170,7 +194,10 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
           setErrorDialog({ title: '첨부파일 등록 불가', messages: result.error.split('\n').filter(Boolean) });
         } else {
           setFieldErrors(result.fieldErrors ?? {});
-          setErrorDialog({ title: '제휴 제안 내용 확인', messages: [...new Set([...(result.errors ?? []), result.error].filter(Boolean))] });
+          setErrorDialog({
+            title: '제휴 제안 내용 확인',
+            messages: [...new Set([...(result.errors ?? []), result.error].filter(Boolean))],
+          });
         }
         setIsSubmissionLocked(false);
         return;
@@ -336,7 +363,10 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             }}
             size="small"
             error={Boolean(fieldErrors.content)}
-            helperText={fieldErrors.content || '제안자의 권리 보호를 위해 특허출원되지 않은 기술은 핵심 기술에 대한 상세한 설명을 제외하고 작성해 주십시오.'}
+            helperText={
+              fieldErrors.content ||
+              '제안자의 권리 보호를 위해 특허출원되지 않은 기술은 핵심 기술에 대한 상세한 설명을 제외하고 작성해 주십시오.'
+            }
           />
         </Stack>
 
@@ -442,7 +472,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             </div>
           </Stack>
         </Stack>
-        {(fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed) ? (
+        {fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed ? (
           <p className="alert popup-error">{fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed}</p>
         ) : null}
         {!formInfo.attachmentAvailable ? (

@@ -45,7 +45,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     .single();
 
   if (error) {
-    return NextResponse.json({ error: '폴더 이름을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.' }, { status: 500 });
+    return NextResponse.json(
+      { error: '폴더 이름을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.' },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ folder: data });

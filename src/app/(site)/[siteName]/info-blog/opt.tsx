@@ -970,7 +970,10 @@ export default function Opt({
       );
       setDeletingItem(null);
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '항목 삭제에 실패했습니다.' : '항목 삭제에 실패했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '항목 삭제에 실패했습니다.'
+          : '항목 삭제에 실패했습니다.';
       setItemErrorMessage(message);
       showFormError(null, [message]);
     } finally {
@@ -1776,13 +1779,25 @@ export default function Opt({
         maxWidth="xs"
         className="vh-dialog vh-alert-dialog"
       >
-        <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 삭제` : '항목 삭제'}</DialogTitle>
+        <DialogTitle>
+          {itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 삭제` : '항목 삭제'}
+        </DialogTitle>
         <DialogContent>삭제한 항목은 복구할 수 없습니다.</DialogContent>
         <DialogActions>
-          <button type="button" className="cancel-button" onClick={() => setDeletingItem(null)} disabled={isItemSubmitting}>
+          <button
+            type="button"
+            className="cancel-button"
+            onClick={() => setDeletingItem(null)}
+            disabled={isItemSubmitting}
+          >
             취소
           </button>
-          <button type="button" className="delete-button" onClick={() => void handleDeleteItem()} disabled={isItemSubmitting}>
+          <button
+            type="button"
+            className="delete-button"
+            onClick={() => void handleDeleteItem()}
+            disabled={isItemSubmitting}
+          >
             삭제
           </button>
         </DialogActions>

@@ -481,7 +481,11 @@ export default function Opt({
                     inputProps={{ minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' }}
                     onKeyDown={(event) => runInputAdornmentAction(event, handleCheckBoardKey, isChecking)}
                     error={boardKeyError}
-                    helperText={boardKeyError ? errorMessage : `스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
+                    helperText={
+                      boardKeyError
+                        ? errorMessage
+                        : `스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`
+                    }
                     fullWidth
                     size="small"
                     slotProps={{
@@ -537,24 +541,29 @@ export default function Opt({
                     }}
                   />
 
-                <PopupMessage
+                  <PopupMessage
                     open={Boolean(boardLabelCheckMessage)}
                     message={boardLabelCheckMessage}
                     onClose={() => setBoardLabelCheckMessage('')}
-                />
-                <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
+                  />
+                  <FormErrorDialog
+                    open={isErrorDialogOpen}
+                    title={null}
+                    messages={errorMessage ? [errorMessage] : []}
+                    onClose={() => setIsErrorDialogOpen(false)}
+                  />
                 </Stack>
 
                 {!hasSubscriptionSeries ? (
-                <FormControl>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    게시판 상태
-                  </Typography>
-                  <FormControlLabel
-                    control={<IOSSwitch sx={{ m: 1 }} checked={isActive} onChange={handleIsActiveChange} />}
-                    label="활성화"
-                  />
-                </FormControl>
+                  <FormControl>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      게시판 상태
+                    </Typography>
+                    <FormControlLabel
+                      control={<IOSSwitch sx={{ m: 1 }} checked={isActive} onChange={handleIsActiveChange} />}
+                      label="활성화"
+                    />
+                  </FormControl>
                 ) : null}
 
                 <Stack gap={1}>

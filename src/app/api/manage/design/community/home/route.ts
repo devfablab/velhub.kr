@@ -324,7 +324,10 @@ export async function PATCH(request: Request) {
       .from('boards')
       .select('id, is_active')
       .eq('site_id', siteId)
-      .in('id', currentOrdersResult.homeOrders.map((homeOrder) => homeOrder.board_id));
+      .in(
+        'id',
+        currentOrdersResult.homeOrders.map((homeOrder) => homeOrder.board_id),
+      );
 
     if (boardStatusResult.error) {
       return Response.json({ error: '게시판 상태를 확인하지 못했습니다.' }, { status: 500 });
@@ -334,7 +337,15 @@ export async function PATCH(request: Request) {
       (boardStatusResult.data ?? []).filter((board) => board.is_active === false).map((board) => board.id),
     );
 
-    if (items.some((item) => item.isShow && currentOrdersResult.homeOrders.some((homeOrder) => homeOrder.id === item.id && inactiveBoardIds.has(homeOrder.board_id)))) {
+    if (
+      items.some(
+        (item) =>
+          item.isShow &&
+          currentOrdersResult.homeOrders.some(
+            (homeOrder) => homeOrder.id === item.id && inactiveBoardIds.has(homeOrder.board_id),
+          ),
+      )
+    ) {
       return Response.json({ error: '비활성 게시판은 노출하실 수 없습니다.' }, { status: 400 });
     }
 

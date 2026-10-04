@@ -111,7 +111,9 @@ export default function CommentForm({
     <form onSubmit={handleSubmit} className="form">
       <fieldset>
         <legend>댓글쓰기 폼</legend>
-        {errorMessage || externalErrorMessage ? <p className="helper error">{errorMessage || externalErrorMessage}</p> : null}
+        {errorMessage || externalErrorMessage ? (
+          <p className="helper error">{errorMessage || externalErrorMessage}</p>
+        ) : null}
         <div className={styles.textarea}>
           <Avatar src={avatarUrl} alt="" sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }} />
 

@@ -1,4 +1,3 @@
-import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -75,3 +74,4 @@ export async function GET(request: Request, context: RouteContext) {
     return Response.json({ error: '카테고리 목록을 불러오지 못했습니다.' }, { status: 500 });
   }
 }
+import verifySession from '@/lib/session/verifySession';

@@ -150,7 +150,10 @@ export default function PaymentEmailDialog({
       onClose();
       await onSaved(result?.paymentEmail ?? '', result?.paymentPhone ?? '');
     } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message || '결제 정보를 저장하지 못했습니다.' : '결제 정보를 저장하지 못했습니다.';
+      const message =
+        unknownError instanceof Error
+          ? unknownError.message || '결제 정보를 저장하지 못했습니다.'
+          : '결제 정보를 저장하지 못했습니다.';
       setErrorPopup({ title: null, messages: [message] });
     } finally {
       setIsSaving(false);
@@ -161,42 +164,42 @@ export default function PaymentEmailDialog({
     return (
       <form id={formId} onSubmit={handleSave}>
         <Stack gap={2}>
-        {requireEmail ? (
-          <TextField
-            type="email"
-            name="paymentEmail"
-            value={paymentEmail}
-            placeholder="결제용 이메일 주소"
-            onChange={handleChange}
-            onInvalid={handleInvalid}
-            disabled={isSaving}
-            required
-            error={Boolean(emailError)}
-            helperText={emailError}
-            fullWidth
-            size="small"
-          />
-        ) : null}
-        {requirePhone ? (
-          <TextField
-            type="tel"
-            name="paymentPhone"
-            value={paymentPhone}
-            placeholder="결제용 휴대폰 번호"
-            onChange={(event) => {
-              setPaymentPhone(event.target.value);
-              setPhoneError('');
-            }}
-            onInvalid={handleInvalid}
-            disabled={isSaving}
-            required
-            error={Boolean(phoneError)}
-            helperText={phoneError}
-            inputMode="tel"
-            fullWidth
-            size="small"
-          />
-        ) : null}
+          {requireEmail ? (
+            <TextField
+              type="email"
+              name="paymentEmail"
+              value={paymentEmail}
+              placeholder="결제용 이메일 주소"
+              onChange={handleChange}
+              onInvalid={handleInvalid}
+              disabled={isSaving}
+              required
+              error={Boolean(emailError)}
+              helperText={emailError}
+              fullWidth
+              size="small"
+            />
+          ) : null}
+          {requirePhone ? (
+            <TextField
+              type="tel"
+              name="paymentPhone"
+              value={paymentPhone}
+              placeholder="결제용 휴대폰 번호"
+              onChange={(event) => {
+                setPaymentPhone(event.target.value);
+                setPhoneError('');
+              }}
+              onInvalid={handleInvalid}
+              disabled={isSaving}
+              required
+              error={Boolean(phoneError)}
+              helperText={phoneError}
+              inputMode="tel"
+              fullWidth
+              size="small"
+            />
+          ) : null}
         </Stack>
       </form>
     );

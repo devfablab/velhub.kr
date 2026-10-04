@@ -633,9 +633,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       새 운영자 선택
                     </MenuItem>
                     {sortedTeams
-                      .filter(
-                        (team) => !team.is_self && team.role !== 'owner' && team.role !== 'observer',
-                      )
+                      .filter((team) => !team.is_self && team.role !== 'owner' && team.role !== 'observer')
                       .map((team) => (
                         <MenuItem key={team.id} value={team.id}>
                           {team.name}
@@ -702,10 +700,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                         새 운영자 선택
                       </MenuItem>
                       {sortedTeams
-                        .filter(
-                          (team) =>
-                            !team.is_self && team.role !== 'owner' && team.role !== 'observer',
-                        )
+                        .filter((team) => !team.is_self && team.role !== 'owner' && team.role !== 'observer')
                         .map((team) => (
                           <MenuItem key={team.id} value={team.id}>
                             {team.name}
@@ -855,7 +850,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       <Typography variant="subtitle2">역할</Typography>
                       <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
                     </Box>
-
                   </Stack>
                 ) : null}
               </div>
@@ -904,7 +898,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       <Typography variant="subtitle2">역할</Typography>
                       <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
                     </Box>
-
                   </Stack>
                 ) : null}
               </DialogContent>

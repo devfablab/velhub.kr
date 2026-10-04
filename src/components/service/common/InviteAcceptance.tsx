@@ -209,7 +209,9 @@ export default function InviteAcceptance({
                 setNicknameError('');
               }}
               error={Boolean(nicknameError)}
-              helperText={nicknameError || '입력하지 않으면 활동명이 사용됩니다. 입력하는 경우 2자 이상 10자 이하입니다.'}
+              helperText={
+                nicknameError || '입력하지 않으면 활동명이 사용됩니다. 입력하는 경우 2자 이상 10자 이하입니다.'
+              }
               fullWidth
               size="small"
               slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}

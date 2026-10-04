@@ -310,7 +310,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
 
           {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
-          <FormErrorDialog open={isErrorDialogOpen} title={null} messages={errorMessage ? [errorMessage] : []} onClose={() => setIsErrorDialogOpen(false)} />
+          <FormErrorDialog
+            open={isErrorDialogOpen}
+            title={null}
+            messages={errorMessage ? [errorMessage] : []}
+            onClose={() => setIsErrorDialogOpen(false)}
+          />
 
           {sortedPrefixes.length === 0 ? (
             <ScreenState>등록된 말머리가 없습니다.</ScreenState>

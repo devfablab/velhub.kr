@@ -31,6 +31,14 @@ export async function POST(request: Request) {
 
     return Response.json({ ok: true });
   } catch (unknownError) {
-    return Response.json({ error: unknownError instanceof Error ? unknownError.message || '사이트 로고 삭제에 실패했습니다.' : '사이트 로고 삭제에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      {
+        error:
+          unknownError instanceof Error
+            ? unknownError.message || '사이트 로고 삭제에 실패했습니다.'
+            : '사이트 로고 삭제에 실패했습니다.',
+      },
+      { status: 500 },
+    );
   }
 }

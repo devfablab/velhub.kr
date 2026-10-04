@@ -12,11 +12,7 @@ type ApplyRequestBody = {
 async function checkAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
-  const rhizome = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_label')
-    .eq('site_key', siteName)
-    .maybeSingle();
+  const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_label').eq('site_key', siteName).maybeSingle();
 
   if (rhizome.error || !rhizome.data) {
     return {
@@ -76,11 +72,7 @@ export async function GET(request: Request) {
         .from('board_series')
         .select('id', { count: 'exact', head: true })
         .eq('site_id', access.siteId),
-      access.supabaseAdmin
-        .from('blog_communities')
-        .select('is_enabled')
-        .eq('site_id', access.siteId)
-        .maybeSingle(),
+      access.supabaseAdmin.from('blog_communities').select('is_enabled').eq('site_id', access.siteId).maybeSingle(),
     ]);
 
     if (boards.error || categories.error || series.error || blogCommunity.error) {

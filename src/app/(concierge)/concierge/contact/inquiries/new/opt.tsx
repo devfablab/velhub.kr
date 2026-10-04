@@ -183,9 +183,7 @@ export default function Opt({
   const needsPost = attemptedPaymentKind === 'post_purchase';
   const isCancellationBlocked =
     isMinorCancellation && !!cancellationAvailableAt && new Date(cancellationAvailableAt).getTime() > Date.now();
-  const cancellationAvailableAtLabel = cancellationAvailableAt
-    ? formatDateTimeDetail(cancellationAvailableAt)
-    : '';
+  const cancellationAvailableAtLabel = cancellationAvailableAt ? formatDateTimeDetail(cancellationAvailableAt) : '';
   const selectedCancellationPayment = cancellationPayments.find((payment) => payment.id === paymentId) ?? null;
   const inquiryUnavailableReason = isMinorCancellation
     ? paymentLoadError || isCancellationBlocked
@@ -232,7 +230,8 @@ export default function Opt({
       if (!occurredAt) next.occurredAt = '문제가 발생한 날짜와 시간을 입력해 주세요.';
       if (!actualBehavior.trim()) next.actualBehavior = '실제로 발생한 상황을 입력해 주세요.';
       else if (actualBehavior.length > 5000) next.actualBehavior = '실제로 발생한 상황은 5,000자 이하로 입력해 주세요.';
-      if (displayedMessage.length > 5000) next.displayedMessage = '화면에 표시된 메시지는 5,000자 이하로 입력해 주세요.';
+      if (displayedMessage.length > 5000)
+        next.displayedMessage = '화면에 표시된 메시지는 5,000자 이하로 입력해 주세요.';
       if (paymentRequired && !paymentId) next.paymentId = '문제가 발생한 결제를 선택해 주세요.';
       if (!paymentRequired) {
         const hasTarget =
@@ -407,7 +406,10 @@ export default function Opt({
       );
       const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
       if (!response.ok) {
-        showTargetLookupError(result?.error ?? '사이트를 검색하지 못했습니다.', response.status >= 500 || !result?.error);
+        showTargetLookupError(
+          result?.error ?? '사이트를 검색하지 못했습니다.',
+          response.status >= 500 || !result?.error,
+        );
       } else {
         setSiteResults(result?.items ?? []);
       }
@@ -439,7 +441,10 @@ export default function Opt({
       );
       const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
       if (!response.ok) {
-        showTargetLookupError(result?.error ?? '결제 대상을 불러오지 못했습니다.', response.status >= 500 || !result?.error);
+        showTargetLookupError(
+          result?.error ?? '결제 대상을 불러오지 못했습니다.',
+          response.status >= 500 || !result?.error,
+        );
       } else {
         setTargetOptions(result?.items ?? []);
       }
@@ -464,7 +469,10 @@ export default function Opt({
       const response = await fetch(`/api/concierge/contact/payment-targets?${params}`, { cache: 'no-store' });
       const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
       if (!response.ok) {
-        showTargetLookupError(result?.error ?? '연재글을 검색하지 못했습니다.', response.status >= 500 || !result?.error);
+        showTargetLookupError(
+          result?.error ?? '연재글을 검색하지 못했습니다.',
+          response.status >= 500 || !result?.error,
+        );
       } else {
         setPostResults(result?.items ?? []);
       }
@@ -855,7 +863,9 @@ export default function Opt({
                   ) : null}
                 </Stack>
               )}
-              {fieldErrors.attemptedPayment ? <p className="alert popup-error">{fieldErrors.attemptedPayment}</p> : null}
+              {fieldErrors.attemptedPayment ? (
+                <p className="alert popup-error">{fieldErrors.attemptedPayment}</p>
+              ) : null}
               {inquiryUnavailableReason ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />
@@ -935,7 +945,7 @@ export default function Opt({
                   type="url"
                   fullWidth
                   size="small"
-                        value={pageUrl}
+                  value={pageUrl}
                   onChange={(event) => {
                     setPageUrl(event.target.value);
                     clearFieldError('pageUrl');
@@ -1034,14 +1044,14 @@ export default function Opt({
                   minRows={2}
                   fullWidth
                   size="small"
-                      value={errorMessage}
-                      onChange={(event) => {
-                        setErrorMessage(event.target.value);
-                        clearFieldError('errorMessage');
-                      }}
-                      error={Boolean(fieldErrors.errorMessage)}
-                      helperText={fieldErrors.errorMessage}
-                      slotProps={{ htmlInput: { maxLength: 5000 } }}
+                  value={errorMessage}
+                  onChange={(event) => {
+                    setErrorMessage(event.target.value);
+                    clearFieldError('errorMessage');
+                  }}
+                  error={Boolean(fieldErrors.errorMessage)}
+                  helperText={fieldErrors.errorMessage}
+                  slotProps={{ htmlInput: { maxLength: 5000 } }}
                 />
               </Stack>
             </Stack>

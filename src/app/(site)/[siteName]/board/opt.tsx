@@ -207,10 +207,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
   function renderAuthorName(content: PostItem, ariaLabel?: string) {
     return (
       <cite aria-label={ariaLabel}>
-          <CommunityMemberMenu
-            siteName={siteName}
-            name={content.author_name}
-        />
+        <CommunityMemberMenu siteName={siteName} name={content.author_name} />
       </cite>
     );
   }
@@ -428,9 +425,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                           </div>
                         ) : null}
                       </td>
-                      <td className="long-cell">
-                        {renderAuthorName(content)}
-                      </td>
+                      <td className="long-cell">{renderAuthorName(content)}</td>
                       <td>{formatTimeAgo(content.created_at)}</td>
                     </tr>
                   ))}
@@ -553,9 +548,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                           ) : null}
                         </div>
                       </td>
-                      <td className="long-cell">
-                        {renderAuthorName(content)}
-                      </td>
+                      <td className="long-cell">{renderAuthorName(content)}</td>
                       <td>
                         {formatTimeAgo(
                           content.published_status === 'published' ? content.published_at : content.created_at,

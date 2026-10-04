@@ -393,7 +393,6 @@ export default function DonationButton(props: Props) {
         )}
 
         <PaymentTerms type="donation" disabled={isProcessing} />
-
       </Stack>
     );
   }

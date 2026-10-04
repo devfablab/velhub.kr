@@ -28,7 +28,11 @@ function hasDuplicateCategories(categories: CategoryInput[] | null | undefined) 
 }
 
 function hasEmptyCategory(categories: CategoryInput[] | null | undefined) {
-  return !Array.isArray(categories) || categories.length === 0 || categories.some((category) => !normalizeText(category?.label));
+  return (
+    !Array.isArray(categories) ||
+    categories.length === 0 ||
+    categories.some((category) => !normalizeText(category?.label))
+  );
 }
 
 async function getManageAccess(siteName: string) {

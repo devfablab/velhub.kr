@@ -64,9 +64,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       ? initialData.categories.map((category) => ({ id: category.id, label: category.category_label }))
       : [{ id: null, label: '분류없음' }],
   );
-  const [notice, setNotice] = useState<Notice | null>(
-    null,
-  );
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [errorDialogTitle, setErrorDialogTitle] = useState<string | null>(initialError ? '불러오기 실패' : null);
@@ -246,72 +244,68 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </p>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
           <form onSubmit={(event) => void handleSave(event)}>
-          <div className={`paper ${styles.paper}`}>
-            <Stack gap={2}>
-              <Typography variant="h6">게시판 설정</Typography>
-              <TextField
-                value={boardLabel}
-                onChange={(event) => setBoardLabel(event.target.value)}
-                placeholder="게시판 이름"
-                required
-                error={Boolean(boardLabelError)}
-                helperText={boardLabelError}
-                fullWidth
-                size="small"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox checked={isImageEnabled} onChange={(event) => setIsImageEnabled(event.target.checked)} />
-                }
-                label="첨부 이미지 사용"
-              />
-            </Stack>
-          </div>
-          <div className={`paper ${styles.paper}`}>
-            <Stack gap={2}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="h6">카테고리</Typography>
-                <button
-                  type="button"
-                  className="button small action"
-                  onClick={() => setCategories((previous) => [...previous, { id: null, label: '' }])}
-                >
-                  <AddRoundedIcon />
-                  추가
-                </button>
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={2}>
+                <Typography variant="h6">게시판 설정</Typography>
+                <TextField
+                  value={boardLabel}
+                  onChange={(event) => setBoardLabel(event.target.value)}
+                  placeholder="게시판 이름"
+                  required
+                  error={Boolean(boardLabelError)}
+                  helperText={boardLabelError}
+                  fullWidth
+                  size="small"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox checked={isImageEnabled} onChange={(event) => setIsImageEnabled(event.target.checked)} />
+                  }
+                  label="첨부 이미지 사용"
+                />
               </Stack>
-              {categories.map((category, index) => (
-                <Stack direction="row" gap={1} key={category.id ?? `new-${index}`} alignItems="center">
-                  <TextField
-                    value={category.label}
-                    onChange={(event) => changeCategory(index, event.target.value)}
-                    placeholder={index === 0 ? '기본 카테고리' : '카테고리'}
-                    fullWidth
-                    size="small"
-                    required
-                    error={Boolean(categoryErrors[index])}
-                    helperText={categoryErrors[index]}
-                  />
-                  <IconButton
-                    aria-label="카테고리 삭제"
-                    disabled={categories.length === 1}
-                    onClick={() => handleRequestCategoryDelete(index)}
+            </div>
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={2}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h6">카테고리</Typography>
+                  <button
+                    type="button"
+                    className="button small action"
+                    onClick={() => setCategories((previous) => [...previous, { id: null, label: '' }])}
                   >
-                    <DeleteOutlineRoundedIcon />
-                  </IconButton>
+                    <AddRoundedIcon />
+                    추가
+                  </button>
                 </Stack>
-              ))}
+                {categories.map((category, index) => (
+                  <Stack direction="row" gap={1} key={category.id ?? `new-${index}`} alignItems="center">
+                    <TextField
+                      value={category.label}
+                      onChange={(event) => changeCategory(index, event.target.value)}
+                      placeholder={index === 0 ? '기본 카테고리' : '카테고리'}
+                      fullWidth
+                      size="small"
+                      required
+                      error={Boolean(categoryErrors[index])}
+                      helperText={categoryErrors[index]}
+                    />
+                    <IconButton
+                      aria-label="카테고리 삭제"
+                      disabled={categories.length === 1}
+                      onClick={() => handleRequestCategoryDelete(index)}
+                    >
+                      <DeleteOutlineRoundedIcon />
+                    </IconButton>
+                  </Stack>
+                ))}
+              </Stack>
+            </div>
+            <Stack direction="row" justifyContent="flex-end">
+              <button type="submit" className="button medium submit" disabled={isSaving}>
+                {isInstalled ? '수정 완료' : '설치 완료'}
+              </button>
             </Stack>
-          </div>
-          <Stack direction="row" justifyContent="flex-end">
-            <button
-              type="submit"
-              className="button medium submit"
-              disabled={isSaving}
-            >
-              {isInstalled ? '수정 완료' : '설치 완료'}
-            </button>
-          </Stack>
           </form>
         </div>
       </div>

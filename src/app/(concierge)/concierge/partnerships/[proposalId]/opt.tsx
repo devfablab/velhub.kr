@@ -26,7 +26,9 @@ export default function Opt({
   const load = async () => {
     try {
       const response = await fetch(`/api/concierge/partnerships/${proposalId}`, { cache: 'no-store' });
-      const result = (await response.json().catch(() => null)) as (PartnershipProposalDetail & { error?: string }) | null;
+      const result = (await response.json().catch(() => null)) as
+        | (PartnershipProposalDetail & { error?: string })
+        | null;
       if (!response.ok || !result) return false;
       setProposal(result);
       return true;

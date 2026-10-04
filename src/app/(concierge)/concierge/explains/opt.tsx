@@ -594,7 +594,11 @@ export default function Opt({
   }
 
   function renderOpinionFieldError(field: string) {
-    return opinionFieldErrors[field] ? <Typography color="error" variant="caption">{opinionFieldErrors[field]}</Typography> : null;
+    return opinionFieldErrors[field] ? (
+      <Typography color="error" variant="caption">
+        {opinionFieldErrors[field]}
+      </Typography>
+    ) : null;
   }
 
   function closeOpinionSuccess() {
@@ -614,10 +618,13 @@ export default function Opt({
       if (!normalizeText(opinionValues[field.key])) fieldErrors[field.key] = `${field.label} 항목을 입력해 주세요.`;
     });
     if (!contentRequest) fieldErrors.contentRequest = '게시물 · 댓글 처리 요청을 선택해 주세요.';
-    if (contentRequest === 'edit_and_review' && !modificationContent.trim()) fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
+    if (contentRequest === 'edit_and_review' && !modificationContent.trim())
+      fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
     if (!opinionFile) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
-    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf')) fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
-    else if (opinionFile.size >= MAX_FILE_SIZE) fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
+    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf'))
+      fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
+    else if (opinionFile.size >= MAX_FILE_SIZE)
+      fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
     if (Object.keys(fieldErrors).length > 0) {
       showOpinionValidationErrors(fieldErrors);
       return;
@@ -643,19 +650,32 @@ export default function Opt({
         credentials: 'include',
         body: formData,
       });
-      const result = (await response.json().catch(() => ({ error: '소명 의견서 응답을 확인하지 못했습니다.' }))) as { error?: string; errors?: string[]; fieldErrors?: FieldErrors };
+      const result = (await response.json().catch(() => ({ error: '소명 의견서 응답을 확인하지 못했습니다.' }))) as {
+        error?: string;
+        errors?: string[];
+        fieldErrors?: FieldErrors;
+      };
 
       if (!response.ok || result.error) {
-        if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0) showOpinionValidationErrors(result.fieldErrors);
-        else if (response.status >= 500) setErrorDialog({ title: null, messages: [result.error ?? '소명 의견서를 제출하지 못했습니다.'] });
-        else setErrorDialog({ title: '소명 의견서 확인', messages: result.errors?.length ? result.errors : [result.error ?? '소명 의견서를 제출하지 못했습니다.'] });
+        if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0)
+          showOpinionValidationErrors(result.fieldErrors);
+        else if (response.status >= 500)
+          setErrorDialog({ title: null, messages: [result.error ?? '소명 의견서를 제출하지 못했습니다.'] });
+        else
+          setErrorDialog({
+            title: '소명 의견서 확인',
+            messages: result.errors?.length ? result.errors : [result.error ?? '소명 의견서를 제출하지 못했습니다.'],
+          });
         return;
       }
 
       closeOpinion();
       setOpinionSuccessOpen(true);
     } catch {
-      setErrorDialog({ title: null, messages: ['소명 의견서를 제출하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.'] });
+      setErrorDialog({
+        title: null,
+        messages: ['소명 의견서를 제출하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.'],
+      });
     } finally {
       setActionLoading(false);
     }

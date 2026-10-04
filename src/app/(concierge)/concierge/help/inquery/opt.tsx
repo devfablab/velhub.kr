@@ -404,7 +404,9 @@ export default function Opt({
   }
 
   function renderSelectionErrors(fields: (keyof FieldErrors)[]) {
-    const messages = [...new Set(fields.map((field) => fieldErrors[field]).filter((message): message is string => Boolean(message)))];
+    const messages = [
+      ...new Set(fields.map((field) => fieldErrors[field]).filter((message): message is string => Boolean(message))),
+    ];
     return messages.length ? (
       <Stack gap={0.5}>
         {messages.map((message) => (
@@ -493,7 +495,8 @@ export default function Opt({
         errors.illegalInfoConfirmed = '불법정보 신고 · 요청 확인이 필요합니다.';
       if (requestType === 'false_manipulated_info' && !falseManipulatedInfoConfirmed)
         errors.falseManipulatedInfoConfirmed = '허위조작정보 신고 · 요청 확인이 필요합니다.';
-      if (!illegalInfoNoticeConfirmed) errors.illegalInfoNoticeConfirmed = '불법정보/허위조작정보 신고 유의사항 확인이 필요합니다.';
+      if (!illegalInfoNoticeConfirmed)
+        errors.illegalInfoNoticeConfirmed = '불법정보/허위조작정보 신고 유의사항 확인이 필요합니다.';
     }
     if (selectedLegalType === 'illegal_filming') {
       if (!filmingRequestTypes.length) errors.filmingRequestTypes = '신고 · 요청 구분을 선택해 주세요.';
@@ -1355,7 +1358,12 @@ export default function Opt({
             label="위 내용을 확인하였습니다."
           />
         </Stack>
-        {renderSelectionErrors(['filmingRequestTypes', 'filmingReasonTypes', 'filmingRequestConfirmed', 'filmingNoticeConfirmed'])}
+        {renderSelectionErrors([
+          'filmingRequestTypes',
+          'filmingReasonTypes',
+          'filmingRequestConfirmed',
+          'filmingNoticeConfirmed',
+        ])}
       </Stack>
     );
   }

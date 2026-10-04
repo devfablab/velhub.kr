@@ -88,7 +88,9 @@ export async function refreshCommunityMemberLevel({
       .maybeSingle(),
     supabaseAdmin
       .from('community_levels')
-      .select('id, lv, requirement_type, required_posts, required_comments, required_checkins, required_days, required_likes')
+      .select(
+        'id, lv, requirement_type, required_posts, required_comments, required_checkins, required_days, required_likes',
+      )
       .eq('site_id', siteId)
       .order('lv', { ascending: false }),
   ]);
@@ -105,7 +107,8 @@ export async function refreshCommunityMemberLevel({
 
   const levels = (levelsResult.data ?? []) as LevelRow[];
   const targetLevel = levels.find(
-    (level) => level.requirement_type === 'automatic' && hasAtLeastOneRequirement(level) && meetsRequirements(membership, level),
+    (level) =>
+      level.requirement_type === 'automatic' && hasAtLeastOneRequirement(level) && meetsRequirements(membership, level),
   );
 
   if (!targetLevel) {
@@ -118,7 +121,11 @@ export async function refreshCommunityMemberLevel({
     return;
   }
 
-  await supabaseAdmin.from('rhizome_stigmas').update({ lv: targetLevel.id }).eq('id', membership.id).eq('site_id', siteId);
+  await supabaseAdmin
+    .from('rhizome_stigmas')
+    .update({ lv: targetLevel.id })
+    .eq('id', membership.id)
+    .eq('site_id', siteId);
 }
 
 export async function refreshCommunitySiteMemberLevels({

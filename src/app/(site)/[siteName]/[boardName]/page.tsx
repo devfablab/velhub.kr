@@ -85,8 +85,7 @@ export default async function Page(context: SearchContext) {
     queryParams.set('keyword', searchParams.keyword);
   if (typeof searchParams.seriesName === 'string' && searchParams.seriesName)
     queryParams.set('seriesName', searchParams.seriesName);
-  if (typeof searchParams.author === 'string' && searchParams.author)
-    queryParams.set('author', searchParams.author);
+  if (typeof searchParams.author === 'string' && searchParams.author) queryParams.set('author', searchParams.author);
   const initial = await getSiteApiData<BoardListResponse>(
     `/api/boards/${normalizedBoardName}?${queryParams.toString()}`,
     '전체 게시글을 불러오지 못했습니다.',

@@ -44,9 +44,11 @@ export default async function Page(context: RouteContext) {
         .maybeSingle()
     : null;
 
-  return <Opt
-    initialData={initial.data}
-    initialError={initial.error}
-    hasSubscriptionSeries={Boolean(subscriptionSeries?.data)}
-  />;
+  return (
+    <Opt
+      initialData={initial.data}
+      initialError={initial.error}
+      hasSubscriptionSeries={Boolean(subscriptionSeries?.data)}
+    />
+  );
 }

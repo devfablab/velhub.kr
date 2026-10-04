@@ -171,7 +171,12 @@ async function loadContentState(report: ReportRow) {
       .eq('id', report.blog_community_post_id)
       .maybeSingle();
     if (result.error || !result.data) throw new Error('신고 대상 게시물을 찾을 수 없습니다.');
-    return { post: null, comment: null, blogCommunityPost: result.data as BlogCommunityPostState, blogCommunityComment: null };
+    return {
+      post: null,
+      comment: null,
+      blogCommunityPost: result.data as BlogCommunityPostState,
+      blogCommunityComment: null,
+    };
   }
 
   if (report.target_type === 'blog_community_comment' && report.blog_community_comment_id) {
@@ -181,7 +186,12 @@ async function loadContentState(report: ReportRow) {
       .eq('id', report.blog_community_comment_id)
       .maybeSingle();
     if (result.error || !result.data) throw new Error('신고 대상 댓글을 찾을 수 없습니다.');
-    return { post: null, comment: null, blogCommunityPost: null, blogCommunityComment: result.data as BlogCommunityCommentState };
+    return {
+      post: null,
+      comment: null,
+      blogCommunityPost: null,
+      blogCommunityComment: result.data as BlogCommunityCommentState,
+    };
   }
 
   throw new Error('소명 요청서를 작성할 수 없는 신고 대상입니다.');
@@ -541,7 +551,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const reportTable = reportTableByType[reportType];
     const reportResult = await supabaseAdmin
       .from(reportTable)
-      .select('id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, reporter_user_id, site_id, board_id')
+      .select(
+        'id, target_type, post_id, comment_id, blog_community_post_id, blog_community_comment_id, reporter_user_id, site_id, board_id',
+      )
       .eq('id', reportId)
       .maybeSingle();
 
