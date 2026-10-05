@@ -31,6 +31,7 @@ import {
   useTheme,
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
+import { getNotFoundPageMessage } from '@/lib/pageError';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -610,7 +611,7 @@ export default function Opt({
             </h2>
             <div className="paper page-error">
               <ServiceErrorIcon />
-              <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
+              <p>{getNotFoundPageMessage(errorMessage)}</p>
             </div>
           </div>
         </div>

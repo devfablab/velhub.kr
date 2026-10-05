@@ -22,6 +22,10 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import BlogPostPromotionFields, {
+  emptyBlogPromotion,
+  type BlogPromotionValue,
+} from '@/components/service/blog/BlogPostPromotionFields';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -242,6 +246,9 @@ export default function Opt({
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(
     initialContent?.content?.thumbnail_height ?? null,
   );
+  const [promotion, setPromotion] = useState<BlogPromotionValue>(emptyBlogPromotion);
+  const [promotionLoaded, setPromotionLoaded] = useState(false);
+  const [promotionSubscription, setPromotionSubscription] = useState(false);
   const [hasBoard, setHasBoard] = useState(initialStatus?.hasBoard || false);
   const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
   const initialCategories = [...(initialCategory?.categories ?? [])];
@@ -274,6 +281,86 @@ export default function Opt({
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
   }, [editorBlobImages]);
+
+  useEffect(() => {
+    let active = true;
+    fetch(
+      `/api/manage/contents/blog-posts/${encodeURIComponent(contentId)}/ad?siteName=${encodeURIComponent(siteName)}`,
+    )
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          isSubscriptionSeries?: boolean;
+          multiAds?: Array<{ product_name: string; thumbnail_image: string; thumbnail_url: string; link_url: string }>;
+          postAd?:
+            | {
+                ad_type: 'advertisement';
+                product_name: string;
+                sponsor_name: null;
+                thumbnail_image: string;
+                thumbnail_url: string;
+                link_url: string;
+              }
+            | {
+                ad_type: 'sponsorship';
+                product_name: null;
+                sponsor_name: string;
+                thumbnail_image: null;
+                thumbnail_url: null;
+                link_url: string;
+              }
+            | null;
+        };
+        if (!response.ok) throw new Error('글 광고 정보를 불러오지 못했습니다.');
+        if (!active) return;
+        setPromotionSubscription(Boolean(data.isSubscriptionSeries));
+        if (data.postAd?.ad_type === 'sponsorship')
+          setPromotion({
+            type: 'sponsorship',
+            sponsorName: data.postAd.sponsor_name ?? '',
+            linkUrl: data.postAd.link_url,
+            item: emptyBlogPromotion().item,
+            items: emptyBlogPromotion().items,
+          });
+        else if (data.postAd?.ad_type === 'advertisement')
+          setPromotion({
+            type: 'advertisement',
+            sponsorName: '',
+            linkUrl: '',
+            item: {
+              productName: data.postAd.product_name,
+              thumbnailImage: data.postAd.thumbnail_image,
+              thumbnailUrl: data.postAd.thumbnail_url,
+              linkUrl: data.postAd.link_url,
+            },
+            items: emptyBlogPromotion().items,
+          });
+        else if (data.isSubscriptionSeries && data.multiAds?.length)
+          setPromotion({
+            type: 'advertisement',
+            sponsorName: '',
+            linkUrl: '',
+            item: emptyBlogPromotion().item,
+            items: data.multiAds.map((item) => ({
+              productName: item.product_name,
+              thumbnailImage: item.thumbnail_image,
+              thumbnailUrl: item.thumbnail_url,
+              linkUrl: item.link_url,
+            })),
+          });
+        setPromotionLoaded(true);
+      })
+      .catch(
+        (error) =>
+          active &&
+          setFormErrorDialog({
+            title: null,
+            messages: [error instanceof Error ? error.message : '글 광고 정보를 불러오지 못했습니다.'],
+          }),
+      );
+    return () => {
+      active = false;
+    };
+  }, [contentId, siteName]);
 
   useEffect(() => {
     return () => {
@@ -538,6 +625,10 @@ export default function Opt({
     if (isSubmitting) {
       return;
     }
+    if (!promotionLoaded) {
+      setFormErrorDialog({ title: null, messages: ['광고 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.'] });
+      return;
+    }
 
     if (!hasBoard || !boardName) {
       setErrorMessage('블로그 게시판을 찾을 수 없습니다.');
@@ -589,6 +680,22 @@ export default function Opt({
       if (!editResponse.ok) {
         throw new Error(editResult.error ?? '블로그 글 수정에 실패했습니다.');
       }
+
+      const promotionResponse = await fetch(
+        `/api/manage/contents/blog-posts/${encodeURIComponent(contentId)}/ad?siteName=${encodeURIComponent(siteName)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            siteName,
+            ...promotion,
+            items: promotionSubscription ? promotion.items : [promotion.item],
+          }),
+        },
+      );
+      const promotionResult = (await promotionResponse.json()) as { error?: string };
+      if (!promotionResponse.ok) throw new Error(promotionResult.error ?? '광고 또는 협찬 정보를 저장하지 못했습니다.');
 
       if (ti === 'i') router.replace(`/${siteName}/manage/contents/posts/${contentId}`);
       else router.replace(`/${siteName}/b/${contentId}`);
@@ -698,6 +805,22 @@ export default function Opt({
                   </Select>
                 </FormControl>
               </Stack>
+
+              <BlogPostPromotionFields
+                siteName={siteName}
+                isSubscriptionSeries={promotionSubscription}
+                classes={{
+                  adProductItem: styles['ad-product-item'],
+                  adProductThumbnail: styles['ad-product-thumbnail'],
+                  adProductFields: styles['ad-product-fields'],
+                  adProductDelete: styles['ad-product-delete'],
+                  addProductButton: styles['add-product-button'],
+                }}
+                disabled={isSubmitting || !promotionLoaded}
+                value={promotion}
+                onChange={setPromotion}
+                onError={(message) => setFormErrorDialog({ title: null, messages: [message] })}
+              />
 
               <Stack direction="column">
                 <Stack direction="column" gap={2} justifyContent="space-between">

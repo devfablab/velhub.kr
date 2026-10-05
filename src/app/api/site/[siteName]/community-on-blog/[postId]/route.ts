@@ -1,4 +1,5 @@
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
+import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -24,7 +25,7 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     const { siteName, postId: contentId } = await context.params;
     const slug = contentId.trim();
-    if (!slug) return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    if (!isNumericContentSlug(slug)) return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     const feature = await getBlogCommunityContext(siteName);
     if (!feature) return Response.json({ error: '블로그를 찾을 수 없습니다.' }, { status: 404 });
     assertBlogCommunityUse(feature);
@@ -95,7 +96,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { siteName, postId: contentId } = await context.params;
     const slug = contentId.trim();
-    if (!slug) return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    if (!isNumericContentSlug(slug)) return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     const feature = await getBlogCommunityContext(siteName);
     if (!feature) return Response.json({ error: '블로그를 찾을 수 없습니다.' }, { status: 404 });
     assertBlogCommunityUse(feature);
@@ -134,7 +135,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const { siteName, postId: contentId } = await context.params;
     const slug = contentId.trim();
-    if (!slug) return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    if (!isNumericContentSlug(slug)) return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     const feature = await getBlogCommunityContext(siteName);
     if (!feature) return Response.json({ error: '블로그를 찾을 수 없습니다.' }, { status: 404 });
     assertBlogCommunityUse(feature);

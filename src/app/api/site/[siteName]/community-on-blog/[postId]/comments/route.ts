@@ -1,4 +1,5 @@
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
+import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -30,7 +31,7 @@ function getAvatarUrl(value: string | null | undefined) {
 
 async function assertPost(siteId: string, contentId: string) {
   const slug = contentId.trim();
-  if (!slug) throw new Error('글을 찾을 수 없습니다.');
+  if (!isNumericContentSlug(slug)) throw new Error('글을 찾을 수 없습니다.');
   const result = await getSupabaseAdmin()
     .from('blog_community_posts')
     .select('id')

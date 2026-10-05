@@ -259,3 +259,52 @@
 
     .remove
       color: ds.$hex-warning!important
+
+.ad-product-item
+  display: flex
+  flex-direction: row
+  gap: ds.rem(12)
+
+  .ad-product-thumbnail
+    width: ds.rem(123)
+    height: ds.rem(123)
+    position: relative
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    border-radius: ds.rem(7)
+
+    p
+      position: absolute
+      top: 50%
+      left: 50%
+      transform: translate(-50%, -50%)
+      font-size: ds.rem(12)
+      color: rgba(ds.$rgb-tertiary, .5)
+
+    button
+      position: absolute
+      bottom: ds.rem(5)
+      left: 50%
+      transform: translateX(-50%)
+
+    img
+      width: ds.rem(123)
+      height: ds.rem(123)
+      object-fit: contain
+
+  .ad-product-fields
+    @include ds.col
+
+  .ad-product-delete
+    width: ds.rem(40)
+
+    button
+      color: ds.$hex-warning
+
+.add-product-button
+  span
+    display: inline-flex
+    justify-content: center
+    align-items: center
+    width: ds.rem(20)
+    height: ds.rem(20)
+    color: ds.$hex-accent

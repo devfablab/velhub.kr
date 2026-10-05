@@ -28,6 +28,10 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import BlogPostPromotionFields, {
+  emptyBlogPromotion,
+  type BlogPromotionValue,
+} from '@/components/service/blog/BlogPostPromotionFields';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -95,6 +99,7 @@ type SeriesRow = {
   site_id: string;
   last_published_at: string | null;
   is_completed: boolean;
+  is_subscription?: boolean | null;
   user_id: string | null;
 };
 
@@ -234,6 +239,10 @@ export default function Opt({
   const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const isSubscriptionSeries = Boolean(
+    seriesList.find((series) => series.series_key === selectedSeriesKey)?.is_subscription,
+  );
+  const [promotion, setPromotion] = useState<BlogPromotionValue>(emptyBlogPromotion);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [fieldErrors, setFieldErrors] = useState<{ subject?: string; content?: string; scheduled?: string }>({});
   const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
@@ -583,6 +592,7 @@ export default function Opt({
           thumbnailHeight,
           categories: selectedCategories,
           seriesKey: selectedSeriesKey || null,
+          promotion: { ...promotion, items: isSubscriptionSeries ? promotion.items : [promotion.item] },
           publishedAt: publishTimeMode === 'scheduled' ? publishedAt : null,
           isComment: commentProvider === 'none' ? false : isComment,
         }),
@@ -729,6 +739,22 @@ export default function Opt({
                   </Select>
                 </FormControl>
               </Stack>
+
+              <BlogPostPromotionFields
+                siteName={siteName}
+                isSubscriptionSeries={isSubscriptionSeries}
+                classes={{
+                  adProductItem: styles['ad-product-item'],
+                  adProductThumbnail: styles['ad-product-thumbnail'],
+                  adProductFields: styles['ad-product-fields'],
+                  adProductDelete: styles['ad-product-delete'],
+                  addProductButton: styles['add-product-button'],
+                }}
+                disabled={isSubmitting}
+                value={promotion}
+                onChange={setPromotion}
+                onError={(message) => setFormErrorDialog({ title: null, messages: [message] })}
+              />
 
               <Stack direction="column">
                 <Stack direction="column" gap={2} justifyContent="space-between">

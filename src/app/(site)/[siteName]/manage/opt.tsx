@@ -65,6 +65,7 @@ export default function Opt({
 
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
   const isPersonalBlog = siteType === 'blog' && siteHeader?.blogType !== 'team';
+  const isBlogOwner = siteType === 'blog' && (siteRole === 'owner' || globalRole === 'admin');
   const menuItems = [
     ...(showAllManageMenus
       ? [{ href: `/${siteName}/manage/settings`, label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보' }]
@@ -81,6 +82,7 @@ export default function Opt({
         ]
       : []),
     { href: `/${siteName}/manage/contents/posts`, label: '콘텐츠 관리' },
+    ...(isBlogOwner ? [{ href: `/${siteName}/manage/ads`, label: '광고 관리' }] : []),
     ...(showAllManageMenus && siteType === 'community'
       ? [{ href: `/${siteName}/manage/private`, label: '비공개 게시판' }]
       : []),

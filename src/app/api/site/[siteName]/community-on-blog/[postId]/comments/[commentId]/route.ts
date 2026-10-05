@@ -1,4 +1,5 @@
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
+import { isNumericContentSlug } from '@/lib/contentSlug';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -12,7 +13,7 @@ async function getCommentTarget(siteName: string, contentId: string, commentId: 
 
   const supabaseAdmin = getSupabaseAdmin();
   const slug = contentId.trim();
-  if (!slug) throw new Error('글을 찾을 수 없습니다.');
+  if (!isNumericContentSlug(slug)) throw new Error('글을 찾을 수 없습니다.');
   const postResult = await supabaseAdmin
     .from('blog_community_posts')
     .select('id')

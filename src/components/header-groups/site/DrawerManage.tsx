@@ -1,4 +1,5 @@
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import ContactsOutlinedIcon from '@mui/icons-material/ContactsOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import DesignServicesOutlinedIcon from '@mui/icons-material/DesignServicesOutlined';
@@ -41,6 +42,7 @@ function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | n
 
 export default function DrawerManage({ siteName, siteType, blogType, siteRole, globalRole, onClose }: Props) {
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
+  const isBlogOwner = siteType === 'blog' && (siteRole === 'owner' || globalRole === 'admin');
 
   return (
     <>
@@ -88,6 +90,15 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
           <span>콘텐츠 관리</span>
         </Anchor>
       </MenuItem>
+
+      {isBlogOwner ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/ads`}>
+            <CampaignOutlinedIcon fontSize="small" />
+            <span>광고 관리</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
       {showAllManageMenus && siteType === 'blog' && blogType !== 'team' ? (
         <MenuItem onClick={onClose}>

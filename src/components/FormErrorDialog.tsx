@@ -5,7 +5,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuer
 
 type Props = {
   open: boolean;
-  title: string | null;
+  title?: string | null;
   messages: string[];
   onClose: () => void;
 };
@@ -22,7 +22,7 @@ export default function FormErrorDialog({ open, title, messages, onClose }: Prop
   ) : (
     <p className="alert popup-error">
       <ErrorOutlineRoundedIcon />
-      <span>{messages[0]}</span>
+      <span>{messages[0] ?? '요청을 처리하지 못했습니다.'}</span>
     </p>
   );
 

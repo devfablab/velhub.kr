@@ -1,3 +1,4 @@
+import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/blogAds/server';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -14,6 +15,7 @@ type RequestBody = {
   thumbnailHeight: number | string | null;
   publishedAt?: string | null;
   isComment?: boolean | null;
+  promotion?: BlogPostPromotionInput | null;
 };
 
 function normalizePublishedAt(value: unknown) {
@@ -166,6 +168,20 @@ export async function POST(request: Request) {
     }
 
     const createdPost = post.data[0];
+
+    if (requestBody.promotion?.type && requestBody.promotion.type !== 'none') {
+      try {
+        await createBlogPostPromotion({
+          siteName,
+          postId: String(createdPost.post_id),
+          seriesId: null,
+          input: requestBody.promotion,
+        });
+      } catch (promotionError) {
+        await supabaseAdmin.from('posts').delete().eq('id', createdPost.post_id);
+        throw promotionError;
+      }
+    }
 
     return Response.json({
       ok: true,

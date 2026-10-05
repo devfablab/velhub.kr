@@ -1266,7 +1266,11 @@
 
   .thumbnail-dialog-preview
     img
+      display: block
+      width: 100%
+      max-height: 50vh
       border-radius: ds.rem(7)
+      object-fit: contain
 
   .gallery-dialog-preview
     display: grid
@@ -2207,3 +2211,81 @@
   dd
     margin: 0
     overflow-wrap: anywhere
+
+.sponsorship-message
+  @include ds.fw(pre, 500)
+  flex-direction: row
+  align-items: center
+  gap: ds.rem(7)
+  font-size: ds.rem(14)
+
+.blog-ads
+  gap: ds.rem(12)
+
+  .blog-ad-items
+    display: flex
+    flex-direction: row
+    gap: ds.rem(12)
+    overflow-x: auto
+    scroll-snap-type: x mandatory
+    padding-bottom: ds.rem(7)
+
+    &::-webkit-scrollbar
+      height: 7px
+
+    &::-webkit-scrollbar-thumb
+      background: ds.$hex-accent
+
+  .blog-ad-item
+    display: flex
+    flex: 0 0 min(ds.rem(270), 100%)
+    align-items: center
+    gap: ds.rem(14)
+    min-width: 0
+    padding: ds.rem(16)
+    border-radius: ds.rem(16)
+    scroll-snap-align: start
+    position: relative
+
+    a
+      display: flex
+      align-items: center
+      width: 100%
+      gap: ds.rem(14)
+
+    img
+      width: ds.rem(52)
+      height: ds.rem(52)
+      flex: 0 0 auto
+      object-fit: cover
+      border-radius: ds.rem(8)
+
+    span
+      display: grid
+      min-width: 0
+      padding-right: ds.rem(47)
+      @include ds.col
+
+    strong, em
+      overflow: hidden
+      text-overflow: ellipsis
+      white-space: nowrap
+
+    strong
+      @include ds.fw(pre, 700)
+      font-size: ds.rem(14)
+      color: ds.$hex-secondary
+      opacity: .8
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+    em
+      font-style: normal
+      font-size: ds.rem(12)
+      color: ds.$hex-action
+
+    button
+      position: absolute
+      top: ds.rem(16)
+      right: ds.rem(16)

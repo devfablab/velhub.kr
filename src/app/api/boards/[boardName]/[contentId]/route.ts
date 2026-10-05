@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getVisibleBlogPostPromotion } from '@/lib/blogAds/server';
 import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
@@ -1529,6 +1530,14 @@ export async function GET(request: Request, context: RouteContext) {
     const isPostDonationAvailable =
       !isYoutubeCommunityBoard &&
       (rhizomeData.site_type === 'blog' || (boardSeriesCount >= 2 && Boolean(postData.series_id)));
+    const promotion =
+      rhizomeData.site_type === 'blog'
+        ? await getVisibleBlogPostPromotion({
+            siteId: rhizomeData.id,
+            postId: postData.id,
+            seriesId: postData.series_id,
+          })
+        : { sponsorship: null, ads: [] };
 
     return NextResponse.json({
       board: boardData,
@@ -1573,6 +1582,7 @@ export async function GET(request: Request, context: RouteContext) {
         is_post_donation_available: isPostDonationAvailable,
         paid_preview_html: registeredPaidPreview?.html ?? null,
         paid_preview_markdown: registeredPaidPreview?.markdown ?? null,
+        promotion,
       },
       categories,
       series,

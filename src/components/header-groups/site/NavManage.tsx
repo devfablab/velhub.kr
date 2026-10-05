@@ -49,6 +49,7 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
   }
 
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
+  const isBlogOwner = siteType === 'blog' && (siteRole === 'owner' || globalRole === 'admin');
 
   const navItems: StaffNavItem[] = [
     ...(showAllManageMenus
@@ -83,6 +84,7 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
       href: `/${siteName}/manage/contents`,
       startsWith: true,
     },
+    ...(isBlogOwner ? [{ label: '광고 관리', href: `/${siteName}/manage/ads`, startsWith: true }] : []),
     ...(showAllManageMenus && siteType === 'blog' && blogType !== 'team'
       ? [{ label: '커뮤니티 관리', href: `/${siteName}/manage/community-on-blog`, startsWith: true }]
       : []),

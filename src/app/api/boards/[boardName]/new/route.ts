@@ -1,3 +1,4 @@
+import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/blogAds/server';
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
@@ -71,6 +72,7 @@ type RequestBody = {
   drawLimit?: number | null;
   drawEndsAt?: string | null;
   publishedAt?: string | null;
+  promotion?: BlogPostPromotionInput | null;
 };
 
 function normalizePublishedAt(value: unknown) {
@@ -1008,6 +1010,20 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (insertPost.error || !insertPost.data) {
       return Response.json({ error: '글 작성에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (rhizomeData.site_type === 'blog' && requestBody.promotion?.type && requestBody.promotion.type !== 'none') {
+      try {
+        await createBlogPostPromotion({
+          siteName,
+          postId: String(insertPost.data.id),
+          seriesId,
+          input: requestBody.promotion,
+        });
+      } catch (promotionError) {
+        await supabaseAdmin.from('posts').delete().eq('id', insertPost.data.id);
+        throw promotionError;
+      }
     }
 
     if (action === 'publish' || action === 'unknown') {

@@ -13,6 +13,7 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -28,10 +29,12 @@ import {
   Drawer,
   type SelectChangeEvent,
   TextField,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
+import { getNotFoundPageMessage } from '@/lib/pageError';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -41,6 +44,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import BlogAdReportButton from '@/components/service/blog/BlogAdReportButton';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
@@ -58,6 +62,7 @@ import YoutubeEmbed, { type YoutubePlayerHandle } from '@/components/service/You
 import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../../menu';
+import { useSiteHeader } from '../../SiteHeaderContext';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -246,6 +251,17 @@ type PostContent = {
   can_view_paid_content: boolean;
   board_series_count: number;
   is_post_donation_available: boolean;
+  promotion?: {
+    sponsorship: { id: string; sponsorName: string; linkUrl: string; targetType: 'postAd' } | null;
+    ads: {
+      id: string;
+      productName: string;
+      thumbnailUrl: string;
+      linkUrl: string;
+      domain: string;
+      targetType: 'ad' | 'postAd';
+    }[];
+  };
 };
 
 type SeriesItem = {
@@ -398,7 +414,9 @@ export default function Opt({
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
+  const siteHeader = useSiteHeader();
   const siteName = normalizeText(params.siteName);
+  const displaySiteLabel = siteHeader?.siteLabel || siteHeader?.siteName || siteName;
   const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
   const categoryName = normalizeText(searchParams.get('categoryName')).toLowerCase();
@@ -406,6 +424,7 @@ export default function Opt({
 
   const [board] = useState<BoardInfo | null>(initialData?.board ?? null);
   const content = initialData?.content ?? null;
+  const promotion = content?.promotion ?? { sponsorship: null, ads: [] };
   const [series] = useState<SeriesItem | null>(initialData?.series ?? null);
   const [seriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
   const [previousPost] = useState<AdjacentPost | null>(initialData?.previousPost ?? null);
@@ -745,7 +764,7 @@ export default function Opt({
           <div className={`${styles.content} content`}>
             <div className="paper page-error">
               <ServiceErrorIcon />
-              <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
+              <p>{getNotFoundPageMessage(errorMessage)}</p>
             </div>
           </div>
         </div>
@@ -1392,6 +1411,16 @@ export default function Opt({
             {isBasicBoard || isBlogBoard ? (
               <div className={`${styles['board-container']} ${styles['basic-board']}`}>
                 <div className="paper">
+                  {isBlogBoard && promotion.sponsorship ? (
+                    <p className={`paper ${styles['sponsorship-message']}`} style={{ marginBottom: 16 }}>
+                      <InfoOutlineRoundedIcon />
+                      <Anchor href={promotion.sponsorship.linkUrl} className="link">
+                        이 글은 {promotion.sponsorship.sponsorName}의 협찬을 받아 작성되었습니다.
+                      </Anchor>
+                      <BlogAdReportButton siteName={siteName} adId={promotion.sponsorship.id} targetType="postAd" />
+                    </p>
+                  ) : null}
+
                   {content.content_html ? (
                     <>
                       <EmbeddedContentHtml
@@ -1410,6 +1439,16 @@ export default function Opt({
                         <span key={hashtag}>{`#${hashtag}`}</span>
                       ))}
                     </div>
+                  ) : null}
+
+                  {isBlogBoard && promotion.sponsorship ? (
+                    <p className={`paper ${styles['sponsorship-message']}`} style={{ marginTop: 16 }}>
+                      <InfoOutlineRoundedIcon />
+                      <Anchor href={promotion.sponsorship.linkUrl} className="link">
+                        이 글은 {promotion.sponsorship.sponsorName}의 협찬을 받아 작성되었습니다.
+                      </Anchor>
+                      <BlogAdReportButton siteName={siteName} adId={promotion.sponsorship.id} targetType="postAd" />
+                    </p>
                   ) : null}
                 </div>
                 {content.poll ? (
@@ -1564,6 +1603,25 @@ export default function Opt({
                 </div>
               ) : null}
             </div>
+            {isBlogBoard && promotion.ads.length > 0 ? (
+              <div className={`paper ${styles['blog-ads']}`}>
+                <Typography variant="subtitle2">{displaySiteLabel} 제공</Typography>
+                <div className={styles['blog-ad-items']}>
+                  {promotion.ads.map((ad) => (
+                    <div key={ad.id} className={`paper ${styles['blog-ad-item']}`}>
+                      <Anchor href={ad.linkUrl}>
+                        <img src={ad.thumbnailUrl} alt="" />
+                        <span>
+                          <strong>{ad.productName}</strong>
+                          <em>{ad.domain}</em>
+                        </span>
+                      </Anchor>
+                      <BlogAdReportButton siteName={siteName} adId={ad.id} targetType={ad.targetType} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {seriesList}
           </article>
           {(content.published_status === 'published' || content.published_status === 'unknown') &&
