@@ -29,7 +29,13 @@ import {
 import FormErrorDialog from '@/components/FormErrorDialog';
 import styles from '@/app/reports.module.sass';
 
-type Reason = 'unsafe_link' | 'illegal_or_harmful_site' | 'different_destination' | 'broken_link';
+type Reason =
+  | 'unsafe_link'
+  | 'illegal_or_harmful_site'
+  | 'different_destination'
+  | 'non_product_link'
+  | 'problematic_product'
+  | 'broken_link';
 
 const reasons: { value: Reason; title: string; descriptions: string[] }[] = [
   {
@@ -45,7 +51,17 @@ const reasons: { value: Reason; title: string; descriptions: string[] }[] = [
   {
     value: 'different_destination',
     title: '표시된 정보와 다른 사이트로 연결됩니다.',
-    descriptions: ['상품명 또는 협찬사 정보와 관계없는 사이트로 연결되는 경우'],
+    descriptions: ['쇼핑몰명·상품명 또는 협찬사 정보와 관계없는 사이트로 연결되는 경우'],
+  },
+  {
+    value: 'non_product_link',
+    title: '상품과 관련 없는 링크입니다.',
+    descriptions: ['상품 구매·소개와 관계없이 특정 사이트 방문이나 앱 설치를 유도하는 링크인 경우'],
+  },
+  {
+    value: 'problematic_product',
+    title: '상품에 문제가 있습니다.',
+    descriptions: ['의약품을 온라인으로 판매하거나, 특정 효능을 보장하는 등 허위·과장 광고가 의심되는 경우'],
   },
   {
     value: 'broken_link',

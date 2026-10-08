@@ -20,14 +20,14 @@ export async function POST(request: Request, context: RouteContext) {
       targetType === 'ad'
         ? await site.supabaseAdmin
             .from('blog_ads')
-            .select('id, post_id, product_name, thumbnail_image, link_url')
+            .select('id, post_id, product_name, shop_name, thumbnail_image, link_url')
             .eq('id', adId)
             .eq('site_id', site.siteId)
             .is('deleted_at', null)
             .maybeSingle()
         : await site.supabaseAdmin
             .from('blog_post_ads')
-            .select('id, post_id, ad_type, product_name, sponsor_name, thumbnail_image, link_url')
+            .select('id, post_id, ad_type, product_name, sponsor_name, shop_name, thumbnail_image, link_url')
             .eq('id', adId)
             .eq('site_id', site.siteId)
             .is('deleted_at', null)
@@ -49,6 +49,7 @@ export async function POST(request: Request, context: RouteContext) {
               ? target.data.product_name
               : ((target.data as { sponsor_name?: string | null; product_name?: string | null }).sponsor_name ??
                 target.data.product_name),
+          shopName: targetType === 'ad' ? target.data.shop_name : (target.data as { shop_name?: string | null }).shop_name,
           thumbnailImage: target.data.thumbnail_image,
           linkUrl: target.data.link_url,
         },

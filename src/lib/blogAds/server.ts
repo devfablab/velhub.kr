@@ -13,6 +13,8 @@ export const BLOG_AD_REPORT_REASONS = [
   'unsafe_link',
   'illegal_or_harmful_site',
   'different_destination',
+  'non_product_link',
+  'problematic_product',
   'broken_link',
 ] as const;
 
@@ -21,6 +23,7 @@ export type BlogPostAdType = 'advertisement' | 'sponsorship';
 
 export type BlogPostPromotionInput = {
   type?: unknown;
+  shopName?: unknown;
   sponsorName?: unknown;
   linkUrl?: unknown;
   items?: unknown;
@@ -37,7 +40,15 @@ export const BLOG_AD_REPORT_REASON_LABELS: Record<BlogAdReportReason, { title: s
   },
   different_destination: {
     title: '표시된 정보와 다른 사이트로 연결됩니다.',
-    description: '상품명 또는 협찬사 정보와 관계없는 사이트로 연결되는 경우',
+    description: '쇼핑몰명·상품명 또는 협찬사 정보와 관계없는 사이트로 연결되는 경우',
+  },
+  non_product_link: {
+    title: '상품과 관련 없는 링크입니다.',
+    description: '상품 구매·소개와 관계없이 특정 사이트 방문이나 앱 설치를 유도하는 링크인 경우',
+  },
+  problematic_product: {
+    title: '상품에 문제가 있습니다.',
+    description: '의약품을 온라인으로 판매하거나, 특정 효능을 보장하는 등 허위·과장 광고가 의심되는 경우',
   },
   broken_link: {
     title: '링크가 동작하지 않습니다.',
@@ -50,7 +61,12 @@ export function isBlogAdReportReason(value: unknown): value is BlogAdReportReaso
 }
 
 export function isImmediateBlogAdReport(reason: BlogAdReportReason) {
-  return reason === 'illegal_or_harmful_site' || reason === 'different_destination';
+  return (
+    reason === 'illegal_or_harmful_site' ||
+    reason === 'different_destination' ||
+    reason === 'non_product_link' ||
+    reason === 'problematic_product'
+  );
 }
 
 export function isValidBlogAdUrl(value: string) {
@@ -241,6 +257,7 @@ export async function createBlogPostPromotion({
     return;
   }
   const rawItems = Array.isArray(input?.items) ? input.items : [];
+  const shopName = normalizeText(typeof input?.shopName === 'string' ? input.shopName : '');
   const items = rawItems.map((item) => {
     const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
     return {
@@ -263,12 +280,14 @@ export async function createBlogPostPromotion({
   ) {
     throw new Error('상품명, 상품 썸네일, HTTPS 링크를 확인해주세요.');
   }
+  if (!shopName || shopName.length > 50) throw new Error('쇼핑몰명은 50자 이하로 입력해주세요.');
   if (isSubscription) {
     const result = await context.supabaseAdmin.from('blog_ads').insert(
       items.map((item, sortOrder) => ({
         site_id: context.siteId,
         post_id: postId,
         product_name: item.productName,
+        shop_name: shopName,
         thumbnail_image: item.thumbnailImage,
         link_url: item.linkUrl,
         sort_order: sortOrder,
@@ -283,6 +302,7 @@ export async function createBlogPostPromotion({
     post_id: postId,
     ad_type: 'advertisement',
     product_name: item.productName,
+    shop_name: shopName,
     sponsor_name: null,
     thumbnail_image: item.thumbnailImage,
     link_url: item.linkUrl,
@@ -294,6 +314,7 @@ type PromotionTarget = {
   id: string;
   product_name?: string | null;
   sponsor_name?: string | null;
+  shop_name?: string | null;
   thumbnail_image?: string | null;
   link_url: string;
 };
@@ -319,8 +340,7 @@ async function filterBlockedPromotionTargets({
       .filter(
         (report) =>
           report.status === 'issue' ||
-          (report.status === 'pending' &&
-            (report.reason === 'illegal_or_harmful_site' || report.reason === 'different_destination')),
+          (report.status === 'pending' && isImmediateBlogAdReport(report.reason as BlogAdReportReason)),
       )
       .map((report) => String((report as Record<string, unknown>)[target] ?? ''))
       .filter(Boolean),
@@ -349,13 +369,13 @@ export async function getVisibleBlogPostPromotion({
   const [postAds, multiAds] = await Promise.all([
     supabaseAdmin
       .from('blog_post_ads')
-      .select('id, ad_type, product_name, sponsor_name, thumbnail_image, link_url')
+      .select('id, ad_type, product_name, sponsor_name, shop_name, thumbnail_image, link_url')
       .eq('post_id', postId)
       .is('deleted_at', null)
       .maybeSingle(),
     supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, thumbnail_image, link_url, sort_order')
+      .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
       .eq('post_id', postId)
       .is('deleted_at', null)
       .order('sort_order'),
@@ -385,6 +405,7 @@ export async function getVisibleBlogPostPromotion({
       ads: visible.map((ad) => ({
         id: ad.id,
         productName: ad.product_name ?? '',
+        shopName: ad.shop_name ?? '',
         thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
         linkUrl: ad.link_url,
         domain: getBlogAdDomain(ad.link_url),
@@ -400,6 +421,7 @@ export async function getVisibleBlogPostPromotion({
       ads: visible.map((ad) => ({
         id: ad.id,
         productName: ad.product_name ?? '',
+        shopName: ad.shop_name ?? '',
         thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
         linkUrl: ad.link_url,
         domain: getBlogAdDomain(ad.link_url),
@@ -413,7 +435,7 @@ export async function getVisibleBlogPostPromotion({
 
   const commonAds = await supabaseAdmin
     .from('blog_ads')
-    .select('id, product_name, thumbnail_image, link_url, sort_order')
+    .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
     .eq('site_id', siteId)
     .is('post_id', null)
     .is('deleted_at', null)
@@ -426,6 +448,7 @@ export async function getVisibleBlogPostPromotion({
     ads: visible.map((ad) => ({
       id: ad.id,
       productName: ad.product_name ?? '',
+      shopName: ad.shop_name ?? '',
       thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
       linkUrl: ad.link_url,
       domain: getBlogAdDomain(ad.link_url),

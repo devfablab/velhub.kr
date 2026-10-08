@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     const context = await getOwnerContext(siteName);
     const result = await context.supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, thumbnail_image, link_url, sort_order')
+      .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
       .eq('site_id', context.siteId)
       .is('post_id', null)
       .is('deleted_at', null)
@@ -53,9 +53,10 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const body = (await request.json()) as { siteName?: unknown; items?: unknown };
+    const body = (await request.json()) as { siteName?: unknown; shopName?: unknown; items?: unknown };
     const siteName = normalizeText(typeof body.siteName === 'string' ? body.siteName : '').toLowerCase();
     const context = await getOwnerContext(siteName);
+    const shopName = normalizeText(typeof body.shopName === 'string' ? body.shopName : '');
     if (!context.isEnabled || !context.isEligible)
       return Response.json({ error: '광고 사용 조건을 충족하지 않았습니다.' }, { status: 400 });
     const identity = await getBlogAdIdentityStatus(context.session.stigmaId);
@@ -68,6 +69,8 @@ export async function PUT(request: Request) {
     }
 
     const items = body.items.map((item) => normalizeItem(item as Item));
+    if (!shopName || shopName.length > 50)
+      return Response.json({ error: '쇼핑몰명은 50자 이하로 입력해주세요.' }, { status: 400 });
     if (
       items.some(
         (item) =>
@@ -79,7 +82,7 @@ export async function PUT(request: Request) {
 
     const currentResult = await context.supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, thumbnail_image, link_url')
+      .select('id, product_name, shop_name, thumbnail_image, link_url')
       .eq('site_id', context.siteId)
       .is('post_id', null)
       .is('deleted_at', null);
@@ -105,6 +108,7 @@ export async function PUT(request: Request) {
         const hasInformationChange =
           hasLinkChange ||
           current.product_name !== item.productName ||
+          (current.shop_name ?? '') !== shopName ||
           (current.thumbnail_image ?? '') !== item.thumbnailImage;
         if (hasInformationChange) {
           const reports = await context.supabaseAdmin
@@ -118,15 +122,20 @@ export async function PUT(request: Request) {
               const detail = {
                 previous: {
                   productName: current.product_name,
+                  shopName: current.shop_name,
                   thumbnailImage: current.thumbnail_image,
                   linkUrl: current.link_url,
                 },
-                next: { productName: item.productName, thumbnailImage: item.thumbnailImage, linkUrl: item.linkUrl },
+                next: { productName: item.productName, shopName, thumbnailImage: item.thumbnailImage, linkUrl: item.linkUrl },
               };
               if (hasLinkChange && (report.reason === 'unsafe_link' || report.reason === 'illegal_or_harmful_site')) {
                 logs.push({ report_id: report.id, action: 'link_changed', detail });
                 logs.push({ report_id: report.id, action: 'release_requested', detail: {} });
-              } else if (report.reason === 'different_destination') {
+              } else if (
+                report.reason === 'different_destination' ||
+                report.reason === 'non_product_link' ||
+                report.reason === 'problematic_product'
+              ) {
                 logs.push({ report_id: report.id, action: 'information_changed', detail });
                 if (report.status === 'issue') {
                   await context.supabaseAdmin
@@ -143,6 +152,7 @@ export async function PUT(request: Request) {
           .from('blog_ads')
           .update({
             product_name: item.productName,
+            shop_name: shopName,
             thumbnail_image: item.thumbnailImage,
             link_url: item.linkUrl,
             sort_order: sortOrder,
@@ -155,6 +165,7 @@ export async function PUT(request: Request) {
           site_id: context.siteId,
           post_id: null,
           product_name: item.productName,
+          shop_name: shopName,
           thumbnail_image: item.thumbnailImage,
           link_url: item.linkUrl,
           sort_order: sortOrder,

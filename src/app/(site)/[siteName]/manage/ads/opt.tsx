@@ -34,6 +34,7 @@ export default function Opt({ initialData }: { initialData: Data }) {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [items, setItems] = useState<AdItem[]>([]);
+  const [shopName, setShopName] = useState('');
   const [isLoadingItems, setIsLoadingItems] = useState(initialData.isEnabled);
 
   const unavailableReason = !initialData.hasBeenOpenFor15Days
@@ -82,6 +83,7 @@ export default function Opt({ initialData }: { initialData: Data }) {
         ads?: {
           id: string;
           product_name: string;
+          shop_name: string | null;
           thumbnail_image: string;
           thumbnail_url: string;
           link_url: string;
@@ -98,6 +100,7 @@ export default function Opt({ initialData }: { initialData: Data }) {
           linkUrl: item.link_url,
         })),
       );
+      setShopName(data.ads?.[0]?.shop_name ?? '');
     } catch (unknownError) {
       setError(unknownError instanceof Error ? unknownError.message : '기본 광고를 불러오지 못했습니다.');
     } finally {
@@ -134,6 +137,8 @@ export default function Opt({ initialData }: { initialData: Data }) {
       if (item.linkUrl.trim().length > 100) return [`${itemName}의 링크는 100자 이하로 입력해주세요.`];
       return [];
     });
+    if (!shopName.trim()) messages.unshift('쇼핑몰명을 입력해주세요.');
+    if (shopName.trim().length > 50) messages.unshift('쇼핑몰명은 50자 이하로 입력해주세요.');
     if (messages.length) {
       setError(messages[0]);
       return;
@@ -143,7 +148,7 @@ export default function Opt({ initialData }: { initialData: Data }) {
       const response = await fetch('/api/manage/blog-ads/common', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteName, items }),
+        body: JSON.stringify({ siteName, shopName, items }),
       });
       const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) throw new Error(data.error || '기본 광고를 저장하지 못했습니다.');
@@ -194,6 +199,14 @@ export default function Opt({ initialData }: { initialData: Data }) {
             <Typography variant="subtitle2">기본 적용 광고</Typography>
             <Typography variant="body2">연재글에 표시할 상품을 최대 10개까지 등록할 수 있습니다.</Typography>
             {isLoadingItems ? <p>기본 광고를 불러오는 중입니다.</p> : null}
+            <TextField
+              placeholder="쇼핑몰명"
+              value={shopName}
+              onChange={(event) => setShopName(event.target.value)}
+              inputProps={{ maxLength: 50 }}
+              disabled={isSubmitting}
+              size="small"
+            />
             {items.map((item, index) => (
               <div key={item.id ?? `new-${index}`} className={styles['ad-product-item']}>
                 <div className={styles['ad-product-thumbnail']}>

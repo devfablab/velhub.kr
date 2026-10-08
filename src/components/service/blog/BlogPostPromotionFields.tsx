@@ -12,6 +12,7 @@ import IdentityVerificationButton from '@/components/service/common/IdentityVeri
 export type BlogPromotionItem = { productName: string; thumbnailImage: string; thumbnailUrl: string; linkUrl: string };
 export type BlogPromotionValue = {
   type: 'none' | 'advertisement' | 'sponsorship';
+  shopName: string;
   sponsorName: string;
   linkUrl: string;
   item: BlogPromotionItem;
@@ -37,7 +38,7 @@ type Props = {
 const emptyItem = (): BlogPromotionItem => ({ productName: '', thumbnailImage: '', thumbnailUrl: '', linkUrl: '' });
 
 export function emptyBlogPromotion(): BlogPromotionValue {
-  return { type: 'none', sponsorName: '', linkUrl: '', item: emptyItem(), items: [emptyItem()] };
+  return { type: 'none', shopName: '', sponsorName: '', linkUrl: '', item: emptyItem(), items: [emptyItem()] };
 }
 
 export default function BlogPostPromotionFields({
@@ -136,7 +137,17 @@ export default function BlogPostPromotionFields({
         </>
       ) : null}
       {available && value.type === 'advertisement'
-        ? (isSubscriptionSeries ? value.items : [value.item]).map((item, index) => (
+        ? (
+            <>
+              <TextField
+                disabled={disabled}
+                placeholder="쇼핑몰명"
+                value={value.shopName}
+                inputProps={{ maxLength: 50 }}
+                onChange={(event) => onChange({ ...value, shopName: event.target.value })}
+                size="small"
+              />
+              {(isSubscriptionSeries ? value.items : [value.item]).map((item, index) => (
             <div
               key={isSubscriptionSeries ? `${index}-${item.thumbnailImage}` : 'single'}
               className={classes.adProductItem}
@@ -204,7 +215,9 @@ export default function BlogPostPromotionFields({
                 </div>
               ) : null}
             </div>
-          ))
+              ))}
+            </>
+          )
         : null}
       {available && value.type === 'advertisement' && isSubscriptionSeries && value.items.length < 10 ? (
         <button

@@ -256,6 +256,7 @@ type PostContent = {
     ads: {
       id: string;
       productName: string;
+      shopName: string;
       thumbnailUrl: string;
       linkUrl: string;
       domain: string;
@@ -416,7 +417,6 @@ export default function Opt({
   const searchParams = useSearchParams();
   const siteHeader = useSiteHeader();
   const siteName = normalizeText(params.siteName);
-  const displaySiteLabel = siteHeader?.siteLabel || siteHeader?.siteName || siteName;
   const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
   const categoryName = normalizeText(searchParams.get('categoryName')).toLowerCase();
@@ -1605,7 +1605,9 @@ export default function Opt({
             </div>
             {isBlogBoard && promotion.ads.length > 0 ? (
               <div className={`paper ${styles['blog-ads']}`}>
-                <Typography variant="subtitle2">{displaySiteLabel} 제공</Typography>
+                {promotion.ads[0]?.shopName ? (
+                  <Typography variant="subtitle2">{promotion.ads[0].shopName} 제공</Typography>
+                ) : null}
                 <div className={styles['blog-ad-items']}>
                   {promotion.ads.map((ad) => (
                     <div key={ad.id} className={`paper ${styles['blog-ad-item']}`}>

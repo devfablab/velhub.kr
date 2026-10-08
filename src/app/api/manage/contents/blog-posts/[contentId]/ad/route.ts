@@ -29,12 +29,15 @@ async function addChangeLogs({
   supabaseAdmin: Awaited<ReturnType<typeof assertBlogAdEditor>>['supabaseAdmin'];
   target: 'blog_ad_id' | 'blog_post_ad_id';
   targetId: string;
-  previous: { name: string; thumbnailImage: string | null; linkUrl: string };
-  next: { name: string; thumbnailImage: string | null; linkUrl: string };
+  previous: { name: string; shopName: string | null; thumbnailImage: string | null; linkUrl: string };
+  next: { name: string; shopName: string | null; thumbnailImage: string | null; linkUrl: string };
 }) {
   const hasLinkChange = previous.linkUrl !== next.linkUrl;
   const hasInformationChange =
-    hasLinkChange || previous.name !== next.name || (previous.thumbnailImage ?? '') !== (next.thumbnailImage ?? '');
+    hasLinkChange ||
+    previous.name !== next.name ||
+    (previous.shopName ?? '') !== (next.shopName ?? '') ||
+    (previous.thumbnailImage ?? '') !== (next.thumbnailImage ?? '');
   if (!hasInformationChange) return;
 
   const reports = await supabaseAdmin
@@ -52,7 +55,11 @@ async function addChangeLogs({
       continue;
     }
 
-    if (report.reason === 'different_destination') {
+    if (
+      report.reason === 'different_destination' ||
+      report.reason === 'non_product_link' ||
+      report.reason === 'problematic_product'
+    ) {
       logRows.push({ report_id: report.id, action: 'information_changed', detail: { previous, next } });
       if (report.status === 'issue') {
         await supabaseAdmin
@@ -90,13 +97,13 @@ export async function GET(request: Request, context: RouteContext) {
     const [multiAds, postAd] = await Promise.all([
       base.supabaseAdmin
         .from('blog_ads')
-        .select('id, product_name, thumbnail_image, link_url, sort_order')
+        .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
         .eq('post_id', base.post.id)
         .is('deleted_at', null)
         .order('sort_order'),
       base.supabaseAdmin
         .from('blog_post_ads')
-        .select('id, ad_type, product_name, sponsor_name, thumbnail_image, link_url')
+        .select('id, ad_type, product_name, sponsor_name, shop_name, thumbnail_image, link_url')
         .eq('post_id', base.post.id)
         .is('deleted_at', null)
         .maybeSingle(),
@@ -136,6 +143,7 @@ export async function PUT(request: Request, context: RouteContext) {
     const body = (await request.json()) as {
       siteName?: unknown;
       type?: unknown;
+      shopName?: unknown;
       items?: unknown;
       sponsorName?: unknown;
       linkUrl?: unknown;
@@ -145,6 +153,7 @@ export async function PUT(request: Request, context: RouteContext) {
     const type =
       body.type === 'advertisement' || body.type === 'sponsorship' || body.type === 'none' ? body.type : null;
     if (!type) return Response.json({ error: '광고 유형이 유효하지 않습니다.' }, { status: 400 });
+    const shopName = normalizeText(typeof body.shopName === 'string' ? body.shopName : '');
 
     const isSubscriptionSeries = await isSubscriptionSeriesPost({ siteId: base.siteId, seriesId: base.post.series_id });
     const now = new Date().toISOString();
@@ -213,10 +222,11 @@ export async function PUT(request: Request, context: RouteContext) {
           targetId: oldPostAd.data.id,
           previous: {
             name: oldPostAd.data.sponsor_name ?? oldPostAd.data.product_name ?? '',
+            shopName: oldPostAd.data.shop_name,
             thumbnailImage: oldPostAd.data.thumbnail_image,
             linkUrl: oldPostAd.data.link_url,
           },
-          next: { name: sponsorName, thumbnailImage: null, linkUrl },
+          next: { name: sponsorName, shopName: null, thumbnailImage: null, linkUrl },
         });
       }
       const nextPostAd = {
@@ -224,6 +234,7 @@ export async function PUT(request: Request, context: RouteContext) {
         post_id: base.post.id,
         ad_type: 'sponsorship' satisfies BlogPostAdType,
         product_name: null,
+        shop_name: null,
         sponsor_name: sponsorName,
         thumbnail_image: null,
         link_url: linkUrl,
@@ -252,6 +263,8 @@ export async function PUT(request: Request, context: RouteContext) {
       );
     }
     const items = body.items.map((item) => normalizeItem(item as AdItem));
+    if (!shopName || shopName.length > 50)
+      return Response.json({ error: '쇼핑몰명은 50자 이하로 입력해주세요.' }, { status: 400 });
     if (
       items.some(
         (item) =>
@@ -285,6 +298,7 @@ export async function PUT(request: Request, context: RouteContext) {
           site_id: base.siteId,
           post_id: base.post.id,
           product_name: item.productName,
+          shop_name: shopName,
           thumbnail_image: item.thumbnailImage,
           link_url: item.linkUrl,
           sort_order: sortOrder,
@@ -309,10 +323,11 @@ export async function PUT(request: Request, context: RouteContext) {
         targetId: oldPostAd.data.id,
         previous: {
           name: oldPostAd.data.sponsor_name ?? oldPostAd.data.product_name ?? '',
+          shopName: oldPostAd.data.shop_name,
           thumbnailImage: oldPostAd.data.thumbnail_image,
           linkUrl: oldPostAd.data.link_url,
         },
-        next: { name: item.productName, thumbnailImage: item.thumbnailImage, linkUrl: item.linkUrl },
+        next: { name: item.productName, shopName, thumbnailImage: item.thumbnailImage, linkUrl: item.linkUrl },
       });
     }
     const nextPostAd = {
@@ -320,6 +335,7 @@ export async function PUT(request: Request, context: RouteContext) {
       post_id: base.post.id,
       ad_type: 'advertisement' satisfies BlogPostAdType,
       product_name: item.productName,
+      shop_name: shopName,
       sponsor_name: null,
       thumbnail_image: item.thumbnailImage,
       link_url: item.linkUrl,

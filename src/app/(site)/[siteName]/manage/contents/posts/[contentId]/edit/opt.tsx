@@ -290,11 +290,18 @@ export default function Opt({
       .then(async (response) => {
         const data = (await response.json()) as {
           isSubscriptionSeries?: boolean;
-          multiAds?: Array<{ product_name: string; thumbnail_image: string; thumbnail_url: string; link_url: string }>;
+          multiAds?: Array<{
+            product_name: string;
+            shop_name: string | null;
+            thumbnail_image: string;
+            thumbnail_url: string;
+            link_url: string;
+          }>;
           postAd?:
             | {
                 ad_type: 'advertisement';
                 product_name: string;
+                shop_name: string | null;
                 sponsor_name: null;
                 thumbnail_image: string;
                 thumbnail_url: string;
@@ -303,6 +310,7 @@ export default function Opt({
             | {
                 ad_type: 'sponsorship';
                 product_name: null;
+                shop_name: null;
                 sponsor_name: string;
                 thumbnail_image: null;
                 thumbnail_url: null;
@@ -316,6 +324,7 @@ export default function Opt({
         if (data.postAd?.ad_type === 'sponsorship')
           setPromotion({
             type: 'sponsorship',
+            shopName: '',
             sponsorName: data.postAd.sponsor_name ?? '',
             linkUrl: data.postAd.link_url,
             item: emptyBlogPromotion().item,
@@ -324,6 +333,7 @@ export default function Opt({
         else if (data.postAd?.ad_type === 'advertisement')
           setPromotion({
             type: 'advertisement',
+            shopName: data.postAd.shop_name ?? '',
             sponsorName: '',
             linkUrl: '',
             item: {
@@ -337,6 +347,7 @@ export default function Opt({
         else if (data.isSubscriptionSeries && data.multiAds?.length)
           setPromotion({
             type: 'advertisement',
+            shopName: data.multiAds[0]?.shop_name ?? '',
             sponsorName: '',
             linkUrl: '',
             item: emptyBlogPromotion().item,
