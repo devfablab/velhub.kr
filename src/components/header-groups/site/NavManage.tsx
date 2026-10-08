@@ -86,7 +86,7 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
     },
     ...(isBlogOwner ? [{ label: '광고 관리', href: `/${siteName}/manage/ads`, startsWith: true }] : []),
     ...(showAllManageMenus && siteType === 'blog' && blogType !== 'team'
-      ? [{ label: '커뮤니티 관리', href: `/${siteName}/manage/community-on-blog`, startsWith: true }]
+      ? [{ label: '커뮤니티 관리', href: `/${siteName}/manage/community-on-blog/posts`, startsWith: true }]
       : []),
     ...(showAllManageMenus && siteType === 'community'
       ? [

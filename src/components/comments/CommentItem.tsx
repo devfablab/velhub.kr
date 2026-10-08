@@ -71,6 +71,7 @@ export type CommentData = {
   blinded_message: string | null;
   author_name: string;
   author_avatar_url: string;
+  author_membership_badge_url?: string | null;
   author_level: AuthorLevel | null;
   author_role: AuthorRole;
   author_manage_roles: AuthorManageRole[];
@@ -311,6 +312,13 @@ export default function CommentItem({
               comment.author_name
             )}
           </cite>
+          {comment.author_membership_badge_url ? (
+            <img
+              className={styles['membership-fan-badge']}
+              src={comment.author_membership_badge_url}
+              alt="멤버십팬 배지"
+            />
+          ) : null}
 
           {roleLabel ? (
             <span className={styles['author-manager']}>

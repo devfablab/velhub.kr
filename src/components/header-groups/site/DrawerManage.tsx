@@ -102,7 +102,7 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
 
       {showAllManageMenus && siteType === 'blog' && blogType !== 'team' ? (
         <MenuItem onClick={onClose}>
-          <Anchor href={`/${siteName}/manage/community-on-blog`}>
+          <Anchor href={`/${siteName}/manage/community-on-blog/posts`}>
             <InterestsRoundedIcon fontSize="small" />
             <span>커뮤니티 관리</span>
           </Anchor>

@@ -2,6 +2,7 @@ import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommu
 import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string }> };
@@ -71,6 +72,11 @@ export async function GET(_request: Request, context: RouteContext) {
       ? await supabaseAdmin.from('stigmas').select('id, user_name, avatar').in('id', userIds)
       : { data: [], error: null };
     if (authorsResult.error) throw new Error('댓글을 불러오지 못했습니다.');
+    const badgeByUser = await getBlogSubscriptionBadgeUrls({
+      supabaseAdmin,
+      siteId: feature.siteId,
+      subscriberIds: userIds,
+    });
     const authors = new Map(
       (authorsResult.data ?? []).map((author) => [
         author.id,
@@ -102,6 +108,7 @@ export async function GET(_request: Request, context: RouteContext) {
         is_pinned: false,
         author_name: authors.get(comment.user_id)?.name ?? '알 수 없음',
         author_avatar_url: authors.get(comment.user_id)?.avatarUrl ?? '',
+        author_membership_badge_url: badgeByUser.get(comment.user_id) ?? null,
         author_level: null,
         author_role: 'member' as const,
         author_manage_roles: [],

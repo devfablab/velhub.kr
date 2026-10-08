@@ -26,6 +26,7 @@ type BlogCommunityPost = {
   editedAt: string | null;
   authorName: string;
   authorAvatarUrl: string | null;
+  authorBadgeUrl: string | null;
   isAuthor: boolean;
   canDelete: boolean;
   commentCount: number;
@@ -142,6 +143,12 @@ export default function Opt({
                             <cite>
                               <span>{post.authorName}</span>
                             </cite>
+
+                            {post.authorBadgeUrl ? (
+                              <em>
+                                <img src={post.authorBadgeUrl} alt="멤버십팬 배지" />
+                              </em>
+                            ) : null}
                           </div>
                           <div className={styles.datetime}>
                             <span aria-label="게시일">{formatDateTimeDetail(post.createdAt)}</span>

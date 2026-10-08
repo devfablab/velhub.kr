@@ -12,7 +12,7 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import { Avatar, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import CommentList from '@/components/comments/CommentList';
+import CommentList, { type CommentsResponse } from '@/components/comments/CommentList';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ContentWithInlineLinks from '@/components/service/blog-community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
@@ -29,6 +29,7 @@ export type BlogCommunityPostResponse = {
     editedAt: string | null;
     authorName: string;
     authorAvatarUrl: string | null;
+    authorBadgeUrl: string | null;
     isAuthor: boolean;
     isOwner: boolean;
     images: string[];
@@ -41,9 +42,11 @@ export type BlogCommunityPostResponse = {
 export default function Opt({
   initialData,
   initialError,
+  initialCommentsData,
 }: {
   initialData: BlogCommunityPostResponse | null;
   initialError: string;
+  initialCommentsData: CommentsResponse | null;
 }) {
   const params = useParams();
   const router = useRouter();
@@ -127,6 +130,15 @@ export default function Opt({
                   <div className={styles.info}>
                     <div className={styles.name}>
                       <cite>{post.authorName}</cite>
+                      {post.authorBadgeUrl ? (
+                        <em>
+                          <img
+                            className={styles['membership-fan-badge']}
+                            src={post.authorBadgeUrl}
+                            alt="멤버십팬 배지"
+                          />
+                        </em>
+                      ) : null}
                     </div>
                     <div className={styles.datetime}>
                       <span aria-label="게시일">{formatDateTimeDetail(post.createdAt)}</span>
@@ -188,6 +200,7 @@ export default function Opt({
             includeSiteNameInApiPath={false}
             reportTargetType="blog_community_comment"
             isCommentLikeEnabled={false}
+            initialData={initialCommentsData}
           />
           {isMobile ? null : (
             <div className={styles['top-buttons']}>

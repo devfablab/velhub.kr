@@ -6,6 +6,7 @@ import {
 } from '@/lib/blogCommunity/access';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
@@ -44,7 +45,7 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
   const posts = postsResult.data ?? [];
   const postIds = posts.map((post) => post.id);
   const userIds = [...new Set(posts.map((post) => post.user_id))];
-  const [imagesResult, stigmasResult, commentsResult] = await Promise.all([
+  const [imagesResult, stigmasResult, commentsResult, subscriptionsResult, badgesResult] = await Promise.all([
     postIds.length
       ? supabaseAdmin
           .from('blog_community_post_images')
@@ -58,9 +59,20 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
     postIds.length
       ? supabaseAdmin.from('blog_community_comments').select('post_id, is_deleted').in('post_id', postIds)
       : Promise.resolve({ data: [], error: null }),
+    userIds.length
+      ? supabaseAdmin
+          .from('subscriptions')
+          .select('subscriber_user_id, badge_image_url, badge_months')
+          .eq('subscription_type', 'subscription_site')
+          .eq('target_type', 'site')
+          .eq('target_id', siteId)
+          .in('subscriber_user_id', userIds)
+          .order('created_at', { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    supabaseAdmin.from('blog_subscription_badges').select('subscription_months,image_url').eq('site_id', siteId).order('subscription_months'),
   ]);
 
-  if (imagesResult.error || stigmasResult.error || commentsResult.error)
+  if (imagesResult.error || stigmasResult.error || commentsResult.error || subscriptionsResult.error || badgesResult.error)
     throw new Error('커뮤니티 글을 불러오지 못했습니다.');
   const imageMap = new Map<string, string[]>();
   for (const image of imagesResult.data ?? []) {
@@ -79,6 +91,23 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
     if (comment.is_deleted) continue;
     commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) ?? 0) + 1);
   }
+  const badgeMap = new Map<string, string>();
+  for (const subscription of subscriptionsResult.data ?? []) {
+    if (badgeMap.has(subscription.subscriber_user_id)) continue;
+    if (
+      await hasValidBlogSubscription({
+        supabaseAdmin,
+        subscriberId: subscription.subscriber_user_id,
+        siteId,
+      })
+    )
+      badgeMap.set(
+        subscription.subscriber_user_id,
+        subscription.badge_image_url ??
+          (badgesResult.data ?? []).filter((badge) => badge.subscription_months <= subscription.badge_months).at(-1)?.image_url ??
+          (badgesResult.data ?? [])[0]?.image_url ?? '',
+      );
+  }
 
   return {
     posts: posts.map((post) => ({
@@ -88,6 +117,7 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
       editedAt: post.edited_at,
       authorName: authorMap.get(post.user_id)?.name ?? '알 수 없음',
       authorAvatarUrl: authorMap.get(post.user_id)?.avatarUrl ?? null,
+      authorBadgeUrl: badgeMap.get(post.user_id) ?? null,
       isAuthor: stigmaId === post.user_id,
       canDelete: isOwner || stigmaId === post.user_id,
       commentCount: commentCountMap.get(post.id) ?? 0,
@@ -242,7 +272,10 @@ export async function POST(request: Request, context: RouteContext) {
         .select('id, slug, created_at')
         .single();
     }
-    if (postResult.error || !postResult.data) throw new Error('글을 게시하지 못했습니다.');
+    if (postResult.error || !postResult.data) {
+      const detail = postResult.error?.message || '알 수 없는 오류';
+      throw new Error(process.env.NODE_ENV === 'development' ? `글을 게시하지 못했습니다. (${detail})` : '글을 게시하지 못했습니다.');
+    }
 
     const uploadedImages: { post_id: string; image_url: string; sort_order: number }[] = [];
     let imageUploadError = false;

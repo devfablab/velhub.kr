@@ -1,6 +1,7 @@
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
 import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -40,7 +41,7 @@ export async function GET(_request: Request, context: RouteContext) {
     if (!postResult.data || postResult.data.is_deleted)
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
 
-    const [imagesResult, authorResult, previousResult, nextResult] = await Promise.all([
+    const [imagesResult, authorResult, previousResult, nextResult, badgeByUser] = await Promise.all([
       supabaseAdmin
         .from('blog_community_post_images')
         .select('image_url, sort_order')
@@ -65,6 +66,11 @@ export async function GET(_request: Request, context: RouteContext) {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
+      getBlogSubscriptionBadgeUrls({
+        supabaseAdmin,
+        siteId: feature.siteId,
+        subscriberIds: [postResult.data.user_id],
+      }),
     ]);
     if (imagesResult.error || authorResult.error || previousResult.error || nextResult.error)
       throw new Error('글을 불러오지 못했습니다.');
@@ -76,6 +82,7 @@ export async function GET(_request: Request, context: RouteContext) {
         editedAt: postResult.data.edited_at,
         authorName: getDisplayName(authorResult.data?.user_name),
         authorAvatarUrl: authorResult.data?.avatar ?? null,
+        authorBadgeUrl: badgeByUser.get(postResult.data.user_id) ?? null,
         isAuthor: feature.stigmaId === postResult.data.user_id,
         isOwner: feature.isOwner,
         images: (imagesResult.data ?? []).map((image) => image.image_url),

@@ -178,8 +178,9 @@ export default function CommentList({
   }, [apiBasePath, includeSiteNameInApiPath, siteName]);
 
   useEffect(() => {
+    if (initialData) return;
     void loadComments();
-  }, [loadComments]);
+  }, [initialData, loadComments]);
 
   async function createComment(content: string, parentId: string | null) {
     try {

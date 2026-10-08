@@ -2,6 +2,7 @@ import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/re
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -77,6 +78,7 @@ type CommentItem = {
   is_pinned: boolean;
   author_name: string;
   author_avatar_url: string;
+  author_membership_badge_url: string | null;
   author_level: AuthorLevel | null;
   author_role: AuthorRole;
   author_manage_roles: AuthorManageRole[];
@@ -197,7 +199,12 @@ function isManageRole(value: string): value is AuthorManageRole['role'] {
   );
 }
 
-async function getUserDisplayInfo(siteId: string, boardId: string, userId: string | null | undefined) {
+async function getUserDisplayInfo(
+  siteId: string,
+  boardId: string,
+  userId: string | null | undefined,
+  isBlog: boolean,
+) {
   const normalizedUserId = normalizeText(userId);
 
   if (!normalizedUserId) {
@@ -208,6 +215,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
       role: 'member' as AuthorRole,
       manageRoles: [] as AuthorManageRole[],
       manageIcon: null as AuthorManageIcon | null,
+      membershipBadgeUrl: null as string | null,
     };
   }
 
@@ -354,6 +362,10 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     }
   }
 
+  const badgeByUser = isBlog
+    ? await getBlogSubscriptionBadgeUrls({ supabaseAdmin, siteId, subscriberIds: [stigmaId || normalizedUserId] })
+    : new Map<string, string>();
+
   return {
     name,
     avatarUrl,
@@ -361,6 +373,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     role,
     manageRoles,
     manageIcon,
+    membershipBadgeUrl: badgeByUser.get(stigmaId || normalizedUserId) ?? null,
   };
 }
 
@@ -536,6 +549,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
 async function insertFirstComeDrawIfNeeded({
   siteId,
   boardId,
+  isBlog,
   postId,
   commentId,
   userId,
@@ -544,6 +558,7 @@ async function insertFirstComeDrawIfNeeded({
 }: {
   siteId: string;
   boardId: string;
+  isBlog: boolean;
   postId: string;
   commentId: string;
   userId: string;
@@ -606,6 +621,7 @@ async function buildCommentItem({
   authorMap,
   siteId,
   boardId,
+  isBlog,
   postAuthorId,
   stigmaId,
   canManageComment,
@@ -619,6 +635,7 @@ async function buildCommentItem({
   authorMap: Map<string, Awaited<ReturnType<typeof getUserDisplayInfo>>>;
   siteId: string;
   boardId: string;
+  isBlog: boolean;
   postAuthorId: string;
   stigmaId: string | null;
   canManageComment: boolean;
@@ -630,7 +647,7 @@ async function buildCommentItem({
   let author = authorMap.get(comment.user_id);
 
   if (!author) {
-    author = await getUserDisplayInfo(siteId, boardId, comment.user_id);
+    author = await getUserDisplayInfo(siteId, boardId, comment.user_id, isBlog);
     authorMap.set(comment.user_id, author);
   }
 
@@ -643,7 +660,7 @@ async function buildCommentItem({
       let replyToAuthor = authorMap.get(replyTargetComment.user_id);
 
       if (!replyToAuthor) {
-        replyToAuthor = await getUserDisplayInfo(siteId, boardId, replyTargetComment.user_id);
+        replyToAuthor = await getUserDisplayInfo(siteId, boardId, replyTargetComment.user_id, isBlog);
         authorMap.set(replyTargetComment.user_id, replyToAuthor);
       }
 
@@ -679,6 +696,7 @@ async function buildCommentItem({
     is_pinned: comment.is_pinned === true,
     author_name: author.name,
     author_avatar_url: author.avatarUrl,
+    author_membership_badge_url: author.membershipBadgeUrl,
     author_level: author.level,
     author_role: author.role,
     author_manage_roles: author.manageRoles,
@@ -873,6 +891,7 @@ export async function GET(request: Request, context: RouteContext) {
           authorMap,
           siteId: target.data.siteId,
           boardId: target.data.boardId,
+          isBlog: target.data.siteType === 'blog',
           postAuthorId: target.data.postAuthorId,
           stigmaId: session.stigmaId ?? null,
           canManageComment,
@@ -1052,6 +1071,7 @@ export async function POST(request: Request, context: RouteContext) {
     await insertFirstComeDrawIfNeeded({
       siteId: target.data.siteId,
       boardId: target.data.boardId,
+      isBlog: target.data.siteType === 'blog',
       postId: target.data.postId,
       commentId: insertResult.data.id,
       userId: session.stigmaId,
@@ -1114,6 +1134,7 @@ export async function POST(request: Request, context: RouteContext) {
       authorMap,
       siteId: target.data.siteId,
       boardId: target.data.boardId,
+      isBlog: target.data.siteType === 'blog',
       postAuthorId: target.data.postAuthorId,
       stigmaId: session.stigmaId,
       canManageComment,

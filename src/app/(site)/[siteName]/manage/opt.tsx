@@ -88,7 +88,7 @@ export default function Opt({
       : []),
     ...(showAllManageMenus
       ? [
-          ...(isPersonalBlog ? [{ href: `/${siteName}/manage/community-on-blog`, label: '커뮤니티 관리' }] : []),
+          ...(isPersonalBlog ? [{ href: `/${siteName}/manage/community-on-blog/posts`, label: '커뮤니티 관리' }] : []),
           { href: `/${siteName}/manage/reports`, label: '신고 관리' },
           {
             href:

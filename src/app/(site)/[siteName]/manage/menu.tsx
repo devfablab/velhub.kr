@@ -53,7 +53,17 @@ type ContainerProps = {
   pageTitle?: string;
   pageBack?: string;
   pageEnterance?: boolean;
-  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team' | 'payments' | 'stats' | 'reports';
+  menu?:
+    | 'contents'
+    | 'design'
+    | 'join'
+    | 'members'
+    | 'settings'
+    | 'team'
+    | 'payments'
+    | 'stats'
+    | 'reports'
+    | 'community';
   children: React.ReactNode;
 };
 
@@ -64,31 +74,6 @@ type TabMenuItem = {
 };
 
 type SiteType = 'blog' | 'community';
-
-type HeaderResponse = {
-  siteName: string | null;
-  siteLabel: string | null;
-  siteType: SiteType | null;
-  themeType: string;
-  profilePictureUrl: string | null;
-  profileLogoUrl: string | null;
-  blogFontSettings: BlogFontSettings | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  nickname: string | null;
-  isApproval: boolean | null;
-  invite: boolean;
-  join: boolean;
-  sessionCase?: string | null;
-  isAuthor?: boolean;
-  creatorHandleName?: string | null;
-  userHandleName?: string | null;
-  hasAffettoMyPosts?: boolean;
-};
 
 type UserProfile = {
   name: string | null;
@@ -612,6 +597,13 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       return [
         { href: `/${siteName}/manage/contents/posts`, label: '글', startsWith: true },
         { href: `/${siteName}/manage/contents/pages`, label: '페이지', startsWith: true },
+      ];
+    }
+
+    if (menu === 'community') {
+      return [
+        { href: `/${siteName}/manage/community-on-blog/posts`, label: '커뮤니티 관리', startsWith: false },
+        { href: `/${siteName}/manage/community-on-blog/badge`, label: '멤버십팬 배지', startsWith: true },
       ];
     }
 

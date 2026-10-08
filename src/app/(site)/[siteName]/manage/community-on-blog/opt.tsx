@@ -94,7 +94,7 @@ export default function Opt({
               : '';
 
   return (
-    <Container pageTitle="커뮤니티 관리" pageBack={`/${siteName}/manage`}>
+    <Container pageTitle="커뮤니티 관리" pageBack={`/${siteName}/manage`} menu="community">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           {unavailableMessage ? (

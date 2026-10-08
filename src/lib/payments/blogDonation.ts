@@ -13,6 +13,75 @@ type BlogSubscriptionRow = {
 
 type SeriesSubscriptionRow = BlogSubscriptionRow;
 
+type BlogSubscriptionBadgeRow = {
+  subscriber_user_id: string;
+  badge_months: number | null;
+  badge_image_url: string | null;
+};
+
+/**
+ * 현재 유효한 블로그 구독자에게 표시할 멤버십팬 배지를 구한다.
+ * 저장된 배지 URL이 아직 갱신되지 않은 구독 이력도 현재 설정으로 보완한다.
+ */
+export async function getBlogSubscriptionBadgeUrls({
+  supabaseAdmin,
+  siteId,
+  subscriberIds,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  subscriberIds: string[];
+}) {
+  const ids = [...new Set(subscriberIds.filter(Boolean))];
+  const badgeBySubscriberId = new Map<string, string>();
+
+  if (!ids.length) return badgeBySubscriberId;
+
+  const [subscriptionsResult, badgesResult] = await Promise.all([
+    supabaseAdmin
+      .from('subscriptions')
+      .select('subscriber_user_id, badge_months, badge_image_url')
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
+      .eq('target_id', siteId)
+      .in('subscriber_user_id', ids)
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('blog_subscription_badges')
+      .select('subscription_months, image_url')
+      .eq('site_id', siteId)
+      .order('subscription_months'),
+  ]);
+
+  if (subscriptionsResult.error || badgesResult.error) {
+    throw new Error('멤버십팬 배지를 불러오지 못했습니다.');
+  }
+
+  const badges = badgesResult.data ?? [];
+  for (const subscription of (subscriptionsResult.data ?? []) as BlogSubscriptionBadgeRow[]) {
+    if (badgeBySubscriberId.has(subscription.subscriber_user_id)) continue;
+
+    if (
+      !(await hasValidBlogSubscription({
+        supabaseAdmin,
+        subscriberId: subscription.subscriber_user_id,
+        siteId,
+      }))
+    ) {
+      continue;
+    }
+
+    const savedUrl = subscription.badge_image_url?.trim();
+    const monthCount = Math.max(0, Number(subscription.badge_months ?? 0));
+    const configuredUrl = badges.filter((badge) => badge.subscription_months <= monthCount).at(-1)?.image_url;
+    const badgeUrl = savedUrl || configuredUrl || badges[0]?.image_url;
+
+    if (badgeUrl) badgeBySubscriberId.set(subscription.subscriber_user_id, badgeUrl);
+  }
+
+  return badgeBySubscriberId;
+}
+
 export async function hasValidBlogSubscription({
   supabaseAdmin,
   subscriberId,
