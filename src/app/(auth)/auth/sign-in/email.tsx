@@ -518,7 +518,8 @@ export default function EmailSignIn() {
             onChange={handleEmailChange}
             onInvalid={(event) => {
               event.preventDefault();
-              const input = event.currentTarget as HTMLInputElement;
+              const input = event.target;
+              if (!(input instanceof HTMLInputElement)) return;
               showFieldValidationError(
                 'email',
                 input.validity.valueMissing ? '이메일을 입력해 주세요.' : '올바른 이메일 형식으로 입력해 주세요.',
@@ -539,7 +540,8 @@ export default function EmailSignIn() {
             onChange={handlePasswordChange}
             onInvalid={(event) => {
               event.preventDefault();
-              showFieldValidationError('password', '비밀번호를 입력해 주세요.');
+              if (event.target instanceof HTMLInputElement)
+                showFieldValidationError('password', '비밀번호를 입력해 주세요.');
             }}
             error={Boolean(fieldErrors.password)}
             helperText={fieldErrors.password}
