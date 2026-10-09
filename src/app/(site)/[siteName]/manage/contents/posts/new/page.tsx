@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 import type { CategoryListResponse, SeriesListResponse, StatusResponse } from './opt';
+import type { BlogPromotionStatus } from '@/components/service/blog/BlogPostPromotionFields';
 import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = {
@@ -33,10 +34,11 @@ export default async function Page(context: RouteContext) {
   );
   let categories: CategoryListResponse | null = null;
   let series: SeriesListResponse | null = null;
+  let promotionStatus: BlogPromotionStatus | null = null;
   let initialError = status.error;
 
   if (status.data?.hasBoard && status.data.boardName) {
-    const [categoryResult, seriesResult] = await Promise.all([
+    const [categoryResult, seriesResult, promotionStatusResult] = await Promise.all([
       getSiteApiData<CategoryListResponse>(
         `/api/boards/${status.data.boardName}/category?siteName=${normalizedSiteName}`,
         '카테고리 목록을 불러오지 못했습니다.',
@@ -45,10 +47,15 @@ export default async function Page(context: RouteContext) {
         `/api/boards/${status.data.boardName}/series?siteName=${normalizedSiteName}`,
         '연재 목록을 불러오지 못했습니다.',
       ),
+      getSiteApiData<BlogPromotionStatus>(
+        `/api/manage/blog-ads?siteName=${normalizedSiteName}`,
+        '광고 사용 상태를 불러오지 못했습니다.',
+      ),
     ]);
     categories = categoryResult.data;
     series = seriesResult.data;
-    initialError ||= categoryResult.error || seriesResult.error;
+    promotionStatus = promotionStatusResult.data;
+    initialError ||= categoryResult.error || seriesResult.error || promotionStatusResult.error;
   }
 
   return (
@@ -56,6 +63,7 @@ export default async function Page(context: RouteContext) {
       initialStatus={status.data}
       initialCategories={categories}
       initialSeries={series}
+      initialPromotionStatus={promotionStatus}
       initialError={initialError}
     />
   );

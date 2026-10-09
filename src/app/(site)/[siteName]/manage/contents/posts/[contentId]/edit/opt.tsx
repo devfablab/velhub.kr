@@ -91,6 +91,95 @@ type EditResponse = {
   error?: string;
 };
 
+export type PromotionResponse = {
+  isEnabled: boolean;
+  isEligible: boolean;
+  isIdentityVerified: boolean;
+  isAtLeastAge14: boolean;
+  isSubscriptionSeries: boolean;
+  multiAds: Array<{
+    id: string;
+    product_name: string;
+    shop_name: string | null;
+    thumbnail_image: string;
+    thumbnail_url: string;
+    link_url: string;
+    report: { status: 'pending' | 'issue'; reasonDescription: string; isImmediatelyStopped: boolean } | null;
+  }>;
+  postAd:
+    | {
+        id: string;
+        ad_type: 'advertisement';
+        product_name: string;
+        shop_name: string | null;
+        sponsor_name: null;
+        thumbnail_image: string;
+        thumbnail_url: string;
+        link_url: string;
+        report: { status: 'pending' | 'issue'; reasonDescription: string; isImmediatelyStopped: boolean } | null;
+      }
+    | {
+        id: string;
+        ad_type: 'sponsorship';
+        product_name: null;
+        shop_name: null;
+        sponsor_name: string;
+        thumbnail_image: null;
+        thumbnail_url: null;
+        link_url: string;
+        report: { status: 'pending' | 'issue'; reasonDescription: string; isImmediatelyStopped: boolean } | null;
+      }
+    | null;
+};
+
+function promotionFromResponse(data?: PromotionResponse | null) {
+  if (!data) return emptyBlogPromotion();
+  if (data.postAd?.ad_type === 'sponsorship')
+    return {
+      type: 'sponsorship' as const,
+      shopName: '',
+      sponsorName: data.postAd.sponsor_name ?? '',
+      linkUrl: data.postAd.link_url,
+      item: emptyBlogPromotion().item,
+      items: emptyBlogPromotion().items,
+      report: data.postAd.report,
+    };
+  if (data.postAd?.ad_type === 'advertisement')
+    return {
+      type: 'advertisement' as const,
+      shopName: data.postAd.shop_name ?? '',
+      sponsorName: '',
+      linkUrl: '',
+      item: {
+        id: data.postAd.id,
+        productName: data.postAd.product_name,
+        thumbnailImage: data.postAd.thumbnail_image,
+        thumbnailUrl: data.postAd.thumbnail_url,
+        linkUrl: data.postAd.link_url,
+      },
+      items: emptyBlogPromotion().items,
+      report: data.postAd.report,
+    };
+  if (data.isSubscriptionSeries && data.multiAds.length)
+    return {
+      type: 'advertisement' as const,
+      shopName: data.multiAds[0]?.shop_name ?? '',
+      sponsorName: '',
+      linkUrl: '',
+      item: emptyBlogPromotion().item,
+      items: data.multiAds.map((item) => ({
+        id: item.id,
+        productName: item.product_name,
+        thumbnailImage: item.thumbnail_image,
+        thumbnailUrl: item.thumbnail_url,
+        linkUrl: item.link_url,
+        report: item.report,
+      })),
+      report: null,
+    };
+  return emptyBlogPromotion();
+}
+
 type UploadResponse = {
   ok?: boolean;
   path?: string;
@@ -213,12 +302,14 @@ export default function Opt({
   initialContent,
   initialCategory,
   initialSeries,
+  initialPromotion,
   initialError,
 }: {
   initialStatus?: StatusResponse | null;
   initialContent?: ContentResponse | null;
   initialCategory?: CategoryListResponse | null;
   initialSeries?: SeriesListResponse | null;
+  initialPromotion?: PromotionResponse | null;
   initialError?: string | null;
 }) {
   const router = useRouter();
@@ -246,9 +337,9 @@ export default function Opt({
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(
     initialContent?.content?.thumbnail_height ?? null,
   );
-  const [promotion, setPromotion] = useState<BlogPromotionValue>(emptyBlogPromotion);
-  const [promotionLoaded, setPromotionLoaded] = useState(false);
-  const [promotionSubscription, setPromotionSubscription] = useState(false);
+  const [promotion, setPromotion] = useState<BlogPromotionValue>(() => promotionFromResponse(initialPromotion));
+  const [promotionLoaded] = useState(Boolean(initialPromotion));
+  const [promotionSubscription] = useState(Boolean(initialPromotion?.isSubscriptionSeries));
   const [hasBoard, setHasBoard] = useState(initialStatus?.hasBoard || false);
   const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
   const initialCategories = [...(initialCategory?.categories ?? [])];
@@ -281,97 +372,6 @@ export default function Opt({
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
   }, [editorBlobImages]);
-
-  useEffect(() => {
-    let active = true;
-    fetch(
-      `/api/manage/contents/blog-posts/${encodeURIComponent(contentId)}/ad?siteName=${encodeURIComponent(siteName)}`,
-    )
-      .then(async (response) => {
-        const data = (await response.json()) as {
-          isSubscriptionSeries?: boolean;
-          multiAds?: Array<{
-            product_name: string;
-            shop_name: string | null;
-            thumbnail_image: string;
-            thumbnail_url: string;
-            link_url: string;
-          }>;
-          postAd?:
-            | {
-                ad_type: 'advertisement';
-                product_name: string;
-                shop_name: string | null;
-                sponsor_name: null;
-                thumbnail_image: string;
-                thumbnail_url: string;
-                link_url: string;
-              }
-            | {
-                ad_type: 'sponsorship';
-                product_name: null;
-                shop_name: null;
-                sponsor_name: string;
-                thumbnail_image: null;
-                thumbnail_url: null;
-                link_url: string;
-              }
-            | null;
-        };
-        if (!response.ok) throw new Error('글 광고 정보를 불러오지 못했습니다.');
-        if (!active) return;
-        setPromotionSubscription(Boolean(data.isSubscriptionSeries));
-        if (data.postAd?.ad_type === 'sponsorship')
-          setPromotion({
-            type: 'sponsorship',
-            shopName: '',
-            sponsorName: data.postAd.sponsor_name ?? '',
-            linkUrl: data.postAd.link_url,
-            item: emptyBlogPromotion().item,
-            items: emptyBlogPromotion().items,
-          });
-        else if (data.postAd?.ad_type === 'advertisement')
-          setPromotion({
-            type: 'advertisement',
-            shopName: data.postAd.shop_name ?? '',
-            sponsorName: '',
-            linkUrl: '',
-            item: {
-              productName: data.postAd.product_name,
-              thumbnailImage: data.postAd.thumbnail_image,
-              thumbnailUrl: data.postAd.thumbnail_url,
-              linkUrl: data.postAd.link_url,
-            },
-            items: emptyBlogPromotion().items,
-          });
-        else if (data.isSubscriptionSeries && data.multiAds?.length)
-          setPromotion({
-            type: 'advertisement',
-            shopName: data.multiAds[0]?.shop_name ?? '',
-            sponsorName: '',
-            linkUrl: '',
-            item: emptyBlogPromotion().item,
-            items: data.multiAds.map((item) => ({
-              productName: item.product_name,
-              thumbnailImage: item.thumbnail_image,
-              thumbnailUrl: item.thumbnail_url,
-              linkUrl: item.link_url,
-            })),
-          });
-        setPromotionLoaded(true);
-      })
-      .catch(
-        (error) =>
-          active &&
-          setFormErrorDialog({
-            title: null,
-            messages: [error instanceof Error ? error.message : '글 광고 정보를 불러오지 못했습니다.'],
-          }),
-      );
-    return () => {
-      active = false;
-    };
-  }, [contentId, siteName]);
 
   useEffect(() => {
     return () => {
@@ -820,8 +820,19 @@ export default function Opt({
               <BlogPostPromotionFields
                 siteName={siteName}
                 isSubscriptionSeries={promotionSubscription}
+                initialStatus={
+                  initialPromotion
+                    ? {
+                        isEnabled: initialPromotion.isEnabled,
+                        isEligible: initialPromotion.isEligible,
+                        isIdentityVerified: initialPromotion.isIdentityVerified,
+                        isAtLeastAge14: initialPromotion.isAtLeastAge14,
+                      }
+                    : null
+                }
                 classes={{
                   adProductItem: styles['ad-product-item'],
+                  adProductItemError: styles['ad-product-item-error'],
                   adProductThumbnail: styles['ad-product-thumbnail'],
                   adProductFields: styles['ad-product-fields'],
                   adProductDelete: styles['ad-product-delete'],

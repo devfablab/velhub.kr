@@ -30,6 +30,7 @@ import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import BlogPostPromotionFields, {
   emptyBlogPromotion,
+  type BlogPromotionStatus,
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
 import Container from '../../../menu';
@@ -204,11 +205,13 @@ export default function Opt({
   initialStatus,
   initialCategories,
   initialSeries,
+  initialPromotionStatus,
   initialError,
 }: {
   initialStatus: StatusResponse | null;
   initialCategories: CategoryListResponse | null;
   initialSeries: SeriesListResponse | null;
+  initialPromotionStatus: BlogPromotionStatus | null;
   initialError: string;
 }) {
   const router = useRouter();
@@ -743,8 +746,10 @@ export default function Opt({
               <BlogPostPromotionFields
                 siteName={siteName}
                 isSubscriptionSeries={isSubscriptionSeries}
+                initialStatus={initialPromotionStatus}
                 classes={{
                   adProductItem: styles['ad-product-item'],
+                  adProductItemError: styles['ad-product-item-error'],
                   adProductThumbnail: styles['ad-product-thumbnail'],
                   adProductFields: styles['ad-product-fields'],
                   adProductDelete: styles['ad-product-delete'],

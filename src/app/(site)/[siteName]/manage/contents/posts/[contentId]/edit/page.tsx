@@ -1,6 +1,12 @@
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
-import type { StatusResponse, ContentResponse, CategoryListResponse, SeriesListResponse } from './opt';
+import type {
+  StatusResponse,
+  ContentResponse,
+  CategoryListResponse,
+  SeriesListResponse,
+  PromotionResponse,
+} from './opt';
 import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 type Props = { params: Promise<{ siteName: string; contentId: string }> };
 export default async function Page({ params }: Props) {
@@ -12,10 +18,11 @@ export default async function Page({ params }: Props) {
   );
   let contentData = null,
     categoryData = null,
-    seriesData = null;
+    seriesData = null,
+    promotionData = null;
   if (statusData.data?.hasBoard && statusData.data?.boardName) {
     const boardName = statusData.data.boardName;
-    [contentData, categoryData, seriesData] = await Promise.all([
+    [contentData, categoryData, seriesData, promotionData] = await Promise.all([
       getSiteApiData<ContentResponse>(
         `/api/boards/${boardName}/${contentId}?siteName=${normalizedSiteName}`,
         '글을 불러오지 못했습니다.',
@@ -28,6 +35,10 @@ export default async function Page({ params }: Props) {
         `/api/boards/${boardName}/series?siteName=${normalizedSiteName}`,
         '시리즈를 불러오지 못했습니다.',
       ),
+      getSiteApiData<PromotionResponse>(
+        `/api/manage/contents/blog-posts/${encodeURIComponent(contentId)}/ad?siteName=${normalizedSiteName}`,
+        '글 광고 정보를 불러오지 못했습니다.',
+      ),
     ]);
   }
   return (
@@ -36,7 +47,8 @@ export default async function Page({ params }: Props) {
       initialContent={contentData?.data}
       initialCategory={categoryData?.data}
       initialSeries={seriesData?.data}
-      initialError={statusData.error || contentData?.error}
+      initialPromotion={promotionData?.data}
+      initialError={statusData.error || contentData?.error || promotionData?.error}
     />
   );
 }

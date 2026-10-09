@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -24,18 +25,44 @@ type Data = {
   isAtLeastAge14: boolean;
 };
 
-type AdItem = { id?: string; productName: string; thumbnailImage: string; thumbnailUrl: string; linkUrl: string };
+const reportedFieldSx = (isReported: boolean) =>
+  isReported
+    ? (theme: Theme) => ({
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: `${theme.palette.error.main} !important`,
+        },
+      })
+    : undefined;
 
-export default function Opt({ initialData }: { initialData: Data }) {
+type AdReport = { status: 'pending' | 'issue'; reasonDescription: string; isImmediatelyStopped: boolean };
+type AdItem = {
+  id?: string;
+  productName: string;
+  thumbnailImage: string;
+  thumbnailUrl: string;
+  linkUrl: string;
+  report: AdReport | null;
+};
+
+export default function Opt({
+  initialData,
+  initialItems,
+  initialShopName,
+}: {
+  initialData: Data;
+  initialItems: AdItem[];
+  initialShopName: string;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
   const [isEnabled, setIsEnabled] = useState(initialData.isEnabled);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [items, setItems] = useState<AdItem[]>([]);
-  const [shopName, setShopName] = useState('');
-  const [isLoadingItems, setIsLoadingItems] = useState(initialData.isEnabled);
+  const [items, setItems] = useState<AdItem[]>(initialItems);
+  const [shopName, setShopName] = useState(initialShopName);
+  const isAnyEditingLocked = items.some((item) => item.report?.isImmediatelyStopped);
+  const hasReportedItem = items.some((item) => item.report);
 
   const unavailableReason = !initialData.hasBeenOpenFor15Days
     ? initialData.postCount < 10
@@ -76,7 +103,6 @@ export default function Opt({ initialData }: { initialData: Data }) {
   }
 
   async function loadItems() {
-    setIsLoadingItems(true);
     try {
       const response = await fetch(`/api/manage/blog-ads/common?siteName=${encodeURIComponent(siteName)}`);
       const data = (await response.json()) as {
@@ -87,6 +113,7 @@ export default function Opt({ initialData }: { initialData: Data }) {
           thumbnail_image: string;
           thumbnail_url: string;
           link_url: string;
+          report: AdReport | null;
         }[];
         error?: string;
       };
@@ -98,19 +125,14 @@ export default function Opt({ initialData }: { initialData: Data }) {
           thumbnailImage: item.thumbnail_image,
           thumbnailUrl: item.thumbnail_url,
           linkUrl: item.link_url,
+          report: item.report,
         })),
       );
       setShopName(data.ads?.[0]?.shop_name ?? '');
     } catch (unknownError) {
       setError(unknownError instanceof Error ? unknownError.message : '기본 광고를 불러오지 못했습니다.');
-    } finally {
-      setIsLoadingItems(false);
     }
   }
-
-  useEffect(() => {
-    if (initialData.isEnabled) void loadItems();
-  }, []);
 
   function updateItem(index: number, patch: Partial<AdItem>) {
     setItems((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)));
@@ -195,23 +217,34 @@ export default function Opt({ initialData }: { initialData: Data }) {
           </Stack>
         ) : null}
         {isEnabled ? (
-          <div className={`paper ${styles.paper}`}>
+          <form
+            className={`paper ${styles.paper}`}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveItems();
+            }}
+          >
             <Typography variant="subtitle2">기본 적용 광고</Typography>
             <Typography variant="body2">연재글에 표시할 상품을 최대 10개까지 등록할 수 있습니다.</Typography>
-            {isLoadingItems ? <p>기본 광고를 불러오는 중입니다.</p> : null}
             <TextField
               placeholder="쇼핑몰명"
               value={shopName}
               onChange={(event) => setShopName(event.target.value)}
-              inputProps={{ maxLength: 50 }}
-              disabled={isSubmitting}
+              required
+              disabled={isSubmitting || isAnyEditingLocked}
+              error={hasReportedItem}
+              sx={reportedFieldSx(hasReportedItem)}
+              slotProps={{ htmlInput: { maxLength: 50 } }}
               size="small"
             />
             {items.map((item, index) => (
-              <div key={item.id ?? `new-${index}`} className={styles['ad-product-item']}>
+              <div
+                key={item.id ?? `new-${index}`}
+                className={`${styles['ad-product-item']} ${item.report ? styles['ad-product-item-error'] : ''}`}
+              >
                 <div className={styles['ad-product-thumbnail']}>
                   <BlogAdImageDialog
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || item.report?.isImmediatelyStopped}
                     value={item.thumbnailImage}
                     previewUrl={item.thumbnailUrl}
                     onUpload={uploadThumbnail}
@@ -230,16 +263,36 @@ export default function Opt({ initialData }: { initialData: Data }) {
                       placeholder="상품명"
                       value={item.productName}
                       onChange={(event) => updateItem(index, { productName: event.target.value })}
-                      inputProps={{ maxLength: 50 }}
+                      required
                       size="small"
+                      disabled={isSubmitting || item.report?.isImmediatelyStopped}
+                      error={Boolean(item.report)}
+                      sx={reportedFieldSx(Boolean(item.report))}
+                      slotProps={{
+                        htmlInput: { maxLength: 50 },
+                      }}
                     />
                     <TextField
                       placeholder="링크"
                       value={item.linkUrl}
                       onChange={(event) => updateItem(index, { linkUrl: event.target.value })}
-                      inputProps={{ maxLength: 100 }}
+                      required
+                      type="url"
                       size="small"
+                      disabled={isSubmitting || item.report?.isImmediatelyStopped}
+                      error={Boolean(item.report)}
+                      sx={reportedFieldSx(Boolean(item.report))}
+                      slotProps={{
+                        htmlInput: { maxLength: 100, pattern: 'https://.*' },
+                      }}
                     />
+                    {item.report ? (
+                      <Typography variant="body2" color="warning">
+                        {item.report.isImmediatelyStopped
+                          ? '컨시어지팀에서 확인 중입니다.'
+                          : `[${item.report.reasonDescription}] 사유로 광고가 거절되었습니다.`}
+                      </Typography>
+                    ) : null}
                   </Stack>
                 </div>
                 <div className={styles['ad-product-delete']}>
@@ -259,7 +312,7 @@ export default function Opt({ initialData }: { initialData: Data }) {
               onClick={() =>
                 setItems((current) => [
                   ...current,
-                  { productName: '', thumbnailImage: '', thumbnailUrl: '', linkUrl: '' },
+                  { productName: '', thumbnailImage: '', thumbnailUrl: '', linkUrl: '', report: null },
                 ])
               }
             >
@@ -268,15 +321,10 @@ export default function Opt({ initialData }: { initialData: Data }) {
                 <AddRoundedIcon fontSize="small" />
               </span>
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              disabled={isSubmitting}
-              onClick={() => void saveItems()}
-            >
+            <button type="submit" className="button medium submit" disabled={isSubmitting}>
               상품 등록하기
             </button>
-          </div>
+          </form>
         ) : null}
       </div>
       <FormErrorDialog open={Boolean(error)} messages={error ? [error] : []} onClose={() => setError('')} />

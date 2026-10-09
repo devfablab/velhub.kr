@@ -1,8 +1,11 @@
 import {
+  BLOG_AD_REPORT_REASON_LABELS,
   MAX_BLOG_AD_ITEMS,
   getBlogAdIdentityStatus,
   getBlogAdPublicImageUrl,
+  getBlogAdReportCorrection,
   getBlogAdSiteContext,
+  isImmediateBlogAdReport,
   isValidBlogAdUrl,
 } from '@/lib/blogAds/server';
 import { normalizeText } from '@/lib/utils';
@@ -42,7 +45,42 @@ export async function GET(request: Request) {
       if (!thumbnailUrl) throw new Error('상품 썸네일 정보가 없습니다.');
       return { ...ad, thumbnail_url: thumbnailUrl };
     });
-    return Response.json({ ads });
+    const reportsResult = ads.length
+      ? await context.supabaseAdmin
+          .from('blog_ad_reports')
+          .select('id, blog_ad_id, reason, status, created_at')
+          .in(
+            'blog_ad_id',
+            ads.map((ad) => ad.id),
+          )
+          .in('status', ['pending', 'issue'])
+          .order('created_at', { ascending: false })
+      : { data: [], error: null };
+    if (reportsResult.error) throw new Error('광고 신고 상태를 불러오지 못했습니다.');
+    const reportByAdId = new Map<
+      string,
+      { status: 'pending' | 'issue'; reasonDescription: string; isImmediatelyStopped: boolean }
+    >();
+    for (const report of reportsResult.data ?? []) {
+      if (!report.blog_ad_id || reportByAdId.has(report.blog_ad_id)) continue;
+      const isImmediatelyStopped =
+        report.status === 'pending' &&
+        isImmediateBlogAdReport(report.reason as keyof typeof BLOG_AD_REPORT_REASON_LABELS);
+      // 일반 신고는 Velman의 판단 전까지 운영자 화면에 노출하지 않는다.
+      if (report.status !== 'issue' && !isImmediatelyStopped) continue;
+      const reason = BLOG_AD_REPORT_REASON_LABELS[report.reason as keyof typeof BLOG_AD_REPORT_REASON_LABELS];
+      reportByAdId.set(report.blog_ad_id, {
+        status: report.status as 'pending' | 'issue',
+        reasonDescription: reason?.description ?? '신고 사유를 확인해주세요.',
+        isImmediatelyStopped,
+      });
+    }
+    return Response.json({
+      ads: ads.map((ad) => ({
+        ...ad,
+        report: reportByAdId.get(ad.id) ?? null,
+      })),
+    });
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : '기본 광고를 불러오지 못했습니다.' },
@@ -87,8 +125,37 @@ export async function PUT(request: Request) {
       .is('post_id', null)
       .is('deleted_at', null);
     if (currentResult.error) return Response.json({ error: '기본 광고를 저장하지 못했습니다.' }, { status: 500 });
+    const currentAds = currentResult.data ?? [];
+    const currentAdIds = currentAds.map((item) => item.id);
+    const immediateReports = currentAdIds.length
+      ? await context.supabaseAdmin
+          .from('blog_ad_reports')
+          .select('blog_ad_id, reason, status')
+          .in('blog_ad_id', currentAdIds)
+          .eq('status', 'pending')
+      : { data: [], error: null };
+    if (immediateReports.error) return Response.json({ error: '광고 신고 상태를 확인하지 못했습니다.' }, { status: 500 });
+    const lockedAdIds = new Set(
+      (immediateReports.data ?? [])
+        .filter((report) => isImmediateBlogAdReport(report.reason as keyof typeof BLOG_AD_REPORT_REASON_LABELS))
+        .map((report) => report.blog_ad_id)
+        .filter(Boolean),
+    );
+    for (const item of items) {
+      if (!item.id || !lockedAdIds.has(item.id)) continue;
+      const current = currentAds.find((entry) => entry.id === item.id);
+      if (
+        current &&
+        (current.product_name !== item.productName ||
+          current.link_url !== item.linkUrl ||
+          current.thumbnail_image !== item.thumbnailImage ||
+          (current.shop_name ?? '') !== shopName)
+      ) {
+        return Response.json({ error: '컨시어지팀에서 확인 중인 광고는 삭제만 할 수 있습니다.' }, { status: 400 });
+      }
+    }
     const retainedIds = new Set(items.map((item) => item.id).filter(Boolean));
-    const removedIds = (currentResult.data ?? []).map((item) => item.id).filter((id) => !retainedIds.has(id));
+    const removedIds = currentAds.map((item) => item.id).filter((id) => !retainedIds.has(id));
     const now = new Date().toISOString();
 
     if (removedIds.length) {
@@ -105,12 +172,8 @@ export async function PUT(request: Request) {
       if (item.id && (currentResult.data ?? []).some((current) => current.id === item.id)) {
         const current = (currentResult.data ?? []).find((entry) => entry.id === item.id)!;
         const hasLinkChange = current.link_url !== item.linkUrl;
-        const hasInformationChange =
-          hasLinkChange ||
-          current.product_name !== item.productName ||
-          (current.shop_name ?? '') !== shopName ||
-          (current.thumbnail_image ?? '') !== item.thumbnailImage;
-        if (hasInformationChange) {
+        const hasNameChange = current.product_name !== item.productName;
+        if (hasLinkChange || hasNameChange) {
           const reports = await context.supabaseAdmin
             .from('blog_ad_reports')
             .select('id, reason, status')
@@ -128,16 +191,14 @@ export async function PUT(request: Request) {
                 },
                 next: { productName: item.productName, shopName, thumbnailImage: item.thumbnailImage, linkUrl: item.linkUrl },
               };
-              if (hasLinkChange && (report.reason === 'unsafe_link' || report.reason === 'illegal_or_harmful_site')) {
+              const correction = getBlogAdReportCorrection(report.reason, { hasNameChange, hasLinkChange });
+              if (correction === 'link_changed') {
                 logs.push({ report_id: report.id, action: 'link_changed', detail });
                 logs.push({ report_id: report.id, action: 'release_requested', detail: {} });
-              } else if (
-                report.reason === 'different_destination' ||
-                report.reason === 'non_product_link' ||
-                report.reason === 'problematic_product'
-              ) {
+              } else if (correction === 'recheck') {
                 logs.push({ report_id: report.id, action: 'information_changed', detail });
                 if (report.status === 'issue') {
+                  logs.push({ report_id: report.id, action: 'recheck_requested', detail: {} });
                   await context.supabaseAdmin
                     .from('blog_ad_reports')
                     .update({ status: 'pending', reviewed_at: null })

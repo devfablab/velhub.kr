@@ -62,11 +62,24 @@ export function isBlogAdReportReason(value: unknown): value is BlogAdReportReaso
 
 export function isImmediateBlogAdReport(reason: BlogAdReportReason) {
   return (
-    reason === 'illegal_or_harmful_site' ||
-    reason === 'different_destination' ||
-    reason === 'non_product_link' ||
-    reason === 'problematic_product'
+    reason === 'unsafe_link' || reason === 'illegal_or_harmful_site' || reason === 'problematic_product'
   );
+}
+
+export function getBlogAdReportCorrection(
+  reason: BlogAdReportReason,
+  { hasNameChange, hasLinkChange }: { hasNameChange: boolean; hasLinkChange: boolean },
+) {
+  if (reason === 'unsafe_link' || reason === 'illegal_or_harmful_site' || reason === 'broken_link') {
+    return hasLinkChange ? 'link_changed' : null;
+  }
+  if (reason === 'different_destination') {
+    return hasNameChange || hasLinkChange ? 'recheck' : null;
+  }
+  if (reason === 'non_product_link' || reason === 'problematic_product') {
+    return hasNameChange && hasLinkChange ? 'recheck' : null;
+  }
+  return null;
 }
 
 export function isValidBlogAdUrl(value: string) {
