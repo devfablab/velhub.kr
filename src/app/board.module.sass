@@ -1553,18 +1553,23 @@
       width: ds.rem(290)
 
 .gallery-viewer-dialog
-  div[aria-hidden="true"]
+  div[aria-hidden="true"], :global(.MuiBackdrop-root)
     background-color: rgba(ds.$rgb-white, .9)
 
     html[data-theme="yellow-dark"] &
       background-color: rgba(ds.$rgb-black, .9)
 
-  div[role="dialog"]
+  div[role="dialog"], :global(.MuiDrawer-paper)
     background: transparent
     border-radius: 0
     box-shadow: none
 
-    .dialog-title
+    &:global(.MuiDrawer-paper)
+      width: 100%
+      height: 100%
+      max-height: none
+
+    .dialog-title, h2
       padding: ds.rem(17)
       border-bottom: 0!important
       @include ds.fw(neo, 800)
@@ -1581,15 +1586,6 @@
     .dialog-actions
       padding: 0
       height: 0
-
-      .close-button
-        position: absolute
-        top: ds.rem(15)
-        right: ds.rem(15)
-        width: ds.rem(30)
-        height: ds.rem(30)
-        background-color: transparent
-        color: ds.$hex-warning
 
       .control-button
         position: absolute
@@ -1610,6 +1606,15 @@
 
         &.next-button
           right: ds.rem(32)
+
+    .close-button
+      position: absolute
+      top: ds.rem(15)
+      right: ds.rem(15)
+      width: ds.rem(30)
+      height: ds.rem(30)
+      background-color: transparent
+      color: ds.$hex-warning
 
 .select-board-type
   display: flex

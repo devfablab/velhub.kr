@@ -2,10 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Stack } from '@mui/material';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import FormErrorDialog from '@/components/FormErrorDialog';
 
 type Props = {
@@ -24,6 +34,8 @@ export default function Opt({ siteName }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = !useMediaQuery(theme.breakpoints.up('lg'));
 
   async function handleRejoin(mode: RejoinMode) {
     if (isSubmitting) return;
@@ -100,39 +112,83 @@ export default function Opt({ siteName }: Props) {
         </button>
       </Stack>
 
-      <Dialog
-        open={isResetConfirmOpen}
-        onClose={() => !isSubmitting && setIsResetConfirmOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        className="vh-dialog vh-alert-dialog"
-      >
-        <DialogTitle>초기화 후 재가입</DialogTitle>
-        <DialogContent>
-          <ul>
-            <li>기존 글, 댓글, 첨부 파일은 영구 삭제되며 복구할 수 없습니다.</li>
-            <li>결제 또는 후원 이력이 있는 글은 거래 내역 보존을 위해 삭제하지 않고 복구됩니다.</li>
-          </ul>
-        </DialogContent>
-        <DialogActions>
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isResetConfirmOpen}
+          onClose={() => !isSubmitting && setIsResetConfirmOpen(false)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
+          <h2>초기화 후 재가입</h2>
           <button
             type="button"
-            className="cancel-button"
+            className="close-button"
             onClick={() => setIsResetConfirmOpen(false)}
             disabled={isSubmitting}
+            aria-label="닫기"
           >
-            취소
+            <CloseRoundedIcon />
           </button>
-          <button
-            type="button"
-            className="delete-button"
-            onClick={() => void handleRejoin('reset')}
-            disabled={isSubmitting}
-          >
-            초기화 후 재가입
-          </button>
-        </DialogActions>
-      </Dialog>
+          <div className="VhiDrawer-bottom-content">
+            <ul>
+              <li>기존 글, 댓글, 첨부 파일은 영구 삭제되며 복구할 수 없습니다.</li>
+              <li>결제 또는 후원 이력이 있는 글은 거래 내역 보존을 위해 삭제하지 않고 복구됩니다.</li>
+            </ul>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={() => setIsResetConfirmOpen(false)}
+              disabled={isSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small danger"
+              onClick={() => void handleRejoin('reset')}
+              disabled={isSubmitting}
+            >
+              초기화 후 재가입
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isResetConfirmOpen}
+          onClose={() => !isSubmitting && setIsResetConfirmOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
+        >
+          <DialogTitle>초기화 후 재가입</DialogTitle>
+          <DialogContent>
+            <ul>
+              <li>기존 글, 댓글, 첨부 파일은 영구 삭제되며 복구할 수 없습니다.</li>
+              <li>결제 또는 후원 이력이 있는 글은 거래 내역 보존을 위해 삭제하지 않고 복구됩니다.</li>
+            </ul>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={() => setIsResetConfirmOpen(false)}
+              disabled={isSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="delete-button"
+              onClick={() => void handleRejoin('reset')}
+              disabled={isSubmitting}
+            >
+              초기화 후 재가입
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       <FormErrorDialog
         open={Boolean(errorMessage)}

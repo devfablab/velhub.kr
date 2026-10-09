@@ -9,7 +9,16 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
-import { Avatar, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Avatar,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import CommentList, { type CommentsResponse } from '@/components/comments/CommentList';
@@ -284,43 +293,83 @@ export default function Opt({
           )}
 
           {post.images.length ? (
-            <Dialog
-              open={isImageViewerOpen}
-              onClose={() => setIsImageViewerOpen(false)}
-              fullScreen
-              className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
-            >
-              <DialogTitle className={styles['dialog-title']}>{`${imageIndex + 1}번째 이미지`}</DialogTitle>
-              <DialogContent className={styles['dialog-content']}>
-                <img src={post.images[imageIndex]} alt="" />
-              </DialogContent>
-              <DialogActions className={styles['dialog-actions']}>
+            isMobile ? (
+              <Drawer
+                anchor="bottom"
+                open={isImageViewerOpen}
+                onClose={() => setIsImageViewerOpen(false)}
+                className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['gallery-viewer-dialog']}`}
+              >
+                <h2>{`${imageIndex + 1}번째 이미지`}</h2>
                 <button
                   type="button"
-                  onClick={showPreviousImage}
-                  className={`${styles['control-button']} ${styles['prev-button']}`}
-                  aria-label="이전 이미지"
-                >
-                  <ArrowBackRoundedIcon />
-                </button>
-                <button
-                  type="button"
-                  onClick={showNextImage}
-                  className={`${styles['control-button']} ${styles['next-button']}`}
-                  aria-label="다음 이미지"
-                >
-                  <ArrowForwardRoundedIcon />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsImageViewerOpen(false)}
                   className={styles['close-button']}
+                  onClick={() => setIsImageViewerOpen(false)}
                   aria-label="이미지 닫기"
                 >
                   <CloseRoundedIcon />
                 </button>
-              </DialogActions>
-            </Dialog>
+                <div className={styles['dialog-content']}>
+                  <img src={post.images[imageIndex]} alt="" />
+                </div>
+                <div className={styles['dialog-actions']}>
+                  <button
+                    type="button"
+                    onClick={showPreviousImage}
+                    className={`${styles['control-button']} ${styles['prev-button']}`}
+                    aria-label="이전 이미지"
+                  >
+                    <ArrowBackRoundedIcon />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextImage}
+                    className={`${styles['control-button']} ${styles['next-button']}`}
+                    aria-label="다음 이미지"
+                  >
+                    <ArrowForwardRoundedIcon />
+                  </button>
+                </div>
+              </Drawer>
+            ) : (
+              <Dialog
+                open={isImageViewerOpen}
+                onClose={() => setIsImageViewerOpen(false)}
+                fullScreen
+                className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
+              >
+                <DialogTitle className={styles['dialog-title']}>{`${imageIndex + 1}번째 이미지`}</DialogTitle>
+                <DialogContent className={styles['dialog-content']}>
+                  <img src={post.images[imageIndex]} alt="" />
+                </DialogContent>
+                <DialogActions className={styles['dialog-actions']}>
+                  <button
+                    type="button"
+                    onClick={showPreviousImage}
+                    className={`${styles['control-button']} ${styles['prev-button']}`}
+                    aria-label="이전 이미지"
+                  >
+                    <ArrowBackRoundedIcon />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextImage}
+                    className={`${styles['control-button']} ${styles['next-button']}`}
+                    aria-label="다음 이미지"
+                  >
+                    <ArrowForwardRoundedIcon />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsImageViewerOpen(false)}
+                    className={styles['close-button']}
+                    aria-label="이미지 닫기"
+                  >
+                    <CloseRoundedIcon />
+                  </button>
+                </DialogActions>
+              </Dialog>
+            )
           ) : null}
         </div>
       </div>

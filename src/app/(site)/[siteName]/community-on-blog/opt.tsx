@@ -8,7 +8,17 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import { Avatar, Dialog, DialogActions, DialogContent, DialogTitle, Fab, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Avatar,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Fab,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -246,57 +256,138 @@ export default function Opt({
         </div>
       </div>
       {imageViewer ? (
-        <Dialog open onClose={closeImageViewer} fullScreen className={`vh-dialog ${styles['gallery-viewer-dialog']}`}>
-          <DialogTitle className={styles['dialog-title']}>{`${imageViewer.index + 1}번째 이미지`}</DialogTitle>
-          <DialogContent className={styles['dialog-content']}>
-            <img src={imageViewer.images[imageViewer.index]} alt="" />
-          </DialogContent>
-          <DialogActions className={styles['dialog-actions']}>
+        isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open
+            onClose={closeImageViewer}
+            className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['gallery-viewer-dialog']}`}
+          >
+            <h2>{`${imageViewer.index + 1}번째 이미지`}</h2>
             <button
               type="button"
-              onClick={showPreviousImage}
-              className={`${styles['control-button']} ${styles['prev-button']}`}
-              aria-label="이전 이미지"
-            >
-              <ArrowBackRoundedIcon />
-            </button>
-            <button
-              type="button"
-              onClick={showNextImage}
-              className={`${styles['control-button']} ${styles['next-button']}`}
-              aria-label="다음 이미지"
-            >
-              <ArrowForwardRoundedIcon />
-            </button>
-            <button
-              type="button"
-              onClick={closeImageViewer}
               className={styles['close-button']}
+              onClick={closeImageViewer}
               aria-label="이미지 닫기"
             >
               <CloseRoundedIcon />
             </button>
+            <div className={styles['dialog-content']}>
+              <img src={imageViewer.images[imageViewer.index]} alt="" />
+            </div>
+            <div className={styles['dialog-actions']}>
+              <button
+                type="button"
+                onClick={showPreviousImage}
+                className={`${styles['control-button']} ${styles['prev-button']}`}
+                aria-label="이전 이미지"
+              >
+                <ArrowBackRoundedIcon />
+              </button>
+              <button
+                type="button"
+                onClick={showNextImage}
+                className={`${styles['control-button']} ${styles['next-button']}`}
+                aria-label="다음 이미지"
+              >
+                <ArrowForwardRoundedIcon />
+              </button>
+            </div>
+          </Drawer>
+        ) : (
+          <Dialog open onClose={closeImageViewer} fullScreen className={`vh-dialog ${styles['gallery-viewer-dialog']}`}>
+            <DialogTitle className={styles['dialog-title']}>{`${imageViewer.index + 1}번째 이미지`}</DialogTitle>
+            <DialogContent className={styles['dialog-content']}>
+              <img src={imageViewer.images[imageViewer.index]} alt="" />
+            </DialogContent>
+            <DialogActions className={styles['dialog-actions']}>
+              <button
+                type="button"
+                onClick={showPreviousImage}
+                className={`${styles['control-button']} ${styles['prev-button']}`}
+                aria-label="이전 이미지"
+              >
+                <ArrowBackRoundedIcon />
+              </button>
+              <button
+                type="button"
+                onClick={showNextImage}
+                className={`${styles['control-button']} ${styles['next-button']}`}
+                aria-label="다음 이미지"
+              >
+                <ArrowForwardRoundedIcon />
+              </button>
+              <button
+                type="button"
+                onClick={closeImageViewer}
+                className={styles['close-button']}
+                aria-label="이미지 닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+            </DialogActions>
+          </Dialog>
+        )
+      ) : null}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(deleteTarget)}
+          onClose={() => !isDeleting && setDeleteTarget(null)}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        >
+          <h2>글 삭제</h2>
+          <button
+            type="button"
+            className="close-button"
+            onClick={() => setDeleteTarget(null)}
+            disabled={isDeleting}
+            aria-label="닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">
+            <p>정말로 글을 삭제하시겠습니까?</p>
+          </div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button small cancel"
+              onClick={() => setDeleteTarget(null)}
+              disabled={isDeleting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small danger"
+              onClick={() => void deletePost()}
+              disabled={isDeleting}
+            >
+              삭제
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={Boolean(deleteTarget)}
+          onClose={() => !isDeleting && setDeleteTarget(null)}
+          className="vh-dialog vh-alert-dialog"
+        >
+          <DialogTitle>글 삭제</DialogTitle>
+          <DialogContent>
+            <p>정말로 글을 삭제하시겠습니까?</p>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="cancel-button" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+              취소
+            </button>
+            <button type="button" className="delete-button" onClick={() => void deletePost()} disabled={isDeleting}>
+              삭제
+            </button>
           </DialogActions>
         </Dialog>
-      ) : null}
-      <Dialog
-        open={Boolean(deleteTarget)}
-        onClose={() => !isDeleting && setDeleteTarget(null)}
-        className="vh-dialog vh-alert-dialog"
-      >
-        <DialogTitle>글 삭제</DialogTitle>
-        <DialogContent>
-          <p>정말로 글을 삭제하시겠습니까?</p>
-        </DialogContent>
-        <DialogActions>
-          <button type="button" className="cancel-button" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
-            취소
-          </button>
-          <button type="button" className="delete-button" onClick={() => void deletePost()} disabled={isDeleting}>
-            삭제
-          </button>
-        </DialogActions>
-      </Dialog>
+      )}
       <FormErrorDialog
         open={Boolean(actionError)}
         title="글 삭제 오류"
