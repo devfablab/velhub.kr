@@ -191,6 +191,15 @@ export default function ThemeProviderClient({
             },
           },
         },
+        MuiPopper: {
+          styleOverrides: {
+            root: {
+              '&.MuiPickerPopper-root': {
+                zIndex: 2700,
+              },
+            },
+          },
+        },
       },
     });
   }, [themeMode]);

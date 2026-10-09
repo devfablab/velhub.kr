@@ -39,6 +39,8 @@ export type BlogCommunityResponse = {
     isEligible: boolean;
     isEnabled: boolean;
     isOwner: boolean;
+    isManager: boolean;
+    isOperator: boolean;
     isSubscriber: boolean;
     canUse: boolean;
   };

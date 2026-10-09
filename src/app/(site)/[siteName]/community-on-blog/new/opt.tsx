@@ -17,10 +17,12 @@ import {
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import DrawEventFields, { emptyBlogCommunityDraw } from '@/components/service/blog-community/DrawEventFields';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import { type BlogCommunityResponse } from '../opt';
 import styles from '@/app/board.module.sass';
+
 const MAX_CONTENT_LENGTH = 10_000;
 const MAX_IMAGE_COUNT = 9;
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -210,6 +212,7 @@ export default function Opt({
   const feature = initialData?.feature;
   const [content, setContent] = useState('');
   const [images, setImages] = useState<File[]>([]);
+  const [draw, setDraw] = useState(emptyBlogCommunityDraw);
   const [fieldError, setFieldError] = useState('');
   const [dialogError, setDialogError] = useState<string | null>(initialError || initialData?.error || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -245,6 +248,9 @@ export default function Opt({
     try {
       const formData = new FormData();
       formData.set('content', normalizedContent);
+      formData.set('drawType', draw.type);
+      formData.set('drawLimit', String(draw.limit));
+      if (draw.endsAt) formData.set('drawEndsAt', draw.endsAt.toISOString());
       images.forEach((image) => formData.append('images', image));
       const response = await fetch(`/api/site/${siteName}/community-on-blog`, {
         method: 'POST',
@@ -280,6 +286,9 @@ export default function Opt({
               <div className="paper">
                 <div className={styles['post-options']}>
                   <ImagePicker images={images} onChange={setImages} disabled={isSubmitting} />
+                  {feature.isOperator ? (
+                    <DrawEventFields value={draw} onChange={setDraw} disabled={isSubmitting} classes={styles} />
+                  ) : null}
                 </div>
               </div>
               <div className="paper paper-p0">

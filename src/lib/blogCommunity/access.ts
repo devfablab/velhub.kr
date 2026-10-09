@@ -17,6 +17,8 @@ export type BlogCommunityContext = {
   hasStarted: boolean;
   isEnabled: boolean;
   isOwner: boolean;
+  isManager: boolean;
+  isOperator: boolean;
   isSubscriber: boolean;
   stigmaId: string | null;
   canUse: boolean;
@@ -61,6 +63,7 @@ export async function getBlogCommunityContext(siteName: string): Promise<BlogCom
   // 기존 개인 블로그는 blog_type이 null일 수 있으며, team으로 명시된 경우만 팀 블로그입니다.
   const isPersonalBlog = blogResult.data?.blog_type !== 'team';
   const isOwner = session.case === 'admin' || session.stigmaId === siteResult.data.owner_id;
+  const isManager = session.case === 'staff';
   const isSubscriber =
     !isOwner && session.stigmaId
       ? await hasValidBlogSubscription({
@@ -89,7 +92,9 @@ export async function getBlogCommunityContext(siteName: string): Promise<BlogCom
     isOwner,
     isSubscriber,
     stigmaId: session.stigmaId,
-    canUse: isPersonalBlog && isEnabled && (isOwner || isSubscriber),
+    isManager,
+    isOperator: isOwner || isManager,
+    canUse: isPersonalBlog && isEnabled && (isOwner || isManager || isSubscriber),
   };
 }
 

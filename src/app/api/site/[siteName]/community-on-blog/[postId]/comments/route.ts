@@ -1,8 +1,9 @@
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
+import { registerBlogCommunityFirstComeDraw } from '@/lib/blogCommunity/draw';
 import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string }> };
@@ -35,7 +36,7 @@ async function assertPost(siteId: string, contentId: string) {
   if (!isNumericContentSlug(slug)) throw new Error('글을 찾을 수 없습니다.');
   const result = await getSupabaseAdmin()
     .from('blog_community_posts')
-    .select('id')
+    .select('id, draw_type, draw_limit')
     .eq('slug', slug)
     .eq('site_id', siteId)
     .eq('is_deleted', false)
@@ -209,6 +210,14 @@ export async function POST(request: Request, context: RouteContext) {
       .select('id')
       .single();
     if (result.error) throw new Error('댓글을 등록하지 못했습니다.');
+    await registerBlogCommunityFirstComeDraw({
+      siteId: feature.siteId,
+      postId: post.id,
+      commentId: result.data.id,
+      userId: feature.stigmaId,
+      drawType: post.draw_type === 'first_come' || post.draw_type === 'random' ? post.draw_type : null,
+      drawLimit: post.draw_limit ? Number(post.draw_limit) : null,
+    });
     return Response.json({ ok: true, commentId: result.data.id });
   } catch (error) {
     const message = error instanceof Error ? error.message : '댓글을 등록하지 못했습니다.';

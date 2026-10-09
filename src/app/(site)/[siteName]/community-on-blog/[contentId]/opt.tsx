@@ -32,7 +32,16 @@ export type BlogCommunityPostResponse = {
     authorBadgeUrl: string | null;
     isAuthor: boolean;
     isOwner: boolean;
+    isOperator: boolean;
     images: string[];
+    draw: {
+      drawType: 'first_come' | 'random';
+      drawLimit: number | null;
+      drawEndsAt: string | null;
+      isCompleted: boolean;
+      canViewDraws: boolean;
+      winners: { id: string; drawOrder: number; authorName: string; authorAvatarUrl: string | null }[];
+    } | null;
   };
   previousPost?: { slug: string } | null;
   nextPost?: { slug: string } | null;
@@ -166,6 +175,56 @@ export default function Opt({
                 ) : null}
               </div>
             </div>
+            {post.draw ? (
+              <div className="paper">
+                <div className={styles['content-draw']}>
+                  {post.draw.isCompleted ? (
+                    <p className={styles.warning}>추첨 이벤트가 완료되었습니다.</p>
+                  ) : post.draw.drawType === 'first_come' ? (
+                    <p className={styles.info}>{`선착순 ${post.draw.drawLimit ?? 0}명 추첨 이벤트가 진행중입니다.`}</p>
+                  ) : (
+                    <p
+                      className={styles.info}
+                    >{`${post.draw.drawEndsAt ? formatDateTimeDetail(post.draw.drawEndsAt) : ''}까지 댓글을 남긴 회원 중 ${post.draw.drawLimit ?? 0}명을 무작위 추첨합니다.`}</p>
+                  )}
+                  {!post.draw.isCompleted ? (
+                    <p className={styles.warning}>
+                      하나의 계정으로 여러번 댓글을 작성하셔도 단 하나의 댓글로만 추첨됩니다. (확률에 영향 없음)
+                    </p>
+                  ) : null}
+                  {post.draw.canViewDraws && post.draw.winners.length ? (
+                    <>
+                      <p className={styles.info}>당첨자 목록은 글 작성자와 매니저만 보실 수 있어요.</p>
+                      <table>
+                        <colgroup>
+                          <col style={{ width: 100 }} />
+                          <col />
+                        </colgroup>
+                        <thead>
+                          <tr>
+                            <th scope="col">당첨 번호</th>
+                            <th scope="col">당첨자</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {post.draw.winners.map((winner) => (
+                            <tr key={winner.id}>
+                              <td>{winner.drawOrder}</td>
+                              <td>
+                                <div>
+                                  <Avatar src={winner.authorAvatarUrl ?? undefined} alt={winner.authorName} />
+                                  <cite>{winner.authorName}</cite>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             <div className={styles.options}>
               <div className={styles.buttons}>
                 <div className={styles['button-basics']}>

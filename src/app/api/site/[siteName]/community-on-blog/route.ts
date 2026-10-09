@@ -4,9 +4,10 @@ import {
   getBlogCommunityEnablement,
   assertBlogCommunityUse,
 } from '@/lib/blogCommunity/access';
+import { normalizeBlogCommunityDraw } from '@/lib/blogCommunity/draw';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
@@ -69,10 +70,20 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
           .in('subscriber_user_id', userIds)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [], error: null }),
-    supabaseAdmin.from('blog_subscription_badges').select('subscription_months,image_url').eq('site_id', siteId).order('subscription_months'),
+    supabaseAdmin
+      .from('blog_subscription_badges')
+      .select('subscription_months,image_url')
+      .eq('site_id', siteId)
+      .order('subscription_months'),
   ]);
 
-  if (imagesResult.error || stigmasResult.error || commentsResult.error || subscriptionsResult.error || badgesResult.error)
+  if (
+    imagesResult.error ||
+    stigmasResult.error ||
+    commentsResult.error ||
+    subscriptionsResult.error ||
+    badgesResult.error
+  )
     throw new Error('커뮤니티 글을 불러오지 못했습니다.');
   const imageMap = new Map<string, string[]>();
   for (const image of imagesResult.data ?? []) {
@@ -104,8 +115,10 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
       badgeMap.set(
         subscription.subscriber_user_id,
         subscription.badge_image_url ??
-          (badgesResult.data ?? []).filter((badge) => badge.subscription_months <= subscription.badge_months).at(-1)?.image_url ??
-          (badgesResult.data ?? [])[0]?.image_url ?? '',
+          (badgesResult.data ?? []).filter((badge) => badge.subscription_months <= subscription.badge_months).at(-1)
+            ?.image_url ??
+          (badgesResult.data ?? [])[0]?.image_url ??
+          '',
       );
   }
 
@@ -173,6 +186,8 @@ export async function GET(request: Request, context: RouteContext) {
         hasStarted: feature.hasStarted,
         isEnabled: feature.isEnabled,
         isOwner: feature.isOwner,
+        isManager: feature.isManager,
+        isOperator: feature.isOperator,
         isSubscriber: feature.isSubscriber,
         canUse: feature.canUse,
         isIdentityVerified: feature.isIdentityVerified,
@@ -246,10 +261,18 @@ export async function POST(request: Request, context: RouteContext) {
     const formData = await request.formData();
     const rawContent = formData.get('content');
     const content = normalizeText(typeof rawContent === 'string' ? rawContent : '');
+    const draw = normalizeBlogCommunityDraw({
+      drawType: formData.get('drawType'),
+      drawLimit: formData.get('drawLimit'),
+      drawEndsAt: formData.get('drawEndsAt'),
+    });
     const files = formData.getAll('images').filter((value): value is File => value instanceof File);
     if (!content) return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
     if (content.length > MAX_CONTENT_LENGTH)
       return Response.json({ error: '내용은 10,000자 이하로 입력해주세요.' }, { status: 400 });
+    if ('error' in draw) return Response.json({ error: draw.error }, { status: 400 });
+    if (draw.drawType && !feature.isOperator)
+      return Response.json({ error: '운영자 또는 매니저만 추첨 이벤트를 설정할 수 있습니다.' }, { status: 403 });
     if (files.length > MAX_IMAGE_COUNT)
       return Response.json({ error: '이미지는 최대 9장까지 등록할 수 있습니다.' }, { status: 400 });
     for (const file of files) {
@@ -262,19 +285,35 @@ export async function POST(request: Request, context: RouteContext) {
     const supabaseAdmin = getSupabaseAdmin();
     let postResult = await supabaseAdmin
       .from('blog_community_posts')
-      .insert({ site_id: feature.siteId, user_id: feature.stigmaId, content })
+      .insert({
+        site_id: feature.siteId,
+        user_id: feature.stigmaId,
+        content,
+        draw_type: draw.drawType,
+        draw_limit: draw.drawLimit,
+        draw_ends_at: draw.drawEndsAt,
+      })
       .select('id, slug, created_at')
       .single();
     for (let attempt = 0; postResult.error?.code === '23505' && attempt < 2; attempt += 1) {
       postResult = await supabaseAdmin
         .from('blog_community_posts')
-        .insert({ site_id: feature.siteId, user_id: feature.stigmaId, content })
+        .insert({
+          site_id: feature.siteId,
+          user_id: feature.stigmaId,
+          content,
+          draw_type: draw.drawType,
+          draw_limit: draw.drawLimit,
+          draw_ends_at: draw.drawEndsAt,
+        })
         .select('id, slug, created_at')
         .single();
     }
     if (postResult.error || !postResult.data) {
       const detail = postResult.error?.message || '알 수 없는 오류';
-      throw new Error(process.env.NODE_ENV === 'development' ? `글을 게시하지 못했습니다. (${detail})` : '글을 게시하지 못했습니다.');
+      throw new Error(
+        process.env.NODE_ENV === 'development' ? `글을 게시하지 못했습니다. (${detail})` : '글을 게시하지 못했습니다.',
+      );
     }
 
     const uploadedImages: { post_id: string; image_url: string; sort_order: number }[] = [];

@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import DrawEventFields, { type BlogCommunityDrawState } from '@/components/service/blog-community/DrawEventFields';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/board.module.sass';
@@ -15,6 +16,12 @@ export type BlogCommunityEditResponse = {
   post?: {
     content: string;
     isAuthor: boolean;
+    isOperator: boolean;
+    draw?: {
+      drawType: 'first_come' | 'random';
+      drawLimit: number | null;
+      drawEndsAt: string | null;
+    } | null;
   };
   error?: string;
 };
@@ -34,13 +41,23 @@ export default function Opt({
   const post = initialData?.post;
   const initialContent = post?.content ?? '';
   const [content, setContent] = useState(initialContent);
+  const [draw, setDraw] = useState<BlogCommunityDrawState>(() => ({
+    type: post?.draw?.drawType ?? '',
+    limit: post?.draw?.drawLimit ?? 1,
+    endsAt: post?.draw?.drawEndsAt ? new Date(post.draw.drawEndsAt) : null,
+  }));
   const [fieldError, setFieldError] = useState('');
   const [dialogError, setDialogError] = useState<string | null>(initialError || initialData?.error || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingReference = useRef(false);
   const normalizedContent = normalizeText(content);
   const isOverLimit = content.length > MAX_CONTENT_LENGTH;
-  const hasChanged = normalizedContent !== initialContent;
+  const initialDraw = post?.draw ?? null;
+  const hasDrawChanged =
+    draw.type !== (initialDraw?.drawType ?? '') ||
+    draw.limit !== (initialDraw?.drawLimit ?? 1) ||
+    (draw.endsAt?.getTime() ?? null) !== (initialDraw?.drawEndsAt ? new Date(initialDraw.drawEndsAt).getTime() : null);
+  const hasChanged = normalizedContent !== initialContent || hasDrawChanged;
   const cancelHref =
     searchParams.get('from') === 'list'
       ? `/${siteName}/community-on-blog`
@@ -70,7 +87,12 @@ export default function Opt({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ content: normalizedContent }),
+        body: JSON.stringify({
+          content: normalizedContent,
+          drawType: draw.type,
+          drawLimit: draw.limit,
+          drawEndsAt: draw.endsAt?.toISOString() ?? null,
+        }),
       });
       const result = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) throw new Error(result?.error || '글을 수정하지 못했습니다.');
@@ -111,6 +133,13 @@ export default function Opt({
                   }}
                 />
               </div>
+              {post.isOperator ? (
+                <div className="paper">
+                  <div className={styles['post-options']}>
+                    <DrawEventFields value={draw} onChange={setDraw} disabled={isSubmitting} classes={styles} />
+                  </div>
+                </div>
+              ) : null}
               {fieldError ? <div className="paper paper-error">{fieldError}</div> : null}
               <div className={styles['button-group']}>
                 <Anchor href={cancelHref} className={`${styles.link} link`}>
