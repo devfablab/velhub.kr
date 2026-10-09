@@ -654,7 +654,6 @@ export default function Opt({
       setFormErrorDialog({ title: '글 수정', messages: Object.values(nextErrors) });
       return;
     }
-
     setErrorMessage('');
     setFieldErrors({});
     setIsSubmitting(true);

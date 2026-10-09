@@ -565,7 +565,6 @@ export default function Opt({
       setFormErrorDialog({ title: '글쓰기', messages: Object.values(nextErrors) });
       return;
     }
-
     setErrorMessage('');
     setFieldErrors({});
     setIsSubmitting(true);

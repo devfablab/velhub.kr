@@ -8,6 +8,7 @@ import {
   isImmediateBlogAdReport,
   isValidBlogAdUrl,
 } from '@/lib/blogAds/server';
+import { hasMultipleBlogAdLinkDomains } from '@/lib/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
 
 type Item = { id?: unknown; productName?: unknown; thumbnailImage?: unknown; linkUrl?: unknown };
@@ -117,6 +118,9 @@ export async function PUT(request: Request) {
     ) {
       return Response.json({ error: '상품명, 상품 썸네일, HTTPS 링크를 확인해주세요.' }, { status: 400 });
     }
+    if (hasMultipleBlogAdLinkDomains(items)) {
+      return Response.json({ error: '여러개의 쇼핑몰 링크를 사용하시면 안됩니다.' }, { status: 400 });
+    }
 
     const currentResult = await context.supabaseAdmin
       .from('blog_ads')
@@ -134,7 +138,8 @@ export async function PUT(request: Request) {
           .in('blog_ad_id', currentAdIds)
           .eq('status', 'pending')
       : { data: [], error: null };
-    if (immediateReports.error) return Response.json({ error: '광고 신고 상태를 확인하지 못했습니다.' }, { status: 500 });
+    if (immediateReports.error)
+      return Response.json({ error: '광고 신고 상태를 확인하지 못했습니다.' }, { status: 500 });
     const lockedAdIds = new Set(
       (immediateReports.data ?? [])
         .filter((report) => isImmediateBlogAdReport(report.reason as keyof typeof BLOG_AD_REPORT_REASON_LABELS))
@@ -189,7 +194,12 @@ export async function PUT(request: Request) {
                   thumbnailImage: current.thumbnail_image,
                   linkUrl: current.link_url,
                 },
-                next: { productName: item.productName, shopName, thumbnailImage: item.thumbnailImage, linkUrl: item.linkUrl },
+                next: {
+                  productName: item.productName,
+                  shopName,
+                  thumbnailImage: item.thumbnailImage,
+                  linkUrl: item.linkUrl,
+                },
               };
               const correction = getBlogAdReportCorrection(report.reason, { hasNameChange, hasLinkChange });
               if (correction === 'link_changed') {

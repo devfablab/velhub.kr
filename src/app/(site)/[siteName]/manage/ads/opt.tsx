@@ -6,6 +6,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
+import { hasMultipleBlogAdLinkDomains } from '@/lib/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -163,6 +164,10 @@ export default function Opt({
     if (shopName.trim().length > 50) messages.unshift('쇼핑몰명은 50자 이하로 입력해주세요.');
     if (messages.length) {
       setError(messages[0]);
+      return;
+    }
+    if (hasMultipleBlogAdLinkDomains(items)) {
+      setError('여러개의 쇼핑몰 링크를 사용하시면 안됩니다.');
       return;
     }
     setIsSubmitting(true);

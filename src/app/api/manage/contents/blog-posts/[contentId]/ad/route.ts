@@ -368,7 +368,6 @@ export async function PUT(request: Request, context: RouteContext) {
     ) {
       return Response.json({ error: '상품명, 상품 썸네일, HTTPS 링크를 확인해주세요.' }, { status: 400 });
     }
-
     if (isSubscriptionSeries) {
       if (isPostAdLocked) {
         return Response.json({ error: '컨시어지팀에서 확인 중인 광고는 삭제만 할 수 있습니다.' }, { status: 400 });
