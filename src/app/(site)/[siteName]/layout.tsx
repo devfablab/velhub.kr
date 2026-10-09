@@ -211,7 +211,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
       '운영자 교체 요청을 불러오지 못했습니다.',
     ),
     header.data?.siteType === 'blog'
-      ? getSiteApiData<{ feature?: { isPersonalBlog?: boolean; isEnabled?: boolean } }>(
+      ? getSiteApiData<{ feature?: { isPersonalBlog?: boolean; isEnabled?: boolean; canUse?: boolean } }>(
           `/api/site/${siteName}/community-on-blog?summary=1`,
           '블로그 커뮤니티 정보를 불러오지 못했습니다.',
         )
@@ -249,7 +249,9 @@ export default async function SiteLayout({ children, params }: RouteContext) {
             hasCategories: Boolean(siteMenu.data?.siteInfo?.has_categories),
             hasSeries: Boolean(siteMenu.data?.siteInfo?.has_series),
             hasBlogCommunity:
-              blogCommunity.data?.feature?.isPersonalBlog === true && blogCommunity.data?.feature?.isEnabled === true,
+              blogCommunity.data?.feature?.isPersonalBlog === true &&
+              blogCommunity.data?.feature?.isEnabled === true &&
+              blogCommunity.data?.feature?.canUse === true,
           }}
         >
           <HeaderSite />
