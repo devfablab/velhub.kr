@@ -478,7 +478,6 @@ export default function Opt({
                     value={boardKey}
                     onChange={handleBoardKeyChange}
                     required
-                    inputProps={{ minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' }}
                     onKeyDown={(event) => runInputAdornmentAction(event, handleCheckBoardKey, isChecking)}
                     error={boardKeyError}
                     helperText={
@@ -489,6 +488,7 @@ export default function Opt({
                     fullWidth
                     size="small"
                     slotProps={{
+                      htmlInput: { minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' },
                       input: {
                         startAdornment: (
                           <InputAdornment position="start">

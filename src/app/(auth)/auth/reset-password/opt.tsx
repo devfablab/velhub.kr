@@ -262,7 +262,7 @@ export default function Opt() {
               placeholder="새 비밀번호"
               type="password"
               required
-              inputProps={{ minLength: 8, pattern: PASSWORD_HTML_PATTERN }}
+              slotProps={{ htmlInput: { minLength: 8, pattern: PASSWORD_HTML_PATTERN } }}
               autoComplete="new-password"
               value={password}
               onChange={handlePasswordChange}

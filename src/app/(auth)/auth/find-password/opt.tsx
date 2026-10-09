@@ -204,7 +204,7 @@ export default function Opt() {
               autoComplete="email"
               value={email}
               onChange={handleEmailChange}
-              inputProps={{ pattern: EMAIL_PATTERN.source }}
+              slotProps={{ htmlInput: { pattern: EMAIL_PATTERN.source } }}
               onInvalid={(event) => {
                 event.preventDefault();
                 const input = event.currentTarget as HTMLInputElement;

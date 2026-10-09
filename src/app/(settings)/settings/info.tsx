@@ -374,10 +374,12 @@ export default function UserInfo({
                       size="small"
                       value={userNameDraft}
                       onChange={handleUserNameChange}
-                      inputProps={{
-                        required: true,
-                        minLength: ACTIVITY_NAME_MIN_LENGTH,
-                        maxLength: ACTIVITY_NAME_MAX_LENGTH,
+                      slotProps={{
+                        htmlInput: {
+                          required: true,
+                          minLength: ACTIVITY_NAME_MIN_LENGTH,
+                          maxLength: ACTIVITY_NAME_MAX_LENGTH,
+                        },
                       }}
                       fullWidth
                       error={Boolean(userNameError)}

@@ -371,12 +371,14 @@ export default function TotpSetup({
                       setResetVerifyCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6));
                       setResetVerifyCodeError('');
                     }}
-                    inputProps={{
-                      inputMode: 'numeric',
-                      pattern: '[0-9]{6}',
-                      minLength: 6,
-                      maxLength: 6,
-                      required: true,
+                    slotProps={{
+                      htmlInput: {
+                        inputMode: 'numeric',
+                        pattern: '[0-9]{6}',
+                        minLength: 6,
+                        maxLength: 6,
+                        required: true,
+                      },
                     }}
                     fullWidth
                     size="small"
@@ -441,7 +443,9 @@ export default function TotpSetup({
                         type="text"
                         value={verifyCode}
                         onChange={handleVerifyCodeChange}
-                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]{6}', minLength: 6, maxLength: 6 }}
+                        slotProps={{
+                          htmlInput: { inputMode: 'numeric', pattern: '[0-9]{6}', minLength: 6, maxLength: 6 },
+                        }}
                         size="small"
                         fullWidth
                         error={Boolean(verifyCodeError)}

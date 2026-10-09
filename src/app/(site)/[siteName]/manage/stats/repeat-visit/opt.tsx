@@ -171,14 +171,7 @@ function DateSelectGroup({ title, value, yearOptions, onChange, error }: DateSel
     <>
       <Typography variant="subtitle2">{title}</Typography>
       <div className={styles.buttons}>
-        <Select
-          size="small"
-          value={value.year}
-          onChange={handleChange('year')}
-          inputProps={{
-            'aria-label': `${title} 년`,
-          }}
-        >
+        <Select size="small" value={value.year} onChange={handleChange('year')} aria-label={`${title} 년`}>
           {yearOptions.map((year) => (
             <MenuItem key={year} value={year}>
               {year} 년
@@ -186,14 +179,7 @@ function DateSelectGroup({ title, value, yearOptions, onChange, error }: DateSel
           ))}
         </Select>
 
-        <Select
-          size="small"
-          value={value.month}
-          onChange={handleChange('month')}
-          inputProps={{
-            'aria-label': `${title} 월`,
-          }}
-        >
+        <Select size="small" value={value.month} onChange={handleChange('month')} aria-label={`${title} 월`}>
           {monthOptions.map((month) => (
             <MenuItem key={month} value={month}>
               {month} 월
@@ -201,14 +187,7 @@ function DateSelectGroup({ title, value, yearOptions, onChange, error }: DateSel
           ))}
         </Select>
 
-        <Select
-          size="small"
-          value={value.day}
-          onChange={handleChange('day')}
-          inputProps={{
-            'aria-label': `${title} 일`,
-          }}
-        >
+        <Select size="small" value={value.day} onChange={handleChange('day')} aria-label={`${title} 일`}>
           {dayOptions.map((day) => (
             <MenuItem key={day} value={day}>
               {day} 일

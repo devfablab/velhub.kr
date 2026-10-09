@@ -605,7 +605,6 @@ export default function Opt() {
                   value={slug}
                   onChange={handleSlugChange}
                   required
-                  inputProps={{ pattern: '[a-z][a-z0-9-]*' }}
                   error={Boolean(fieldErrors.slug)}
                   onInvalid={() => handleInputInvalid('slug', '페이지 식별자를 영소문자로 시작해 입력해주세요.')}
                   onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSlug, isCheckingSlug)}
@@ -613,6 +612,7 @@ export default function Opt() {
                   size="medium"
                   helperText={fieldErrors.slug || `관리 화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
                   slotProps={{
+                    htmlInput: { pattern: '[a-z][a-z0-9-]*' },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">

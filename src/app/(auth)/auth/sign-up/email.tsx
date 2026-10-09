@@ -278,7 +278,7 @@ export default function EmailSignUp({
             autoComplete="email"
             value={email}
             onChange={handleEmailChange}
-            inputProps={{ readOnly: isInviteEmailLocked, pattern: EMAIL_PATTERN.source }}
+            slotProps={{ htmlInput: { readOnly: isInviteEmailLocked, pattern: EMAIL_PATTERN.source } }}
             onInvalid={(event) => {
               event.preventDefault();
               const input = event.currentTarget as HTMLInputElement;
@@ -298,7 +298,7 @@ export default function EmailSignUp({
             placeholder="활동명"
             type="text"
             required={isActivityNameRequired}
-            inputProps={{ minLength: ACTIVITY_NAME_MIN_LENGTH, maxLength: ACTIVITY_NAME_MAX_LENGTH }}
+            slotProps={{ htmlInput: { minLength: ACTIVITY_NAME_MIN_LENGTH, maxLength: ACTIVITY_NAME_MAX_LENGTH } }}
             autoComplete="nickname"
             value={userName}
             onChange={handleUserNameChange}
@@ -317,7 +317,7 @@ export default function EmailSignUp({
             placeholder="비밀번호"
             type="password"
             required
-            inputProps={{ minLength: 8, pattern: PASSWORD_HTML_PATTERN }}
+            slotProps={{ htmlInput: { minLength: 8, pattern: PASSWORD_HTML_PATTERN } }}
             autoComplete="new-password"
             value={password}
             onChange={handlePasswordChange}

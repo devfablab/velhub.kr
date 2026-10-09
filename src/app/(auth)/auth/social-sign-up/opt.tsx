@@ -285,7 +285,7 @@ export default function Opt() {
             autoComplete="email"
             type="email"
             required
-            inputProps={{ pattern: EMAIL_PATTERN.source }}
+            slotProps={{ htmlInput: { pattern: EMAIL_PATTERN.source } }}
             value={paymentEmail}
             onChange={(event: InputChangeEvent) => {
               setPaymentEmail(event.currentTarget.value);
@@ -311,7 +311,9 @@ export default function Opt() {
           placeholder="활동명"
           autoComplete="nickname"
           required
-          inputProps={{ minLength: SOCIAL_ACTIVITY_NAME_MIN_LENGTH, maxLength: SOCIAL_ACTIVITY_NAME_MAX_LENGTH }}
+          slotProps={{
+            htmlInput: { minLength: SOCIAL_ACTIVITY_NAME_MIN_LENGTH, maxLength: SOCIAL_ACTIVITY_NAME_MAX_LENGTH },
+          }}
           value={userName}
           onChange={(event: InputChangeEvent) => {
             setUserName(event.currentTarget.value);
