@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined';
 import {
   DialogActions,
@@ -108,7 +109,10 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
   }
 
   const detailContent = errorMessage ? (
-    <p className="alert popup-error">{errorMessage}</p>
+    <p className="alert popup-error">
+      <ErrorOutlineRoundedIcon />
+      <span>{errorMessage}</span>
+    </p>
   ) : !member ? (
     <p>멤버 정보를 불러오는 중입니다.</p>
   ) : (

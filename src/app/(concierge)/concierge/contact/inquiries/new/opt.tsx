@@ -619,7 +619,12 @@ export default function Opt({
                       <FormControlLabel key={payment.id} value={payment.id} control={<Radio />} label={payment.label} />
                     ))}
                   </RadioGroup>
-                  {fieldErrors.paymentId ? <p className="alert popup-error">{fieldErrors.paymentId}</p> : null}
+                  {fieldErrors.paymentId ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{fieldErrors.paymentId}</span>
+                    </p>
+                  ) : null}
                 </Stack>
               ) : null}
             </Stack>
@@ -654,7 +659,12 @@ export default function Opt({
                           />
                         ))}
                       </RadioGroup>
-                      {fieldErrors.paymentId ? <p className="alert popup-error">{fieldErrors.paymentId}</p> : null}
+                      {fieldErrors.paymentId ? (
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>{fieldErrors.paymentId}</span>
+                        </p>
+                      ) : null}
                     </>
                   ) : null}
                 </Stack>
@@ -901,7 +911,10 @@ export default function Opt({
                 </Stack>
               )}
               {fieldErrors.attemptedPayment ? (
-                <p className="alert popup-error">{fieldErrors.attemptedPayment}</p>
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{fieldErrors.attemptedPayment}</span>
+                </p>
               ) : null}
               {inquiryUnavailableReason ? (
                 <p className="alert warning">
@@ -1131,7 +1144,12 @@ export default function Opt({
                 ) : null}
               </Stack>
               {evidence ? <Typography variant="body2">{evidence.name}</Typography> : null}
-              {fieldErrors.evidence ? <p className="alert popup-error">{fieldErrors.evidence}</p> : null}
+              {fieldErrors.evidence ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{fieldErrors.evidence}</span>
+                </p>
+              ) : null}
             </Stack>
           ) : null}
           {!isBug && !isPaymentProblem && !inquiryUnavailableReason ? (

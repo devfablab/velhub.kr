@@ -401,7 +401,7 @@ export default function Opt({
 
   function renderFieldError(field: string) {
     return fieldErrors[field] ? (
-      <p className="alert popup-error">
+      <p className="alert error">
         <ErrorOutlineRoundedIcon />
         <span>{fieldErrors[field]}</span>
       </p>
