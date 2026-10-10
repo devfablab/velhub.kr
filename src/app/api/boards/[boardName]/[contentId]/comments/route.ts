@@ -3,6 +3,7 @@ import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
+import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -784,6 +785,21 @@ export async function GET(request: Request, context: RouteContext) {
       session.stigmaId ?? null,
       session.case,
     );
+    const canAccessComments = await canAccessSubscriptionSeriesComments({
+      supabaseAdmin: getSupabaseAdmin(),
+      siteId: target.data.siteId,
+      boardId: target.data.boardId,
+      postId: target.data.postId,
+      stigmaId: session.stigmaId ?? null,
+      isPrivileged: canManageComment,
+    });
+
+    if (!canAccessComments) {
+      return Response.json(
+        { error: '이 글의 댓글은 블로그 또는 연재 구독자, 글 구매자만 볼 수 있습니다.' },
+        { status: 403 },
+      );
+    }
     const canPinComment =
       target.data.siteType === 'community' &&
       Boolean(session.stigmaId) &&
@@ -1011,6 +1027,28 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '댓글을 작성할 수 없습니다.' }, { status: 403 });
     }
 
+    const canManageComment = await getCommentAccess(
+      target.data.siteId,
+      target.data.boardId,
+      session.stigmaId,
+      session.case,
+    );
+    const canAccessComments = await canAccessSubscriptionSeriesComments({
+      supabaseAdmin: getSupabaseAdmin(),
+      siteId: target.data.siteId,
+      boardId: target.data.boardId,
+      postId: target.data.postId,
+      stigmaId: session.stigmaId,
+      isPrivileged: canManageComment,
+    });
+
+    if (!canAccessComments) {
+      return Response.json(
+        { error: '이 글의 댓글은 블로그 또는 연재 구독자, 글 구매자만 작성할 수 있습니다.' },
+        { status: 403 },
+      );
+    }
+
     await assertCommunityCommentWritePolicy({
       siteId: target.data.siteId,
       stigmaId: session.stigmaId,
@@ -1118,12 +1156,6 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
-    const canManageComment = await getCommentAccess(
-      target.data.siteId,
-      target.data.boardId,
-      session.stigmaId,
-      session.case,
-    );
     const canPinComment =
       target.data.siteType === 'community' && (session.stigmaId === target.data.postAuthorId || canManageComment);
 

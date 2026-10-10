@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getVisibleBlogPostPromotion } from '@/lib/blogAds/server';
 import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -1279,6 +1280,14 @@ export async function GET(request: Request, context: RouteContext) {
 
     const canViewPaidContent =
       isAuthor || canManageContent || paidContentAccess.can_view_paid_content || hasDeletedPostPermanentPurchase;
+    const canViewSubscriptionComments = await canAccessSubscriptionSeriesComments({
+      supabaseAdmin,
+      siteId: rhizomeData.id,
+      boardId: boardData.id,
+      postId: postData.id,
+      stigmaId: session.stigmaId,
+      isPrivileged: canManageContent,
+    });
     let isGallerySubscriptionPreview = boardData.board_type === 'gallery' && paidContentAccess.has_subscription_series;
 
     const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
@@ -1580,6 +1589,7 @@ export async function GET(request: Request, context: RouteContext) {
         has_subscription_series: paidContentAccess.has_subscription_series,
         has_purchase_post: paidContentAccess.has_purchase_post,
         can_view_paid_content: canViewPaidContent,
+        can_view_subscription_comments: canViewSubscriptionComments,
         board_series_count: boardSeriesCount,
         is_post_donation_available: isPostDonationAvailable,
         paid_preview_html: registeredPaidPreview?.html ?? null,

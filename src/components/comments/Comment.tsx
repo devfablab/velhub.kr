@@ -35,6 +35,7 @@ type Props = {
   onYoutubeTimestampClick?: (seconds: number) => void;
   initialData?: CommentsResponse | null;
   isPostDonationAvailable?: boolean;
+  canViewSubscriptionComments?: boolean;
 };
 
 const DISQUS_SHORTNAME = process.env.NEXT_PUBLIC_DISQUS_SHORTNAME ?? '';
@@ -53,6 +54,7 @@ export default function Comment({
   onYoutubeTimestampClick,
   initialData,
   isPostDonationAvailable = false,
+  canViewSubscriptionComments = true,
 }: Props) {
   const disqusUrl = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -61,6 +63,10 @@ export default function Comment({
 
     return `${window.location.origin}/${siteName}/${boardName}/${slug}`;
   }, [siteName, boardName, slug]);
+
+  if (!canViewSubscriptionComments) {
+    return null;
+  }
 
   if (boardName === 'b') {
     if (commentProvider === 'velhub') {

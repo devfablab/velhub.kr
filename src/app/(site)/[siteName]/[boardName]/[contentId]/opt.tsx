@@ -249,6 +249,7 @@ type PostContent = {
   has_subscription_series: boolean;
   has_purchase_post: boolean;
   can_view_paid_content: boolean;
+  can_view_subscription_comments: boolean;
   board_series_count: number;
   is_post_donation_available: boolean;
   promotion?: {
@@ -1653,6 +1654,7 @@ export default function Opt({
               }
               initialData={initialComments}
               isPostDonationAvailable={content.is_post_donation_available === true}
+              canViewSubscriptionComments={content.can_view_subscription_comments}
             />
           ) : null}
 
