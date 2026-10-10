@@ -7,6 +7,8 @@ import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 const MINOR_CANCELLATION_COOLDOWN_MS = 15 * 24 * 60 * 60 * 1000;
+const FAMILY_RELATION_CERTIFICATE_BUCKET = 'family-relation-certificates';
+const MAX_FAMILY_RELATION_CERTIFICATE_SIZE = 1024 * 1024;
 
 type InquiryFieldErrors = Record<string, string>;
 
@@ -429,7 +431,24 @@ export async function POST(request: NextRequest) {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
-  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  const isMultipart = request.headers.get('content-type')?.includes('multipart/form-data');
+  let body: Record<string, unknown> | null = null;
+  let familyRelationCertificate: File | null = null;
+  if (isMultipart) {
+    const formData = await request.formData();
+    const payload = formData.get('payload');
+    if (typeof payload === 'string') {
+      try {
+        body = (JSON.parse(payload) as Record<string, unknown>) ?? null;
+      } catch {
+        return validationError({ inquiry: '문의 입력 정보를 확인해 주세요.' });
+      }
+    }
+    const file = formData.get('familyRelationCertificate');
+    if (file instanceof File) familyRelationCertificate = file;
+  } else {
+    body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  }
   const inquiryType = body?.inquiryType;
   const inquirySubtype = getText(body?.inquirySubtype);
   const title = getText(body?.title);
@@ -465,9 +484,10 @@ export async function POST(request: NextRequest) {
   const isBug = inquiryType === 'bug_report';
   const isPaymentProblem = inquiryType === 'payment_refund_error';
   const requiresPayment = isPaymentProblem && inquirySubtype !== 'payment_declined';
+  if (!title || title.length > 120)
+    return validationError({ title: !title ? '제목을 입력해 주세요.' : '제목은 120자 이하로 입력해 주세요.' });
   if (!isBug && !isPaymentProblem) {
     const fieldErrors: InquiryFieldErrors = {
-      title: !title ? '제목을 입력해 주세요.' : title.length > 120 ? '제목은 120자 이하로 입력해 주세요.' : '',
       content: !content
         ? '문의 내용을 입력해 주세요.'
         : content.length > 10000
@@ -494,6 +514,7 @@ export async function POST(request: NextRequest) {
       recurrence: !['always', 'often', 'sometimes', 'once'].includes(recurrence)
         ? '문제 발생 빈도를 선택해 주세요.'
         : '',
+      errorMessage: !errorMessage ? '화면에 표시된 에러 메시지를 입력해 주세요.' : '',
     };
     if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
   }
@@ -508,6 +529,7 @@ export async function POST(request: NextRequest) {
           : '',
       paymentId: requiresPayment && !paymentId ? '문제가 발생한 결제를 선택해 주세요.' : '',
       attemptedPayment: !requiresPayment && !attemptedPayment.kind ? '결제하려던 항목을 선택해 주세요.' : '',
+      displayedMessage: !displayedMessage ? '화면에 표시된 메시지를 입력해 주세요.' : '',
     };
     if (Object.values(fieldErrors).some(Boolean)) return validationError(fieldErrors);
   }
@@ -519,6 +541,17 @@ export async function POST(request: NextRequest) {
     return validationError({ displayedMessage: '화면에 표시된 메시지는 5,000자 이하로 입력해 주세요.' });
   if (inquiryType === 'minor_purchase_cancellation' && !paymentId)
     return validationError({ paymentId: '청약취소를 요청할 결제를 선택해 주세요.' });
+  if (inquiryType === 'minor_purchase_cancellation') {
+    if (!familyRelationCertificate || familyRelationCertificate.size === 0)
+      return validationError({ evidence: '가족관계증명서 PDF를 첨부해 주세요.' });
+    if (
+      familyRelationCertificate.type !== 'application/pdf' ||
+      !familyRelationCertificate.name.toLowerCase().endsWith('.pdf')
+    )
+      return validationError({ evidence: '가족관계증명서는 PDF 파일만 첨부할 수 있습니다.' });
+    if (familyRelationCertificate.size > MAX_FAMILY_RELATION_CERTIFICATE_SIZE)
+      return validationError({ evidence: '가족관계증명서 PDF는 1MB 이하만 첨부할 수 있습니다.' });
+  }
 
   const db = getSupabaseAdmin();
   let attemptedPaymentTarget: Awaited<ReturnType<typeof resolveAttemptedPayment>> | null = null;
@@ -594,7 +627,7 @@ export async function POST(request: NextRequest) {
       return validationError({ pageUrl: '문제가 발생한 화면 주소를 확인해 주세요.' });
     }
   }
-  const inquiryTitle = isBug || isPaymentProblem ? null : title;
+  const inquiryTitle = title;
   const generatedContent = isBug || isPaymentProblem ? actualBehavior : content;
 
   const { data: inquiry, error: inquiryError } = await db
@@ -664,6 +697,33 @@ export async function POST(request: NextRequest) {
     if (orderError) {
       await db.from('inquiries').delete().eq('id', inquiry.id);
       return Response.json({ error: '문의에 결제를 연결하지 못했습니다.' }, { status: 500 });
+    }
+  }
+  if (inquiryType === 'minor_purchase_cancellation' && familyRelationCertificate) {
+    const storagePath = `${currentStigma.userId}/${inquiry.id}/${crypto.randomUUID()}.pdf`;
+    const { error: uploadError } = await db.storage
+      .from(FAMILY_RELATION_CERTIFICATE_BUCKET)
+      .upload(storagePath, familyRelationCertificate, {
+        contentType: 'application/pdf',
+        upsert: false,
+      });
+    if (uploadError) {
+      await db.from('inquiries').delete().eq('id', inquiry.id);
+      return Response.json({ error: '가족관계증명서를 업로드하지 못했습니다.' }, { status: 500 });
+    }
+    const { error: attachmentError } = await db.from('inquiry_attachments').insert({
+      inquiry_id: inquiry.id,
+      attachment_type: 'family_relation_certificate',
+      storage_path: storagePath,
+      storage_bucket: FAMILY_RELATION_CERTIFICATE_BUCKET,
+      mime_type: 'application/pdf',
+      submitted_by_stigma_id: currentStigma.stigmaId,
+      submitted_at: new Date().toISOString(),
+    });
+    if (attachmentError) {
+      await db.storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([storagePath]);
+      await db.from('inquiries').delete().eq('id', inquiry.id);
+      return Response.json({ error: '가족관계증명서 제출 정보를 저장하지 못했습니다.' }, { status: 500 });
     }
   }
   await db

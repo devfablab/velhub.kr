@@ -57,7 +57,8 @@ type FieldErrors = Partial<
     | 'paymentId'
     | 'attemptedPayment'
     | 'displayedMessage'
-    | 'errorMessage',
+    | 'errorMessage'
+    | 'evidence',
     string
   >
 >;
@@ -199,9 +200,9 @@ export default function Opt({
 
   function validateFields() {
     const next: FieldErrors = {};
+    if (!title.trim()) next.title = '제목을 입력해 주세요.';
+    else if (title.trim().length > 120) next.title = '제목은 120자 이하로 입력해 주세요.';
     if (!isBug && !isPaymentProblem) {
-      if (!title.trim()) next.title = '제목을 입력해 주세요.';
-      else if (title.trim().length > 120) next.title = '제목은 120자 이하로 입력해 주세요.';
       if (!content.trim()) next.content = '문의 내용을 입력해 주세요.';
       else if (content.trim().length > 10000) next.content = '문의 내용은 10,000자 이하로 입력해 주세요.';
     }
@@ -221,7 +222,8 @@ export default function Opt({
       else if (attemptedAction.length > 2000) next.attemptedAction = '하려고 했던 작업은 2,000자 이하로 입력해 주세요.';
       if (!actualBehavior.trim()) next.actualBehavior = '실제로 발생한 문제를 입력해 주세요.';
       else if (actualBehavior.length > 5000) next.actualBehavior = '실제로 발생한 문제는 5,000자 이하로 입력해 주세요.';
-      if (errorMessage.length > 5000) next.errorMessage = '오류 메시지는 5,000자 이하로 입력해 주세요.';
+      if (!errorMessage.trim()) next.errorMessage = '화면에 표시된 에러 메시지를 입력해 주세요.';
+      else if (errorMessage.length > 5000) next.errorMessage = '오류 메시지는 5,000자 이하로 입력해 주세요.';
       if (!['always', 'often', 'sometimes', 'once'].includes(recurrence)) {
         next.recurrence = '문제 발생 빈도를 선택해 주세요.';
       }
@@ -230,7 +232,8 @@ export default function Opt({
       if (!occurredAt) next.occurredAt = '문제가 발생한 날짜와 시간을 입력해 주세요.';
       if (!actualBehavior.trim()) next.actualBehavior = '실제로 발생한 상황을 입력해 주세요.';
       else if (actualBehavior.length > 5000) next.actualBehavior = '실제로 발생한 상황은 5,000자 이하로 입력해 주세요.';
-      if (displayedMessage.length > 5000)
+      if (!displayedMessage.trim()) next.displayedMessage = '화면에 표시된 메시지를 입력해 주세요.';
+      else if (displayedMessage.length > 5000)
         next.displayedMessage = '화면에 표시된 메시지는 5,000자 이하로 입력해 주세요.';
       if (paymentRequired && !paymentId) next.paymentId = '문제가 발생한 결제를 선택해 주세요.';
       if (!paymentRequired) {
@@ -244,7 +247,10 @@ export default function Opt({
         }
       }
     }
-    if (isMinorCancellation && !paymentId) next.paymentId = '청약취소를 요청할 결제를 선택해 주세요.';
+    if (isMinorCancellation) {
+      if (!paymentId) next.paymentId = '청약취소를 요청할 결제를 선택해 주세요.';
+      if (!evidence) next.evidence = '가족관계증명서 PDF를 첨부해 주세요.';
+    }
     return next;
   }
 
@@ -276,41 +282,48 @@ export default function Opt({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/concierge/contact/inquiries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inquiryType,
-          inquirySubtype,
-          title,
-          content,
-          paymentId: isMinorCancellation || paymentRequired ? paymentId : undefined,
-          pageUrl,
-          occurredAt: occurredAt?.toISOString() ?? '',
-          attemptedAction,
-          actualBehavior,
-          recurrence,
-          errorMessage,
-          attemptedPaymentKind,
-          attemptedPaymentSubtype,
-          attemptedMembershipType,
-          attemptedFeatureKeys,
-          attemptedSiteId: selectedSite?.id,
-          attemptedSeriesId: selectedSeriesId || undefined,
-          attemptedPostId: selectedPostId || undefined,
-          attemptedAmount: attemptedAmount ? parseCurrencyInput(attemptedAmount) : undefined,
-          displayedMessage,
-          environment: {
-            browserName: navigator.userAgent.match(/(Edg|Chrome|Firefox|Safari)\/?\s*([\d.]*)/i)?.[1] ?? 'unknown',
-            browserVersion: navigator.userAgent.match(/(Edg|Chrome|Firefox|Version)\/?\s*([\d.]*)/i)?.[2] ?? '',
-            operatingSystem: navigator.platform,
-            deviceType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop',
-            viewportWidth: window.innerWidth,
-            viewportHeight: window.innerHeight,
-            userAgent: navigator.userAgent,
-          },
-        }),
-      });
+      const payload = {
+        inquiryType,
+        inquirySubtype,
+        title,
+        content,
+        paymentId: isMinorCancellation || paymentRequired ? paymentId : undefined,
+        pageUrl,
+        occurredAt: occurredAt?.toISOString() ?? '',
+        attemptedAction,
+        actualBehavior,
+        recurrence,
+        errorMessage,
+        attemptedPaymentKind,
+        attemptedPaymentSubtype,
+        attemptedMembershipType,
+        attemptedFeatureKeys,
+        attemptedSiteId: selectedSite?.id,
+        attemptedSeriesId: selectedSeriesId || undefined,
+        attemptedPostId: selectedPostId || undefined,
+        attemptedAmount: attemptedAmount ? parseCurrencyInput(attemptedAmount) : undefined,
+        displayedMessage,
+        environment: {
+          browserName: navigator.userAgent.match(/(Edg|Chrome|Firefox|Safari)\/?\s*([\d.]*)/i)?.[1] ?? 'unknown',
+          browserVersion: navigator.userAgent.match(/(Edg|Chrome|Firefox|Version)\/?\s*([\d.]*)/i)?.[2] ?? '',
+          operatingSystem: navigator.platform,
+          deviceType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop',
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+          userAgent: navigator.userAgent,
+        },
+      };
+      const formData = new FormData();
+      if (isMinorCancellation && evidence) {
+        formData.set('payload', JSON.stringify(payload));
+        formData.set('familyRelationCertificate', evidence);
+      }
+      const response = await fetch(
+        '/api/concierge/contact/inquiries',
+        isMinorCancellation
+          ? { method: 'POST', body: formData }
+          : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+      );
       const result = (await response.json().catch(() => null)) as {
         inquiry?: { id: string };
         error?: string;
@@ -357,9 +370,14 @@ export default function Opt({
   function chooseEvidence(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0] ?? null;
     setError('');
-    if (selectedFile && !['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(selectedFile.type)) {
+    const allowedTypes = isMinorCancellation
+      ? ['application/pdf']
+      : ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (selectedFile && !allowedTypes.includes(selectedFile.type)) {
       setEvidence(null);
-      const message = '첨부 파일은 PDF, JPG, PNG 또는 WEBP 파일만 등록할 수 있습니다.';
+      const message = isMinorCancellation
+        ? '가족관계증명서는 PDF 파일만 등록할 수 있습니다.'
+        : '첨부 파일은 PDF, JPG, PNG 또는 WEBP 파일만 등록할 수 있습니다.';
       setError(message);
       setErrorDialog({ title: '첨부 파일 확인', messages: [message] });
       event.target.value = '';
@@ -374,6 +392,7 @@ export default function Opt({
       return;
     }
     setEvidence(selectedFile);
+    clearFieldError('evidence');
   }
 
   function removeEvidence() {
@@ -546,6 +565,24 @@ export default function Opt({
               </Stack>
             </>
           )}
+          {!inquiryUnavailableReason ? (
+            <Stack gap={1}>
+              <Typography variant="subtitle2">제목</Typography>
+              <TextField
+                required
+                fullWidth
+                size="small"
+                value={title}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  clearFieldError('title');
+                }}
+                error={Boolean(fieldErrors.title)}
+                helperText={fieldErrors.title}
+                slotProps={{ htmlInput: { maxLength: 120 } }}
+              />
+            </Stack>
+          ) : null}
           {isMinorCancellation ? (
             <Stack gap={2}>
               <p className="alert info">
@@ -900,6 +937,7 @@ export default function Opt({
                   <Stack gap={1}>
                     <Typography variant="subtitle2">화면에 표시된 메시지</Typography>
                     <TextField
+                      required
                       multiline
                       minRows={2}
                       fullWidth
@@ -1040,6 +1078,7 @@ export default function Opt({
               <Stack gap={1}>
                 <Typography variant="subtitle2">화면에 표시된 에러 메시지</Typography>
                 <TextField
+                  required
                   multiline
                   minRows={2}
                   fullWidth
@@ -1056,19 +1095,29 @@ export default function Opt({
               </Stack>
             </Stack>
           ) : null}
-          {isBug || (isPaymentProblem && !inquiryUnavailableReason) ? (
+          {isBug ||
+          (isMinorCancellation && !inquiryUnavailableReason) ||
+          (isPaymentProblem && !inquiryUnavailableReason) ? (
             <Stack gap={1}>
-              <Typography variant="subtitle2">문제가 된 페이지 캡쳐 이미지 첨부</Typography>
+              <Typography variant="subtitle2">
+                {isMinorCancellation ? '가족관계증명서 PDF 첨부' : '문제가 된 페이지 캡쳐 이미지 첨부'}
+              </Typography>
               <p className="alert info">
                 <InfoOutlineRoundedIcon />
                 <span>
-                  이미지는 PNG, JPG, WEBP 형식만 가능하며 1MB 이하만 첨부할 수 있습니다. PDF 파일도 첨부할 수 있습니다.
+                  {isMinorCancellation
+                    ? '가족관계증명서는 PDF 형식으로 1MB 이하 파일을 반드시 첨부해 주세요.'
+                    : '이미지는 PNG, JPG, WEBP 형식만 가능하며 1MB 이하만 첨부할 수 있습니다. PDF 파일도 첨부할 수 있습니다.'}
                 </span>
               </p>
               <VisuallyHiddenInput
                 ref={evidenceInputRef}
                 type="file"
-                accept="application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp"
+                accept={
+                  isMinorCancellation
+                    ? 'application/pdf,.pdf'
+                    : 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
+                }
                 onChange={chooseEvidence}
               />
               <Stack direction="row" gap={1} alignItems="center">
@@ -1082,26 +1131,11 @@ export default function Opt({
                 ) : null}
               </Stack>
               {evidence ? <Typography variant="body2">{evidence.name}</Typography> : null}
+              {fieldErrors.evidence ? <p className="alert popup-error">{fieldErrors.evidence}</p> : null}
             </Stack>
           ) : null}
           {!isBug && !isPaymentProblem && !inquiryUnavailableReason ? (
             <Stack gap={3}>
-              <Stack gap={1}>
-                <Typography variant="subtitle2">제목</Typography>
-                <TextField
-                  required
-                  fullWidth
-                  size="small"
-                  value={title}
-                  onChange={(event) => {
-                    setTitle(event.target.value);
-                    clearFieldError('title');
-                  }}
-                  error={Boolean(fieldErrors.title)}
-                  helperText={fieldErrors.title}
-                  slotProps={{ htmlInput: { maxLength: 120 } }}
-                />
-              </Stack>
               <Stack gap={1}>
                 <Typography variant="subtitle2">문의 내용</Typography>
                 <TextField
