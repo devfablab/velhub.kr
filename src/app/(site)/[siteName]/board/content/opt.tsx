@@ -1366,6 +1366,7 @@ export default function Opt({
               siteName={siteName}
               boardName={boardName}
               contentId={content.id}
+              slug={content.slug}
               isCommentEnabled={content.is_comment !== false}
               getYoutubeCurrentTime={
                 isYoutubeBoard && content.youtube_id
@@ -1378,6 +1379,7 @@ export default function Opt({
                   : undefined
               }
               initialData={initialComments}
+              isPostDonationAvailable={content.is_post_donation_available === true}
             />
           ) : null}
         </div>

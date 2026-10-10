@@ -34,6 +34,7 @@ type Props = {
   getYoutubeCurrentTime?: () => number | null;
   onYoutubeTimestampClick?: (seconds: number) => void;
   initialData?: CommentsResponse | null;
+  isPostDonationAvailable?: boolean;
 };
 
 const DISQUS_SHORTNAME = process.env.NEXT_PUBLIC_DISQUS_SHORTNAME ?? '';
@@ -51,6 +52,7 @@ export default function Comment({
   getYoutubeCurrentTime,
   onYoutubeTimestampClick,
   initialData,
+  isPostDonationAvailable = false,
 }: Props) {
   const disqusUrl = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -67,10 +69,12 @@ export default function Comment({
           siteName={siteName}
           boardName={boardName}
           contentId={contentId}
+          contentSlug={slug ?? contentId}
           isCommentEnabled={isCommentEnabled}
           getYoutubeCurrentTime={getYoutubeCurrentTime}
           onYoutubeTimestampClick={onYoutubeTimestampClick}
           initialData={initialData}
+          isPostDonationAvailable={isPostDonationAvailable}
         />
       );
     }
@@ -127,10 +131,12 @@ export default function Comment({
       siteName={siteName}
       boardName={boardName}
       contentId={contentId}
+      contentSlug={slug ?? contentId}
       isCommentEnabled={isCommentEnabled}
       getYoutubeCurrentTime={getYoutubeCurrentTime}
       onYoutubeTimestampClick={onYoutubeTimestampClick}
       initialData={initialData}
+      isPostDonationAvailable={isPostDonationAvailable}
     />
   );
 }

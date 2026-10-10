@@ -14,13 +14,15 @@ export type PaymentOrder = {
   board_id: string | null;
   series_id: string | null;
   post_id: string | null;
+  donation_comment_content: string | null;
   amount: number;
   currency: string;
   status: 'ready' | 'completed' | 'expired';
   expires_at: string;
 };
 
-type CreatePaymentOrderInput = Omit<PaymentOrder, 'id' | 'status' | 'expires_at'> & {
+type CreatePaymentOrderInput = Omit<PaymentOrder, 'id' | 'status' | 'expires_at' | 'donation_comment_content'> & {
+  donation_comment_content?: string | null;
   expiresAt?: string;
 };
 

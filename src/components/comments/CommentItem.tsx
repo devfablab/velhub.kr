@@ -4,6 +4,7 @@ import { useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Avatar,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -61,11 +62,12 @@ export type CommentData = {
   parent_id: string | null;
   reply_to_id: string | null;
   reply_to_author_name: string;
-  content: string;
+  content: string | null;
   is_deleted: boolean;
   deleted_at: string | null;
   is_blinded: boolean;
   is_pinned: boolean;
+  donation_amount: number | null;
   is_locked: boolean;
   blinded_at: string | null;
   blinded_message: string | null;
@@ -339,7 +341,6 @@ export default function CommentItem({
           {comment.is_author ? <span className={styles['author-type']}>글 작성자</span> : null}
           {comment.is_me ? <span className={styles['author-type']}>본인</span> : null}
           {comment.is_pinned ? <span className={styles['author-type']}>댓글 고정됨</span> : null}
-
           {isStaff ? (
             <>
               {comment.is_deleted ? <span className={styles['comment-status']}>삭제된 댓글</span> : null}
@@ -357,7 +358,7 @@ export default function CommentItem({
 
         {isEditing ? (
           <CommentForm
-            defaultValue={comment.content}
+            defaultValue={comment.content ?? ''}
             submitLabel="수정"
             isSubmitting={isSubmitting}
             onSubmit={handleEdit}
@@ -371,13 +372,23 @@ export default function CommentItem({
             {comment.parent_id && comment.reply_to_author_name ? (
               <strong>{comment.reply_to_author_name} </strong>
             ) : null}
-            <p>
-              {onYoutubeTimestampClick ? (
-                <YoutubeTimestampText value={comment.content} onTimestampClick={onYoutubeTimestampClick} />
-              ) : (
-                comment.content
-              )}
-            </p>
+            {comment.donation_amount ? (
+              <Chip
+                label={`후원 ${comment.donation_amount.toLocaleString()}원`}
+                size="small"
+                className="chip success"
+                sx={{ mb: 1 }}
+              />
+            ) : null}
+            {onYoutubeTimestampClick ? (
+              comment.content ? (
+                <p>
+                  <YoutubeTimestampText value={comment.content} onTimestampClick={onYoutubeTimestampClick} />
+                </p>
+              ) : null
+            ) : comment.content ? (
+              <p>{comment.content}</p>
+            ) : null}
             {comment.poll_choice ? <blockquote>선택한 항목: {comment.poll_choice.label}</blockquote> : null}
           </div>
         )}

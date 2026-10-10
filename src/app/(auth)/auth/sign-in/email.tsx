@@ -389,7 +389,7 @@ export default function EmailSignIn() {
       if (checkResult.accountType === 'social' && checkResult.hasPassword === false) {
         setDecisionState('confirm-enable-email-login');
         setDecisionMessage(
-          '이 계정은 소셜 로그인으로 가입되어 있습니다. 이메일 로그인도 사용할 수 있도록 비밀번호 설정 메일을 보내시겠습니까?',
+          '이 계정은 소셜 로그인으로 가입되어 있습니다.\n이메일 로그인도 사용할 수 있도록 비밀번호 설정 메일을 보내시겠습니까?',
         );
         setIsSubmitting(false);
         return;

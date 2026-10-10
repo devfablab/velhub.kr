@@ -59,6 +59,21 @@ export async function GET(request: NextRequest) {
     const session = await verifySession({
       siteId: site.id,
     });
+    const paymentContactResult = Promise.all([
+      session.authUserId ? getPaymentCustomerName(session.authUserId).catch(() => null) : Promise.resolve(null),
+      session.authUserId ? getPaymentCustomerPhone(session.authUserId).catch(() => null) : Promise.resolve(null),
+      session.authUserId ? getPaymentCustomerRealName(session.authUserId).catch(() => null) : Promise.resolve(null),
+    ]);
+    async function getDonationStatus(isEnabled: boolean) {
+      const [paymentEmail, paymentPhone, customerName] = await paymentContactResult;
+
+      return Response.json({
+        isEnabled,
+        paymentEmail,
+        paymentPhone,
+        customerName,
+      });
+    }
 
     if (session.rhizomeStigmaId) {
       const membershipResult = await supabaseAdmin
@@ -70,15 +85,11 @@ export async function GET(request: NextRequest) {
       if (membershipResult.error) {
         console.error(membershipResult.error);
 
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
 
       if (membershipResult.data?.role === 'owner') {
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
     }
 
@@ -87,22 +98,16 @@ export async function GET(request: NextRequest) {
       targetType !== PAYMENT_TARGET_TYPE.SERIES &&
       targetType !== PAYMENT_TARGET_TYPE.POST
     ) {
-      return Response.json({
-        isEnabled: false,
-      });
+      return getDonationStatus(false);
     }
 
     if (site.site_type === 'community' && targetType === PAYMENT_TARGET_TYPE.SITE) {
-      return Response.json({
-        isEnabled: false,
-      });
+      return getDonationStatus(false);
     }
 
     if (site.site_type === 'blog' && targetType === PAYMENT_TARGET_TYPE.SITE) {
       if (!session.stigmaId) {
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
 
       const hasBlogSubscription = await hasValidBlogSubscription({
@@ -112,17 +117,13 @@ export async function GET(request: NextRequest) {
       });
 
       if (!hasBlogSubscription) {
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
     }
 
     if (targetType === PAYMENT_TARGET_TYPE.SERIES) {
       if (!session.stigmaId || !boardName || !seriesName) {
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
 
       const boardResult = await supabaseAdmin
@@ -133,9 +134,7 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (boardResult.error || !boardResult.data) {
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
 
       const seriesResult = await supabaseAdmin
@@ -147,9 +146,7 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (seriesResult.error || !seriesResult.data) {
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
 
       const hasSeriesSubscription = await hasValidSeriesSubscription({
@@ -159,37 +156,11 @@ export async function GET(request: NextRequest) {
       });
 
       if (!hasSeriesSubscription) {
-        return Response.json({
-          isEnabled: false,
-        });
+        return getDonationStatus(false);
       }
     }
 
-    async function getPaymentEmail() {
-      try {
-        if (!session.authUserId) {
-          return null;
-        }
-
-        return getPaymentCustomerName(session.authUserId);
-      } catch (unknownError) {
-        console.error(unknownError);
-        return null;
-      }
-    }
-
-    const [paymentEmail, paymentPhone, customerName] = await Promise.all([
-      getPaymentEmail(),
-      session.authUserId ? getPaymentCustomerPhone(session.authUserId) : Promise.resolve(null),
-      session.authUserId ? getPaymentCustomerRealName(session.authUserId) : Promise.resolve(null),
-    ]);
-
-    return Response.json({
-      isEnabled: true,
-      paymentEmail,
-      paymentPhone,
-      customerName,
-    });
+    return getDonationStatus(true);
   } catch (unknownError) {
     console.error(unknownError);
 

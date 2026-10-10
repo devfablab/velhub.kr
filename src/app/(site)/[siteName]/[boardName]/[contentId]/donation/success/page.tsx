@@ -13,8 +13,10 @@ export default async function Page({ params, searchParams }: Props) {
   const query = await searchParams;
   const siteName = normalizeText(route.siteName).toLowerCase();
   const boardName = normalizeText(route.boardName).toLowerCase();
-  const contentId = normalizeText(route.contentId);
   const value = (key: string) => normalizeText(typeof query[key] === 'string' ? query[key] : '');
+  const routeContentId = normalizeText(route.contentId);
+  const queryContentId = value('contentId');
+  const contentId = /^\d+$/.test(queryContentId) ? queryContentId : routeContentId;
   const paymentKey = value('paymentKey') || value('paymentId');
   const orderId = value('orderId') || value('orderNo');
   const amount = Number(value('amount'));
@@ -30,7 +32,7 @@ export default async function Page({ params, searchParams }: Props) {
     errorMessage = '후원 결제 정보가 올바르지 않습니다.';
   } else {
     const result = await getSiteApiData<Response>(
-      '/api/payments/portone/donation/success',
+      '/api/payments/portone/donation/post/success',
       '후원 결제를 완료하지 못했습니다.',
       {
         method: 'POST',

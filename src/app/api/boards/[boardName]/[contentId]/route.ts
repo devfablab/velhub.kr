@@ -1529,7 +1529,9 @@ export async function GET(request: Request, context: RouteContext) {
     delete publicPostData.closed_by;
     const isPostDonationAvailable =
       !isYoutubeCommunityBoard &&
-      (rhizomeData.site_type === 'blog' || (boardSeriesCount >= 2 && Boolean(postData.series_id)));
+      canViewPaidContent &&
+      (paidContentAccess.has_subscription_series || paidContentAccess.has_purchase_post) &&
+      !isAuthor;
     const promotion =
       rhizomeData.site_type === 'blog'
         ? await getVisibleBlogPostPromotion({

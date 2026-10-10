@@ -25,7 +25,7 @@ import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 
-type DonationTargetType = 'site' | 'series';
+type DonationTargetType = 'site' | 'series' | 'post';
 
 type DonationStartResponse = {
   storeId?: string;
@@ -46,6 +46,7 @@ type CommonProps = {
   siteName: string;
   initialStatus?: DonationStatusResponse | null;
   buttonText?: string;
+  triggerClassName?: string;
   disabled?: boolean;
   onProcessingChange?: (isProcessing: boolean) => void;
 };
@@ -64,7 +65,16 @@ type SeriesDonationProps = CommonProps & {
   failUrl?: string;
 };
 
-type Props = SiteDonationProps | SeriesDonationProps;
+type PostDonationProps = CommonProps & {
+  targetType: 'post';
+  boardName: string;
+  contentId: string;
+  commentFormId?: string;
+  successUrl?: string;
+  failUrl?: string;
+};
+
+type Props = SiteDonationProps | SeriesDonationProps | PostDonationProps;
 
 type IdentityStatusResponse = {
   exists: boolean;
@@ -124,16 +134,21 @@ function isValidDonationAmount(amount: number) {
 }
 
 function getTargetType(props: Props): DonationTargetType {
-  return props.targetType === 'series' ? 'series' : 'site';
+  return props.targetType === 'series' || props.targetType === 'post' ? props.targetType : 'site';
 }
 
 function getDonationTitle(props: Props) {
+  if (getTargetType(props) === 'post') return '후원 댓글';
   return getTargetType(props) === 'series' ? '연재 후원' : '블로그 후원';
 }
 
 function getSuccessUrl(props: Props) {
   if (props.successUrl) {
     return props.successUrl;
+  }
+
+  if (props.targetType === 'post') {
+    return `/${props.siteName}/${props.boardName}/${props.contentId}/donation/success`;
   }
 
   return `/${props.siteName}/donation/success`;
@@ -144,10 +159,41 @@ function getFailUrl(props: Props) {
     return props.failUrl;
   }
 
+  if (props.targetType === 'post') {
+    return `/${props.siteName}/${props.boardName}/${props.contentId}/donation/fail`;
+  }
+
   return `/${props.siteName}/donation/fail`;
 }
 
+function getPostDonationCommentContent(props: PostDonationProps) {
+  if (typeof document === 'undefined' || !props.commentFormId) {
+    return '';
+  }
+
+  const form = document.getElementById(props.commentFormId);
+
+  if (!(form instanceof HTMLFormElement)) {
+    return '';
+  }
+
+  return String(new FormData(form).get('content') ?? '');
+}
+
 function createRequestBody(props: Props, amount: number) {
+  if (props.targetType === 'post') {
+    return {
+      targetType: 'post',
+      siteName: props.siteName,
+      boardName: props.boardName,
+      contentId: props.contentId,
+      commentContent: getPostDonationCommentContent(props),
+      amount,
+      successUrl: getSuccessUrl(props),
+      failUrl: getFailUrl(props),
+    };
+  }
+
   if (props.targetType === 'series') {
     return {
       targetType: 'series',
@@ -174,7 +220,7 @@ export default function DonationButton(props: Props) {
   const identityStatus = siteInitialData?.identityStatus as IdentityStatusResponse | null;
   const siteProfile = siteInitialData?.blogProfile as { donation?: DonationStatusResponse | null } | null;
   const initialStatus = props.initialStatus ?? (props.targetType === 'series' ? null : siteProfile?.donation) ?? null;
-  const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
+  const { buttonText = '후원하기', triggerClassName, disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [donationAmount, setDonationAmount] = useState('1,000');
@@ -182,7 +228,7 @@ export default function DonationButton(props: Props) {
   const [errorTitle, setErrorTitle] = useState<string | null>(null);
   const [amountError, setAmountError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const canShowDonationButton = Boolean(initialStatus?.isEnabled);
+  const canShowDonationButton = props.targetType === 'post' || Boolean(initialStatus?.isEnabled);
   const hasIdentity = Boolean(identityStatus?.exists);
   const [paymentEmail, setPaymentEmail] = useState(String(initialStatus?.paymentEmail ?? ''));
   const [paymentPhone, setPaymentPhone] = useState(String(initialStatus?.paymentPhone ?? ''));
@@ -205,13 +251,43 @@ export default function DonationButton(props: Props) {
     onProcessingChange?.(nextIsProcessing);
   }
 
-  function handleOpenDialog() {
+  async function handleOpenDialog() {
     if (!hasIdentity) {
       setIsIdentityDialogOpen(true);
       return;
     }
 
-    if (!paymentEmail || !paymentPhone) {
+    let currentPaymentEmail = paymentEmail;
+    let currentPaymentPhone = paymentPhone;
+
+    if (!currentPaymentEmail || !currentPaymentPhone) {
+      try {
+        const response = await fetch('/api/payments/portone/billing-method/status', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
+        const result = (await response.json()) as {
+          paymentEmail?: string | null;
+          paymentPhone?: string | null;
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(result.error ?? '결제 정보를 확인하지 못했습니다.');
+        }
+
+        currentPaymentEmail = String(result.paymentEmail ?? '');
+        currentPaymentPhone = String(result.paymentPhone ?? '');
+        setPaymentEmail(currentPaymentEmail);
+        setPaymentPhone(currentPaymentPhone);
+      } catch (error) {
+        setErrorTitle(donationTitle);
+        setErrorMessage(error instanceof Error ? error.message : '결제 정보를 확인하지 못했습니다.');
+        return;
+      }
+    }
+
+    if (!currentPaymentEmail || !currentPaymentPhone) {
       setIsPaymentEmailDialogOpen(true);
       return;
     }
@@ -289,14 +365,19 @@ export default function DonationButton(props: Props) {
         return;
       }
 
-      const response = await fetch('/api/payments/portone/donation/start', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        props.targetType === 'post'
+          ? '/api/payments/portone/donation/post/start'
+          : '/api/payments/portone/donation/start',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...createRequestBody(props, amount), guardianIdentityVerificationId }),
         },
-        body: JSON.stringify({ ...createRequestBody(props, amount), guardianIdentityVerificationId }),
-      });
+      );
 
       const result = (await response.json()) as DonationStartResponse;
 
@@ -403,11 +484,11 @@ export default function DonationButton(props: Props) {
         {({ check, isChecking }) => (
           <button
             type="button"
-            className="button small action"
+            className={triggerClassName ?? 'button small action'}
             onClick={check}
             disabled={disabled || isProcessing || isChecking}
           >
-            <strong>{buttonText}</strong>
+            {triggerClassName ? buttonText : <strong>{buttonText}</strong>}
           </button>
         )}
       </MinorPaymentControl>
@@ -498,7 +579,7 @@ export default function DonationButton(props: Props) {
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="button medium submit" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </div>

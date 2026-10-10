@@ -8,6 +8,7 @@ import type { ReportTargetType } from '@/lib/reports/guidelines';
 import CommentForm from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import DonationButton from '@/components/service/common/DonationButton';
 import Anchor from '../Anchor';
 import styles from '@/app/comments.module.sass';
 
@@ -15,6 +16,7 @@ type Props = {
   siteName: string;
   boardName: string;
   contentId: string;
+  contentSlug?: string;
   isCommentEnabled: boolean;
   apiBasePath?: string;
   includeSiteNameInApiPath?: boolean;
@@ -23,6 +25,7 @@ type Props = {
   getYoutubeCurrentTime?: () => number | null;
   onYoutubeTimestampClick?: (seconds: number) => void;
   initialData?: CommentsResponse | null;
+  isPostDonationAvailable?: boolean;
 };
 
 type PollChoice = {
@@ -110,6 +113,7 @@ export default function CommentList({
   siteName,
   boardName,
   contentId,
+  contentSlug = contentId,
   isCommentEnabled,
   apiBasePath = `/api/boards/${boardName}/${contentId}/comments`,
   includeSiteNameInApiPath = true,
@@ -118,6 +122,7 @@ export default function CommentList({
   getYoutubeCurrentTime,
   onYoutubeTimestampClick,
   initialData,
+  isPostDonationAvailable = false,
 }: Props) {
   const [comments, setComments] = useState<CommentData[]>(initialData?.comments ?? []);
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState(initialData?.mySelfAvatarUrl ?? '');
@@ -440,6 +445,24 @@ export default function CommentList({
           isSubmitting={isSubmitting}
           externalErrorMessage={errorMessage}
           getYoutubeCurrentTime={getYoutubeCurrentTime}
+          renderDonationAction={
+            isPostDonationAvailable
+              ? (commentFormId) => (
+                  <DonationButton
+                    siteName={siteName}
+                    targetType="post"
+                    boardName={boardName}
+                    contentId={contentId}
+                    commentFormId={commentFormId}
+                    successUrl={`/${siteName}/${boardName}/${contentSlug}/donation/success`}
+                    failUrl={`/${siteName}/${boardName}/${contentSlug}/donation/fail`}
+                    buttonText="후원 댓글"
+                    triggerClassName={styles['submit-button']}
+                    disabled={isSubmitting}
+                  />
+                )
+              : undefined
+          }
           onSubmit={(content) => createComment(content, null)}
         />
       ) : null}

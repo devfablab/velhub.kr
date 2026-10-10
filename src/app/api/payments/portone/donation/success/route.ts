@@ -133,8 +133,8 @@ async function confirmPortOnePayment({
       throw new PortOnePaymentConfirmError('결제 금액이 올바르지 않습니다.', payment);
     }
 
-    if (payment.order?.id !== orderId) {
-      throw new PortOnePaymentConfirmError('결제 주문번호가 올바르지 않습니다.', payment);
+    if (normalizeText(payment.id) !== paymentKey) {
+      throw new PortOnePaymentConfirmError('결제 식별자가 올바르지 않습니다.', payment);
     }
 
     return {

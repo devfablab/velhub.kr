@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, JSX, useRef, useState } from 'react';
+import { type ChangeEvent, JSX, type ReactNode, useId, useRef, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import styles from '@/app/comments.module.sass';
 
@@ -14,6 +14,7 @@ type Props = {
   isSubmitting?: boolean;
   externalErrorMessage?: string;
   getYoutubeCurrentTime?: () => number | null;
+  renderDonationAction?: (formId: string) => ReactNode;
   onSubmit: (content: string) => Promise<void>;
   onCancel?: () => void;
 };
@@ -22,17 +23,19 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 
 export default function CommentForm({
   placeholder = '댓글을 달아보세요.',
-  submitLabel = '등록',
+  submitLabel = '댓글 달기',
   defaultValue = '',
   replyTargetName,
   avatarUrl,
   isSubmitting = false,
   externalErrorMessage = '',
   getYoutubeCurrentTime,
+  renderDonationAction,
   onSubmit,
   onCancel,
 }: Props) {
   const textareaReference = useRef<HTMLTextAreaElement | null>(null);
+  const formId = useId();
 
   const [content, setContent] = useState(defaultValue);
   const [errorMessage, setErrorMessage] = useState('');
@@ -108,7 +111,7 @@ export default function CommentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="form">
+    <form id={formId} onSubmit={handleSubmit} className="form">
       <fieldset>
         <legend>댓글쓰기 폼</legend>
         {errorMessage || externalErrorMessage ? (
@@ -125,6 +128,7 @@ export default function CommentForm({
 
           <textarea
             ref={textareaReference}
+            name="content"
             value={content}
             placeholder={placeholder}
             disabled={isSubmitting}
@@ -152,6 +156,8 @@ export default function CommentForm({
                 타임스탬프 추가
               </button>
             ) : null}
+
+            {renderDonationAction?.(formId)}
 
             <button type="submit" disabled={isSubmitting} className={styles['submit-button']}>
               {submitLabel}

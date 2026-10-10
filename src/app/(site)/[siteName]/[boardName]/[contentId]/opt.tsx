@@ -1635,12 +1635,12 @@ export default function Opt({
               siteName={siteName}
               boardName={boardName}
               contentId={content.id}
+              slug={content.slug}
               isCommentEnabled={content.is_comment !== false}
               commentProvider={content.comment_provider}
               giscusSettings={content.giscus_settings}
               themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
               title={content.subject}
-              slug={content.slug}
               getYoutubeCurrentTime={
                 isYoutubeBoard && content.youtube_id
                   ? () => youtubePlayerReference.current?.getCurrentTime() ?? null
@@ -1652,6 +1652,7 @@ export default function Opt({
                   : undefined
               }
               initialData={initialComments}
+              isPostDonationAvailable={content.is_post_donation_available === true}
             />
           ) : null}
 

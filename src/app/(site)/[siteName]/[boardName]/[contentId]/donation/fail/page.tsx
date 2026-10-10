@@ -13,8 +13,10 @@ export default async function Page({ params, searchParams }: Props) {
   const query = await searchParams;
   const siteName = normalizeText(route.siteName).toLowerCase();
   const boardName = normalizeText(route.boardName).toLowerCase();
-  const contentId = normalizeText(route.contentId);
   const value = (key: string) => normalizeText(typeof query[key] === 'string' ? query[key] : '');
+  const routeContentId = normalizeText(route.contentId);
+  const queryContentId = value('contentId');
+  const contentId = /^\d+$/.test(queryContentId) ? queryContentId : routeContentId;
   const message = value('message') || '후원이 취소되었거나 실패했습니다.';
   const orderNo = value('orderNo');
   const paymentType = value('paymentType');

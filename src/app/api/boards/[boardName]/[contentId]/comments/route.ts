@@ -50,7 +50,7 @@ type CommentRow = {
   user_id: string;
   parent_id: string | null;
   reply_to_id: string | null;
-  content: string;
+  content: string | null;
   is_deleted: boolean;
   is_locked: boolean;
   deleted_at: string | null;
@@ -60,6 +60,8 @@ type CommentRow = {
   blinded_by: string | null;
   blinded_message: string | null;
   is_pinned: boolean;
+  donation_payment_id: string | null;
+  donation_amount: number | string | null;
 };
 
 type CommentItem = {
@@ -68,7 +70,7 @@ type CommentItem = {
   parent_id: string | null;
   reply_to_id: string | null;
   reply_to_author_name: string;
-  content: string;
+  content: string | null;
   is_deleted: boolean;
   is_locked: boolean;
   deleted_at: string | null;
@@ -76,6 +78,7 @@ type CommentItem = {
   blinded_at: string | null;
   blinded_message: string | null;
   is_pinned: boolean;
+  donation_amount: number | null;
   author_name: string;
   author_avatar_url: string;
   author_membership_badge_url: string | null;
@@ -199,12 +202,7 @@ function isManageRole(value: string): value is AuthorManageRole['role'] {
   );
 }
 
-async function getUserDisplayInfo(
-  siteId: string,
-  boardId: string,
-  userId: string | null | undefined,
-  isBlog: boolean,
-) {
+async function getUserDisplayInfo(siteId: string, boardId: string, userId: string | null | undefined, isBlog: boolean) {
   const normalizedUserId = normalizeText(userId);
 
   if (!normalizedUserId) {
@@ -694,6 +692,10 @@ async function buildCommentItem({
     blinded_at: comment.blinded_at,
     blinded_message: comment.blinded_message,
     is_pinned: comment.is_pinned === true,
+    donation_amount:
+      !isDeleted && !isBlinded && comment.donation_payment_id && Number(comment.donation_amount) > 0
+        ? Number(comment.donation_amount)
+        : null,
     author_name: author.name,
     author_avatar_url: author.avatarUrl,
     author_membership_badge_url: author.membershipBadgeUrl,
@@ -807,7 +809,7 @@ export async function GET(request: Request, context: RouteContext) {
     const commentsResult = await supabaseAdmin
       .from('post_comments')
       .select(
-        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message, is_locked, is_pinned',
+        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message, is_locked, is_pinned, donation_payment_id, donation_amount',
       )
       .eq('site_id', target.data.siteId)
       .eq('board_id', target.data.boardId)
