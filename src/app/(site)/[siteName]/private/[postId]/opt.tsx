@@ -475,7 +475,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                   </h3>
                   <div className={styles['author-profile']}>
                     <div className={styles.avatar}>
-                      <Avatar src={data.post?.author_avatar_url} alt="" />
+                      <Avatar src={data.post?.author_avatar_url || '/broken-image.jpg'} alt="" />
                     </div>
                     <div className={styles.info}>
                       <div className={styles.name}>
@@ -596,7 +596,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                     </div>
                     <div className={styles['author-profile']}>
                       <div className={styles.avatar}>
-                        <Avatar src={reply.author_avatar_url} alt="" />
+                        <Avatar src={reply.author_avatar_url || '/broken-image.jpg'} alt="" />
                       </div>
                       <div className={styles.info}>
                         <div className={styles.name}>

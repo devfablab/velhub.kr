@@ -329,7 +329,11 @@ export default function UserInfo({
         <AccordionDetails>
           <Stack gap={3}>
             <Stack gap={1.5} alignItems="flex-start">
-              <Avatar src={getAvatarDisplayUrl() || 'broken-image.png'} alt={userName} sx={{ width: 80, height: 80 }} />
+              <Avatar
+                src={getAvatarDisplayUrl() || '/broken-image.jpg'}
+                alt={userName}
+                sx={{ width: 80, height: 80 }}
+              />
 
               <VisuallyHiddenInput
                 ref={fileInputReference}

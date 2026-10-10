@@ -255,7 +255,7 @@ export default function HeaderHub() {
 
                 <IconButton onClick={handleOpenProfileMenu}>
                   <Avatar
-                    src={isAuthenticated ? userProfile.avatarUrl || '/broken-image.jpg' : ''}
+                    src={isAuthenticated ? userProfile.avatarUrl || '/broken-image.jpg' : '/broken-image.jpg'}
                     alt={isAuthenticated ? userProfile.name || '' : ''}
                     sx={{ width: 24, height: 24 }}
                   />

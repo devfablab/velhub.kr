@@ -115,7 +115,11 @@ export default function CommentForm({
           <p className="helper error">{errorMessage || externalErrorMessage}</p>
         ) : null}
         <div className={styles.textarea}>
-          <Avatar src={avatarUrl} alt="" sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }} />
+          <Avatar
+            src={avatarUrl || '/broken-image.jpg'}
+            alt=""
+            sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }}
+          />
 
           {replyTargetName ? <strong>{replyTargetName}</strong> : null}
 

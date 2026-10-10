@@ -1173,7 +1173,7 @@ export default function Opt({
 
                   <div className={styles['author-profile']}>
                     <div className={styles.avatar}>
-                      <Avatar src={content.author_avatar_url} alt={content.author_name} />
+                      <Avatar src={content.author_avatar_url || '/broken-image.jpg'} alt={content.author_name} />
                     </div>
                     <div className={styles.info}>
                       <div className={styles.name}>
@@ -1563,7 +1563,10 @@ export default function Opt({
                                   <td>{winner.draw_order}</td>
                                   <td>
                                     <div>
-                                      <Avatar src={winner.author_avatar_url} alt={winner.author_name} />
+                                      <Avatar
+                                        src={winner.author_avatar_url || '/broken-image.jpg'}
+                                        alt={winner.author_name}
+                                      />
                                       <cite>
                                         {winner.author_name}
                                         {winner.author_email ? ` (${maskEmail(winner.author_email)})` : null}

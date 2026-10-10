@@ -294,7 +294,7 @@ export default function CommentItem({
   return (
     <div className={depth === 1 ? `${styles['comment-item']} ${styles['comment-reply-item']}` : styles['comment-item']}>
       <Avatar
-        src={comment.author_avatar_url}
+        src={comment.author_avatar_url || '/broken-image.jpg'}
         alt={comment.author_name}
         sx={{ width: 28, height: 28, position: 'relative', top: 5 }}
       />

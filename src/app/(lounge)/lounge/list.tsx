@@ -69,7 +69,7 @@ export default function List({ postsData, orderType }: ListProps) {
                     <div className={styles.tail}>
                       <div className={styles['tail-author']}>
                         <Avatar
-                          src={post.author_avatar ?? undefined}
+                          src={post.author_avatar || '/broken-image.jpg'}
                           alt={post.author_name}
                           sx={{ width: 24, height: 24, fontSize: 12 }}
                         />
@@ -165,7 +165,7 @@ export default function List({ postsData, orderType }: ListProps) {
                       <strong>{post.site_label}</strong>
                       <em>by</em>
                       <Avatar
-                        src={post.author_avatar ?? undefined}
+                        src={post.author_avatar || '/broken-image.jpg'}
                         alt={post.author_name}
                         sx={{ width: 24, height: 24, fontSize: 12 }}
                       />
@@ -260,7 +260,7 @@ export default function List({ postsData, orderType }: ListProps) {
                   </div>
                   <div className={styles['tail-author']}>
                     <Avatar
-                      src={post.author_avatar ?? undefined}
+                      src={post.author_avatar || '/broken-image.jpg'}
                       alt={post.author_name}
                       sx={{ width: 24, height: 24, fontSize: 12 }}
                     />

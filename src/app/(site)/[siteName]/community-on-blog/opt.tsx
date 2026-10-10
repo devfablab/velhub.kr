@@ -148,7 +148,7 @@ export default function Opt({
                     <header className={styles['content-header']}>
                       <div className={styles['author-profile']}>
                         <div className={styles.avatar}>
-                          <Avatar src={post.authorAvatarUrl ?? undefined} alt={post.authorName} />
+                          <Avatar src={post.authorAvatarUrl || '/broken-image.jpg'} alt={post.authorName} />
                         </div>
                         <div className={styles.info}>
                           <div className={styles.name}>
