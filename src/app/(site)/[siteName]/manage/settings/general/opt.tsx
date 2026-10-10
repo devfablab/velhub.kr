@@ -1880,16 +1880,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
             팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?
           </div>
           <div className="drawer-dialog-actions">
-            <button
-              type="button"
-              className="button medium cancel"
-              onClick={() => setIsTeamConversionConfirmOpen(false)}
-            >
+            <button type="button" className="button medium close" onClick={() => setIsTeamConversionConfirmOpen(false)}>
               취소
             </button>
             <button
               type="button"
-              className="button medium warning"
+              className="button medium danger"
               onClick={() => {
                 setIsTeamConversionConfirmOpen(false);
                 void saveField('blog_type', undefined, true);
@@ -1912,16 +1908,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
             팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?
           </DialogContent>
           <DialogActions>
-            <button
-              type="button"
-              className="button medium cancel"
-              onClick={() => setIsTeamConversionConfirmOpen(false)}
-            >
+            <button type="button" className="cancel-button" onClick={() => setIsTeamConversionConfirmOpen(false)}>
               취소
             </button>
             <button
               type="button"
-              className="button medium warning"
+              className="danger-button"
               onClick={() => {
                 setIsTeamConversionConfirmOpen(false);
                 void saveField('blog_type', undefined, true);
@@ -1952,7 +1944,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
             >
               확인

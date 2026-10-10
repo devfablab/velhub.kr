@@ -936,14 +936,14 @@ export default function Opt({
               ) : null}
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button small cancel" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
                 type="button"
                 onClick={() => void deletePost()}
                 disabled={isDeletingPost}
-                className="button small danger"
+                className="button medium danger"
               >
                 삭제
               </button>
@@ -994,7 +994,7 @@ export default function Opt({
                 type="button"
                 onClick={() => void deletePost()}
                 disabled={isDeletingPost}
-                className="delete-button"
+                className="danger-button"
               >
                 삭제
               </button>
@@ -1693,7 +1693,7 @@ export default function Opt({
                 <p>연재글은 다른 게시판으로 이동시킬 수 없습니다.</p>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button small submit" onClick={() => setIsSeriesMoveDialogOpen(false)}>
+                <button type="button" className="button medium submit" onClick={() => setIsSeriesMoveDialogOpen(false)}>
                   확인
                 </button>
               </div>
@@ -1755,12 +1755,12 @@ export default function Opt({
                 )}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button small cancel" onClick={() => setIsPostMoveDialogOpen(false)}>
+                <button type="button" className="button medium close" onClick={() => setIsPostMoveDialogOpen(false)}>
                   취소
                 </button>
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   disabled={
                     !selectedMoveBoardKey ||
                     selectedMoveBoardKey === board.board_key ||

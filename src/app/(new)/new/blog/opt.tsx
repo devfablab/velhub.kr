@@ -753,10 +753,10 @@ export default function Opt() {
             <Typography>정말로 개설을 취소하시겠어요?</Typography>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={closeCancelDialog}>
+            <button type="button" className="button medium close" onClick={closeCancelDialog}>
               닫기
             </button>
-            <button type="button" className="button small warning" onClick={handleConfirmCancel}>
+            <button type="button" className="button medium danger" onClick={handleConfirmCancel}>
               개설 취소
             </button>
           </div>
@@ -780,7 +780,7 @@ export default function Opt() {
             <button type="button" className="cancel-button" onClick={closeCancelDialog}>
               닫기
             </button>
-            <button type="button" className="warning-button" onClick={handleConfirmCancel}>
+            <button type="button" className="danger-button" onClick={handleConfirmCancel}>
               개설 취소
             </button>
           </DialogActions>
@@ -813,7 +813,7 @@ export default function Opt() {
             )}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small submit" onClick={closeErrorDialog}>
+            <button type="button" className="button medium submit" onClick={closeErrorDialog}>
               확인
             </button>
           </div>

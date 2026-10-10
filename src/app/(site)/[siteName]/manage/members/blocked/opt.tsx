@@ -485,7 +485,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseActionDialog}
                   disabled={isActionSubmitting}
                 >
@@ -493,7 +493,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   onClick={handleSubmitAction}
                   disabled={isActionSubmitting}
                 >

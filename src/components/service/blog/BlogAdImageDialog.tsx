@@ -151,14 +151,14 @@ export default function BlogAdImageDialog({
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>{content}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={closeDialog} disabled={isUploading} className="button small cancel">
+            <button type="button" onClick={closeDialog} disabled={isUploading} className="button medium close">
               취소
             </button>
             <button
               type="button"
               onClick={() => void applyImage()}
               disabled={!selectedFile || isUploading}
-              className="button small submit"
+              className="button medium submit"
             >
               {isUploading ? '업로드 중' : '이미지 업로드'}
             </button>

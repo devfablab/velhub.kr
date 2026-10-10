@@ -743,12 +743,12 @@ export default function SubscriptionButton({
             ) : null}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleCloseDialog} disabled={isProcessing}>
+            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={() =>
                 void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
               }
@@ -815,12 +815,12 @@ export default function SubscriptionButton({
             ) : null}
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button small cancel" onClick={handleCloseDialog} disabled={isProcessing}>
+            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={() =>
                 void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
               }
@@ -870,7 +870,7 @@ export default function SubscriptionButton({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseCancelDialog}
               disabled={isProcessing}
             >
@@ -878,7 +878,7 @@ export default function SubscriptionButton({
             </button>
             <button
               type="button"
-              className="button small warning"
+              className="button medium danger"
               onClick={handleCancelSubscription}
               disabled={isProcessing}
             >
@@ -926,7 +926,7 @@ export default function SubscriptionButton({
           <DialogActions>
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseCancelDialog}
               disabled={isProcessing}
             >
@@ -934,7 +934,7 @@ export default function SubscriptionButton({
             </button>
             <button
               type="button"
-              className="button small warning"
+              className="button medium danger"
               onClick={handleCancelSubscription}
               disabled={isProcessing}
             >
@@ -962,7 +962,7 @@ export default function SubscriptionButton({
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </div>

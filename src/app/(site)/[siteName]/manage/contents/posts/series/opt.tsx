@@ -1134,7 +1134,7 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseDialog}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
@@ -1142,7 +1142,7 @@ export default function Opt({
                 </button>
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   onClick={handleSubmit}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
@@ -1408,13 +1408,13 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseDialog}
                   disabled={isSubmitting}
                 >
                   취소
                 </button>
-                <button type="button" className="button small warning" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </div>
@@ -1453,7 +1453,7 @@ export default function Opt({
                 <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="warning-button" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="danger-button" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </DialogActions>
@@ -1540,7 +1540,7 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseUserDialog}
                   disabled={isUserSearching}
                 >

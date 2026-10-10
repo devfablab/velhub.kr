@@ -138,7 +138,7 @@ export default function Opt({ siteName }: Props) {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={() => setIsResetConfirmOpen(false)}
               disabled={isSubmitting}
             >
@@ -146,7 +146,7 @@ export default function Opt({ siteName }: Props) {
             </button>
             <button
               type="button"
-              className="button small danger"
+              className="button medium danger"
               onClick={() => void handleRejoin('reset')}
               disabled={isSubmitting}
             >
@@ -180,7 +180,7 @@ export default function Opt({ siteName }: Props) {
             </button>
             <button
               type="button"
-              className="delete-button"
+              className="danger-button"
               onClick={() => void handleRejoin('reset')}
               disabled={isSubmitting}
             >

@@ -922,7 +922,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 </button>
                 <div className="VhiDrawer-bottom-content">{searchContent}</div>
                 <div className="drawer-dialog-actions">
-                  <button type="button" className="button small cancel" onClick={() => setIsSearchOpen(false)}>
+                  <button type="button" className="button medium close" onClick={() => setIsSearchOpen(false)}>
                     닫기
                   </button>
                 </div>
@@ -1069,7 +1069,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       <div className="drawer-dialog-actions">
                         <button
                           type="button"
-                          className="button small cancel"
+                          className="button medium close"
                           onClick={() => setIsLevelChangeDialogOpen(false)}
                           disabled={isLevelChanging}
                         >
@@ -1077,7 +1077,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         </button>
                         <button
                           type="button"
-                          className="button small submit"
+                          className="button medium submit"
                           onClick={() => void handleChangeLevel()}
                           disabled={isLevelChanging}
                         >
@@ -1277,7 +1277,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 <div className="drawer-dialog-actions">
                   <button
                     type="button"
-                    className="button small cancel"
+                    className="button medium close"
                     onClick={handleCloseActionDialog}
                     disabled={isActionSubmitting}
                   >
@@ -1285,7 +1285,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   </button>
                   <button
                     type="button"
-                    className="button small submit"
+                    className="button medium submit"
                     onClick={handleSubmitAction}
                     disabled={isActionSubmitting}
                   >

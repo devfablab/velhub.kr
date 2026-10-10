@@ -1099,10 +1099,10 @@ export default function Opt({
             ) : null}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" disabled={actionLoading} onClick={closeOpinion}>
+            <button type="button" className="button medium close" disabled={actionLoading} onClick={closeOpinion}>
               취소
             </button>
-            <button type="button" className="button small submit" disabled={actionLoading} onClick={submitOpinion}>
+            <button type="button" className="button medium submit" disabled={actionLoading} onClick={submitOpinion}>
               제출
             </button>
           </div>

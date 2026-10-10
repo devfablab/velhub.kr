@@ -761,13 +761,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseDeleteDialog}
                   disabled={isDeleting}
                 >
                   취소
                 </button>
-                <button type="button" className="button small warning" onClick={handleDelete} disabled={isDeleting}>
+                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isDeleting}>
                   삭제
                 </button>
               </div>
@@ -820,7 +820,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                   취소
                 </button>
-                <button type="button" className="warning-button" onClick={handleDelete} disabled={isDeleting}>
+                <button type="button" className="danger-button" onClick={handleDelete} disabled={isDeleting}>
                   삭제
                 </button>
               </DialogActions>
@@ -862,13 +862,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseDeleteDialog}
                   disabled={isDeleting}
                 >
                   취소
                 </button>
-                <button type="button" className="button small submit" onClick={handleDelete} disabled={isDeleting}>
+                <button type="button" className="button medium submit" onClick={handleDelete} disabled={isDeleting}>
                   확인
                 </button>
               </div>

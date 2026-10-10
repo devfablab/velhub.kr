@@ -346,14 +346,14 @@ export default function Opt({
               ) : null}
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" onClick={closeImageDialog} className="button small cancel">
+              <button type="button" onClick={closeImageDialog} className="button medium close">
                 취소
               </button>
               <button
                 type="button"
                 onClick={applyImageDialog}
                 disabled={imageDialogImages.length === 0}
-                className="button small submit"
+                className="button medium submit"
               >
                 이미지 업로드
               </button>

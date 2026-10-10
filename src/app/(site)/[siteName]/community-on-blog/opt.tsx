@@ -352,7 +352,7 @@ export default function Opt({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={() => setDeleteTarget(null)}
               disabled={isDeleting}
             >
@@ -360,7 +360,7 @@ export default function Opt({
             </button>
             <button
               type="button"
-              className="button small danger"
+              className="button medium danger"
               onClick={() => void deletePost()}
               disabled={isDeleting}
             >
@@ -382,7 +382,7 @@ export default function Opt({
             <button type="button" className="cancel-button" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
               취소
             </button>
-            <button type="button" className="delete-button" onClick={() => void deletePost()} disabled={isDeleting}>
+            <button type="button" className="danger-button" onClick={() => void deletePost()} disabled={isDeleting}>
               삭제
             </button>
           </DialogActions>

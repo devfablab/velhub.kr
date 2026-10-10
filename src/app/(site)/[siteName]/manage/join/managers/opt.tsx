@@ -1131,7 +1131,7 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={closeIconDialog}
                   disabled={isUploadingIcon || Boolean(deletingIconId)}
                 >
@@ -1474,7 +1474,7 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={closeSearchDialog}
                   disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
                 >
@@ -1754,7 +1754,7 @@ export default function Opt({
                 </Stack>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button small cancel" onClick={closeOwnerTransferConfirm}>
+                <button type="button" className="button medium close" onClick={closeOwnerTransferConfirm}>
                   닫기
                 </button>
               </div>
@@ -1822,7 +1822,7 @@ export default function Opt({
                   <div className="drawer-dialog-actions">
                     <button
                       type="button"
-                      className="button small cancel"
+                      className="button medium close"
                       onClick={closeManagerEdit}
                       disabled={isSubmittingDelete || isSubmittingMove}
                     >

@@ -328,7 +328,7 @@ export default function ReportButton({
 
           <div className="VhiDrawer-bottom-content">{renderContent()}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleClose} disabled={submitting}>
+            <button type="button" className="button medium close" onClick={handleClose} disabled={submitting}>
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}

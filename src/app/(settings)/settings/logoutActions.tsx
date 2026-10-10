@@ -185,7 +185,7 @@ export default function LogoutActions() {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseConfirm}
               disabled={isLoggingOutAllDevices}
             >
@@ -193,7 +193,7 @@ export default function LogoutActions() {
             </button>
             <button
               type="button"
-              className="button small danger"
+              className="button medium danger"
               onClick={handleLogoutAllDevices}
               disabled={isLoggingOutAllDevices}
             >
@@ -227,7 +227,7 @@ export default function LogoutActions() {
             </button>
             <button
               type="button"
-              className="delete-button"
+              className="danger-button"
               onClick={handleLogoutAllDevices}
               disabled={isLoggingOutAllDevices}
             >

@@ -347,7 +347,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <button
                   type="submit"
                   form="community-invite-form"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
@@ -356,7 +356,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <button
                   type="submit"
                   form="community-invite-form"
-                  className="button small submit"
+                  className="button medium submit"
                   disabled={isInviteSubmitting}
                 >
                   초대하기
@@ -451,7 +451,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
@@ -459,7 +459,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >
@@ -538,7 +538,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={() => {
                     setInviteEmailError(pendingInviteEmailError);
                     setErrorMessage('');

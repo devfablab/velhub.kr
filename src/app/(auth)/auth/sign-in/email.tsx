@@ -600,7 +600,7 @@ export default function EmailSignIn() {
               </ul>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button small cancel" onClick={handleErrorPopupClose}>
+              <button type="button" className="button medium close" onClick={handleErrorPopupClose}>
                 확인
               </button>
             </div>
@@ -656,7 +656,7 @@ export default function EmailSignIn() {
             <div className="drawer-dialog-actions">
               <button
                 type="button"
-                className="button small cancel"
+                className="button medium close"
                 onClick={handleCancelDecision}
                 disabled={isSubmitting}
               >
@@ -664,7 +664,7 @@ export default function EmailSignIn() {
               </button>
               <button
                 type="button"
-                className="button small submit"
+                className="button medium submit"
                 onClick={handleConfirmEnableEmailLogin}
                 disabled={isSubmitting}
               >
@@ -727,7 +727,7 @@ export default function EmailSignIn() {
             <div className="drawer-dialog-actions">
               <button
                 type="button"
-                className="button small cancel"
+                className="button medium close"
                 onClick={handleCancelDecision}
                 disabled={isSubmitting}
               >
@@ -735,7 +735,7 @@ export default function EmailSignIn() {
               </button>
               <button
                 type="button"
-                className="button small submit"
+                className="button medium submit"
                 onClick={handleConfirmEmailLogin}
                 disabled={isSubmitting}
               >

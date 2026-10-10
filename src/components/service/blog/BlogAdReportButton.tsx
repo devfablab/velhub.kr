@@ -225,7 +225,7 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
           </button>
           <div className="VhiDrawer-bottom-content">{renderContent()}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={closeReport} disabled={isSubmitting}>
+            <button type="button" className="button medium close" onClick={closeReport} disabled={isSubmitting}>
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}

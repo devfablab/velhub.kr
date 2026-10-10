@@ -1078,7 +1078,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             <div className="drawer-dialog-actions">
               <button
                 type="button"
-                className={isDetailContentPopup ? 'button medium cancel' : 'button small cancel'}
+                className={
+                  !showPast && selectedReport && !canFinalize(selectedReport)
+                    ? 'button medium close'
+                    : 'button medium submit'
+                }
                 onClick={handleClose}
                 disabled={saving}
               >
@@ -1087,7 +1091,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               {!showPast && selectedReport && !canFinalize(selectedReport) ? (
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   onClick={handleSave}
                   disabled={saving || !nextStatus}
                 >
@@ -1112,7 +1116,15 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             <DialogActions>
               <button
                 type="button"
-                className={isDetailContentPopup ? 'button medium close' : 'cancel-button'}
+                className={
+                  isDetailContentPopup
+                    ? !showPast && selectedReport && !canFinalize(selectedReport)
+                      ? 'button medium close'
+                      : 'button medium submit'
+                    : !showPast && selectedReport && !canFinalize(selectedReport)
+                      ? 'cancel-button'
+                      : undefined
+                }
                 onClick={handleClose}
                 disabled={saving}
               >
@@ -1120,7 +1132,12 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               </button>
 
               {!showPast && selectedReport && !canFinalize(selectedReport) ? (
-                <button type="button" onClick={handleSave} disabled={saving || !nextStatus}>
+                <button
+                  type="button"
+                  className={isDetailContentPopup ? 'button medium submit' : undefined}
+                  onClick={handleSave}
+                  disabled={saving || !nextStatus}
+                >
                   {getSubmitLabel(targetType, nextStatus)}
                 </button>
               ) : null}
@@ -1142,10 +1159,15 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               </Typography>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button small cancel" onClick={() => setIsCompletionConfirmOpen(false)}>
+              <button type="button" className="button medium close" onClick={() => setIsCompletionConfirmOpen(false)}>
                 취소
               </button>
-              <button type="button" className="button small submit" onClick={handleConfirmCompletion} disabled={saving}>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={handleConfirmCompletion}
+                disabled={saving}
+              >
                 변경
               </button>
             </div>
@@ -1196,7 +1218,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             <div className="drawer-dialog-actions">
               <button
                 type="button"
-                className="button small cancel"
+                className="button medium close"
                 onClick={handleCloseMessages}
                 disabled={messageSaving}
               >
@@ -1204,7 +1226,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               </button>
               <button
                 type="button"
-                className="button small submit"
+                className="button medium submit"
                 onClick={() => void handleSendReply()}
                 disabled={
                   messageSaving ||
@@ -1279,12 +1301,12 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               <Typography variant="body2">선택하세요.</Typography>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button small cancel" onClick={handleCloseFinal} disabled={finalSaving}>
+              <button type="button" className="button medium close" onClick={handleCloseFinal} disabled={finalSaving}>
                 닫기
               </button>
               <button
                 type="button"
-                className="button small warning"
+                className="button medium danger"
                 onClick={() => void handleFinalize('keep_deleted')}
                 disabled={finalSaving}
               >
@@ -1292,7 +1314,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               </button>
               <button
                 type="button"
-                className="button small submit"
+                className="button medium submit"
                 onClick={() => void handleFinalize('restore')}
                 disabled={finalSaving}
               >
@@ -1327,7 +1349,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               </button>
               <button
                 type="button"
-                className="warning-button"
+                className="danger-button"
                 onClick={() => void handleFinalize('keep_deleted')}
                 disabled={finalSaving}
               >

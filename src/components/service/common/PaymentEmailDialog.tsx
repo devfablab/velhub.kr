@@ -215,10 +215,10 @@ export default function PaymentEmailDialog({
           </button>
           <div className="VhiDrawer-bottom-content">{renderContent('payment-email-form-mobile')}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleClose} disabled={isSaving}>
+            <button type="button" className="button medium close" onClick={handleClose} disabled={isSaving}>
               취소
             </button>
-            <button type="submit" form="payment-email-form-mobile" className="button small submit" disabled={isSaving}>
+            <button type="submit" form="payment-email-form-mobile" className="button medium submit" disabled={isSaving}>
               저장하고 계속
             </button>
           </div>

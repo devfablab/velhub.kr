@@ -110,10 +110,15 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
       </button>
       <div className="VhiDrawer-bottom-content">{content}</div>
       <div className="drawer-dialog-actions">
-        <button type="button" className="button small cancel" onClick={onClose}>
+        <button type="button" className="button medium close" onClick={onClose}>
           취소
         </button>
-        <button type="button" onClick={handleSubmit} className="button small action" disabled={bypass && !selectedTxId}>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="button medium action"
+          disabled={bypass && !selectedTxId}
+        >
           {bypass ? '가짜 데이터로 인증하기' : '원래대로 진행'}
         </button>
       </div>

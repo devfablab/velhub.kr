@@ -2387,14 +2387,14 @@ export default function Opt({
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" onClick={closeThumbnailDialog} className="button small cancel">
+                <button type="button" onClick={closeThumbnailDialog} className="button medium close">
                   취소
                 </button>
                 <button
                   type="button"
                   onClick={applyThumbnailDialogImage}
                   disabled={!thumbnailDialogFile}
-                  className="button small submit"
+                  className="button medium submit"
                 >
                   이미지 업로드
                 </button>
@@ -2535,10 +2535,10 @@ export default function Opt({
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" onClick={closeGalleryDialog} className="button small cancel">
+                <button type="button" onClick={closeGalleryDialog} className="button medium close">
                   취소
                 </button>
-                <button type="button" onClick={applyGalleryDialogImages} className="button small submit">
+                <button type="button" onClick={applyGalleryDialogImages} className="button medium submit">
                   이미지 업로드
                 </button>
               </div>
@@ -2827,14 +2827,14 @@ export default function Opt({
               </div>
               <div className="drawer-dialog-actions">
                 {isPollEnabled ? (
-                  <button type="button" onClick={removePoll} className="button small danger">
+                  <button type="button" onClick={removePoll} className="button medium danger">
                     투표 삭제
                   </button>
                 ) : null}
-                <button type="button" onClick={closePollDialog} className="button small cancel">
+                <button type="button" onClick={closePollDialog} className="button medium close">
                   취소
                 </button>
-                <button type="button" onClick={applyPollDialog} className="button small submit">
+                <button type="button" onClick={applyPollDialog} className="button medium submit">
                   이미지 업로드
                 </button>
               </div>
@@ -3040,7 +3040,7 @@ export default function Opt({
               </DialogContent>
               <DialogActions>
                 {isPollEnabled ? (
-                  <button type="button" onClick={removePoll} className="delete-button">
+                  <button type="button" onClick={removePoll} className="danger-button">
                     투표 삭제
                   </button>
                 ) : null}
@@ -3132,24 +3132,24 @@ export default function Opt({
               <div className={`drawer-dialog-actions ${isDrawEnabled ? 'complex-buttons' : undefined}`}>
                 {isDrawEnabled ? (
                   <>
-                    <button type="button" onClick={removeDraw} className="button small danger">
+                    <button type="button" onClick={removeDraw} className="button medium danger">
                       추첨 이벤트 삭제
                     </button>
                     <div className="complex-button">
-                      <button type="button" onClick={closeDrawDialog} className="button small cancel">
+                      <button type="button" onClick={closeDrawDialog} className="button medium close">
                         취소
                       </button>
-                      <button type="button" onClick={applyDrawDialog} className="button small submit">
+                      <button type="button" onClick={applyDrawDialog} className="button medium submit">
                         추첨 이벤트 설정
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <button type="button" onClick={closeDrawDialog} className="button small cancel">
+                    <button type="button" onClick={closeDrawDialog} className="button medium close">
                       취소
                     </button>
-                    <button type="button" onClick={applyDrawDialog} className="button small submit">
+                    <button type="button" onClick={applyDrawDialog} className="button medium submit">
                       추첨 이벤트 설정
                     </button>
                   </>
@@ -3235,7 +3235,7 @@ export default function Opt({
               <DialogActions className={isDrawEnabled ? 'complex-buttons' : undefined}>
                 {isDrawEnabled ? (
                   <>
-                    <button type="button" onClick={removeDraw} className="delete-button">
+                    <button type="button" onClick={removeDraw} className="danger-button">
                       추첨 이벤트 삭제
                     </button>
                     <div className="complex-button">
@@ -3282,12 +3282,12 @@ export default function Opt({
               </div>
               <div className="drawer-dialog-actions">
                 {accessDialog.cancelLabel ? (
-                  <button type="button" onClick={accessDialog.onCancel} className="button small cancel">
+                  <button type="button" onClick={accessDialog.onCancel} className="button medium close">
                     {accessDialog.cancelLabel}
                   </button>
                 ) : null}
 
-                <button type="button" onClick={accessDialog.onConfirm} className="button small submit">
+                <button type="button" onClick={accessDialog.onConfirm} className="button medium submit">
                   {accessDialog.confirmLabel}
                 </button>
               </div>

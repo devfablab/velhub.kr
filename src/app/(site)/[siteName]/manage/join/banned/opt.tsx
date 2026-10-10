@@ -338,13 +338,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseDialog}
                   disabled={isSubmitting}
                 >
                   취소
                 </button>
-                <button type="button" className="button small submit" onClick={handleSubmit} disabled={isSubmitting}>
+                <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
                   확인
                 </button>
               </div>

@@ -263,7 +263,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
             </ul>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={() => setIsErrorPopupOpen(false)}>
+            <button type="button" className="button medium close" onClick={() => setIsErrorPopupOpen(false)}>
               확인
             </button>
           </div>

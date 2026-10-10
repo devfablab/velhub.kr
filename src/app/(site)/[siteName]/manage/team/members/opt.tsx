@@ -645,7 +645,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseOwnerTransfer}
                   disabled={isOwnerTransferSubmitting}
                 >
@@ -653,7 +653,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   onClick={handleSubmitOwnerTransfer}
                   disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
                 >
@@ -760,7 +760,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={() => {
                     setInviteEmailError(pendingInviteEmailError);
                     setInviteErrorMessage('');
@@ -854,7 +854,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button medium cancel" onClick={handleCloseDetail}>
+                <button type="button" className="button medium close" onClick={handleCloseDetail}>
                   닫기
                 </button>
               </div>
@@ -954,7 +954,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseRoleDialog}
                   disabled={isRoleSubmitting}
                 >
@@ -962,7 +962,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   onClick={handleSubmitRole}
                   disabled={isRoleSubmitting}
                 >
@@ -1108,7 +1108,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <button
                   type="submit"
                   form="team-invite-form"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
@@ -1117,7 +1117,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <button
                   type="submit"
                   form="team-invite-form"
-                  className="button small submit"
+                  className="button medium submit"
                   disabled={isInviteSubmitting}
                 >
                   초대하기
@@ -1267,7 +1267,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </div>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button medium cancel" onClick={handleCloseInviteListDialog}>
+                <button type="button" className="button medium close" onClick={handleCloseInviteListDialog}>
                   닫기
                 </button>
               </div>
@@ -1360,7 +1360,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
@@ -1368,7 +1368,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="button small warning"
+                  className="button medium danger"
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >
@@ -1411,7 +1411,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="warning-button"
+                  className="danger-button"
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >

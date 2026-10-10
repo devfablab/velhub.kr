@@ -208,14 +208,14 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
       </button>
       <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>{uploader}</div>
       <div className="drawer-dialog-actions">
-        <button type="button" onClick={closeDialog} className="button small cancel">
+        <button type="button" onClick={closeDialog} className="button medium close">
           취소
         </button>
         <button
           type="button"
           onClick={applyDialog}
           disabled={dialogImages.length === 0}
-          className="button small submit"
+          className="button medium submit"
         >
           이미지 업로드
         </button>
@@ -799,12 +799,12 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button small cancel" onClick={() => setDeleteDialogOpen(false)}>
+                <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>
                   취소
                 </button>
                 <button
                   type="button"
-                  className="button small danger"
+                  className="button medium danger"
                   disabled={isDeletingPost}
                   onClick={() => void deletePost()}
                 >
@@ -842,7 +842,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                 </button>
                 <button
                   type="button"
-                  className="delete-button"
+                  className="danger-button"
                   disabled={isDeletingPost}
                   onClick={() => void deletePost()}
                 >

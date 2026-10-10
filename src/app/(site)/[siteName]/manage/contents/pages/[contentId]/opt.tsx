@@ -352,13 +352,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseDeleteDialog}
                   disabled={isSubmitting}
                 >
                   취소
                 </button>
-                <button type="button" className="button small warning" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </div>
@@ -402,7 +402,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="warning-button" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="button" className="danger-button" onClick={handleDelete} disabled={isSubmitting}>
                   삭제
                 </button>
               </DialogActions>
@@ -441,13 +441,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseRestoreDialog}
                   disabled={isSubmitting}
                 >
                   취소
                 </button>
-                <button type="button" className="button small submit" onClick={handleRestore} disabled={isSubmitting}>
+                <button type="button" className="button medium submit" onClick={handleRestore} disabled={isSubmitting}>
                   확인
                 </button>
               </div>

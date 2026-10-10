@@ -190,15 +190,15 @@ export default function IdentityAgreement({
         <div className="drawer-dialog-actions">
           {showAgreementCheck ? (
             <>
-              <button type="button" className="button small cancel" onClick={onClose}>
+              <button type="button" className="button medium close" onClick={onClose}>
                 취소
               </button>
-              <button type="button" className="button small submit" disabled={!isAgreed} onClick={onConfirm}>
+              <button type="button" className="button medium submit" disabled={!isAgreed} onClick={onConfirm}>
                 다음
               </button>
             </>
           ) : (
-            <button type="button" className="button small submit" onClick={onClose}>
+            <button type="button" className="button medium submit" onClick={onClose}>
               확인
             </button>
           )}
@@ -217,15 +217,15 @@ export default function IdentityAgreement({
       <DialogActions>
         {showAgreementCheck ? (
           <>
-            <button type="button" className="button small cancel" onClick={onClose}>
+            <button type="button" className="button medium close" onClick={onClose}>
               취소
             </button>
-            <button type="button" className="button small submit" disabled={!isAgreed} onClick={onConfirm}>
+            <button type="button" className="button medium submit" disabled={!isAgreed} onClick={onConfirm}>
               다음
             </button>
           </>
         ) : (
-          <button type="button" className="button small submit" onClick={onClose}>
+          <button type="button" className="button medium submit" onClick={onClose}>
             확인
           </button>
         )}

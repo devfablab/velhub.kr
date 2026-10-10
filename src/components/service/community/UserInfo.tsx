@@ -443,14 +443,14 @@ export default function UserInfo() {
             </form>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button small cancel">
+            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button medium close">
               취소
             </button>
             <button
               type="submit"
               form="community-profile-form-mobile"
               disabled={!canSubmit || isSubmitting}
-              className="button small submit"
+              className="button medium submit"
             >
               확인
             </button>
@@ -563,14 +563,14 @@ export default function UserInfo() {
 
           <div className="drawer-dialog-actions">
             {isWithdrawBlocked ? (
-              <button type="button" className="button small submit" onClick={handleCloseWithdrawDialog}>
+              <button type="button" className="button medium submit" onClick={handleCloseWithdrawDialog}>
                 {withdrawBlockedButtonText}
               </button>
             ) : (
               <>
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseWithdrawDialog}
                   disabled={isWithdrawSubmitting}
                 >
@@ -578,7 +578,7 @@ export default function UserInfo() {
                 </button>
                 <button
                   type="button"
-                  className="button small warning"
+                  className="button medium danger"
                   onClick={handleWithdraw}
                   disabled={isWithdrawSubmitting}
                 >
@@ -642,7 +642,7 @@ export default function UserInfo() {
 
                 <button
                   type="button"
-                  className="warning-button"
+                  className="danger-button"
                   onClick={handleWithdraw}
                   disabled={isWithdrawSubmitting}
                 >

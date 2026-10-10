@@ -246,7 +246,7 @@ export default function InviteAcceptance({
             </ul>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleErrorClose}>
+            <button type="button" className="button medium close" onClick={handleErrorClose}>
               확인
             </button>
           </div>

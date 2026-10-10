@@ -170,10 +170,10 @@ function ImagePicker({
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>{content}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={closeDialog} className="button small cancel">
+            <button type="button" onClick={closeDialog} className="button medium close">
               취소
             </button>
-            <button type="button" onClick={applyImages} className="button small submit">
+            <button type="button" onClick={applyImages} className="button medium submit">
               이미지 업로드
             </button>
           </div>

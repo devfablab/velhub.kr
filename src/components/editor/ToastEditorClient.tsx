@@ -168,7 +168,7 @@ export default function ToastEditorClient({
             <Typography>{imageErrorMessage}</Typography>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium cancel" onClick={() => setImageErrorMessage('')}>
+            <button type="button" className="button medium close" onClick={() => setImageErrorMessage('')}>
               확인
             </button>
           </div>

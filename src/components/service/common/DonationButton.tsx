@@ -443,12 +443,12 @@ export default function DonationButton(props: Props) {
           </button>
           <div className="VhiDrawer-bottom-content">{renderDonationForm()}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleCloseDialog} disabled={isProcessing}>
+            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={() => void handleDonate()}
               disabled={isProcessing}
             >
@@ -498,7 +498,7 @@ export default function DonationButton(props: Props) {
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </div>

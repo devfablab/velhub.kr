@@ -134,10 +134,10 @@ export default function WithdrawalActions() {
             <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleCloseConfirm} disabled={isSubmitting}>
+            <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
-            <button type="button" className="button small warning" onClick={handleSubmit} disabled={isSubmitting}>
+            <button type="button" className="button medium danger" onClick={handleSubmit} disabled={isSubmitting}>
               탈퇴 신청
             </button>
           </div>
@@ -158,7 +158,7 @@ export default function WithdrawalActions() {
             <button type="button" className="cancel-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
-            <button type="button" className="warning-button" onClick={handleSubmit} disabled={isSubmitting}>
+            <button type="button" className="danger-button" onClick={handleSubmit} disabled={isSubmitting}>
               탈퇴 신청
             </button>
           </DialogActions>

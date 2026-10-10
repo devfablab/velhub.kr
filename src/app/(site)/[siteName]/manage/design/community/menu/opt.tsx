@@ -390,7 +390,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseRenameDialog}
                   disabled={isRenaming}
                 >
@@ -398,7 +398,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className="button small submit"
+                  className="button medium submit"
                   onClick={() => void handleRename()}
                   disabled={isRenaming}
                 >

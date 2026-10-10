@@ -1652,7 +1652,7 @@ export default function Opt({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseGeneralDialog}
               disabled={isSubmitting}
             >
@@ -1660,7 +1660,7 @@ export default function Opt({
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={() => void handleSubmitGeneral()}
               disabled={isGeneralSubmitDisabled}
             >
@@ -1794,7 +1794,7 @@ export default function Opt({
           </button>
           <button
             type="button"
-            className="delete-button"
+            className="danger-button"
             onClick={() => void handleDeleteItem()}
             disabled={isItemSubmitting}
           >
@@ -1848,7 +1848,7 @@ export default function Opt({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseNicknameDialog}
               disabled={isNicknameSubmitting}
             >
@@ -1856,7 +1856,7 @@ export default function Opt({
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={() => void handleSubmitNickname()}
               disabled={isNicknameSubmitDisabled}
             >
@@ -1971,7 +1971,7 @@ export default function Opt({
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium cancel" onClick={handleCloseItemManageDialog}>
+            <button type="button" className="button medium close" onClick={handleCloseItemManageDialog}>
               닫기
             </button>
           </div>
@@ -2073,7 +2073,7 @@ export default function Opt({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseItemFormDialog}
               disabled={isItemSubmitting}
             >
@@ -2081,7 +2081,7 @@ export default function Opt({
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={() => void handleSubmitItem()}
               disabled={isItemSubmitDisabled}
             >
@@ -2160,7 +2160,7 @@ export default function Opt({
             </div>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small submit" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
+            <button type="button" className="button medium submit" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
               확인
             </button>
           </div>

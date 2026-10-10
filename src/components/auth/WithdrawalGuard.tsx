@@ -139,7 +139,7 @@ export default function WithdrawalGuard({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleLogout}
               disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
@@ -147,7 +147,7 @@ export default function WithdrawalGuard({
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={handleCancelWithdrawal}
               disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >

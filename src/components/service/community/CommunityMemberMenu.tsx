@@ -198,7 +198,7 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
             {detailContent}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium cancel" onClick={() => setIsDialogOpen(false)}>
+            <button type="button" className="button medium close" onClick={() => setIsDialogOpen(false)}>
               닫기
             </button>
           </div>

@@ -31,7 +31,7 @@ export default function FormErrorDialog({ open, title, messages, onClose }: Prop
       {title ? <h2>{title}</h2> : null}
       <div className="VhiDrawer-bottom-content">{messageContent}</div>
       <div className="drawer-dialog-actions">
-        <button type="button" className="button small submit" onClick={onClose}>
+        <button type="button" className="button medium submit" onClick={onClose}>
           확인
         </button>
       </div>

@@ -736,7 +736,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseIconDialog}
                   disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
                 >

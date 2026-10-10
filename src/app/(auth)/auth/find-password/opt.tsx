@@ -237,7 +237,7 @@ export default function Opt() {
         <Drawer anchor="bottom" open={popup.open} onClose={handlePopupClose} className="VhiDrawer-bottom">
           {renderPopupContents(true)}
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium cancel" onClick={handlePopupClose}>
+            <button type="button" className="button medium close" onClick={handlePopupClose}>
               확인
             </button>
           </div>

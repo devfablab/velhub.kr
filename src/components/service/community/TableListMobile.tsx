@@ -225,7 +225,7 @@ export default function TableListMobile({
             <DialogContentText>{alertMessage}</DialogContentText>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={() => setAlertMessage('')} className="button small submit">
+            <button type="button" onClick={() => setAlertMessage('')} className="button medium submit">
               확인
             </button>
           </div>

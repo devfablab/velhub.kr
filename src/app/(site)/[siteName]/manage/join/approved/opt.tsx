@@ -447,7 +447,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </div>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button medium cancel" onClick={() => setSelectedUser(null)}>
+                <button type="button" className="button medium close" onClick={() => setSelectedUser(null)}>
                   닫기
                 </button>
               </div>
@@ -554,7 +554,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button small cancel"
+                  className="button medium close"
                   onClick={handleCloseConfirmAction}
                   disabled={isSubmitting}
                 >
@@ -562,7 +562,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className={confirmActionType === 'approve' ? 'button small submit' : 'button small danger'}
+                  className={confirmActionType === 'approve' ? 'button medium submit' : 'button medium danger'}
                   onClick={() => {
                     if (confirmActionType) {
                       void handleSubmitAction(confirmActionType);
@@ -606,7 +606,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 <button
                   type="button"
-                  className={confirmActionType === 'approve' ? undefined : 'delete-button'}
+                  className={confirmActionType === 'approve' ? undefined : 'danger-button'}
                   onClick={() => {
                     if (confirmActionType) {
                       void handleSubmitAction(confirmActionType);

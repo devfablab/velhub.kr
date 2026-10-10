@@ -24,11 +24,20 @@ type Props = {
   variant?: 'default' | 'content';
 };
 
-function getDialogActionClass(intent: ResponsivePopupAction['intent']) {
+function getDialogActionClass(intent: ResponsivePopupAction['intent'], isSingleAction: boolean) {
+  if (intent === 'danger' || intent === 'warning') return 'danger-button';
+  if (isSingleAction) return undefined;
   if (intent === 'cancel') return 'cancel-button';
-  if (intent === 'danger') return 'delete-button';
-  if (intent === 'warning') return 'warning-button';
+  if (intent === 'action') return 'action-button';
   return undefined;
+}
+
+function getContentActionClass(intent: ResponsivePopupAction['intent'], isSingleAction: boolean) {
+  if (intent === 'danger' || intent === 'warning') return 'button medium danger';
+  if (isSingleAction) return 'button medium submit';
+  if (intent === 'cancel') return 'button medium close';
+  if (intent === 'action') return 'button medium action';
+  return 'button medium submit';
 }
 
 export default function ResponsivePopup({
@@ -62,11 +71,7 @@ export default function ResponsivePopup({
           <button
             key={index}
             type="button"
-            className={
-              variant === 'content' && action.label === '닫기'
-                ? 'button medium cancel'
-                : `button small ${action.intent ?? 'action'}`
-            }
+            className={getContentActionClass(action.intent, actions.length === 1)}
             onClick={action.onClick}
             disabled={action.disabled}
           >
@@ -94,15 +99,9 @@ export default function ResponsivePopup({
             key={index}
             type="button"
             className={
-              actions.length === 1
-                ? variant === 'content'
-                  ? 'button medium submit'
-                  : undefined
-                : variant === 'content'
-                  ? action.label === '닫기'
-                    ? 'button medium close'
-                    : `button small ${action.intent ?? 'action'}`
-                  : getDialogActionClass(action.intent)
+              variant === 'content'
+                ? getContentActionClass(action.intent, actions.length === 1)
+                : getDialogActionClass(action.intent, actions.length === 1)
             }
             onClick={action.onClick}
             disabled={action.disabled}

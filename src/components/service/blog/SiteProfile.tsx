@@ -674,7 +674,7 @@ export default function SiteProfile() {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -682,7 +682,7 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
-              className="button small warning"
+              className="button medium danger"
               onClick={() => void handleCancelBlogSubscription()}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -730,7 +730,7 @@ export default function SiteProfile() {
           <DialogActions>
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -738,7 +738,7 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
-              className="button small warning"
+              className="button medium danger"
               onClick={() => void handleCancelBlogSubscription()}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -767,7 +767,7 @@ export default function SiteProfile() {
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button small cancel" onClick={handleCloseIdentityDialog}>
+            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </div>
@@ -850,7 +850,7 @@ export default function SiteProfile() {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseBlogSubscriptionDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -858,7 +858,7 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -917,7 +917,7 @@ export default function SiteProfile() {
           <DialogActions>
             <button
               type="button"
-              className="button small cancel"
+              className="button medium close"
               onClick={handleCloseBlogSubscriptionDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -925,7 +925,7 @@ export default function SiteProfile() {
             </button>
             <button
               type="button"
-              className="button small submit"
+              className="button medium submit"
               onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
               disabled={isBlogSubscriptionProcessing}
             >
