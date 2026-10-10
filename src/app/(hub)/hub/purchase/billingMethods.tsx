@@ -9,7 +9,7 @@ import { BillingMethod } from './page';
 
 type BillingMethodsProps = {
   billingMethods: BillingMethod[];
-  hasSettlement: boolean;
+  isIdentityVerified: boolean;
 };
 
 function formatCardNumber(cardNumberMasked: string | null | undefined) {
@@ -69,7 +69,7 @@ function getOwnerTypeText(ownerType: string | null | undefined) {
   return (ownerTypeTextMap[normalizedOwnerType] ?? normalizedOwnerType) || '소유 유형 확인 필요';
 }
 
-export default function BillingMethods({ billingMethods, hasSettlement }: BillingMethodsProps) {
+export default function BillingMethods({ billingMethods, isIdentityVerified }: BillingMethodsProps) {
   return (
     <>
       {billingMethods.length ? (
@@ -94,7 +94,7 @@ export default function BillingMethods({ billingMethods, hasSettlement }: Billin
       )}
 
       <div>
-        {!hasSettlement ? (
+        {!isIdentityVerified ? (
           <Stack gap={1}>
             <Typography variant="body2">본인인증을 하시면 결제 수단을 추가하실 수 있습니다.</Typography>
             <Box>

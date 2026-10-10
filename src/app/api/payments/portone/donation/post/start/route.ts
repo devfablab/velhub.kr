@@ -73,8 +73,21 @@ export async function POST(request: NextRequest) {
         .eq('user_id', session.stigmaId)
         .maybeSingle(),
     ]);
-    if (!customerName || !paymentEmail || !paymentPhone || !identityResult.data?.identity_verified_at) {
+    if (!identityResult.data?.identity_verified_at) {
       return Response.json({ error: '후원하려면 본인인증을 먼저 해주세요.' }, { status: 403 });
+    }
+    if (!customerName) {
+      return Response.json({ error: '본인인증된 실명을 확인하지 못했습니다.' }, { status: 400 });
+    }
+    if (!paymentEmail || !paymentPhone) {
+      return Response.json(
+        {
+          error: '결제용 이메일 주소와 휴대폰 번호를 확인하지 못했습니다.',
+          paymentEmailRequired: !paymentEmail,
+          paymentPhoneRequired: !paymentPhone,
+        },
+        { status: 400 },
+      );
     }
     if ((getKoreanAge(getChorogonBirthDate(identityResult.data)) ?? 0) < 12) {
       return Response.json({ error: '후원은 만 12세 이상부터 할 수 있습니다.' }, { status: 403 });

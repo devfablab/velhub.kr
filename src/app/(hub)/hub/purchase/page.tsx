@@ -5,6 +5,7 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
+import { getHubApiData } from '../shared/getHubApiData';
 import BillingMethods from './billingMethods';
 import Content from './tab';
 import styles from '@/app/hub.module.sass';
@@ -69,9 +70,8 @@ type PurchaseResponse = {
   error?: string;
 };
 
-type SettlementResponse = {
-  exists: boolean;
-  settlement: { settlement_type: 'individual' | 'business' } | null;
+type IdentityStatusResponse = {
+  exists?: boolean;
 };
 
 function formatAmount(value: number) {
@@ -131,6 +131,11 @@ export default async function Page() {
     );
   }
 
+  const identityStatus = await getHubApiData<IdentityStatusResponse>(
+    '/api/identity/portone/status',
+    '본인인증 정보를 불러오지 못했습니다.',
+  );
+
   const recentPaymentHistory = result.recentPayments.flatMap((payment) => {
     const isRefunded = payment.refundedAmount > 0;
     const paymentHistory = {
@@ -156,23 +161,6 @@ export default async function Page() {
       paymentHistory,
     ];
   });
-  const cookieStore = await cookies();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  let hasSettlement = false;
-
-  try {
-    const settlementResponse = await fetch(`${protocol}://${host}/api/settlement`, {
-      headers: { cookie: cookieStore.toString() },
-      cache: 'no-store',
-    });
-    const settlement = (await settlementResponse.json()) as SettlementResponse;
-    hasSettlement = settlementResponse.ok && Boolean(settlement.exists && settlement.settlement);
-  } catch {
-    hasSettlement = false;
-  }
-
   return (
     <Container pageTitle="구입내역" pageBack="/hub">
       <div className="container">
@@ -219,7 +207,7 @@ export default async function Page() {
 
           <section className={`paper ${styles.paper}`}>
             <h2>결제수단</h2>
-            <BillingMethods billingMethods={result.billingMethods} hasSettlement={hasSettlement} />
+            <BillingMethods billingMethods={result.billingMethods} isIdentityVerified={identityStatus.data?.exists === true} />
           </section>
 
           <section className={`paper ${styles.paper} ${styles.history}`}>

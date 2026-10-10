@@ -37,7 +37,7 @@ async function getSettlementStatus(baseUrl: string, cookieHeader: string) {
 
   const data = (await response.json().catch(() => null)) as SettlementResponse | null;
 
-  return data?.exists && data.settlement ? data : null;
+  return data?.exists && data.identity ? data : null;
 }
 
 export default async function Page() {
