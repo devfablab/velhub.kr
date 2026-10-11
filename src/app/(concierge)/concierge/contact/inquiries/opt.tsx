@@ -9,6 +9,7 @@ import {
 } from '@/lib/concierge/inquiries';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/concierge.module.sass';
 
@@ -24,18 +25,21 @@ type InquiryRow = {
 export default function Opt({
   initialInquiries,
   initialError,
+  initialLoginRequired,
 }: {
   initialInquiries: InquiryRow[];
   initialError: string;
+  initialLoginRequired: boolean;
 }) {
   const inquiries = initialInquiries;
   const error = initialError;
 
   return (
     <div className={styles.inquiry}>
-      {error ? <ScreenState kind="error">{error}</ScreenState> : null}
-      {!error && inquiries.length === 0 ? <ScreenState>문의 내역이 없습니다.</ScreenState> : null}
-      {inquiries.length > 0 ? (
+      {initialLoginRequired ? <LoginRequiredScreen /> : null}
+      {!initialLoginRequired && error ? <ScreenState kind="error">{error}</ScreenState> : null}
+      {!initialLoginRequired && !error && inquiries.length === 0 ? <ScreenState>문의 내역이 없습니다.</ScreenState> : null}
+      {!initialLoginRequired && inquiries.length > 0 ? (
         <div className={`paper ${styles['inquiry-items']}`}>
           {inquiries.map((inquiry) => (
             <Anchor
@@ -54,14 +58,14 @@ export default function Opt({
           ))}
         </div>
       ) : null}
-      <Stack direction="row" justifyContent="flex-end" gap={2}>
+      {!initialLoginRequired ? <Stack direction="row" justifyContent="flex-end" gap={2}>
         <Anchor href="/concierge/contact" className="button medium close">
           뒤로가기
         </Anchor>
         <Anchor href="/concierge/contact/inquiries/new" className="button medium action">
           문의하기
         </Anchor>
-      </Stack>
+      </Stack> : null}
     </div>
   );
 }

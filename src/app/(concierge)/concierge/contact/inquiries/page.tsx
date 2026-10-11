@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import type { InquiryStatus, InquiryType } from '@/lib/concierge/inquiries';
+import { getCurrentStigma } from '@/lib/session/utils';
 import Container from '../../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';
@@ -25,8 +26,9 @@ export default async function Page() {
   const protocol = headersList.get('x-forwarded-proto') ?? 'http';
   let initialInquiries: InquiryRow[] = [];
   let initialError = '';
+  const current = await getCurrentStigma();
 
-  if (host) {
+  if (current && host) {
     try {
       const response = await fetch(`${protocol}://${host}/api/concierge/contact/inquiries`, {
         headers: { Cookie: (await cookies()).toString() },
@@ -45,7 +47,7 @@ export default async function Page() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <h1>문의 내역</h1>
-          <Opt initialInquiries={initialInquiries} initialError={initialError} />
+          <Opt initialInquiries={initialInquiries} initialError={initialError} initialLoginRequired={!current} />
         </div>
       </div>
     </Container>

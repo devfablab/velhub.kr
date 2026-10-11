@@ -48,6 +48,7 @@ import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import ResponsivePopup from '../ResponsivePopup';
@@ -789,10 +790,7 @@ export default function Opt({
   return (
     <Stack gap={2}>
       {isLoginRequired ? (
-        <div className="paper page-info">
-          <WarningAmberRoundedIcon />
-          <span>로그인이 필요합니다.</span>
-        </div>
+        <LoginRequiredScreen />
       ) : errorMessage ? (
         <div className="paper page-error">
           <WarningAmberRoundedIcon />
@@ -803,7 +801,7 @@ export default function Opt({
         <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
           <LoadingIndicator />
         </Stack>
-      ) : isLoginRequired ? null : items.length === 0 ? (
+      ) : isLoginRequired || errorMessage ? null : items.length === 0 ? (
         <div className="paper page-info">
           <ServiceNoDataIcon />
           <p>소명내역이 없습니다.</p>

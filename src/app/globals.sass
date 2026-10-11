@@ -353,6 +353,7 @@ a, button, select, input
 
     > p
       @include ds.fw(pre, 600)
+      margin-top: ds.rem(12)
       font-size: ds.rem(14)
 
       @include ds.mq(minSmall)
@@ -1154,6 +1155,17 @@ html[data-site-type='blog']
 
     &:hover, &:focus-visible
       background-color: ds.$hex-secondary
+
+.MuiFormControlLabel-root.MuiFormControlLabel-labelPlacementEnd.Mui-required
+  span
+    &+ div
+      display: flex
+      flex-direction: row-reverse
+      gap: ds.rem(3)
+
+      > span
+        @include ds.fw(pre, 700)
+        color: ds.$hex-warning
 
 .VhiMenu-popover
   li

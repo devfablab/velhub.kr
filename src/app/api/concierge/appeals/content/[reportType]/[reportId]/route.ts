@@ -29,6 +29,7 @@ type AppealRow = {
   content_request: string | null;
   edit_completed_at: string | null;
   opinion_submitted_at: string | null;
+  updated_at: string;
 };
 
 type PostRow = {
@@ -164,7 +165,7 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
       ? { data: null, error: null }
       : await supabaseAdmin
           .from('report_appeals')
-          .select('id, admin_status, appellant_status, content_request, edit_completed_at, opinion_submitted_at')
+          .select('id, admin_status, appellant_status, content_request, edit_completed_at, opinion_submitted_at, updated_at')
           .eq('report_type', reportType)
           .eq('report_id', report.id)
           .maybeSingle();
@@ -181,11 +182,15 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
       if (!report.blog_community_comment_id) throw new Error('신고 대상 댓글 정보가 없습니다.');
       const commentResult = await supabaseAdmin
         .from('blog_community_comments')
-        .select('id, post_id, user_id, content, is_deleted, deleted_message, updated_at')
+        .select('id, post_id, user_id, content, is_deleted, deleted_message')
         .eq('id', report.blog_community_comment_id)
         .maybeSingle();
       if (commentResult.error || !commentResult.data) throw new Error('신고 대상 댓글을 찾을 수 없습니다.');
-      blogComment = { ...(commentResult.data as Omit<CommentRow, 'exp_at'>), exp_at: null };
+      blogComment = {
+        ...(commentResult.data as Omit<CommentRow, 'updated_at' | 'exp_at'>),
+        updated_at: null,
+        exp_at: null,
+      };
       blogPostId = blogComment.post_id;
     }
 
@@ -551,7 +556,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
 
       const updateResult = await supabaseAdmin
         .from(result.isBlogCommunity ? 'blog_community_comments' : 'post_comments')
-        .update({ content, updated_at: now })
+        .update(result.isBlogCommunity ? { content } : { content, updated_at: now })
         .eq('id', result.comment.id)
         .eq('user_id', session.stigmaId ?? '')
         .select('id')
@@ -559,6 +564,14 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
 
       if (updateResult.error || !updateResult.data) {
         return Response.json({ error: '댓글을 수정하지 못했습니다.' }, { status: 500 });
+      }
+
+      if (result.isBlogCommunity && result.appeal) {
+        const appealUpdate = await supabaseAdmin
+          .from('report_appeals')
+          .update({ updated_at: now })
+          .eq('id', result.appeal.id);
+        if (appealUpdate.error) return Response.json({ error: '댓글 수정 기록을 저장하지 못했습니다.' }, { status: 500 });
       }
 
       return Response.json({ ok: true });
@@ -654,7 +667,10 @@ export async function POST(_request: Request, context: ContentRouteContext) {
       return Response.json({ error: '수정 확인을 요청할 수 없습니다.' }, { status: 403 });
     }
 
-    const updatedAt = result.comment?.updated_at ?? result.post.updated_at;
+    const updatedAt =
+      result.isBlogCommunity && result.report.target_type === 'blog_community_comment'
+        ? result.appeal.updated_at
+        : (result.comment?.updated_at ?? result.post.updated_at);
     const expAt = result.isBlogCommunity
       ? result.appeal.opinion_submitted_at
       : (result.comment?.exp_at ?? result.post.exp_at);

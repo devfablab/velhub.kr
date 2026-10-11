@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
+import { getCurrentStigma } from '@/lib/session/utils';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import Container from '../../menu';
 import Opt, { SettlementResponse } from './opt';
 import styles from '@/app/concierge.module.sass';
@@ -44,8 +46,9 @@ export default async function Page() {
   const cookieStore = await cookies();
   const baseUrl = await getBaseUrl();
   const cookieHeader = cookieStore.toString();
+  const current = await getCurrentStigma();
   let reporter: SettlementResponse | null = null;
-  if (baseUrl) {
+  if (current && baseUrl) {
     reporter = await getSettlementStatus(baseUrl, cookieHeader);
   }
 
@@ -54,12 +57,13 @@ export default async function Page() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <h1>권리보호센터</h1>
-          {!reporter ? (
+          {!current ? <LoginRequiredScreen /> : null}
+          {current && !reporter ? (
             <div className="paper">
               <IdentityVerificationButton />
             </div>
           ) : null}
-          {reporter ? <Opt initialReporter={reporter} initialError="" /> : null}
+          {current && reporter ? <Opt initialReporter={reporter} initialError="" /> : null}
         </div>
       </div>
     </Container>
