@@ -2,6 +2,7 @@
 
 import { type Dispatch, type SetStateAction, useCallback, useMemo, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
@@ -596,9 +597,10 @@ export default function Opt({
 
   function renderOpinionFieldError(field: string) {
     return opinionFieldErrors[field] ? (
-      <Typography color="error" variant="caption">
-        {opinionFieldErrors[field]}
-      </Typography>
+      <p className="alert error">
+        <ErrorOutlineRoundedIcon />
+        <span>{opinionFieldErrors[field]}</span>
+      </p>
     ) : null;
   }
 

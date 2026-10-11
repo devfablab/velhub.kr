@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import { Avatar } from '@mui/material';
@@ -426,7 +427,7 @@ export default function CommentList({
 
   return (
     <section className={`${styles['comment-section']} paper`}>
-      {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
+      {errorMessage ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{errorMessage}</span></p> : null}
 
       <div className={styles['comment-headline']}>
         <strong>

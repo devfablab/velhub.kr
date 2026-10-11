@@ -583,7 +583,7 @@ export default function Opt() {
           </button>
           <div className="VhiDrawer-bottom-content">
             {errorTitle ? (
-              <ul>
+              <ul className="error-messages">
                 {errorMessage.split('\n').map((message, index) => (
                   <li key={`${index}-${message}`}>{message}</li>
                 ))}
@@ -615,7 +615,7 @@ export default function Opt() {
           </button>
           <DialogContent>
             {errorTitle ? (
-              <ul>
+              <ul className="error-messages">
                 {errorMessage.split('\n').map((message, index) => (
                   <li key={`${index}-${message}`}>{message}</li>
                 ))}

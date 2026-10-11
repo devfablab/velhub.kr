@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
   Dialog,
@@ -753,9 +754,14 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <ul>
-                  <li>{inviteErrorMessage}</li>
-                </ul>
+                {inviteErrorTitle ? (
+                  <p>{inviteErrorMessage}</p>
+                ) : (
+                  <p className="alert popup-error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{inviteErrorMessage}</span>
+                  </p>
+                )}
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -794,9 +800,14 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <ul>
-                  <li>{inviteErrorMessage}</li>
-                </ul>
+                {inviteErrorTitle ? (
+                  <p>{inviteErrorMessage}</p>
+                ) : (
+                  <p className="alert popup-error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{inviteErrorMessage}</span>
+                  </p>
+                )}
               </DialogContent>
               <DialogActions>
                 <button

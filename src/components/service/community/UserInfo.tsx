@@ -274,7 +274,10 @@ export default function UserInfo() {
   if (errorMessage) {
     return (
       <div className={`${styles['user-status']} paper`}>
-        <p>{errorMessage}</p>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
       </div>
     );
   }

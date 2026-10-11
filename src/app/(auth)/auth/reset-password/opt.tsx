@@ -219,7 +219,7 @@ export default function Opt() {
         {popup.title ? (
           isDrawer ? (
             <div className="VhiDrawer-bottom-content">
-              <ul>
+              <ul className="error-messages">
                 {popup.messages.map((message) => (
                   <li key={message} style={{ whiteSpace: 'pre-line' }}>
                     {message}
@@ -229,7 +229,7 @@ export default function Opt() {
             </div>
           ) : (
             <DialogContent>
-              <ul>
+              <ul className="error-messages">
                 {popup.messages.map((message) => (
                   <li key={message} style={{ whiteSpace: 'pre-line' }}>
                     {message}

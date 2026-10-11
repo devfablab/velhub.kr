@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { formatDateTimeDetail } from '@/lib/utils';
+import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
@@ -95,7 +96,7 @@ export default async function Page() {
         <div className="container">
           <Content>
             <section className={`paper ${styles.paper}`}>
-              <p>{errorMessage}</p>
+              <ScreenState kind="error">{errorMessage}</ScreenState>
             </section>
           </Content>
         </div>

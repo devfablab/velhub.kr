@@ -14,9 +14,9 @@ export default function FormErrorDialog({ open, title, messages, onClose }: Prop
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const messageContent = title ? (
-    <ul>
-      {messages.map((message) => (
-        <li key={message}>{message}</li>
+    <ul className="error-messages">
+      {messages.map((message, index) => (
+        <li key={`${index}-${message}`}>{message}</li>
       ))}
     </ul>
   ) : (

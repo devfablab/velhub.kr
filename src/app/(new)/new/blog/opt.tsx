@@ -800,9 +800,9 @@ export default function Opt() {
           </button>
           <div className="VhiDrawer-bottom-content">
             {errorDialog.title ? (
-              <ul>
-                {errorDialog.messages.map((message) => (
-                  <li key={message}>{message}</li>
+              <ul className="error-messages">
+                {errorDialog.messages.map((message, index) => (
+                  <li key={`${index}-${message}`}>{message}</li>
                 ))}
               </ul>
             ) : (
@@ -832,9 +832,9 @@ export default function Opt() {
           </button>
           <DialogContent>
             {errorDialog.title ? (
-              <ul>
-                {errorDialog.messages.map((message) => (
-                  <li key={message}>{message}</li>
+              <ul className="error-messages">
+                {errorDialog.messages.map((message, index) => (
+                  <li key={`${index}-${message}`}>{message}</li>
                 ))}
               </ul>
             ) : (

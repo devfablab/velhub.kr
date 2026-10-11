@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -165,7 +164,7 @@ export default function ToastEditorClient({
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <Typography>{imageErrorMessage}</Typography>
+            <p>{imageErrorMessage}</p>
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={() => setImageErrorMessage('')}>
@@ -186,7 +185,7 @@ export default function ToastEditorClient({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Typography>{imageErrorMessage}</Typography>
+            <p>{imageErrorMessage}</p>
           </DialogContent>
           <DialogActions>
             <button type="button" className="button medium submit" onClick={() => setImageErrorMessage('')}>

@@ -404,7 +404,7 @@ export default function EmailSignUp({
               <CloseRoundedIcon />
             </button>
             <div className="VhiDrawer-bottom-content">
-              <ul>
+              <ul className="error-messages">
                 {popup.messages.map((message, index) => (
                   <li key={`${index}-${message}`} style={{ whiteSpace: 'pre-line' }}>
                     {message}
@@ -431,7 +431,7 @@ export default function EmailSignUp({
               <CloseRoundedIcon />
             </button>
             <DialogContent>
-              <ul>
+              <ul className="error-messages">
                 {popup.messages.map((message, index) => (
                   <li key={`${index}-${message}`} style={{ whiteSpace: 'pre-line' }}>
                     {message}

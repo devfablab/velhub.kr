@@ -175,7 +175,7 @@ export default function FolderModals({
           style={{ width: '100%', padding: '8px' }}
         />
         {addLabelError ? (
-          <p id="add-folder-label-error" className="alert popup-error">
+          <p id="add-folder-label-error" className="alert error">
             <ErrorOutlineRoundedIcon />
             <span>{addLabelError}</span>
           </p>
@@ -216,7 +216,7 @@ export default function FolderModals({
           style={{ width: '100%', padding: '8px' }}
         />
         {editLabelError ? (
-          <p id="edit-folder-label-error" className="alert popup-error">
+          <p id="edit-folder-label-error" className="alert error">
             <ErrorOutlineRoundedIcon />
             <span>{editLabelError}</span>
           </p>

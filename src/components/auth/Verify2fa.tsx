@@ -240,7 +240,7 @@ export default function Verify2fa() {
         />
       </Stack>
       {errorMessages.length > 0 ? (
-        <ul>
+        <ul className="error-messages">
           {errorMessages.map((message, index) => (
             <li key={`${index}-${message}`} style={{ whiteSpace: 'pre-line' }}>
               {message}

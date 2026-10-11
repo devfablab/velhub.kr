@@ -2,6 +2,7 @@
 
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import styles from '@/app/hub.module.sass';
 
@@ -34,7 +35,7 @@ export default function SavedItems({ initialData, initialError }: Props) {
     <section className={`paper ${styles.paper} ${styles.history}`}>
       <h2>보고 또 보고 👉</h2>
 
-      {initialError ? <p>{initialError}</p> : null}
+      {initialError ? <ScreenState kind="error">{initialError}</ScreenState> : null}
 
       {!initialError && posts.length > 0 ? (
         <div className={styles.items}>

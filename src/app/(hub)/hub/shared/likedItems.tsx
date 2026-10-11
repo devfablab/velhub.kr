@@ -5,6 +5,7 @@ import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ModeCommentOutlinedIcon from '@mui/icons-material/ModeCommentOutlined';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import styles from '@/app/hub.module.sass';
 
@@ -75,7 +76,7 @@ export default function LikedItems({ initialData, initialError }: Props) {
         </ul>
       </div>
 
-      {initialError ? <p>{initialError}</p> : null}
+      {initialError ? <ScreenState kind="error">{initialError}</ScreenState> : null}
 
       {!initialError && viewType === 'posts' ? (
         postLikes.length > 0 ? (

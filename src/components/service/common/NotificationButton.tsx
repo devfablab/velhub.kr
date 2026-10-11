@@ -3,6 +3,7 @@
 import { type MouseEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import Badge from '@mui/material/Badge';
 import Drawer from '@mui/material/Drawer';
@@ -157,7 +158,14 @@ export default function NotificationButton({ isMobile }: Props) {
     }
 
     if (errorMessage) {
-      return <li className={styles['notification-item']}>{errorMessage}</li>;
+      return (
+        <li className={styles['notification-item']}>
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        </li>
+      );
     }
 
     if (visibleItems.length === 0) {

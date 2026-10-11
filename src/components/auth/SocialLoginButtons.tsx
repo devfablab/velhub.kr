@@ -258,9 +258,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <ul>
-              <li style={{ whiteSpace: 'pre-line' }}>{errorMessage}</li>
-            </ul>
+            <p style={{ whiteSpace: 'pre-line' }}>{errorMessage}</p>
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={() => setIsErrorPopupOpen(false)}>
@@ -281,9 +279,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <ul>
-              <li style={{ whiteSpace: 'pre-line' }}>{errorMessage}</li>
-            </ul>
+            <p style={{ whiteSpace: 'pre-line' }}>{errorMessage}</p>
           </DialogContent>
           <DialogActions>
             <button type="button" onClick={() => setIsErrorPopupOpen(false)}>

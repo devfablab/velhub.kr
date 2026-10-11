@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -1053,7 +1054,10 @@ export default function Opt({
                     <LoadingIndicator />
                   </Stack>
                 ) : appealTargetContentError ? (
-                  <p className="alert danger">{appealTargetContentError}</p>
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{appealTargetContentError}</span>
+                  </p>
                 ) : appealTargetContent ? (
                   <AppealTargetContent response={appealTargetContent} />
                 ) : null}

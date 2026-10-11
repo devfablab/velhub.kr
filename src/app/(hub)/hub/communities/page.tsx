@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
+import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
 import JoinSites, { JoinSiteRow } from '../shared/joinSites';
@@ -67,7 +68,7 @@ export default async function SectionJoinSites() {
       <main>
         <div className="container">
           <div className={`content ${styles['hub-content']}`}>
-            <p>{errorMessage}</p>
+            <ScreenState kind="error">{errorMessage}</ScreenState>
           </div>
         </div>
       </main>
