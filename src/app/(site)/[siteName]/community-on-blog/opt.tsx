@@ -372,6 +372,7 @@ export default function Opt({
         <Dialog
           open={Boolean(deleteTarget)}
           onClose={() => !isDeleting && setDeleteTarget(null)}
+          maxWidth="xs"
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>글 삭제</DialogTitle>

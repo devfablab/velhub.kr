@@ -954,6 +954,7 @@ export default function Opt({
           <Dialog
             open={deleteDialogOpen}
             onClose={() => setDeleteDialogOpen(false)}
+            maxWidth="xs"
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>글 삭제</DialogTitle>
@@ -1706,9 +1707,10 @@ export default function Opt({
             </Drawer>
           ) : (
             <Dialog
-              open={isSeriesMoveDialogOpen}
-              onClose={() => setIsSeriesMoveDialogOpen(false)}
-              className="vh-dialog vh-alert-dialog"
+            open={isSeriesMoveDialogOpen}
+            onClose={() => setIsSeriesMoveDialogOpen(false)}
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>글 이동</DialogTitle>
               <button type="button" className="close-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
@@ -1781,9 +1783,10 @@ export default function Opt({
             </Drawer>
           ) : (
             <Dialog
-              open={isPostMoveDialogOpen}
-              onClose={() => setIsPostMoveDialogOpen(false)}
-              className="vh-dialog vh-alert-dialog"
+            open={isPostMoveDialogOpen}
+            onClose={() => setIsPostMoveDialogOpen(false)}
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>글 이동</DialogTitle>
               <button type="button" className="close-button" onClick={() => setIsPostMoveDialogOpen(false)}>

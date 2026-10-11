@@ -816,6 +816,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
             <Dialog
               open={deleteDialogOpen}
               onClose={() => setDeleteDialogOpen(false)}
+              maxWidth="xs"
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle className={styles['dialog-title']}>글 삭제</DialogTitle>

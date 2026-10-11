@@ -768,6 +768,7 @@ export default function SubscriptionButton({
         <Dialog
           open={isDialogOpen}
           onClose={handleCloseDialog}
+          maxWidth="xs"
           aria-labelledby="subscription-dialog-title"
           className="VhiDialog"
         >
@@ -910,6 +911,7 @@ export default function SubscriptionButton({
         <Dialog
           open={isCancelDialogOpen}
           onClose={handleCloseCancelDialog}
+          maxWidth="xs"
           aria-labelledby="subscription-cancel-dialog-title"
           className="VhiDialog"
         >

@@ -421,6 +421,7 @@ export default function PostPurchaseButton(props: Props) {
         <Dialog
           open={isConfirmOpen}
           onClose={handleCloseConfirm}
+          maxWidth="xs"
           aria-labelledby="post-purchase-dialog-title"
           className="VhiDialog"
         >

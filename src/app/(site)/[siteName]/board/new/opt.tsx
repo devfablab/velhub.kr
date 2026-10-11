@@ -3203,7 +3203,12 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
             </div>
           </Drawer>
         ) : (
-          <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog vh-alert-dialog">
+          <Dialog
+            open={accessDialog.open}
+            onClose={accessDialog.onCancel}
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
+          >
             <DialogTitle>{accessDialog.title}</DialogTitle>
             <button
               type="button"

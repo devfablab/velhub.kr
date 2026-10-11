@@ -792,9 +792,10 @@ export default function Opt({
           </Drawer>
         ) : (
           <Dialog
-            open={deleteDialogOpen}
-            onClose={() => setDeleteDialogOpen(false)}
-            className="vh-dialog vh-alert-dialog"
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          maxWidth="xs"
+          className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle className={styles['dialog-title']}>글 삭제</DialogTitle>
             <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
