@@ -432,55 +432,63 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  {actionType === 'kick' || actionType === 'ban' ? (
-                    <Stack gap={1}>
-                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
-                      <TextField
-                        value={actionReason}
-                        onChange={(event) => setActionReason(event.currentTarget.value)}
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        size="small"
-                        error={Boolean(dialogErrorMessage)}
-                        helperText={dialogErrorMessage}
-                      />
-                    </Stack>
-                  ) : null}
-                  {actionType === 'kick' || actionType === 'ban' ? (
-                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <form
+                  id="mobile-blocked-members-action-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmitAction();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    {actionType === 'kick' || actionType === 'ban' ? (
                       <Stack gap={1}>
-                        <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
-                        <DatePicker
-                          value={actionTerm}
-                          onChange={setActionTerm}
-                          format="yyyy년 MM월 dd일"
-                          minDate={new Date()}
-                          disabled={isActionSubmitting}
-                          slotProps={{
-                            textField: {
-                              fullWidth: true,
-                              size: 'small',
-                            },
-                            popper: {
-                              sx: {
-                                zIndex: 9999,
-                              },
-                            },
-                          }}
+                        <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                        <TextField
+                          value={actionReason}
+                          onChange={(event) => setActionReason(event.currentTarget.value)}
+                          fullWidth
+                          multiline
+                          minRows={4}
+                          size="small"
+                          error={Boolean(dialogErrorMessage)}
+                          helperText={dialogErrorMessage}
                         />
                       </Stack>
-                    </LocalizationProvider>
-                  ) : null}
+                    ) : null}
+                    {actionType === 'kick' || actionType === 'ban' ? (
+                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                        <Stack gap={1}>
+                          <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
+                          <DatePicker
+                            value={actionTerm}
+                            onChange={setActionTerm}
+                            format="yyyy년 MM월 dd일"
+                            minDate={new Date()}
+                            disabled={isActionSubmitting}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                size: 'small',
+                              },
+                              popper: {
+                                sx: {
+                                  zIndex: 9999,
+                                },
+                              },
+                            }}
+                          />
+                        </Stack>
+                      </LocalizationProvider>
+                    ) : null}
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -492,9 +500,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="mobile-blocked-members-action-form"
                   className="button medium submit"
-                  onClick={handleSubmitAction}
                   disabled={isActionSubmitting}
                 >
                   확인
@@ -514,49 +522,59 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  {actionType === 'unblock' ? <Typography variant="subtitle2">활동정지를 해제합니다</Typography> : null}
-                  {actionType === 'kick' || actionType === 'ban' ? (
-                    <>
-                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
-                      <TextField
-                        value={actionReason}
-                        onChange={(event) => setActionReason(event.currentTarget.value)}
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        size="small"
-                        error={Boolean(dialogErrorMessage)}
-                        helperText={dialogErrorMessage}
-                      />
-                    </>
-                  ) : null}
-                  {actionType === 'kick' || actionType === 'ban' ? (
-                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                      <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
-                      <DatePicker
-                        value={actionTerm}
-                        onChange={setActionTerm}
-                        format="yyyy.MM.dd"
-                        minDate={new Date()}
-                        disabled={isActionSubmitting}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            size: 'small',
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  ) : null}
+                <form
+                  id="desktop-blocked-members-action-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmitAction();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    {actionType === 'unblock' ? (
+                      <Typography variant="subtitle2">활동정지를 해제합니다</Typography>
+                    ) : null}
+                    {actionType === 'kick' || actionType === 'ban' ? (
+                      <>
+                        <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                        <TextField
+                          value={actionReason}
+                          onChange={(event) => setActionReason(event.currentTarget.value)}
+                          fullWidth
+                          multiline
+                          minRows={4}
+                          size="small"
+                          error={Boolean(dialogErrorMessage)}
+                          helperText={dialogErrorMessage}
+                        />
+                      </>
+                    ) : null}
+                    {actionType === 'kick' || actionType === 'ban' ? (
+                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                        <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
+                        <DatePicker
+                          value={actionTerm}
+                          onChange={setActionTerm}
+                          format="yyyy.MM.dd"
+                          minDate={new Date()}
+                          disabled={isActionSubmitting}
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              size: 'small',
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    ) : null}
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -567,7 +585,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" onClick={handleSubmitAction} disabled={isActionSubmitting}>
+                <button type="submit" form="desktop-blocked-members-action-form" disabled={isActionSubmitting}>
                   확인
                 </button>
               </DialogActions>

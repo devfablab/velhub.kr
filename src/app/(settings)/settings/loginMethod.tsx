@@ -148,7 +148,14 @@ export default function LoginMethod({
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack gap={2.5}>
+          <Stack
+            component="form"
+            gap={2.5}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSave();
+            }}
+          >
             {email ? <Typography variant="body2">이메일 {maskEmail(email)}</Typography> : null}
 
             <RadioGroup name="defaultLoginMethod" value={selectedLoginMethod}>
@@ -166,9 +173,8 @@ export default function LoginMethod({
             </RadioGroup>
 
             <button
-              type="button"
+              type="submit"
               className="button medium submit"
-              onClick={handleSave}
               disabled={isSubmitting || selectedLoginMethod === savedLoginMethod}
             >
               기본 로그인 방식 변경

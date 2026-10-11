@@ -479,7 +479,14 @@ export default function SeriesSubscriptions({
     const selectedSeries = findSeries(editingRow.boardId, editingRow.seriesId);
 
     return (
-      <Stack gap={2}>
+      <Stack
+        component="form"
+        gap={2}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSaveEditingRow();
+        }}
+      >
         {siteType === 'community' ? (
           <TextField
             select
@@ -581,7 +588,7 @@ export default function SeriesSubscriptions({
           >
             취소
           </button>
-          <button type="button" className="button medium submit" onClick={handleSaveEditingRow} disabled={isSaving}>
+          <button type="submit" className="button medium submit" disabled={isSaving}>
             저장
           </button>
         </Stack>

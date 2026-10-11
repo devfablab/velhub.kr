@@ -39,6 +39,8 @@ export default function Opt({
       return;
     }
 
+    let isNavigating = false;
+
     try {
       setErrorMessage('');
       setSuccessMessage('');
@@ -58,6 +60,7 @@ export default function Opt({
       const result = (await response.json()) as AdvancedUserResponse;
 
       if (response.status === 401) {
+        isNavigating = true;
         router.replace('/');
         return;
       }
@@ -74,7 +77,9 @@ export default function Opt({
         setErrorMessage('추가 설정 수정에 실패했습니다.');
       }
     } finally {
-      setIsSubmitting(false);
+      if (!isNavigating) {
+        setIsSubmitting(false);
+      }
     }
   }
 
@@ -87,7 +92,13 @@ export default function Opt({
   }
 
   return (
-    <div className={`paper ${styles.paper}`}>
+    <form
+      className={`paper ${styles.paper}`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void handleSubmit();
+      }}
+    >
       <Stack gap={1}>
         <FormLabel>자동 로그인</FormLabel>
         <FormControlLabel
@@ -96,7 +107,7 @@ export default function Opt({
         />
       </Stack>
 
-      <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+      <button type="submit" className="button medium submit" disabled={isSubmitting}>
         수정 완료
       </button>
 
@@ -108,6 +119,6 @@ export default function Opt({
       />
 
       <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
-    </div>
+    </form>
   );
 }

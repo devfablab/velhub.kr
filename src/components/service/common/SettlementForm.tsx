@@ -586,273 +586,275 @@ export default function SettlementForm({
 
       {isFormOpen && identity ? (
         <div className="paper">
-          <Stack gap={2}>
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
-            <Stack gap={1}>
-              <Typography variant="subtitle2">개인/기업 선택</Typography>
-              <RadioGroup
-                {...(isApproved ? { sx: { pointerEvents: 'none', opacity: 0.7 } } : {})}
-                row
-                value={settlementType === 'individual' ? 'individual' : 'business'}
-                onChange={(event) => {
-                  setSettlementType(event.target.value === 'individual' ? 'individual' : 'individual_business');
-                }}
-              >
-                <FormControlLabel value="individual" control={<Radio />} label="개인" />
-                <FormControlLabel value="business" control={<Radio />} label="기업" />
-              </RadioGroup>
-            </Stack>
-
-            {settlementType === 'individual' ? (
-              <Stack gap={2}>
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">성명</Typography>
-                  <Typography variant="body2">{identity.name}</Typography>
-                </Stack>
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">주민등록번호</Typography>
-                  <Stack direction="row" alignItems="center" gap={1}>
-                    <Typography variant="body2">{getBirthDatePrefix(identity.birth_date)}</Typography>
-                    <Typography variant="body2">-</Typography>
-                    <TextField
-                      disabled={isApproved}
-                      size="small"
-                      type="password"
-                      placeholder="주민등록번호 뒷자리"
-                      value={residentSuffix}
-                      onChange={(event) => setResidentSuffix(onlyDigits(event.target.value).slice(0, 7))}
-                      slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 7 } }}
-                    />
-                    <TextField
-                      disabled={isApproved}
-                      size="small"
-                      type="password"
-                      placeholder="주민등록번호 뒷자리 확인"
-                      value={residentSuffixConfirm}
-                      onChange={(event) => setResidentSuffixConfirm(onlyDigits(event.target.value).slice(0, 7))}
-                      slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 7 } }}
-                    />
-                  </Stack>
-                </Stack>
-
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">업종 선택</Typography>
-                  <Select
-                    disabled={isApproved}
-                    size="small"
-                    displayEmpty
-                    value={businessIncomeCode}
-                    onChange={(event) => setBusinessIncomeCode(event.target.value)}
-                  >
-                    <MenuItem value="" disabled>
-                      업종코드를 선택해 주세요
-                    </MenuItem>
-                    {BUSINESS_INCOME_CODE_OPTIONS.map((option) => (
-                      <MenuItem key={option.code} value={option.code}>
-                        {option.code} ({option.label})
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </Stack>
-              </Stack>
-            ) : (
-              <Stack gap={2}>
-                <Typography variant="subtitle2">사업자 선택</Typography>
-                <RadioGroup
-                  {...(isApproved ? { sx: { pointerEvents: 'none', opacity: 0.7 } } : {})}
-                  row
-                  value={settlementType}
-                  onChange={(event) => setSettlementType(event.target.value as SettlementType)}
-                >
-                  <FormControlLabel value="individual_business" control={<Radio />} label="개인사업자" />
-                  <FormControlLabel value="corporation" control={<Radio />} label="법인" />
-                </RadioGroup>
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">단체/회사명</Typography>
-                  <TextField
-                    disabled={isApproved}
-                    fullWidth
-                    size="small"
-                    placeholder="단체/회사명"
-                    value={companyName}
-                    onChange={(event) => setCompanyName(event.target.value)}
-                  />
-                </Stack>
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">사업자등록번호/등록증</Typography>
-                  <TextField
-                    disabled={isApproved}
-                    fullWidth
-                    size="small"
-                    placeholder="사업자등록번호"
-                    value={businessRegistrationNumber}
-                    onChange={(event) => setBusinessRegistrationNumber(onlyDigits(event.target.value).slice(0, 10))}
-                    slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 10 } }}
-                  />
-                  <Button component="label" className="button small action" disabled={isApproved}>
-                    사업자등록증 PDF 선택
-                    <input type="file" accept="application/pdf" hidden onChange={handleBusinessLicenseChange} />
-                  </Button>
-                  {businessLicenseFile ? <Typography variant="body2">{businessLicenseFile.name}</Typography> : null}
-                </Stack>
-              </Stack>
-            )}
-
-            <Stack gap={1}>
-              <Typography variant="subtitle2">정산 안내 이메일</Typography>
-              <TextField
-                disabled={isApproved}
-                fullWidth
-                size="small"
-                type="email"
-                placeholder="정산 안내 이메일"
-                value={paymentEmail}
-                onChange={(event) => setPaymentEmail(event.target.value)}
-              />
-            </Stack>
-            <Stack gap={1}>
-              <Typography variant="subtitle2">정산 정보 입력</Typography>
-              <Stack gap={1}>
-                <Select
-                  disabled={isApproved}
-                  size="small"
-                  displayEmpty
-                  value={bankCode}
-                  onChange={(event) => setBankCode(event.target.value)}
-                >
-                  <MenuItem value="" disabled>
-                    입금 은행을 선택해 주세요
-                  </MenuItem>
-                  {BANK_OPTIONS.map((option) => (
-                    <MenuItem key={option.code} value={option.code}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <TextField
-                  disabled={isApproved}
-                  fullWidth
-                  size="small"
-                  placeholder="예금주"
-                  value={accountHolder}
-                  onChange={(event) => setAccountHolder(event.target.value)}
-                  helperText={
-                    settlementType === 'individual'
-                      ? '본인인증한 성명과 동일하게 입력해 주세요.'
-                      : settlementType === 'corporation'
-                        ? '단체/회사명과 동일하게 입력해 주세요.'
-                        : '개인사업자 계좌 또는 본인 개인 계좌를 사용할 수 있습니다.'
-                  }
-                />
-                <TextField
-                  disabled={isApproved}
-                  fullWidth
-                  size="small"
-                  placeholder="계좌번호"
-                  value={accountNumber}
-                  onChange={(event) => setAccountNumber(onlyDigits(event.target.value))}
-                  slotProps={{ htmlInput: { inputMode: 'numeric' } }}
-                />
-              </Stack>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
+          >
+            <Stack gap={2}>
               {errorMessage ? (
                 <p className="alert error">
                   <ErrorOutlineRoundedIcon />
                   <span>{errorMessage}</span>
                 </p>
               ) : null}
-            </Stack>
-            {needsGuardian ? (
-              <Stack gap={1.5}>
-                <Divider />
-                <Typography variant="subtitle2">법정대리인 동의 (만 14세 이상 ~ 만 19세 미만 필수)</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  미성년자 작가 신청에는 민법 제5조에 따라 법정대리인(부모님 등) 중 한 분의 동의가 필요합니다. 아래
-                  버튼으로 법정대리인 본인인증을 완료하고 가족관계증명서를 첨부해 주세요.
-                </Typography>
-                {guardianIdentity ? (
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>법정대리인 {guardianIdentity.name}</span>
-                  </p>
-                ) : (
-                  <div>
-                    <button
-                      type="button"
-                      className="button small action"
-                      onClick={() => void handleGuardianVerify()}
-                      disabled={isGuardianVerifying}
+              <Stack gap={1}>
+                <Typography variant="subtitle2">개인/기업 선택</Typography>
+                <RadioGroup
+                  {...(isApproved ? { sx: { pointerEvents: 'none', opacity: 0.7 } } : {})}
+                  row
+                  value={settlementType === 'individual' ? 'individual' : 'business'}
+                  onChange={(event) => {
+                    setSettlementType(event.target.value === 'individual' ? 'individual' : 'individual_business');
+                  }}
+                >
+                  <FormControlLabel value="individual" control={<Radio />} label="개인" />
+                  <FormControlLabel value="business" control={<Radio />} label="기업" />
+                </RadioGroup>
+              </Stack>
+
+              {settlementType === 'individual' ? (
+                <Stack gap={2}>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">성명</Typography>
+                    <Typography variant="body2">{identity.name}</Typography>
+                  </Stack>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">주민등록번호</Typography>
+                    <Stack direction="row" alignItems="center" gap={1}>
+                      <Typography variant="body2">{getBirthDatePrefix(identity.birth_date)}</Typography>
+                      <Typography variant="body2">-</Typography>
+                      <TextField
+                        disabled={isApproved}
+                        size="small"
+                        type="password"
+                        placeholder="주민등록번호 뒷자리"
+                        value={residentSuffix}
+                        onChange={(event) => setResidentSuffix(onlyDigits(event.target.value).slice(0, 7))}
+                        slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 7 } }}
+                      />
+                      <TextField
+                        disabled={isApproved}
+                        size="small"
+                        type="password"
+                        placeholder="주민등록번호 뒷자리 확인"
+                        value={residentSuffixConfirm}
+                        onChange={(event) => setResidentSuffixConfirm(onlyDigits(event.target.value).slice(0, 7))}
+                        slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 7 } }}
+                      />
+                    </Stack>
+                  </Stack>
+
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">업종 선택</Typography>
+                    <Select
+                      disabled={isApproved}
+                      size="small"
+                      displayEmpty
+                      value={businessIncomeCode}
+                      onChange={(event) => setBusinessIncomeCode(event.target.value)}
                     >
-                      {isGuardianVerifying ? '인증 중...' : '법정대리인 본인인증'}
-                    </button>
-                  </div>
-                )}
-                {guardianErrorMessage ? (
+                      <MenuItem value="" disabled>
+                        업종코드를 선택해 주세요
+                      </MenuItem>
+                      {BUSINESS_INCOME_CODE_OPTIONS.map((option) => (
+                        <MenuItem key={option.code} value={option.code}>
+                          {option.code} ({option.label})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </Stack>
+                </Stack>
+              ) : (
+                <Stack gap={2}>
+                  <Typography variant="subtitle2">사업자 선택</Typography>
+                  <RadioGroup
+                    {...(isApproved ? { sx: { pointerEvents: 'none', opacity: 0.7 } } : {})}
+                    row
+                    value={settlementType}
+                    onChange={(event) => setSettlementType(event.target.value as SettlementType)}
+                  >
+                    <FormControlLabel value="individual_business" control={<Radio />} label="개인사업자" />
+                    <FormControlLabel value="corporation" control={<Radio />} label="법인" />
+                  </RadioGroup>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">단체/회사명</Typography>
+                    <TextField
+                      disabled={isApproved}
+                      fullWidth
+                      size="small"
+                      placeholder="단체/회사명"
+                      value={companyName}
+                      onChange={(event) => setCompanyName(event.target.value)}
+                    />
+                  </Stack>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">사업자등록번호/등록증</Typography>
+                    <TextField
+                      disabled={isApproved}
+                      fullWidth
+                      size="small"
+                      placeholder="사업자등록번호"
+                      value={businessRegistrationNumber}
+                      onChange={(event) => setBusinessRegistrationNumber(onlyDigits(event.target.value).slice(0, 10))}
+                      slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 10 } }}
+                    />
+                    <Button component="label" className="button small action" disabled={isApproved}>
+                      사업자등록증 PDF 선택
+                      <input type="file" accept="application/pdf" hidden onChange={handleBusinessLicenseChange} />
+                    </Button>
+                    {businessLicenseFile ? <Typography variant="body2">{businessLicenseFile.name}</Typography> : null}
+                  </Stack>
+                </Stack>
+              )}
+
+              <Stack gap={1}>
+                <Typography variant="subtitle2">정산 안내 이메일</Typography>
+                <TextField
+                  disabled={isApproved}
+                  fullWidth
+                  size="small"
+                  type="email"
+                  placeholder="정산 안내 이메일"
+                  value={paymentEmail}
+                  onChange={(event) => setPaymentEmail(event.target.value)}
+                />
+              </Stack>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">정산 정보 입력</Typography>
+                <Stack gap={1}>
+                  <Select
+                    disabled={isApproved}
+                    size="small"
+                    displayEmpty
+                    value={bankCode}
+                    onChange={(event) => setBankCode(event.target.value)}
+                  >
+                    <MenuItem value="" disabled>
+                      입금 은행을 선택해 주세요
+                    </MenuItem>
+                    {BANK_OPTIONS.map((option) => (
+                      <MenuItem key={option.code} value={option.code}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <TextField
+                    disabled={isApproved}
+                    fullWidth
+                    size="small"
+                    placeholder="예금주"
+                    value={accountHolder}
+                    onChange={(event) => setAccountHolder(event.target.value)}
+                    helperText={
+                      settlementType === 'individual'
+                        ? '본인인증한 성명과 동일하게 입력해 주세요.'
+                        : settlementType === 'corporation'
+                          ? '단체/회사명과 동일하게 입력해 주세요.'
+                          : '개인사업자 계좌 또는 본인 개인 계좌를 사용할 수 있습니다.'
+                    }
+                  />
+                  <TextField
+                    disabled={isApproved}
+                    fullWidth
+                    size="small"
+                    placeholder="계좌번호"
+                    value={accountNumber}
+                    onChange={(event) => setAccountNumber(onlyDigits(event.target.value))}
+                    slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+                  />
+                </Stack>
+                {errorMessage ? (
                   <p className="alert error">
                     <ErrorOutlineRoundedIcon />
-                    <span>{guardianErrorMessage}</span>
+                    <span>{errorMessage}</span>
                   </p>
                 ) : null}
-                <Divider />
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">가족관계증명서 첨부</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    정부24(www.gov.kr)에서 발급받은 가족관계증명서 PDF를 업로드해 주세요.
-                  </Typography>
-                  <div>
-                    <Button component="label" className="button small action">
-                      파일 선택
-                      <VisuallyHiddenInput
-                        ref={guardianDocumentRef}
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        onChange={handleGuardianDocumentChange}
-                      />
-                    </Button>
-                  </div>
-                  {guardianDocumentFile ? <Typography variant="body2">{guardianDocumentFile.name}</Typography> : null}
-                </Stack>
               </Stack>
-            ) : null}
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    disabled={isApproved}
-                    checked={isSettlementAgreed}
-                    onChange={(event) => setIsSettlementAgreed(event.target.checked)}
-                  />
-                }
-                label={
-                  <button type="button" className="link-normal" onClick={() => setSettlementAgreementOpen(true)}>
-                    [필수] 정산정보 수집 · 이용 동의
-                  </button>
-                }
-              />
-            </FormGroup>
-            <Stack direction="row" justifyContent="flex-end" gap={1}>
-              <button
-                type="button"
-                className="button medium action"
-                onClick={() => setIsFormOpen(false)}
-                disabled={isSubmitting || isApproved}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleSubmit()}
-                disabled={isSubmitting || isApproved}
-              >
-                {isSubmitting ? '저장 중' : settlement ? '정산정보 수정' : '작가 신청'}
-              </button>
+              {needsGuardian ? (
+                <Stack gap={1.5}>
+                  <Divider />
+                  <Typography variant="subtitle2">법정대리인 동의 (만 14세 이상 ~ 만 19세 미만 필수)</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    미성년자 작가 신청에는 민법 제5조에 따라 법정대리인(부모님 등) 중 한 분의 동의가 필요합니다. 아래
+                    버튼으로 법정대리인 본인인증을 완료하고 가족관계증명서를 첨부해 주세요.
+                  </Typography>
+                  {guardianIdentity ? (
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
+                      <span>법정대리인 {guardianIdentity.name}</span>
+                    </p>
+                  ) : (
+                    <div>
+                      <button
+                        type="button"
+                        className="button small action"
+                        onClick={() => void handleGuardianVerify()}
+                        disabled={isGuardianVerifying}
+                      >
+                        {isGuardianVerifying ? '인증 중...' : '법정대리인 본인인증'}
+                      </button>
+                    </div>
+                  )}
+                  {guardianErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{guardianErrorMessage}</span>
+                    </p>
+                  ) : null}
+                  <Divider />
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">가족관계증명서 첨부</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      정부24(www.gov.kr)에서 발급받은 가족관계증명서 PDF를 업로드해 주세요.
+                    </Typography>
+                    <div>
+                      <Button component="label" className="button small action">
+                        파일 선택
+                        <VisuallyHiddenInput
+                          ref={guardianDocumentRef}
+                          type="file"
+                          accept=".pdf,application/pdf"
+                          onChange={handleGuardianDocumentChange}
+                        />
+                      </Button>
+                    </div>
+                    {guardianDocumentFile ? <Typography variant="body2">{guardianDocumentFile.name}</Typography> : null}
+                  </Stack>
+                </Stack>
+              ) : null}
+              <FormGroup>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      disabled={isApproved}
+                      checked={isSettlementAgreed}
+                      onChange={(event) => setIsSettlementAgreed(event.target.checked)}
+                    />
+                  }
+                  label={
+                    <button type="button" className="link-normal" onClick={() => setSettlementAgreementOpen(true)}>
+                      [필수] 정산정보 수집 · 이용 동의
+                    </button>
+                  }
+                />
+              </FormGroup>
+              <Stack direction="row" justifyContent="flex-end" gap={1}>
+                <button
+                  type="button"
+                  className="button medium action"
+                  onClick={() => setIsFormOpen(false)}
+                  disabled={isSubmitting || isApproved}
+                >
+                  취소
+                </button>
+                <button type="submit" className="button medium submit" disabled={isSubmitting || isApproved}>
+                  {isSubmitting ? '저장 중' : settlement ? '정산정보 수정' : '작가 신청'}
+                </button>
+              </Stack>
             </Stack>
-          </Stack>
+          </form>
         </div>
       ) : null}
       <IdentityAgreement

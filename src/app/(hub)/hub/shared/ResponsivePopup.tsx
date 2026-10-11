@@ -22,6 +22,8 @@ type Props = {
   dialogClassName?: string;
   drawerClassName?: string;
   variant?: 'default' | 'content';
+  formId?: string;
+  onSubmit?: () => void;
 };
 
 function getDialogActionClass(intent: ResponsivePopupAction['intent'], isSingleAction: boolean) {
@@ -50,6 +52,8 @@ export default function ResponsivePopup({
   dialogClassName = '',
   drawerClassName = '',
   variant = 'default',
+  formId,
+  onSubmit,
 }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -65,14 +69,29 @@ export default function ResponsivePopup({
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
-      <div className="VhiDrawer-bottom-content">{children}</div>
+      <div className="VhiDrawer-bottom-content">
+        {formId ? (
+          <form
+            id={formId}
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSubmit?.();
+            }}
+          >
+            {children}
+          </form>
+        ) : (
+          children
+        )}
+      </div>
       <div className="drawer-dialog-actions">
         {actions.map((action, index) => (
           <button
             key={index}
-            type="button"
+            type={formId && action.intent === 'submit' ? 'submit' : 'button'}
+            form={formId && action.intent === 'submit' ? formId : undefined}
             className={getContentActionClass(action.intent, actions.length === 1)}
-            onClick={action.onClick}
+            onClick={formId && action.intent === 'submit' ? undefined : action.onClick}
             disabled={action.disabled}
           >
             {action.label}
@@ -92,18 +111,33 @@ export default function ResponsivePopup({
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
-      <DialogContent>{children}</DialogContent>
+      <DialogContent>
+        {formId ? (
+          <form
+            id={formId}
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSubmit?.();
+            }}
+          >
+            {children}
+          </form>
+        ) : (
+          children
+        )}
+      </DialogContent>
       <DialogActions>
         {actions.map((action, index) => (
           <button
             key={index}
-            type="button"
+            type={formId && action.intent === 'submit' ? 'submit' : 'button'}
+            form={formId && action.intent === 'submit' ? formId : undefined}
             className={
               variant === 'content'
                 ? getContentActionClass(action.intent, actions.length === 1)
                 : getDialogActionClass(action.intent, actions.length === 1)
             }
-            onClick={action.onClick}
+            onClick={formId && action.intent === 'submit' ? undefined : action.onClick}
             disabled={action.disabled}
           >
             {action.label}

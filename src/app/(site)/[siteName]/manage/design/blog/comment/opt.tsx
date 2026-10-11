@@ -232,281 +232,284 @@ export default function Opt({ initialData, initialError }: OptProps) {
     <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <div className={`paper ${styles.paper}`}>
-            <FormControl>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                댓글 방식
-              </Typography>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
+          >
+            <div className={`paper ${styles.paper}`}>
+              <FormControl>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  댓글 방식
+                </Typography>
 
-              <RadioGroup
-                className={styles['radio-group']}
-                value={commentProvider}
-                onChange={(event) => {
-                  const nextValue = event.target.value;
+                <RadioGroup
+                  className={styles['radio-group']}
+                  value={commentProvider}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
 
-                  if (!isCommentProvider(nextValue)) {
-                    return;
-                  }
-
-                  setCommentProvider(nextValue);
-                  setErrorMessage('');
-                  setSuccessMessage('');
-                }}
-              >
-                {COMMENT_PROVIDER_OPTIONS.map((option) => (
-                  <FormControlLabel
-                    key={option.value}
-                    value={option.value}
-                    control={<Radio />}
-                    label={
-                      <Stack>
-                        <Typography variant="body1">{option.label}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {option.description}
-                        </Typography>
-                      </Stack>
+                    if (!isCommentProvider(nextValue)) {
+                      return;
                     }
-                  />
-                ))}
-              </RadioGroup>
-            </FormControl>
 
-            {commentProvider === 'giscus' ? (
-              <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
-                <Stack gap={2}>
-                  <Typography variant="subtitle1">Giscus 설정</Typography>
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      repo
-                    </Typography>
-                    <TextField
-                      value={giscusSettings.repo}
-                      onChange={(event) => handleChangeGiscusTextField('repo', event.target.value)}
-                      error={errorMessage.includes('Giscus') || errorMessage.includes('repo')}
-                      helperText={
-                        errorMessage.includes('Giscus') || errorMessage.includes('repo') ? errorMessage : undefined
+                    setCommentProvider(nextValue);
+                    setErrorMessage('');
+                    setSuccessMessage('');
+                  }}
+                >
+                  {COMMENT_PROVIDER_OPTIONS.map((option) => (
+                    <FormControlLabel
+                      key={option.value}
+                      value={option.value}
+                      control={<Radio />}
+                      label={
+                        <Stack>
+                          <Typography variant="body1">{option.label}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {option.description}
+                          </Typography>
+                        </Stack>
                       }
-                      fullWidth
-                      size="small"
-                      required
                     />
-                  </Stack>
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      repoId
-                    </Typography>
-                    <TextField
-                      value={giscusSettings.repoId}
-                      onChange={(event) => handleChangeGiscusTextField('repoId', event.target.value)}
-                      error={errorMessage.includes('Giscus') || errorMessage.includes('repoId')}
-                      helperText={
-                        errorMessage.includes('Giscus') || errorMessage.includes('repoId') ? errorMessage : undefined
-                      }
-                      fullWidth
-                      size="small"
-                      required
-                    />
-                  </Stack>
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      category
-                    </Typography>
-                    <TextField
-                      select
-                      value={giscusSettings.category}
-                      onChange={(event) => handleChangeGiscusTextField('category', event.target.value)}
-                      error={errorMessage.includes('Giscus') || errorMessage.includes('category')}
-                      helperText={
-                        errorMessage.includes('Giscus') || errorMessage.includes('category') ? errorMessage : undefined
-                      }
-                      fullWidth
-                      size="small"
-                      required
-                    >
-                      {GISCUS_CATEGORY_OPTIONS.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
+                  ))}
+                </RadioGroup>
+              </FormControl>
+
+              {commentProvider === 'giscus' ? (
+                <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
+                  <Stack gap={2}>
+                    <Typography variant="subtitle1">Giscus 설정</Typography>
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        repo
+                      </Typography>
+                      <TextField
+                        value={giscusSettings.repo}
+                        onChange={(event) => handleChangeGiscusTextField('repo', event.target.value)}
+                        error={errorMessage.includes('Giscus') || errorMessage.includes('repo')}
+                        helperText={
+                          errorMessage.includes('Giscus') || errorMessage.includes('repo') ? errorMessage : undefined
+                        }
+                        fullWidth
+                        size="small"
+                        required
+                      />
+                    </Stack>
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        repoId
+                      </Typography>
+                      <TextField
+                        value={giscusSettings.repoId}
+                        onChange={(event) => handleChangeGiscusTextField('repoId', event.target.value)}
+                        error={errorMessage.includes('Giscus') || errorMessage.includes('repoId')}
+                        helperText={
+                          errorMessage.includes('Giscus') || errorMessage.includes('repoId') ? errorMessage : undefined
+                        }
+                        fullWidth
+                        size="small"
+                        required
+                      />
+                    </Stack>
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        category
+                      </Typography>
+                      <TextField
+                        select
+                        value={giscusSettings.category}
+                        onChange={(event) => handleChangeGiscusTextField('category', event.target.value)}
+                        error={errorMessage.includes('Giscus') || errorMessage.includes('category')}
+                        helperText={
+                          errorMessage.includes('Giscus') || errorMessage.includes('category')
+                            ? errorMessage
+                            : undefined
+                        }
+                        fullWidth
+                        size="small"
+                        required
+                      >
+                        {GISCUS_CATEGORY_OPTIONS.map((category) => (
+                          <MenuItem key={category} value={category}>
+                            {category}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Stack>
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        categoryId
+                      </Typography>
+                      <TextField
+                        value={giscusSettings.categoryId}
+                        onChange={(event) => handleChangeGiscusTextField('categoryId', event.target.value)}
+                        error={errorMessage.includes('Giscus') || errorMessage.includes('categoryId')}
+                        helperText={
+                          errorMessage.includes('Giscus') || errorMessage.includes('categoryId')
+                            ? errorMessage
+                            : undefined
+                        }
+                        fullWidth
+                        size="small"
+                        required
+                      />
+                    </Stack>
+
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        inputPosition
+                      </Typography>
+                      <TextField
+                        select
+                        value={giscusSettings.inputPosition}
+                        onChange={(event) => handleChangeGiscusInputPosition(event.target.value)}
+                        fullWidth
+                        size="small"
+                        required
+                      >
+                        <MenuItem value="top">
+                          {giscusSettings.inputPosition === 'top' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          top
                         </MenuItem>
-                      ))}
-                    </TextField>
-                  </Stack>
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      categoryId
-                    </Typography>
-                    <TextField
-                      value={giscusSettings.categoryId}
-                      onChange={(event) => handleChangeGiscusTextField('categoryId', event.target.value)}
-                      error={errorMessage.includes('Giscus') || errorMessage.includes('categoryId')}
-                      helperText={
-                        errorMessage.includes('Giscus') || errorMessage.includes('categoryId')
-                          ? errorMessage
-                          : undefined
-                      }
-                      fullWidth
-                      size="small"
-                      required
-                    />
-                  </Stack>
+                        <MenuItem value="bottom">
+                          {giscusSettings.inputPosition === 'bottom' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          bottom
+                        </MenuItem>
+                      </TextField>
+                    </Stack>
 
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      inputPosition
-                    </Typography>
-                    <TextField
-                      select
-                      value={giscusSettings.inputPosition}
-                      onChange={(event) => handleChangeGiscusInputPosition(event.target.value)}
-                      fullWidth
-                      size="small"
-                      required
-                    >
-                      <MenuItem value="top">
-                        {giscusSettings.inputPosition === 'top' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        top
-                      </MenuItem>
-                      <MenuItem value="bottom">
-                        {giscusSettings.inputPosition === 'bottom' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        bottom
-                      </MenuItem>
-                    </TextField>
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        strict
+                      </Typography>
+                      <TextField
+                        select
+                        value={giscusSettings.strict}
+                        onChange={(event) => handleChangeGiscusFlag('strict', event.target.value)}
+                        fullWidth
+                        size="small"
+                      >
+                        <MenuItem value="0">
+                          {giscusSettings.strict === '0' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          0
+                        </MenuItem>
+                        <MenuItem value="1">
+                          {giscusSettings.strict === '1' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          1
+                        </MenuItem>
+                      </TextField>
+                    </Stack>
+
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        reactionsEnabled
+                      </Typography>
+                      <TextField
+                        select
+                        value={giscusSettings.reactionsEnabled}
+                        onChange={(event) => handleChangeGiscusFlag('reactionsEnabled', event.target.value)}
+                        fullWidth
+                        size="small"
+                      >
+                        <MenuItem value="0">
+                          {giscusSettings.reactionsEnabled === '0' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          0
+                        </MenuItem>
+                        <MenuItem value="1">
+                          {giscusSettings.reactionsEnabled === '1' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          1
+                        </MenuItem>
+                      </TextField>
+                    </Stack>
+
+                    <Stack>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        emitMetadata
+                      </Typography>
+                      <TextField
+                        select
+                        value={giscusSettings.emitMetadata}
+                        onChange={(event) => handleChangeGiscusFlag('emitMetadata', event.target.value)}
+                        fullWidth
+                        size="small"
+                      >
+                        <MenuItem value="0">
+                          {giscusSettings.emitMetadata === '0' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          0
+                        </MenuItem>
+                        <MenuItem value="1">
+                          {giscusSettings.emitMetadata === '1' ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          1
+                        </MenuItem>
+                      </TextField>
+                    </Stack>
                   </Stack>
-
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      strict
-                    </Typography>
-                    <TextField
-                      select
-                      value={giscusSettings.strict}
-                      onChange={(event) => handleChangeGiscusFlag('strict', event.target.value)}
-                      fullWidth
-                      size="small"
-                    >
-                      <MenuItem value="0">
-                        {giscusSettings.strict === '0' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        0
-                      </MenuItem>
-                      <MenuItem value="1">
-                        {giscusSettings.strict === '1' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        1
-                      </MenuItem>
-                    </TextField>
-                  </Stack>
-
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      reactionsEnabled
-                    </Typography>
-                    <TextField
-                      select
-                      value={giscusSettings.reactionsEnabled}
-                      onChange={(event) => handleChangeGiscusFlag('reactionsEnabled', event.target.value)}
-                      fullWidth
-                      size="small"
-                    >
-                      <MenuItem value="0">
-                        {giscusSettings.reactionsEnabled === '0' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        0
-                      </MenuItem>
-                      <MenuItem value="1">
-                        {giscusSettings.reactionsEnabled === '1' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        1
-                      </MenuItem>
-                    </TextField>
-                  </Stack>
-
-                  <Stack>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      emitMetadata
-                    </Typography>
-                    <TextField
-                      select
-                      value={giscusSettings.emitMetadata}
-                      onChange={(event) => handleChangeGiscusFlag('emitMetadata', event.target.value)}
-                      fullWidth
-                      size="small"
-                    >
-                      <MenuItem value="0">
-                        {giscusSettings.emitMetadata === '0' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        0
-                      </MenuItem>
-                      <MenuItem value="1">
-                        {giscusSettings.emitMetadata === '1' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        1
-                      </MenuItem>
-                    </TextField>
-                  </Stack>
-                </Stack>
-              </div>
-            ) : null}
-          </div>
-
-          <FormErrorDialog
-            open={isErrorDialogOpen}
-            title={errorMessage.includes('Giscus') ? 'Giscus 설정' : null}
-            messages={errorMessage ? [errorMessage] : []}
-            onClose={() => setIsErrorDialogOpen(false)}
-          />
-
-          {isMobile ? (
-            <div className={styles['button-top']}>
-              <button
-                type="button"
-                className={`button ${styles.button}`}
-                onClick={() => void handleSubmit()}
-                disabled={isSubmitDisabled}
-              >
-                저장
-              </button>
+                </div>
+              ) : null}
             </div>
-          ) : (
-            <Stack direction="row" justifyContent="flex-end">
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleSubmit()}
-                disabled={isSubmitDisabled}
-              >
-                적용하기
-              </button>
-            </Stack>
-          )}
 
-          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorMessage.includes('Giscus') ? 'Giscus 설정' : null}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
+
+            {isMobile ? (
+              <div className={styles['button-top']}>
+                <button type="submit" className={`button ${styles.button}`} disabled={isSubmitDisabled}>
+                  저장
+                </button>
+              </div>
+            ) : (
+              <Stack direction="row" justifyContent="flex-end">
+                <button type="submit" className="button medium submit" disabled={isSubmitDisabled}>
+                  적용하기
+                </button>
+              </Stack>
+            )}
+
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            <PopupMessage
+              open={Boolean(successMessage)}
+              message={successMessage}
+              onClose={() => setSuccessMessage('')}
+            />
+          </form>
         </div>
       </div>
     </Container>

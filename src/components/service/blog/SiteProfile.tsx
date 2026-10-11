@@ -653,23 +653,31 @@ export default function SiteProfile() {
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <Stack gap={1}>
-              <Typography variant="subtitle2">
-                {isBlogSubscriptionRefundable ? '블로그 구독을 환불하시겠어요?' : '블로그 구독을 취소하시겠어요?'}
-              </Typography>
-              <Typography variant="body2">
-                {getBlogSubscriptionCancelDescription({
-                  isRefundableCancellation: isBlogSubscriptionRefundable,
-                  refundAmount: blogSubscriptionRefundAmount,
-                })}
-              </Typography>
-              {blogSubscriptionErrorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{blogSubscriptionErrorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
+            <form
+              id="mobile-blog-subscription-cancel-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCancelBlogSubscription();
+              }}
+            >
+              <Stack gap={1}>
+                <Typography variant="subtitle2">
+                  {isBlogSubscriptionRefundable ? '블로그 구독을 환불하시겠어요?' : '블로그 구독을 취소하시겠어요?'}
+                </Typography>
+                <Typography variant="body2">
+                  {getBlogSubscriptionCancelDescription({
+                    isRefundableCancellation: isBlogSubscriptionRefundable,
+                    refundAmount: blogSubscriptionRefundAmount,
+                  })}
+                </Typography>
+                {blogSubscriptionErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{blogSubscriptionErrorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button
@@ -681,9 +689,9 @@ export default function SiteProfile() {
               계속 이용하기
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-blog-subscription-cancel-form"
               className="button medium danger"
-              onClick={() => void handleCancelBlogSubscription()}
               disabled={isBlogSubscriptionProcessing}
             >
               {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
@@ -709,23 +717,31 @@ export default function SiteProfile() {
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Stack gap={1}>
-              <Typography variant="subtitle2">
-                {isBlogSubscriptionRefundable ? '블로그 구독을 환불하시겠어요?' : '블로그 구독을 취소하시겠어요?'}
-              </Typography>
-              <Typography variant="body2">
-                {getBlogSubscriptionCancelDescription({
-                  isRefundableCancellation: isBlogSubscriptionRefundable,
-                  refundAmount: blogSubscriptionRefundAmount,
-                })}
-              </Typography>
-              {blogSubscriptionErrorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{blogSubscriptionErrorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
+            <form
+              id="desktop-blog-subscription-cancel-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCancelBlogSubscription();
+              }}
+            >
+              <Stack gap={1}>
+                <Typography variant="subtitle2">
+                  {isBlogSubscriptionRefundable ? '블로그 구독을 환불하시겠어요?' : '블로그 구독을 취소하시겠어요?'}
+                </Typography>
+                <Typography variant="body2">
+                  {getBlogSubscriptionCancelDescription({
+                    isRefundableCancellation: isBlogSubscriptionRefundable,
+                    refundAmount: blogSubscriptionRefundAmount,
+                  })}
+                </Typography>
+                {blogSubscriptionErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{blogSubscriptionErrorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+            </form>
           </DialogContent>
           <DialogActions>
             <button
@@ -737,9 +753,9 @@ export default function SiteProfile() {
               계속 이용하기
             </button>
             <button
-              type="button"
+              type="submit"
+              form="desktop-blog-subscription-cancel-form"
               className="button medium danger"
-              onClick={() => void handleCancelBlogSubscription()}
               disabled={isBlogSubscriptionProcessing}
             >
               {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
@@ -820,32 +836,42 @@ export default function SiteProfile() {
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            {isResumingScheduledBlogSubscription ? (
-              <Stack gap={1}>
-                <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
-                <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
-                <Typography variant="body2">
-                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도
-                  매월 자동 결제됩니다.
-                </Typography>
-              </Stack>
-            ) : (
-              <>
-                <Typography variant="body2">
-                  {isMinor
-                    ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
-                    : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
-                </Typography>
-                <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
-              </>
-            )}
+            <form
+              id="mobile-blog-subscription-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void (isResumingScheduledBlogSubscription
+                  ? handleResumeBlogSubscription()
+                  : handleJoinBlogSubscription());
+              }}
+            >
+              {isResumingScheduledBlogSubscription ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
+                  <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
+                  <Typography variant="body2">
+                    다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며,
+                    이후에도 매월 자동 결제됩니다.
+                  </Typography>
+                </Stack>
+              ) : (
+                <>
+                  <Typography variant="body2">
+                    {isMinor
+                      ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                      : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
+                  </Typography>
+                  <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
+                </>
+              )}
 
-            {blogSubscriptionErrorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{blogSubscriptionErrorMessage}</span>
-              </p>
-            ) : null}
+              {blogSubscriptionErrorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{blogSubscriptionErrorMessage}</span>
+                </p>
+              ) : null}
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button
@@ -857,9 +883,9 @@ export default function SiteProfile() {
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-blog-subscription-form"
               className="button medium submit"
-              onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
               disabled={isBlogSubscriptionProcessing}
             >
               {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
@@ -887,32 +913,42 @@ export default function SiteProfile() {
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            {isResumingScheduledBlogSubscription ? (
-              <Stack gap={1}>
-                <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
-                <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
-                <Typography variant="body2">
-                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도
-                  매월 자동 결제됩니다.
-                </Typography>
-              </Stack>
-            ) : (
-              <>
-                <Typography variant="body2">
-                  {isMinor
-                    ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
-                    : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
-                </Typography>
-                <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
-              </>
-            )}
+            <form
+              id="desktop-blog-subscription-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void (isResumingScheduledBlogSubscription
+                  ? handleResumeBlogSubscription()
+                  : handleJoinBlogSubscription());
+              }}
+            >
+              {isResumingScheduledBlogSubscription ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
+                  <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
+                  <Typography variant="body2">
+                    다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며,
+                    이후에도 매월 자동 결제됩니다.
+                  </Typography>
+                </Stack>
+              ) : (
+                <>
+                  <Typography variant="body2">
+                    {isMinor
+                      ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                      : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
+                  </Typography>
+                  <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
+                </>
+              )}
 
-            {blogSubscriptionErrorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{blogSubscriptionErrorMessage}</span>
-              </p>
-            ) : null}
+              {blogSubscriptionErrorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{blogSubscriptionErrorMessage}</span>
+                </p>
+              ) : null}
+            </form>
           </DialogContent>
           <DialogActions>
             <button
@@ -924,9 +960,9 @@ export default function SiteProfile() {
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="desktop-blog-subscription-form"
               className="button medium submit"
-              onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
               disabled={isBlogSubscriptionProcessing}
             >
               {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}

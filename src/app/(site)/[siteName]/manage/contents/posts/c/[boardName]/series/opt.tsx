@@ -944,199 +944,207 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">연재 식별자 *</Typography>
+                <form
+                  id="mobile-community-series-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">연재 식별자 *</Typography>
 
-                    <TextField
-                      value={seriesKey}
-                      onChange={handleSeriesKeyChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
-                      fullWidth
-                      required
-                      error={dialogErrorMessage.includes('연재 식별자')}
-                      helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
-                      size="small"
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckSeriesKey}
-                                disabled={isCheckingKey}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">연재명</Typography>
-
-                    <TextField
-                      value={seriesLabel}
-                      onChange={handleSeriesLabelChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
-                      fullWidth
-                      error={dialogErrorMessage.includes('연재명')}
-                      helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
-                      size="small"
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckSeriesLabel}
-                                disabled={isCheckingLabel}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">연재 설명</Typography>
-
-                    <TextField
-                      value={summary}
-                      onChange={handleSummaryChange}
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      size="small"
-                    />
-                  </Stack>
-
-                  <Stack gap={1} direction="column">
-                    <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
-                      <Typography variant="subtitle2">연재 썸네일 이미지</Typography>
-
-                      <Stack direction="row" gap={1}>
-                        <Button component="label" className="button small action" disabled={isUploadingImage}>
-                          이미지 선택
-                          <VisuallyHiddenInput
-                            ref={fileInputReference}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageFileChange}
-                          />
-                        </Button>
-
-                        {thumbnailImage ? (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            onClick={handleDeleteImage}
-                            disabled={isDeletingImage}
-                          >
-                            이미지 삭제
-                          </button>
-                        ) : null}
-                      </Stack>
+                      <TextField
+                        value={seriesKey}
+                        onChange={handleSeriesKeyChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
+                        fullWidth
+                        required
+                        error={dialogErrorMessage.includes('연재 식별자')}
+                        helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
+                        size="small"
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckSeriesKey}
+                                  disabled={isCheckingKey}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
                     </Stack>
 
-                    {thumbnailImageUrl ? (
-                      <Box
-                        component="img"
-                        src={thumbnailImageUrl}
-                        alt="연재 썸네일"
-                        sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
-                      />
-                    ) : null}
-                  </Stack>
-
-                  <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
                     <Stack gap={1}>
-                      {selectedUser ? (
-                        <Stack gap={0.5}>
-                          <Box>
-                            <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">
-                              {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
-                            </Typography>
-                          </Box>
-                          {selectedUser.userName ? (
-                            <Box>
-                              <Typography variant="subtitle2">활동명</Typography>
-                              <Typography variant="body2">{selectedUser.userName}</Typography>
-                            </Box>
-                          ) : null}
-                          {selectedUser.nickname ? (
-                            <Box>
-                              <Typography variant="subtitle2">닉네임</Typography>
-                              <Typography variant="body2">{selectedUser.nickname}</Typography>
-                            </Box>
+                      <Typography variant="subtitle2">연재명</Typography>
+
+                      <TextField
+                        value={seriesLabel}
+                        onChange={handleSeriesLabelChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
+                        fullWidth
+                        error={dialogErrorMessage.includes('연재명')}
+                        helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
+                        size="small"
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckSeriesLabel}
+                                  disabled={isCheckingLabel}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                    </Stack>
+
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">연재 설명</Typography>
+
+                      <TextField
+                        value={summary}
+                        onChange={handleSummaryChange}
+                        fullWidth
+                        multiline
+                        minRows={3}
+                        size="small"
+                      />
+                    </Stack>
+
+                    <Stack gap={1} direction="column">
+                      <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
+                        <Typography variant="subtitle2">연재 썸네일 이미지</Typography>
+
+                        <Stack direction="row" gap={1}>
+                          <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            이미지 선택
+                            <VisuallyHiddenInput
+                              ref={fileInputReference}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageFileChange}
+                            />
+                          </Button>
+
+                          {thumbnailImage ? (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              onClick={handleDeleteImage}
+                              disabled={isDeletingImage}
+                            >
+                              이미지 삭제
+                            </button>
                           ) : null}
                         </Stack>
-                      ) : (
-                        <p className="alert warning">
-                          <WarningAmberRoundedIcon />
-                          <span>
-                            연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.
-                          </span>
-                        </p>
-                      )}
-                      <Stack direction="column" gap={1}>
-                        {selectedUser ? (
-                          <>
-                            <Typography variant="subtitle2">연재 담당 작가 취소</Typography>
-                            <button type="button" className="button small danger" onClick={handleClearUser}>
-                              작가 지정 취소
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <Typography variant="subtitle2">연재 담당 작가 지정</Typography>
-                            <button type="button" className="button small action" onClick={handleOpenUserDialog}>
-                              작가 검색
-                            </button>
-                          </>
-                        )}
                       </Stack>
+
+                      {thumbnailImageUrl ? (
+                        <Box
+                          component="img"
+                          src={thumbnailImageUrl}
+                          alt="연재 썸네일"
+                          sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                        />
+                      ) : null}
                     </Stack>
 
-                    {dialogMode !== 'new' && (
-                      <Stack direction="row" gap={1} alignItems="center">
-                        <FormControlLabel
-                          control={<Checkbox checked={isCompleted} onChange={handleIsCompletedChange} />}
-                          label="완결"
-                        />
-                        {isCompleted && (
+                    <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
+                      <Stack gap={1}>
+                        {selectedUser ? (
+                          <Stack gap={0.5}>
+                            <Box>
+                              <Typography variant="subtitle2">이메일</Typography>
+                              <Typography variant="body2">
+                                {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
+                              </Typography>
+                            </Box>
+                            {selectedUser.userName ? (
+                              <Box>
+                                <Typography variant="subtitle2">활동명</Typography>
+                                <Typography variant="body2">{selectedUser.userName}</Typography>
+                              </Box>
+                            ) : null}
+                            {selectedUser.nickname ? (
+                              <Box>
+                                <Typography variant="subtitle2">닉네임</Typography>
+                                <Typography variant="body2">{selectedUser.nickname}</Typography>
+                              </Box>
+                            ) : null}
+                          </Stack>
+                        ) : (
                           <p className="alert warning">
                             <WarningAmberRoundedIcon />
-                            <span>완결 처리된 연재는 다시 연재중으로 변경할 수 없습니다.</span>
+                            <span>
+                              연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.
+                            </span>
                           </p>
                         )}
+                        <Stack direction="column" gap={1}>
+                          {selectedUser ? (
+                            <>
+                              <Typography variant="subtitle2">연재 담당 작가 취소</Typography>
+                              <button type="button" className="button small danger" onClick={handleClearUser}>
+                                작가 지정 취소
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <Typography variant="subtitle2">연재 담당 작가 지정</Typography>
+                              <button type="button" className="button small action" onClick={handleOpenUserDialog}>
+                                작가 검색
+                              </button>
+                            </>
+                          )}
+                        </Stack>
                       </Stack>
-                    )}
-                  </div>
 
-                  {dialogHelperMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogHelperMessage}</span>
-                    </p>
-                  ) : null}
+                      {dialogMode !== 'new' && (
+                        <Stack direction="row" gap={1} alignItems="center">
+                          <FormControlLabel
+                            control={<Checkbox checked={isCompleted} onChange={handleIsCompletedChange} />}
+                            label="완결"
+                          />
+                          {isCompleted && (
+                            <p className="alert warning">
+                              <WarningAmberRoundedIcon />
+                              <span>완결 처리된 연재는 다시 연재중으로 변경할 수 없습니다.</span>
+                            </p>
+                          )}
+                        </Stack>
+                      )}
+                    </div>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogHelperMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogHelperMessage}</span>
+                      </p>
+                    ) : null}
+
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -1148,9 +1156,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="mobile-community-series-form"
                   className="button medium submit"
-                  onClick={handleSubmit}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
                   저장
@@ -1176,216 +1184,224 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  {dialogHelperMessage ? (
-                    <p className="alert info">
-                      <InfoOutlineRoundedIcon />
-                      <span>{dialogHelperMessage}</span>
-                    </p>
-                  ) : null}
+                <form
+                  id="desktop-community-series-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    {dialogHelperMessage ? (
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>{dialogHelperMessage}</span>
+                      </p>
+                    ) : null}
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
 
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">연재 식별자 *</Typography>
-                    <TextField
-                      value={seriesKey}
-                      onChange={handleSeriesKeyChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
-                      fullWidth
-                      required
-                      error={dialogErrorMessage.includes('연재 식별자')}
-                      helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
-                      size="small"
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckSeriesKey}
-                                disabled={isCheckingKey}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">연재명</Typography>
-                    <TextField
-                      value={seriesLabel}
-                      onChange={handleSeriesLabelChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
-                      fullWidth
-                      error={dialogErrorMessage.includes('연재명')}
-                      helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
-                      size="small"
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckSeriesLabel}
-                                disabled={isCheckingLabel}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">연재 설명</Typography>
-                    <TextField
-                      value={summary}
-                      onChange={handleSummaryChange}
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      size="small"
-                    />
-                  </Stack>
-
-                  <Stack gap={1} direction="column">
-                    <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
-                      <Typography variant="subtitle2">연재 썸네일 이미지</Typography>
-
-                      <Stack direction="row" gap={1}>
-                        <Button component="label" className="button small action" disabled={isUploadingImage}>
-                          이미지 선택
-                          <VisuallyHiddenInput
-                            ref={fileInputReference}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageFileChange}
-                          />
-                        </Button>
-
-                        {thumbnailImage ? (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            onClick={handleDeleteImage}
-                            disabled={isDeletingImage}
-                          >
-                            이미지 삭제
-                          </button>
-                        ) : null}
-                      </Stack>
-                    </Stack>
-
-                    {thumbnailImageUrl ? (
-                      <Box
-                        component="img"
-                        src={thumbnailImageUrl}
-                        alt="연재 썸네일"
-                        sx={{
-                          maxWidth: 320,
-                          height: 'auto',
-                          display: 'block',
-                          borderRadius: 1,
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">연재 식별자 *</Typography>
+                      <TextField
+                        value={seriesKey}
+                        onChange={handleSeriesKeyChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
+                        fullWidth
+                        required
+                        error={dialogErrorMessage.includes('연재 식별자')}
+                        helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
+                        size="small"
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckSeriesKey}
+                                  disabled={isCheckingKey}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
                         }}
                       />
-                    ) : null}
-                  </Stack>
-
-                  <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
-                    <Stack gap={1}>
-                      {selectedUser ? (
-                        <Stack gap={0.5}>
-                          <Box>
-                            <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">
-                              {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
-                            </Typography>
-                          </Box>
-                          {selectedUser.userName ? (
-                            <Box>
-                              <Typography variant="subtitle2">활동명</Typography>
-                              <Typography variant="body2">{selectedUser.userName}</Typography>
-                            </Box>
-                          ) : null}
-                          {selectedUser.nickname ? (
-                            <Box>
-                              <Typography variant="subtitle2">닉네임</Typography>
-                              <Typography variant="body2">{selectedUser.nickname}</Typography>
-                            </Box>
-                          ) : null}
-                        </Stack>
-                      ) : (
-                        <p className="alert warning">
-                          <WarningAmberRoundedIcon />
-                          <span>
-                            연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.
-                          </span>
-                        </p>
-                      )}
-                      <Stack direction="column" gap={1}>
-                        {selectedUser ? (
-                          <>
-                            <Typography variant="subtitle2">연재 담당 작가 취소</Typography>
-                            <button type="button" className="button small danger" onClick={handleClearUser}>
-                              작가 지정 취소
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <Typography variant="subtitle2">연재 담당 작가 지정</Typography>
-                            <button type="button" className="button small action" onClick={handleOpenUserDialog}>
-                              작가 검색
-                            </button>
-                          </>
-                        )}
-                      </Stack>
                     </Stack>
 
-                    {dialogMode !== 'new' && (
-                      <Stack direction="row" gap={1} alignItems="center">
-                        <FormControlLabel
-                          control={<Checkbox checked={isCompleted} onChange={handleIsCompletedChange} />}
-                          label="완결"
-                        />
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">연재명</Typography>
+                      <TextField
+                        value={seriesLabel}
+                        onChange={handleSeriesLabelChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
+                        fullWidth
+                        error={dialogErrorMessage.includes('연재명')}
+                        helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
+                        size="small"
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckSeriesLabel}
+                                  disabled={isCheckingLabel}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                    </Stack>
 
-                        {isCompleted && (
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">연재 설명</Typography>
+                      <TextField
+                        value={summary}
+                        onChange={handleSummaryChange}
+                        fullWidth
+                        multiline
+                        minRows={3}
+                        size="small"
+                      />
+                    </Stack>
+
+                    <Stack gap={1} direction="column">
+                      <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
+                        <Typography variant="subtitle2">연재 썸네일 이미지</Typography>
+
+                        <Stack direction="row" gap={1}>
+                          <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            이미지 선택
+                            <VisuallyHiddenInput
+                              ref={fileInputReference}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageFileChange}
+                            />
+                          </Button>
+
+                          {thumbnailImage ? (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              onClick={handleDeleteImage}
+                              disabled={isDeletingImage}
+                            >
+                              이미지 삭제
+                            </button>
+                          ) : null}
+                        </Stack>
+                      </Stack>
+
+                      {thumbnailImageUrl ? (
+                        <Box
+                          component="img"
+                          src={thumbnailImageUrl}
+                          alt="연재 썸네일"
+                          sx={{
+                            maxWidth: 320,
+                            height: 'auto',
+                            display: 'block',
+                            borderRadius: 1,
+                          }}
+                        />
+                      ) : null}
+                    </Stack>
+
+                    <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
+                      <Stack gap={1}>
+                        {selectedUser ? (
+                          <Stack gap={0.5}>
+                            <Box>
+                              <Typography variant="subtitle2">이메일</Typography>
+                              <Typography variant="body2">
+                                {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
+                              </Typography>
+                            </Box>
+                            {selectedUser.userName ? (
+                              <Box>
+                                <Typography variant="subtitle2">활동명</Typography>
+                                <Typography variant="body2">{selectedUser.userName}</Typography>
+                              </Box>
+                            ) : null}
+                            {selectedUser.nickname ? (
+                              <Box>
+                                <Typography variant="subtitle2">닉네임</Typography>
+                                <Typography variant="body2">{selectedUser.nickname}</Typography>
+                              </Box>
+                            ) : null}
+                          </Stack>
+                        ) : (
                           <p className="alert warning">
                             <WarningAmberRoundedIcon />
-                            <span>완결 처리된 연재는 다시 연재중으로 변경할 수 없습니다.</span>
+                            <span>
+                              연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.
+                            </span>
                           </p>
                         )}
+                        <Stack direction="column" gap={1}>
+                          {selectedUser ? (
+                            <>
+                              <Typography variant="subtitle2">연재 담당 작가 취소</Typography>
+                              <button type="button" className="button small danger" onClick={handleClearUser}>
+                                작가 지정 취소
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <Typography variant="subtitle2">연재 담당 작가 지정</Typography>
+                              <button type="button" className="button small action" onClick={handleOpenUserDialog}>
+                                작가 검색
+                              </button>
+                            </>
+                          )}
+                        </Stack>
                       </Stack>
-                    )}
-                  </div>
 
-                  {dialogHelperMessage ? (
-                    <p className="alert info">
-                      <InfoOutlineRoundedIcon />
-                      <span>{dialogHelperMessage}</span>
-                    </p>
-                  ) : null}
+                      {dialogMode !== 'new' && (
+                        <Stack direction="row" gap={1} alignItems="center">
+                          <FormControlLabel
+                            control={<Checkbox checked={isCompleted} onChange={handleIsCompletedChange} />}
+                            label="완결"
+                          />
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                          {isCompleted && (
+                            <p className="alert warning">
+                              <WarningAmberRoundedIcon />
+                              <span>완결 처리된 연재는 다시 연재중으로 변경할 수 없습니다.</span>
+                            </p>
+                          )}
+                        </Stack>
+                      )}
+                    </div>
+
+                    {dialogHelperMessage ? (
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>{dialogHelperMessage}</span>
+                      </p>
+                    ) : null}
+
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -1397,8 +1413,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button
-                  type="button"
-                  onClick={handleSubmit}
+                  type="submit"
+                  form="desktop-community-series-form"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
                   저장
@@ -1425,16 +1441,24 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
+                <form
+                  id="mobile-community-series-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -1445,7 +1469,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="mobile-community-series-delete-form"
+                  className="button medium danger"
+                  disabled={isSubmitting}
+                >
                   삭제
                 </button>
               </div>
@@ -1469,22 +1498,35 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
+                <form
+                  id="desktop-community-series-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="danger-button" onClick={handleDelete} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="desktop-community-series-delete-form"
+                  className="danger-button"
+                  disabled={isSubmitting}
+                >
                   삭제
                 </button>
               </DialogActions>
@@ -1509,66 +1551,68 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Stack direction="row" gap={1} alignItems="center">
-                    <TextField
-                      placeholder="이메일, 활동명, 닉네임 검색"
-                      value={userSearchKeyword}
-                      onChange={handleUserSearchKeywordChange}
-                      fullWidth
-                      size="small"
-                    />
-                    <button
-                      type="button"
-                      className="button medium submit"
-                      onClick={handleSearchUsers}
-                      disabled={isUserSearching}
-                    >
-                      검색
-                    </button>
-                  </Stack>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSearchUsers();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Stack direction="row" gap={1} alignItems="center">
+                      <TextField
+                        placeholder="이메일, 활동명, 닉네임 검색"
+                        value={userSearchKeyword}
+                        onChange={handleUserSearchKeywordChange}
+                        fullWidth
+                        size="small"
+                      />
+                      <button type="submit" className="button medium submit" disabled={isUserSearching}>
+                        검색
+                      </button>
+                    </Stack>
 
-                  <div className={`paper paper-p0 ${styles.paper}`}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>이메일</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>활동명</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>닉네임</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>선택</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {searchedUsers.map((user) => (
-                          <TableRow key={user.stigmaId}>
-                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
-                              {isUserEmailSearch ? user.email : maskEmail(user.email)}
-                            </TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.userName}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.nickname}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={() => handleSelectUser(user)}
-                              >
-                                선택
-                              </button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {searchedUsers.length === 0 ? (
+                    <div className={`paper paper-p0 ${styles.paper}`}>
+                      <Table>
+                        <TableHead>
                           <TableRow>
-                            <TableCell colSpan={4} sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
-                              검색 결과가 없습니다.
-                            </TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>이메일</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>활동명</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>닉네임</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>선택</TableCell>
                           </TableRow>
-                        ) : null}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Stack>
+                        </TableHead>
+                        <TableBody>
+                          {searchedUsers.map((user) => (
+                            <TableRow key={user.stigmaId}>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {isUserEmailSearch ? user.email : maskEmail(user.email)}
+                              </TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.userName}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.nickname}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={() => handleSelectUser(user)}
+                                >
+                                  선택
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+
+                          {searchedUsers.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                검색 결과가 없습니다.
+                              </TableCell>
+                            </TableRow>
+                          ) : null}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -1600,70 +1644,72 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Stack direction="row" gap={1} alignItems="center">
-                    <TextField
-                      placeholder="이메일, 활동명, 닉네임 검색"
-                      value={userSearchKeyword}
-                      onChange={handleUserSearchKeywordChange}
-                      fullWidth
-                      size="small"
-                    />
-                    <button
-                      type="button"
-                      className="button medium submit"
-                      onClick={handleSearchUsers}
-                      disabled={isUserSearching}
-                    >
-                      검색
-                    </button>
-                  </Stack>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSearchUsers();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Stack direction="row" gap={1} alignItems="center">
+                      <TextField
+                        placeholder="이메일, 활동명, 닉네임 검색"
+                        value={userSearchKeyword}
+                        onChange={handleUserSearchKeywordChange}
+                        fullWidth
+                        size="small"
+                      />
+                      <button type="submit" className="button medium submit" disabled={isUserSearching}>
+                        검색
+                      </button>
+                    </Stack>
 
-                  <div className={`paper paper-p0 ${styles.paper}`}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>활동명</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>닉네임</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>작가 여부</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>선택</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {searchedUsers.map((user) => (
-                          <TableRow key={user.stigmaId}>
-                            <TableCell>{user.userName}</TableCell>
-                            <TableCell>{user.nickname}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
-                              {user.isAuthor ? (
-                                <span style={{ color: 'var(--color-green)' }}>O</span>
-                              ) : (
-                                <span style={{ color: 'var(--color-red)' }}>X</span>
-                              )}
-                            </TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={() => handleSelectUser(user)}
-                              >
-                                선택
-                              </button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {searchedUsers.length === 0 ? (
+                    <div className={`paper paper-p0 ${styles.paper}`}>
+                      <Table>
+                        <TableHead>
                           <TableRow>
-                            <TableCell colSpan={5} sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
-                              검색 결과가 없습니다.
-                            </TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>활동명</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>닉네임</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>작가 여부</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>선택</TableCell>
                           </TableRow>
-                        ) : null}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Stack>
+                        </TableHead>
+                        <TableBody>
+                          {searchedUsers.map((user) => (
+                            <TableRow key={user.stigmaId}>
+                              <TableCell>{user.userName}</TableCell>
+                              <TableCell>{user.nickname}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {user.isAuthor ? (
+                                  <span style={{ color: 'var(--color-green)' }}>O</span>
+                                ) : (
+                                  <span style={{ color: 'var(--color-red)' }}>X</span>
+                                )}
+                              </TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={() => handleSelectUser(user)}
+                                >
+                                  선택
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+
+                          {searchedUsers.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                검색 결과가 없습니다.
+                              </TableCell>
+                            </TableRow>
+                          ) : null}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button type="button" onClick={handleCloseUserDialog} disabled={isUserSearching}>

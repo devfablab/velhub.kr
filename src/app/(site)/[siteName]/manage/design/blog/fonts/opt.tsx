@@ -242,7 +242,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
             messages={errorMessage ? [errorMessage] : []}
             onClose={() => setIsErrorDialogOpen(false)}
           />
-          <Stack gap={3}>
+          <Stack
+            component="form"
+            gap={3}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
+          >
             <div className={`paper ${styles.paper}`}>
               <FormControl>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>
@@ -414,23 +421,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             {isMobile ? (
               <div className={styles['button-top']}>
-                <button
-                  type="button"
-                  className={`button ${styles.button}`}
-                  onClick={() => void handleSubmit()}
-                  disabled={isSubmitting}
-                >
+                <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
                   저장
                 </button>
               </div>
             ) : (
               <Stack direction="row" justifyContent="flex-end">
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleSubmit()}
-                  disabled={isSubmitting}
-                >
+                <button type="submit" className="button medium submit" disabled={isSubmitting}>
                   적용하기
                 </button>
               </Stack>

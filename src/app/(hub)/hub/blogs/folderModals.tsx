@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { FormControl } from '@mui/material';
 import { validateFavoriteFolderLabel } from '@/lib/hub/favoriteFolder.shared';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -146,6 +147,8 @@ export default function FolderModals({
         onClose={() => setIsAddFolderOpen(false)}
         title="즐겨찾기 폴더 추가"
         maxWidth="xs"
+        formId="add-favorite-folder-form"
+        onSubmit={() => void handleAddFolder()}
         actions={[
           { label: '취소', intent: 'cancel', onClick: () => setIsAddFolderOpen(false) },
           {
@@ -173,7 +176,8 @@ export default function FolderModals({
         />
         {addLabelError ? (
           <p id="add-folder-label-error" className="alert popup-error">
-            {addLabelError}
+            <ErrorOutlineRoundedIcon />
+            <span>{addLabelError}</span>
           </p>
         ) : null}
       </ResponsivePopup>
@@ -183,6 +187,8 @@ export default function FolderModals({
         onClose={() => setEditFolder(null)}
         title="폴더 수정"
         maxWidth="xs"
+        formId="edit-favorite-folder-form"
+        onSubmit={() => void handleEditFolder()}
         actions={[
           { label: '삭제', intent: 'danger', onClick: () => setIsDeleteConfirmOpen(true) },
           { label: '취소', intent: 'cancel', onClick: () => setEditFolder(null) },
@@ -211,7 +217,8 @@ export default function FolderModals({
         />
         {editLabelError ? (
           <p id="edit-folder-label-error" className="alert popup-error">
-            {editLabelError}
+            <ErrorOutlineRoundedIcon />
+            <span>{editLabelError}</span>
           </p>
         ) : null}
       </ResponsivePopup>
@@ -234,6 +241,8 @@ export default function FolderModals({
         onClose={() => setIsMoveSitesOpen(false)}
         title="이동할 폴더 선택"
         maxWidth="xs"
+        formId="move-favorite-blogs-form"
+        onSubmit={() => void handleMoveSites()}
         actions={[
           { label: '취소', intent: 'cancel', onClick: () => setIsMoveSitesOpen(false) },
           { label: '이동', intent: 'submit', onClick: handleMoveSites, disabled: isLoading },

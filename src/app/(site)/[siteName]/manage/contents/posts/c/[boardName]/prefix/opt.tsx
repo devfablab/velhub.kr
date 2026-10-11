@@ -373,25 +373,33 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <TextField
-                    placeholder="말머리명"
-                    value={prefixLabel}
-                    onChange={handlePrefixLabelChange}
-                    required
-                    error={Boolean(dialogErrorMessage)}
-                    helperText={dialogErrorMessage || undefined}
-                    fullWidth
-                    size="small"
-                  />
+                <form
+                  id="mobile-prefix-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <TextField
+                      placeholder="말머리명"
+                      value={prefixLabel}
+                      onChange={handlePrefixLabelChange}
+                      required
+                      error={Boolean(dialogErrorMessage)}
+                      helperText={dialogErrorMessage || undefined}
+                      fullWidth
+                      size="small"
+                    />
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -402,7 +410,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="mobile-prefix-form"
+                  className="button medium submit"
+                  disabled={isSubmitting}
+                >
                   저장
                 </button>
               </div>
@@ -426,31 +439,39 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <TextField
-                    placeholder="말머리명"
-                    value={prefixLabel}
-                    onChange={handlePrefixLabelChange}
-                    required
-                    error={Boolean(dialogErrorMessage)}
-                    helperText={dialogErrorMessage || undefined}
-                    fullWidth
-                    size="small"
-                  />
+                <form
+                  id="desktop-prefix-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <TextField
+                      placeholder="말머리명"
+                      value={prefixLabel}
+                      onChange={handlePrefixLabelChange}
+                      required
+                      error={Boolean(dialogErrorMessage)}
+                      helperText={dialogErrorMessage || undefined}
+                      fullWidth
+                      size="small"
+                    />
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+                <button type="submit" form="desktop-prefix-form" disabled={isSubmitting}>
                   저장
                 </button>
               </DialogActions>
@@ -475,16 +496,24 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
+                <form
+                  id="mobile-prefix-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -495,7 +524,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="mobile-prefix-delete-form"
+                  className="button medium danger"
+                  disabled={isSubmitting}
+                >
                   삭제
                 </button>
               </div>
@@ -519,22 +553,35 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
+                <form
+                  id="desktop-prefix-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="danger-button" onClick={handleDelete} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="desktop-prefix-delete-form"
+                  className="danger-button"
+                  disabled={isSubmitting}
+                >
                   삭제
                 </button>
               </DialogActions>

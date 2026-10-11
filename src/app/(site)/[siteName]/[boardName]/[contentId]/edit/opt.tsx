@@ -2309,7 +2309,9 @@ export default function Opt({
                 <div className={styles['button-top']}>
                   <button
                     type="submit"
-                    disabled={publishedStatus === 'published' && !hasPostChanges}
+                    disabled={
+                      isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)
+                    }
                     className={`button ${styles.button}`}
                   >
                     저장

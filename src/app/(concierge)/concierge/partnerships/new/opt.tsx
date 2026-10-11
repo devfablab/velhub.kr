@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, styled } from '@mui/material';
 import type { PartnershipFormInfo } from '@/lib/partnerships';
 import { maskEmail } from '@/lib/utils';
@@ -177,6 +178,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
     data.set('noticeAgreed', String(noticeAgreed));
     if (proposalFile) data.set('proposalFile', proposalFile);
     if (introductionFile) data.set('introductionFile', introductionFile);
+    let isNavigating = false;
     try {
       const response = await fetch('/api/concierge/partnerships', { method: 'POST', body: data });
       const result = (await response.json().catch(() => null)) as {
@@ -202,12 +204,13 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
         setIsSubmissionLocked(false);
         return;
       }
+      isNavigating = true;
       router.push(result.responseChannel === 'email' ? '/concierge/partnerships/done' : '/concierge/partnerships');
     } catch {
       setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
       setIsSubmissionLocked(false);
     } finally {
-      setIsSubmitting(false);
+      if (!isNavigating) setIsSubmitting(false);
     }
   };
 
@@ -237,7 +240,12 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
                 ))}
               </Select>
             </FormControl>
-            {fieldErrors.categoryId ? <p className="alert popup-error">{fieldErrors.categoryId}</p> : null}
+            {fieldErrors.categoryId ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.categoryId}</span>
+              </p>
+            ) : null}
           </Stack>
           <Stack gap={0.5}>
             <Typography variant="subtitle2">회사/기관명 *</Typography>
@@ -312,7 +320,10 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               />
             )}
             {formInfo.isLoggedIn && formInfo.paymentEmail && fieldErrors.proposerEmail ? (
-              <p className="alert popup-error">{fieldErrors.proposerEmail}</p>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.proposerEmail}</span>
+              </p>
             ) : null}
           </Stack>
           <Stack gap={0.5}>
@@ -388,7 +399,12 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             />
           </div>
         ) : null}
-        {fieldErrors.attachment ? <p className="alert popup-error">{fieldErrors.attachment}</p> : null}
+        {fieldErrors.attachment ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{fieldErrors.attachment}</span>
+          </p>
+        ) : null}
         <Stack gap={2}>
           <Stack>
             <div>
@@ -473,7 +489,10 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
           </Stack>
         </Stack>
         {fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed ? (
-          <p className="alert popup-error">{fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed}</p>
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed}</span>
+          </p>
         ) : null}
         {!formInfo.attachmentAvailable ? (
           <Typography color="warning.main" sx={{ whiteSpace: 'pre-line' }}>

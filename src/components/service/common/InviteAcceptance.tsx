@@ -124,6 +124,7 @@ export default function InviteAcceptance({
       return;
     }
 
+    let isNavigating = false;
     setIsSubmitting(true);
 
     try {
@@ -144,11 +145,12 @@ export default function InviteAcceptance({
         return;
       }
 
+      isNavigating = true;
       router.replace(`/${result.siteName}`);
     } catch {
       showError('초대 처리에 실패했습니다.');
     } finally {
-      setIsSubmitting(false);
+      if (!isNavigating) setIsSubmitting(false);
     }
   }
 

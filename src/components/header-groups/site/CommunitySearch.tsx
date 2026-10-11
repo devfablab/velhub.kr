@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import SearchIcon from '@mui/icons-material/Search';
 import styles from '@/app/header.module.sass';
@@ -13,6 +13,7 @@ type Props = {
 export default function CommunitySearch({ siteName, isBlog }: Props) {
   const router = useRouter();
   const [keyword, setKeyword] = useState('');
+  const [isNavigating, startNavigation] = useTransition();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,7 +24,7 @@ export default function CommunitySearch({ siteName, isBlog }: Props) {
       return;
     }
 
-    router.push(`/${siteName}/board?keyword=${trimmedKeyword}`);
+    startNavigation(() => router.push(`/${siteName}/board?keyword=${trimmedKeyword}`));
   }
 
   if (isBlog) {
@@ -44,7 +45,7 @@ export default function CommunitySearch({ siteName, isBlog }: Props) {
               aria-label="커뮤니티 검색어"
             />
           </div>
-          <button type="submit" disabled={!keyword.trim()} aria-label="검색">
+          <button type="submit" disabled={!keyword.trim() || isNavigating} aria-label="검색">
             <SearchIcon />
           </button>
         </div>

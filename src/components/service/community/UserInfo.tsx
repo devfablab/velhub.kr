@@ -4,7 +4,7 @@ import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { DialogActions, DialogContent, DialogTitle, Drawer, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { DialogActions, DialogContent, DialogTitle, Drawer, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
@@ -146,6 +146,8 @@ export default function UserInfo() {
       return;
     }
 
+    let isNavigating = false;
+
     try {
       setWithdrawErrorMessage('');
       setIsWithdrawSubmitting(true);
@@ -170,6 +172,7 @@ export default function UserInfo() {
       setIsWithdrawDialogOpen(false);
       setUserInfo(null);
       setStatus('not_joined');
+      isNavigating = true;
       router.replace(`/${siteName}`);
     } catch (unknownError) {
       const message =
@@ -179,7 +182,9 @@ export default function UserInfo() {
       setWithdrawErrorMessage(message);
       setErrorPopup({ title: null, messages: [message] });
     } finally {
-      setIsWithdrawSubmitting(false);
+      if (!isNavigating) {
+        setIsWithdrawSubmitting(false);
+      }
     }
   }
 
@@ -188,9 +193,8 @@ export default function UserInfo() {
     setDialogErrorMessage('');
   }
 
-  function showNicknameError(message: string, title: string | null = '별명 확인') {
+  function showNicknameError(message: string) {
     setDialogErrorMessage(message);
-    setErrorPopup({ title, messages: [message] });
   }
 
   function getNicknameValidationMessage() {
@@ -248,7 +252,7 @@ export default function UserInfo() {
 
       if (!response.ok || !result?.userInfo) {
         const message = result?.error ?? '프로필 수정에 실패했습니다.';
-        showNicknameError(message, response.status < 500 ? '별명 확인' : null);
+        showNicknameError(message);
         return;
       }
 
@@ -261,7 +265,7 @@ export default function UserInfo() {
         unknownError instanceof Error
           ? unknownError.message || '프로필 수정에 실패했습니다.'
           : '프로필 수정에 실패했습니다.';
-      showNicknameError(message, null);
+      showNicknameError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -394,28 +398,23 @@ export default function UserInfo() {
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
             <form id="community-profile-form-mobile" onSubmit={handleSubmit}>
-              {dialogErrorMessage ? <p className="field-error">{dialogErrorMessage}</p> : null}
               <div className={styles['form-group']}>
                 <cite>
                   {userInfo.activityName} <span>(데브허브 활동명)</span>
                 </cite>
-                <div className={styles['form-control']}>
-                  <input
-                    type="text"
-                    name="nickname"
-                    value={nickname}
-                    onChange={handleNicknameChange}
-                    onInvalid={handleNicknameInvalid}
-                    placeholder="별명을 입력하세요"
-                    minLength={2}
-                    maxLength={10}
-                    required
-                    aria-invalid={Boolean(dialogErrorMessage)}
-                  />
-                </div>
-                <p className={dialogErrorMessage ? 'field-error' : ''}>
-                  {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
-                </p>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="nickname"
+                  value={nickname}
+                  onChange={handleNicknameChange}
+                  onInvalid={handleNicknameInvalid}
+                  placeholder="별명을 입력하세요"
+                  required
+                  error={Boolean(dialogErrorMessage)}
+                  helperText={dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                />
                 <div className={styles.misc}>
                   <div className={styles.role}>
                     <span>{roleLabel}</span>
@@ -470,28 +469,23 @@ export default function UserInfo() {
           </button>
           <DialogContent className={styles['info-content']}>
             <form id="community-profile-form-desktop" onSubmit={handleSubmit}>
-              {dialogErrorMessage ? <p className="field-error">{dialogErrorMessage}</p> : null}
               <div className={styles['form-group']}>
                 <cite>
                   {userInfo.activityName} <span>(데브허브 활동명)</span>
                 </cite>
-                <div className={styles['form-control']}>
-                  <input
-                    type="text"
-                    name="nickname"
-                    value={nickname}
-                    onChange={handleNicknameChange}
-                    onInvalid={handleNicknameInvalid}
-                    placeholder="별명을 입력하세요"
-                    minLength={2}
-                    maxLength={10}
-                    required
-                    aria-invalid={Boolean(dialogErrorMessage)}
-                  />
-                </div>
-                <p className={dialogErrorMessage ? 'field-error' : ''}>
-                  {dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
-                </p>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="nickname"
+                  value={nickname}
+                  onChange={handleNicknameChange}
+                  onInvalid={handleNicknameInvalid}
+                  placeholder="별명을 입력하세요"
+                  required
+                  error={Boolean(dialogErrorMessage)}
+                  helperText={dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                />
                 <div className={styles.misc}>
                   <div className={styles.role}>
                     <span>{roleLabel}</span>
@@ -549,7 +543,13 @@ export default function UserInfo() {
             {isWithdrawBlocked ? (
               <Typography variant="subtitle2">{withdrawBlockedMessage}</Typography>
             ) : (
-              <>
+              <form
+                id="mobile-community-withdraw-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleWithdraw();
+                }}
+              >
                 <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
                 {withdrawErrorMessage ? (
                   <p className="alert error">
@@ -557,7 +557,7 @@ export default function UserInfo() {
                     <span>{withdrawErrorMessage}</span>
                   </p>
                 ) : null}
-              </>
+              </form>
             )}
           </div>
 
@@ -577,9 +577,9 @@ export default function UserInfo() {
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="mobile-community-withdraw-form"
                   className="button medium danger"
-                  onClick={handleWithdraw}
                   disabled={isWithdrawSubmitting}
                 >
                   탈퇴하기
@@ -611,7 +611,13 @@ export default function UserInfo() {
             {isWithdrawBlocked ? (
               <Typography variant="subtitle2">{withdrawBlockedMessage}</Typography>
             ) : (
-              <>
+              <form
+                id="desktop-community-withdraw-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleWithdraw();
+                }}
+              >
                 <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
 
                 {withdrawErrorMessage ? (
@@ -620,7 +626,7 @@ export default function UserInfo() {
                     <span>{withdrawErrorMessage}</span>
                   </p>
                 ) : null}
-              </>
+              </form>
             )}
           </DialogContent>
 
@@ -641,9 +647,9 @@ export default function UserInfo() {
                 </button>
 
                 <button
-                  type="button"
+                  type="submit"
+                  form="desktop-community-withdraw-form"
                   className="danger-button"
-                  onClick={handleWithdraw}
                   disabled={isWithdrawSubmitting}
                 >
                   탈퇴하기

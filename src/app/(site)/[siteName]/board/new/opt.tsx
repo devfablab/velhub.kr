@@ -2223,7 +2223,11 @@ export default function Opt({ isCommunity, writePolicyMessage, initialBoards, in
             {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
             {isMobile ? (
               <div className={styles['button-top']}>
-                <button type="submit" className={`button ${styles.button}`}>
+                <button
+                  type="submit"
+                  className={`button ${styles.button}`}
+                  disabled={isSubmittingDraft || isSubmittingPublish}
+                >
                   저장
                 </button>
               </div>

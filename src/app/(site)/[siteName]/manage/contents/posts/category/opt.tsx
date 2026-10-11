@@ -942,131 +942,139 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">사이트 주소</Typography>
-                    <TextField
-                      value={categoryKey}
-                      onChange={handleCategoryKeyChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryKey, isCheckingKey)}
-                      fullWidth
-                      required
-                      size="medium"
-                      helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              {baseUrl}/{siteName}/b/c/
-                            </InputAdornment>
-                          ),
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckCategoryKey}
-                                disabled={isCheckingKey}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">카테고리명</Typography>
-                    <TextField
-                      value={categoryLabel}
-                      onChange={handleCategoryLabelChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryLabel, isCheckingLabel)}
-                      fullWidth
-                      size="medium"
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckCategoryLabel}
-                                disabled={isCheckingLabel}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">카테고리 설명</Typography>
-                    <TextField
-                      value={summary}
-                      onChange={handleSummaryChange}
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      size="small"
-                    />
-                  </Stack>
-
-                  <Stack gap={1} direction="column">
-                    <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
-                      <Typography variant="subtitle2">카테고리 썸네일 이미지</Typography>
-
-                      <Stack direction="row" gap={1}>
-                        <Button component="label" className="button small action" disabled={isUploadingImage}>
-                          이미지 선택
-                          <VisuallyHiddenInput
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageFileChange}
-                          />
-                        </Button>
-
-                        {thumbnailImage ? (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            onClick={handleDeleteImage}
-                            disabled={isDeletingImage}
-                          >
-                            이미지 삭제
-                          </button>
-                        ) : null}
-                      </Stack>
+                <form
+                  id="mobile-category-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">사이트 주소</Typography>
+                      <TextField
+                        value={categoryKey}
+                        onChange={handleCategoryKeyChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryKey, isCheckingKey)}
+                        fullWidth
+                        required
+                        size="medium"
+                        helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                {baseUrl}/{siteName}/b/c/
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckCategoryKey}
+                                  disabled={isCheckingKey}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
                     </Stack>
 
-                    {thumbnailImageUrl ? (
-                      <Box
-                        component="img"
-                        src={thumbnailImageUrl}
-                        alt="카테고리 썸네일"
-                        sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">카테고리명</Typography>
+                      <TextField
+                        value={categoryLabel}
+                        onChange={handleCategoryLabelChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryLabel, isCheckingLabel)}
+                        fullWidth
+                        size="medium"
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckCategoryLabel}
+                                  disabled={isCheckingLabel}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
                       />
+                    </Stack>
+
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">카테고리 설명</Typography>
+                      <TextField
+                        value={summary}
+                        onChange={handleSummaryChange}
+                        fullWidth
+                        multiline
+                        minRows={3}
+                        size="small"
+                      />
+                    </Stack>
+
+                    <Stack gap={1} direction="column">
+                      <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
+                        <Typography variant="subtitle2">카테고리 썸네일 이미지</Typography>
+
+                        <Stack direction="row" gap={1}>
+                          <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            이미지 선택
+                            <VisuallyHiddenInput
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageFileChange}
+                            />
+                          </Button>
+
+                          {thumbnailImage ? (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              onClick={handleDeleteImage}
+                              disabled={isDeletingImage}
+                            >
+                              이미지 삭제
+                            </button>
+                          ) : null}
+                        </Stack>
+                      </Stack>
+
+                      {thumbnailImageUrl ? (
+                        <Box
+                          component="img"
+                          src={thumbnailImageUrl}
+                          alt="카테고리 썸네일"
+                          sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                        />
+                      ) : null}
+                    </Stack>
+
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
                     ) : null}
+
+                    <PopupMessage
+                      open={Boolean(dialogSuccessMessage)}
+                      message={dialogSuccessMessage}
+                      onClose={() => setDialogSuccessMessage('')}
+                    />
                   </Stack>
-
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-
-                  <PopupMessage
-                    open={Boolean(dialogSuccessMessage)}
-                    message={dialogSuccessMessage}
-                    onClose={() => setDialogSuccessMessage('')}
-                  />
-                </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -1078,9 +1086,9 @@ export default function Opt({
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="mobile-category-form"
                   className="button medium submit"
-                  onClick={handleSubmit}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
                   저장
@@ -1106,131 +1114,139 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1, pb: 1 }}>
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">사이트 주소</Typography>
-                    <TextField
-                      value={categoryKey}
-                      onChange={handleCategoryKeyChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryKey, isCheckingKey)}
-                      fullWidth
-                      required
-                      size="medium"
-                      helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              {baseUrl}/{siteName}/b/c/
-                            </InputAdornment>
-                          ),
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckCategoryKey}
-                                disabled={isCheckingKey}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">카테고리명</Typography>
-                    <TextField
-                      value={categoryLabel}
-                      onChange={handleCategoryLabelChange}
-                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryLabel, isCheckingLabel)}
-                      fullWidth
-                      size="medium"
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={handleCheckCategoryLabel}
-                                disabled={isCheckingLabel}
-                              >
-                                중복 확인
-                              </button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Stack>
-
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">카테고리 설명</Typography>
-                    <TextField
-                      value={summary}
-                      onChange={handleSummaryChange}
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      size="small"
-                    />
-                  </Stack>
-
-                  <Stack gap={1} direction="column">
-                    <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
-                      <Typography variant="subtitle2">카테고리 썸네일 이미지</Typography>
-
-                      <Stack direction="row" gap={1}>
-                        <Button component="label" className="button small action" disabled={isUploadingImage}>
-                          이미지 선택
-                          <VisuallyHiddenInput
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageFileChange}
-                          />
-                        </Button>
-
-                        {thumbnailImage ? (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            onClick={handleDeleteImage}
-                            disabled={isDeletingImage}
-                          >
-                            이미지 삭제
-                          </button>
-                        ) : null}
-                      </Stack>
+                <form
+                  id="desktop-category-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1, pb: 1 }}>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">사이트 주소</Typography>
+                      <TextField
+                        value={categoryKey}
+                        onChange={handleCategoryKeyChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryKey, isCheckingKey)}
+                        fullWidth
+                        required
+                        size="medium"
+                        helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                {baseUrl}/{siteName}/b/c/
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckCategoryKey}
+                                  disabled={isCheckingKey}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
                     </Stack>
 
-                    {thumbnailImageUrl ? (
-                      <Box
-                        component="img"
-                        src={thumbnailImageUrl}
-                        alt="카테고리 썸네일"
-                        sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">카테고리명</Typography>
+                      <TextField
+                        value={categoryLabel}
+                        onChange={handleCategoryLabelChange}
+                        onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryLabel, isCheckingLabel)}
+                        fullWidth
+                        size="medium"
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={handleCheckCategoryLabel}
+                                  disabled={isCheckingLabel}
+                                >
+                                  중복 확인
+                                </button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
                       />
+                    </Stack>
+
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">카테고리 설명</Typography>
+                      <TextField
+                        value={summary}
+                        onChange={handleSummaryChange}
+                        fullWidth
+                        multiline
+                        minRows={3}
+                        size="small"
+                      />
+                    </Stack>
+
+                    <Stack gap={1} direction="column">
+                      <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
+                        <Typography variant="subtitle2">카테고리 썸네일 이미지</Typography>
+
+                        <Stack direction="row" gap={1}>
+                          <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            이미지 선택
+                            <VisuallyHiddenInput
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageFileChange}
+                            />
+                          </Button>
+
+                          {thumbnailImage ? (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              onClick={handleDeleteImage}
+                              disabled={isDeletingImage}
+                            >
+                              이미지 삭제
+                            </button>
+                          ) : null}
+                        </Stack>
+                      </Stack>
+
+                      {thumbnailImageUrl ? (
+                        <Box
+                          component="img"
+                          src={thumbnailImageUrl}
+                          alt="카테고리 썸네일"
+                          sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                        />
+                      ) : null}
+                    </Stack>
+
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
                     ) : null}
+
+                    <PopupMessage
+                      open={Boolean(dialogSuccessMessage)}
+                      message={dialogSuccessMessage}
+                      onClose={() => setDialogSuccessMessage('')}
+                    />
                   </Stack>
-
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-
-                  <PopupMessage
-                    open={Boolean(dialogSuccessMessage)}
-                    message={dialogSuccessMessage}
-                    onClose={() => setDialogSuccessMessage('')}
-                  />
-                </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -1242,8 +1258,8 @@ export default function Opt({
                   취소
                 </button>
                 <button
-                  type="button"
-                  onClick={handleSubmit}
+                  type="submit"
+                  form="desktop-category-form"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
                   저장
@@ -1270,16 +1286,24 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
+                <form
+                  id="mobile-category-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -1290,7 +1314,12 @@ export default function Opt({
                 >
                   취소
                 </button>
-                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="mobile-category-delete-form"
+                  className="button medium danger"
+                  disabled={isSubmitting}
+                >
                   삭제
                 </button>
               </div>
@@ -1314,22 +1343,35 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
+                <form
+                  id="desktop-category-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" className="danger-button" onClick={handleDelete} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="desktop-category-delete-form"
+                  className="danger-button"
+                  disabled={isSubmitting}
+                >
                   삭제
                 </button>
               </DialogActions>

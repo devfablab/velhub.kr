@@ -1575,79 +1575,87 @@ export default function Opt({
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-              <Stack direction="column" gap={1}>
-                <Stack>
-                  <Typography variant="subtitle2">국문명</Typography>
-                  <TextField
-                    value={generalFormValue.nameKo}
-                    onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
-                    fullWidth
-                    size="small"
-                  />
-                </Stack>
+            <form
+              id="mobile-info-general-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitGeneral();
+              }}
+            >
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <Stack direction="column" gap={1}>
+                  <Stack>
+                    <Typography variant="subtitle2">국문명</Typography>
+                    <TextField
+                      value={generalFormValue.nameKo}
+                      onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">영문명</Typography>
-                  <TextField
-                    value={generalFormValue.nameEn}
-                    onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
-                    fullWidth
-                    size="small"
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">영문명</Typography>
+                    <TextField
+                      value={generalFormValue.nameEn}
+                      onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">본인소개 국문</Typography>
-                  <TextField
-                    value={generalFormValue.descriptionKo}
-                    onChange={(event) => handleChangeGeneralTextField('descriptionKo', event)}
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">본인소개 국문</Typography>
+                    <TextField
+                      value={generalFormValue.descriptionKo}
+                      onChange={(event) => handleChangeGeneralTextField('descriptionKo', event)}
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={3}
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">본인소개 영문</Typography>
-                  <TextField
-                    value={generalFormValue.descriptionEn}
-                    onChange={(event) => handleChangeGeneralTextField('descriptionEn', event)}
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">본인소개 영문</Typography>
+                    <TextField
+                      value={generalFormValue.descriptionEn}
+                      onChange={(event) => handleChangeGeneralTextField('descriptionEn', event)}
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={3}
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">경력시작일</Typography>
-                  <DatePicker
-                    value={toDateValue(generalFormValue.startWorkDate)}
-                    onChange={handleChangeGeneralStartWorkDate}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">경력시작일</Typography>
+                    <DatePicker
+                      value={toDateValue(generalFormValue.startWorkDate)}
+                      onChange={handleChangeGeneralStartWorkDate}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                        },
+                      }}
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">직업</Typography>
-                  <TextField
-                    value={generalFormValue.job}
-                    onChange={(event) => handleChangeGeneralTextField('job', event)}
-                    fullWidth
-                    size="small"
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">직업</Typography>
+                    <TextField
+                      value={generalFormValue.job}
+                      onChange={(event) => handleChangeGeneralTextField('job', event)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
 
-                {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-              </Stack>
-            </LocalizationProvider>
+                  {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+                </Stack>
+              </LocalizationProvider>
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button
@@ -1659,9 +1667,9 @@ export default function Opt({
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-info-general-form"
               className="button medium submit"
-              onClick={() => void handleSubmitGeneral()}
               disabled={isGeneralSubmitDisabled}
             >
               저장
@@ -1687,85 +1695,93 @@ export default function Opt({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-              <Stack direction="column" gap={1}>
-                <Stack>
-                  <Typography variant="subtitle2">국문명</Typography>
-                  <TextField
-                    value={generalFormValue.nameKo}
-                    onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
-                    fullWidth
-                    size="small"
-                  />
-                </Stack>
+            <form
+              id="desktop-info-general-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitGeneral();
+              }}
+            >
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <Stack direction="column" gap={1}>
+                  <Stack>
+                    <Typography variant="subtitle2">국문명</Typography>
+                    <TextField
+                      value={generalFormValue.nameKo}
+                      onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">영문명</Typography>
-                  <TextField
-                    value={generalFormValue.nameEn}
-                    onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
-                    fullWidth
-                    size="small"
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">영문명</Typography>
+                    <TextField
+                      value={generalFormValue.nameEn}
+                      onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">본인소개 국문</Typography>
-                  <TextField
-                    value={generalFormValue.descriptionKo}
-                    onChange={(event) => handleChangeGeneralTextField('descriptionKo', event)}
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">본인소개 국문</Typography>
+                    <TextField
+                      value={generalFormValue.descriptionKo}
+                      onChange={(event) => handleChangeGeneralTextField('descriptionKo', event)}
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={3}
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">본인소개 영문</Typography>
-                  <TextField
-                    value={generalFormValue.descriptionEn}
-                    onChange={(event) => handleChangeGeneralTextField('descriptionEn', event)}
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">본인소개 영문</Typography>
+                    <TextField
+                      value={generalFormValue.descriptionEn}
+                      onChange={(event) => handleChangeGeneralTextField('descriptionEn', event)}
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={3}
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">경력시작일</Typography>
-                  <DatePicker
-                    value={toDateValue(generalFormValue.startWorkDate)}
-                    onChange={handleChangeGeneralStartWorkDate}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">경력시작일</Typography>
+                    <DatePicker
+                      value={toDateValue(generalFormValue.startWorkDate)}
+                      onChange={handleChangeGeneralStartWorkDate}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                        },
+                      }}
+                    />
+                  </Stack>
 
-                <Stack>
-                  <Typography variant="subtitle2">직업</Typography>
-                  <TextField
-                    value={generalFormValue.job}
-                    onChange={(event) => handleChangeGeneralTextField('job', event)}
-                    fullWidth
-                    size="small"
-                  />
-                </Stack>
+                  <Stack>
+                    <Typography variant="subtitle2">직업</Typography>
+                    <TextField
+                      value={generalFormValue.job}
+                      onChange={(event) => handleChangeGeneralTextField('job', event)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
 
-                {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-              </Stack>
-            </LocalizationProvider>
+                  {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+                </Stack>
+              </LocalizationProvider>
+            </form>
           </DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={handleCloseGeneralDialog} disabled={isSubmitting}>
               취소
             </button>
-            <button type="button" onClick={() => void handleSubmitGeneral()} disabled={isGeneralSubmitDisabled}>
+            <button type="submit" form="desktop-info-general-form" disabled={isGeneralSubmitDisabled}>
               저장
             </button>
           </DialogActions>
@@ -1828,22 +1844,30 @@ export default function Opt({
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <Stack gap={2}>
-              <TextField
-                placeholder="별명"
-                value={nicknameValue}
-                onChange={handleChangeNickname}
-                fullWidth
-                size="small"
-                slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
-                error={Boolean(nicknameErrorMessage)}
-                helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
-              />
+            <form
+              id="mobile-info-nickname-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitNickname();
+              }}
+            >
+              <Stack gap={2}>
+                <TextField
+                  placeholder="별명"
+                  value={nicknameValue}
+                  onChange={handleChangeNickname}
+                  fullWidth
+                  size="small"
+                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                  error={Boolean(nicknameErrorMessage)}
+                  helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
+                />
 
-              {nicknameErrorMessage ? (
-                <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
-              ) : null}
-            </Stack>
+                {nicknameErrorMessage ? (
+                  <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
+                ) : null}
+              </Stack>
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button
@@ -1855,9 +1879,9 @@ export default function Opt({
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-info-nickname-form"
               className="button medium submit"
-              onClick={() => void handleSubmitNickname()}
               disabled={isNicknameSubmitDisabled}
             >
               저장
@@ -1883,22 +1907,30 @@ export default function Opt({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Stack gap={2}>
-              <TextField
-                placeholder="별명"
-                value={nicknameValue}
-                onChange={handleChangeNickname}
-                fullWidth
-                size="small"
-                slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
-                error={Boolean(nicknameErrorMessage)}
-                helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
-              />
+            <form
+              id="desktop-info-nickname-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitNickname();
+              }}
+            >
+              <Stack gap={2}>
+                <TextField
+                  placeholder="별명"
+                  value={nicknameValue}
+                  onChange={handleChangeNickname}
+                  fullWidth
+                  size="small"
+                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                  error={Boolean(nicknameErrorMessage)}
+                  helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
+                />
 
-              {nicknameErrorMessage ? (
-                <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
-              ) : null}
-            </Stack>
+                {nicknameErrorMessage ? (
+                  <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
+                ) : null}
+              </Stack>
+            </form>
           </DialogContent>
           <DialogActions>
             <button
@@ -1909,7 +1941,7 @@ export default function Opt({
             >
               취소
             </button>
-            <button type="button" onClick={() => void handleSubmitNickname()} disabled={isNicknameSubmitDisabled}>
+            <button type="submit" form="desktop-info-nickname-form" disabled={isNicknameSubmitDisabled}>
               저장
             </button>
           </DialogActions>
@@ -2061,14 +2093,22 @@ export default function Opt({
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-              <Stack direction="column" gap={1}>
-                {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
-                {itemErrorMessage ? (
-                  <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div>
-                ) : null}
-              </Stack>
-            </LocalizationProvider>
+            <form
+              id="mobile-info-item-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitItem();
+              }}
+            >
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <Stack direction="column" gap={1}>
+                  {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
+                  {itemErrorMessage ? (
+                    <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div>
+                  ) : null}
+                </Stack>
+              </LocalizationProvider>
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button
@@ -2080,9 +2120,9 @@ export default function Opt({
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-info-item-form"
               className="button medium submit"
-              onClick={() => void handleSubmitItem()}
               disabled={isItemSubmitDisabled}
             >
               저장
@@ -2112,14 +2152,22 @@ export default function Opt({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-              <Stack direction="column" gap={1}>
-                {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
-                {itemErrorMessage ? (
-                  <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div>
-                ) : null}
-              </Stack>
-            </LocalizationProvider>
+            <form
+              id="desktop-info-item-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitItem();
+              }}
+            >
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <Stack direction="column" gap={1}>
+                  {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
+                  {itemErrorMessage ? (
+                    <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div>
+                  ) : null}
+                </Stack>
+              </LocalizationProvider>
+            </form>
           </DialogContent>
           <DialogActions>
             <button
@@ -2130,7 +2178,7 @@ export default function Opt({
             >
               취소
             </button>
-            <button type="button" onClick={() => void handleSubmitItem()} disabled={isItemSubmitDisabled}>
+            <button type="submit" form="desktop-info-item-form" disabled={isItemSubmitDisabled}>
               저장
             </button>
           </DialogActions>

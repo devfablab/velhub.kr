@@ -704,54 +704,60 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            {isResumingScheduledSubscription ? (
-              <Stack gap={1}>
-                <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
-                <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
-                <Typography variant="body2">
-                  다음 결제일에 월 {formatPrice(price ?? 0)} 원이 자동 결제되며, 이후에도 매월 자동 결제됩니다.
-                </Typography>
-              </Stack>
-            ) : (
-              <>
-                <Stack direction="row" alignItems="center" gap={1}>
+            <form
+              id="mobile-subscription-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription());
+              }}
+            >
+              {isResumingScheduledSubscription ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
+                  <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
                   <Typography variant="body2">
-                    {targetLabel}을 {isMinor ? '단건' : '월'} {formatPrice(price ?? 0)} 원에 구독하시겠어요?
+                    다음 결제일에 월 {formatPrice(price ?? 0)} 원이 자동 결제되며, 이후에도 매월 자동 결제됩니다.
                   </Typography>
-                  {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
                 </Stack>
-                <PaymentTerms type="subscription" disabled={isProcessing} />
-                {minorControlMode === 'guardian_auth_required' && (
-                  <p className="alert warning" style={{ marginTop: '8px' }}>
-                    <span>
-                      결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
-                    </span>
-                  </p>
-                )}
-                {isMinor && minorControlMode !== 'guardian_auth_required' && (
-                  <p className="alert warning" style={{ marginTop: '8px' }}>
-                    <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
-                  </p>
-                )}
-              </>
-            )}
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
+              ) : (
+                <>
+                  <Stack direction="row" alignItems="center" gap={1}>
+                    <Typography variant="body2">
+                      {targetLabel}을 {isMinor ? '단건' : '월'} {formatPrice(price ?? 0)} 원에 구독하시겠어요?
+                    </Typography>
+                    {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
+                  </Stack>
+                  <PaymentTerms type="subscription" disabled={isProcessing} />
+                  {minorControlMode === 'guardian_auth_required' && (
+                    <p className="alert warning" style={{ marginTop: '8px' }}>
+                      <span>
+                        결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
+                      </span>
+                    </p>
+                  )}
+                  {isMinor && minorControlMode !== 'guardian_auth_required' && (
+                    <p className="alert warning" style={{ marginTop: '8px' }}>
+                      <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+                    </p>
+                  )}
+                </>
+              )}
+              {errorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{errorMessage}</span>
+                </p>
+              ) : null}
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-subscription-form"
               className="button medium submit"
-              onClick={() =>
-                void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
-              }
               disabled={isProcessing}
             >
               {getDialogSubmitText(subscriptionStatus)}
@@ -776,54 +782,60 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            {isResumingScheduledSubscription ? (
-              <Stack gap={1}>
-                <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
-                <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
-                <Typography variant="body2">
-                  다음 결제일에 월 {formatPrice(price ?? 0)} 원이 자동 결제되며, 이후에도 매월 자동 결제됩니다.
-                </Typography>
-              </Stack>
-            ) : (
-              <>
-                <Stack direction="row" alignItems="center" gap={1} mb={2}>
+            <form
+              id="desktop-subscription-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription());
+              }}
+            >
+              {isResumingScheduledSubscription ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
+                  <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
                   <Typography variant="body2">
-                    {targetLabel}을 {isMinor ? '단건' : '월'} {formatPrice(price ?? 0)} 원에 구독하시겠어요?
+                    다음 결제일에 월 {formatPrice(price ?? 0)} 원이 자동 결제되며, 이후에도 매월 자동 결제됩니다.
                   </Typography>
-                  {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
                 </Stack>
-                <PaymentTerms type="subscription" disabled={isProcessing} />
-                {minorControlMode === 'guardian_auth_required' && (
-                  <p className="alert warning" style={{ marginTop: '8px' }}>
-                    <span>
-                      결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
-                    </span>
-                  </p>
-                )}
-                {isMinor && minorControlMode !== 'guardian_auth_required' && (
-                  <p className="alert warning" style={{ marginTop: '8px' }}>
-                    <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
-                  </p>
-                )}
-              </>
-            )}
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
+              ) : (
+                <>
+                  <Stack direction="row" alignItems="center" gap={1} mb={2}>
+                    <Typography variant="body2">
+                      {targetLabel}을 {isMinor ? '단건' : '월'} {formatPrice(price ?? 0)} 원에 구독하시겠어요?
+                    </Typography>
+                    {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
+                  </Stack>
+                  <PaymentTerms type="subscription" disabled={isProcessing} />
+                  {minorControlMode === 'guardian_auth_required' && (
+                    <p className="alert warning" style={{ marginTop: '8px' }}>
+                      <span>
+                        결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
+                      </span>
+                    </p>
+                  )}
+                  {isMinor && minorControlMode !== 'guardian_auth_required' && (
+                    <p className="alert warning" style={{ marginTop: '8px' }}>
+                      <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+                    </p>
+                  )}
+                </>
+              )}
+              {errorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{errorMessage}</span>
+                </p>
+              ) : null}
+            </form>
           </DialogContent>
           <DialogActions>
             <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="desktop-subscription-form"
               className="button medium submit"
-              onClick={() =>
-                void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
-              }
               disabled={isProcessing}
             >
               {getDialogSubmitText(subscriptionStatus)}
@@ -850,22 +862,30 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <Stack>
-              <Typography variant="subtitle2">
-                {isRefundableCancellation
-                  ? `${targetLabel} 구독을 환불하시겠어요?`
-                  : `${targetLabel} 구독을 취소하시겠어요?`}
-              </Typography>
-              <Typography variant="body2">
-                {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
-              </Typography>
-              {errorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{errorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
+            <form
+              id="mobile-subscription-cancel-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCancelSubscription();
+              }}
+            >
+              <Stack>
+                <Typography variant="subtitle2">
+                  {isRefundableCancellation
+                    ? `${targetLabel} 구독을 환불하시겠어요?`
+                    : `${targetLabel} 구독을 취소하시겠어요?`}
+                </Typography>
+                <Typography variant="body2">
+                  {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
+                </Typography>
+                {errorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{errorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button
@@ -877,9 +897,9 @@ export default function SubscriptionButton({
               아니요
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-subscription-cancel-form"
               className="button medium danger"
-              onClick={handleCancelSubscription}
               disabled={isProcessing}
             >
               {isRefundableCancellation ? '환불하기' : '구독 취소'}
@@ -906,22 +926,30 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Stack>
-              <Typography variant="subtitle2">
-                {isRefundableCancellation
-                  ? `${targetLabel} 구독을 환불하시겠어요?`
-                  : `${targetLabel} 구독을 취소하시겠어요?`}
-              </Typography>
-              <Typography variant="body2">
-                {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
-              </Typography>
-              {errorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{errorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
+            <form
+              id="desktop-subscription-cancel-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCancelSubscription();
+              }}
+            >
+              <Stack>
+                <Typography variant="subtitle2">
+                  {isRefundableCancellation
+                    ? `${targetLabel} 구독을 환불하시겠어요?`
+                    : `${targetLabel} 구독을 취소하시겠어요?`}
+                </Typography>
+                <Typography variant="body2">
+                  {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
+                </Typography>
+                {errorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{errorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+            </form>
           </DialogContent>
           <DialogActions>
             <button
@@ -933,9 +961,9 @@ export default function SubscriptionButton({
               아니요
             </button>
             <button
-              type="button"
+              type="submit"
+              form="desktop-subscription-cancel-form"
               className="button medium danger"
-              onClick={handleCancelSubscription}
               disabled={isProcessing}
             >
               {isRefundableCancellation ? '환불하기' : '구독 취소'}

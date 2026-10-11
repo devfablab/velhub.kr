@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
@@ -410,8 +411,9 @@ export default function Opt({
     return messages.length ? (
       <Stack gap={0.5}>
         {messages.map((message) => (
-          <p className="alert popup-error" key={message}>
-            {message}
+          <p className="alert error" key={message}>
+            <ErrorOutlineRoundedIcon />
+            <span>{message}</span>
           </p>
         ))}
       </Stack>
@@ -571,6 +573,7 @@ export default function Opt({
     formData.append('exposedInformation', exposedInformation.trim());
     formData.append('privacyRequestReason', privacyRequestReason.trim());
 
+    let isNavigating = false;
     try {
       setSubmitting(true);
       setFieldErrors({});
@@ -595,11 +598,12 @@ export default function Opt({
         }
         return;
       }
-      router.push('/concierge/reports');
+      isNavigating = true;
+      router.push('/concierge/help');
     } catch {
       setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
     } finally {
-      setSubmitting(false);
+      if (!isNavigating) setSubmitting(false);
     }
   }
 
@@ -768,7 +772,12 @@ export default function Opt({
               <WarningAmberRoundedIcon />
               <span>PDF 파일 최대 2개, 1개당 5MB 이하로 첨부할 수 있습니다.</span>
             </p>
-            {fieldErrors.attachment ? <p className="alert popup-error">{fieldErrors.attachment}</p> : null}
+            {fieldErrors.attachment ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{fieldErrors.attachment}</span>
+              </p>
+            ) : null}
           </Stack>
         </Stack>
         {renderLegalTypeSelect()}

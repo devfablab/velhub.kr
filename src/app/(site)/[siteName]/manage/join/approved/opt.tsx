@@ -549,7 +549,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Typography variant="body2">{getConfirmActionMessage()}</Typography>
+                <form
+                  id="mobile-join-approved-action-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (confirmActionType) {
+                      void handleSubmitAction(confirmActionType);
+                    }
+                  }}
+                >
+                  <Typography variant="body2">{getConfirmActionMessage()}</Typography>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -561,13 +571,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="mobile-join-approved-action-form"
                   className={confirmActionType === 'approve' ? 'button medium submit' : 'button medium danger'}
-                  onClick={() => {
-                    if (confirmActionType) {
-                      void handleSubmitAction(confirmActionType);
-                    }
-                  }}
                   disabled={isSubmitting}
                 >
                   {getConfirmActionButtonLabel()}
@@ -593,7 +599,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Typography variant="body2">{getConfirmActionMessage()}</Typography>
+                <form
+                  id="desktop-join-approved-action-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (confirmActionType) {
+                      void handleSubmitAction(confirmActionType);
+                    }
+                  }}
+                >
+                  <Typography variant="body2">{getConfirmActionMessage()}</Typography>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -605,13 +621,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="desktop-join-approved-action-form"
                   className={confirmActionType === 'approve' ? undefined : 'danger-button'}
-                  onClick={() => {
-                    if (confirmActionType) {
-                      void handleSubmitAction(confirmActionType);
-                    }
-                  }}
                   disabled={isSubmitting}
                 >
                   {getConfirmActionButtonLabel()}

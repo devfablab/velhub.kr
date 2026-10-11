@@ -237,6 +237,7 @@ export default function Opt() {
       return;
     }
 
+    let isNavigating = false;
     setIsSubmitting(true);
 
     try {
@@ -266,11 +267,12 @@ export default function Opt() {
         return;
       }
 
+      isNavigating = true;
       await moveAfterSignUp();
     } catch {
       showPopup('', ['회원가입 처리 중 오류가 발생했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.']);
     } finally {
-      setIsSubmitting(false);
+      if (!isNavigating) setIsSubmitting(false);
     }
   }
 

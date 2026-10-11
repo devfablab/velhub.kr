@@ -289,7 +289,7 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
 
             {isMobile ? (
               <div className={styles['button-top']}>
-                <button type="submit" className={`button ${styles.button}`}>
+                <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
                   저장
                 </button>
               </div>

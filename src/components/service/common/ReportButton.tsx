@@ -257,13 +257,19 @@ export default function ReportButton({
     );
   }
 
-  function renderContent() {
+  function renderContent(formId: string) {
     if (completed) {
       return <Typography variant="subtitle2">신고가 접수되었습니다.</Typography>;
     }
 
     return (
-      <>
+      <form
+        id={formId}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSubmit();
+        }}
+      >
         {errorMessage ? (
           <p className="alert error">
             <ErrorOutlineRoundedIcon />
@@ -272,7 +278,7 @@ export default function ReportButton({
         ) : null}
 
         {renderReportItems()}
-      </>
+      </form>
     );
   }
 
@@ -283,9 +289,9 @@ export default function ReportButton({
 
     return (
       <button
-        type="button"
-        className={isMobile ? 'button small submit' : undefined}
-        onClick={handleSubmit}
+        type="submit"
+        form={isMobile ? 'mobile-report-form' : 'desktop-report-form'}
+        className={isMobile ? 'button medium submit' : undefined}
         disabled={submitting || !selectedCategory}
       >
         신고 접수
@@ -326,7 +332,7 @@ export default function ReportButton({
             <CloseRoundedIcon />
           </button>
 
-          <div className="VhiDrawer-bottom-content">{renderContent()}</div>
+          <div className="VhiDrawer-bottom-content">{renderContent('mobile-report-form')}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleClose} disabled={submitting}>
               {completed ? '닫기' : '취소'}
@@ -341,7 +347,7 @@ export default function ReportButton({
             <CloseRoundedIcon />
           </button>
 
-          <DialogContent>{renderContent()}</DialogContent>
+          <DialogContent>{renderContent('desktop-report-form')}</DialogContent>
 
           <DialogActions>
             <button type="button" onClick={handleClose} disabled={submitting}>

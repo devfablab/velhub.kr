@@ -318,22 +318,30 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <div className="VhiDrawer-bottom-content">
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <TextField
-                    placeholder="가입불가 해제 사유"
-                    value={clearReason}
-                    onChange={(event) => {
-                      setClearReason(event.currentTarget.value);
-                      setDialogErrorMessage('');
-                    }}
-                    error={Boolean(dialogErrorMessage)}
-                    helperText={dialogErrorMessage}
-                    fullWidth
-                    multiline
-                    minRows={4}
-                    size="small"
-                  />
-                </Stack>
+                <form
+                  id="mobile-join-banned-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <TextField
+                      placeholder="가입불가 해제 사유"
+                      value={clearReason}
+                      onChange={(event) => {
+                        setClearReason(event.currentTarget.value);
+                        setDialogErrorMessage('');
+                      }}
+                      error={Boolean(dialogErrorMessage)}
+                      helperText={dialogErrorMessage}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      size="small"
+                    />
+                  </Stack>
+                </form>
               </div>
               <div className="drawer-dialog-actions">
                 <button
@@ -344,7 +352,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="mobile-join-banned-form"
+                  className="button medium submit"
+                  disabled={isSubmitting}
+                >
                   확인
                 </button>
               </div>
@@ -368,28 +381,36 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <TextField
-                    placeholder="가입불가 해제 사유"
-                    value={clearReason}
-                    onChange={(event) => {
-                      setClearReason(event.currentTarget.value);
-                      setDialogErrorMessage('');
-                    }}
-                    error={Boolean(dialogErrorMessage)}
-                    helperText={dialogErrorMessage}
-                    fullWidth
-                    multiline
-                    minRows={4}
-                    size="small"
-                  />
-                </Stack>
+                <form
+                  id="desktop-join-banned-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <TextField
+                      placeholder="가입불가 해제 사유"
+                      value={clearReason}
+                      onChange={(event) => {
+                        setClearReason(event.currentTarget.value);
+                        setDialogErrorMessage('');
+                      }}
+                      error={Boolean(dialogErrorMessage)}
+                      helperText={dialogErrorMessage}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      size="small"
+                    />
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+                <button type="submit" form="desktop-join-banned-form" disabled={isSubmitting}>
                   확인
                 </button>
               </DialogActions>

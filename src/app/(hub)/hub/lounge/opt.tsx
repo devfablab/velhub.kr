@@ -146,7 +146,14 @@ export default function Opt({
 
   return (
     <>
-      <Stack gap={4}>
+      <Stack
+        component="form"
+        gap={4}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSubmit();
+        }}
+      >
         {data.features.ownerLounge ? (
           <SelectorGroup
             title="오너 라운지 노출"
@@ -184,12 +191,7 @@ export default function Opt({
         ) : null}
         {data.features.ownerLounge || data.features.creatorLounge ? (
           <Stack direction="row" justifyContent="flex-end">
-            <button
-              type="button"
-              className="button medium submit"
-              disabled={!hasChanges || isSaving}
-              onClick={handleSubmit}
-            >
+            <button type="submit" className="button medium submit" disabled={!hasChanges || isSaving}>
               저장
             </button>
           </Stack>

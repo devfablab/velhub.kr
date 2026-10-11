@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, type ReactNode, useState } from 'react';
+import { type JSX, type ReactNode, useState, useTransition } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -136,6 +136,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
 
   const [contents] = useState<PostItem[]>(initialData?.contents ?? []);
   const [keywordInput, setKeywordInput] = useState(initialKeyword);
+  const [isNavigating, startNavigation] = useTransition();
   const [searchKeyword] = useState(initialKeyword);
   const [currentPage] = useState(initialData?.page ?? initialPage);
   const [totalCount] = useState(initialData?.totalCount ?? 0);
@@ -170,7 +171,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
 
     const queryString = queryParams.toString();
 
-    router.push(queryString ? `/${siteName}/board?${queryString}` : `/${siteName}/board`);
+    startNavigation(() => router.push(queryString ? `/${siteName}/board?${queryString}` : `/${siteName}/board`));
   }
 
   function handleSearchSubmit(event: FormSubmitEvent) {
@@ -297,7 +298,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                     onChange={(event) => setKeywordInput(event.currentTarget.value)}
                   />
                 </div>
-                <button type="submit" aria-label="검색">
+                <button type="submit" disabled={isNavigating} aria-label="검색">
                   <SearchIcon />
                 </button>
               </div>

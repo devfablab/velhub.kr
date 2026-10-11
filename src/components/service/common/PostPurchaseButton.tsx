@@ -390,19 +390,27 @@ export default function PostPurchaseButton(props: Props) {
           </button>
 
           <div className="VhiDrawer-bottom-content">
-            <Stack>
-              <Typography variant="body2">{purchaseQuestion}</Typography>
-              {renderPurchaseConsent()}
-            </Stack>
+            <form
+              id="mobile-post-purchase-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handlePurchase();
+              }}
+            >
+              <Stack>
+                <Typography variant="body2">{purchaseQuestion}</Typography>
+                {renderPurchaseConsent()}
+              </Stack>
+            </form>
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isProcessing}>
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-post-purchase-form"
               className="button medium submit"
-              onClick={() => void handlePurchase()}
               disabled={disabled || isProcessing}
             >
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
@@ -422,10 +430,18 @@ export default function PostPurchaseButton(props: Props) {
           </button>
 
           <DialogContent>
-            <Stack>
-              <Typography variant="body2">{purchaseQuestion}</Typography>
-              {renderPurchaseConsent()}
-            </Stack>
+            <form
+              id="desktop-post-purchase-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handlePurchase();
+              }}
+            >
+              <Stack>
+                <Typography variant="body2">{purchaseQuestion}</Typography>
+                {renderPurchaseConsent()}
+              </Stack>
+            </form>
           </DialogContent>
 
           <DialogActions>
@@ -433,9 +449,9 @@ export default function PostPurchaseButton(props: Props) {
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="desktop-post-purchase-form"
               className="button medium submit"
-              onClick={() => void handlePurchase()}
               disabled={disabled || isProcessing}
             >
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}

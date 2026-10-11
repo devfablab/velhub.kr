@@ -156,6 +156,7 @@ export default function Verify2fa() {
 
     setErrorMessages([]);
     setFieldError('');
+    let isNavigating = false;
     setIsSubmitting(true);
 
     try {
@@ -182,13 +183,14 @@ export default function Verify2fa() {
 
       const returnPath = sessionStorage.getItem('auth:after-mfa') || sessionStorage.getItem('route:returnPath') || '/';
       sessionStorage.removeItem('auth:after-mfa');
+      isNavigating = true;
       router.replace(returnPath);
       router.refresh();
     } catch {
       setErrorMessages(['2단계 인증 확인에 실패했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.']);
       setVerifyCode('');
     } finally {
-      setIsSubmitting(false);
+      if (!isNavigating) setIsSubmitting(false);
     }
   }
 

@@ -568,46 +568,54 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <CloseRoundedIcon />
           </button>
           <div className="VhiDrawer-bottom-content">
-            <p className="alert warning">
-              <WarningAmberRoundedIcon />
-              <span>선택한 멤버에게 해당 처리를 진행합니다.</span>
-            </p>
-            <TextField
-              placeholder={getActionReasonLabel()}
-              value={actionReason}
-              onChange={(event) => setActionReason(event.currentTarget.value)}
-              fullWidth
-              multiline
-              minRows={4}
-              size="small"
-              error={Boolean(dialogErrorMessage)}
-              helperText={dialogErrorMessage}
-            />
-            {actionType === 'ban' ? (
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">가입불가 해제 날짜</Typography>
-                  <DatePicker
-                    value={actionTerm}
-                    onChange={setActionTerm}
-                    format="yyyy년 MM월 dd일"
-                    minDate={new Date()}
-                    disabled={isActionSubmitting}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                      popper: {
-                        sx: {
-                          zIndex: 9999,
+            <form
+              id="mobile-withdrawn-members-action-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitAction();
+              }}
+            >
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>선택한 멤버에게 해당 처리를 진행합니다.</span>
+              </p>
+              <TextField
+                placeholder={getActionReasonLabel()}
+                value={actionReason}
+                onChange={(event) => setActionReason(event.currentTarget.value)}
+                fullWidth
+                multiline
+                minRows={4}
+                size="small"
+                error={Boolean(dialogErrorMessage)}
+                helperText={dialogErrorMessage}
+              />
+              {actionType === 'ban' ? (
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">가입불가 해제 날짜</Typography>
+                    <DatePicker
+                      value={actionTerm}
+                      onChange={setActionTerm}
+                      format="yyyy년 MM월 dd일"
+                      minDate={new Date()}
+                      disabled={isActionSubmitting}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
                         },
-                      },
-                    }}
-                  />
-                </Stack>
-              </LocalizationProvider>
-            ) : null}
+                        popper: {
+                          sx: {
+                            zIndex: 9999,
+                          },
+                        },
+                      }}
+                    />
+                  </Stack>
+                </LocalizationProvider>
+              ) : null}
+            </form>
             {dialogErrorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
@@ -625,9 +633,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               취소
             </button>
             <button
-              type="button"
+              type="submit"
+              form="mobile-withdrawn-members-action-form"
               className="button medium submit"
-              onClick={handleSubmitAction}
               disabled={isActionSubmitting}
             >
               확인
@@ -653,52 +661,60 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Stack direction="column" gap={2}>
-              <p className="alert warning">
-                <WarningAmberRoundedIcon />
-                <span>선택한 멤버에게 해당 처리를 진행합니다.</span>
-              </p>
-
-              <TextField
-                placeholder={getActionReasonLabel()}
-                value={actionReason}
-                onChange={(event) => setActionReason(event.currentTarget.value)}
-                fullWidth
-                multiline
-                minRows={4}
-                size="small"
-                error={Boolean(dialogErrorMessage)}
-                helperText={dialogErrorMessage}
-              />
-
-              {actionType === 'ban' ? (
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">가입불가 해제 날짜</Typography>
-                    <DatePicker
-                      value={actionTerm}
-                      onChange={setActionTerm}
-                      format="yyyy년 MM월 dd일"
-                      minDate={new Date()}
-                      disabled={isActionSubmitting}
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                        },
-                      }}
-                    />
-                  </Stack>
-                </LocalizationProvider>
-              ) : null}
-
-              {dialogErrorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{dialogErrorMessage}</span>
+            <form
+              id="desktop-withdrawn-members-action-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitAction();
+              }}
+            >
+              <Stack direction="column" gap={2}>
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>선택한 멤버에게 해당 처리를 진행합니다.</span>
                 </p>
-              ) : null}
-            </Stack>
+
+                <TextField
+                  placeholder={getActionReasonLabel()}
+                  value={actionReason}
+                  onChange={(event) => setActionReason(event.currentTarget.value)}
+                  fullWidth
+                  multiline
+                  minRows={4}
+                  size="small"
+                  error={Boolean(dialogErrorMessage)}
+                  helperText={dialogErrorMessage}
+                />
+
+                {actionType === 'ban' ? (
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">가입불가 해제 날짜</Typography>
+                      <DatePicker
+                        value={actionTerm}
+                        onChange={setActionTerm}
+                        format="yyyy년 MM월 dd일"
+                        minDate={new Date()}
+                        disabled={isActionSubmitting}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </Stack>
+                  </LocalizationProvider>
+                ) : null}
+
+                {dialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+            </form>
           </DialogContent>
           <DialogActions>
             <button
@@ -710,7 +726,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               취소
             </button>
 
-            <button type="button" onClick={handleSubmitAction} disabled={isActionSubmitting}>
+            <button type="submit" form="desktop-withdrawn-members-action-form" disabled={isActionSubmitting}>
               확인
             </button>
           </DialogActions>

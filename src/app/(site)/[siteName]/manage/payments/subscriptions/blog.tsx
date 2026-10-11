@@ -253,7 +253,14 @@ export default function Opt({
       ) : null}
 
       <div className={`paper ${styles.paper}`}>
-        <Stack gap={3}>
+        <Stack
+          component="form"
+          gap={3}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSaveBlogSubscriptionSetting();
+          }}
+        >
           <Stack gap={1}>
             <Typography variant="subtitle2">블로그 구독</Typography>
             <p className="alert info">
@@ -300,12 +307,7 @@ export default function Opt({
           />
 
           <div>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={handleSaveBlogSubscriptionSetting}
-              disabled={isSaving}
-            >
+            <button type="submit" className="button medium submit" disabled={isSaving}>
               저장
             </button>
           </div>

@@ -444,54 +444,61 @@ export default function Opt({ initialData, initialError }: OptProps) {
     <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <FormErrorDialog
-            open={isErrorDialogOpen}
-            title={errorMessage === '빈 데이터가 있습니다.' ? '커뮤니티 링크' : null}
-            messages={errorMessage ? [errorMessage] : []}
-            onClose={() => setIsErrorDialogOpen(false)}
-          />
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSave();
+            }}
+          >
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorMessage === '빈 데이터가 있습니다.' ? '커뮤니티 링크' : null}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
 
-          <p className="alert info" style={{ paddingTop: 23 }}>
-            <InfoOutlineRoundedIcon />
-            <span>순서 변경, 링크 추가, 이미지 변경 후 반드시 저장 버튼을 눌러주세요.</span>
-          </p>
+            <p className="alert info" style={{ paddingTop: 23 }}>
+              <InfoOutlineRoundedIcon />
+              <span>순서 변경, 링크 추가, 이미지 변경 후 반드시 저장 버튼을 눌러주세요.</span>
+            </p>
 
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-              <Stack gap={1.5}>
-                {items.map((item) => (
-                  <SortableItem
-                    key={item.localId}
-                    item={item}
-                    onServiceChange={handleServiceChange}
-                    onAccountChange={handleAccountChange}
-                    onImageChange={handleImageChange}
-                    onImageRemove={handleImageRemove}
-                    onRemove={handleRemove}
-                    hasError={Boolean(errorMessage) && (!item.service || !item.account.trim())}
-                  />
-                ))}
-              </Stack>
-            </SortableContext>
-          </DndContext>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                <Stack gap={1.5}>
+                  {items.map((item) => (
+                    <SortableItem
+                      key={item.localId}
+                      item={item}
+                      onServiceChange={handleServiceChange}
+                      onAccountChange={handleAccountChange}
+                      onImageChange={handleImageChange}
+                      onImageRemove={handleImageRemove}
+                      onRemove={handleRemove}
+                      hasError={Boolean(errorMessage) && (!item.service || !item.account.trim())}
+                    />
+                  ))}
+                </Stack>
+              </SortableContext>
+            </DndContext>
 
-          <Stack justifyContent="space-between" direction="row" sx={{ p: isMobile ? 2 : 0 }}>
-            <button type="button" className="button medium action" onClick={handleAdd}>
-              링크 추가
-            </button>
-            {isMobile ? (
-              <div className={styles['button-top']}>
-                <button type="button" className={`button ${styles.button}`} onClick={handleSave} disabled={isSaving}>
+            <Stack justifyContent="space-between" direction="row" sx={{ p: isMobile ? 2 : 0 }}>
+              <button type="button" className="button medium action" onClick={handleAdd}>
+                링크 추가
+              </button>
+              {isMobile ? (
+                <div className={styles['button-top']}>
+                  <button type="submit" className={`button ${styles.button}`} disabled={isSaving}>
+                    저장
+                  </button>
+                </div>
+              ) : (
+                <button type="submit" className="button medium submit" disabled={isSaving}>
                   저장
                 </button>
-              </div>
-            ) : (
-              <button type="button" className="button medium submit" onClick={handleSave} disabled={isSaving}>
-                저장
-              </button>
-            )}
-          </Stack>
+              )}
+            </Stack>
+          </form>
         </div>
       </div>
     </Container>

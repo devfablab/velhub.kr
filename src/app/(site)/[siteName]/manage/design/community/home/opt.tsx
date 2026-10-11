@@ -320,89 +320,81 @@ export default function Opt({ initialData, initialError }: OptProps) {
     <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <FormErrorDialog
-            open={isErrorDialogOpen}
-            title={errorMessage === '비활성 게시판은 노출하실 수 없습니다.' ? '노출 불가' : null}
-            messages={errorMessage ? [errorMessage] : []}
-            onClose={() => setIsErrorDialogOpen(false)}
-          />
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void (hasHomeOrders ? handleSave() : handleInitialize());
+            }}
+          >
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            <FormErrorDialog
+              open={isErrorDialogOpen}
+              title={errorMessage === '비활성 게시판은 노출하실 수 없습니다.' ? '노출 불가' : null}
+              messages={errorMessage ? [errorMessage] : []}
+              onClose={() => setIsErrorDialogOpen(false)}
+            />
 
-          {!hasHomeOrders ? (
-            <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle1">커뮤니티 홈 세팅이 필요합니다.</Typography>
-              <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
-              <Box>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleInitialize()}
-                  disabled={isInitializing}
-                >
-                  커뮤니티 홈 초기 세팅하기
-                </button>
-              </Box>
-            </div>
-          ) : (
-            <>
-              {items.length === 0 ? (
-                <ScreenState>등록된 게시판이 없습니다.</ScreenState>
-              ) : (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-                    <Stack gap={1.5}>
-                      {items.map((item) => (
-                        <SortableHomeOrderItem
-                          key={item.id}
-                          item={item}
-                          onChangeShow={handleChangeShow}
-                          onUnavailableShow={handleUnavailableShow}
-                        />
-                      ))}
-                    </Stack>
-                  </SortableContext>
-                </DndContext>
-              )}
-
-              <Stack direction="row" gap={1} justifyContent="flex-end" sx={{ p: isMobile ? 2 : 0 }}>
-                <button
-                  type="button"
-                  className="button medium action"
-                  onClick={() => void loadHomeOrders()}
-                  disabled={isSubmitting}
-                >
-                  다시 불러오기
-                </button>
-                {isMobile ? (
-                  <div className={styles['button-top']}>
-                    <button
-                      type="button"
-                      className={`button ${styles.button}`}
-                      onClick={() => void handleSave()}
-                      disabled={isSubmitting}
-                    >
-                      저장
-                    </button>
-                  </div>
+            {!hasHomeOrders ? (
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle1">커뮤니티 홈 세팅이 필요합니다.</Typography>
+                <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
+                <Box>
+                  <button type="submit" className="button medium submit" disabled={isInitializing}>
+                    커뮤니티 홈 초기 세팅하기
+                  </button>
+                </Box>
+              </div>
+            ) : (
+              <>
+                {items.length === 0 ? (
+                  <ScreenState>등록된 게시판이 없습니다.</ScreenState>
                 ) : (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                      <Stack gap={1.5}>
+                        {items.map((item) => (
+                          <SortableHomeOrderItem
+                            key={item.id}
+                            item={item}
+                            onChangeShow={handleChangeShow}
+                            onUnavailableShow={handleUnavailableShow}
+                          />
+                        ))}
+                      </Stack>
+                    </SortableContext>
+                  </DndContext>
+                )}
+
+                <Stack direction="row" gap={1} justifyContent="flex-end" sx={{ p: isMobile ? 2 : 0 }}>
                   <button
                     type="button"
-                    className="button medium submit"
-                    onClick={() => void handleSave()}
+                    className="button medium action"
+                    onClick={() => void loadHomeOrders()}
                     disabled={isSubmitting}
                   >
-                    저장
+                    다시 불러오기
                   </button>
-                )}
-              </Stack>
-            </>
-          )}
+                  {isMobile ? (
+                    <div className={styles['button-top']}>
+                      <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                        저장
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                      저장
+                    </button>
+                  )}
+                </Stack>
+              </>
+            )}
 
-          <PopupMessage
-            open={Boolean(snackbarMessage)}
-            message={snackbarMessage}
-            onClose={() => setSnackbarMessage('')}
-          />
+            <PopupMessage
+              open={Boolean(snackbarMessage)}
+              message={snackbarMessage}
+              onClose={() => setSnackbarMessage('')}
+            />
+          </form>
         </div>
       </div>
     </Container>

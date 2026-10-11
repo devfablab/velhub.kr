@@ -230,6 +230,8 @@ export default function Opt({
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
+  const [paidPreviewHtml, setPaidPreviewHtml] = useState('');
+  const [paidPreviewMarkdown, setPaidPreviewMarkdown] = useState('');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
@@ -245,6 +247,7 @@ export default function Opt({
   const isSubscriptionSeries = Boolean(
     seriesList.find((series) => series.series_key === selectedSeriesKey)?.is_subscription,
   );
+  const canRegisterPaidPreview = isSubscriptionSeries;
   const [promotion, setPromotion] = useState<BlogPromotionValue>(emptyBlogPromotion);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [fieldErrors, setFieldErrors] = useState<{ subject?: string; content?: string; scheduled?: string }>({});
@@ -477,20 +480,26 @@ export default function Opt({
       return {
         contentHtml,
         contentMarkdown,
+        paidPreviewHtml,
+        paidPreviewMarkdown,
         uploadedPaths: [] as string[],
       };
     }
 
     let nextContentHtml = contentHtml;
     let nextContentMarkdown = contentMarkdown;
+    let nextPaidPreviewHtml = paidPreviewHtml;
+    let nextPaidPreviewMarkdown = paidPreviewMarkdown;
     const usedPreviewUrls = new Set<string>();
     const uploadedPaths: string[] = [];
 
     for (const image of currentEditorBlobImages) {
       const isUsedInHtml = nextContentHtml.includes(image.previewUrl);
       const isUsedInMarkdown = nextContentMarkdown.includes(image.previewUrl);
+      const isUsedInPaidPreviewHtml = nextPaidPreviewHtml.includes(image.previewUrl);
+      const isUsedInPaidPreviewMarkdown = nextPaidPreviewMarkdown.includes(image.previewUrl);
 
-      if (!isUsedInHtml && !isUsedInMarkdown) {
+      if (!isUsedInHtml && !isUsedInMarkdown && !isUsedInPaidPreviewHtml && !isUsedInPaidPreviewMarkdown) {
         URL.revokeObjectURL(image.previewUrl);
         continue;
       }
@@ -501,6 +510,8 @@ export default function Opt({
 
       nextContentHtml = replaceAllImageUrl(nextContentHtml, image.previewUrl, uploadedImage.url);
       nextContentMarkdown = replaceAllImageUrl(nextContentMarkdown, image.previewUrl, uploadedImage.url);
+      nextPaidPreviewHtml = replaceAllImageUrl(nextPaidPreviewHtml, image.previewUrl, uploadedImage.url);
+      nextPaidPreviewMarkdown = replaceAllImageUrl(nextPaidPreviewMarkdown, image.previewUrl, uploadedImage.url);
       usedPreviewUrls.add(image.previewUrl);
 
       URL.revokeObjectURL(image.previewUrl);
@@ -511,11 +522,15 @@ export default function Opt({
     editorBlobImagesReference.current = remainingEditorBlobImages;
     setContentHtml(nextContentHtml);
     setContentMarkdown(nextContentMarkdown);
+    setPaidPreviewHtml(nextPaidPreviewHtml);
+    setPaidPreviewMarkdown(nextPaidPreviewMarkdown);
     setEditorBlobImages(remainingEditorBlobImages);
 
     return {
       contentHtml: nextContentHtml,
       contentMarkdown: nextContentMarkdown,
+      paidPreviewHtml: nextPaidPreviewHtml,
+      paidPreviewMarkdown: nextPaidPreviewMarkdown,
       uploadedPaths,
     };
   }
@@ -589,6 +604,8 @@ export default function Opt({
           summary,
           contentHtml: uploadedEditorContent.contentHtml,
           contentMarkdown: uploadedEditorContent.contentMarkdown,
+          paidPreviewHtml: canRegisterPaidPreview ? uploadedEditorContent.paidPreviewHtml : null,
+          paidPreviewMarkdown: canRegisterPaidPreview ? uploadedEditorContent.paidPreviewMarkdown : null,
           thumbnailImage: thumbnailImage || null,
           thumbnailWidth,
           thumbnailHeight,
@@ -793,8 +810,32 @@ export default function Opt({
                 </Stack>
               </Stack>
 
+              {canRegisterPaidPreview ? (
+                <>
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">미리보기</Typography>
+                    <Typography variant="body2">연재 구독하지 않은 독자에게 보여줄 내용을 작성해주세요.</Typography>
+                  </Stack>
+                  <ToastEditor
+                    key={`paid-preview-${selectedSeriesKey}`}
+                    initialValue={paidPreviewHtml}
+                    initialMarkdown={paidPreviewMarkdown}
+                    initialEditType="wysiwyg"
+                    themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                    markdownStatus="markdown_default"
+                    hideModeSwitch
+                    onHtmlChange={setPaidPreviewHtml}
+                    onMarkdownChange={setPaidPreviewMarkdown}
+                    onUploadImage={handleUploadEditorImage}
+                  />
+                </>
+              ) : null}
+
               <Stack gap={1}>
-                <Typography variant="subtitle2">내용 *</Typography>
+                <Typography variant="subtitle2">{canRegisterPaidPreview ? '본문작성 *' : '내용 *'}</Typography>
+                {canRegisterPaidPreview ? (
+                  <Typography variant="body2">연재를 구독한 독자에게 보여줄 본문 내용을 작성해주세요.</Typography>
+                ) : null}
                 <ToastEditor
                   initialValue={contentHtml}
                   initialMarkdown={contentMarkdown}
@@ -858,12 +899,12 @@ export default function Opt({
                 </Anchor>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`}>
+                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
                       저장
                     </button>
                   </div>
                 ) : (
-                  <button type="submit" className="button medium submit">
+                  <button type="submit" className="button medium submit" disabled={isSubmitting}>
                     저장
                   </button>
                 )}

@@ -1064,7 +1064,15 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         <CloseRoundedIcon />
                       </button>
                       <div className="VhiDrawer-bottom-content">
-                        <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
+                        <form
+                          id="mobile-member-level-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            void handleChangeLevel();
+                          }}
+                        >
+                          <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
+                        </form>
                       </div>
                       <div className="drawer-dialog-actions">
                         <button
@@ -1076,9 +1084,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                           취소
                         </button>
                         <button
-                          type="button"
+                          type="submit"
+                          form="mobile-member-level-form"
                           className="button medium submit"
-                          onClick={() => void handleChangeLevel()}
                           disabled={isLevelChanging}
                         >
                           변경
@@ -1108,7 +1116,15 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         <CloseRoundedIcon />
                       </button>
                       <DialogContent>
-                        <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
+                        <form
+                          id="desktop-member-level-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            void handleChangeLevel();
+                          }}
+                        >
+                          <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
+                        </form>
                       </DialogContent>
                       <DialogActions>
                         <button
@@ -1119,7 +1135,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         >
                           취소
                         </button>
-                        <button type="button" onClick={() => void handleChangeLevel()} disabled={isLevelChanging}>
+                        <button type="submit" form="desktop-member-level-form" disabled={isLevelChanging}>
                           변경
                         </button>
                       </DialogActions>
@@ -1226,53 +1242,61 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   <CloseRoundedIcon />
                 </button>
                 <div className="VhiDrawer-bottom-content">
-                  <Stack gap={2} sx={{ pt: 1 }}>
-                    <Stack gap={1}>
-                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
-                      <TextField
-                        value={actionReason}
-                        onChange={(event) => setActionReason(event.currentTarget.value)}
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        size="small"
-                        error={Boolean(dialogErrorMessage)}
-                        helperText={dialogErrorMessage}
-                      />
-                    </Stack>
-                    {actionType ? (
-                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                        <Stack gap={1}>
-                          <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
-                          <DatePicker
-                            value={actionTerm}
-                            onChange={setActionTerm}
-                            format="yyyy년 MM월 dd일"
-                            minDate={new Date()}
-                            disabled={isActionSubmitting}
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                                size: 'small',
-                              },
-                              popper: {
-                                sx: {
-                                  zIndex: 9999,
+                  <form
+                    id="mobile-members-action-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void handleSubmitAction();
+                    }}
+                  >
+                    <Stack gap={2} sx={{ pt: 1 }}>
+                      <Stack gap={1}>
+                        <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                        <TextField
+                          value={actionReason}
+                          onChange={(event) => setActionReason(event.currentTarget.value)}
+                          fullWidth
+                          multiline
+                          minRows={4}
+                          size="small"
+                          error={Boolean(dialogErrorMessage)}
+                          helperText={dialogErrorMessage}
+                        />
+                      </Stack>
+                      {actionType ? (
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                          <Stack gap={1}>
+                            <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
+                            <DatePicker
+                              value={actionTerm}
+                              onChange={setActionTerm}
+                              format="yyyy년 MM월 dd일"
+                              minDate={new Date()}
+                              disabled={isActionSubmitting}
+                              slotProps={{
+                                textField: {
+                                  fullWidth: true,
+                                  size: 'small',
                                 },
-                              },
-                            }}
-                          />
-                        </Stack>
-                      </LocalizationProvider>
-                    ) : null}
+                                popper: {
+                                  sx: {
+                                    zIndex: 9999,
+                                  },
+                                },
+                              }}
+                            />
+                          </Stack>
+                        </LocalizationProvider>
+                      ) : null}
 
-                    {dialogErrorMessage ? (
-                      <p className="alert error">
-                        <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
-                      </p>
-                    ) : null}
-                  </Stack>
+                      {dialogErrorMessage ? (
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>{dialogErrorMessage}</span>
+                        </p>
+                      ) : null}
+                    </Stack>
+                  </form>
                 </div>
                 <div className="drawer-dialog-actions">
                   <button
@@ -1284,9 +1308,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     취소
                   </button>
                   <button
-                    type="button"
+                    type="submit"
+                    form="mobile-members-action-form"
                     className="button medium submit"
-                    onClick={handleSubmitAction}
                     disabled={isActionSubmitting}
                   >
                     확인
@@ -1312,53 +1336,61 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   <CloseRoundedIcon />
                 </button>
                 <DialogContent>
-                  <Stack gap={2} sx={{ pt: 1 }}>
-                    <Stack gap={1}>
-                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
-                      <TextField
-                        value={actionReason}
-                        onChange={(event) => setActionReason(event.currentTarget.value)}
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        size="small"
-                        error={Boolean(dialogErrorMessage)}
-                        helperText={dialogErrorMessage}
-                      />
-                    </Stack>
-                    {actionType ? (
-                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                        <Stack gap={1}>
-                          <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
-                          <DatePicker
-                            value={actionTerm}
-                            onChange={setActionTerm}
-                            format="yyyy년 MM월 dd일"
-                            minDate={new Date()}
-                            disabled={isActionSubmitting}
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                                size: 'small',
-                              },
-                              popper: {
-                                sx: {
-                                  zIndex: 9999,
+                  <form
+                    id="desktop-members-action-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void handleSubmitAction();
+                    }}
+                  >
+                    <Stack gap={2} sx={{ pt: 1 }}>
+                      <Stack gap={1}>
+                        <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                        <TextField
+                          value={actionReason}
+                          onChange={(event) => setActionReason(event.currentTarget.value)}
+                          fullWidth
+                          multiline
+                          minRows={4}
+                          size="small"
+                          error={Boolean(dialogErrorMessage)}
+                          helperText={dialogErrorMessage}
+                        />
+                      </Stack>
+                      {actionType ? (
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                          <Stack gap={1}>
+                            <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
+                            <DatePicker
+                              value={actionTerm}
+                              onChange={setActionTerm}
+                              format="yyyy년 MM월 dd일"
+                              minDate={new Date()}
+                              disabled={isActionSubmitting}
+                              slotProps={{
+                                textField: {
+                                  fullWidth: true,
+                                  size: 'small',
                                 },
-                              },
-                            }}
-                          />
-                        </Stack>
-                      </LocalizationProvider>
-                    ) : null}
+                                popper: {
+                                  sx: {
+                                    zIndex: 9999,
+                                  },
+                                },
+                              }}
+                            />
+                          </Stack>
+                        </LocalizationProvider>
+                      ) : null}
 
-                    {dialogErrorMessage ? (
-                      <p className="alert error">
-                        <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
-                      </p>
-                    ) : null}
-                  </Stack>
+                      {dialogErrorMessage ? (
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>{dialogErrorMessage}</span>
+                        </p>
+                      ) : null}
+                    </Stack>
+                  </form>
                 </DialogContent>
                 <DialogActions>
                   <button
@@ -1369,7 +1401,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   >
                     취소
                   </button>
-                  <button type="button" onClick={handleSubmitAction} disabled={isActionSubmitting}>
+                  <button type="submit" form="desktop-members-action-form" disabled={isActionSubmitting}>
                     확인
                   </button>
                 </DialogActions>

@@ -998,6 +998,8 @@ export default function Opt({
         onClose={handleCloseAppealDialog}
         title={appealDialogReport?.appeal ? '소명 요청서' : '소명 요청서 작성'}
         maxWidth="lg"
+        formId={appealDialogReport?.appeal ? undefined : 'appeal-request-form'}
+        onSubmit={() => void handleSubmitAppealRequest()}
         actions={[
           {
             label: appealDialogReport?.appeal ? '닫기' : '취소',
@@ -1187,6 +1189,8 @@ export default function Opt({
         onClose={() => setMessageDialogReport(null)}
         title="메모 보내기"
         maxWidth="sm"
+        formId="report-message-form"
+        onSubmit={() => void handleSendMessage()}
         actions={[
           {
             label: '취소',

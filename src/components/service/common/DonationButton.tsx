@@ -439,42 +439,50 @@ export default function DonationButton(props: Props) {
     }
   }
 
-  function renderDonationForm() {
+  function renderDonationForm(formId: string) {
     return (
-      <Stack gap={2}>
-        <TextField
-          value={donationAmount}
-          onChange={handleDonationAmountChange}
-          disabled={isProcessing}
-          required
-          error={Boolean(amountError)}
-          helperText={amountError || '1,000원부터 100,000원까지 1,000원 단위로 입력해주세요.'}
-          inputMode="numeric"
-          slotProps={{
-            htmlInput: { min: 1000, max: 100000, step: 1000 },
-            input: {
-              endAdornment: <InputAdornment position="end">원</InputAdornment>,
-            },
-          }}
-          fullWidth
-          size="small"
-        />
+      <form
+        id={formId}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleDonate();
+        }}
+      >
+        <Stack gap={2}>
+          <TextField
+            value={donationAmount}
+            onChange={handleDonationAmountChange}
+            disabled={isProcessing}
+            required
+            error={Boolean(amountError)}
+            helperText={amountError || '1,000원부터 100,000원까지 1,000원 단위로 입력해주세요.'}
+            inputMode="numeric"
+            slotProps={{
+              htmlInput: { min: 1000, max: 100000, step: 1000 },
+              input: {
+                endAdornment: <InputAdornment position="end">원</InputAdornment>,
+              },
+            }}
+            fullWidth
+            size="small"
+          />
 
-        {minorControlMode === 'guardian_auth_required' && (
-          <p className="alert warning" style={{ marginTop: '8px' }}>
-            <span>
-              결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
-            </span>
-          </p>
-        )}
-        {isMinor && minorControlMode !== 'guardian_auth_required' && (
-          <p className="alert warning" style={{ marginTop: '8px' }}>
-            <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
-          </p>
-        )}
+          {minorControlMode === 'guardian_auth_required' && (
+            <p className="alert warning" style={{ marginTop: '8px' }}>
+              <span>
+                결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
+              </span>
+            </p>
+          )}
+          {isMinor && minorControlMode !== 'guardian_auth_required' && (
+            <p className="alert warning" style={{ marginTop: '8px' }}>
+              <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+            </p>
+          )}
 
-        <PaymentTerms type="donation" disabled={isProcessing} />
-      </Stack>
+          <PaymentTerms type="donation" disabled={isProcessing} />
+        </Stack>
+      </form>
     );
   }
 
@@ -522,17 +530,12 @@ export default function DonationButton(props: Props) {
           <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <div className="VhiDrawer-bottom-content">{renderDonationForm()}</div>
+          <div className="VhiDrawer-bottom-content">{renderDonationForm('mobile-donation-form')}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleDonate()}
-              disabled={isProcessing}
-            >
+            <button type="submit" form="mobile-donation-form" className="button medium submit" disabled={isProcessing}>
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
             </button>
           </div>
@@ -549,12 +552,12 @@ export default function DonationButton(props: Props) {
           <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <DialogContent>{renderDonationForm()}</DialogContent>
+          <DialogContent>{renderDonationForm('desktop-donation-form')}</DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
-            <button type="button" onClick={() => void handleDonate()} disabled={isProcessing}>
+            <button type="submit" form="desktop-donation-form" disabled={isProcessing}>
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
             </button>
           </DialogActions>

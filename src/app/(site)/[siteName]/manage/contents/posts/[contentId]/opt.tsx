@@ -565,7 +565,14 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <div className="VhiDrawer-bottom-content">
+              <form
+                id="mobile-post-delete-form"
+                className="VhiDrawer-bottom-content"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleDelete();
+                }}
+              >
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <p className="alert info">
                     <InfoOutlineRoundedIcon />
@@ -593,7 +600,7 @@ export default function Opt({
                     </p>
                   ) : null}
                 </Stack>
-              </div>
+              </form>
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
@@ -603,7 +610,12 @@ export default function Opt({
                 >
                   취소
                 </button>
-                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isDeleting}>
+                <button
+                  type="submit"
+                  form="mobile-post-delete-form"
+                  className="button medium danger"
+                  disabled={isDeleting}
+                >
                   삭제
                 </button>
               </div>
@@ -627,39 +639,47 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>
-                      삭제시 언제든 복구가 가능합니다.
-                      <br />
-                      삭제사유를 입력해 주세요. (필수)
-                    </span>
-                  </p>
-
-                  <TextField
-                    placeholder="삭제 사유"
-                    value={closedMessage}
-                    onChange={handleClosedMessageChange}
-                    fullWidth
-                    multiline
-                    minRows={3}
-                    size="small"
-                  />
-
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
+                <form
+                  id="desktop-post-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
+                      <span>
+                        삭제시 언제든 복구가 가능합니다.
+                        <br />
+                        삭제사유를 입력해 주세요. (필수)
+                      </span>
                     </p>
-                  ) : null}
-                </Stack>
+
+                    <TextField
+                      placeholder="삭제 사유"
+                      value={closedMessage}
+                      onChange={handleClosedMessageChange}
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      size="small"
+                    />
+
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                   취소
                 </button>
-                <button type="button" className="danger-button" onClick={handleDelete} disabled={isDeleting}>
+                <button type="submit" form="desktop-post-delete-form" className="danger-button" disabled={isDeleting}>
                   삭제
                 </button>
               </DialogActions>
@@ -683,7 +703,14 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <div className="VhiDrawer-bottom-content">
+              <form
+                id="mobile-post-restore-form"
+                className="VhiDrawer-bottom-content"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleRestore();
+                }}
+              >
                 <Typography variant="body2">
                   해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
                 </Typography>
@@ -693,7 +720,7 @@ export default function Opt({
                     <span>{dialogErrorMessage}</span>
                   </p>
                 ) : null}
-              </div>
+              </form>
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
@@ -703,7 +730,12 @@ export default function Opt({
                 >
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleRestore} disabled={isRestoring}>
+                <button
+                  type="submit"
+                  form="mobile-post-restore-form"
+                  className="button medium submit"
+                  disabled={isRestoring}
+                >
                   확인
                 </button>
               </div>
@@ -727,15 +759,23 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Typography variant="body2">
-                  해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
-                </Typography>
-                {dialogErrorMessage ? (
-                  <p className="alert error">
-                    <ErrorOutlineRoundedIcon />
-                    <span>{dialogErrorMessage}</span>
-                  </p>
-                ) : null}
+                <form
+                  id="desktop-post-restore-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleRestore();
+                  }}
+                >
+                  <Typography variant="body2">
+                    해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+                  </Typography>
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -746,7 +786,7 @@ export default function Opt({
                 >
                   취소
                 </button>
-                <button type="button" onClick={handleRestore} disabled={isRestoring}>
+                <button type="submit" form="desktop-post-restore-form" disabled={isRestoring}>
                   확인
                 </button>
               </DialogActions>
@@ -770,7 +810,14 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <div className="VhiDrawer-bottom-content">
+              <form
+                id="mobile-post-category-form"
+                className="VhiDrawer-bottom-content"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleSaveCategories();
+                }}
+              >
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
@@ -800,7 +847,7 @@ export default function Opt({
                     </p>
                   ) : null}
                 </Stack>
-              </div>
+              </form>
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
@@ -811,9 +858,9 @@ export default function Opt({
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="mobile-post-category-form"
                   className="button medium submit"
-                  onClick={handleSaveCategories}
                   disabled={isCategorySubmitting}
                 >
                   저장
@@ -839,35 +886,43 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <FormControl fullWidth size="small">
-                    <Select
-                      labelId="detail-post-category-select-label"
-                      multiple
-                      value={selectedCategories}
-                      onChange={handleCategoryChange}
-                      renderValue={(selected) =>
-                        categories
-                          .filter((category) => selected.includes(category.category_key))
-                          .map((category) => category.category_label)
-                          .join(', ')
-                      }
-                    >
-                      {categories.map((category) => (
-                        <MenuItem key={category.id} value={category.category_key}>
-                          <ListItemText primary={category.category_label} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                <form
+                  id="desktop-post-category-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSaveCategories();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        labelId="detail-post-category-select-label"
+                        multiple
+                        value={selectedCategories}
+                        onChange={handleCategoryChange}
+                        renderValue={(selected) =>
+                          categories
+                            .filter((category) => selected.includes(category.category_key))
+                            .map((category) => category.category_label)
+                            .join(', ')
+                        }
+                      >
+                        {categories.map((category) => (
+                          <MenuItem key={category.id} value={category.category_key}>
+                            <ListItemText primary={category.category_label} />
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -878,7 +933,7 @@ export default function Opt({
                 >
                   취소
                 </button>
-                <button type="button" onClick={handleSaveCategories} disabled={isCategorySubmitting}>
+                <button type="submit" form="desktop-post-category-form" disabled={isCategorySubmitting}>
                   저장
                 </button>
               </DialogActions>
@@ -902,7 +957,14 @@ export default function Opt({
               >
                 <CloseRoundedIcon />
               </button>
-              <div className="VhiDrawer-bottom-content">
+              <form
+                id="mobile-post-series-form"
+                className="VhiDrawer-bottom-content"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleSaveSeries();
+                }}
+              >
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
@@ -939,7 +1001,7 @@ export default function Opt({
                     </p>
                   ) : null}
                 </Stack>
-              </div>
+              </form>
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
@@ -950,9 +1012,9 @@ export default function Opt({
                   취소
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="mobile-post-series-form"
                   className="button medium submit"
-                  onClick={handleSaveSeries}
                   disabled={isSeriesSubmitting}
                 >
                   저장
@@ -978,42 +1040,52 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <FormControl fullWidth size="small">
-                    <Select
-                      labelId="detail-post-series-select-label"
-                      value={selectedSeriesKey}
-                      onChange={handleSeriesChange}
-                      disabled={isSeriesLocked}
-                    >
-                      <MenuItem value="">
-                        <ListItemText primary="선택 안함" />
-                      </MenuItem>
+                <form
+                  id="desktop-post-series-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSaveSeries();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        labelId="detail-post-series-select-label"
+                        value={selectedSeriesKey}
+                        onChange={handleSeriesChange}
+                        disabled={isSeriesLocked}
+                      >
+                        <MenuItem value="">
+                          <ListItemText primary="선택 안함" />
+                        </MenuItem>
 
-                      {seriesList
-                        .filter((seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey)
-                        .map((seriesItem) => (
-                          <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
-                            <ListItemText primary={seriesItem.series_label} />
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
+                        {seriesList
+                          .filter(
+                            (seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey,
+                          )
+                          .map((seriesItem) => (
+                            <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
+                              <ListItemText primary={seriesItem.series_label} />
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
 
-                  {isSeriesLocked ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>연재가 설정된 글은 연재를 변경할 수 없습니다.</span>
-                    </p>
-                  ) : null}
+                    {isSeriesLocked ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>연재가 설정된 글은 연재를 변경할 수 없습니다.</span>
+                      </p>
+                    ) : null}
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -1024,7 +1096,7 @@ export default function Opt({
                 >
                   취소
                 </button>
-                <button type="button" onClick={handleSaveSeries} disabled={isSeriesSubmitting}>
+                <button type="submit" form="desktop-post-series-form" disabled={isSeriesSubmitting}>
                   저장
                 </button>
               </DialogActions>

@@ -130,14 +130,26 @@ export default function WithdrawalActions() {
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>데브허브 탈퇴</h2>
-          <div className="VhiDrawer-bottom-content">
+          <form
+            id="mobile-withdrawal-form"
+            className="VhiDrawer-bottom-content"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
+          >
             <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
-          </div>
+          </form>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
-            <button type="button" className="button medium danger" onClick={handleSubmit} disabled={isSubmitting}>
+            <button
+              type="submit"
+              form="mobile-withdrawal-form"
+              className="button medium danger"
+              disabled={isSubmitting}
+            >
               탈퇴 신청
             </button>
           </div>
@@ -152,13 +164,21 @@ export default function WithdrawalActions() {
         >
           <DialogTitle>데브허브 탈퇴</DialogTitle>
           <DialogContent>
-            <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
+            <form
+              id="desktop-withdrawal-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmit();
+              }}
+            >
+              <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
+            </form>
           </DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
-            <button type="button" className="danger-button" onClick={handleSubmit} disabled={isSubmitting}>
+            <button type="submit" form="desktop-withdrawal-form" className="danger-button" disabled={isSubmitting}>
               탈퇴 신청
             </button>
           </DialogActions>

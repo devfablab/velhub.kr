@@ -337,7 +337,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-              <div className="VhiDrawer-bottom-content">
+              <form
+                id="mobile-page-delete-form"
+                className="VhiDrawer-bottom-content"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleDelete();
+                }}
+              >
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
 
@@ -348,7 +355,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-              </div>
+              </form>
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
@@ -358,7 +365,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="mobile-page-delete-form"
+                  className="button medium danger"
+                  disabled={isSubmitting}
+                >
                   삭제
                 </button>
               </div>
@@ -382,16 +394,24 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
+                <form
+                  id="desktop-page-delete-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleDelete();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -402,7 +422,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="danger-button" onClick={handleDelete} disabled={isSubmitting}>
+                <button type="submit" form="desktop-page-delete-form" className="danger-button" disabled={isSubmitting}>
                   삭제
                 </button>
               </DialogActions>
@@ -426,7 +446,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
               >
                 <CloseRoundedIcon />
               </button>
-              <div className="VhiDrawer-bottom-content">
+              <form
+                id="mobile-page-restore-form"
+                className="VhiDrawer-bottom-content"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleRestore();
+                }}
+              >
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
 
@@ -437,7 +464,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </p>
                   ) : null}
                 </Stack>
-              </div>
+              </form>
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
@@ -447,7 +474,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" className="button medium submit" onClick={handleRestore} disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  form="mobile-page-restore-form"
+                  className="button medium submit"
+                  disabled={isSubmitting}
+                >
                   확인
                 </button>
               </div>
@@ -471,16 +503,24 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
+                <form
+                  id="desktop-page-restore-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleRestore();
+                  }}
+                >
+                  <Stack gap={2} sx={{ pt: 1 }}>
+                    <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
 
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </form>
               </DialogContent>
               <DialogActions>
                 <button
@@ -491,7 +531,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 >
                   취소
                 </button>
-                <button type="button" onClick={handleRestore} disabled={isSubmitting}>
+                <button type="submit" form="desktop-page-restore-form" disabled={isSubmitting}>
                   확인
                 </button>
               </DialogActions>

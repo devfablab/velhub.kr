@@ -70,8 +70,14 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
     return null;
   }
 
-  const content = (
-    <>
+  const content = (formId: string) => (
+    <form
+      id={formId}
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleSubmit();
+      }}
+    >
       <FormControlLabel
         control={<Checkbox checked={bypass} onChange={(event) => setBypass(event.target.checked)} />}
         label="본인인증 바이패스 (훼이크 DB 사용)"
@@ -99,7 +105,7 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
           )}
         </Stack>
       )}
-    </>
+    </form>
   );
 
   return isMobile ? (
@@ -108,14 +114,14 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
-      <div className="VhiDrawer-bottom-content">{content}</div>
+      <div className="VhiDrawer-bottom-content">{content('mobile-dev-identity-bypass-form')}</div>
       <div className="drawer-dialog-actions">
         <button type="button" className="button medium close" onClick={onClose}>
           취소
         </button>
         <button
-          type="button"
-          onClick={handleSubmit}
+          type="submit"
+          form="mobile-dev-identity-bypass-form"
           className="button medium action"
           disabled={bypass && !selectedTxId}
         >
@@ -129,12 +135,12 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
-      <DialogContent dividers>{content}</DialogContent>
+      <DialogContent dividers>{content('desktop-dev-identity-bypass-form')}</DialogContent>
       <DialogActions>
         <button type="button" className="cancel-button" onClick={onClose}>
           취소
         </button>
-        <button type="button" onClick={handleSubmit} disabled={bypass && !selectedTxId}>
+        <button type="submit" form="desktop-dev-identity-bypass-form" disabled={bypass && !selectedTxId}>
           {bypass ? '가짜 데이터로 인증하기' : '원래대로 진행'}
         </button>
       </DialogActions>
