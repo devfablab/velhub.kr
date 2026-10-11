@@ -26,7 +26,7 @@ export function getSiteKeyError(siteKey: string) {
 
 export function getSiteLabelError(siteKey: string, siteLabel: string) {
   if (!siteLabel) {
-    return isValidActivityName(siteKey) ? '' : '사이트 주소가 10자를 초과하므로 사이트명을 입력해 주세요.';
+    return siteKey.length > ACTIVITY_NAME_MAX_LENGTH ? '사이트 주소가 10자를 초과하므로 사이트명을 입력해 주세요.' : '';
   }
   return isValidActivityName(siteLabel)
     ? ''
