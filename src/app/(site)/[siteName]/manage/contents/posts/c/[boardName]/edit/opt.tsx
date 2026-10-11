@@ -72,9 +72,9 @@ type BoardLabelCheckResponse = {
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
 const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
-  { value: 'markdown_default', label: '마크다운 전용' },
-  { value: 'markdown_on', label: '마크다운 사용가능' },
   { value: 'markdown_off', label: '마크다운 사용안함' },
+  { value: 'markdown_on', label: '마크다운 사용가능' },
+  { value: 'markdown_default', label: '마크다운 전용' },
 ];
 
 const WRITE_PERMISSION_OPTIONS: { value: WritePermission; label: string }[] = [

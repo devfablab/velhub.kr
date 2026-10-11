@@ -64,9 +64,9 @@ type WritePermission = 'member' | 'manager' | 'community-manager' | 'owner';
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
 const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
-  { value: 'markdown_default', label: '마크다운 전용' },
-  { value: 'markdown_on', label: '마크다운 사용가능' },
   { value: 'markdown_off', label: '마크다운 사용안함' },
+  { value: 'markdown_on', label: '마크다운 사용가능' },
+  { value: 'markdown_default', label: '마크다운 전용' },
 ];
 
 const WRITE_PERMISSION_OPTIONS: { value: WritePermission; label: string }[] = [
@@ -120,7 +120,7 @@ export default function Opt({
   const [boardKey, setBoardKey] = useState('');
   const [boardType, setBoardType] = useState<BoardType>('basic');
   const [postPerPage, setPostPerPage] = useState(5);
-  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_default');
+  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_off');
   const [writePermission, setWritePermission] = useState<WritePermission>('member');
   const [postType, setPostType] = useState<PostType>('none');
   const [isChecking, setIsChecking] = useState(false);

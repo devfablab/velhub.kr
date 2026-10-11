@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     const boardKey = normalizeBoardKey(requestBody.boardKey);
     const boardLabel = normalizeText(requestBody.boardLabel);
     const boardType = normalizeText(requestBody.boardType).toLowerCase();
-    const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
+    const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_off';
     const writePermission = normalizeText(requestBody.writePermission) || 'member';
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
     const postPerPage = normalizePostPerPage(requestBody.postPerPage);
