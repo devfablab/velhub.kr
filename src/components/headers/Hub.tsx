@@ -267,22 +267,22 @@ export default function HeaderHub() {
                   onClose={handleCloseProfileMenu}
                   className={styles.VhiMenu}
                 >
-                  {isAuthenticated ? (
-                    <>
-                      <li className={styles['VhiMenu-profile']}>
+                  {isAuthenticated
+                    ? [
+                      <li key="profile" className={styles['VhiMenu-profile']}>
                         <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
                         <div className={styles['VhiMenu-profile-info']}>
                           <em>{userProfile.name}</em>
                           <span>{maskEmail(userProfile.email ?? '')}</span>
                         </div>
-                      </li>
+                      </li>,
                       <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
                         <Anchor href="/">
                           <HomeOutlinedIcon fontSize="small" />
                           <span>라운지 이동</span>
                         </Anchor>
-                      </MenuItem>
-                      {userProfile.isAuthor ? (
+                      </MenuItem>,
+                      userProfile.isAuthor ? (
                         <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
                           <Anchor
                             href={
@@ -295,8 +295,8 @@ export default function HeaderHub() {
                             <span>작가의 서재</span>
                           </Anchor>
                         </MenuItem>
-                      ) : null}
-                      {userProfile.hasAffettoMyPosts ? (
+                      ) : null,
+                      userProfile.hasAffettoMyPosts ? (
                         <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
                           <Anchor
                             href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
@@ -305,27 +305,27 @@ export default function HeaderHub() {
                             <span>독자의 서재</span>
                           </Anchor>
                         </MenuItem>
-                      ) : null}
+                      ) : null,
                       <MenuItem key="settings" onClick={handleCloseProfileMenu}>
                         <Anchor href="/settings">
                           <SettingsOutlinedIcon fontSize="small" />
                           <span>개인 설정</span>
                         </Anchor>
-                      </MenuItem>
+                      </MenuItem>,
                       <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
                         <ListItemIcon className={styles['MenuItem-icon']}>
                           <LogoutOutlinedIcon fontSize="small" />
                         </ListItemIcon>
                         <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                      </MenuItem>
-                    </>
-                  ) : (
-                    <MenuItem key="sign-in" onClick={handleCloseProfileMenu}>
-                      <Anchor href="/auth/sign-in">
-                        <span>로그인</span>
-                      </Anchor>
-                    </MenuItem>
-                  )}
+                      </MenuItem>,
+                    ]
+                    : [
+                        <MenuItem key="sign-in" onClick={handleCloseProfileMenu}>
+                          <Anchor href="/auth/sign-in">
+                            <span>로그인</span>
+                          </Anchor>
+                        </MenuItem>,
+                      ]}
                 </Menu>
               </div>
             </div>
