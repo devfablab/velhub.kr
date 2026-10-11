@@ -63,6 +63,7 @@ type SeriesRow = {
   site_id: string;
   last_published_at: string | null;
   is_completed: boolean;
+  is_subscription?: boolean | null;
   user_id: string | null;
 };
 
@@ -74,6 +75,8 @@ export type ContentResponse = {
     summary: string | null;
     content_html: string;
     content_markdown: string | null;
+    paid_preview_html: string | null;
+    paid_preview_markdown: string | null;
     thumbnail_image: string | null;
     thumbnail_width: number | null;
     thumbnail_height: number | null;
@@ -330,6 +333,8 @@ export default function Opt({
   const [summary, setSummary] = useState(initialContent?.content?.summary ?? '');
   const [contentHtml, setContentHtml] = useState(initialContent?.content?.content_html ?? '');
   const [contentMarkdown, setContentMarkdown] = useState(initialContent?.content?.content_markdown ?? '');
+  const [paidPreviewHtml, setPaidPreviewHtml] = useState(initialContent?.content?.paid_preview_html ?? '');
+  const [paidPreviewMarkdown, setPaidPreviewMarkdown] = useState(initialContent?.content?.paid_preview_markdown ?? '');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [thumbnailImage, setThumbnailImage] = useState(initialContent?.content?.thumbnail_image ?? '');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
@@ -339,7 +344,6 @@ export default function Opt({
   );
   const [promotion, setPromotion] = useState<BlogPromotionValue>(() => promotionFromResponse(initialPromotion));
   const [promotionLoaded] = useState(Boolean(initialPromotion));
-  const [promotionSubscription] = useState(Boolean(initialPromotion?.isSubscriptionSeries));
   const [hasBoard, setHasBoard] = useState(initialStatus?.hasBoard || false);
   const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
   const initialCategories = [...(initialCategory?.categories ?? [])];
@@ -358,6 +362,10 @@ export default function Opt({
     initialContent?.categories?.map((category) => category.category_key) ?? [],
   );
   const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
+  const isSubscriptionSeries = Boolean(
+    seriesList.find((series) => series.series_key === selectedSeriesKey)?.is_subscription,
+  );
+  const canRegisterPaidPreview = isSubscriptionSeries;
   const [isSeriesLocked, setIsSeriesLocked] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError || '');
   const [fieldErrors, setFieldErrors] = useState<{ subject?: string; content?: string }>({});
@@ -574,20 +582,26 @@ export default function Opt({
       return {
         contentHtml,
         contentMarkdown,
+        paidPreviewHtml,
+        paidPreviewMarkdown,
         uploadedPaths: [] as string[],
       };
     }
 
     let nextContentHtml = contentHtml;
     let nextContentMarkdown = contentMarkdown;
+    let nextPaidPreviewHtml = paidPreviewHtml;
+    let nextPaidPreviewMarkdown = paidPreviewMarkdown;
     const usedPreviewUrls = new Set<string>();
     const uploadedPaths: string[] = [];
 
     for (const image of currentEditorBlobImages) {
       const isUsedInHtml = nextContentHtml.includes(image.previewUrl);
       const isUsedInMarkdown = nextContentMarkdown.includes(image.previewUrl);
+      const isUsedInPaidPreviewHtml = nextPaidPreviewHtml.includes(image.previewUrl);
+      const isUsedInPaidPreviewMarkdown = nextPaidPreviewMarkdown.includes(image.previewUrl);
 
-      if (!isUsedInHtml && !isUsedInMarkdown) {
+      if (!isUsedInHtml && !isUsedInMarkdown && !isUsedInPaidPreviewHtml && !isUsedInPaidPreviewMarkdown) {
         URL.revokeObjectURL(image.previewUrl);
         continue;
       }
@@ -598,6 +612,8 @@ export default function Opt({
 
       nextContentHtml = replaceAllImageUrl(nextContentHtml, image.previewUrl, uploadedImage.url);
       nextContentMarkdown = replaceAllImageUrl(nextContentMarkdown, image.previewUrl, uploadedImage.url);
+      nextPaidPreviewHtml = replaceAllImageUrl(nextPaidPreviewHtml, image.previewUrl, uploadedImage.url);
+      nextPaidPreviewMarkdown = replaceAllImageUrl(nextPaidPreviewMarkdown, image.previewUrl, uploadedImage.url);
       usedPreviewUrls.add(image.previewUrl);
 
       URL.revokeObjectURL(image.previewUrl);
@@ -608,11 +624,15 @@ export default function Opt({
     editorBlobImagesReference.current = remainingEditorBlobImages;
     setContentHtml(nextContentHtml);
     setContentMarkdown(nextContentMarkdown);
+    setPaidPreviewHtml(nextPaidPreviewHtml);
+    setPaidPreviewMarkdown(nextPaidPreviewMarkdown);
     setEditorBlobImages(remainingEditorBlobImages);
 
     return {
       contentHtml: nextContentHtml,
       contentMarkdown: nextContentMarkdown,
+      paidPreviewHtml: nextPaidPreviewHtml,
+      paidPreviewMarkdown: nextPaidPreviewMarkdown,
       uploadedPaths,
     };
   }
@@ -676,6 +696,8 @@ export default function Opt({
           summary,
           contentHtml: uploadedEditorContent.contentHtml,
           contentMarkdown: uploadedEditorContent.contentMarkdown,
+          paidPreviewHtml: canRegisterPaidPreview ? uploadedEditorContent.paidPreviewHtml : null,
+          paidPreviewMarkdown: canRegisterPaidPreview ? uploadedEditorContent.paidPreviewMarkdown : null,
           thumbnailImage: thumbnailImage || null,
           thumbnailWidth,
           thumbnailHeight,
@@ -700,7 +722,7 @@ export default function Opt({
           body: JSON.stringify({
             siteName,
             ...promotion,
-            items: promotionSubscription ? promotion.items : [promotion.item],
+            items: isSubscriptionSeries ? promotion.items : [promotion.item],
           }),
         },
       );
@@ -818,7 +840,7 @@ export default function Opt({
 
               <BlogPostPromotionFields
                 siteName={siteName}
-                isSubscriptionSeries={promotionSubscription}
+                isSubscriptionSeries={isSubscriptionSeries}
                 initialStatus={
                   initialPromotion
                     ? {
@@ -876,8 +898,34 @@ export default function Opt({
                 </Stack>
               </Stack>
 
+              {canRegisterPaidPreview ? (
+                <>
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">미리보기</Typography>
+                    <Typography variant="body2">연재 구독하지 않은 독자에게 보여줄 내용을 작성해주세요.</Typography>
+                  </Stack>
+                  <ToastEditor
+                    key={`paid-preview-${selectedSeriesKey}`}
+                    initialValue={paidPreviewHtml}
+                    initialMarkdown={paidPreviewMarkdown}
+                    initialEditType="wysiwyg"
+                    themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                    markdownStatus="markdown_default"
+                    hideModeSwitch
+                    onHtmlChange={setPaidPreviewHtml}
+                    onMarkdownChange={setPaidPreviewMarkdown}
+                    onUploadImage={handleUploadEditorImage}
+                  />
+                </>
+              ) : null}
+
               <Stack gap={1}>
-                <Typography sx={{ mb: 1 }}>내용 *</Typography>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">{canRegisterPaidPreview ? '본문작성 *' : '내용 *'}</Typography>
+                  {canRegisterPaidPreview ? (
+                    <Typography variant="body2">연재를 구독한 독자에게 보여줄 본문 내용을 작성해주세요.</Typography>
+                  ) : null}
+                </Stack>
                 <ToastEditor
                   initialValue={contentHtml}
                   initialMarkdown={contentMarkdown}
