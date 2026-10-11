@@ -24,6 +24,7 @@ import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import ResponsivePopup from '../../ResponsivePopup';
@@ -385,10 +386,7 @@ export default function Opt({
   return (
     <Stack gap={2}>
       {isLoginRequired ? (
-        <div className="paper page-info">
-          <WarningAmberRoundedIcon />
-          <span>로그인이 필요합니다.</span>
-        </div>
+        <LoginRequiredScreen />
       ) : errorMessage ? (
         <div className="paper page-error">
           <WarningAmberRoundedIcon />
