@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
         'slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id',
       )
       .eq('is_closed', false)
+      .eq('is_wording_blinded', false)
       .not('published_at', 'is', null)
       .in('board_id', boardIds)
       .order(sortBy, { ascending: false })

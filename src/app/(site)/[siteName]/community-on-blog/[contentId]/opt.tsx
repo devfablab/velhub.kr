@@ -9,6 +9,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Avatar,
   Dialog,
@@ -40,6 +41,7 @@ export type BlogCommunityPostResponse = {
     authorAvatarUrl: string | null;
     authorBadgeUrl: string | null;
     isAuthor: boolean;
+    isWordingBlinded: boolean;
     isOwner: boolean;
     isOperator: boolean;
     images: string[];
@@ -166,6 +168,14 @@ export default function Opt({
                 </div>
               </header>
             </div>
+            {post.isAuthor && post.isWordingBlinded ? (
+              <div className="paper">
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>워딩 프로파일러에 의해 글이 비공개 처리되었습니다. 혐오 표현은 사용하실 수 없어요.</span>
+                </p>
+              </div>
+            ) : null}
             <div className={`${styles['board-container']} ${styles['feed-board']}`}>
               <div className="paper">
                 <p>

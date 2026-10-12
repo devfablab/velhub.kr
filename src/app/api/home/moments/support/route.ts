@@ -90,6 +90,7 @@ export async function GET(request: Request) {
           `,
             )
             .in('id', postIds)
+            .eq('is_wording_blinded', false)
         : { data: [], error: null },
     ]);
 

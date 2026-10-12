@@ -7,6 +7,7 @@ import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } 
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getWordingProfilerViolationFields } from '@/lib/wordingProfiler/server';
 
 type RouteContext = {
   params: Promise<{
@@ -97,6 +98,28 @@ type PaidContentAccess = {
   has_purchase_post: boolean;
   can_view_paid_content: boolean;
 };
+
+function getStoredPollWordingFields(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  const poll = value as { question?: unknown; options?: unknown };
+  const question = typeof poll.question === 'string' ? poll.question : null;
+  const options = Array.isArray(poll.options) ? poll.options : [];
+
+  return {
+    pollQuestion: question,
+    ...Object.fromEntries(
+      options.map((option, index) => [
+        `pollOption${index}`,
+        option && typeof option === 'object' && typeof (option as { label?: unknown }).label === 'string'
+          ? (option as { label: string }).label
+          : null,
+      ]),
+    ),
+  };
+}
 
 function getRegisteredPaidPreview({
   boardType,
@@ -1166,7 +1189,7 @@ export async function GET(request: Request, context: RouteContext) {
     const post = await supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, preview_html, preview_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, preview_html, preview_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', boardData.id)
@@ -1180,6 +1203,10 @@ export async function GET(request: Request, context: RouteContext) {
     const postData = post.data;
 
     const isAuthor = Boolean(session.stigmaId) && postData.user_id === session.stigmaId;
+
+    if (postData.is_wording_blinded === true && !isAuthor) {
+      return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    }
     let canDeleteContent = canManageContent || isAuthor;
     let canEditContent = canManageContent || isAuthor;
 
@@ -1541,6 +1568,19 @@ export async function GET(request: Request, context: RouteContext) {
       canViewPaidContent &&
       (paidContentAccess.has_subscription_series || paidContentAccess.has_purchase_post) &&
       !isAuthor;
+    const wordingViolationFields =
+      rhizomeData.site_type === 'community' && postData.is_wording_blinded === true && canEditContent
+        ? await getWordingProfilerViolationFields(rhizomeData.id, {
+            subject: postData.subject,
+            summary: postData.summary,
+            contentHtml: postData.content_html,
+            contentMarkdown: postData.content_markdown,
+            contentSimple: postData.content_simple,
+            previewHtml: postData.preview_html,
+            previewMarkdown: postData.preview_markdown,
+            ...getStoredPollWordingFields(postData.poll),
+          })
+        : [];
     const promotion =
       rhizomeData.site_type === 'blog'
         ? await getVisibleBlogPostPromotion({
@@ -1619,6 +1659,7 @@ export async function GET(request: Request, context: RouteContext) {
       canManageContent,
       canEditContent,
       canDeleteContent,
+      wordingViolationFields,
       canMovePost: isAuthor || canMovePost,
     });
   } catch (unknownError) {

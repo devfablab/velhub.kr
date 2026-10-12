@@ -162,7 +162,8 @@ export async function GET(request: Request) {
     const postsResult = await supabaseAdmin
       .from('posts')
       .select('id, site_id, board_id, slug, subject, user_id, created_at, published_at, published_status, is_closed')
-      .in('id', postIds);
+      .in('id', postIds)
+      .or(`is_wording_blinded.eq.false,user_id.eq.${session.stigmaId ?? ''}`);
 
     if (postsResult.error) {
       return Response.json({ error: '소장/후원글 정보를 불러오지 못했습니다.' }, { status: 500 });

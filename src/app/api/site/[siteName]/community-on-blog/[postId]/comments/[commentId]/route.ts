@@ -2,6 +2,7 @@ import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommu
 import { isNumericContentSlug } from '@/lib/contentSlug';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler/server';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string; commentId: string }> };
 
@@ -52,7 +53,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     const body = (await request.json().catch(() => null)) as { content?: unknown } | null;
     const content = normalizeText(typeof body?.content === 'string' ? body.content : '');
     if (!content) return Response.json({ error: '댓글을 입력해주세요.' }, { status: 400 });
-    const result = await supabaseAdmin.from('blog_community_comments').update({ content }).eq('id', comment.id);
+    if (await hasWordingProfilerViolation(feature.siteId, { content })) {
+      return Response.json({ code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_COMMENT_EDIT_ERROR, fields: ['content'] }, { status: 400 });
+    }
+    const result = await supabaseAdmin
+      .from('blog_community_comments')
+      .update({ content, is_wording_blinded: false })
+      .eq('id', comment.id);
     if (result.error) throw new Error('댓글을 수정하지 못했습니다.');
     return Response.json({ ok: true });
   } catch (error) {

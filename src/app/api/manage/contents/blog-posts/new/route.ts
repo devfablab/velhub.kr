@@ -164,10 +164,21 @@ export async function POST(request: Request) {
     });
 
     if (post.error || !Array.isArray(post.data) || !post.data[0]) {
-      return Response.json({ error: post.error?.message || '블로그 글 출간에 실패했습니다.' }, { status: 500 });
+      console.error('create_post_with_blog_board failed', post.error);
+      return Response.json({ error: '블로그 글 출간에 실패했습니다. 잠시 후 다시 시도해주세요.' }, { status: 500 });
     }
 
     const createdPost = post.data[0];
+    const createdPostRecord = await supabaseAdmin
+      .from('posts')
+      .select('slug')
+      .eq('id', createdPost.post_id)
+      .maybeSingle();
+
+    if (createdPostRecord.error || !createdPostRecord.data?.slug) {
+      console.error('created blog post slug lookup failed', createdPostRecord.error);
+      return Response.json({ error: '블로그 글 주소를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.' }, { status: 500 });
+    }
 
     if (requestBody.promotion?.type && requestBody.promotion.type !== 'none') {
       try {
@@ -188,7 +199,7 @@ export async function POST(request: Request) {
       boardId: createdPost.board_id,
       postId: createdPost.post_id,
       createdBoard: createdPost.created_board,
-      slug: String(createdPost.slug),
+      slug: String(createdPostRecord.data.slug),
       idx: createdPost.idx,
       publishedStatus: action === 'unknown' ? 'unknown' : 'published',
     });

@@ -1,6 +1,6 @@
 'use client';
 
-import { MouseEvent, useMemo, useState } from 'react';
+import { MouseEvent, useEffect, useMemo, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -96,13 +96,39 @@ export default function TableListMobile({
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName);
   const initialData = useSiteInitialData();
-
-  const boards = (initialData?.boards ?? []).filter(
+  const [currentBoards, setCurrentBoards] = useState<BoardItem[]>(() => (initialData?.boards ?? []) as BoardItem[]);
+  const boards = currentBoards.filter(
     (item) => item.is_active === true && item.board_type !== 'page',
   ) as BoardItem[];
   const writeBoards = useMemo(() => (initialData?.writeBoards ?? []) as BoardItem[], [initialData?.writeBoards]);
   const [alertMessage, setAlertMessage] = useState('');
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!siteName) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void fetch(`/api/boards?siteName=${encodeURIComponent(siteName)}`)
+      .then(async (response) => {
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { boards?: BoardItem[] };
+
+        if (isMounted && Array.isArray(data.boards)) {
+          setCurrentBoards(data.boards);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [siteName]);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));

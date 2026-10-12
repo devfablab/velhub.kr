@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler/server';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string }> };
 const MAX_CONTENT_LENGTH = 10_000;
@@ -39,13 +40,15 @@ export async function GET(_request: Request, context: RouteContext) {
     const postResult = await supabaseAdmin
       .from('blog_community_posts')
       .select(
-        'id, slug, site_id, user_id, content, created_at, edited_at, is_deleted, draw_type, draw_limit, draw_ends_at',
+        'id, slug, site_id, user_id, content, created_at, edited_at, is_deleted, is_wording_blinded, draw_type, draw_limit, draw_ends_at',
       )
       .eq('slug', slug)
       .eq('site_id', feature.siteId)
       .maybeSingle();
     if (postResult.error) throw new Error('글을 불러오지 못했습니다.');
     if (!postResult.data || postResult.data.is_deleted)
+      return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    if (postResult.data.is_wording_blinded && feature.stigmaId !== postResult.data.user_id)
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
 
     await completeBlogCommunityRandomDraw({
@@ -119,6 +122,10 @@ export async function GET(_request: Request, context: RouteContext) {
       drawType === 'first_come'
         ? (drawsResult.data ?? []).length >= (drawLimit ?? 0)
         : Boolean(postResult.data.draw_ends_at && new Date(postResult.data.draw_ends_at).getTime() <= Date.now());
+    const wordingViolationFields =
+      postResult.data.is_wording_blinded && feature.stigmaId === postResult.data.user_id
+        ? await getWordingProfilerViolationFields(feature.siteId, { content: postResult.data.content })
+        : [];
     return Response.json({
       post: {
         slug: String(postResult.data.slug),
@@ -129,6 +136,7 @@ export async function GET(_request: Request, context: RouteContext) {
         authorAvatarUrl: authorResult.data?.avatar ?? null,
         authorBadgeUrl: badgeByUser.get(postResult.data.user_id) ?? null,
         isAuthor: feature.stigmaId === postResult.data.user_id,
+        isWordingBlinded: postResult.data.is_wording_blinded === true,
         isOwner: feature.isOwner,
         isOperator: feature.isOperator,
         images: (imagesResult.data ?? []).map((image) => image.image_url),
@@ -150,6 +158,7 @@ export async function GET(_request: Request, context: RouteContext) {
       },
       previousPost: previousResult.data ? { slug: String(previousResult.data.slug) } : null,
       nextPost: nextResult.data ? { slug: String(nextResult.data.slug) } : null,
+      wordingViolationFields,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : '글을 불러오지 못했습니다.';
@@ -179,7 +188,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const supabaseAdmin = getSupabaseAdmin();
     const postResult = await supabaseAdmin
       .from('blog_community_posts')
-      .select('id, user_id, content, is_deleted, draw_type, draw_limit, draw_ends_at')
+      .select('id, user_id, content, is_deleted, is_wording_blinded, draw_type, draw_limit, draw_ends_at')
       .eq('slug', slug)
       .eq('site_id', feature.siteId)
       .maybeSingle();
@@ -187,6 +196,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     if (postResult.data.user_id !== feature.stigmaId)
       return Response.json({ error: '작성자만 수정할 수 있습니다.' }, { status: 403 });
+    const wordingViolationFields = await getWordingProfilerViolationFields(feature.siteId, { content });
+    if (wordingViolationFields.length) {
+      return Response.json(
+        { code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_POST_EDIT_ERROR, fields: wordingViolationFields },
+        { status: 400 },
+      );
+    }
     const draw = normalizeBlogCommunityDraw(body ?? {});
     if ('error' in draw) return Response.json({ error: draw.error }, { status: 400 });
     const currentDrawType =
@@ -219,6 +235,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         draw_type: draw.drawType,
         draw_limit: draw.drawLimit,
         draw_ends_at: draw.drawEndsAt,
+        is_wording_blinded: false,
         edited_at: new Date().toISOString(),
       })
       .eq('id', postResult.data.id);

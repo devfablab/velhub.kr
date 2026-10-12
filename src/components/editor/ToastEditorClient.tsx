@@ -101,11 +101,6 @@ export default function ToastEditorClient({
   }, [initialEditType, initialMarkdown, initialValue]);
 
   useEffect(() => {
-    syncEditorValue();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorInitialValue]);
-
-  useEffect(() => {
     onReady?.();
   }, [onReady]);
 

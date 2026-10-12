@@ -94,6 +94,7 @@ export async function GET(request: Request) {
       `,
       )
       .in('user_id', userIds)
+      .eq('is_wording_blinded', false)
       .not('published_at', 'is', null)
       .order('published_at', { ascending: false })
       .limit(limit);

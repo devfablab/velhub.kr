@@ -346,7 +346,11 @@ export async function GET() {
             .in('id', seriesTargetIds)
         : { data: [], error: null },
       postTargetIds.length
-        ? supabaseAdmin.from('posts').select('id, site_id, board_id, slug, subject').in('id', postTargetIds)
+        ? supabaseAdmin
+            .from('posts')
+            .select('id, site_id, board_id, slug, subject')
+            .in('id', postTargetIds)
+            .eq('is_wording_blinded', false)
         : { data: [], error: null },
       membershipTargetIds.length
         ? supabaseAdmin.from('memberships').select('id, membership_type').in('id', membershipTargetIds)

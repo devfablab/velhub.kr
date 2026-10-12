@@ -182,6 +182,7 @@ export async function GET(request: Request) {
             .from('posts')
             .select('id, slug, subject, user_id, site_id, board_id, published_status, is_closed')
             .in('id', postIds)
+            .or(`is_wording_blinded.eq.false,user_id.eq.${session.stigmaId ?? ''}`)
         : { data: [], error: null },
       boardIds.length > 0
         ? supabaseAdmin.from('boards').select('id, board_key').in('id', boardIds)

@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string }> };
 
@@ -63,7 +64,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const supabaseAdmin = getSupabaseAdmin();
     const commentsResult = await supabaseAdmin
       .from('blog_community_comments')
-      .select('id, user_id, parent_id, reply_to_id, content, created_at, is_deleted, deleted_at, is_blinded')
+      .select('id, user_id, parent_id, reply_to_id, content, created_at, is_deleted, deleted_at, is_blinded, is_wording_blinded')
       .eq('site_id', feature.siteId)
       .eq('post_id', postData.id)
       .order('created_at');
@@ -91,6 +92,7 @@ export async function GET(_request: Request, context: RouteContext) {
       const replyToAuthor = replyTo ? authors.get(replyTo.user_id) : null;
       const isDeleted = comment.is_deleted === true;
       const isBlinded = comment.is_blinded === true;
+      const isWordingBlinded = comment.is_wording_blinded === true;
       const isMe = feature.stigmaId === comment.user_id;
 
       return {
@@ -99,13 +101,14 @@ export async function GET(_request: Request, context: RouteContext) {
         parent_id: comment.parent_id,
         reply_to_id: comment.reply_to_id,
         reply_to_author_name: replyToAuthor?.name ?? '',
-        content: isDeleted ? '삭제된 댓글입니다.' : isBlinded ? '숨김 처리된 댓글입니다.' : comment.content,
+        content: isWordingBlinded && !isMe ? null : isDeleted ? '삭제된 댓글입니다.' : isBlinded ? '숨김 처리된 댓글입니다.' : comment.content,
         is_deleted: isDeleted,
         deleted_at: comment.deleted_at,
         is_locked: false,
         is_blinded: isBlinded,
+        is_wording_blinded: isWordingBlinded,
         blinded_at: null,
-        blinded_message: null,
+        blinded_message: isWordingBlinded && !isMe ? '워딩 프로파일러에 의해 비공개 처리된 댓글입니다.' : null,
         is_pinned: false,
         author_name: authors.get(comment.user_id)?.name ?? '알 수 없음',
         author_avatar_url: authors.get(comment.user_id)?.avatarUrl ?? '',
@@ -189,12 +192,19 @@ export async function POST(request: Request, context: RouteContext) {
     if (parentId) {
       const parent = await getSupabaseAdmin()
         .from('blog_community_comments')
-        .select('id, parent_id')
+        .select('id, parent_id, is_deleted, is_blinded, is_wording_blinded')
         .eq('id', parentId)
         .eq('post_id', post.id)
         .eq('site_id', feature.siteId)
         .maybeSingle();
-      if (parent.error || !parent.data || parent.data.parent_id)
+      if (
+        parent.error ||
+        !parent.data ||
+        parent.data.parent_id ||
+        parent.data.is_deleted ||
+        parent.data.is_blinded ||
+        parent.data.is_wording_blinded
+      )
         return Response.json({ error: '답글을 작성할 수 없는 댓글입니다.' }, { status: 400 });
     }
     const result = await getSupabaseAdmin()
@@ -204,6 +214,7 @@ export async function POST(request: Request, context: RouteContext) {
         post_id: post.id,
         user_id: feature.stigmaId,
         content,
+        is_wording_blinded: await hasWordingProfilerViolation(feature.siteId, { content }),
         parent_id: parentId,
         reply_to_id: replyToId,
       })

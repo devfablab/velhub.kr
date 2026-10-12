@@ -227,6 +227,7 @@ type PostContent = {
   series_idx: number | null;
   created_at: string;
   is_closed: boolean;
+  is_wording_blinded: boolean;
   is_locked: boolean;
   closed_message: string | null;
   published_status: 'draft' | 'published' | 'unknown';
@@ -1225,6 +1226,14 @@ export default function Opt({
                 </header>
               </div>
             )}
+            {initialData?.isAuthor && content.is_wording_blinded ? (
+              <div className="paper">
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>워딩 프로파일러에 의해 글이 비공개 처리되었습니다. 혐오 표현은 사용하실 수 없어요.</span>
+                </p>
+              </div>
+            ) : null}
             {isGalleryBoard ? (
               <div className={`${styles['board-container']} ${styles['gallery-board']}`}>
                 <div className="paper">
@@ -1707,10 +1716,10 @@ export default function Opt({
             </Drawer>
           ) : (
             <Dialog
-            open={isSeriesMoveDialogOpen}
-            onClose={() => setIsSeriesMoveDialogOpen(false)}
-            maxWidth="xs"
-            className="vh-dialog vh-alert-dialog"
+              open={isSeriesMoveDialogOpen}
+              onClose={() => setIsSeriesMoveDialogOpen(false)}
+              maxWidth="xs"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>글 이동</DialogTitle>
               <button type="button" className="close-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
@@ -1783,10 +1792,10 @@ export default function Opt({
             </Drawer>
           ) : (
             <Dialog
-            open={isPostMoveDialogOpen}
-            onClose={() => setIsPostMoveDialogOpen(false)}
-            maxWidth="xs"
-            className="vh-dialog vh-alert-dialog"
+              open={isPostMoveDialogOpen}
+              onClose={() => setIsPostMoveDialogOpen(false)}
+              maxWidth="xs"
+              className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>글 이동</DialogTitle>
               <button type="button" className="close-button" onClick={() => setIsPostMoveDialogOpen(false)}>

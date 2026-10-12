@@ -1,4 +1,5 @@
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import ContactsOutlinedIcon from '@mui/icons-material/ContactsOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
@@ -90,6 +91,15 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
           <span>콘텐츠 관리</span>
         </Anchor>
       </MenuItem>
+
+      {showAllManageMenus ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/denywords`}>
+            <BlockOutlinedIcon fontSize="small" />
+            <span>단어차단 필터링</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
       {isBlogOwner ? (
         <MenuItem onClick={onClose}>

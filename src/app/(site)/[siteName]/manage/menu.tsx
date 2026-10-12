@@ -63,7 +63,8 @@ type ContainerProps = {
     | 'payments'
     | 'stats'
     | 'reports'
-    | 'community';
+    | 'community'
+    | 'denywords';
   children: React.ReactNode;
 };
 
@@ -605,6 +606,10 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
         { href: `/${siteName}/manage/community-on-blog/posts`, label: '커뮤니티 관리', startsWith: false },
         { href: `/${siteName}/manage/community-on-blog/badge`, label: '멤버십팬 배지', startsWith: true },
       ];
+    }
+
+    if (menu === 'denywords') {
+      return [{ href: `/${siteName}/manage/denywords`, label: '단어차단 필터링', startsWith: true }];
     }
 
     if (menu === 'design') {

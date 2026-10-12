@@ -1,11 +1,12 @@
 'use client';
 
 import { type ChangeEvent, type JSX, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 import HowToVoteRoundedIcon from '@mui/icons-material/HowToVoteRounded';
@@ -122,6 +123,7 @@ export type ContentResponse = {
   series?: SeriesRow | null;
   isAuthor: boolean;
   isStaff: boolean;
+  wordingViolationFields?: string[];
   error?: string;
 };
 
@@ -174,6 +176,8 @@ type UpdateResponse = {
   contentId?: string;
   publishedStatus?: 'draft' | 'published';
   error?: string;
+  code?: string;
+  fields?: string[];
 };
 
 type PostImageRow = {
@@ -671,13 +675,11 @@ export default function Opt({
 }: Props) {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const theme = useTheme();
 
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
-  const returnSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
@@ -788,7 +790,11 @@ export default function Opt({
   const [isUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
+  const [wordingViolationFields, setWordingViolationFields] = useState<string[]>(
+    () => initialContent?.wordingViolationFields ?? [],
+  );
 
+  const hasWordingViolation = (field: string) => wordingViolationFields.includes(field);
   const isBasicBoard = boardType === 'basic';
   const isGalleryBoard = boardType === 'gallery';
   const isYoutubeBoard = boardType === 'youtube';
@@ -1250,7 +1256,7 @@ export default function Opt({
     setPollDialogOpen(false);
   }
 
-  function applyPollDialog() {
+  async function applyPollDialog() {
     try {
       const normalizedQuestion = normalizeText(pollDialog.question);
 
@@ -1313,6 +1319,35 @@ export default function Opt({
           imagePreviewUrl: pollDialog.useOptionThumbnail ? option.imagePreviewUrl : '',
         })),
       };
+
+      const response = await fetch(`/api/boards/${boardName}/wording-check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          poll: {
+            question: nextPoll.question,
+            options: nextPoll.options.map((option) => ({ label: option.label })),
+          },
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as { fields?: string[]; error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error || '워딩 프로파일러를 확인하지 못했습니다.');
+      }
+
+      const pollWordingViolationFields = result?.fields ?? [];
+      setWordingViolationFields((previousFields) => [
+        ...previousFields.filter((field) => !field.startsWith('poll')),
+        ...pollWordingViolationFields,
+      ]);
+
+      if (pollWordingViolationFields.length > 0) {
+        setPollDialogMessage('혐오 표현이 여전히 존재합니다.');
+        return;
+      }
 
       revokeUnusedPollPreviewUrls(poll, nextPoll);
       revokeUnusedPollPreviewUrls(pollDialog, nextPoll);
@@ -1885,6 +1920,13 @@ export default function Opt({
       const result = (await response.json()) as UpdateResponse;
 
       if (!response.ok) {
+        if (result.code === 'WORDING_PROFILER_VIOLATION') {
+          setWordingViolationFields(result.fields ?? []);
+        }
+        if (result.code === 'WORDING_PROFILER_VIOLATION' && result.fields?.some((field) => field.startsWith('poll'))) {
+          setPollDialogMessage(result.error ?? '혐오 표현이 여전히 존재합니다.');
+          setPollDialogOpen(true);
+        }
         throw new Error(result.error ?? '글 수정에 실패했습니다.');
       }
 
@@ -1899,11 +1941,6 @@ export default function Opt({
 
       if (!result.slug) {
         throw new Error('글 수정에 실패했습니다.');
-      }
-
-      if (returnSeriesName && selectedSeriesKey) {
-        router.replace(`/${siteName}/s/${selectedSeriesKey}`);
-        return;
       }
 
       router.replace(`/${siteName}/${boardName}/${result.slug}`);
@@ -2072,10 +2109,17 @@ export default function Opt({
                               required={!isFeedBoard}
                               placeholder="제목을 입력해 주세요"
                               style={{ paddingLeft: subjectPaddingLeft }}
-                              onChange={(event) => setSubject(event.currentTarget.value)}
+                              className={hasWordingViolation('subject') ? styles['wording-error'] : undefined}
+                              aria-invalid={hasWordingViolation('subject')}
+                              onChange={(event) => {
+                                setSubject(event.currentTarget.value);
+                              }}
                             />
                           </div>
                         </div>
+                        {hasWordingViolation('subject') ? (
+                          <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        ) : null}
                       </div>
                     ) : null}
 
@@ -2088,10 +2132,17 @@ export default function Opt({
                               value={summary}
                               placeholder="부제목을 입력해 해주세요"
                               style={{ paddingLeft: 12 }}
-                              onChange={(event) => setSummary(event.currentTarget.value)}
+                              className={hasWordingViolation('summary') ? styles['wording-error'] : undefined}
+                              aria-invalid={hasWordingViolation('summary')}
+                              onChange={(event) => {
+                                setSummary(event.currentTarget.value);
+                              }}
                             />
                           </div>
                         </div>
+                        {hasWordingViolation('summary') ? (
+                          <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        ) : null}
                       </div>
                     ) : null}
 
@@ -2187,12 +2238,18 @@ export default function Opt({
                   {isFeedBoard ? (
                     <div className="paper paper-p0">
                       <textarea
-                        className={`${styles['content-simple']} ${styles['content-simple-feed-edit']}`}
+                        className={`${styles['content-simple']} ${styles['content-simple-feed-edit']} ${hasWordingViolation('contentSimple') ? styles['wording-error'] : ''}`}
                         value={contentSimple}
                         required={isFeedBoard}
                         placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
-                        onChange={(event) => setContentSimple(event.currentTarget.value)}
+                        aria-invalid={hasWordingViolation('contentSimple')}
+                        onChange={(event) => {
+                          setContentSimple(event.currentTarget.value);
+                        }}
                       />
+                      {hasWordingViolation('contentSimple') ? (
+                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                      ) : null}
                     </div>
                   ) : null}
 
@@ -2205,13 +2262,19 @@ export default function Opt({
                       <div className="paper paper-p0">
                         <textarea
                           ref={youtubeSummaryReference}
-                          className={`${styles['content-simple']} ${styles['content-simple-youtube-edit']}`}
+                          className={`${styles['content-simple']} ${styles['content-simple-youtube-edit']} ${hasWordingViolation('summary') ? styles['wording-error'] : ''}`}
                           value={summary}
                           required={isYoutubeBoard}
                           placeholder="영상설명을 간단히 입력해주세요"
-                          onChange={(event) => setSummary(event.currentTarget.value)}
+                          aria-invalid={hasWordingViolation('summary')}
+                          onChange={(event) => {
+                            setSummary(event.currentTarget.value);
+                          }}
                         />
                       </div>
+                      {hasWordingViolation('summary') ? (
+                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                      ) : null}
                     </>
                   ) : null}
 
@@ -2236,11 +2299,18 @@ export default function Opt({
                               themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
                               markdownStatus={markdownStatus}
                               hideModeSwitch
-                              onHtmlChange={setPaidPreviewHtml}
-                              onMarkdownChange={setPaidPreviewMarkdown}
+                              onHtmlChange={(value) => {
+                                setPaidPreviewHtml(value);
+                              }}
+                              onMarkdownChange={(value) => {
+                                setPaidPreviewMarkdown(value);
+                              }}
                               onUploadImage={handleUploadEditorImage}
                             />
                           </div>
+                          {hasWordingViolation('previewHtml') || hasWordingViolation('previewMarkdown') ? (
+                            <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                          ) : null}
                         </fieldset>
                       </div>
                       <div className="paper">
@@ -2255,21 +2325,30 @@ export default function Opt({
                   ) : null}
 
                   {isBasicBoard || isGalleryBoard ? (
-                    <div
-                      className={`${styles.editor} ${isBasicBoard ? styles['editor-basic-edit'] : styles['editor-gallery-edit']} service-editor`}
-                    >
-                      <ToastEditor
+                    <>
+                      <div
+                        className={`${styles.editor} ${isBasicBoard ? styles['editor-basic-edit'] : styles['editor-gallery-edit']} service-editor`}
+                      >
+                        <ToastEditor
                         initialValue={contentHtml}
                         initialMarkdown={contentMarkdown}
                         initialEditType="wysiwyg"
                         themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
                         markdownStatus={markdownStatus}
                         hideModeSwitch
-                        onHtmlChange={setContentHtml}
-                        onMarkdownChange={setContentMarkdown}
+                        onHtmlChange={(value) => {
+                          setContentHtml(value);
+                        }}
+                        onMarkdownChange={(value) => {
+                          setContentMarkdown(value);
+                        }}
                         onUploadImage={handleUploadEditorImage}
-                      />
-                    </div>
+                        />
+                      </div>
+                      {hasWordingViolation('contentHtml') || hasWordingViolation('contentMarkdown') ? (
+                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                      ) : null}
+                    </>
                   ) : null}
 
                   <div className="paper">
@@ -2641,7 +2720,12 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <div className={`VhiDrawer-bottom-content ${styles['poll-dialog-content']}`}>
-                {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
+                {pollDialogMessage && !wordingViolationFields.some((field) => field.startsWith('poll')) ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{pollDialogMessage}</span>
+                  </p>
+                ) : null}
 
                 <div className={styles['form-group']}>
                   <div className={styles['form-control']}>
@@ -2649,6 +2733,8 @@ export default function Opt({
                       type="text"
                       value={pollDialog.question}
                       placeholder="투표 질문을 입력해주세요"
+                      className={hasWordingViolation('pollQuestion') ? styles['wording-error'] : undefined}
+                      aria-invalid={hasWordingViolation('pollQuestion')}
                       onChange={(event) => {
                         const nextQuestion = event.currentTarget.value;
 
@@ -2675,10 +2761,14 @@ export default function Opt({
                     }
                   />
                 </div>
+                {hasWordingViolation('pollQuestion') ? (
+                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                ) : null}
 
                 <div className={styles['poll-options']}>
                   {pollDialog.options.map((option, index) => (
-                    <div key={index} className={styles['poll-option']}>
+                    <div key={index}>
+                      <div className={styles['poll-option']}>
                       <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
                       <div className={styles['form-control']}>
                         <input
@@ -2686,10 +2776,13 @@ export default function Opt({
                           placeholder="항목을 입력해주세요"
                           type="text"
                           value={option.label}
-                          onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
+                          className={hasWordingViolation(`pollOption${index}`) ? styles['wording-error'] : undefined}
+                          aria-invalid={hasWordingViolation(`pollOption${index}`)}
+                          onChange={(event) => {
+                            updatePollDialogOptionLabel(index, event.currentTarget.value);
+                          }}
                         />
                       </div>
-
                       {pollDialog.useOptionThumbnail ? (
                         <div className={styles['poll-option-image']}>
                           {option.imagePreviewUrl || option.imageUrl ? (
@@ -2715,6 +2808,10 @@ export default function Opt({
                             </div>
                           )}
                         </div>
+                      ) : null}
+                      </div>
+                      {hasWordingViolation(`pollOption${index}`) ? (
+                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
                       ) : null}
                     </div>
                   ))}
@@ -2854,7 +2951,12 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent className={styles['poll-dialog-content']}>
-                {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
+                {pollDialogMessage && !wordingViolationFields.some((field) => field.startsWith('poll')) ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{pollDialogMessage}</span>
+                  </p>
+                ) : null}
 
                 <div className={styles['form-group']}>
                   <div className={styles['form-control']}>
@@ -2862,6 +2964,8 @@ export default function Opt({
                       type="text"
                       value={pollDialog.question}
                       placeholder="투표 질문을 입력해주세요"
+                      className={hasWordingViolation('pollQuestion') ? styles['wording-error'] : undefined}
+                      aria-invalid={hasWordingViolation('pollQuestion')}
                       onChange={(event) => {
                         const nextQuestion = event.currentTarget.value;
 
@@ -2888,10 +2992,14 @@ export default function Opt({
                     }
                   />
                 </div>
+                {hasWordingViolation('pollQuestion') ? (
+                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                ) : null}
 
                 <div className={styles['poll-options']}>
                   {pollDialog.options.map((option, index) => (
-                    <div key={index} className={styles['poll-option']}>
+                    <div key={index}>
+                      <div className={styles['poll-option']}>
                       <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
                       <div className={styles['form-control']}>
                         <input
@@ -2899,10 +3007,13 @@ export default function Opt({
                           placeholder="항목을 입력해주세요"
                           type="text"
                           value={option.label}
-                          onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
+                          className={hasWordingViolation(`pollOption${index}`) ? styles['wording-error'] : undefined}
+                          aria-invalid={hasWordingViolation(`pollOption${index}`)}
+                          onChange={(event) => {
+                            updatePollDialogOptionLabel(index, event.currentTarget.value);
+                          }}
                         />
                       </div>
-
                       {pollDialog.useOptionThumbnail ? (
                         <div className={styles['poll-option-image']}>
                           {option.imagePreviewUrl || option.imageUrl ? (
@@ -2928,6 +3039,10 @@ export default function Opt({
                             </div>
                           )}
                         </div>
+                      ) : null}
+                      </div>
+                      {hasWordingViolation(`pollOption${index}`) ? (
+                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
                       ) : null}
                     </div>
                   ))}

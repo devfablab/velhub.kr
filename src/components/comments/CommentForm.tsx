@@ -1,6 +1,7 @@
 'use client';
 
 import { type ChangeEvent, JSX, type ReactNode, useId, useRef, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import Avatar from '@mui/material/Avatar';
 import styles from '@/app/comments.module.sass';
 
@@ -15,7 +16,7 @@ type Props = {
   externalErrorMessage?: string;
   getYoutubeCurrentTime?: () => number | null;
   renderDonationAction?: (formId: string) => ReactNode;
-  onSubmit: (content: string) => Promise<void>;
+  onSubmit: (content: string) => Promise<string | void>;
   onCancel?: () => void;
 };
 
@@ -101,8 +102,14 @@ export default function CommentForm({
       return;
     }
 
+    const submitError = await onSubmit(normalizedContent);
+
+    if (submitError) {
+      setErrorMessage(submitError);
+      return;
+    }
+
     setErrorMessage('');
-    await onSubmit(normalizedContent);
     setContent('');
 
     window.requestAnimationFrame(() => {
@@ -115,7 +122,10 @@ export default function CommentForm({
       <fieldset>
         <legend>댓글쓰기 폼</legend>
         {errorMessage || externalErrorMessage ? (
-          <p className="helper error">{errorMessage || externalErrorMessage}</p>
+          <p className="alert error" style={{ marginBottom: '0.5rem' }}>
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage || externalErrorMessage}</span>
+          </p>
         ) : null}
         <div className={styles.textarea}>
           <Avatar

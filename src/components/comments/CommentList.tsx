@@ -188,7 +188,7 @@ export default function CommentList({
     void loadComments();
   }, [initialData, loadComments]);
 
-  async function createComment(content: string, parentId: string | null) {
+  async function createComment(content: string, parentId: string | null): Promise<string | void> {
     try {
       setIsSubmitting(true);
       setErrorMessage('');
@@ -216,17 +216,17 @@ export default function CommentList({
       await loadComments();
       setActiveReplyTargetId('');
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '댓글 작성에 실패했습니다.');
-      } else {
-        setErrorMessage('댓글 작성에 실패했습니다.');
-      }
+      const nextErrorMessage =
+        unknownError instanceof Error ? unknownError.message || '댓글 작성에 실패했습니다.' : '댓글 작성에 실패했습니다.';
+
+      setErrorMessage(nextErrorMessage);
+      return nextErrorMessage;
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function editComment(commentId: string, content: string) {
+  async function editComment(commentId: string, content: string): Promise<string | void> {
     try {
       setIsSubmitting(true);
       setErrorMessage('');
@@ -251,11 +251,11 @@ export default function CommentList({
 
       await loadComments();
     } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '댓글 수정에 실패했습니다.');
-      } else {
-        setErrorMessage('댓글 수정에 실패했습니다.');
-      }
+      const nextErrorMessage =
+        unknownError instanceof Error ? unknownError.message || '댓글 수정에 실패했습니다.' : '댓글 수정에 실패했습니다.';
+
+      setErrorMessage(nextErrorMessage);
+      return nextErrorMessage;
     } finally {
       setIsSubmitting(false);
     }

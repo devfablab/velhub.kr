@@ -9,6 +9,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 
@@ -36,9 +37,10 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
   const from = (page - 1) * PAGE_SIZE;
   const postsResult = await supabaseAdmin
     .from('blog_community_posts')
-    .select('id, slug, user_id, content, created_at, edited_at, is_deleted', { count: 'exact' })
+    .select('id, slug, user_id, content, created_at, edited_at, is_deleted, is_wording_blinded', { count: 'exact' })
     .eq('site_id', siteId)
     .eq('is_deleted', false)
+    .or(stigmaId ? `is_wording_blinded.eq.false,user_id.eq.${stigmaId}` : 'is_wording_blinded.eq.false')
     .order('created_at', { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
 
@@ -133,6 +135,7 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
       authorBadgeUrl: badgeMap.get(post.user_id) ?? null,
       isAuthor: stigmaId === post.user_id,
       canDelete: isOwner || stigmaId === post.user_id,
+      isWordingBlinded: post.is_wording_blinded === true,
       commentCount: commentCountMap.get(post.id) ?? 0,
       images: imageMap.get(post.id) ?? [],
     })),
@@ -283,6 +286,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const isWordingBlinded = await hasWordingProfilerViolation(feature.siteId, { content });
     let postResult = await supabaseAdmin
       .from('blog_community_posts')
       .insert({
@@ -292,6 +296,7 @@ export async function POST(request: Request, context: RouteContext) {
         draw_type: draw.drawType,
         draw_limit: draw.drawLimit,
         draw_ends_at: draw.drawEndsAt,
+        is_wording_blinded: isWordingBlinded,
       })
       .select('id, slug, created_at')
       .single();
@@ -305,6 +310,7 @@ export async function POST(request: Request, context: RouteContext) {
           draw_type: draw.drawType,
           draw_limit: draw.drawLimit,
           draw_ends_at: draw.drawEndsAt,
+          is_wording_blinded: isWordingBlinded,
         })
         .select('id, slug, created_at')
         .single();

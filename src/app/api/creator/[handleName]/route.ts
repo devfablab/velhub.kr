@@ -58,7 +58,8 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
     .eq('user_id', creator.user_id)
     .eq('published_status', 'published')
-    .eq('is_closed', false);
+    .eq('is_closed', false)
+    .eq('is_wording_blinded', false);
 
   const shouldQueryPosts = tab !== 'series' || seriesIds.length > 0;
 

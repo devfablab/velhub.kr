@@ -7,6 +7,7 @@ import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentA
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
 
 type RouteContext = {
   params: Promise<{
@@ -57,6 +58,7 @@ type CommentRow = {
   deleted_at: string | null;
   deleted_by: string | null;
   is_blinded: boolean;
+  is_wording_blinded: boolean;
   blinded_at: string | null;
   blinded_by: string | null;
   blinded_message: string | null;
@@ -76,6 +78,7 @@ type CommentItem = {
   is_locked: boolean;
   deleted_at: string | null;
   is_blinded: boolean;
+  is_wording_blinded: boolean;
   blinded_at: string | null;
   blinded_message: string | null;
   is_pinned: boolean;
@@ -669,11 +672,16 @@ async function buildCommentItem({
 
   const isDeleted = comment.is_deleted === true;
   const isBlinded = comment.is_blinded === true;
+  const isWordingBlinded = comment.is_wording_blinded === true;
   const isMe = Boolean(stigmaId) && comment.user_id === stigmaId;
 
   let content = comment.content;
+  let blindedMessage = comment.blinded_message;
 
-  if (isDeleted && !canManageComment) {
+  if (isWordingBlinded && !isMe) {
+    content = null;
+    blindedMessage = '워딩 프로파일러에 의해 비공개 처리된 댓글입니다.';
+  } else if (isDeleted && !canManageComment) {
     content = '삭제된 댓글입니다.';
   } else if (isBlinded && !canManageComment) {
     content = '숨겨진 댓글입니다.';
@@ -690,8 +698,9 @@ async function buildCommentItem({
     deleted_at: comment.deleted_at,
     is_locked: comment.is_locked,
     is_blinded: isBlinded,
+    is_wording_blinded: isWordingBlinded,
     blinded_at: comment.blinded_at,
-    blinded_message: comment.blinded_message,
+    blinded_message: blindedMessage,
     is_pinned: comment.is_pinned === true,
     donation_amount:
       !isDeleted && !isBlinded && comment.donation_payment_id && Number(comment.donation_amount) > 0
@@ -825,7 +834,7 @@ export async function GET(request: Request, context: RouteContext) {
     const commentsResult = await supabaseAdmin
       .from('post_comments')
       .select(
-        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message, is_locked, is_pinned, donation_payment_id, donation_amount',
+        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, is_wording_blinded, blinded_at, blinded_by, blinded_message, is_locked, is_pinned, donation_payment_id, donation_amount',
       )
       .eq('site_id', target.data.siteId)
       .eq('board_id', target.data.boardId)
@@ -1062,7 +1071,7 @@ export async function POST(request: Request, context: RouteContext) {
     if (parentId) {
       const parentResult = await supabaseAdmin
         .from('post_comments')
-        .select('id, parent_id, site_id, board_id, post_id, is_deleted, is_blinded')
+        .select('id, parent_id, site_id, board_id, post_id, is_deleted, is_blinded, is_wording_blinded')
         .eq('id', parentId)
         .eq('site_id', target.data.siteId)
         .eq('board_id', target.data.boardId)
@@ -1073,7 +1082,7 @@ export async function POST(request: Request, context: RouteContext) {
         return Response.json({ error: '답글을 작성할 댓글을 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      if (parentResult.data.is_deleted || parentResult.data.is_blinded) {
+      if (parentResult.data.is_deleted || parentResult.data.is_blinded || parentResult.data.is_wording_blinded) {
         return Response.json({ error: '이 댓글에는 답글을 작성할 수 없습니다.' }, { status: 400 });
       }
 
@@ -1095,12 +1104,13 @@ export async function POST(request: Request, context: RouteContext) {
         deleted_at: null,
         deleted_by: null,
         is_blinded: false,
+        is_wording_blinded: await hasWordingProfilerViolation(target.data.siteId, { content }),
         blinded_at: null,
         blinded_by: null,
         blinded_message: null,
       })
       .select(
-        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message',
+        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, is_wording_blinded, blinded_at, blinded_by, blinded_message',
       )
       .maybeSingle();
 

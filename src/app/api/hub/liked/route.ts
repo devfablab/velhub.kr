@@ -41,6 +41,7 @@ type CommentRow = {
   board_id: string;
   is_deleted: boolean;
   is_blinded: boolean;
+  is_wording_blinded: boolean;
 };
 
 type BoardRow = {
@@ -241,11 +242,12 @@ export async function GET(request: Request) {
             .from('posts')
             .select('id, slug, subject, user_id, site_id, board_id, published_status, is_closed')
             .in('id', postIds)
+            .or(`is_wording_blinded.eq.false,user_id.eq.${session.stigmaId ?? ''}`)
         : { data: [], error: null },
       commentIds.length > 0
         ? supabaseAdmin
             .from('post_comments')
-            .select('id, content, post_id, site_id, board_id, is_deleted, is_blinded')
+            .select('id, content, post_id, site_id, board_id, is_deleted, is_blinded, is_wording_blinded')
             .in('id', commentIds)
         : { data: [], error: null },
       boardIds.length > 0
@@ -312,7 +314,9 @@ export async function GET(request: Request) {
 
         return {
           id: like.id,
-          comment: truncateText(comment.content ?? '', 27),
+          comment: comment.is_wording_blinded
+            ? '워딩 프로파일러에 의해 비공개 처리된 댓글입니다'
+            : truncateText(comment.content ?? '', 27),
           postTitle: normalizeText(post.subject),
           siteName: site.site_label || site.site_key,
           likedAt: like.created_at,

@@ -8,6 +8,7 @@ import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/l
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
 
 type RouteContext = {
   params: Promise<{
@@ -952,6 +953,20 @@ export async function POST(request: Request, context: RouteContext) {
 
     const nextIdx = typeof lastPost.data?.idx === 'number' ? Number(lastPost.data.idx) + 1 : 1;
     const nowIsoString = new Date().toISOString();
+    const isWordingBlinded =
+      rhizomeData.site_type === 'community'
+        ? await hasWordingProfilerViolation(rhizomeData.id, {
+            subject: finalSubject,
+            summary: finalSummary,
+            contentHtml: finalContentHtml,
+            contentMarkdown: finalContentMarkdown,
+            contentSimple: finalContentSimple,
+            previewHtml: finalPreviewHtml,
+            previewMarkdown: finalPreviewMarkdown,
+            pollQuestion: finalPoll?.question,
+            ...Object.fromEntries((finalPoll?.options ?? []).map((option, index) => [`pollOption${index}`, option.label])),
+          })
+        : false;
     const publishedAt = action === 'publish' ? nowIsoString : action === 'unknown' ? requestedPublishedAt : null;
     const seriesIdx =
       seriesId && action === 'publish'
@@ -1004,6 +1019,7 @@ export async function POST(request: Request, context: RouteContext) {
         draw_type: resolvedDrawType,
         draw_limit: resolvedDrawLimit,
         draw_ends_at: resolvedDrawEndsAt,
+        is_wording_blinded: isWordingBlinded,
       })
       .select('id, slug')
       .maybeSingle();
@@ -1072,7 +1088,7 @@ export async function POST(request: Request, context: RouteContext) {
       });
     }
 
-    if (action === 'publish' && rhizomeData.site_type === 'community') {
+    if (action === 'publish' && !isWordingBlinded && rhizomeData.site_type === 'community') {
       await createCommunitySubscriptionPostNotifications({
         supabaseAdmin,
         siteId: rhizomeData.id,

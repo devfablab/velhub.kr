@@ -257,10 +257,15 @@ export default function Opt({
         body: formData,
         credentials: 'include',
       });
-      const result = (await response.json().catch(() => null)) as { error?: string; imageUploadError?: boolean } | null;
+      const result = (await response.json().catch(() => null)) as {
+        error?: string;
+        imageUploadError?: boolean;
+        slug?: string;
+      } | null;
       if (!response.ok) throw new Error(result?.error || '글을 게시하지 못했습니다.');
+      if (!result?.slug) throw new Error('글을 게시하지 못했습니다.');
       if (result?.imageUploadError) setDialogError('글은 게시되었지만 일부 이미지를 업로드하지 못했습니다.');
-      router.replace(`/${siteName}/community-on-blog`);
+      router.replace(`/${siteName}/community-on-blog/${result.slug}`);
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : '글을 게시하지 못했습니다.';

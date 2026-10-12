@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Avatar,
   Chip,
@@ -66,6 +67,7 @@ export type CommentData = {
   is_deleted: boolean;
   deleted_at: string | null;
   is_blinded: boolean;
+  is_wording_blinded?: boolean;
   is_pinned: boolean;
   donation_amount: number | null;
   is_locked: boolean;
@@ -110,8 +112,8 @@ type Props = {
   onYoutubeTimestampClick?: (seconds: number) => void;
   onReplyClick: (comment: CommentData) => void;
   onCancelReply: () => void;
-  onCreateReply: (parentId: string, content: string) => Promise<void>;
-  onEdit: (commentId: string, content: string) => Promise<void>;
+  onCreateReply: (parentId: string, content: string) => Promise<string | void>;
+  onEdit: (commentId: string, content: string) => Promise<string | void>;
   onDelete: (commentId: string) => Promise<void>;
   onBlind: (commentId: string) => Promise<void>;
   onUnblind: (commentId: string) => Promise<void>;
@@ -272,12 +274,17 @@ export default function CommentItem({
   })();
 
   async function handleEdit(content: string) {
-    await onEdit(comment.id, content);
-    setIsEditing(false);
+    const submitError = await onEdit(comment.id, content);
+
+    if (!submitError) {
+      setIsEditing(false);
+    }
+
+    return submitError;
   }
 
   async function handleReplySubmit(content: string) {
-    await onCreateReply(comment.id, content);
+    return onCreateReply(comment.id, content);
   }
 
   async function handleLike() {
@@ -294,7 +301,7 @@ export default function CommentItem({
   }
 
   return (
-    <div className={depth === 1 ? `${styles['comment-item']} ${styles['comment-reply-item']}` : styles['comment-item']}>
+    <div className={`${styles['comment-item']} ${depth === 1 ? styles['comment-reply-item'] : ''}`}>
       <Avatar
         src={comment.author_avatar_url || '/broken-image.jpg'}
         alt={comment.author_name}
@@ -372,6 +379,14 @@ export default function CommentItem({
             {comment.parent_id && comment.reply_to_author_name ? (
               <strong>{comment.reply_to_author_name} </strong>
             ) : null}
+            {comment.is_me && comment.is_wording_blinded ? (
+              <div className="paper" style={{ marginBottom: '7px' }}>
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>워딩 프로파일러에 의해 댓글이 비공개 처리되었습니다. 혐오 표현은 사용하실 수 없어요.</span>
+                </p>
+              </div>
+            ) : null}
             {comment.donation_amount ? (
               <Chip
                 label={`후원 ${comment.donation_amount.toLocaleString()}원`}
@@ -394,7 +409,12 @@ export default function CommentItem({
         )}
 
         {comment.blinded_message ? (
-          <p className={styles['comment-blinded-message']}>{comment.blinded_message}</p>
+          <div className="paper" style={{ marginBottom: '7px' }}>
+            <p className="alert error">
+              <ErrorOutlineRoundedIcon />
+              <span>{comment.blinded_message}</span>
+            </p>
+          </div>
         ) : null}
 
         <div className={styles.options}>

@@ -6,6 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 import HowToVoteRoundedIcon from '@mui/icons-material/HowToVoteRounded';
@@ -647,6 +648,7 @@ export default function Opt({
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
   const [pollDialog, setPollDialog] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogMessage, setPollDialogMessage] = useState('');
+  const [pollWordingViolationFields, setPollWordingViolationFields] = useState<string[]>([]);
   const [isDrawEnabled, setIsDrawEnabled] = useState(false);
   const [draw, setDraw] = useState<DrawState>(() => createEmptyDraw());
   const [drawDialogOpen, setDrawDialogOpen] = useState(false);
@@ -1164,6 +1166,7 @@ export default function Opt({
   function openPollDialog() {
     setPollDialog(clonePollState(poll));
     setPollDialogMessage('');
+    setPollWordingViolationFields([]);
     setPollDialogOpen(true);
   }
 
@@ -1171,10 +1174,11 @@ export default function Opt({
     revokeUnusedPollPreviewUrls(pollDialog, poll);
     setPollDialog(clonePollState(poll));
     setPollDialogMessage('');
+    setPollWordingViolationFields([]);
     setPollDialogOpen(false);
   }
 
-  function applyPollDialog() {
+  async function applyPollDialog() {
     try {
       const normalizedQuestion = normalizeText(pollDialog.question);
 
@@ -1225,6 +1229,31 @@ export default function Opt({
           imagePreviewUrl: pollDialog.useOptionThumbnail ? option.imagePreviewUrl : '',
         })),
       };
+
+      const response = await fetch(`/api/boards/${selectedBoardKey}/wording-check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          poll: {
+            question: nextPoll.question,
+            options: nextPoll.options.map((option) => ({ label: option.label })),
+          },
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as { fields?: string[]; error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error || '워딩 프로파일러를 확인하지 못했습니다.');
+      }
+
+      const nextViolationFields = result?.fields ?? [];
+      setPollWordingViolationFields(nextViolationFields);
+      if (nextViolationFields.length > 0) {
+        setPollDialogMessage('혐오 표현이 여전히 존재합니다.');
+        return;
+      }
 
       revokeUnusedPollPreviewUrls(poll, nextPoll);
       revokeUnusedPollPreviewUrls(pollDialog, nextPoll);
@@ -1835,11 +1864,6 @@ export default function Opt({
 
       if (!result.slug) {
         throw new Error('글 작성에 실패했습니다.');
-      }
-
-      if (selectedSeriesKey) {
-        router.replace(`/${siteName}/s/${selectedSeriesKey}`);
-        return;
       }
 
       router.replace(`/${siteName}/${selectedBoardKey}/${result.slug}`);
@@ -2607,7 +2631,12 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <div className={`VhiDrawer-bottom-content ${styles['poll-dialog-content']}`}>
-                {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
+                {pollDialogMessage && pollWordingViolationFields.length === 0 ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{pollDialogMessage}</span>
+                  </p>
+                ) : null}
 
                 <div className={styles['form-group']}>
                   <div className={styles['form-control']}>
@@ -2615,6 +2644,10 @@ export default function Opt({
                       type="text"
                       value={pollDialog.question}
                       placeholder="투표 질문을 입력해주세요"
+                      className={
+                        pollWordingViolationFields.includes('pollQuestion') ? styles['wording-error'] : undefined
+                      }
+                      aria-invalid={pollWordingViolationFields.includes('pollQuestion')}
                       onChange={(event) => {
                         const nextQuestion = event.currentTarget.value;
 
@@ -2641,6 +2674,9 @@ export default function Opt({
                     }
                   />
                 </div>
+                {pollWordingViolationFields.includes('pollQuestion') ? (
+                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                ) : null}
 
                 <div className={styles['poll-options']}>
                   {pollDialog.options.map((option, index) => (
@@ -2652,9 +2688,17 @@ export default function Opt({
                           placeholder="항목을 입력해주세요"
                           type="text"
                           value={option.label}
+                          className={
+                            pollWordingViolationFields.includes(`pollOption${index}`) ? styles['wording-error'] : undefined
+                          }
+                          aria-invalid={pollWordingViolationFields.includes(`pollOption${index}`)}
                           onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
                         />
                       </div>
+
+                      {pollWordingViolationFields.includes(`pollOption${index}`) ? (
+                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                      ) : null}
 
                       {pollDialog.useOptionThumbnail ? (
                         <div className={styles['poll-option-image']}>
@@ -2820,7 +2864,12 @@ export default function Opt({
                 <CloseRoundedIcon />
               </button>
               <DialogContent className={styles['poll-dialog-content']}>
-                {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
+                {pollDialogMessage && pollWordingViolationFields.length === 0 ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{pollDialogMessage}</span>
+                  </p>
+                ) : null}
 
                 <div className={styles['form-group']}>
                   <div className={styles['form-control']}>
@@ -2828,6 +2877,10 @@ export default function Opt({
                       type="text"
                       value={pollDialog.question}
                       placeholder="투표 질문을 입력해주세요"
+                      className={
+                        pollWordingViolationFields.includes('pollQuestion') ? styles['wording-error'] : undefined
+                      }
+                      aria-invalid={pollWordingViolationFields.includes('pollQuestion')}
                       onChange={(event) => {
                         const nextQuestion = event.currentTarget.value;
 
@@ -2854,6 +2907,9 @@ export default function Opt({
                     }
                   />
                 </div>
+                {pollWordingViolationFields.includes('pollQuestion') ? (
+                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                ) : null}
 
                 <div className={styles['poll-options']}>
                   {pollDialog.options.map((option, index) => (
@@ -2865,9 +2921,17 @@ export default function Opt({
                           placeholder="항목을 입력해주세요"
                           type="text"
                           value={option.label}
+                          className={
+                            pollWordingViolationFields.includes(`pollOption${index}`) ? styles['wording-error'] : undefined
+                          }
+                          aria-invalid={pollWordingViolationFields.includes(`pollOption${index}`)}
                           onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
                         />
                       </div>
+
+                      {pollWordingViolationFields.includes(`pollOption${index}`) ? (
+                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                      ) : null}
 
                       {pollDialog.useOptionThumbnail ? (
                         <div className={styles['poll-option-image']}>

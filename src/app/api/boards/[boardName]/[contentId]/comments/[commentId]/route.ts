@@ -4,6 +4,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler/server';
 
 type RouteContext = {
   params: Promise<{
@@ -1146,10 +1147,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '삭제 처리된 댓글은 수정할 수 없습니다.' }, { status: 400 });
     }
 
+    if (await hasWordingProfilerViolation(siteResult.data.id, { content })) {
+      return Response.json({ code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_COMMENT_EDIT_ERROR, fields: ['content'] }, { status: 400 });
+    }
+
     const updateResult = await supabaseAdmin
       .from('post_comments')
       .update({
         content,
+        is_wording_blinded: false,
       })
       .eq('id', normalizedCommentId)
       .eq('user_id', session.stigmaId)

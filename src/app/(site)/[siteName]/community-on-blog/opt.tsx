@@ -38,6 +38,7 @@ type BlogCommunityPost = {
   authorAvatarUrl: string | null;
   authorBadgeUrl: string | null;
   isAuthor: boolean;
+  isWordingBlinded: boolean;
   canDelete: boolean;
   commentCount: number;
   images: string[];

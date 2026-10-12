@@ -59,6 +59,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     .eq('user_id', creator.user_id)
     .eq('published_status', 'published')
     .eq('is_closed', false)
+    .or(`is_wording_blinded.eq.false,user_id.eq.${currentStigma?.stigmaId ?? ''}`)
     .order('published_at', { ascending: false })
     .range(from, from + 99);
 

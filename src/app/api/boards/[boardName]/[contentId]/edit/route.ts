@@ -6,6 +6,7 @@ import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/l
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler/server';
 
 type RouteContext = {
   params: Promise<{
@@ -1071,6 +1072,27 @@ export async function PATCH(request: Request, context: RouteContext) {
       isSubscriptionSeries && (board.data.board_type === 'basic' || board.data.board_type === 'gallery')
         ? paidPreviewMarkdown || null
         : null;
+    const wordingViolationFields =
+      rhizomeData.site_type === 'community'
+        ? await getWordingProfilerViolationFields(rhizomeData.id, {
+            subject: finalSubject,
+            summary: finalSummary,
+            contentHtml: finalContentHtml,
+            contentMarkdown: finalContentMarkdown,
+            contentSimple: finalContentSimple,
+            previewHtml: finalPreviewHtml,
+            previewMarkdown: finalPreviewMarkdown,
+            pollQuestion: finalPoll?.question,
+            ...Object.fromEntries((finalPoll?.options ?? []).map((option, index) => [`pollOption${index}`, option.label])),
+          })
+        : [];
+
+    if (wordingViolationFields.length > 0) {
+      return Response.json(
+        { code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_POST_EDIT_ERROR, fields: wordingViolationFields },
+        { status: 400 },
+      );
+    }
 
     const nowIsoString = new Date().toISOString();
     const nextPublishedStatus =
@@ -1129,6 +1151,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       draw_type: DrawType;
       draw_limit: number | null;
       draw_ends_at: string | null;
+      is_wording_blinded: boolean;
     } = {
       subject: finalSubject || null,
       summary: finalSummary,
@@ -1156,6 +1179,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       draw_type: resolvedDrawType,
       draw_limit: resolvedDrawLimit,
       draw_ends_at: resolvedDrawEndsAt,
+      is_wording_blinded: false,
     };
 
     if (action === 'unknown') {

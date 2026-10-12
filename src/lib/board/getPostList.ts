@@ -117,7 +117,7 @@ export type GetPostListResult = {
 };
 
 const POST_SELECT =
-  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, series_idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id, is_locked';
+  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, series_idx, board_id, site_id, user_id, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id, is_locked';
 
 function stripHtml(value: string | null) {
   const normalizedValue = normalizeText(value);
@@ -286,6 +286,10 @@ export async function getPostList({
       .eq('is_closed', false)
       .eq('published_status', 'published');
 
+    pinnedQuery = stigmaId
+      ? pinnedQuery.or(`is_wording_blinded.eq.false,user_id.eq.${stigmaId}`)
+      : pinnedQuery.eq('is_wording_blinded', false);
+
     if (boardId) {
       pinnedQuery = pinnedQuery.eq('board_id', boardId).order('idx', { ascending: false });
     } else {
@@ -316,6 +320,10 @@ export async function getPostList({
   }
 
   let postsQuery = supabaseAdmin.from('posts').select(POST_SELECT, { count: 'exact' }).eq('site_id', siteId);
+
+  postsQuery = stigmaId
+    ? postsQuery.or(`is_wording_blinded.eq.false,user_id.eq.${stigmaId}`)
+    : postsQuery.eq('is_wording_blinded', false);
 
   if (boardId) {
     postsQuery = postsQuery.eq('board_id', boardId);

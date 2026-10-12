@@ -12,6 +12,8 @@
 - TextField 에는 inputProps 사용할 수 없음.
 - 터미널에서 빌드는 하면 안됨. (Github push시 자동으로 vercel에 빌드됨)
 - 기본으로 사용하는 포트는 3006번임. 그리고 대개 3006번 서버는 로컬에서 실행 중임. 강제로 종료시키려는 시도를 해서는 안됨.
-- '아직 수정하지 않았습니다' 라는 대답 금지.
+- '아직 수정하지 않았습니다' 라고 대답 금지.
+- `TextField`에는 `label` 사용하면 안됨. 화면에 `label` 대신 `<Typography variant="subtitle2">`를 사용하고 있다면 이걸 사용하고 그게 아니라면 `placeholder` 사용
 - 이메일은 기본적으로 `payment_email`을 사용하고 `payment_email` 모를 경우 `email` 사용.
+- mui 컴포넌트에서 size 지정이 가능한 컴포넌트는 size="small" 필수입니다.
 - 링크는 무조건 Anchor 사용. (외부링크라고 a 사용하면 안됨. Anchor 사용시 자동으로 내부링크인지 외부링크인치 확인함)

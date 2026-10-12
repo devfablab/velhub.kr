@@ -2,6 +2,7 @@
 
 import { type FormEvent, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -23,6 +24,7 @@ export type BlogCommunityEditResponse = {
       drawEndsAt: string | null;
     } | null;
   };
+  wordingViolationFields?: string[];
   error?: string;
 };
 
@@ -47,6 +49,9 @@ export default function Opt({
     endsAt: post?.draw?.drawEndsAt ? new Date(post.draw.drawEndsAt) : null,
   }));
   const [fieldError, setFieldError] = useState('');
+  const [wordingViolationFields, setWordingViolationFields] = useState<string[]>(
+    () => initialData?.wordingViolationFields ?? [],
+  );
   const [dialogError, setDialogError] = useState<string | null>(initialError || initialData?.error || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingReference = useRef(false);
@@ -58,6 +63,7 @@ export default function Opt({
     draw.limit !== (initialDraw?.drawLimit ?? 1) ||
     (draw.endsAt?.getTime() ?? null) !== (initialDraw?.drawEndsAt ? new Date(initialDraw.drawEndsAt).getTime() : null);
   const hasChanged = normalizedContent !== initialContent || hasDrawChanged;
+  const hasWordingViolation = wordingViolationFields.includes('content');
   const cancelHref =
     searchParams.get('from') === 'list'
       ? `/${siteName}/community-on-blog`
@@ -74,8 +80,8 @@ export default function Opt({
         : !hasChanged
           ? '변경된 내용이 없습니다.'
           : '';
-    setFieldError(error);
     if (error) {
+      setFieldError(error);
       setDialogError(error);
       return;
     }
@@ -94,7 +100,14 @@ export default function Opt({
           drawEndsAt: draw.endsAt?.toISOString() ?? null,
         }),
       });
-      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      const result = (await response.json().catch(() => null)) as {
+        code?: string;
+        error?: string;
+        fields?: string[];
+      } | null;
+      if (result?.code === 'WORDING_PROFILER_VIOLATION') {
+        setWordingViolationFields(result.fields ?? []);
+      }
       if (!response.ok) throw new Error(result?.error || '글을 수정하지 못했습니다.');
       router.replace(`/${siteName}/community-on-blog/${contentId}`);
       router.refresh();
@@ -120,19 +133,25 @@ export default function Opt({
               <legend>글 수정 폼</legend>
               <div className="paper paper-p0">
                 <textarea
-                  className={`${styles['content-simple']} ${styles['content-simple-feed']}`}
+                  className={`${styles['content-simple']} ${styles['content-simple-feed']} ${hasWordingViolation ? styles['wording-error'] : ''}`}
                   required
                   value={content}
                   disabled={isSubmitting}
                   maxLength={MAX_CONTENT_LENGTH + 1}
+                  aria-invalid={hasWordingViolation}
                   aria-label="커뮤니티 글 내용"
                   placeholder="무슨 일이 일어나고 있나요??"
                   onChange={(event) => {
                     setContent(event.currentTarget.value);
-                    setFieldError('');
                   }}
                 />
               </div>
+              {hasWordingViolation || fieldError ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{hasWordingViolation ? '혐오 표현이 여전히 존재합니다.' : fieldError}</span>
+                </p>
+              ) : null}
               {post.isOperator ? (
                 <div className="paper">
                   <div className={styles['post-options']}>
@@ -140,7 +159,6 @@ export default function Opt({
                   </div>
                 </div>
               ) : null}
-              {fieldError ? <div className="paper paper-error">{fieldError}</div> : null}
               <div className={styles['button-group']}>
                 <Anchor href={cancelHref} className={`${styles.link} link`}>
                   취소
