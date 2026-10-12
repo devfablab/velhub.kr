@@ -6,7 +6,6 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 type ThemeMode = 'light' | 'system' | 'dark';
 
 type RequestBody = {
-  theme_mode?: ThemeMode | null;
   auto_login?: boolean | null;
 };
 
@@ -28,10 +27,6 @@ export async function POST(request: Request) {
 
     const requestBody = (await request.json()) as RequestBody;
 
-    if (!isThemeMode(requestBody.theme_mode)) {
-      return Response.json({ error: 'theme_mode 값이 유효하지 않습니다.' }, { status: 400 });
-    }
-
     if (typeof requestBody.auto_login !== 'boolean') {
       return Response.json({ error: 'auto_login 값이 유효하지 않습니다.' }, { status: 400 });
     }
@@ -46,7 +41,6 @@ export async function POST(request: Request) {
     const profileResult = await supabaseAdmin
       .from('profiles')
       .update({
-        theme_mode: requestBody.theme_mode,
         auto_login: requestBody.auto_login,
       })
       .eq('user_id', currentStigma.stigmaId);
@@ -62,7 +56,6 @@ export async function POST(request: Request) {
     return Response.json({
       ok: true,
       profile: {
-        theme_mode: requestBody.theme_mode,
         auto_login: requestBody.auto_login,
       },
     });
