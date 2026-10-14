@@ -300,7 +300,7 @@
     @include ds.mq(maxSmall)
       grid-template-columns: repeat(1, 1fr)!important
 
-      a
+      a, .skeleton
         p
           height: auto!important
 
@@ -311,7 +311,7 @@
       grid-template-columns: repeat(3, 1fr)
 
       .item
-        a
+        a, .skeleton
           .thumbnail
             width: 100%
 
@@ -365,7 +365,7 @@
                 margin-right: ds.rem(12)
 
     .item
-      a
+      a, .skeleton
         display: flex
         flex-direction: column
         background-color: ds.$hex-white

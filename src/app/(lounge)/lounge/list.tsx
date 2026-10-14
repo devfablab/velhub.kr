@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Avatar, Skeleton, useMediaQuery, useTheme } from '@mui/material';
+import { Avatar, Box, Chip, Skeleton, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
@@ -15,10 +15,13 @@ function LoadingNewestCards({ isMobile }: { isMobile: boolean }) {
   return (
     <div className={`${styles.list} ${styles['list-newest']}`}>
       <div className={`paper ${styles.item}`}>
-        <Anchor href="#">
+        <div className={styles.skeleton}>
           {isMobile ? (
             <div className={`${styles['description-item']} ${styles['description-item-mini']}`}>
               <div className={styles.description}>
+                <Box sx={{ mb: 1 }}>
+                  <Chip label="..." size="small" className="chip success" />
+                </Box>
                 <div className={styles.info}>
                   <Skeleton variant="rounded" height={24} />
                   <Skeleton variant="rounded" height={63} />
@@ -41,6 +44,9 @@ function LoadingNewestCards({ isMobile }: { isMobile: boolean }) {
             <>
               <div className={styles['description-item']}>
                 <div className={styles.description}>
+                  <Box sx={{ mb: 1 }}>
+                    <Chip label="..." size="small" className="chip success" />
+                  </Box>
                   <div className={styles.info}>
                     <Skeleton variant="rounded" height={24} />
                     <Skeleton variant="rounded" height={63} />
@@ -57,13 +63,16 @@ function LoadingNewestCards({ isMobile }: { isMobile: boolean }) {
               </div>
             </>
           )}
-        </Anchor>
+        </div>
       </div>
       <div className={`paper ${styles.item}`}>
-        <Anchor href="#">
+        <div className={styles.skeleton}>
           {isMobile ? (
             <div className={`${styles['description-item']} ${styles['description-item-mini']}`}>
               <div className={styles.description}>
+                <Box sx={{ mb: 1 }}>
+                  <Chip label="..." size="small" className="chip success" />
+                </Box>
                 <div className={styles.info}>
                   <Skeleton variant="rounded" height={24} />
                   <Skeleton variant="rounded" height={63} />
@@ -86,6 +95,9 @@ function LoadingNewestCards({ isMobile }: { isMobile: boolean }) {
             <>
               <div className={styles['description-item']}>
                 <div className={styles.description}>
+                  <Box sx={{ mb: 1 }}>
+                    <Chip label="..." size="small" className="chip success" />
+                  </Box>
                   <div className={styles.info}>
                     <Skeleton variant="rounded" height={24} />
                     <Skeleton variant="rounded" height={63} />
@@ -102,7 +114,7 @@ function LoadingNewestCards({ isMobile }: { isMobile: boolean }) {
               </div>
             </>
           )}
-        </Anchor>
+        </div>
       </div>
     </div>
   );
@@ -112,7 +124,7 @@ function LoadingHitsCards() {
   return (
     <div className={`${styles.list} ${styles['list-hits']}`}>
       <div className={`paper paper-p0 ${styles.item}`}>
-        <Anchor href={'#'}>
+        <div className={styles.skeleton}>
           <div className={styles.thumbnail}>
             <Skeleton variant="rounded" height={24} component="div" className="dummy" />
           </div>
@@ -140,10 +152,10 @@ function LoadingHitsCards() {
               </div>
             </div>
           </div>
-        </Anchor>
+        </div>
       </div>
       <div className={`paper paper-p0 ${styles.item}`}>
-        <Anchor href={'#'}>
+        <div className={styles.skeleton}>
           <div className={styles.thumbnail}>
             <Skeleton variant="rounded" height={24} component="div" className="dummy" />
           </div>
@@ -171,10 +183,10 @@ function LoadingHitsCards() {
               </div>
             </div>
           </div>
-        </Anchor>
+        </div>
       </div>
       <div className={`paper paper-p0 ${styles.item}`}>
-        <Anchor href={'#'}>
+        <div className={styles.skeleton}>
           <div className={styles.thumbnail}>
             <Skeleton variant="rounded" height={24} component="div" className="dummy" />
           </div>
@@ -202,7 +214,7 @@ function LoadingHitsCards() {
               </div>
             </div>
           </div>
-        </Anchor>
+        </div>
       </div>
     </div>
   );
@@ -276,6 +288,13 @@ export default function List({ orderType, postsApiPath }: ListProps) {
               {isMobile ? (
                 <div className={`${styles['description-item']} ${styles['description-item-mini']}`}>
                   <div className={styles.description}>
+                    <Box sx={{ mb: 1 }}>
+                      <Chip
+                        label={post.site_type === 'blog' ? '블로그' : '커뮤니티'}
+                        size="small"
+                        className="chip success"
+                      />
+                    </Box>
                     {post.board_type === 'gallery' && (
                       <div className={styles.info}>
                         <strong>{post.subject}</strong>
@@ -344,6 +363,13 @@ export default function List({ orderType, postsApiPath }: ListProps) {
                 <>
                   <div className={styles['description-item']}>
                     <div className={styles.description}>
+                      <Box sx={{ mb: 1 }}>
+                        <Chip
+                          label={post.site_type === 'blog' ? '블로그' : '커뮤니티'}
+                          size="small"
+                          className="chip success"
+                        />
+                      </Box>
                       {post.board_type === 'gallery' && (
                         <div className={styles.info}>
                           <strong>{post.subject}</strong>
@@ -394,7 +420,7 @@ export default function List({ orderType, postsApiPath }: ListProps) {
                   </div>
                   <div className={styles.tail}>
                     <div className={styles['tail-container']}>
-                      <AppIconAvatar src={post.profile_picture || null} alt="" size={24} />
+                      <AppIconAvatar site={post.site_type} src={post.profile_picture || null} alt="" size={24} />
                       <strong>{post.site_label}</strong>
                       <ScheduleRoundedIcon />
                       <time>{formatTimeAgo(post.published_at)}</time>
