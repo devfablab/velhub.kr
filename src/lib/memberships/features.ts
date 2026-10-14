@@ -89,3 +89,91 @@ export async function getMembershipFeatures(stigmaId: string) {
 export async function hasMembershipFeature(stigmaId: string, featureKey: MembershipFeatureKey) {
   return (await getMembershipFeatures(stigmaId)).has(featureKey);
 }
+
+export async function getUsersWithMembershipFeature(stigmaIds: string[], featureKey: MembershipFeatureKey) {
+  const uniqueStigmaIds = [...new Set(stigmaIds.filter(Boolean))];
+
+  if (uniqueStigmaIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const membershipsResult = await supabaseAdmin
+    .from('memberships')
+    .select('id, user_id')
+    .in('user_id', uniqueStigmaIds);
+
+  if (membershipsResult.error) {
+    throw new Error('멤버십 정보를 확인하지 못했습니다.');
+  }
+
+  const membershipUserIds = new Map(
+    membershipsResult.data.map((membership) => [membership.id, membership.user_id]),
+  );
+  const membershipIds = [...membershipUserIds.keys()];
+
+  if (membershipIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const [itemsResult, subscriptionsResult, identitiesResult] = await Promise.all([
+    supabaseAdmin.from('membership_items').select('membership_id, plan_id').in('membership_id', membershipIds),
+    supabaseAdmin
+      .from('subscriptions')
+      .select('target_id, status, current_period_end')
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
+      .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
+      .in('target_id', membershipIds),
+    supabaseAdmin.from('chorogons').select('user_id, birth_date, birth_date_dummy').in('user_id', uniqueStigmaIds),
+  ]);
+
+  if (itemsResult.error || subscriptionsResult.error || identitiesResult.error) {
+    throw new Error('멤버십 정보를 확인하지 못했습니다.');
+  }
+
+  const isMinorByUserId = new Map(
+    identitiesResult.data.map((identity) => [identity.user_id, isMinor(getChorogonBirthDate(identity))]),
+  );
+  const availableMembershipIds = new Set(
+    subscriptionsResult.data
+      .filter((subscription) => {
+        const userId = membershipUserIds.get(subscription.target_id);
+        return isAvailableSubscription(subscription, { isMinorUser: isMinorByUserId.get(userId ?? '') ?? false });
+      })
+      .map((subscription) => subscription.target_id),
+  );
+  const availablePlanIds = [
+    ...new Set(
+      itemsResult.data
+        .filter((item) => availableMembershipIds.has(item.membership_id))
+        .map((item) => item.plan_id),
+    ),
+  ];
+
+  if (availablePlanIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const plansResult = await supabaseAdmin.from('plans').select('id, plan_key').in('id', availablePlanIds);
+
+  if (plansResult.error) {
+    throw new Error('멤버십 정보를 확인하지 못했습니다.');
+  }
+
+  const eligiblePlanIds = new Set(
+    plansResult.data
+      .filter((plan) => plan.plan_key.replace(/^all_in_one_/, '') === featureKey)
+      .map((plan) => plan.id),
+  );
+  const usersWithFeature = new Set<string>();
+
+  itemsResult.data.forEach((item) => {
+    const userId = membershipUserIds.get(item.membership_id);
+
+    if (availableMembershipIds.has(item.membership_id) && eligiblePlanIds.has(item.plan_id) && userId) {
+      usersWithFeature.add(userId);
+    }
+  });
+
+  return usersWithFeature;
+}

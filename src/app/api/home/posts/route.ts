@@ -1,9 +1,29 @@
 import { type NextRequest } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+
+type PostRow = {
+  board_id: string;
+  content_html: string | null;
+  content_simple: string | null;
+  images: unknown;
+  like_count: number | null;
+  post_count: number | null;
+  published_at: string;
+  slug: string;
+  subject: string | null;
+  summary: string | null;
+  thumbnail_height: number | null;
+  thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  user_id: string | null;
+  youtube_created_at: string | null;
+  youtube_id: string | null;
+  youtube_url: string | null;
+};
 
 function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
@@ -45,67 +65,113 @@ export async function GET(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    let rhizomesQuery = supabaseAdmin
-      .from('rhizomes')
-      .select('id, owner_id, site_key, site_label, site_type, profile_picture, promotion_image, custom_domain')
-      .eq('visibility_type', 'public')
-      .eq('is_shutdown', false)
-      .or('is_blocked.eq.false,is_blocked.is.null');
+    const candidateBatchSize = Math.max(limit * 5, 100);
+    const postsData: PostRow[] = [];
+    const boardMap = new Map<string, { id: string; board_type: string; board_key: string; site_id: string }>();
+    const rhizomeMap = new Map<
+      string,
+      {
+        id: string;
+        owner_id: string | null;
+        site_key: string;
+        site_label: string;
+        site_type: string;
+        profile_picture: string | null;
+        promotion_image: string | null;
+        custom_domain: string | null;
+      }
+    >();
+    let offset = 0;
 
-    if (siteType) {
-      rhizomesQuery = rhizomesQuery.eq('site_type', siteType);
+    while (postsData.length < limit) {
+      const postsResult = await supabaseAdmin
+        .from('posts')
+        .select(
+          'slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id',
+        )
+        .eq('is_closed', false)
+        .eq('is_wording_blinded', false)
+        .not('published_at', 'is', null)
+        .order(sortBy, { ascending: false })
+        .range(offset, offset + candidateBatchSize - 1);
+
+      if (postsResult.error || !postsResult.data) {
+        return Response.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const candidatePosts = postsResult.data as PostRow[];
+
+      if (candidatePosts.length === 0) {
+        break;
+      }
+
+      const candidateBoardIds = [...new Set(candidatePosts.map((post) => post.board_id))];
+      const boardsResult = await supabaseAdmin
+        .from('boards')
+        .select('id, board_type, board_key, site_id')
+        .neq('board_type', 'page')
+        .in('id', candidateBoardIds);
+
+      if (boardsResult.error) {
+        return Response.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const candidateBoards = boardsResult.data ?? [];
+      const candidateBoardMap = new Map(candidateBoards.map((board) => [board.id, board]));
+      const candidateSiteIds = [...new Set(candidateBoards.map((board) => board.site_id))];
+      let rhizomesQuery = supabaseAdmin
+        .from('rhizomes')
+        .select('id, owner_id, site_key, site_label, site_type, profile_picture, promotion_image, custom_domain')
+        .eq('visibility_type', 'public')
+        .eq('is_shutdown', false)
+        .or('is_blocked.eq.false,is_blocked.is.null')
+        .in('id', candidateSiteIds);
+
+      if (siteType) {
+        rhizomesQuery = rhizomesQuery.eq('site_type', siteType);
+      }
+
+      const rhizomesResult = await rhizomesQuery;
+
+      if (rhizomesResult.error) {
+        return Response.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const candidateRhizomeMap = new Map((rhizomesResult.data ?? []).map((rhizome) => [rhizome.id, rhizome]));
+
+      candidatePosts.forEach((post) => {
+        const board = candidateBoardMap.get(post.board_id);
+        const rhizome = board ? candidateRhizomeMap.get(board.site_id) : null;
+
+        if (!board || !rhizome || postsData.length >= limit) {
+          return;
+        }
+
+        postsData.push(post);
+        boardMap.set(board.id, board);
+        rhizomeMap.set(rhizome.id, rhizome);
+      });
+
+      if (candidatePosts.length < candidateBatchSize) {
+        break;
+      }
+
+      offset += candidateBatchSize;
     }
 
-    const rhizomesResult = await rhizomesQuery;
-
-    if (rhizomesResult.error || !rhizomesResult.data || rhizomesResult.data.length === 0) {
+    if (postsData.length === 0) {
       return Response.json({ posts: [] });
     }
 
-    const rhizomes = rhizomesResult.data;
-    const rhizomeMap = new Map(rhizomes.map((rhizome) => [rhizome.id, rhizome]));
+    const siteIds = [...rhizomeMap.keys()];
     const ownerIds = [
-      ...new Set(rhizomes.map((rhizome) => rhizome.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
-    ];
-    const ownerDomainFeatures = new Map(
-      await Promise.all(
-        ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),
+      ...new Set(
+        [...rhizomeMap.values()]
+          .map((rhizome) => rhizome.owner_id)
+          .filter((ownerId): ownerId is string => Boolean(ownerId)),
       ),
-    );
-
-    const siteIds = rhizomes.map((rhizome) => rhizome.id);
-
-    const boardsResult = await supabaseAdmin
-      .from('boards')
-      .select('id, board_type, board_key, site_id')
-      .neq('board_type', 'page')
-      .in('site_id', siteIds);
-
-    if (boardsResult.error || !boardsResult.data || boardsResult.data.length === 0) {
-      return Response.json({ posts: [] });
-    }
-
-    const boards = boardsResult.data;
-    const boardIds = boards.map((board) => board.id);
-    const boardMap = new Map(boards.map((board) => [board.id, board]));
-
-    const postsResult = await supabaseAdmin
-      .from('posts')
-      .select(
-        'slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id',
-      )
-      .eq('is_closed', false)
-      .eq('is_wording_blinded', false)
-      .not('published_at', 'is', null)
-      .in('board_id', boardIds)
-      .order(sortBy, { ascending: false })
-      .limit(limit);
-
-    if (postsResult.error || !postsResult.data) {
-      return Response.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const postsData = postsResult.data;
+    ];
+    const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(ownerIds, 'owner_domain');
     const userIds = Array.from(new Set(postsData.map((post) => post.user_id).filter(Boolean)));
 
     const stigmasMap = new Map();
@@ -175,7 +241,7 @@ export async function GET(request: NextRequest) {
           ? getPublicSiteUrl({
               siteKey: rhizome.site_key,
               customDomain: rhizome.custom_domain,
-              hasOwnerDomainFeature: ownerDomainFeatures.get(rhizome.owner_id) === true,
+              hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(rhizome.owner_id),
             })
           : null,
         site_label: rhizome?.site_label,

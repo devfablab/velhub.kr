@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -140,11 +140,7 @@ export async function GET(request: Request) {
           .filter((ownerId): ownerId is string => Boolean(ownerId)),
       ),
     );
-    const ownerDomainFeatures = new Map(
-      await Promise.all(
-        ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),
-      ),
-    );
+    const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(ownerIds, 'owner_domain');
 
     const postUserIds = Array.from(new Set(uniqueRecentPosts.map((post) => post.user_id).filter(Boolean)));
     const stigmasMap = new Map<string, StigmaRow>();
@@ -181,7 +177,7 @@ export async function GET(request: Request) {
           ? getPublicSiteUrl({
               siteKey: site.site_key,
               customDomain: site.custom_domain,
-              hasOwnerDomainFeature: ownerDomainFeatures.get(site.owner_id ?? '') === true,
+              hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
             })
           : null,
         site_label: site?.site_label,

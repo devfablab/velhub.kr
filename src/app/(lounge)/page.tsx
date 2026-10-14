@@ -175,19 +175,16 @@ export default async function Home() {
   let sitesCreatedData = null;
   let postsPublishedData = null;
   try {
-    const sitesCreatedResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&sortBy=created_at`, {
-      cache: 'no-store',
-    });
+    const [sitesCreatedResponse, postsPublishedResponse] = await Promise.all([
+      fetch(`${baseUrl}/api/home/sites?limit=10&sortBy=created_at`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/api/home/posts?limit=20`, { cache: 'no-store' }),
+    ]);
 
     if (!sitesCreatedResponse.ok) {
       console.error('Sites API Error:', sitesCreatedResponse.status, await sitesCreatedResponse.text());
     } else {
       sitesCreatedData = await sitesCreatedResponse.json();
     }
-
-    const postsPublishedResponse = await fetch(`${baseUrl}/api/home/posts?limit=20`, {
-      cache: 'no-store',
-    });
 
     if (!postsPublishedResponse.ok) {
       console.error('Posts API Error:', postsPublishedResponse.status, await postsPublishedResponse.text());

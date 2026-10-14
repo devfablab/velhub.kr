@@ -28,19 +28,16 @@ export default async function Page() {
   let sitesHitsData = null;
   let postsHitsData = null;
   try {
-    const sitesHitsResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&membership=owner&siteType=community`, {
-      cache: 'no-store',
-    });
+    const [sitesHitsResponse, postsHitsResponse] = await Promise.all([
+      fetch(`${baseUrl}/api/home/sites?limit=10&membership=owner&siteType=community`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=community`, { cache: 'no-store' }),
+    ]);
 
     if (!sitesHitsResponse.ok) {
       console.error('Sites API Error:', sitesHitsResponse.status, await sitesHitsResponse.text());
     } else {
       sitesHitsData = await sitesHitsResponse.json();
     }
-
-    const postsHitsResponse = await fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=community`, {
-      cache: 'no-store',
-    });
 
     if (!postsHitsResponse.ok) {
       console.error('Posts API Error:', postsHitsResponse.status, await postsHitsResponse.text());

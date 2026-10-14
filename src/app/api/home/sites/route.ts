@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -95,18 +95,14 @@ export async function GET(request: NextRequest) {
     const ownerIds = [
       ...new Set(sitesData.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
     ];
-    const ownerDomainFeatures = new Map(
-      await Promise.all(
-        ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),
-      ),
-    );
+    const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(ownerIds, 'owner_domain');
 
     const sites = sitesData.map((site) => ({
       site_key: site.site_key,
       site_url: getPublicSiteUrl({
         siteKey: site.site_key,
         customDomain: site.custom_domain,
-        hasOwnerDomainFeature: ownerDomainFeatures.get(site.owner_id ?? '') === true,
+        hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
       }),
       site_label: site.site_label,
       profile_picture: getPublicUrl('profile_picture', site.profile_picture),
