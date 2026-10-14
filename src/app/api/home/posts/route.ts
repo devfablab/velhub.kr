@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
           ? getPublicSiteUrl({
               siteKey: rhizome.site_key,
               customDomain: rhizome.custom_domain,
-              hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(rhizome.owner_id),
+              hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(rhizome.owner_id ?? ''),
             })
           : null,
         site_label: rhizome?.site_label,
