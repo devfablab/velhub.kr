@@ -80,7 +80,7 @@ type PaymentStats = {
 
 type StigmaRow = {
   id: string;
-  user_id: string;
+  user_name: string | null;
 };
 
 type RhizomeStigmaRow = {
@@ -92,6 +92,14 @@ function getSubscriptionStatus(status: string) {
   if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
   if (status === SUBSCRIPTION_STATUS.PAST_DUE) return '결제 유예 중';
   return '중단';
+}
+
+function decryptUserName(value: string) {
+  try {
+    return normalizeText(decrypt(value));
+  } catch {
+    return '';
+  }
 }
 
 async function getSiteAndSession(siteName: string) {
@@ -382,12 +390,12 @@ export async function GET(request: Request) {
       });
     }
 
-    const subscriberUserIds = Array.from(
+    const subscriberStigmaIds = Array.from(
       new Set(latestSubscriptions.map((subscription) => subscription.subscriber_user_id)),
     );
 
-    const stigmasResult = subscriberUserIds.length
-      ? await supabaseAdmin.from('stigmas').select('id, user_id').in('user_id', subscriberUserIds)
+    const stigmasResult = subscriberStigmaIds.length
+      ? await supabaseAdmin.from('stigmas').select('id, user_name').in('id', subscriberStigmaIds)
       : { data: [], error: null };
 
     if (stigmasResult.error) {
@@ -397,7 +405,9 @@ export async function GET(request: Request) {
     }
 
     const stigmas = (stigmasResult.data ?? []) as StigmaRow[];
-    const stigmaIdByParticleId = new Map(stigmas.map((stigma) => [stigma.user_id, stigma.id]));
+    const activityNameByStigmaId = new Map(
+      stigmas.map((stigma) => [stigma.id, decryptUserName(stigma.user_name || '')]),
+    );
     const stigmaIds = stigmas.map((stigma) => stigma.id);
 
     const rhizomeStigmasResult = stigmaIds.length
@@ -473,14 +483,17 @@ export async function GET(request: Request) {
                     parentPrice,
                   },
               subscribers: seriesSubscriptions.map((subscription) => {
-                const stigmaId = stigmaIdByParticleId.get(subscription.subscriber_user_id);
+                const stigmaId = subscription.subscriber_user_id;
                 const paymentStats = paymentStatsByKey.get(
                   `${subscription.target_id}:${subscription.subscriber_user_id}`,
                 );
 
                 return {
                   id: subscription.id,
-                  nickname: stigmaId ? (nicknameByStigmaId.get(stigmaId) ?? '매칭 실패') : '매칭 실패',
+                  nickname:
+                    normalizeText(nicknameByStigmaId.get(stigmaId)) ||
+                    activityNameByStigmaId.get(stigmaId) ||
+                    '사용자',
                   status: getSubscriptionStatus(subscription.status),
                   activeMonths: paymentStats?.activeMonths ?? 0,
                   lastPaidAt: paymentStats?.lastPaidAt ?? null,
@@ -674,3 +687,4 @@ export async function PATCH(request: Request) {
     return Response.json({ error: '연재 구독 설정을 저장하지 못했습니다.' }, { status: 500 });
   }
 }
+import { decrypt } from '@/lib/encryption/decrypt';

@@ -9,6 +9,7 @@ type SiteRow = {
   id: string;
   site_key: string;
   site_label: string | null;
+  site_type: string;
   owner_id: string;
 };
 
@@ -76,7 +77,7 @@ export async function GET(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, owner_id')
+      .select('id, site_key, site_label, site_type, owner_id')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -177,10 +178,10 @@ export async function GET(request: Request) {
 
     const seriesById = new Map(seriesList.map((series) => [series.id, series]));
     const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
-    const donorParticleIds = Array.from(new Set(donations.map((donation) => donation.buyer_user_id)));
+    const donorStigmaIds = Array.from(new Set(donations.map((donation) => donation.buyer_user_id)));
 
-    const stigmasResult = donorParticleIds.length
-      ? await supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', donorParticleIds)
+    const stigmasResult = donorStigmaIds.length
+      ? await supabaseAdmin.from('stigmas').select('id, user_name').in('id', donorStigmaIds)
       : { data: [], error: null };
 
     if (stigmasResult.error) {
@@ -190,11 +191,9 @@ export async function GET(request: Request) {
     }
 
     const stigmas = (stigmasResult.data ?? []) as StigmaRow[];
-    const stigmaIdByParticleId = new Map(stigmas.map((stigma) => [stigma.user_id, stigma.id]));
-    const activityNameByParticleId = new Map(
-      stigmas.map((stigma) => [stigma.user_id, decryptUserName(stigma.user_name || '')]),
+    const activityNameByStigmaId = new Map(
+      stigmas.map((stigma) => [stigma.id, decryptUserName(stigma.user_name || '')]),
     );
-    const donorStigmaIds = stigmas.map((stigma) => stigma.id);
 
     const rhizomeStigmasResult = donorStigmaIds.length
       ? await supabaseAdmin
@@ -240,9 +239,10 @@ export async function GET(request: Request) {
         seriesDonationTotalAmount: getTotalAmount(seriesDonations),
       },
       donations: donations.map((donation) => {
-        const stigmaId = stigmaIdByParticleId.get(donation.buyer_user_id);
-        const nickname = stigmaId ? normalizeText(nicknameByStigmaId.get(stigmaId)) : '';
-        const buyerName = nickname || activityNameByParticleId.get(donation.buyer_user_id) || '사용자';
+        const stigmaId = donation.buyer_user_id;
+        const nickname = normalizeText(nicknameByStigmaId.get(stigmaId));
+        const activityName = activityNameByStigmaId.get(stigmaId) || '';
+        const buyerName = site.site_type === 'community' ? nickname || activityName || '사용자' : activityName || '사용자';
         const series =
           donation.payment_type === PAYMENT_TYPE.DONATION_SERIES ? (seriesById.get(donation.target_id) ?? null) : null;
         const board = series ? (boardById.get(series.board_id) ?? null) : null;

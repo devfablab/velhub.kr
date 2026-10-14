@@ -75,32 +75,20 @@ type StigmaRow = {
   user_name: string | null;
 };
 
-type RhizomeStigmaRow = {
-  user_id: string;
-  nickname: string;
-};
-
 function getBlogSubscriptionStatus(status: string) {
   if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
   if (status === SUBSCRIPTION_STATUS.PAST_DUE) return '결제 유예 중';
   return '중단';
 }
 
-function getNickname({
-  subscriberUserId,
-  stigmaIdByParticleId,
-  nicknameByStigmaId,
-  activityNameByParticleId,
+function getActivityName({
+  subscriberStigmaId,
+  activityNameByStigmaId,
 }: {
-  subscriberUserId: string;
-  stigmaIdByParticleId: Map<string, string>;
-  nicknameByStigmaId: Map<string, string>;
-  activityNameByParticleId: Map<string, string>;
+  subscriberStigmaId: string;
+  activityNameByStigmaId: Map<string, string>;
 }) {
-  const stigmaId = stigmaIdByParticleId.get(subscriberUserId);
-  const nickname = stigmaId ? normalizeText(nicknameByStigmaId.get(stigmaId)) : '';
-
-  return nickname || activityNameByParticleId.get(subscriberUserId) || '사용자';
+  return activityNameByStigmaId.get(subscriberStigmaId) || '사용자';
 }
 
 function decryptUserName(value: string) {
@@ -300,7 +288,7 @@ export async function GET(request: Request) {
     }
 
     const latestSubscriptions = Array.from(latestSubscriptionByUserId.values());
-    const subscriberUserIds = latestSubscriptions.map((subscription) => subscription.subscriber_user_id);
+    const subscriberStigmaIds = latestSubscriptions.map((subscription) => subscription.subscriber_user_id);
 
     const paymentsResult = await supabaseAdmin
       .from('payments')
@@ -343,8 +331,8 @@ export async function GET(request: Request) {
       });
     }
 
-    const stigmasResult = subscriberUserIds.length
-      ? await supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', subscriberUserIds)
+    const stigmasResult = subscriberStigmaIds.length
+      ? await supabaseAdmin.from('stigmas').select('id, user_name').in('id', subscriberStigmaIds)
       : { data: [], error: null };
 
     if (stigmasResult.error) {
@@ -354,29 +342,8 @@ export async function GET(request: Request) {
     }
 
     const stigmas = (stigmasResult.data ?? []) as StigmaRow[];
-    const stigmaIdByParticleId = new Map(stigmas.map((stigma) => [stigma.user_id, stigma.id]));
-    const activityNameByParticleId = new Map(
-      stigmas.map((stigma) => [stigma.user_id, decryptUserName(stigma.user_name || '')]),
-    );
-    const subscriberStigmaIds = stigmas.map((stigma) => stigma.id);
-
-    const rhizomeStigmasResult = subscriberStigmaIds.length
-      ? await supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('user_id, nickname')
-          .eq('site_id', site.id)
-          .in('user_id', subscriberStigmaIds)
-      : { data: [], error: null };
-
-    if (rhizomeStigmasResult.error) {
-      console.error(rhizomeStigmasResult.error);
-
-      return Response.json({ error: '블로그 구독 구독자 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const rhizomeStigmas = (rhizomeStigmasResult.data ?? []) as RhizomeStigmaRow[];
-    const nicknameByStigmaId = new Map(
-      rhizomeStigmas.map((rhizomeStigma) => [rhizomeStigma.user_id, rhizomeStigma.nickname]),
+    const activityNameByStigmaId = new Map(
+      stigmas.map((stigma) => [stigma.id, decryptUserName(stigma.user_name || '')]),
     );
 
     return Response.json({
@@ -406,11 +373,9 @@ export async function GET(request: Request) {
 
         return {
           id: subscription.id,
-          nickname: getNickname({
-            subscriberUserId: subscription.subscriber_user_id,
-            stigmaIdByParticleId,
-            nicknameByStigmaId,
-            activityNameByParticleId,
+          nickname: getActivityName({
+            subscriberStigmaId: subscription.subscriber_user_id,
+            activityNameByStigmaId,
           }),
           status: getBlogSubscriptionStatus(subscription.status),
           activeMonths: paymentStats?.activeMonths ?? 0,
