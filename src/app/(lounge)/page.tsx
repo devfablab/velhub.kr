@@ -139,7 +139,7 @@ type sitesHitsResponse = {
   sites: SitesHitsData[];
 };
 
-type PostsResponse = {
+export type PostsResponse = {
   posts: PostItem[];
 };
 
@@ -163,8 +163,8 @@ export type SlickProps = {
 };
 
 export type ListProps = {
-  postsData?: PostsResponse;
   orderType?: 'newest' | 'hits';
+  postsApiPath?: string;
 };
 
 export default async function Home() {
@@ -213,7 +213,7 @@ export default async function Home() {
           </section>
           <section>
             <h2>여러분의 관심이 필요해요 🥹</h2>
-            <List postsData={postsPublishedData} orderType="newest" />
+            <List orderType="newest" />
           </section>
         </div>
         <Aside />

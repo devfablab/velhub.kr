@@ -1,19 +1,244 @@
 /* eslint-disable react-hooks/purity */
 'use client';
 
+import { useEffect, useState } from 'react';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Avatar, useMediaQuery, useTheme } from '@mui/material';
+import { Avatar, Skeleton, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
-import { ListProps } from '../page';
+import type { ListProps, PostsResponse } from '../page';
 import styles from '@/app/page.module.sass';
 
-export default function List({ postsData, orderType }: ListProps) {
+function LoadingNewestCards({ isMobile }: { isMobile: boolean }) {
+  return (
+    <div className={`${styles.list} ${styles['list-newest']}`}>
+      <div className={`paper ${styles.item}`}>
+        <Anchor href="#">
+          {isMobile ? (
+            <div className={`${styles['description-item']} ${styles['description-item-mini']}`}>
+              <div className={styles.description}>
+                <div className={styles.info}>
+                  <Skeleton variant="rounded" height={24} />
+                  <Skeleton variant="rounded" height={63} />
+                </div>
+                <div className={styles.tail}>
+                  <div className={styles['tail-author']}>
+                    <Skeleton variant="circular" width={24} height={24} component="div" />
+                    <Skeleton variant="rounded" width={32} height={24} component="strong" />
+                    <ScheduleRoundedIcon />
+                    <Skeleton variant="rounded" width={32} height={24} component="time" />
+                  </div>
+                  <div className={styles['tail-site']}>
+                    <AppIconAvatar site="community" src={null} alt="" size={24} />
+                    <Skeleton variant="rounded" width={32} height={24} component="strong" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className={styles['description-item']}>
+                <div className={styles.description}>
+                  <div className={styles.info}>
+                    <Skeleton variant="rounded" height={24} />
+                    <Skeleton variant="rounded" height={63} />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.tail}>
+                <div className={styles['tail-container']}>
+                  <Skeleton variant="circular" width={24} height={24} component="div" />
+                  <Skeleton variant="rounded" width={32} height={24} component="strong" />
+                  <ScheduleRoundedIcon />
+                  <Skeleton variant="rounded" width={32} height={24} component="time" />
+                </div>
+              </div>
+            </>
+          )}
+        </Anchor>
+      </div>
+      <div className={`paper ${styles.item}`}>
+        <Anchor href="#">
+          {isMobile ? (
+            <div className={`${styles['description-item']} ${styles['description-item-mini']}`}>
+              <div className={styles.description}>
+                <div className={styles.info}>
+                  <Skeleton variant="rounded" height={24} />
+                  <Skeleton variant="rounded" height={63} />
+                </div>
+                <div className={styles.tail}>
+                  <div className={styles['tail-author']}>
+                    <Skeleton variant="circular" width={24} height={24} component="div" />
+                    <Skeleton variant="rounded" width={32} height={24} component="strong" />
+                    <ScheduleRoundedIcon />
+                    <Skeleton variant="rounded" width={32} height={24} component="time" />
+                  </div>
+                  <div className={styles['tail-site']}>
+                    <AppIconAvatar site="community" src={null} alt="" size={24} />
+                    <Skeleton variant="rounded" width={32} height={24} component="strong" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className={styles['description-item']}>
+                <div className={styles.description}>
+                  <div className={styles.info}>
+                    <Skeleton variant="rounded" height={24} />
+                    <Skeleton variant="rounded" height={63} />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.tail}>
+                <div className={styles['tail-container']}>
+                  <Skeleton variant="circular" width={24} height={24} component="div" />
+                  <Skeleton variant="rounded" width={32} height={24} component="strong" />
+                  <ScheduleRoundedIcon />
+                  <Skeleton variant="rounded" width={32} height={24} component="time" />
+                </div>
+              </div>
+            </>
+          )}
+        </Anchor>
+      </div>
+    </div>
+  );
+}
+
+function LoadingHitsCards() {
+  return (
+    <div className={`${styles.list} ${styles['list-hits']}`}>
+      <div className={`paper paper-p0 ${styles.item}`}>
+        <Anchor href={'#'}>
+          <div className={styles.thumbnail}>
+            <Skeleton variant="rounded" height={24} component="div" className="dummy" />
+          </div>
+          <div className={styles['description-item']}>
+            <div className={styles.description}>
+              <div className={styles.info}>
+                <Skeleton variant="rounded" height={24} />
+                <Skeleton variant="rounded" height={63} />
+              </div>
+            </div>
+            <div className={styles.tail}>
+              <div className={styles['tail-site']}>
+                <AppIconAvatar site="community" src={null} alt="" size={24} />
+                <Skeleton variant="rounded" width={32} height={24} component="strong" />
+              </div>
+              <div className={styles['tail-author']}>
+                <Skeleton variant="circular" width={24} height={24} component="div" />
+                <Skeleton variant="rounded" width={32} height={24} component="strong" />
+              </div>
+              <div className={styles['tail-date']}>
+                <ScheduleRoundedIcon />
+                <Skeleton variant="rounded" width={32} height={24} component="time" />
+                <VisibilityOutlinedIcon />
+                <Skeleton variant="rounded" width={32} height={24} component="time" />
+              </div>
+            </div>
+          </div>
+        </Anchor>
+      </div>
+      <div className={`paper paper-p0 ${styles.item}`}>
+        <Anchor href={'#'}>
+          <div className={styles.thumbnail}>
+            <Skeleton variant="rounded" height={24} component="div" className="dummy" />
+          </div>
+          <div className={styles['description-item']}>
+            <div className={styles.description}>
+              <div className={styles.info}>
+                <Skeleton variant="rounded" height={24} />
+                <Skeleton variant="rounded" height={63} />
+              </div>
+            </div>
+            <div className={styles.tail}>
+              <div className={styles['tail-site']}>
+                <AppIconAvatar site="community" src={null} alt="" size={24} />
+                <Skeleton variant="rounded" width={32} height={24} component="strong" />
+              </div>
+              <div className={styles['tail-author']}>
+                <Skeleton variant="circular" width={24} height={24} component="div" />
+                <Skeleton variant="rounded" width={32} height={24} component="strong" />
+              </div>
+              <div className={styles['tail-date']}>
+                <ScheduleRoundedIcon />
+                <Skeleton variant="rounded" width={32} height={24} component="time" />
+                <VisibilityOutlinedIcon />
+                <Skeleton variant="rounded" width={32} height={24} component="time" />
+              </div>
+            </div>
+          </div>
+        </Anchor>
+      </div>
+      <div className={`paper paper-p0 ${styles.item}`}>
+        <Anchor href={'#'}>
+          <div className={styles.thumbnail}>
+            <Skeleton variant="rounded" height={24} component="div" className="dummy" />
+          </div>
+          <div className={styles['description-item']}>
+            <div className={styles.description}>
+              <div className={styles.info}>
+                <Skeleton variant="rounded" height={24} />
+                <Skeleton variant="rounded" height={63} />
+              </div>
+            </div>
+            <div className={styles.tail}>
+              <div className={styles['tail-site']}>
+                <AppIconAvatar site="community" src={null} alt="" size={24} />
+                <Skeleton variant="rounded" width={32} height={24} component="strong" />
+              </div>
+              <div className={styles['tail-author']}>
+                <Skeleton variant="circular" width={24} height={24} component="div" />
+                <Skeleton variant="rounded" width={32} height={24} component="strong" />
+              </div>
+              <div className={styles['tail-date']}>
+                <ScheduleRoundedIcon />
+                <Skeleton variant="rounded" width={32} height={24} component="time" />
+                <VisibilityOutlinedIcon />
+                <Skeleton variant="rounded" width={32} height={24} component="time" />
+              </div>
+            </div>
+          </div>
+        </Anchor>
+      </div>
+    </div>
+  );
+}
+
+export default function List({ orderType, postsApiPath }: ListProps) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+  const [loadedPostsData, setLoadedPostsData] = useState<PostsResponse | null>(null);
+  const listPostsApiPath = postsApiPath ?? '/api/home/posts?limit=20';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPosts() {
+      try {
+        const response = await fetch(listPostsApiPath);
+        const result = (await response.json()) as PostsResponse;
+
+        if (isMounted && response.ok && Array.isArray(result.posts)) {
+          setLoadedPostsData(result);
+        }
+      } catch {
+        // 조회에 실패해도 초기 로딩 카드의 구조는 유지한다.
+      }
+    }
+
+    void loadPosts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [listPostsApiPath]);
+
+  const resolvedPostsData = loadedPostsData;
 
   function getYoutubeThumbnailUrl(videoId: string) {
     return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
@@ -31,10 +256,18 @@ export default function List({ postsData, orderType }: ListProps) {
     return text.slice(0, 160);
   }
 
-  if (postsData && orderType === 'newest') {
+  if (!resolvedPostsData && orderType === 'newest') {
+    return <LoadingNewestCards isMobile={isMobile} />;
+  }
+
+  if (!resolvedPostsData && orderType === 'hits') {
+    return <LoadingHitsCards />;
+  }
+
+  if (resolvedPostsData && orderType === 'newest') {
     return (
       <div className={`${styles.list} ${styles['list-newest']}`}>
-        {postsData.posts.map((post) => (
+        {resolvedPostsData.posts.map((post) => (
           <div
             key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`}
             className={`paper ${styles.item}`}
@@ -163,13 +396,6 @@ export default function List({ postsData, orderType }: ListProps) {
                     <div className={styles['tail-container']}>
                       <AppIconAvatar src={post.profile_picture || null} alt="" size={24} />
                       <strong>{post.site_label}</strong>
-                      <em>by</em>
-                      <Avatar
-                        src={post.author_avatar || '/broken-image.jpg'}
-                        alt={post.author_name}
-                        sx={{ width: 24, height: 24, fontSize: 12 }}
-                      />
-                      <strong>{post.author_name}</strong>
                       <ScheduleRoundedIcon />
                       <time>{formatTimeAgo(post.published_at)}</time>
                     </div>
@@ -183,10 +409,10 @@ export default function List({ postsData, orderType }: ListProps) {
     );
   }
 
-  if (postsData && orderType === 'hits') {
+  if (resolvedPostsData && orderType === 'hits') {
     return (
       <div className={`${styles.list} ${styles['list-hits']}`}>
-        {postsData.posts.map((post) => (
+        {resolvedPostsData.posts.map((post) => (
           <div
             key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`}
             className={`paper paper-p0 ${styles.item}`}

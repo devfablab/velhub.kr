@@ -27,11 +27,7 @@ export default async function Page() {
   const baseUrl = `${protocol}://${host}`;
 
   let supportCreatorsData = null;
-  let supportCreatorsListData = null;
-  let recentCreatorsData = null;
   let supportCreatorsError = '';
-  let supportCreatorsListError = '';
-  let recentCreatorsError = '';
 
   try {
     const supportCreatorsResponse = await fetch(`${baseUrl}/api/home/moments/support?limit=10`, {
@@ -43,28 +39,9 @@ export default async function Page() {
       supportCreatorsError = '서포트 작가를 불러오지 못했습니다.';
     }
 
-    const supportCreatorsListResponse = await fetch(`${baseUrl}/api/home/moments/support?limit=100`, {
-      cache: 'no-store',
-    });
-    if (supportCreatorsListResponse.ok) {
-      supportCreatorsListData = await supportCreatorsListResponse.json();
-    } else {
-      supportCreatorsListError = '서포트 크리에이터를 불러오지 못했습니다.';
-    }
-
-    const recentCreatorsResponse = await fetch(`${baseUrl}/api/home/moments/recent-creators?limit=100`, {
-      cache: 'no-store',
-    });
-    if (recentCreatorsResponse.ok) {
-      recentCreatorsData = await recentCreatorsResponse.json();
-    } else {
-      recentCreatorsError = '최근 승인된 작가를 불러오지 못했습니다.';
-    }
   } catch (error) {
     console.error('Fetch Failed:', error);
     supportCreatorsError ||= '서포트 작가를 불러오지 못했습니다.';
-    supportCreatorsListError ||= '서포트 크리에이터를 불러오지 못했습니다.';
-    recentCreatorsError ||= '최근 승인된 작가를 불러오지 못했습니다.';
   }
 
   return (
@@ -86,26 +63,11 @@ export default async function Page() {
           </section>
           <section>
             <h2>서포트 크리에이터 ✨</h2>
-            {supportCreatorsListError ? (
-              <ScreenState kind="error">{supportCreatorsListError}</ScreenState>
-            ) : supportCreatorsListData && (supportCreatorsListData.sites || supportCreatorsListData.posts) ? (
-              <List
-                postsData={supportCreatorsListData.posts ? supportCreatorsListData : undefined}
-                orderType="newest"
-              />
-            ) : (
-              <ScreenState>아직 등록된 서포트 크리에이터가 없습니다.</ScreenState>
-            )}
+            <List orderType="newest" postsApiPath="/api/home/moments/support?limit=100" />
           </section>
           <section>
             <h2>작가들에게 무슨 일이 있나요? 🧐</h2>
-            {recentCreatorsError ? (
-              <ScreenState kind="error">{recentCreatorsError}</ScreenState>
-            ) : recentCreatorsData && recentCreatorsData.posts ? (
-              <List postsData={recentCreatorsData} orderType="newest" />
-            ) : (
-              <ScreenState>최근 승인된 작가가 없습니다.</ScreenState>
-            )}
+            <List orderType="newest" postsApiPath="/api/home/moments/recent-creators?limit=100" />
           </section>
         </div>
         <Aside />

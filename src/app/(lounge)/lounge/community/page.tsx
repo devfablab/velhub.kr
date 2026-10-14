@@ -66,7 +66,7 @@ export default async function Page() {
           </section>
           <section>
             <h2>많은 분들이 읽었어요 😎</h2>
-            <List postsData={postsHitsData} orderType="hits" />
+            <List orderType="hits" postsApiPath="/api/home/posts?limit=20&sortBy=like_count&siteType=community" />
           </section>
         </div>
         <Aside />
