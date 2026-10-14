@@ -121,7 +121,7 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
           {postsData.posts.map((post) => (
             <div key={`${post.site_key}-${post.board_key}-${post.slug}`}>
               <Anchor
-                href={post.site_url && post.slug ? `${post.site_url}/${post.board_key}/${post.slug}` : '#'}
+                href={`${post.site_url}/${post.board_key}/${post.slug}`}
                 style={{
                   aspectRatio:
                     post.board_type === 'gallery' || post.board_type === 'feed'

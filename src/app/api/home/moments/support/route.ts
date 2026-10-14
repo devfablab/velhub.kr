@@ -128,11 +128,15 @@ export async function GET(request: Request) {
     if (boardsResult.error) throw boardsResult.error;
 
     const boardMap = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
+    const visiblePostRows = postRows.filter(
+      (post): post is PostRow & { site_id: string; board_id: string; slug: number } =>
+        Boolean(post.site_id && siteMap.has(post.site_id) && post.board_id && boardMap.has(post.board_id) && post.slug !== null),
+    );
     const ownerIds = Array.from(
       new Set(siteRows.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
     );
     const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(ownerIds, 'owner_domain');
-    const userIds = Array.from(new Set(postRows.map((post) => post.user_id).filter(Boolean)));
+    const userIds = Array.from(new Set(visiblePostRows.map((post) => post.user_id).filter(Boolean)));
     const stigmasMap = new Map<string, StigmaRow>();
 
     if (userIds.length > 0) {
@@ -163,10 +167,10 @@ export async function GET(request: Request) {
       }))
       .slice(0, limit);
 
-    const posts = postRows
+    const posts = visiblePostRows
       .map((post) => {
-        const site = post.site_id ? (siteMap.get(post.site_id) ?? null) : null;
-        const board = post.board_id ? (boardMap.get(post.board_id) ?? null) : null;
+        const site = siteMap.get(post.site_id)!;
+        const board = boardMap.get(post.board_id)!;
         const stigma = stigmasMap.get(post.user_id);
         let authorName = '';
         if (stigma?.user_name) {
@@ -179,20 +183,18 @@ export async function GET(request: Request) {
 
         return {
           site_key: site?.site_key,
-          site_url: site
-            ? getPublicSiteUrl({
-                siteKey: site.site_key,
-                customDomain: site.custom_domain,
-                hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
-              })
-            : null,
+          site_url: getPublicSiteUrl({
+            siteKey: site.site_key,
+            customDomain: site.custom_domain,
+            hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
+          }),
           site_label: site?.site_label,
           site_type: site?.site_type,
           profile_picture: getPublicImageUrl('avatar', site?.profile_picture),
           promotion_image: getPublicImageUrl('promotion-image', site?.promotion_image),
-          slug: post.slug,
-          board_key: board?.board_key,
-          board_type: board?.board_type,
+          slug: String(post.slug),
+          board_key: board.board_key,
+          board_type: board.board_type,
           author_name: authorName,
           author_avatar: getPublicImageUrl('avatar', stigma?.avatar),
           published_at: post.published_at,

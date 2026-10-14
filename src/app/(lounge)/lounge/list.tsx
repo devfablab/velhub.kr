@@ -284,7 +284,7 @@ export default function List({ orderType, postsApiPath }: ListProps) {
             key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`}
             className={`paper ${styles.item}`}
           >
-            <Anchor href={post.site_url && post.slug ? `${post.site_url}/${post.board_key}/${post.slug}` : '#'}>
+            <Anchor href={`${post.site_url}/${post.board_key}/${post.slug}`}>
               {isMobile ? (
                 <div className={`${styles['description-item']} ${styles['description-item-mini']}`}>
                   <div className={styles.description}>
@@ -443,7 +443,7 @@ export default function List({ orderType, postsApiPath }: ListProps) {
             key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`}
             className={`paper paper-p0 ${styles.item}`}
           >
-            <Anchor href={post.site_url && post.slug ? `${post.site_url}/${post.board_key}/${post.slug}` : '#'}>
+            <Anchor href={`${post.site_url}/${post.board_key}/${post.slug}`}>
               {post.board_type === 'gallery' && (
                 <div className={styles.thumbnail}>
                   <img src={post.image} alt="" />
