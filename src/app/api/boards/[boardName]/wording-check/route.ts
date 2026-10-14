@@ -17,12 +17,16 @@ type RequestBody = {
   };
 };
 
+function normalizeRequestText(value: unknown) {
+  return normalizeText(typeof value === 'string' ? value : '');
+}
+
 export async function POST(request: Request, { params }: RouteContext) {
   try {
     const { boardName } = await params;
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
     const body = (await request.json()) as RequestBody;
-    const siteName = normalizeText(body.siteName).toLowerCase();
+    const siteName = normalizeRequestText(body.siteName).toLowerCase();
 
     if (!siteName || !normalizedBoardName) {
       return Response.json({ error: '잘못된 요청입니다.' }, { status: 400 });
@@ -61,9 +65,9 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const options = Array.isArray(body.poll?.options) ? body.poll.options : [];
     const fields = await getWordingProfilerViolationFields(rhizomeResult.data.id, {
-      pollQuestion: normalizeText(body.poll?.question),
+      pollQuestion: normalizeRequestText(body.poll?.question),
       ...Object.fromEntries(
-        options.map((option, index) => [`pollOption${index}`, normalizeText(option?.label)]),
+        options.map((option, index) => [`pollOption${index}`, normalizeRequestText(option?.label)]),
       ),
     });
 
