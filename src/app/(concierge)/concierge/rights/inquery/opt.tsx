@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type FormEvent, type ReactNode, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type ReactNode, type SubmitEventHandler, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -634,7 +634,7 @@ export default function Opt({
     return errors;
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event.preventDefault();
     const validationErrors = validateInputs();
     const nativeFormIsValid = formRef.current?.reportValidity() ?? true;

@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useState } from 'react';
+import { type SubmitEventHandler, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -45,7 +45,7 @@ type Notice = {
   message: string;
 };
 
-type FormSubmitEvent = FormEvent<HTMLFormElement>;
+type FormSubmitEvent = Parameters<SubmitEventHandler<HTMLFormElement>>[0];
 
 type OptProps = { initialData: BoardResponse | null; initialError: string };
 

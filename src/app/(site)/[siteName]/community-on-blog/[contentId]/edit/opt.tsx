@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useRef, useState } from 'react';
+import { type SubmitEventHandler, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
@@ -69,7 +69,7 @@ export default function Opt({
       ? `/${siteName}/community-on-blog`
       : `/${siteName}/community-on-blog/${contentId}`;
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event.preventDefault();
     if (submittingReference.current) return;
 

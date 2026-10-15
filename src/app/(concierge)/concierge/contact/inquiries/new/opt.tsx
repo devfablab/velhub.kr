@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, type SubmitEventHandler, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -266,7 +266,7 @@ export default function Opt({
     });
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event.preventDefault();
     if (inquiryUnavailableReason) return;
     if (!event.currentTarget.reportValidity()) return;

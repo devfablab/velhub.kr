@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { type SubmitEventHandler, useState } from 'react';
 import { Chip, Stack, TextField, Typography } from '@mui/material';
 import type { PartnershipProposalDetail } from '@/lib/partnerships';
 import { formatDateTimeDetail } from '@/lib/utils';
@@ -37,7 +37,7 @@ export default function Opt({
     }
   };
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) => {
     event.preventDefault();
     if (!event.currentTarget.reportValidity()) return;
     const message = content.trim();

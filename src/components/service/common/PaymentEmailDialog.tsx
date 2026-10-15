@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { type ChangeEvent, type ReactEventHandler, type SubmitEventHandler, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Dialog,
@@ -102,13 +102,13 @@ export default function PaymentEmailDialog({
     };
   }
 
-  function handleInvalid(event: FormEvent<HTMLInputElement>) {
+  function handleInvalid(event: Parameters<ReactEventHandler<HTMLInputElement>>[0]) {
     event.preventDefault();
     const validation = getValidationErrors();
     showValidationErrors(validation.email, validation.phone);
   }
 
-  async function handleSave(event?: FormEvent<HTMLFormElement>) {
+  async function handleSave(event?: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event?.preventDefault();
 
     try {

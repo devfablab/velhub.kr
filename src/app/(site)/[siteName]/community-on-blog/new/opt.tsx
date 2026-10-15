@@ -1,5 +1,5 @@
 'use client';
-import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, type SubmitEventHandler, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsIcon from '@mui/icons-material/Collections';
@@ -228,7 +228,7 @@ export default function Opt({
     return '';
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event.preventDefault();
     if (submittingReference.current) return;
     const normalizedContent = normalizeText(content);

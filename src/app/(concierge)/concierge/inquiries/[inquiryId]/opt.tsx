@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useState } from 'react';
+import { type SubmitEventHandler, useCallback, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -138,7 +138,7 @@ export default function Opt({
     if (result.manualRefund) setManualRefund(result.manualRefund);
   }, [params.inquiryId]);
 
-  async function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event.preventDefault();
     setError('');
     setIsSaving(true);

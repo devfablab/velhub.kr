@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useRef, useState } from 'react';
+import { ChangeEvent, type SubmitEventHandler, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, styled } from '@mui/material';
@@ -129,7 +129,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
     event.target.value = '';
   };
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) => {
     event.preventDefault();
     if (!event.currentTarget.reportValidity()) return;
     const nextFieldErrors: FieldErrors = {

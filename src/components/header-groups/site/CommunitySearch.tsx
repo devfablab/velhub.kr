@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useState, useTransition } from 'react';
+import { type SubmitEventHandler, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import SearchIcon from '@mui/icons-material/Search';
 import styles from '@/app/header.module.sass';
@@ -15,7 +15,7 @@ export default function CommunitySearch({ siteName, isBlog }: Props) {
   const [keyword, setKeyword] = useState('');
   const [isNavigating, startNavigation] = useTransition();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event.preventDefault();
 
     const trimmedKeyword = keyword.trim();

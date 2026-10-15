@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, type ReactEventHandler, type SubmitEventHandler, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -209,12 +209,12 @@ export default function UserInfo() {
     return '';
   }
 
-  function handleNicknameInvalid(event: FormEvent<HTMLInputElement>) {
+  function handleNicknameInvalid(event: Parameters<ReactEventHandler<HTMLInputElement>>[0]) {
     event.preventDefault();
     showNicknameError(getNicknameValidationMessage() || '별명을 확인해주세요.');
   }
 
-  async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event?: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event?.preventDefault();
 
     if (isSubmitting) {
