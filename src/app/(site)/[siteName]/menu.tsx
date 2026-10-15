@@ -372,7 +372,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
   }
 
   const home = pathname === `/${siteName}` ? true : false;
-  const isBoardSearch = !pageFin && pageBack === `/${siteName}/board`;
+  const isSearchResult = !pageFin && pageBack === pathname;
 
   const isSiteStaff = userProfile.globalRole === 'admin' || isStaffRole(userProfile.siteRole);
   const isBlog = siteType === 'blog' ? true : false;
@@ -389,8 +389,8 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
             {pageBack ? (
               <>
                 <div className={styles.location} style={{ marginLeft: '-12px' }}>
-                  <IconButton href={pageBack} aria-label={isBoardSearch ? '검색 닫기' : '이전화면으로 이동'}>
-                    {isBoardSearch ? <CloseRoundedIcon /> : <ArrowBackIosNewRoundedIcon />}
+                  <IconButton href={pageBack} aria-label={isSearchResult ? '검색 닫기' : '이전화면으로 이동'}>
+                    {isSearchResult ? <CloseRoundedIcon /> : <ArrowBackIosNewRoundedIcon />}
                   </IconButton>
                 </div>
               </>
@@ -398,7 +398,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
               <i style={{ width: 120, height: 1, display: 'inline-flex' }} aria-hidden />
             )}
 
-            {isBoardSearch ? (
+            {isSearchResult ? (
               siteType === 'blog' ? (
                 <BlogSearch siteName={siteName} isBlog={isBlog} />
               ) : (

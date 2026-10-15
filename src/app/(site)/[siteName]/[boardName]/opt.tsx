@@ -402,7 +402,7 @@ export default function Opt({
     updateRoute(1, searchKeyword, nextSeriesName);
   }
 
-  const isSearchMode = Boolean(searchKeyword);
+  const isSearchMode = Boolean(searchKeyword || authorName);
   const seriesNameParam = normalizeText(searchParams.get('seriesName')).toLowerCase();
   const getContentHref = (slug: string) => {
     const contentPath = `/${siteName}/${boardName}/${slug}`;
@@ -420,7 +420,7 @@ export default function Opt({
   if (errorMessage) {
     return (
       <Container
-        pageBack={`/${siteName}`}
+        pageBack={isSearchMode ? `/${siteName}/${boardName}` : `/${siteName}`}
         pageTitle={
           isSearchMode ? searchKeyword : selectedSeries ? selectedSeries.series_label : board ? board.board_label : ''
         }
@@ -439,7 +439,7 @@ export default function Opt({
 
   return (
     <Container
-      pageBack={`/${siteName}`}
+      pageBack={isSearchMode ? `/${siteName}/${boardName}` : `/${siteName}`}
       pageTitle={
         isSearchMode ? searchKeyword : selectedSeries ? selectedSeries.series_label : board ? board.board_label : ''
       }
