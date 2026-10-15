@@ -200,41 +200,41 @@ header.header
 
   .search
     .form-group
-      display: flex
-      flex-direction: row
-      gap: ds.rem(7)
       width: ds.rem(270)
       position: relative
-      border: 1px solid ds.$hex-accent
-      border-radius: ds.rem(7)
-      @include ds.fw(pre, 700)
-      background-color: ds.$rgb-white
-      color: ds.$hex-primary
-
-      html[data-theme="yellow-dark"] &
-        background-color: ds.$rgb-black
-        color: ds.$hex-bright
 
       .form-control
-        @include ds.col
-
         input
           background-color: transparent
-          border: 0
-          padding: 0 ds.rem(17)
           width: 100%
           height: ds.rem(37)
+          border: 0
+          padding: 0 ds.rem(74) 0 ds.rem(17)
+          border: 1px solid ds.$hex-accent
+          border-radius: ds.rem(7)
+          @include ds.fw(pre, 700)
+          background-color: ds.$rgb-white
+          color: ds.$hex-primary
 
-      button
-        posiation: absolute
+          html[data-theme="yellow-dark"] &
+            background-color: ds.$rgb-black
+            color: ds.$hex-bright
+
+      button, a
+        position: absolute
         top: 0
-        right: 0
         display: flex
         justify-content: center
         align-items: center
         background-color: transparent
         width: ds.rem(37)
         height: ds.rem(37)
+
+      button
+        right: ds.rem(37)
+
+      a
+        right: 0
 
   .navigationbar
     display: flex
@@ -477,6 +477,49 @@ header.header
 
   html[data-theme="yellow-dark"] &
     background-color: ds.$hex-black
+
+  form
+    @include ds.col
+
+  .search
+    .form-group
+      display: flex
+      flex-direction: row
+      gap: ds.rem(7)
+      width: 100%
+      position: relative
+
+      .form-control
+        @include ds.col
+
+        input
+          background-color: ds.$rgb-white
+          border: 0
+          width: 100%
+          height: ds.rem(37)
+          padding: 0 ds.rem(17)
+          border: 1px solid ds.$hex-accent
+          border-radius: ds.rem(37)
+          @include ds.fw(pre, 700)
+          color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            background-color: ds.$rgb-black
+            color: ds.$hex-bright
+
+      button
+        position: absolute
+        top: 0
+        right: 0
+        display: flex
+        justify-content: center
+        align-items: center
+        background-color: transparent
+        width: ds.rem(37)
+        height: ds.rem(37)
+
+      a
+        display: none
 
   &.header-appbar
     flex-direction: column
@@ -799,7 +842,7 @@ header.header
             height: ds.rem(37)
 
         button
-          posiation: absolute
+          position: absolute
           top: 0
           right: 0
           display: flex
@@ -956,7 +999,7 @@ header.header
               height: ds.rem(37)
 
           button
-            posiation: absolute
+            position: absolute
             top: 0
             right: 0
             display: flex

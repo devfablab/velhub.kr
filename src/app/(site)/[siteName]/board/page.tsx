@@ -50,6 +50,9 @@ export default async function Page(context: SearchContext) {
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
   const pageSize = normalizePageSize(searchParams.size, LIST_BOARD_PAGE_SIZES, DEFAULT_LIST_BOARD_PAGE_SIZE);
+  const isSearchResult =
+    (typeof searchParams.keyword === 'string' && Boolean(searchParams.keyword)) ||
+    (typeof searchParams.author === 'string' && Boolean(searchParams.author));
   const queryParams = new URLSearchParams({
     siteName: normalizedSiteName,
     page: typeof searchParams.page === 'string' ? searchParams.page : '1',
@@ -63,7 +66,7 @@ export default async function Page(context: SearchContext) {
     '전체 게시글을 불러오지 못했습니다.',
   );
   return (
-    <Container pageBack={`/${siteName}`} pageTitle="최근글 보기">
+    <Container pageBack={isSearchResult ? `/${siteName}/board` : `/${siteName}`} pageTitle="최근글 보기">
       <Opt
         key={queryParams.toString()}
         isCommunity={isCommunity}

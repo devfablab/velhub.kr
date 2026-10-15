@@ -372,6 +372,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
   }
 
   const home = pathname === `/${siteName}` ? true : false;
+  const isBoardSearch = !pageFin && pageBack === `/${siteName}/board`;
 
   const isSiteStaff = userProfile.globalRole === 'admin' || isStaffRole(userProfile.siteRole);
   const isBlog = siteType === 'blog' ? true : false;
@@ -386,327 +387,348 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
         {isMobile ? (
           <>
             {pageBack ? (
-              <div className={styles.location} style={{ marginLeft: '-12px' }}>
-                <IconButton href={pageBack} aria-label="이전화면으로 이동">
-                  <ArrowBackIosNewRoundedIcon />
-                </IconButton>
-              </div>
+              <>
+                <div className={styles.location} style={{ marginLeft: '-12px' }}>
+                  <IconButton href={pageBack} aria-label={isBoardSearch ? '검색 닫기' : '이전화면으로 이동'}>
+                    {isBoardSearch ? <CloseRoundedIcon /> : <ArrowBackIosNewRoundedIcon />}
+                  </IconButton>
+                </div>
+              </>
             ) : (
               <i style={{ width: 120, height: 1, display: 'inline-flex' }} aria-hidden />
             )}
-            <h1>
-              {home ? (
-                <strong>
-                  {profileLogoUrl ? (
-                    <img src={profileLogoUrl} alt={siteLabel} aria-hidden="true" />
+
+            {isBoardSearch ? (
+              siteType === 'blog' ? (
+                <BlogSearch siteName={siteName} isBlog={isBlog} />
+              ) : (
+                <CommunitySearch siteName={siteName} isBlog={isBlog} />
+              )
+            ) : (
+              <>
+                <h1>
+                  {home ? (
+                    <strong>
+                      {profileLogoUrl ? (
+                        <img src={profileLogoUrl} alt={siteLabel} aria-hidden="true" />
+                      ) : (
+                        <>
+                          {profilePictureUrl ? (
+                            <AppIconAvatar src={profilePictureUrl || null} alt="" size={18} />
+                          ) : null}
+                          <span className={profilePictureUrl ? undefined : styles['site-label']}>{siteLabel}</span>
+                        </>
+                      )}
+                      {pageTitle}
+                    </strong>
                   ) : (
                     <>
-                      {profilePictureUrl ? <AppIconAvatar src={profilePictureUrl || null} alt="" size={18} /> : null}
-                      <span className={profilePictureUrl ? undefined : styles['site-label']}>{siteLabel}</span>
+                      <span>{siteLabel} </span>
+                      <strong>
+                        <span>{pageTitle}</span>
+                      </strong>
                     </>
                   )}
-                  {pageTitle}
-                </strong>
-              ) : (
-                <>
-                  <span>{siteLabel} </span>
-                  <strong>
-                    <span>{pageTitle}</span>
-                  </strong>
-                </>
-              )}
-            </h1>
-            <div className={styles.iconbuttons}>
-              {pageFin ? (
-                <IconButton onClick={handleOpenProfileDrawer} sx={{ width: 40, height: 40 }}>
-                  <MoreHorizRoundedIcon />
-                </IconButton>
-              ) : (
-                <>
-                  <ReportButton targetType="site" siteName={siteName} />
-                  <IconButton onClick={handleOpenSearchDrawer} sx={{ width: 40, height: 40 }}>
-                    <SearchOutlinedIcon />
-                  </IconButton>
-                  <Drawer
-                    anchor="top"
-                    open={isSearchDrawerOpen}
-                    onClose={handleCloseSearchDrawer}
-                    className={styles['VhiDrawer-search']}
-                  >
-                    <div className={styles['mobile-search']}>
-                      <IconButton
-                        className={styles['icon-button']}
-                        onClick={handleCloseSearchDrawer}
-                        aria-label="검색 닫기"
-                      >
-                        <CloseRoundedIcon />
+                </h1>
+                <div className={styles.iconbuttons}>
+                  {pageFin ? (
+                    <IconButton onClick={handleOpenProfileDrawer} sx={{ width: 40, height: 40 }}>
+                      <MoreHorizRoundedIcon />
+                    </IconButton>
+                  ) : (
+                    <>
+                      <ReportButton targetType="site" siteName={siteName} />
+                      <IconButton onClick={handleOpenSearchDrawer} sx={{ width: 40, height: 40 }}>
+                        <SearchOutlinedIcon />
                       </IconButton>
-
-                      {siteType === 'blog' ? (
-                        <BlogSearch siteName={siteName} isBlog={isBlog} />
-                      ) : (
-                        <CommunitySearch siteName={siteName} isBlog={isBlog} />
-                      )}
-                    </div>
-                  </Drawer>
-                  <IconButton onClick={handleOpenThemeModeMenu} sx={{ width: 40, height: 40 }}>
-                    {renderThemeModeIcon()}
-                  </IconButton>
-                  <Drawer
-                    anchor="right"
-                    open={isThemeModeDrawerOpen}
-                    onClose={handleCloseThemeModeDrawer}
-                    className={styles.VhiDrawer}
-                  >
-                    <Box role="presentation">
-                      <List>
-                        <li className={styles['VhiDrawer-header']}>
-                          <strong>화면모드 설정</strong>
-                          <IconButton type="button" onClick={handleCloseThemeModeDrawer} aria-label="메뉴 닫기">
+                      <Drawer
+                        anchor="top"
+                        open={isSearchDrawerOpen}
+                        onClose={handleCloseSearchDrawer}
+                        className={styles['VhiDrawer-search']}
+                      >
+                        <div className={styles['mobile-search']}>
+                          <IconButton
+                            className={styles['icon-button']}
+                            onClick={handleCloseSearchDrawer}
+                            aria-label="검색 닫기"
+                          >
                             <CloseRoundedIcon />
                           </IconButton>
-                        </li>
-                        <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
-                          <ListItemIcon className={styles['MenuItem-icon']}>
-                            <LightModeIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
-                        </MenuItem>
 
-                        <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
-                          <ListItemIcon className={styles['MenuItem-icon']}>
-                            <SettingsBrightnessIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
-                        </MenuItem>
-
-                        <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
-                          <ListItemIcon className={styles['MenuItem-icon']}>
-                            <DarkModeIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
-                        </MenuItem>
-                      </List>
-                    </Box>
-                  </Drawer>
-                  <NotificationButton isMobile={true} />
-                  <IconButton
-                    onClick={handleOpenProfileDrawer}
-                    className={styles['theme-mode-button']}
-                    sx={{ width: 40, height: 40 }}
-                  >
-                    <MenuRoundedIcon />
-                  </IconButton>
-                </>
-              )}
-
-              <Drawer
-                anchor="right"
-                open={isProfileDrawerOpen}
-                onClose={handleCloseProfileDrawer}
-                className={styles.VhiDrawer}
-              >
-                <Box role="presentation">
-                  <List>
-                    <li className={styles['VhiDrawer-header']}>
-                      <strong>{pageFin ? '설정 및 메뉴' : '마이 메뉴'}</strong>
-                      <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                        <CloseRoundedIcon />
-                      </IconButton>
-                    </li>
-
-                    {isLoggedIn ? (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>{userProfile.name}</em>
-                          <span>{maskEmail(userProfile.email ?? '')}</span>
-                        </div>
-                      </li>
-                    ) : (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src="" alt="" />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>로그인이 필요합니다</em>
-                        </div>
-                      </li>
-                    )}
-                    {isLoggedIn && userProfile.join ? (
-                      <ListSubheader className={styles['VhiMenu-profile']}>
-                        <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>{siteLabel}</em>
-                          <span>
-                            {userProfile.isApproval === true
-                              ? userProfile.nickname || userProfile.name
-                              : userProfile.isApproval === false
-                                ? '승인을 기다려요'
-                                : userProfile.invite
-                                  ? '초대에 응해 주세요'
-                                  : null}{' '}
-                            {userProfile.isApproval === true && userProfile.siteRoleLabels.length > 0 ? (
-                              <>({userProfile.siteRoleLabels.join(', ')})</>
-                            ) : null}
-                          </span>
-                        </div>
-                      </ListSubheader>
-                    ) : null}
-                    {isLoggedIn && userProfile.join === false && siteType === 'community' ? (
-                      <ListSubheader className={styles['VhiMenu-profile']}>
-                        <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>{siteLabel}</em>
-                          <span>가입해 주세요</span>
-                        </div>
-                      </ListSubheader>
-                    ) : null}
-
-                    {pageFin ? (
-                      <>
-                        <li className={styles.searchform}>
                           {siteType === 'blog' ? (
                             <BlogSearch siteName={siteName} isBlog={isBlog} />
                           ) : (
                             <CommunitySearch siteName={siteName} isBlog={isBlog} />
                           )}
+                        </div>
+                      </Drawer>
+                      <IconButton onClick={handleOpenThemeModeMenu} sx={{ width: 40, height: 40 }}>
+                        {renderThemeModeIcon()}
+                      </IconButton>
+                      <Drawer
+                        anchor="right"
+                        open={isThemeModeDrawerOpen}
+                        onClose={handleCloseThemeModeDrawer}
+                        className={styles.VhiDrawer}
+                      >
+                        <Box role="presentation">
+                          <List>
+                            <li className={styles['VhiDrawer-header']}>
+                              <strong>화면모드 설정</strong>
+                              <IconButton type="button" onClick={handleCloseThemeModeDrawer} aria-label="메뉴 닫기">
+                                <CloseRoundedIcon />
+                              </IconButton>
+                            </li>
+                            <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
+                              <ListItemIcon className={styles['MenuItem-icon']}>
+                                <LightModeIcon fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
+                            </MenuItem>
+
+                            <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
+                              <ListItemIcon className={styles['MenuItem-icon']}>
+                                <SettingsBrightnessIcon fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
+                            </MenuItem>
+
+                            <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
+                              <ListItemIcon className={styles['MenuItem-icon']}>
+                                <DarkModeIcon fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
+                            </MenuItem>
+                          </List>
+                        </Box>
+                      </Drawer>
+                      <NotificationButton isMobile={true} />
+                      <IconButton
+                        onClick={handleOpenProfileDrawer}
+                        className={styles['theme-mode-button']}
+                        sx={{ width: 40, height: 40 }}
+                      >
+                        <MenuRoundedIcon />
+                      </IconButton>
+                    </>
+                  )}
+
+                  <Drawer
+                    anchor="right"
+                    open={isProfileDrawerOpen}
+                    onClose={handleCloseProfileDrawer}
+                    className={styles.VhiDrawer}
+                  >
+                    <Box role="presentation">
+                      <List>
+                        <li className={styles['VhiDrawer-header']}>
+                          <strong>{pageFin ? '설정 및 메뉴' : '마이 메뉴'}</strong>
+                          <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
+                            <CloseRoundedIcon />
+                          </IconButton>
                         </li>
 
-                        <ListSubheader className={styles['VhiDrawer-subheader']}>화면모드 설정</ListSubheader>
-                        <li className={styles['theme-buttons']}>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectThemeMode('light')}
-                            className={themeMode === 'light' ? styles.active : undefined}
-                          >
-                            {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
-                            <span>라이트 모드</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectThemeMode('system')}
-                            className={themeMode === 'system' ? styles.active : undefined}
-                          >
-                            {themeMode === 'system' ? <SettingsBrightnessIcon /> : <SettingsBrightnessOutlinedIcon />}
-                            <span>시스템</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectThemeMode('dark')}
-                            className={themeMode === 'dark' ? styles.active : undefined}
-                          >
-                            {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
-                            <span>다크 모드</span>
-                          </button>
-                        </li>
-                      </>
-                    ) : null}
-
-                    <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
-                    <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
-
-                    {isAdult ? (
-                      <>
-                        <ListSubheader className={styles['VhiDrawer-subheader']}>수익/정산</ListSubheader>
-                        <DrawerPayments siteName={siteName} onClose={handleCloseProfileDrawer} />
-                      </>
-                    ) : null}
-
-                    {isSiteStaff ? (
-                      <>
-                        <ListSubheader className={styles['VhiDrawer-subheader']}>
-                          {isBlog ? '블로그' : '커뮤니티'} 관리
-                        </ListSubheader>
-                        <DrawerManage
-                          siteName={siteName}
-                          siteType={siteType}
-                          blogType={initialHeader?.blogType}
-                          siteRole={userProfile.siteRole}
-                          globalRole={userProfile.globalRole}
-                          onClose={handleCloseProfileDrawer}
-                        />
-                      </>
-                    ) : null}
-
-                    {isLoggedIn ? (
-                      <>
-                        <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                        <MenuItem onClick={handleCloseProfileDrawer}>
-                          <Anchor href="/">
-                            <HomeOutlinedIcon fontSize="small" />
-                            <span>라운지</span>
-                          </Anchor>
-                        </MenuItem>
-
-                        <MenuItem onClick={handleCloseProfileDrawer}>
-                          <Anchor href="/hub">
-                            <HubOutlinedIcon fontSize="small" />
-                            <span>마이허브</span>
-                          </Anchor>
-                        </MenuItem>
-
-                        {userProfile.isAuthor ? (
-                          <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
-                            <Anchor
-                              href={
-                                userProfile.creatorHandleName
-                                  ? `/creator/${userProfile.creatorHandleName}`
-                                  : '/creator/settings'
-                              }
-                            >
-                              <MenuBookRoundedIcon fontSize="small" />
-                              <span>작가의 서재</span>
-                            </Anchor>
-                          </MenuItem>
+                        {isLoggedIn ? (
+                          <li className={styles['VhiMenu-profile']}>
+                            <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                            <div className={styles['VhiMenu-profile-info']}>
+                              <em>{userProfile.name}</em>
+                              <span>{maskEmail(userProfile.email ?? '')}</span>
+                            </div>
+                          </li>
+                        ) : (
+                          <li className={styles['VhiMenu-profile']}>
+                            <Avatar src="" alt="" />
+                            <div className={styles['VhiMenu-profile-info']}>
+                              <em>로그인이 필요합니다</em>
+                            </div>
+                          </li>
+                        )}
+                        {isLoggedIn && userProfile.join ? (
+                          <ListSubheader className={styles['VhiMenu-profile']}>
+                            <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                            <div className={styles['VhiMenu-profile-info']}>
+                              <em>{siteLabel}</em>
+                              <span>
+                                {userProfile.isApproval === true
+                                  ? userProfile.nickname || userProfile.name
+                                  : userProfile.isApproval === false
+                                    ? '승인을 기다려요'
+                                    : userProfile.invite
+                                      ? '초대에 응해 주세요'
+                                      : null}{' '}
+                                {userProfile.isApproval === true && userProfile.siteRoleLabels.length > 0 ? (
+                                  <>({userProfile.siteRoleLabels.join(', ')})</>
+                                ) : null}
+                              </span>
+                            </div>
+                          </ListSubheader>
                         ) : null}
-                        {userProfile.hasAffettoMyPosts ? (
-                          <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
-                            <Anchor
-                              href={
-                                userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'
-                              }
-                            >
-                              <InterestsOutlinedIcon fontSize="small" />
-                              <span>독자의 서재</span>
-                            </Anchor>
-                          </MenuItem>
+                        {isLoggedIn && userProfile.join === false && siteType === 'community' ? (
+                          <ListSubheader className={styles['VhiMenu-profile']}>
+                            <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                            <div className={styles['VhiMenu-profile-info']}>
+                              <em>{siteLabel}</em>
+                              <span>가입해 주세요</span>
+                            </div>
+                          </ListSubheader>
                         ) : null}
 
-                        <MenuItem onClick={handleCloseProfileDrawer}>
-                          <Anchor href="/settings">
-                            <SettingsOutlinedIcon fontSize="small" />
-                            <span>개인 설정</span>
-                          </Anchor>
-                        </MenuItem>
+                        {pageFin ? (
+                          <>
+                            <li className={styles.searchform}>
+                              {siteType === 'blog' ? (
+                                <BlogSearch siteName={siteName} isBlog={isBlog} />
+                              ) : (
+                                <CommunitySearch siteName={siteName} isBlog={isBlog} />
+                              )}
+                            </li>
 
-                        <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                          <ListItemIcon className={styles['MenuItem-icon']}>
-                            <LogoutOutlinedIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                        </MenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                        <MenuItem onClick={handleCloseProfileDrawer}>
-                          <Anchor href="/auth/sign-in">
-                            <LoginOutlinedIcon fontSize="small" />
-                            <span>로그인</span>
-                          </Anchor>
-                        </MenuItem>
+                            <ListSubheader className={styles['VhiDrawer-subheader']}>화면모드 설정</ListSubheader>
+                            <li className={styles['theme-buttons']}>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectThemeMode('light')}
+                                className={themeMode === 'light' ? styles.active : undefined}
+                              >
+                                {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
+                                <span>라이트 모드</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectThemeMode('system')}
+                                className={themeMode === 'system' ? styles.active : undefined}
+                              >
+                                {themeMode === 'system' ? (
+                                  <SettingsBrightnessIcon />
+                                ) : (
+                                  <SettingsBrightnessOutlinedIcon />
+                                )}
+                                <span>시스템</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectThemeMode('dark')}
+                                className={themeMode === 'dark' ? styles.active : undefined}
+                              >
+                                {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
+                                <span>다크 모드</span>
+                              </button>
+                            </li>
+                          </>
+                        ) : null}
 
-                        <MenuItem onClick={handleCloseProfileDrawer}>
-                          <Anchor href="/auth/sign-up">
-                            <CheckOutlinedIcon fontSize="small" />
-                            <span>회원가입</span>
-                          </Anchor>
-                        </MenuItem>
-                      </>
-                    )}
-                  </List>
-                </Box>
-              </Drawer>
-            </div>
+                        <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
+                        <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
+
+                        {isAdult ? (
+                          <>
+                            <ListSubheader className={styles['VhiDrawer-subheader']}>수익/정산</ListSubheader>
+                            <DrawerPayments siteName={siteName} onClose={handleCloseProfileDrawer} />
+                          </>
+                        ) : null}
+
+                        {isSiteStaff ? (
+                          <>
+                            <ListSubheader className={styles['VhiDrawer-subheader']}>
+                              {isBlog ? '블로그' : '커뮤니티'} 관리
+                            </ListSubheader>
+                            <DrawerManage
+                              siteName={siteName}
+                              siteType={siteType}
+                              blogType={initialHeader?.blogType}
+                              siteRole={userProfile.siteRole}
+                              globalRole={userProfile.globalRole}
+                              onClose={handleCloseProfileDrawer}
+                            />
+                          </>
+                        ) : null}
+
+                        {isLoggedIn ? (
+                          <>
+                            <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
+                            <MenuItem onClick={handleCloseProfileDrawer}>
+                              <Anchor href="/">
+                                <HomeOutlinedIcon fontSize="small" />
+                                <span>라운지</span>
+                              </Anchor>
+                            </MenuItem>
+
+                            <MenuItem onClick={handleCloseProfileDrawer}>
+                              <Anchor href="/hub">
+                                <HubOutlinedIcon fontSize="small" />
+                                <span>마이허브</span>
+                              </Anchor>
+                            </MenuItem>
+
+                            {userProfile.isAuthor ? (
+                              <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
+                                <Anchor
+                                  href={
+                                    userProfile.creatorHandleName
+                                      ? `/creator/${userProfile.creatorHandleName}`
+                                      : '/creator/settings'
+                                  }
+                                >
+                                  <MenuBookRoundedIcon fontSize="small" />
+                                  <span>작가의 서재</span>
+                                </Anchor>
+                              </MenuItem>
+                            ) : null}
+                            {userProfile.hasAffettoMyPosts ? (
+                              <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
+                                <Anchor
+                                  href={
+                                    userProfile.userHandleName
+                                      ? `/user/${userProfile.userHandleName}`
+                                      : '/user/settings'
+                                  }
+                                >
+                                  <InterestsOutlinedIcon fontSize="small" />
+                                  <span>독자의 서재</span>
+                                </Anchor>
+                              </MenuItem>
+                            ) : null}
+
+                            <MenuItem onClick={handleCloseProfileDrawer}>
+                              <Anchor href="/settings">
+                                <SettingsOutlinedIcon fontSize="small" />
+                                <span>개인 설정</span>
+                              </Anchor>
+                            </MenuItem>
+
+                            <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                              <ListItemIcon className={styles['MenuItem-icon']}>
+                                <LogoutOutlinedIcon fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
+                            </MenuItem>
+                          </>
+                        ) : (
+                          <>
+                            <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
+                            <MenuItem onClick={handleCloseProfileDrawer}>
+                              <Anchor href="/auth/sign-in">
+                                <LoginOutlinedIcon fontSize="small" />
+                                <span>로그인</span>
+                              </Anchor>
+                            </MenuItem>
+
+                            <MenuItem onClick={handleCloseProfileDrawer}>
+                              <Anchor href="/auth/sign-up">
+                                <CheckOutlinedIcon fontSize="small" />
+                                <span>회원가입</span>
+                              </Anchor>
+                            </MenuItem>
+                          </>
+                        )}
+                      </List>
+                    </Box>
+                  </Drawer>
+                </div>
+              </>
+            )}
           </>
         ) : null}
       </header>

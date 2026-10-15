@@ -1,8 +1,10 @@
 'use client';
 
-import { type SubmitEventHandler, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import SearchIcon from '@mui/icons-material/Search';
+import { type SubmitEventHandler, useEffect, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import Anchor from '@/components/Anchor';
 import styles from '@/app/header.module.sass';
 
 type Props = {
@@ -12,8 +14,14 @@ type Props = {
 
 export default function CommunitySearch({ siteName, isBlog }: Props) {
   const router = useRouter();
-  const [keyword, setKeyword] = useState('');
+  const searchParams = useSearchParams();
+  const urlKeyword = searchParams.get('keyword') ?? '';
+  const [keyword, setKeyword] = useState(urlKeyword);
   const [isNavigating, startNavigation] = useTransition();
+
+  useEffect(() => {
+    setKeyword(urlKeyword);
+  }, [urlKeyword]);
 
   function handleSubmit(event: Parameters<SubmitEventHandler<HTMLFormElement>>[0]) {
     event.preventDefault();
@@ -46,8 +54,11 @@ export default function CommunitySearch({ siteName, isBlog }: Props) {
             />
           </div>
           <button type="submit" disabled={!keyword.trim() || isNavigating} aria-label="검색">
-            <SearchIcon />
+            <SearchRoundedIcon />
           </button>
+          <Anchor href={`/${siteName}/board`} aria-label="검색취소">
+            <CloseRoundedIcon />
+          </Anchor>
         </div>
       </fieldset>
     </form>
