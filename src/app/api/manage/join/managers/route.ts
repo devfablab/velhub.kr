@@ -4,7 +4,7 @@ import {
   buildCommunityManagerList,
   getBoardSummaries,
   getCommunityManagerAccess,
-} from '@/lib/community/community-manager/utils';
+} from '@/lib/community/communityManager/utils';
 import { getOwnerTransferAvailability } from '@/lib/community/ownerTransfers';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

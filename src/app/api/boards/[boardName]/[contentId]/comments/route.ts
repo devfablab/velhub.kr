@@ -1,4 +1,4 @@
-import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
+import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
+import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
 import { getKoreanAge } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';

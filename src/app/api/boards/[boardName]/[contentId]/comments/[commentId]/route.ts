@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -1148,7 +1148,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (await hasWordingProfilerViolation(siteResult.data.id, { content })) {
-      return Response.json({ code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_COMMENT_EDIT_ERROR, fields: ['content'] }, { status: 400 });
+      return Response.json(
+        { code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_COMMENT_EDIT_ERROR, fields: ['content'] },
+        { status: 400 },
+      );
     }
 
     const updateResult = await supabaseAdmin

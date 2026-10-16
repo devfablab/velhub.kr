@@ -1,8 +1,8 @@
 import path from 'path';
 import sharp from 'sharp';
 import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
-import { refreshCommunitySiteMemberLevels } from '@/lib/community/community-levels/refreshMemberLevel';
-import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { refreshCommunitySiteMemberLevels } from '@/lib/community/communityLevels/refreshMemberLevel';
+import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 

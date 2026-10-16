@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
+import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';

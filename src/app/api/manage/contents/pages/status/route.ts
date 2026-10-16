@@ -1,4 +1,4 @@
-import { canManageCommunityPages, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { canManageCommunityPages, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

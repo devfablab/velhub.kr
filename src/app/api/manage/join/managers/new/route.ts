@@ -3,7 +3,7 @@ import {
   type CommunityManagerAccess,
   getCommunityManagerAccess,
   getCommunityManagerRows,
-} from '@/lib/community/community-manager/utils';
+} from '@/lib/community/communityManager/utils';
 import { createCommunityManagerChangeNotifications } from '@/lib/notifications/createCommunityManagerChangeNotifications';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { normalizeText } from '@/lib/utils';

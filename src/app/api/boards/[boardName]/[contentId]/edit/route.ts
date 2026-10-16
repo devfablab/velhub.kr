@@ -1,6 +1,6 @@
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
-import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
@@ -1083,7 +1083,9 @@ export async function PATCH(request: Request, context: RouteContext) {
             previewHtml: finalPreviewHtml,
             previewMarkdown: finalPreviewMarkdown,
             pollQuestion: finalPoll?.question,
-            ...Object.fromEntries((finalPoll?.options ?? []).map((option, index) => [`pollOption${index}`, option.label])),
+            ...Object.fromEntries(
+              (finalPoll?.options ?? []).map((option, index) => [`pollOption${index}`, option.label]),
+            ),
           })
         : [];
 

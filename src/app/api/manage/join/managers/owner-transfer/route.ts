@@ -1,4 +1,4 @@
-import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { getOwnerTransferAvailability } from '@/lib/community/ownerTransfers';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { normalizeText } from '@/lib/utils';

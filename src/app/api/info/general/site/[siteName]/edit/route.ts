@@ -1,5 +1,5 @@
 import { isValidActivityName } from '@/lib/auth/emailSignUp';
-import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { getCustomDomainError, normalizeCustomDomain } from '@/lib/customDomain';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { cancelPortOnePayment } from '@/lib/payments/portone';

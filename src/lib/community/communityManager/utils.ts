@@ -3,7 +3,7 @@ import {
   type CommunityManageRoleType,
   getMergedCommunityManagePermission,
   isCommunityManageRole,
-} from '@/lib/community/community-manager/permissions';
+} from '@/lib/community/communityManager/permissions';
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';

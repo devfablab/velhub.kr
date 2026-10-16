@@ -1,4 +1,4 @@
-import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { getStaffRestrictionMessageStatus } from '@/lib/users/memberRestrictionMessages';
 import { loadRestrictionLastSenderMap } from '@/lib/users/memberRestrictionMessagesServer';
 import {

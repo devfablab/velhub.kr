@@ -3,7 +3,7 @@ import {
   canManageCommunityBoardContents,
   canManageCommunityBoardSettings,
   getCommunityManagerAccess,
-} from '@/lib/community/community-manager/utils';
+} from '@/lib/community/communityManager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';

@@ -1,4 +1,4 @@
-import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
+import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getLibraryStatus } from '@/lib/session/libraryStatus';

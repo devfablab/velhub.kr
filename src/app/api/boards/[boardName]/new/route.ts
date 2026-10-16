@@ -1,7 +1,7 @@
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/blogAds/server';
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
-import { refreshCommunityMemberLevel } from '@/lib/community/community-levels/refreshMemberLevel';
+import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
 import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
@@ -964,7 +964,9 @@ export async function POST(request: Request, context: RouteContext) {
             previewHtml: finalPreviewHtml,
             previewMarkdown: finalPreviewMarkdown,
             pollQuestion: finalPoll?.question,
-            ...Object.fromEntries((finalPoll?.options ?? []).map((option, index) => [`pollOption${index}`, option.label])),
+            ...Object.fromEntries(
+              (finalPoll?.options ?? []).map((option, index) => [`pollOption${index}`, option.label]),
+            ),
           })
         : false;
     const publishedAt = action === 'publish' ? nowIsoString : action === 'unknown' ? requestedPublishedAt : null;

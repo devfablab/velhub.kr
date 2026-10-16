@@ -1,4 +1,4 @@
-import type { CommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import type { CommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type ManagerChangeAction = 'assigned' | 'removed';
