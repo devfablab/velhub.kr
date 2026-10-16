@@ -222,19 +222,39 @@ header.header
 
       button, a
         position: absolute
-        top: 0
+        top: 50%
+        transform: translateY(-50%)
         display: flex
         justify-content: center
         align-items: center
         background-color: transparent
-        width: ds.rem(37)
-        height: ds.rem(37)
+        width: ds.rem(27)
+        height: ds.rem(27)
 
       button
-        right: ds.rem(37)
+        &.search-submit
+          right: ds.rem(7)
+
+        &.search-reset
+          right: ds.rem(37)
+          border-radius: 100%
+          background-color: rgba(ds.$rgb-tertiary, .2)
+          width: ds.rem(24)
+          height: ds.rem(24)
+
+          html[data-theme="yellow-dark"] &
+            background-color: rgba(ds.$rgb-tertiary, .5)
+
+          svg
+            width: ds.rem(18)
+            height: ds.rem(18)
 
       a
-        right: 0
+        right: ds.rem(34)
+
+      &:has(> a)
+        .search-reset
+          right: ds.rem(61)
 
   .navigationbar
     display: flex
@@ -509,14 +529,31 @@ header.header
 
       button
         position: absolute
-        top: 0
-        right: 0
+        top: 50%
+        transform: translateY(-50%)
         display: flex
         justify-content: center
         align-items: center
         background-color: transparent
-        width: ds.rem(37)
-        height: ds.rem(37)
+        width: ds.rem(27)
+        height: ds.rem(27)
+
+        &.search-submit
+          right: ds.rem(7)
+
+        &.search-reset
+          right: ds.rem(37)
+          border-radius: 100%
+          background-color: rgba(ds.$rgb-tertiary, .2)
+          width: ds.rem(24)
+          height: ds.rem(24)
+
+          html[data-theme="yellow-dark"] &
+            background-color: rgba(ds.$rgb-tertiary, .5)
+
+          svg
+            width: ds.rem(18)
+            height: ds.rem(18)
 
       a
         display: none
@@ -821,36 +858,50 @@ header.header
         gap: ds.rem(7)
         width: 100%
         position: relative
-        border: 1px solid ds.$hex-accent
-        border-radius: ds.rem(37)
-        @include ds.fw(pre, 700)
-        background-color: ds.$rgb-white
-        color: ds.$hex-primary
-
-        html[data-theme="yellow-dark"] &
-          background-color: ds.$rgb-black
-          color: ds.$hex-bright
-
         .form-control
           @include ds.col
 
           input
-            background-color: transparent
-            border: 0
+            background-color: ds.$rgb-white
+            border: 1px solid ds.$hex-accent
+            border-radius: ds.rem(37)
             padding: 0 ds.rem(17)
             width: 100%
             height: ds.rem(37)
+            @include ds.fw(pre, 700)
+            color: ds.$hex-primary
+
+            html[data-theme="yellow-dark"] &
+              background-color: ds.$rgb-black
+              color: ds.$hex-bright
 
         button
           position: absolute
-          top: 0
-          right: 0
+          top: 50%
+          transform: translateY(-50%)
           display: flex
           justify-content: center
           align-items: center
           background-color: transparent
-          width: ds.rem(37)
-          height: ds.rem(37)
+          width: ds.rem(27)
+          height: ds.rem(27)
+
+          &.search-submit
+            right: ds.rem(7)
+
+          &.search-reset
+            right: ds.rem(37)
+            border-radius: 100%
+            background-color: rgba(ds.$rgb-tertiary, .2)
+            width: ds.rem(24)
+            height: ds.rem(24)
+
+            html[data-theme="yellow-dark"] &
+              background-color: rgba(ds.$rgb-tertiary, .5)
+
+            svg
+              width: ds.rem(18)
+              height: ds.rem(18)
 
     .theme-buttons
       display: flex
@@ -1009,6 +1060,9 @@ header.header
             &:disabled
               opacity: .2
               cursor: not-allowed
+
+            &.search-reset
+              right: ds.rem(37)
 
           a
             display: none

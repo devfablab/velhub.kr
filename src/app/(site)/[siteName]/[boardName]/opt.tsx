@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
@@ -540,7 +541,17 @@ export default function Opt({
                       onChange={(event) => setKeywordInput(event.currentTarget.value)}
                     />
                   </div>
-                  <button type="submit" disabled={isNavigating} aria-label="검색">
+                  {keywordInput ? (
+                    <button
+                      type="button"
+                      className={styles['search-reset']}
+                      onClick={() => setKeywordInput('')}
+                      aria-label="검색어 지우기"
+                    >
+                      <CloseRoundedIcon />
+                    </button>
+                  ) : null}
+                  <button type="submit" className={styles['search-submit']} disabled={isNavigating} aria-label="검색">
                     <SearchIcon />
                   </button>
                 </div>

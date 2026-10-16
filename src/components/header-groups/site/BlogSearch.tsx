@@ -53,12 +53,29 @@ export default function BlogSearch({ siteName, isBlog }: Props) {
               aria-label="블로그 검색어"
             />
           </div>
-          <button type="submit" disabled={!keyword.trim() || isNavigating} aria-label="검색">
+          {keyword ? (
+            <button
+              type="button"
+              className={styles['search-reset']}
+              onClick={() => setKeyword('')}
+              aria-label="검색어 지우기"
+            >
+              <CloseRoundedIcon />
+            </button>
+          ) : null}
+          {urlKeyword ? (
+            <Anchor href={`/${siteName}/b`} aria-label="검색취소">
+              <CloseRoundedIcon />
+            </Anchor>
+          ) : null}
+          <button
+            type="submit"
+            className={styles['search-submit']}
+            disabled={!keyword.trim() || isNavigating}
+            aria-label="검색"
+          >
             <SearchRoundedIcon />
           </button>
-          <Anchor href={`/${siteName}/b`} aria-label="검색취소">
-            <CloseRoundedIcon />
-          </Anchor>
         </div>
       </fieldset>
     </form>

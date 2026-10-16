@@ -4,6 +4,7 @@ import { type JSX, type ReactNode, useState, useTransition } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
@@ -298,7 +299,17 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                     onChange={(event) => setKeywordInput(event.currentTarget.value)}
                   />
                 </div>
-                <button type="submit" disabled={isNavigating} aria-label="검색">
+                {keywordInput ? (
+                  <button
+                    type="button"
+                    className={styles['search-reset']}
+                    onClick={() => setKeywordInput('')}
+                    aria-label="검색어 지우기"
+                  >
+                    <CloseRoundedIcon />
+                  </button>
+                ) : null}
+                <button type="submit" className={styles['search-submit']} disabled={isNavigating} aria-label="검색">
                   <SearchIcon />
                 </button>
               </div>

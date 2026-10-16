@@ -1,7 +1,7 @@
 'use client';
 
 import { type SubmitEventHandler, useEffect, useState, useTransition } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import Anchor from '@/components/Anchor';
@@ -13,6 +13,7 @@ type Props = {
 
 export default function LoungeSearch({ onNavigate }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlKeyword = searchParams.get('keyword') ?? '';
   const [keyword, setKeyword] = useState(urlKeyword);
@@ -50,12 +51,29 @@ export default function LoungeSearch({ onNavigate }: Props) {
               minLength={2}
             />
           </div>
-          <button type="submit" disabled={!isValidKeyword || isNavigating} aria-label="검색">
+          {keyword ? (
+            <button
+              type="button"
+              className={styles['search-reset']}
+              onClick={() => setKeyword('')}
+              aria-label="검색어 지우기"
+            >
+              <CloseRoundedIcon />
+            </button>
+          ) : null}
+          {pathname === '/lounge/search' ? (
+            <Anchor href="/" aria-label="검색취소" onClick={onNavigate}>
+              <CloseRoundedIcon />
+            </Anchor>
+          ) : null}
+          <button
+            type="submit"
+            className={styles['search-submit']}
+            disabled={!isValidKeyword || isNavigating}
+            aria-label="검색"
+          >
             <SearchRoundedIcon />
           </button>
-          <Anchor href="/" aria-label="검색취소" onClick={onNavigate}>
-            <CloseRoundedIcon />
-          </Anchor>
         </div>
       </fieldset>
     </form>
