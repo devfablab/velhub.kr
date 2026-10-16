@@ -975,28 +975,25 @@ header.header
         .form-group
           display: flex
           flex-direction: row
-          gap: ds.rem(7)
           width: 100%
           position: relative
-          border: 1px solid ds.$hex-accent
-          border-radius: ds.rem(37)
-          @include ds.fw(pre, 700)
-          background-color: ds.$rgb-white
-          color: ds.$hex-primary
-
-          html[data-theme="yellow-dark"] &
-            background-color: ds.$rgb-black
-            color: ds.$hex-bright
 
           .form-control
             @include ds.col
 
             input
-              background-color: transparent
-              border: 0
+              background-color: ds.$rgb-white
+              border: 1px solid ds.$hex-accent
+              border-radius: ds.rem(37)
               padding: 0 ds.rem(17)
               width: 100%
               height: ds.rem(37)
+              @include ds.fw(pre, 700)
+              color: ds.$hex-primary
+
+              html[data-theme="yellow-dark"] &
+                background-color: ds.$rgb-black
+                color: ds.$hex-bright
 
           button
             position: absolute
@@ -1008,6 +1005,13 @@ header.header
             background-color: transparent
             width: ds.rem(37)
             height: ds.rem(37)
+
+            &:disabled
+              opacity: .2
+              cursor: not-allowed
+
+          a
+            display: none
 
 main.manage
   flex-direction: column
