@@ -165,6 +165,7 @@ export type SlickProps = {
 export type ListProps = {
   orderType?: 'newest' | 'hits';
   postsApiPath?: string;
+  onPostsLoaded?: (count: number) => void;
 };
 
 export default async function Home() {

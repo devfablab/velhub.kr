@@ -18,6 +18,7 @@ import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import PrimaryMenu from '../header-groups/lounge/PrimaryMenu';
+import LoungeSearch from '../header-groups/lounge/Search';
 import SecondaryMenu from '../header-groups/lounge/SecondaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
 import { ServiceLogo } from '../Svgs';
@@ -233,6 +234,7 @@ export default function HeaderLounge() {
                     </Anchor>
                   </h1>
                   <PrimaryMenu />
+                  <LoungeSearch />
                 </div>
 
                 <div className={styles.iconbuttons}>

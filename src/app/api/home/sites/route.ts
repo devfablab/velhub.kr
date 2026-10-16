@@ -19,6 +19,25 @@ type RhizomeRow = {
   custom_domain: string | null;
 };
 
+function getRelevanceScore(value: string, keyword: string) {
+  const normalizedValue = normalizeText(value).toLocaleLowerCase();
+  const normalizedKeyword = normalizeText(keyword).toLocaleLowerCase();
+
+  if (!normalizedKeyword || !normalizedValue) {
+    return 0;
+  }
+
+  if (normalizedValue === normalizedKeyword) {
+    return 3;
+  }
+
+  if (normalizedValue.startsWith(normalizedKeyword)) {
+    return 2;
+  }
+
+  return normalizedValue.includes(normalizedKeyword) ? 1 : 0;
+}
+
 function getPublicUrl(bucket: string, path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
 
@@ -44,9 +63,16 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') ?? 'desc';
     const limitParam = searchParams.get('limit') ?? '10';
     const siteType = searchParams.get('siteType');
+    const keyword = normalizeText(searchParams.get('keyword'));
+    const isRelevanceSort = sortBy === 'relevance' && Boolean(keyword);
+
+    if (keyword && keyword.length < 2) {
+      return Response.json({ error: '검색어는 두 글자 이상 입력해주세요.' }, { status: 400 });
+    }
 
     const ascending = sortOrder === 'asc';
-    const limit = parseInt(limitParam, 10);
+    const parsedLimit = parseInt(limitParam, 10);
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10;
     const membership = searchParams.get('membership');
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -73,6 +99,10 @@ export async function GET(request: NextRequest) {
       .eq('is_shutdown', false)
       .or('is_blocked.eq.false,is_blocked.is.null');
 
+    if (isRelevanceSort) {
+      query = query.ilike('site_label', `%${keyword}%`).in('site_type', ['blog', 'community']);
+    }
+
     if (siteType === 'blog' || siteType === 'community') {
       query = query.eq('site_type', siteType);
     }
@@ -85,13 +115,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const { data, error } = await query.order(sortBy, { ascending }).limit(limit);
+    const { data, error } = await query
+      .order(isRelevanceSort ? 'created_at' : sortBy, { ascending })
+      .limit(isRelevanceSort ? Math.max(limit * 10, 100) : limit);
 
     if (error || !data) {
       return Response.json({ error: '사이트 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const sitesData = data as RhizomeRow[];
+    const sitesData = (data as RhizomeRow[])
+      .map((site) => ({
+        site,
+        relevance: isRelevanceSort ? getRelevanceScore(site.site_label, keyword) : 0,
+      }))
+      .sort((left, right) => right.relevance - left.relevance)
+      .slice(0, limit)
+      .map(({ site }) => site);
     const ownerIds = [
       ...new Set(sitesData.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
     ];

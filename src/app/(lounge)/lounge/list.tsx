@@ -220,7 +220,7 @@ function LoadingHitsCards() {
   );
 }
 
-export default function List({ orderType, postsApiPath }: ListProps) {
+export default function List({ orderType, postsApiPath, onPostsLoaded }: ListProps) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -237,6 +237,7 @@ export default function List({ orderType, postsApiPath }: ListProps) {
 
         if (isMounted && response.ok && Array.isArray(result.posts)) {
           setLoadedPostsData(result);
+          onPostsLoaded?.(result.posts.length);
         }
       } catch {
         // 조회에 실패해도 초기 로딩 카드의 구조는 유지한다.
@@ -248,7 +249,7 @@ export default function List({ orderType, postsApiPath }: ListProps) {
     return () => {
       isMounted = false;
     };
-  }, [listPostsApiPath]);
+  }, [listPostsApiPath, onPostsLoaded]);
 
   const resolvedPostsData = loadedPostsData;
 
