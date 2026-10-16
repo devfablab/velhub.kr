@@ -61,9 +61,7 @@ export function isBlogAdReportReason(value: unknown): value is BlogAdReportReaso
 }
 
 export function isImmediateBlogAdReport(reason: BlogAdReportReason) {
-  return (
-    reason === 'unsafe_link' || reason === 'illegal_or_harmful_site' || reason === 'problematic_product'
-  );
+  return reason === 'unsafe_link' || reason === 'illegal_or_harmful_site' || reason === 'problematic_product';
 }
 
 export function getBlogAdReportCorrection(
@@ -132,13 +130,7 @@ export async function getBlogAdSiteContext(siteName: string) {
   if (siteResult.error) throw new Error('블로그 정보를 불러오지 못했습니다.');
   if (!siteResult.data || siteResult.data.site_type !== 'blog') return null;
 
-  const [postsResult, viewsResult, settingsResult, session] = await Promise.all([
-    supabaseAdmin
-      .from('posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('site_id', siteResult.data.id)
-      .eq('published_status', 'published')
-      .eq('is_closed', false),
+  const [viewsResult, settingsResult, session] = await Promise.all([
     supabaseAdmin
       .from('posts')
       .select('post_count')
@@ -153,11 +145,11 @@ export async function getBlogAdSiteContext(siteName: string) {
     verifySession({ siteId: siteResult.data.id }),
   ]);
 
-  if (postsResult.error || viewsResult.error || settingsResult.error) {
+  if (viewsResult.error || settingsResult.error) {
     throw new Error('광고 사용 조건을 확인하지 못했습니다.');
   }
 
-  const postCount = postsResult.count ?? 0;
+  const postCount = viewsResult.data?.length ?? 0;
   const totalViews = (viewsResult.data ?? []).reduce((sum, post) => sum + Number(post.post_count ?? 0), 0);
   const hasBeenOpenFor15Days = hasBeenOpenForFifteenDays(String(siteResult.data.created_at));
   const isEligible = hasBeenOpenFor15Days && postCount >= 10 && totalViews >= 1000;

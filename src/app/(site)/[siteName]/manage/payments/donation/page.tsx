@@ -15,9 +15,11 @@ type RouteContext = {
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
-  const isAdult = await detectAdult(siteName);
   const supabaseAdmin = getSupabaseAdmin();
-  const siteInfo = await supabaseAdmin.from('rhizomes').select('site_type').eq('site_key', siteName).maybeSingle();
+  const [isAdult, siteInfo] = await Promise.all([
+    detectAdult(siteName),
+    supabaseAdmin.from('rhizomes').select('site_type').eq('site_key', siteName).maybeSingle(),
+  ]);
   const [initial, settlement] = isAdult
     ? await Promise.all([
         getSiteApiData<DonationManageResponse>(

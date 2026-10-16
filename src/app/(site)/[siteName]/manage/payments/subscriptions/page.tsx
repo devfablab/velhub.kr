@@ -21,11 +21,10 @@ type RouteContext = {
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
   const supabaseAdmin = getSupabaseAdmin();
-  const siteInfo = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_type, owner_id')
-    .eq('site_key', siteName)
-    .maybeSingle();
+  const [siteInfo, settlementResult] = await Promise.all([
+    supabaseAdmin.from('rhizomes').select('id, site_type, owner_id').eq('site_key', siteName).maybeSingle(),
+    getSiteApiData<SettlementResponse>('/api/settlement', '정산 정보를 불러오지 못했습니다.'),
+  ]);
   const site = siteInfo.data;
   const isBlog = site?.site_type === 'blog';
   const [blogInfo, authorState, session, isAdult] = await Promise.all([
@@ -71,11 +70,6 @@ export default async function Page(context: RouteContext) {
   let initialSeriesSubscriptions: SeriesSubscriptionsResponse | null = null;
   let initialBlogSubscription: BlogSubscriptionResponse | null = null;
   let initialError: string | null = null;
-  const settlementResult = await getSiteApiData<SettlementResponse>(
-    '/api/settlement',
-    '정산 정보를 불러오지 못했습니다.',
-  );
-
   if (canManageBlogSubscriptions || isAdult) {
     const [seriesResult, blogResult] = await Promise.all([
       getSiteApiData<SeriesSubscriptionsResponse>(

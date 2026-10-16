@@ -86,37 +86,41 @@ export default async function Page(context: SearchContext) {
   if (typeof searchParams.seriesName === 'string' && searchParams.seriesName)
     queryParams.set('seriesName', searchParams.seriesName);
   if (typeof searchParams.author === 'string' && searchParams.author) queryParams.set('author', searchParams.author);
-  const initial = await getSiteApiData<BoardListResponse>(
-    `/api/boards/${normalizedBoardName}?${queryParams.toString()}`,
-    '전체 게시글을 불러오지 못했습니다.',
-  );
-  const initialPopularPosts = await getSiteApiData<BoardPostCountResponse>(
-    `/api/boards/${normalizedBoardName}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
-    '인기글을 불러오지 못했습니다.',
-  );
+  const [initial, initialPopularPosts] = await Promise.all([
+    getSiteApiData<BoardListResponse>(
+      `/api/boards/${normalizedBoardName}?${queryParams.toString()}`,
+      '전체 게시글을 불러오지 못했습니다.',
+    ),
+    getSiteApiData<BoardPostCountResponse>(
+      `/api/boards/${normalizedBoardName}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
+      '인기글을 불러오지 못했습니다.',
+    ),
+  ]);
   const selectedSeries = initial.data?.selectedSeries;
-  const initialSubscriptionStatus = selectedSeries
-    ? await getSiteApiData<SubscriptionStatusResponse>(
-        `/api/payments/portone/subscriptions/status?${new URLSearchParams({
-          siteName: normalizedSiteName,
-          boardName: normalizedBoardName,
-          targetType: 'series',
-          seriesName: selectedSeries.series_key,
-        }).toString()}`,
-        '구독 상태를 확인하지 못했습니다.',
-      )
-    : { data: null, error: '' };
-  const initialDonationStatus = selectedSeries
-    ? await getSiteApiData<DonationStatusResponse>(
-        `/api/payments/portone/donation/status?${new URLSearchParams({
-          siteName: normalizedSiteName,
-          boardName: normalizedBoardName,
-          targetType: 'series',
-          seriesName: selectedSeries.series_key,
-        }).toString()}`,
-        '후원 상태를 확인하지 못했습니다.',
-      )
-    : { data: null, error: '' };
+  const [initialSubscriptionStatus, initialDonationStatus] = await Promise.all([
+    selectedSeries
+      ? getSiteApiData<SubscriptionStatusResponse>(
+          `/api/payments/portone/subscriptions/status?${new URLSearchParams({
+            siteName: normalizedSiteName,
+            boardName: normalizedBoardName,
+            targetType: 'series',
+            seriesName: selectedSeries.series_key,
+          }).toString()}`,
+          '구독 상태를 확인하지 못했습니다.',
+        )
+      : Promise.resolve({ data: null, error: '' }),
+    selectedSeries
+      ? getSiteApiData<DonationStatusResponse>(
+          `/api/payments/portone/donation/status?${new URLSearchParams({
+            siteName: normalizedSiteName,
+            boardName: normalizedBoardName,
+            targetType: 'series',
+            seriesName: selectedSeries.series_key,
+          }).toString()}`,
+          '후원 상태를 확인하지 못했습니다.',
+        )
+      : Promise.resolve({ data: null, error: '' }),
+  ]);
 
   return (
     <Opt

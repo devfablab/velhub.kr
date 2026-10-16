@@ -359,40 +359,38 @@ export async function GET(request: Request) {
     const weekStart = addDays(todayStart, -7);
     const monthStart = addDays(todayStart, -30);
 
-    const weekInactiveResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', true)
-      .lt('last_checkin_at', weekStart.toISOString());
+    const [weekInactiveResult, monthInactiveResult, beforeStartResult, inactiveRows] = await Promise.all([
+      access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', access.rhizome.id)
+        .eq('is_approval', true)
+        .lt('last_checkin_at', weekStart.toISOString()),
+      access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', access.rhizome.id)
+        .eq('is_approval', true)
+        .lt('last_checkin_at', monthStart.toISOString()),
+      access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', access.rhizome.id)
+        .eq('is_approval', true)
+        .lt('last_checkin_at', dateRange.start.toISOString()),
+      getInactiveRows(access.rhizome.id, dateRange.start, dateRange.endExclusive),
+    ]);
 
     if (weekInactiveResult.error) {
       return Response.json({ error: '일주일 전 비활동 유저 수를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const monthInactiveResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', true)
-      .lt('last_checkin_at', monthStart.toISOString());
-
     if (monthInactiveResult.error) {
       return Response.json({ error: '30일 이전 비활동 유저 수를 불러오지 못했습니다.' }, { status: 500 });
     }
-
-    const beforeStartResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', true)
-      .lt('last_checkin_at', dateRange.start.toISOString());
-
     if (beforeStartResult.error) {
       return Response.json({ error: '누적 비활동 유저 수를 불러오지 못했습니다.' }, { status: 500 });
     }
-
-    const inactiveRows = await getInactiveRows(access.rhizome.id, dateRange.start, dateRange.endExclusive);
     const buckets = buildBuckets(dateRange);
 
     const chartData = buckets.reduce<{

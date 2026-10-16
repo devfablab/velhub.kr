@@ -53,17 +53,31 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
   const { postId } = await params;
   const result = await getPostAccess(request, postId);
   if (!result.ok) return Response.json({ error: result.error }, { status: result.status });
-  const replies = await result.access.supabaseAdmin
-    .from('private_post_replies')
-    .select('*')
-    .eq('private_post_id', postId)
-    .order('created_at');
+  const [replies, images, authorStigma, authorMembership] = await Promise.all([
+    result.access.supabaseAdmin
+      .from('private_post_replies')
+      .select('*')
+      .eq('private_post_id', postId)
+      .order('created_at'),
+    result.access.supabaseAdmin
+      .from('private_post_images')
+      .select('id, storage_path, image_width, image_height')
+      .eq('private_post_id', postId)
+      .order('sort_order'),
+    result.access.supabaseAdmin
+      .from('stigmas')
+      .select('id, avatar, user_name')
+      .eq('id', result.post.author_stigma_id)
+      .maybeSingle(),
+    result.access.supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('nickname')
+      .eq('site_id', result.access.site.id)
+      .eq('user_id', result.post.author_stigma_id)
+      .is('withdrawn_at', null)
+      .maybeSingle(),
+  ]);
   if (replies.error) return Response.json({ error: '답변을 불러오지 못했습니다.' }, { status: 500 });
-  const images = await result.access.supabaseAdmin
-    .from('private_post_images')
-    .select('id, storage_path, image_width, image_height')
-    .eq('private_post_id', postId)
-    .order('sort_order');
   if (images.error) return Response.json({ error: '첨부 이미지를 불러오지 못했습니다.' }, { status: 500 });
   const postImages = await Promise.all(
     (images.data ?? []).map(async (image) => {
@@ -132,18 +146,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
     nextNavigationQuery.gt('created_at', result.post.created_at).order('created_at').limit(1).maybeSingle(),
   ]);
 
-  const authorStigma = await result.access.supabaseAdmin
-    .from('stigmas')
-    .select('id, avatar, user_name')
-    .eq('id', result.post.author_stigma_id)
-    .maybeSingle();
-  const authorMembership = await result.access.supabaseAdmin
-    .from('rhizome_stigmas')
-    .select('nickname')
-    .eq('site_id', result.access.site.id)
-    .eq('user_id', result.post.author_stigma_id)
-    .is('withdrawn_at', null)
-    .maybeSingle();
   const avatarValue = normalizeText(authorStigma.data?.avatar);
   const authorAvatarUrl = avatarValue
     ? /^https?:\/\//i.test(avatarValue)

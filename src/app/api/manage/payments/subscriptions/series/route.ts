@@ -275,20 +275,21 @@ export async function GET(request: Request) {
     const boards = (boardsResult.data ?? []) as BoardRow[];
     const boardIds = boards.map((board) => board.id);
 
-    const parentPriceByBoardId = await getParentPriceByBoardId({
-      supabaseAdmin,
-      site,
-      boardIds,
-    });
-
-    const seriesResult = boardIds.length
-      ? await supabaseAdmin
-          .from('board_series')
-          .select('id, site_id, board_id, series_key, series_label')
-          .eq('site_id', site.id)
-          .in('board_id', boardIds)
-          .order('series_label', { ascending: true })
-      : { data: [], error: null };
+    const [parentPriceByBoardId, seriesResult] = await Promise.all([
+      getParentPriceByBoardId({
+        supabaseAdmin,
+        site,
+        boardIds,
+      }),
+      boardIds.length
+        ? supabaseAdmin
+            .from('board_series')
+            .select('id, site_id, board_id, series_key, series_label')
+            .eq('site_id', site.id)
+            .in('board_id', boardIds)
+            .order('series_label', { ascending: true })
+        : { data: [], error: null },
+    ]);
 
     if (seriesResult.error) {
       console.error(seriesResult.error);
@@ -299,14 +300,34 @@ export async function GET(request: Request) {
     const seriesList = (seriesResult.data ?? []) as BoardSeriesRow[];
     const seriesIds = seriesList.map((series) => series.id);
 
-    const settingsResult = seriesIds.length
-      ? await supabaseAdmin
-          .from('subscription_settings')
-          .select('id, target_id, is_enabled, price')
-          .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
-          .in('target_id', seriesIds)
-      : { data: [], error: null };
+    const [settingsResult, subscriptionsResult, paymentsResult] = await Promise.all([
+      seriesIds.length
+        ? supabaseAdmin
+            .from('subscription_settings')
+            .select('id, target_id, is_enabled, price')
+            .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+            .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+            .in('target_id', seriesIds)
+        : { data: [], error: null },
+      seriesIds.length
+        ? supabaseAdmin
+            .from('subscriptions')
+            .select('id, subscriber_user_id, target_id, status, price, created_at')
+            .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+            .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+            .in('target_id', seriesIds)
+            .order('created_at', { ascending: false })
+        : { data: [], error: null },
+      seriesIds.length
+        ? supabaseAdmin
+            .from('payments')
+            .select('id, buyer_user_id, target_id, amount, approved_at, created_at')
+            .eq('payment_type', PAYMENT_TYPE.SUBSCRIPTION_SERIES)
+            .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+            .eq('status', PAYMENT_STATUS.PAID)
+            .in('target_id', seriesIds)
+        : { data: [], error: null },
+    ]);
 
     if (settingsResult.error) {
       console.error(settingsResult.error);
@@ -316,16 +337,6 @@ export async function GET(request: Request) {
 
     const settings = (settingsResult.data ?? []) as SubscriptionSettingRow[];
     const settingBySeriesId = new Map(settings.map((setting) => [setting.target_id, setting]));
-
-    const subscriptionsResult = seriesIds.length
-      ? await supabaseAdmin
-          .from('subscriptions')
-          .select('id, subscriber_user_id, target_id, status, price, created_at')
-          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
-          .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-          .in('target_id', seriesIds)
-          .order('created_at', { ascending: false })
-      : { data: [], error: null };
 
     if (subscriptionsResult.error) {
       console.error(subscriptionsResult.error);
@@ -345,16 +356,6 @@ export async function GET(request: Request) {
     }
 
     const latestSubscriptions = Array.from(latestSubscriptionByKey.values());
-
-    const paymentsResult = seriesIds.length
-      ? await supabaseAdmin
-          .from('payments')
-          .select('id, buyer_user_id, target_id, amount, approved_at, created_at')
-          .eq('payment_type', PAYMENT_TYPE.SUBSCRIPTION_SERIES)
-          .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-          .eq('status', PAYMENT_STATUS.PAID)
-          .in('target_id', seriesIds)
-      : { data: [], error: null };
 
     if (paymentsResult.error) {
       console.error(paymentsResult.error);
@@ -394,9 +395,18 @@ export async function GET(request: Request) {
       new Set(latestSubscriptions.map((subscription) => subscription.subscriber_user_id)),
     );
 
-    const stigmasResult = subscriberStigmaIds.length
-      ? await supabaseAdmin.from('stigmas').select('id, user_name').in('id', subscriberStigmaIds)
-      : { data: [], error: null };
+    const [stigmasResult, rhizomeStigmasResult] = await Promise.all([
+      subscriberStigmaIds.length
+        ? supabaseAdmin.from('stigmas').select('id, user_name').in('id', subscriberStigmaIds)
+        : { data: [], error: null },
+      subscriberStigmaIds.length
+        ? supabaseAdmin
+            .from('rhizome_stigmas')
+            .select('user_id, nickname')
+            .eq('site_id', site.id)
+            .in('user_id', subscriberStigmaIds)
+        : { data: [], error: null },
+    ]);
 
     if (stigmasResult.error) {
       console.error(stigmasResult.error);
@@ -408,16 +418,6 @@ export async function GET(request: Request) {
     const activityNameByStigmaId = new Map(
       stigmas.map((stigma) => [stigma.id, decryptUserName(stigma.user_name || '')]),
     );
-    const stigmaIds = stigmas.map((stigma) => stigma.id);
-
-    const rhizomeStigmasResult = stigmaIds.length
-      ? await supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('user_id, nickname')
-          .eq('site_id', site.id)
-          .in('user_id', stigmaIds)
-      : { data: [], error: null };
-
     if (rhizomeStigmasResult.error) {
       console.error(rhizomeStigmasResult.error);
 
@@ -491,9 +491,7 @@ export async function GET(request: Request) {
                 return {
                   id: subscription.id,
                   nickname:
-                    normalizeText(nicknameByStigmaId.get(stigmaId)) ||
-                    activityNameByStigmaId.get(stigmaId) ||
-                    '사용자',
+                    normalizeText(nicknameByStigmaId.get(stigmaId)) || activityNameByStigmaId.get(stigmaId) || '사용자',
                   status: getSubscriptionStatus(subscription.status),
                   activeMonths: paymentStats?.activeMonths ?? 0,
                   lastPaidAt: paymentStats?.lastPaidAt ?? null,

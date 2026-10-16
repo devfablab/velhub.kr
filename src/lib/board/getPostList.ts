@@ -408,61 +408,36 @@ export async function getPostList({
     new Set(mergedPosts.map((post) => post.series_id).filter((value): value is string => Boolean(value))),
   );
 
-  const boardsResult =
-    boardIds.length > 0
-      ? await supabaseAdmin.from('boards').select('id, board_key, board_label').eq('site_id', siteId).in('id', boardIds)
-      : { data: [], error: null };
+  const [boardsResult, rhizomeStigmasResult, stigmaResult, prefixResult, seriesResult, commentResult] =
+    await Promise.all([
+      boardIds.length > 0
+        ? supabaseAdmin.from('boards').select('id, board_key, board_label').eq('site_id', siteId).in('id', boardIds)
+        : Promise.resolve({ data: [], error: null }),
+      userIds.length > 0
+        ? supabaseAdmin.from('rhizome_stigmas').select('user_id, nickname').eq('site_id', siteId).in('user_id', userIds)
+        : Promise.resolve({ data: [], error: null }),
+      userIds.length > 0
+        ? supabaseAdmin.from('stigmas').select('id, user_name').in('id', userIds)
+        : Promise.resolve({ data: [], error: null }),
+      prefixIds.length > 0
+        ? supabaseAdmin.from('board_prefixes').select('id, prefix_label').in('id', prefixIds)
+        : Promise.resolve({ data: [], error: null }),
+      seriesIds.length > 0
+        ? supabaseAdmin.from('board_series').select('id, series_label').in('id', seriesIds)
+        : Promise.resolve({ data: [], error: null }),
+      postIds.length > 0
+        ? supabaseAdmin.from('post_comments').select('post_id').eq('is_deleted', false).in('post_id', postIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
-  if (boardsResult.error) {
-    throw new Error('글 목록을 불러오지 못했습니다.');
-  }
-
-  const rhizomeStigmasResult =
-    userIds.length > 0
-      ? await supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('user_id, nickname')
-          .eq('site_id', siteId)
-          .in('user_id', userIds)
-      : { data: [], error: null };
-
-  if (rhizomeStigmasResult.error) {
-    throw new Error('글 목록을 불러오지 못했습니다.');
-  }
-
-  const stigmaResult =
-    userIds.length > 0
-      ? await supabaseAdmin.from('stigmas').select('id, user_name').in('id', userIds)
-      : { data: [], error: null };
-
-  if (stigmaResult.error) {
-    throw new Error('글 목록을 불러오지 못했습니다.');
-  }
-
-  const prefixResult =
-    prefixIds.length > 0
-      ? await supabaseAdmin.from('board_prefixes').select('id, prefix_label').in('id', prefixIds)
-      : { data: [], error: null };
-
-  if (prefixResult.error) {
-    throw new Error('글 목록을 불러오지 못했습니다.');
-  }
-
-  const seriesResult =
-    seriesIds.length > 0
-      ? await supabaseAdmin.from('board_series').select('id, series_label').in('id', seriesIds)
-      : { data: [], error: null };
-
-  if (seriesResult.error) {
-    throw new Error('글 목록을 불러오지 못했습니다.');
-  }
-
-  const commentResult =
-    postIds.length > 0
-      ? await supabaseAdmin.from('post_comments').select('post_id').eq('is_deleted', false).in('post_id', postIds)
-      : { data: [], error: null };
-
-  if (commentResult.error) {
+  if (
+    boardsResult.error ||
+    rhizomeStigmasResult.error ||
+    stigmaResult.error ||
+    prefixResult.error ||
+    seriesResult.error ||
+    commentResult.error
+  ) {
     throw new Error('글 목록을 불러오지 못했습니다.');
   }
 

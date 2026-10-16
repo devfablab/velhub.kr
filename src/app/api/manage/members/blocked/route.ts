@@ -52,17 +52,19 @@ export async function GET(request: Request) {
       .map((membership) => membership.blocked_by)
       .filter(Boolean) as string[];
 
-    const stigmaResult = await getStigmasByIds([...new Set([...userIds, ...blockedByIds])]);
+    const [stigmaResult, lastSenderMap] = await Promise.all([
+      getStigmasByIds([...new Set([...userIds, ...blockedByIds])]),
+      loadRestrictionLastSenderMap({
+        membershipIds: membershipResult.memberships.map((membership) => membership.id),
+        restrictionTypes: ['block'],
+      }),
+    ]);
 
     if (!stigmaResult.ok) {
       return Response.json({ error: stigmaResult.error }, { status: 500 });
     }
 
     const stigmaMap = new Map(stigmaResult.stigmas.map((stigma) => [stigma.id, stigma]));
-    const lastSenderMap = await loadRestrictionLastSenderMap({
-      membershipIds: membershipResult.memberships.map((membership) => membership.id),
-      restrictionTypes: ['block'],
-    });
 
     return Response.json({
       ok: true,

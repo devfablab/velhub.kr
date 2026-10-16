@@ -124,13 +124,11 @@ async function getHomeOrders(siteId: string) {
 }
 
 async function getHomeItems(siteId: string) {
-  const boardsResult = await getBoards(siteId);
+  const [boardsResult, homeOrdersResult] = await Promise.all([getBoards(siteId), getHomeOrders(siteId)]);
 
   if (!boardsResult.ok) {
     return boardsResult;
   }
-
-  const homeOrdersResult = await getHomeOrders(siteId);
 
   if (!homeOrdersResult.ok) {
     return homeOrdersResult;

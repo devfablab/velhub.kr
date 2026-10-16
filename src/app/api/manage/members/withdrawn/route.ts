@@ -61,17 +61,19 @@ export async function GET(request: Request) {
       .flatMap((membership) => [membership.kicked_by, membership.banned_by, membership.cleared_by])
       .filter(Boolean) as string[];
 
-    const stigmaResult = await getStigmasByIds([...new Set([...userIds, ...processedByIds])]);
+    const [stigmaResult, lastSenderMap] = await Promise.all([
+      getStigmasByIds([...new Set([...userIds, ...processedByIds])]),
+      loadRestrictionLastSenderMap({
+        membershipIds: membershipResult.memberships.map((membership) => membership.id),
+        restrictionTypes: ['kick', 'ban'],
+      }),
+    ]);
 
     if (!stigmaResult.ok) {
       return Response.json({ error: stigmaResult.error }, { status: 500 });
     }
 
     const stigmaMap = new Map(stigmaResult.stigmas.map((stigma) => [stigma.id, stigma]));
-    const lastSenderMap = await loadRestrictionLastSenderMap({
-      membershipIds: membershipResult.memberships.map((membership) => membership.id),
-      restrictionTypes: ['kick', 'ban'],
-    });
 
     return Response.json({
       ok: true,

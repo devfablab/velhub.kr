@@ -307,14 +307,28 @@ export async function GET(request: Request) {
       return mode === 'past' ? Boolean(report.handling_result) : !report.handling_result;
     });
     const reportIds = reports.map((report) => report.id);
-    const messagesResult = reportIds.length
-      ? await supabaseAdmin
-          .from('report_guideline_messages')
-          .select('id, report_id, sender_type, created_at')
-          .in('report_id', reportIds)
-          .order('created_at', { ascending: true })
-          .order('id', { ascending: true })
-      : { data: [], error: null };
+    const boardIds = Array.from(new Set(reports.map((report) => report.board_id).filter(Boolean))) as string[];
+    const postIds = Array.from(new Set(reports.map((report) => report.post_id).filter(Boolean))) as string[];
+    const commentIds = Array.from(new Set(reports.map((report) => report.comment_id).filter(Boolean))) as string[];
+    const [messagesResult, boardsResult, commentsResult] = await Promise.all([
+      reportIds.length
+        ? supabaseAdmin
+            .from('report_guideline_messages')
+            .select('id, report_id, sender_type, created_at')
+            .in('report_id', reportIds)
+            .order('created_at', { ascending: true })
+            .order('id', { ascending: true })
+        : Promise.resolve({ data: [], error: null }),
+      boardIds.length
+        ? supabaseAdmin.from('boards').select('id, board_key, board_label, board_type').in('id', boardIds)
+        : Promise.resolve({ data: [], error: null }),
+      targetType === 'comment' && commentIds.length
+        ? supabaseAdmin
+            .from('post_comments')
+            .select('id, post_id, user_id, content, created_at, is_deleted, deleted_message')
+            .in('id', commentIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
     if (messagesResult.error) {
       console.error(messagesResult.error);
@@ -330,26 +344,10 @@ export async function GET(request: Request) {
       lastSenderByReport.set(message.report_id, message.sender_type);
     }
 
-    const boardIds = Array.from(new Set(reports.map((report) => report.board_id).filter(Boolean))) as string[];
-    const postIds = Array.from(new Set(reports.map((report) => report.post_id).filter(Boolean))) as string[];
-    const commentIds = Array.from(new Set(reports.map((report) => report.comment_id).filter(Boolean))) as string[];
-
-    const boardsResult = boardIds.length
-      ? await supabaseAdmin.from('boards').select('id, board_key, board_label, board_type').in('id', boardIds)
-      : { data: [], error: null };
-
     if (boardsResult.error) {
       console.error(boardsResult.error);
       return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
-
-    const commentsResult =
-      targetType === 'comment' && commentIds.length
-        ? await supabaseAdmin
-            .from('post_comments')
-            .select('id, post_id, user_id, content, created_at, is_deleted, deleted_message')
-            .in('id', commentIds)
-        : { data: [], error: null };
 
     if (commentsResult.error) {
       console.error(commentsResult.error);

@@ -82,23 +82,19 @@ export async function GET(request: Request, context: RouteContext) {
       ...new Set(membershipsResult.memberships.map((membership) => membership.lv).filter(Boolean) as string[]),
     ];
 
-    const stigmaResult = await getStigmasByIds(userIds);
+    const [stigmaResult, levelResult, communityResult] = await Promise.all([
+      getStigmasByIds(userIds),
+      getLevelsByIds(access.site.id, levelIds),
+      access.supabaseAdmin.from('communities').select('id').eq('site_id', access.site.id).maybeSingle(),
+    ]);
 
     if (!stigmaResult.ok) {
       return Response.json({ error: stigmaResult.error }, { status: 500 });
     }
 
-    const levelResult = await getLevelsByIds(access.site.id, levelIds);
-
     if (!levelResult.ok) {
       return Response.json({ error: levelResult.error }, { status: 500 });
     }
-
-    const communityResult = await access.supabaseAdmin
-      .from('communities')
-      .select('id')
-      .eq('site_id', access.site.id)
-      .maybeSingle();
 
     if (communityResult.error || !communityResult.data) {
       return Response.json({ error: '커뮤니티 정보를 불러오지 못했습니다.' }, { status: 500 });

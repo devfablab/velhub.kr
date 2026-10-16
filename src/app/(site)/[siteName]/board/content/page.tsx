@@ -96,40 +96,38 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  const initial = await getSiteApiData<ContentResponse>(
+  const initialPromise = getSiteApiData<ContentResponse>(
     `/api/boards/${normalizedBoardName}/${contentId}?siteName=${normalizedSiteName}`,
     '게시글 정보를 불러오지 못했습니다.',
   );
-  if (initial.data?.content?.published_status === 'published') {
-    const [countResult] = await Promise.all([
-      getSiteApiData<CountResponse>(
-        `/api/boards/${normalizedBoardName}/${contentId}/count?siteName=${normalizedSiteName}`,
-        '조회수를 반영하지 못했습니다.',
-        { method: 'PATCH' },
-      ),
-      getSiteApiData(
-        `/api/boards/${normalizedBoardName}/${contentId}/read?siteName=${normalizedSiteName}`,
-        '읽은 글을 기록하지 못했습니다.',
-        { method: 'PATCH' },
-      ),
-    ]);
-
-    if (typeof countResult.data?.postCount === 'number') {
-      initial.data.content.post_count = countResult.data.postCount;
-    }
-  }
-  const initialPoll = initial.data?.content?.poll
-    ? await getSiteApiData<PollResponse>(
-        `/api/boards/${normalizedBoardName}/${contentId}/poll?siteName=${normalizedSiteName}`,
-        '투표 정보를 불러오지 못했습니다.',
-      )
-    : { data: null, error: '' };
-  const initialComments = await getSiteApiData<CommentsResponse>(
+  const initialCommentsPromise = getSiteApiData<CommentsResponse>(
     `/api/boards/${normalizedBoardName}/${contentId}/comments?siteName=${normalizedSiteName}`,
     '댓글 목록을 불러오지 못했습니다.',
   );
-  const initialSubscriptionStatus = initial.data?.series
-    ? await getSiteApiData<SubscriptionStatusResponse>(
+  const initial = await initialPromise;
+  const countAndReadPromise =
+    initial.data?.content?.published_status === 'published'
+      ? Promise.all([
+          getSiteApiData<CountResponse>(
+            `/api/boards/${normalizedBoardName}/${contentId}/count?siteName=${normalizedSiteName}`,
+            '조회수를 반영하지 못했습니다.',
+            { method: 'PATCH' },
+          ),
+          getSiteApiData(
+            `/api/boards/${normalizedBoardName}/${contentId}/read?siteName=${normalizedSiteName}`,
+            '읽은 글을 기록하지 못했습니다.',
+            { method: 'PATCH' },
+          ),
+        ])
+      : Promise.resolve([null, null] as const);
+  const initialPollPromise = initial.data?.content?.poll
+    ? getSiteApiData<PollResponse>(
+        `/api/boards/${normalizedBoardName}/${contentId}/poll?siteName=${normalizedSiteName}`,
+        '투표 정보를 불러오지 못했습니다.',
+      )
+    : Promise.resolve({ data: null, error: '' });
+  const initialSubscriptionStatusPromise = initial.data?.series
+    ? getSiteApiData<SubscriptionStatusResponse>(
         `/api/payments/portone/subscriptions/status?${new URLSearchParams({
           siteName: normalizedSiteName,
           boardName: normalizedBoardName,
@@ -138,8 +136,19 @@ export default async function Page(context: RouteContext) {
         }).toString()}`,
         '구독 상태를 확인하지 못했습니다.',
       )
-    : { data: null, error: '' };
-  const initialLinkPreviews = await getLinkPreviews(initial.data?.content?.content_simple);
+    : Promise.resolve({ data: null, error: '' });
+  const [[countResult], initialPoll, initialComments, initialSubscriptionStatus, initialLinkPreviews] =
+    await Promise.all([
+      countAndReadPromise,
+      initialPollPromise,
+      initialCommentsPromise,
+      initialSubscriptionStatusPromise,
+      getLinkPreviews(initial.data?.content?.content_simple),
+    ]);
+
+  if (typeof countResult?.data?.postCount === 'number' && initial.data?.content) {
+    initial.data.content.post_count = countResult.data.postCount;
+  }
 
   return (
     <Opt

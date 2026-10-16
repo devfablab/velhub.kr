@@ -6,7 +6,7 @@ import {
 } from '@/lib/blogCommunity/access';
 import { normalizeBlogCommunityDraw } from '@/lib/blogCommunity/draw';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
+import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
@@ -65,7 +65,9 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
     userIds.length
       ? supabaseAdmin
           .from('subscriptions')
-          .select('subscriber_user_id, badge_image_url, badge_months')
+          .select(
+            'subscriber_user_id, badge_image_url, badge_months, status, current_period_end, expired_at, past_due_started_at',
+          )
           .eq('subscription_type', 'subscription_site')
           .eq('target_type', 'site')
           .eq('target_id', siteId)
@@ -107,13 +109,7 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
   const badgeMap = new Map<string, string>();
   for (const subscription of subscriptionsResult.data ?? []) {
     if (badgeMap.has(subscription.subscriber_user_id)) continue;
-    if (
-      await hasValidBlogSubscription({
-        supabaseAdmin,
-        subscriberId: subscription.subscriber_user_id,
-        siteId,
-      })
-    )
+    if (isValidBlogSubscription(subscription))
       badgeMap.set(
         subscription.subscriber_user_id,
         subscription.badge_image_url ??

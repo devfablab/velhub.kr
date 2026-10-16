@@ -16,16 +16,18 @@ export default async function Page({ params }: Props) {
   const siteName = normalizeText((await params).siteName).toLowerCase();
   const context = await getBlogAdSiteContext(siteName);
   if (!context || !context.isOwner) redirect(`/${siteName}/manage`);
-  const identity = await getBlogAdIdentityStatus(context.session.stigmaId);
-  const commonAdsResult = context.isEnabled
-    ? await context.supabaseAdmin
-        .from('blog_ads')
-        .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
-        .eq('site_id', context.siteId)
-        .is('post_id', null)
-        .is('deleted_at', null)
-        .order('sort_order')
-    : { data: [], error: null };
+  const [identity, commonAdsResult] = await Promise.all([
+    getBlogAdIdentityStatus(context.session.stigmaId),
+    context.isEnabled
+      ? context.supabaseAdmin
+          .from('blog_ads')
+          .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
+          .eq('site_id', context.siteId)
+          .is('post_id', null)
+          .is('deleted_at', null)
+          .order('sort_order')
+      : Promise.resolve({ data: [], error: null }),
+  ]);
   if (commonAdsResult.error) throw new Error('기본 광고를 불러오지 못했습니다.');
   const commonAdIds = (commonAdsResult.data ?? []).map((item) => item.id);
   const reportsResult = commonAdIds.length

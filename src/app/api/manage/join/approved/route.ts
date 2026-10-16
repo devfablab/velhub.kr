@@ -260,11 +260,16 @@ export async function GET(request: Request) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const communityResult = await access.supabaseAdmin
-      .from('communities')
-      .select('join_questions')
-      .eq('site_id', access.rhizome.id)
-      .maybeSingle();
+    const [communityResult, membershipResult] = await Promise.all([
+      access.supabaseAdmin.from('communities').select('join_questions').eq('site_id', access.rhizome.id).maybeSingle(),
+      access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('id, user_id, nickname, created_at, answered_questions, rejected_at, rejected_by, is_re_approval')
+        .eq('site_id', access.rhizome.id)
+        .eq('is_approval', false)
+        .is('withdrawn_at', null)
+        .order('created_at', { ascending: false }),
+    ]);
 
     if (communityResult.error) {
       return Response.json({ error: '가입 신청 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -272,14 +277,6 @@ export async function GET(request: Request) {
 
     const community = (communityResult.data ?? null) as CommunityRow | null;
     const questionMap = getJoinQuestionMap(community?.join_questions ?? null);
-
-    const membershipResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('id, user_id, nickname, created_at, answered_questions, rejected_at, rejected_by, is_re_approval')
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', false)
-      .is('withdrawn_at', null)
-      .order('created_at', { ascending: false });
 
     if (membershipResult.error) {
       return Response.json({ error: '가입 신청 정보를 불러오지 못했습니다.' }, { status: 500 });

@@ -17,7 +17,25 @@ type BlogSubscriptionBadgeRow = {
   subscriber_user_id: string;
   badge_months: number | null;
   badge_image_url: string | null;
-};
+} & BlogSubscriptionRow;
+
+export function isValidBlogSubscription(subscription: BlogSubscriptionRow | null | undefined) {
+  if (!subscription || subscription.expired_at || !subscription.current_period_end) return false;
+
+  const now = Date.now();
+  const periodEnd = new Date(subscription.current_period_end).getTime();
+
+  if (subscription.status === SUBSCRIPTION_STATUS.TRIALING || subscription.status === SUBSCRIPTION_STATUS.ACTIVE) {
+    return periodEnd > now;
+  }
+
+  if (subscription.status === SUBSCRIPTION_STATUS.PAST_DUE && subscription.past_due_started_at) {
+    const startedAt = new Date(subscription.past_due_started_at).getTime();
+    return Number.isFinite(startedAt) && startedAt + getPastDueGraceDays() * 24 * 60 * 60 * 1000 > now;
+  }
+
+  return subscription.status === SUBSCRIPTION_STATUS.CANCELED && periodEnd > now;
+}
 
 /**
  * 현재 유효한 블로그 구독자에게 표시할 멤버십팬 배지를 구한다.
@@ -40,7 +58,9 @@ export async function getBlogSubscriptionBadgeUrls({
   const [subscriptionsResult, badgesResult] = await Promise.all([
     supabaseAdmin
       .from('subscriptions')
-      .select('subscriber_user_id, badge_months, badge_image_url')
+      .select(
+        'subscriber_user_id, badge_months, badge_image_url, status, current_period_end, expired_at, past_due_started_at',
+      )
       .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', siteId)
@@ -61,15 +81,7 @@ export async function getBlogSubscriptionBadgeUrls({
   for (const subscription of (subscriptionsResult.data ?? []) as BlogSubscriptionBadgeRow[]) {
     if (badgeBySubscriberId.has(subscription.subscriber_user_id)) continue;
 
-    if (
-      !(await hasValidBlogSubscription({
-        supabaseAdmin,
-        subscriberId: subscription.subscriber_user_id,
-        siteId,
-      }))
-    ) {
-      continue;
-    }
+    if (!isValidBlogSubscription(subscription)) continue;
 
     const savedUrl = subscription.badge_image_url?.trim();
     const monthCount = Math.max(0, Number(subscription.badge_months ?? 0));
@@ -107,25 +119,7 @@ export async function hasValidBlogSubscription({
 
   const subscription = ((subscriptionResult.data ?? [])[0] as BlogSubscriptionRow | undefined) ?? null;
 
-  if (!subscription || subscription.expired_at || !subscription.current_period_end) {
-    return false;
-  }
-
-  const now = Date.now();
-  const periodEnd = new Date(subscription.current_period_end).getTime();
-
-  if (subscription.status === SUBSCRIPTION_STATUS.TRIALING || subscription.status === SUBSCRIPTION_STATUS.ACTIVE) {
-    return periodEnd > now;
-  }
-
-  // 자동결제 오류는 결제 수단을 고칠 수 있도록 7일간만 구독 권한을 유지합니다.
-  if (subscription.status === SUBSCRIPTION_STATUS.PAST_DUE && subscription.past_due_started_at) {
-    const startedAt = new Date(subscription.past_due_started_at).getTime();
-    return Number.isFinite(startedAt) && startedAt + getPastDueGraceDays() * 24 * 60 * 60 * 1000 > now;
-  }
-
-  // 환불 없이 해지한 구독은 이미 결제한 회차가 끝날 때까지 이용할 수 있습니다.
-  return subscription.status === SUBSCRIPTION_STATUS.CANCELED && periodEnd > now;
+  return isValidBlogSubscription(subscription);
 }
 
 export async function hasValidSeriesSubscription({

@@ -37,13 +37,14 @@ function hasEmptyCategory(categories: CategoryInput[] | null | undefined) {
 
 async function getManageAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
-  const site = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
+  const [site, session] = await Promise.all([
+    supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle(),
+    getSessionClaims(),
+  ]);
 
   if (site.error || !site.data) {
     return { ok: false, status: 404, error: '사이트를 찾을 수 없습니다.' } as const;
   }
-
-  const session = await getSessionClaims();
 
   if (!session?.userId) {
     return { ok: false, status: 401, error: '로그인이 필요합니다.' } as const;

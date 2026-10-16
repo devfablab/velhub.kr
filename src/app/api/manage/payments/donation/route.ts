@@ -99,12 +99,13 @@ export async function GET(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const authorState = await getAuthorState(site.owner_id);
+    const [authorState, paymentSplitsResult] = await Promise.all([
+      getAuthorState(site.owner_id),
+      supabaseAdmin.from('payment_splits').select('payment_id').eq('site_id', site.id),
+    ]);
 
     const ownerIsCreator = authorState.isAuthor || !!authorState.isSettlementError;
     const ownerCreatorStatus = authorState.isAuthor ? 'approved' : authorState.isSettlementError ? 'error' : null;
-
-    const paymentSplitsResult = await supabaseAdmin.from('payment_splits').select('payment_id').eq('site_id', site.id);
 
     if (paymentSplitsResult.error) {
       console.error(paymentSplitsResult.error);
@@ -154,9 +155,22 @@ export async function GET(request: Request) {
           .map((donation) => donation.target_id),
       ),
     );
-    const seriesResult = seriesIds.length
-      ? await supabaseAdmin.from('board_series').select('id, board_id, series_label').in('id', seriesIds)
-      : { data: [], error: null };
+    const donorStigmaIds = Array.from(new Set(donations.map((donation) => donation.buyer_user_id)));
+    const [seriesResult, stigmasResult, rhizomeStigmasResult] = await Promise.all([
+      seriesIds.length
+        ? supabaseAdmin.from('board_series').select('id, board_id, series_label').in('id', seriesIds)
+        : { data: [], error: null },
+      donorStigmaIds.length
+        ? supabaseAdmin.from('stigmas').select('id, user_name').in('id', donorStigmaIds)
+        : { data: [], error: null },
+      donorStigmaIds.length
+        ? supabaseAdmin
+            .from('rhizome_stigmas')
+            .select('site_id, user_id, nickname')
+            .eq('site_id', site.id)
+            .in('user_id', donorStigmaIds)
+        : { data: [], error: null },
+    ]);
 
     if (seriesResult.error) {
       console.error(seriesResult.error);
@@ -178,11 +192,6 @@ export async function GET(request: Request) {
 
     const seriesById = new Map(seriesList.map((series) => [series.id, series]));
     const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
-    const donorStigmaIds = Array.from(new Set(donations.map((donation) => donation.buyer_user_id)));
-
-    const stigmasResult = donorStigmaIds.length
-      ? await supabaseAdmin.from('stigmas').select('id, user_name').in('id', donorStigmaIds)
-      : { data: [], error: null };
 
     if (stigmasResult.error) {
       console.error(stigmasResult.error);
@@ -194,14 +203,6 @@ export async function GET(request: Request) {
     const activityNameByStigmaId = new Map(
       stigmas.map((stigma) => [stigma.id, decryptUserName(stigma.user_name || '')]),
     );
-
-    const rhizomeStigmasResult = donorStigmaIds.length
-      ? await supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('site_id, user_id, nickname')
-          .eq('site_id', site.id)
-          .in('user_id', donorStigmaIds)
-      : { data: [], error: null };
 
     if (rhizomeStigmasResult.error) {
       console.error(rhizomeStigmasResult.error);
@@ -242,7 +243,8 @@ export async function GET(request: Request) {
         const stigmaId = donation.buyer_user_id;
         const nickname = normalizeText(nicknameByStigmaId.get(stigmaId));
         const activityName = activityNameByStigmaId.get(stigmaId) || '';
-        const buyerName = site.site_type === 'community' ? nickname || activityName || '사용자' : activityName || '사용자';
+        const buyerName =
+          site.site_type === 'community' ? nickname || activityName || '사용자' : activityName || '사용자';
         const series =
           donation.payment_type === PAYMENT_TYPE.DONATION_SERIES ? (seriesById.get(donation.target_id) ?? null) : null;
         const board = series ? (boardById.get(series.board_id) ?? null) : null;

@@ -175,31 +175,31 @@ export async function GET(request: Request) {
 
     const siteStats = siteStatsResult.data as SiteStatsRow;
 
-    const todayVisitorsResult = await access.supabaseAdmin
-      .from('site_visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', siteStats.id)
-      .gte('last_visited_at', todayStart.toISOString());
+    const [todayVisitorsResult, weekVisitorsResult, monthVisitorsResult] = await Promise.all([
+      access.supabaseAdmin
+        .from('site_visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', siteStats.id)
+        .gte('last_visited_at', todayStart.toISOString()),
+      access.supabaseAdmin
+        .from('site_visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', siteStats.id)
+        .gte('last_visited_at', weekStart.toISOString()),
+      access.supabaseAdmin
+        .from('site_visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', siteStats.id)
+        .gte('last_visited_at', monthStart.toISOString()),
+    ]);
 
     if (todayVisitorsResult.error) {
       return Response.json({ error: '오늘 접속자 수를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const weekVisitorsResult = await access.supabaseAdmin
-      .from('site_visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', siteStats.id)
-      .gte('last_visited_at', weekStart.toISOString());
-
     if (weekVisitorsResult.error) {
       return Response.json({ error: '일주일간 접속자 수를 불러오지 못했습니다.' }, { status: 500 });
     }
-
-    const monthVisitorsResult = await access.supabaseAdmin
-      .from('site_visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', siteStats.id)
-      .gte('last_visited_at', monthStart.toISOString());
 
     if (monthVisitorsResult.error) {
       return Response.json({ error: '30일간 접속자 수를 불러오지 못했습니다.' }, { status: 500 });
@@ -252,87 +252,91 @@ export async function GET(request: Request) {
     };
 
     if (access.siteType === 'community') {
-      const todayApprovedJoinResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .eq('is_approval', true)
-        .gte('created_at', todayStart.toISOString());
+      const [
+        todayApprovedJoinResult,
+        todayUnapprovedJoinResult,
+        todayTotalJoinResult,
+        weekApprovedJoinResult,
+        monthApprovedJoinResult,
+        totalApprovedJoinResult,
+        inactiveWeekResult,
+        inactiveMonthResult,
+      ] = await Promise.all([
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true)
+          .gte('created_at', todayStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', false)
+          .gte('created_at', todayStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .gte('created_at', todayStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true)
+          .gte('created_at', weekStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true)
+          .gte('created_at', monthStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true)
+          .lt('last_checkin_at', weekStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true)
+          .lt('last_checkin_at', monthStart.toISOString()),
+      ]);
 
       if (todayApprovedJoinResult.error) {
         return Response.json({ error: '오늘 승인 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const todayUnapprovedJoinResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .eq('is_approval', false)
-        .gte('created_at', todayStart.toISOString());
-
       if (todayUnapprovedJoinResult.error) {
         return Response.json({ error: '오늘 비승인 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
       }
-
-      const todayTotalJoinResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .gte('created_at', todayStart.toISOString());
 
       if (todayTotalJoinResult.error) {
         return Response.json({ error: '오늘 신규 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const weekApprovedJoinResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .eq('is_approval', true)
-        .gte('created_at', weekStart.toISOString());
-
       if (weekApprovedJoinResult.error) {
         return Response.json({ error: '일주일간 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
       }
-
-      const monthApprovedJoinResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .eq('is_approval', true)
-        .gte('created_at', monthStart.toISOString());
 
       if (monthApprovedJoinResult.error) {
         return Response.json({ error: '30일간 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const totalApprovedJoinResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .eq('is_approval', true);
-
       if (totalApprovedJoinResult.error) {
         return Response.json({ error: '총 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const inactiveWeekResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .eq('is_approval', true)
-        .lt('last_checkin_at', weekStart.toISOString());
-
       if (inactiveWeekResult.error) {
         return Response.json({ error: '일주일 이상 미접속 유저 수를 불러오지 못했습니다.' }, { status: 500 });
       }
-
-      const inactiveMonthResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', access.rhizome.id)
-        .eq('is_approval', true)
-        .lt('last_checkin_at', monthStart.toISOString());
 
       if (inactiveMonthResult.error) {
         return Response.json({ error: '30일 이상 미접속 유저 수를 불러오지 못했습니다.' }, { status: 500 });
@@ -357,14 +361,17 @@ export async function GET(request: Request) {
     }
 
     if (access.siteType === 'blog') {
-      const popularPostsResult = await access.supabaseAdmin
-        .from('posts')
-        .select('id, slug, subject, post_count, published_at, board_id')
-        .eq('site_id', access.rhizome.id)
-        .eq('published_status', 'published')
-        .or('is_closed.is.null,is_closed.eq.false')
-        .order('post_count', { ascending: false, nullsFirst: false })
-        .limit(POPULAR_POST_LIMIT);
+      const [popularPostsResult, visitRows] = await Promise.all([
+        access.supabaseAdmin
+          .from('posts')
+          .select('id, slug, subject, post_count, published_at, board_id')
+          .eq('site_id', access.rhizome.id)
+          .eq('published_status', 'published')
+          .or('is_closed.is.null,is_closed.eq.false')
+          .order('post_count', { ascending: false, nullsFirst: false })
+          .limit(POPULAR_POST_LIMIT),
+        getVisitRows(siteStats.id),
+      ]);
 
       if (popularPostsResult.error) {
         return Response.json({ error: '인기글 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -394,7 +401,6 @@ export async function GET(request: Request) {
         {},
       );
 
-      const visitRows = await getVisitRows(siteStats.id);
       const revisitVisitors = visitRows.filter((visit) => isRevisit(visit.created_at, visit.last_visited_at)).length;
       const totalVisitors = visitRows.length;
 

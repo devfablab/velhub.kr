@@ -74,45 +74,26 @@ export default async function Page(context: RouteContext) {
 
   const rhizome = rhizomeResult.data;
 
-  const siteResult = await supabaseAdmin
-    .from('sites')
-    .select('updated_at, updated_by')
-    .eq('site_id', rhizome.id)
-    .maybeSingle();
-
-  if (siteResult.error || !siteResult.data) {
-    notFound();
-  }
-
-  const sitesInfo = {
-    rhizomes: rhizome,
-    sites: siteResult.data,
-  };
-
   if (rhizome.site_type === 'blog') {
-    const blogInfo = await supabaseAdmin
-      .from('blogs')
-      .select('created_at, comment_provider')
-      .eq('site_id', rhizome.id)
-      .maybeSingle();
+    const [siteResult, blogInfo, blogBoardResult] = await Promise.all([
+      supabaseAdmin.from('sites').select('updated_at, updated_by').eq('site_id', rhizome.id).maybeSingle(),
+      supabaseAdmin.from('blogs').select('created_at, comment_provider').eq('site_id', rhizome.id).maybeSingle(),
+      supabaseAdmin
+        .from('boards')
+        .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
+        .eq('site_id', rhizome.id)
+        .eq('is_active', true)
+        .neq('board_type', 'page')
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-    if (blogInfo.error || !blogInfo.data) {
+    if (siteResult.error || !siteResult.data || blogInfo.error || !blogInfo.data || blogBoardResult.error) {
       notFound();
     }
 
-    const blogBoardResult = await supabaseAdmin
-      .from('boards')
-      .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
-      .eq('site_id', rhizome.id)
-      .eq('is_active', true)
-      .neq('board_type', 'page')
-      .order('sort_order', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    if (blogBoardResult.error) {
-      notFound();
-    }
+    const sitesInfo = { rhizomes: rhizome, sites: siteResult.data };
 
     if (blogBoardResult.data === null) {
       return (
@@ -156,26 +137,26 @@ export default async function Page(context: RouteContext) {
   }
 
   if (rhizome.site_type === 'community') {
-    const communityInfo = await supabaseAdmin
-      .from('communities')
-      .select('created_at, join_type, policy_post, policy_comment')
-      .eq('site_id', rhizome.id)
-      .maybeSingle();
+    const [siteResult, communityInfo, homeOrderResult] = await Promise.all([
+      supabaseAdmin.from('sites').select('updated_at, updated_by').eq('site_id', rhizome.id).maybeSingle(),
+      supabaseAdmin
+        .from('communities')
+        .select('created_at, join_type, policy_post, policy_comment')
+        .eq('site_id', rhizome.id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('community_home_orders')
+        .select('id, site_id, board_id, order, is_show')
+        .eq('site_id', rhizome.id)
+        .eq('is_show', true)
+        .order('order', { ascending: true }),
+    ]);
 
-    if (communityInfo.error || !communityInfo.data) {
+    if (siteResult.error || !siteResult.data || communityInfo.error || !communityInfo.data || homeOrderResult.error) {
       notFound();
     }
 
-    const homeOrderResult = await supabaseAdmin
-      .from('community_home_orders')
-      .select('id, site_id, board_id, order, is_show')
-      .eq('site_id', rhizome.id)
-      .eq('is_show', true)
-      .order('order', { ascending: true });
-
-    if (homeOrderResult.error) {
-      notFound();
-    }
+    const sitesInfo = { rhizomes: rhizome, sites: siteResult.data };
 
     const homeOrders = (homeOrderResult.data ?? []) as HomeOrderRow[];
     const boardIds = homeOrders.map((homeOrder) => homeOrder.board_id);

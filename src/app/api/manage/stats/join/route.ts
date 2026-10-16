@@ -353,52 +353,51 @@ export async function GET(request: Request) {
     const todayStart = getKstStartOfToday();
     const tomorrowStart = addDays(todayStart, 1);
 
-    const todayApprovedResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', true)
-      .gte('created_at', todayStart.toISOString())
-      .lt('created_at', tomorrowStart.toISOString());
+    const [todayApprovedResult, todayUnapprovedResult, totalApprovedResult, beforeStartResult, joinRows] =
+      await Promise.all([
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true)
+          .gte('created_at', todayStart.toISOString())
+          .lt('created_at', tomorrowStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', false)
+          .gte('created_at', todayStart.toISOString())
+          .lt('created_at', tomorrowStart.toISOString()),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true),
+        access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', access.rhizome.id)
+          .eq('is_approval', true)
+          .lt('created_at', dateRange.start.toISOString()),
+        getJoinRows(access.rhizome.id, dateRange.start, dateRange.endExclusive),
+      ]);
 
     if (todayApprovedResult.error) {
       return Response.json({ error: '오늘 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const todayUnapprovedResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', false)
-      .gte('created_at', todayStart.toISOString())
-      .lt('created_at', tomorrowStart.toISOString());
-
     if (todayUnapprovedResult.error) {
       return Response.json({ error: '오늘 비승인 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
     }
-
-    const totalApprovedResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', true);
 
     if (totalApprovedResult.error) {
       return Response.json({ error: '총 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const beforeStartResult = await access.supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', access.rhizome.id)
-      .eq('is_approval', true)
-      .lt('created_at', dateRange.start.toISOString());
-
     if (beforeStartResult.error) {
       return Response.json({ error: '누적 가입자 수를 불러오지 못했습니다.' }, { status: 500 });
     }
-
-    const joinRows = await getJoinRows(access.rhizome.id, dateRange.start, dateRange.endExclusive);
     const buckets = buildBuckets(dateRange);
 
     const chartData = buckets.reduce<{

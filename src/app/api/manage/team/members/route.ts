@@ -46,7 +46,10 @@ async function checkAccess(siteName: string) {
     } as const;
   }
 
-  const blog = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', rhizome.data.id).maybeSingle();
+  const [blog, session] = await Promise.all([
+    supabaseAdmin.from('blogs').select('blog_type').eq('site_id', rhizome.data.id).maybeSingle(),
+    verifySession({ siteId: rhizome.data.id }),
+  ]);
 
   if (blog.error) {
     return {
@@ -63,10 +66,6 @@ async function checkAccess(siteName: string) {
       error: '팀원 관리는 팀 블로그에서만 사용할 수 있습니다.',
     } as const;
   }
-
-  const session = await verifySession({
-    siteId: rhizome.data.id,
-  });
 
   if (session.case !== 'admin' && session.case !== 'staff') {
     return {

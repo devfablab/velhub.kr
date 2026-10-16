@@ -197,10 +197,12 @@ export async function GET(request: Request) {
     }
 
     const { access } = accessResult;
-    const managers = await buildCommunityManagerList(access);
-    const boards = await getBoardSummaries(access);
-    const managerIcons = await getManagerIcons(access.rhizome.id);
-    const ownerTransfer = await getOwnerTransferAvailability(access);
+    const [managers, boards, managerIcons, ownerTransfer] = await Promise.all([
+      buildCommunityManagerList(access),
+      getBoardSummaries(access),
+      getManagerIcons(access.rhizome.id),
+      getOwnerTransferAvailability(access),
+    ]);
 
     if (!managerIcons.ok) {
       return Response.json({ error: managerIcons.error }, { status: 500 });
