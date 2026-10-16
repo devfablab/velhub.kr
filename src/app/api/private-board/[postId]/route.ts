@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/private-board/access';
+import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/privateBoard/access';
 import { normalizeText } from '@/lib/utils';
 
 function getFallbackAuthorName(value: string | null | undefined) {

@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/private-board/access';
+import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/privateBoard/access';
 import { normalizeText } from '@/lib/utils';
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
