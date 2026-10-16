@@ -587,13 +587,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authHealth = await getSupabaseAuthHealth();
+  const isReadRequest = ['GET', 'HEAD', 'OPTIONS'].includes(request.method);
+  const needsAuthHealthCheck = !isReadRequest || pathname === '/auth/sign-in';
+  const authHealth = needsAuthHealthCheck ? await getSupabaseAuthHealth() : null;
 
-  if (
-    isSupabaseAuthOutage(authHealth) &&
-    !['GET', 'HEAD', 'OPTIONS'].includes(request.method) &&
-    pathname !== '/api/auth/health'
-  ) {
+  if (authHealth && isSupabaseAuthOutage(authHealth) && !isReadRequest && pathname !== '/api/auth/health') {
     return NextResponse.json(
       { error: '현재 인증 서버 장애로 읽기만 가능합니다.' },
       { status: 503, headers: { 'Cache-Control': 'no-store, max-age=0' } },
@@ -631,7 +629,7 @@ export async function proxy(request: NextRequest) {
   const isAal1 = sessionClaims?.authenticationLevel === 'aal1';
   const hasTotp = sessionClaims?.hasTotp === true;
 
-  if (isSupabaseAuthOutage(authHealth) && pathname === '/auth/sign-in') {
+  if (authHealth && isSupabaseAuthOutage(authHealth) && pathname === '/auth/sign-in') {
     return redirectWithPath(request, '/auth/health');
   }
 

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Snackbar } from '@mui/material';
+import { usePathname } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type AuthStateContextValue = {
@@ -37,13 +38,13 @@ export default function AuthStateProvider({
   const [hasSession, setHasSession] = useState(initialSessionCookie);
   const [authVersion, setAuthVersion] = useState(0);
   const isAuthServiceUnavailableRef = useRef(isAuthServiceUnavailable);
+  const pathname = usePathname();
 
   useEffect(() => {
     isAuthServiceUnavailableRef.current = isAuthServiceUnavailable;
   }, [isAuthServiceUnavailable]);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowser();
     let isActive = true;
 
     async function getHealthStatus() {
@@ -71,7 +72,7 @@ export default function AuthStateProvider({
       }
 
       setIsAuthServiceUnavailable(false);
-      const sessionResult = await supabase.auth.getSession();
+      const sessionResult = await getSupabaseBrowser().auth.getSession();
 
       if (!isActive) {
         return;
@@ -91,9 +92,13 @@ export default function AuthStateProvider({
 
     void loadSession();
 
-    const healthInterval = window.setInterval(() => {
-      void loadSession();
-    }, 30_000);
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowser();
 
     const {
       data: { subscription },
@@ -109,8 +114,6 @@ export default function AuthStateProvider({
     });
 
     return () => {
-      isActive = false;
-      window.clearInterval(healthInterval);
       subscription.unsubscribe();
     };
   }, []);
