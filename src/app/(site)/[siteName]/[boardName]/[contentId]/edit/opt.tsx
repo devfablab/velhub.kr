@@ -41,6 +41,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { ko } from 'date-fns/locale';
 import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
+import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import NumberField from '@/components/custom-ui/NumberField';
@@ -50,6 +51,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
@@ -65,6 +67,7 @@ type Props = {
   initialSeries: SeriesListResponse | null;
   initialError: string;
   initialBoardError: string;
+  guidelineDialogData: SiteGuidelineDialogData | null;
 };
 
 type BoardItem = {
@@ -672,6 +675,7 @@ export default function Opt({
   initialSeries,
   initialError,
   initialBoardError,
+  guidelineDialogData,
 }: Props) {
   const router = useRouter();
   const params = useParams();
@@ -2056,6 +2060,8 @@ export default function Opt({
                   </div>
                 ) : board ? (
                   <>
+                    <SiteGuidelineActions siteName={siteName} data={guidelineDialogData} />
+
                     {!isFeedBoard ? (
                       <div className={styles['post-info']}>
                         <div className={styles['form-group']}>
@@ -2118,7 +2124,10 @@ export default function Opt({
                           </div>
                         </div>
                         {hasWordingViolation('subject') ? (
-                          <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                          <p className="alert error">
+                            <ErrorOutlineRoundedIcon />
+                            <span>혐오 표현이 여전히 존재합니다.</span>
+                          </p>
                         ) : null}
                       </div>
                     ) : null}
@@ -2141,7 +2150,10 @@ export default function Opt({
                           </div>
                         </div>
                         {hasWordingViolation('summary') ? (
-                          <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                          <p className="alert error">
+                            <ErrorOutlineRoundedIcon />
+                            <span>혐오 표현이 여전히 존재합니다.</span>
+                          </p>
                         ) : null}
                       </div>
                     ) : null}
@@ -2248,7 +2260,10 @@ export default function Opt({
                         }}
                       />
                       {hasWordingViolation('contentSimple') ? (
-                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>혐오 표현이 여전히 존재합니다.</span>
+                        </p>
                       ) : null}
                     </div>
                   ) : null}
@@ -2273,7 +2288,10 @@ export default function Opt({
                         />
                       </div>
                       {hasWordingViolation('summary') ? (
-                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>혐오 표현이 여전히 존재합니다.</span>
+                        </p>
                       ) : null}
                     </>
                   ) : null}
@@ -2309,7 +2327,10 @@ export default function Opt({
                             />
                           </div>
                           {hasWordingViolation('previewHtml') || hasWordingViolation('previewMarkdown') ? (
-                            <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                            <p className="alert error">
+                              <ErrorOutlineRoundedIcon />
+                              <span>혐오 표현이 여전히 존재합니다.</span>
+                            </p>
                           ) : null}
                         </fieldset>
                       </div>
@@ -2330,23 +2351,26 @@ export default function Opt({
                         className={`${styles.editor} ${isBasicBoard ? styles['editor-basic-edit'] : styles['editor-gallery-edit']} service-editor`}
                       >
                         <ToastEditor
-                        initialValue={contentHtml}
-                        initialMarkdown={contentMarkdown}
-                        initialEditType="wysiwyg"
-                        themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                        markdownStatus={markdownStatus}
-                        hideModeSwitch
-                        onHtmlChange={(value) => {
-                          setContentHtml(value);
-                        }}
-                        onMarkdownChange={(value) => {
-                          setContentMarkdown(value);
-                        }}
-                        onUploadImage={handleUploadEditorImage}
+                          initialValue={contentHtml}
+                          initialMarkdown={contentMarkdown}
+                          initialEditType="wysiwyg"
+                          themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                          markdownStatus={markdownStatus}
+                          hideModeSwitch
+                          onHtmlChange={(value) => {
+                            setContentHtml(value);
+                          }}
+                          onMarkdownChange={(value) => {
+                            setContentMarkdown(value);
+                          }}
+                          onUploadImage={handleUploadEditorImage}
                         />
                       </div>
                       {hasWordingViolation('contentHtml') || hasWordingViolation('contentMarkdown') ? (
-                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>혐오 표현이 여전히 존재합니다.</span>
+                        </p>
                       ) : null}
                     </>
                   ) : null}
@@ -2762,56 +2786,62 @@ export default function Opt({
                   />
                 </div>
                 {hasWordingViolation('pollQuestion') ? (
-                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>혐오 표현이 여전히 존재합니다.</span>
+                  </p>
                 ) : null}
 
                 <div className={styles['poll-options']}>
                   {pollDialog.options.map((option, index) => (
                     <div key={index}>
                       <div className={styles['poll-option']}>
-                      <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
-                      <div className={styles['form-control']}>
-                        <input
-                          id={`poll-option-${index}`}
-                          placeholder="항목을 입력해주세요"
-                          type="text"
-                          value={option.label}
-                          className={hasWordingViolation(`pollOption${index}`) ? styles['wording-error'] : undefined}
-                          aria-invalid={hasWordingViolation(`pollOption${index}`)}
-                          onChange={(event) => {
-                            updatePollDialogOptionLabel(index, event.currentTarget.value);
-                          }}
-                        />
-                      </div>
-                      {pollDialog.useOptionThumbnail ? (
-                        <div className={styles['poll-option-image']}>
-                          {option.imagePreviewUrl || option.imageUrl ? (
-                            <div className={styles['poll-option-image-preview']}>
-                              <button type="button" onClick={() => removePollOptionImage(index)}>
-                                <CloseRoundedIcon />
-                              </button>
-                              <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
-                            </div>
-                          ) : (
-                            <div className={styles['poll-option-image-upload']}>
-                              <button type="button">
-                                <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
-                                  <InsertPhotoOutlinedIcon />
-                                </label>
-                              </button>
-                              <input
-                                id={`poll-option-image-${index}`}
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                onChange={(event) => handlePollOptionImageChange(index, event)}
-                              />
-                            </div>
-                          )}
+                        <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
+                        <div className={styles['form-control']}>
+                          <input
+                            id={`poll-option-${index}`}
+                            placeholder="항목을 입력해주세요"
+                            type="text"
+                            value={option.label}
+                            className={hasWordingViolation(`pollOption${index}`) ? styles['wording-error'] : undefined}
+                            aria-invalid={hasWordingViolation(`pollOption${index}`)}
+                            onChange={(event) => {
+                              updatePollDialogOptionLabel(index, event.currentTarget.value);
+                            }}
+                          />
                         </div>
-                      ) : null}
+                        {pollDialog.useOptionThumbnail ? (
+                          <div className={styles['poll-option-image']}>
+                            {option.imagePreviewUrl || option.imageUrl ? (
+                              <div className={styles['poll-option-image-preview']}>
+                                <button type="button" onClick={() => removePollOptionImage(index)}>
+                                  <CloseRoundedIcon />
+                                </button>
+                                <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                              </div>
+                            ) : (
+                              <div className={styles['poll-option-image-upload']}>
+                                <button type="button">
+                                  <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
+                                    <InsertPhotoOutlinedIcon />
+                                  </label>
+                                </button>
+                                <input
+                                  id={`poll-option-image-${index}`}
+                                  type="file"
+                                  accept="image/png,image/jpeg,image/webp"
+                                  onChange={(event) => handlePollOptionImageChange(index, event)}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                       {hasWordingViolation(`pollOption${index}`) ? (
-                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>혐오 표현이 여전히 존재합니다.</span>
+                        </p>
                       ) : null}
                     </div>
                   ))}
@@ -2993,56 +3023,62 @@ export default function Opt({
                   />
                 </div>
                 {hasWordingViolation('pollQuestion') ? (
-                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>혐오 표현이 여전히 존재합니다.</span>
+                  </p>
                 ) : null}
 
                 <div className={styles['poll-options']}>
                   {pollDialog.options.map((option, index) => (
                     <div key={index}>
                       <div className={styles['poll-option']}>
-                      <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
-                      <div className={styles['form-control']}>
-                        <input
-                          id={`poll-option-${index}`}
-                          placeholder="항목을 입력해주세요"
-                          type="text"
-                          value={option.label}
-                          className={hasWordingViolation(`pollOption${index}`) ? styles['wording-error'] : undefined}
-                          aria-invalid={hasWordingViolation(`pollOption${index}`)}
-                          onChange={(event) => {
-                            updatePollDialogOptionLabel(index, event.currentTarget.value);
-                          }}
-                        />
-                      </div>
-                      {pollDialog.useOptionThumbnail ? (
-                        <div className={styles['poll-option-image']}>
-                          {option.imagePreviewUrl || option.imageUrl ? (
-                            <div className={styles['poll-option-image-preview']}>
-                              <button type="button" onClick={() => removePollOptionImage(index)}>
-                                <CloseRoundedIcon />
-                              </button>
-                              <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
-                            </div>
-                          ) : (
-                            <div className={styles['poll-option-image-upload']}>
-                              <button type="button">
-                                <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
-                                  <InsertPhotoOutlinedIcon />
-                                </label>
-                              </button>
-                              <input
-                                id={`poll-option-image-${index}`}
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                onChange={(event) => handlePollOptionImageChange(index, event)}
-                              />
-                            </div>
-                          )}
+                        <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
+                        <div className={styles['form-control']}>
+                          <input
+                            id={`poll-option-${index}`}
+                            placeholder="항목을 입력해주세요"
+                            type="text"
+                            value={option.label}
+                            className={hasWordingViolation(`pollOption${index}`) ? styles['wording-error'] : undefined}
+                            aria-invalid={hasWordingViolation(`pollOption${index}`)}
+                            onChange={(event) => {
+                              updatePollDialogOptionLabel(index, event.currentTarget.value);
+                            }}
+                          />
                         </div>
-                      ) : null}
+                        {pollDialog.useOptionThumbnail ? (
+                          <div className={styles['poll-option-image']}>
+                            {option.imagePreviewUrl || option.imageUrl ? (
+                              <div className={styles['poll-option-image-preview']}>
+                                <button type="button" onClick={() => removePollOptionImage(index)}>
+                                  <CloseRoundedIcon />
+                                </button>
+                                <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                              </div>
+                            ) : (
+                              <div className={styles['poll-option-image-upload']}>
+                                <button type="button">
+                                  <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
+                                    <InsertPhotoOutlinedIcon />
+                                  </label>
+                                </button>
+                                <input
+                                  id={`poll-option-image-${index}`}
+                                  type="file"
+                                  accept="image/png,image/jpeg,image/webp"
+                                  onChange={(event) => handlePollOptionImageChange(index, event)}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                       {hasWordingViolation(`pollOption${index}`) ? (
-                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>혐오 표현이 여전히 존재합니다.</span>
+                        </p>
                       ) : null}
                     </div>
                   ))}

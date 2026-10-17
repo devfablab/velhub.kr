@@ -20,6 +20,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import CommentList, { type CommentsResponse } from '@/components/comments/CommentList';
@@ -63,10 +64,12 @@ export default function Opt({
   initialData,
   initialError,
   initialCommentsData,
+  guidelineDialogData,
 }: {
   initialData: BlogCommunityPostResponse | null;
   initialError: string;
   initialCommentsData: CommentsResponse | null;
+  guidelineDialogData: SiteGuidelineDialogData | null;
 }) {
   const params = useParams();
   const router = useRouter();
@@ -279,6 +282,7 @@ export default function Opt({
             reportTargetType="blog_community_comment"
             isCommentLikeEnabled={false}
             initialData={initialCommentsData}
+            guidelineDialogData={guidelineDialogData}
           />
           {isMobile ? null : (
             <div className={styles['top-buttons']}>

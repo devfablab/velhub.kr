@@ -1,4 +1,4 @@
-import { deleteMemberContents } from '@/lib/community/communityMember/deleteMemberContents;
+import { deleteMemberContents } from '@/lib/community/communityMember/deleteMemberContents';
 import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';

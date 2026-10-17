@@ -64,7 +64,8 @@ type ContainerProps = {
     | 'stats'
     | 'reports'
     | 'community'
-    | 'denywords';
+    | 'denywords'
+    | 'guidelines';
   children: React.ReactNode;
 };
 
@@ -610,6 +611,10 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
 
     if (menu === 'denywords') {
       return [{ href: `/${siteName}/manage/denywords`, label: '단어차단 필터링', startsWith: true }];
+    }
+
+    if (menu === 'guidelines') {
+      return [{ href: `/${siteName}/manage/guidelines`, label: '가이드라인 관리', startsWith: true }];
     }
 
     if (menu === 'design') {

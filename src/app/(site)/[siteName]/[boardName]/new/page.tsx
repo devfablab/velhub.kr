@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import verifySession from '@/lib/session/verifySession';
+import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../getSiteApiData';
@@ -103,6 +104,14 @@ export default async function Page(context: RouteContext) {
       ? requestedSeriesName
       : '';
   const initialError = initialBoards.error || initialBoardInfo.error || initialPrefixes.error || initialSeries.error;
+  const guidelineDialogData =
+    isCommunity && currentBoard
+      ? await getSiteGuidelineDialogData({
+          siteName: normalizedSiteName,
+          target: 'board',
+          boardId: currentBoard.id,
+        })
+      : null;
 
   return (
     <Opt
@@ -114,6 +123,7 @@ export default async function Page(context: RouteContext) {
       initialSeries={initialSeries.data}
       initialSeriesName={initialSeriesName}
       initialError={initialError}
+      guidelineDialogData={guidelineDialogData}
     />
   );
 }

@@ -3,8 +3,10 @@
 import { useMemo } from 'react';
 import Giscus from '@giscus/react';
 import { DiscussionEmbed } from 'disqus-react';
+import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import CommentList from '@/components/comments/CommentList';
 import type { CommentsResponse } from '@/components/comments/CommentList';
+import SiteGuidelineActions from '../service/common/SiteGuidelineActions';
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 type GiscusInputPosition = 'top' | 'bottom';
@@ -36,6 +38,7 @@ type Props = {
   initialData?: CommentsResponse | null;
   isPostDonationAvailable?: boolean;
   canViewSubscriptionComments?: boolean;
+  guidelineDialogData?: SiteGuidelineDialogData | null;
 };
 
 const DISQUS_SHORTNAME = process.env.NEXT_PUBLIC_DISQUS_SHORTNAME ?? '';
@@ -55,6 +58,7 @@ export default function Comment({
   initialData,
   isPostDonationAvailable = false,
   canViewSubscriptionComments = true,
+  guidelineDialogData,
 }: Props) {
   const disqusUrl = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -81,6 +85,7 @@ export default function Comment({
           onYoutubeTimestampClick={onYoutubeTimestampClick}
           initialData={initialData}
           isPostDonationAvailable={isPostDonationAvailable}
+          guidelineDialogData={guidelineDialogData}
         />
       );
     }
@@ -92,6 +97,7 @@ export default function Comment({
 
       return (
         <div className="paper">
+          <SiteGuidelineActions siteName={siteName} data={guidelineDialogData} />
           <Giscus
             id="comments"
             repo={giscusSettings.repo as `${string}/${string}`}
@@ -118,6 +124,7 @@ export default function Comment({
 
       return (
         <div className="paper" style={{ colorScheme: themeMode }}>
+          <SiteGuidelineActions siteName={siteName} data={guidelineDialogData} />
           <DiscussionEmbed
             shortname={DISQUS_SHORTNAME}
             config={{
@@ -143,6 +150,7 @@ export default function Comment({
       onYoutubeTimestampClick={onYoutubeTimestampClick}
       initialData={initialData}
       isPostDonationAvailable={isPostDonationAvailable}
+      guidelineDialogData={guidelineDialogData}
     />
   );
 }

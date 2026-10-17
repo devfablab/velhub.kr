@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import verifySession from '@/lib/session/verifySession';
+import { getCommunityBoardGuidelineDialogDataByBoard } from '@/lib/siteGuidelines/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../getSiteApiData';
@@ -64,6 +65,12 @@ export default async function Page(context: RouteContext) {
     `/api/boards/write?siteName=${normalizedSiteName}`,
     '게시판 목록을 불러오지 못했습니다.',
   );
+  const guidelineDialogDataByBoard = isCommunity
+    ? await getCommunityBoardGuidelineDialogDataByBoard({
+        siteName: normalizedSiteName,
+        boardIds: (initialBoards.data?.writeBoards ?? initialBoards.data?.boards ?? []).map((board) => board.id),
+      })
+    : {};
   return (
     <Container pageBack={`/${siteName}/board`} pageTitle="새글 쓰기" pageFin>
       <Opt
@@ -71,6 +78,7 @@ export default async function Page(context: RouteContext) {
         writePolicyMessage={writePolicyMessage}
         initialBoards={initialBoards.data}
         initialError={initialBoards.error}
+        guidelineDialogDataByBoard={guidelineDialogDataByBoard}
       />
     </Container>
   );

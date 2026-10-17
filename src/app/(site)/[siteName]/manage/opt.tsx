@@ -82,6 +82,7 @@ export default function Opt({
         ]
       : []),
     { href: `/${siteName}/manage/contents/posts`, label: '콘텐츠 관리' },
+    ...(showAllManageMenus ? [{ href: `/${siteName}/manage/denywords`, label: '단어차단 필터링' }] : []),
     ...(isBlogOwner ? [{ href: `/${siteName}/manage/ads`, label: '광고 관리' }] : []),
     ...(showAllManageMenus && siteType === 'community'
       ? [{ href: `/${siteName}/manage/private`, label: '비공개 게시판' }]

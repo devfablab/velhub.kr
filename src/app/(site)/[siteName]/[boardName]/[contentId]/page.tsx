@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
+import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import type { CommentsResponse } from '@/components/comments/CommentList';
@@ -69,7 +70,7 @@ export default async function Page(context: SearchContext) {
 
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
-    .select('site_type')
+    .select('id, site_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -99,6 +100,23 @@ export default async function Page(context: SearchContext) {
     `/api/boards/${boardName.toLowerCase()}?siteName=${normalizedSiteName}&page=1&size=10&includePin=false`,
     '최신글을 불러오지 못했습니다.',
   );
+  const guidelineDialogDataPromise = isCommunity
+    ? supabaseAdmin
+        .from('boards')
+        .select('id')
+        .eq('site_id', rhizomeResult.data.id)
+        .eq('board_key', boardName.toLowerCase())
+        .maybeSingle()
+        .then((result) =>
+          result.data
+            ? getSiteGuidelineDialogData({
+                siteName: normalizedSiteName,
+                target: 'board',
+                boardId: result.data.id,
+              })
+            : null,
+        )
+    : getSiteGuidelineDialogData({ siteName: normalizedSiteName, target: 'blog-post' });
   const initial = await initialPromise;
   const countAndReadPromise =
     initial.data?.content?.published_status === 'published'
@@ -140,6 +158,7 @@ export default async function Page(context: SearchContext) {
     initialPoll,
     initialSubscriptionStatus,
     initialLinkPreviews,
+    guidelineDialogData,
   ] = await Promise.all([
     countAndReadPromise,
     initialCommentsPromise,
@@ -148,6 +167,7 @@ export default async function Page(context: SearchContext) {
     initialPollPromise,
     initialSubscriptionStatusPromise,
     getLinkPreviews(initial.data?.content?.content_simple),
+    guidelineDialogDataPromise,
   ]);
 
   if (typeof countResult?.data?.postCount === 'number' && initial.data?.content) {
@@ -166,6 +186,7 @@ export default async function Page(context: SearchContext) {
       initialPollError={initialPoll.error}
       initialSubscriptionStatus={initialSubscriptionStatus.data}
       initialLinkPreviews={initialLinkPreviews}
+      guidelineDialogData={guidelineDialogData}
     />
   );
 }

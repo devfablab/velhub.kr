@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../../getSiteApiData';
@@ -29,7 +30,7 @@ export default async function Page(context: RouteContext) {
 
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
-    .select('site_type')
+    .select('id, site_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -63,6 +64,23 @@ export default async function Page(context: RouteContext) {
         )
       : Promise.resolve({ data: null, error: '' }),
   ]);
+  const guidelineDialogData = isCommunity
+    ? await supabaseAdmin
+        .from('boards')
+        .select('id')
+        .eq('site_id', rhizomeResult.data.id)
+        .eq('board_key', boardName.toLowerCase())
+        .maybeSingle()
+        .then((result) =>
+          result.data
+            ? getSiteGuidelineDialogData({
+                siteName: normalizedSiteName,
+                target: 'board',
+                boardId: result.data.id,
+              })
+            : null,
+        )
+    : null;
 
   return (
     <Opt
@@ -73,6 +91,7 @@ export default async function Page(context: RouteContext) {
       initialSeries={series.data}
       initialError={content.error}
       initialBoardError={boardInfo.error || prefixes.error || series.error}
+      guidelineDialogData={guidelineDialogData}
     />
   );
 }

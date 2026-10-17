@@ -36,6 +36,7 @@ import {
 import Avatar from '@mui/material/Avatar';
 import { getNotFoundPageMessage } from '@/lib/pageError';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
+import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
@@ -76,6 +77,7 @@ type Props = {
   initialPollError: string;
   initialSubscriptionStatus: SubscriptionStatusResponse | null;
   initialLinkPreviews: Record<string, LinkPreviewData | null>;
+  guidelineDialogData: SiteGuidelineDialogData | null;
 };
 
 type BoardInfo = {
@@ -413,6 +415,7 @@ export default function Opt({
   initialPollError,
   initialSubscriptionStatus,
   initialLinkPreviews,
+  guidelineDialogData,
 }: Props) {
   const theme = useTheme();
   const params = useParams();
@@ -1665,6 +1668,7 @@ export default function Opt({
               initialData={initialComments}
               isPostDonationAvailable={content.is_post_donation_available === true}
               canViewSubscriptionComments={content.can_view_subscription_comments}
+              guidelineDialogData={guidelineDialogData}
             />
           ) : null}
 

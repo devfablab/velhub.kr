@@ -6,10 +6,12 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import { Avatar } from '@mui/material';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
+import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import CommentForm from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import DonationButton from '@/components/service/common/DonationButton';
+import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
 import Anchor from '../Anchor';
 import styles from '@/app/comments.module.sass';
 
@@ -27,6 +29,7 @@ type Props = {
   onYoutubeTimestampClick?: (seconds: number) => void;
   initialData?: CommentsResponse | null;
   isPostDonationAvailable?: boolean;
+  guidelineDialogData?: SiteGuidelineDialogData | null;
 };
 
 type PollChoice = {
@@ -124,6 +127,7 @@ export default function CommentList({
   onYoutubeTimestampClick,
   initialData,
   isPostDonationAvailable = false,
+  guidelineDialogData,
 }: Props) {
   const [comments, setComments] = useState<CommentData[]>(initialData?.comments ?? []);
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState(initialData?.mySelfAvatarUrl ?? '');
@@ -217,7 +221,9 @@ export default function CommentList({
       setActiveReplyTargetId('');
     } catch (unknownError) {
       const nextErrorMessage =
-        unknownError instanceof Error ? unknownError.message || '댓글 작성에 실패했습니다.' : '댓글 작성에 실패했습니다.';
+        unknownError instanceof Error
+          ? unknownError.message || '댓글 작성에 실패했습니다.'
+          : '댓글 작성에 실패했습니다.';
 
       setErrorMessage(nextErrorMessage);
       return nextErrorMessage;
@@ -252,7 +258,9 @@ export default function CommentList({
       await loadComments();
     } catch (unknownError) {
       const nextErrorMessage =
-        unknownError instanceof Error ? unknownError.message || '댓글 수정에 실패했습니다.' : '댓글 수정에 실패했습니다.';
+        unknownError instanceof Error
+          ? unknownError.message || '댓글 수정에 실패했습니다.'
+          : '댓글 수정에 실패했습니다.';
 
       setErrorMessage(nextErrorMessage);
       return nextErrorMessage;
@@ -427,7 +435,12 @@ export default function CommentList({
 
   return (
     <section className={`${styles['comment-section']} paper`}>
-      {errorMessage ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{errorMessage}</span></p> : null}
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
 
       <div className={styles['comment-headline']}>
         <strong>
@@ -438,6 +451,8 @@ export default function CommentList({
           <RefreshRoundedIcon />
         </button>
       </div>
+
+      <SiteGuidelineActions siteName={siteName} data={guidelineDialogData} />
 
       {isCommentEnabled && canWrite ? (
         <CommentForm

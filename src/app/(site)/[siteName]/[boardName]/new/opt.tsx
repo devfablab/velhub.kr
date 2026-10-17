@@ -41,6 +41,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { ko } from 'date-fns/locale';
 import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
+import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -51,6 +52,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
@@ -67,6 +69,7 @@ type Props = {
   initialSeries: SeriesListResponse | null;
   initialSeriesName: string;
   initialError: string;
+  guidelineDialogData: SiteGuidelineDialogData | null;
 };
 
 type BoardItem = {
@@ -573,6 +576,7 @@ export default function Opt({
   initialSeries,
   initialSeriesName,
   initialError,
+  guidelineDialogData,
 }: Props) {
   const router = useRouter();
   const params = useParams();
@@ -2021,6 +2025,7 @@ export default function Opt({
                   </div>
                 ) : selectedBoard ? (
                   <>
+                    <SiteGuidelineActions siteName={siteName} data={guidelineDialogData} />
                     {!isFeedBoard ? (
                       <div className={styles['post-info']}>
                         <div className={styles['form-group']}>
@@ -2675,7 +2680,10 @@ export default function Opt({
                   />
                 </div>
                 {pollWordingViolationFields.includes('pollQuestion') ? (
-                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>혐오 표현이 여전히 존재합니다.</span>
+                  </p>
                 ) : null}
 
                 <div className={styles['poll-options']}>
@@ -2689,7 +2697,9 @@ export default function Opt({
                           type="text"
                           value={option.label}
                           className={
-                            pollWordingViolationFields.includes(`pollOption${index}`) ? styles['wording-error'] : undefined
+                            pollWordingViolationFields.includes(`pollOption${index}`)
+                              ? styles['wording-error']
+                              : undefined
                           }
                           aria-invalid={pollWordingViolationFields.includes(`pollOption${index}`)}
                           onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
@@ -2697,7 +2707,10 @@ export default function Opt({
                       </div>
 
                       {pollWordingViolationFields.includes(`pollOption${index}`) ? (
-                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>혐오 표현이 여전히 존재합니다.</span>
+                        </p>
                       ) : null}
 
                       {pollDialog.useOptionThumbnail ? (
@@ -2908,7 +2921,10 @@ export default function Opt({
                   />
                 </div>
                 {pollWordingViolationFields.includes('pollQuestion') ? (
-                  <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>혐오 표현이 여전히 존재합니다.</span>
+                  </p>
                 ) : null}
 
                 <div className={styles['poll-options']}>
@@ -2922,7 +2938,9 @@ export default function Opt({
                           type="text"
                           value={option.label}
                           className={
-                            pollWordingViolationFields.includes(`pollOption${index}`) ? styles['wording-error'] : undefined
+                            pollWordingViolationFields.includes(`pollOption${index}`)
+                              ? styles['wording-error']
+                              : undefined
                           }
                           aria-invalid={pollWordingViolationFields.includes(`pollOption${index}`)}
                           onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
@@ -2930,7 +2948,10 @@ export default function Opt({
                       </div>
 
                       {pollWordingViolationFields.includes(`pollOption${index}`) ? (
-                        <p className="alert error"><ErrorOutlineRoundedIcon /><span>혐오 표현이 여전히 존재합니다.</span></p>
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>혐오 표현이 여전히 존재합니다.</span>
+                        </p>
                       ) : null}
 
                       {pollDialog.useOptionThumbnail ? (

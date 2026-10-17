@@ -14,10 +14,12 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import DrawEventFields, { emptyBlogCommunityDraw } from '@/components/service/blog-community/DrawEventFields';
+import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import { type BlogCommunityResponse } from '../opt';
@@ -202,9 +204,11 @@ function ImagePicker({
 export default function Opt({
   initialData,
   initialError,
+  guidelineDialogData,
 }: {
   initialData: BlogCommunityResponse | null;
   initialError: string;
+  guidelineDialogData: SiteGuidelineDialogData | null;
 }) {
   const params = useParams();
   const router = useRouter();
@@ -285,6 +289,7 @@ export default function Opt({
     <Container pageBack={`/${siteName}/community-on-blog`} pageTitle="커뮤니티 글쓰기">
       <div className="container">
         <div className={`content ${styles.content} ${styles['blog-content']}`}>
+          <SiteGuidelineActions siteName={siteName} data={guidelineDialogData} />
           <form onSubmit={handleSubmit} className={`${styles.form} form`} noValidate>
             <fieldset>
               <legend>글쓰기 폼</legend>

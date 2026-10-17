@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../../getSiteApiData';
@@ -54,7 +55,7 @@ export default async function Page(context: RouteContext) {
     ),
   ]);
   const postType = boardInfo.data?.board?.post_type ?? 'none';
-  const [prefixes, series] = await Promise.all([
+  const [prefixes, series, guidelineDialogData] = await Promise.all([
     postType === 'prefix'
       ? getSiteApiData<PrefixListResponse>(
           `/api/boards/${normalizedBoardName}/prefix?siteName=${normalizedSiteName}`,
@@ -67,6 +68,13 @@ export default async function Page(context: RouteContext) {
           '연재 목록을 불러오지 못했습니다.',
         )
       : Promise.resolve({ data: null, error: '' }),
+    content.data?.board?.id
+      ? getSiteGuidelineDialogData({
+          siteName: normalizedSiteName,
+          target: 'board',
+          boardId: content.data.board.id,
+        })
+      : Promise.resolve(null),
   ]);
 
   return (
@@ -78,6 +86,7 @@ export default async function Page(context: RouteContext) {
       initialSeries={series.data}
       initialError={content.error}
       initialBoardError={boardInfo.error || prefixes.error || series.error}
+      guidelineDialogData={guidelineDialogData}
     />
   );
 }

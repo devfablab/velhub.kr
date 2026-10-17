@@ -1,7 +1,6 @@
 'use client';
 
 import { type JSX, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -83,7 +82,6 @@ const VisuallyHiddenInput = styled('input')({
 });
 
 export default function Opt({ siteName, initialData, initialError }: Props) {
-  const router = useRouter();
   const initialJoin = initialData?.join;
   const initialQuestions =
     initialJoin?.join_question_status === 'enabled' && Array.isArray(initialJoin.join_questions)
@@ -428,7 +426,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
         throw new Error(result.error ?? '가입에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}`);
+      window.location.replace(`/${siteName}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '가입에 실패했습니다.');

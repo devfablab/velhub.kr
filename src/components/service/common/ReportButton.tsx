@@ -36,10 +36,13 @@ import styles from '@/app/reports.module.sass';
 
 type ReportButtonProps = {
   targetType: ReportTargetType;
+  reportItemsTargetType?: ReportTargetType;
   siteName: string;
   boardName?: string | null;
   contentId?: string | number | null;
   commentId?: string | number | null;
+  triggerLabel?: string;
+  menuLabel?: string;
 };
 
 type ReportResponse = {
@@ -61,10 +64,13 @@ function getStringParamValue(value: string | number | null | undefined) {
 
 export default function ReportButton({
   targetType,
+  reportItemsTargetType,
   siteName,
   boardName = null,
   contentId = null,
   commentId = null,
+  triggerLabel,
+  menuLabel,
 }: ReportButtonProps) {
   const [menuAnchorElement, setMenuAnchorElement] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -78,7 +84,7 @@ export default function ReportButton({
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const menuOpen = Boolean(menuAnchorElement);
-  const guidelineReportItems = guidelineReportItemsByTargetType[targetType];
+  const guidelineReportItems = guidelineReportItemsByTargetType[reportItemsTargetType ?? targetType];
   const selectedItem = guidelineReportItems.find((item) => item.value === selectedCategory) ?? null;
 
   function handleMenuOpen(mouseEvent: MouseEvent<HTMLButtonElement>) {
@@ -301,29 +307,40 @@ export default function ReportButton({
 
   return (
     <>
-      <IconButton type="button" aria-label="신고 메뉴 열기" aria-haspopup="menu" onClick={handleMenuOpen}>
-        <MoreHorizIcon />
-      </IconButton>
+      {triggerLabel ? (
+        <button type="button" className="button medium" onClick={handleOpen}>
+          <ReportOutlinedIcon />
+          <span>{triggerLabel}</span>
+        </button>
+      ) : (
+        <>
+          <IconButton type="button" aria-label="신고 메뉴 열기" aria-haspopup="menu" onClick={handleMenuOpen}>
+            <MoreHorizIcon />
+          </IconButton>
 
-      <Menu anchorEl={menuAnchorElement} open={menuOpen} onClose={handleMenuClose}>
-        <MenuItem dense onClick={handleOpen}>
-          <ListItemIcon>
-            <ReportOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>
-            {targetType === 'board'
-              ? '게시판'
-              : targetType === 'comment'
-                ? '댓글'
-                : targetType === 'post'
-                  ? '게시물'
-                  : targetType === 'site'
-                    ? '사이트'
-                    : null}{' '}
-            신고하기
-          </ListItemText>
-        </MenuItem>
-      </Menu>
+          <Menu anchorEl={menuAnchorElement} open={menuOpen} onClose={handleMenuClose}>
+            <MenuItem dense onClick={handleOpen}>
+              <ListItemIcon>
+                <ReportOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>
+                {menuLabel ??
+                  `${
+                    targetType === 'board'
+                      ? '게시판'
+                      : targetType === 'comment'
+                        ? '댓글'
+                        : targetType === 'post'
+                          ? '게시물'
+                          : targetType === 'site'
+                            ? '사이트'
+                            : ''
+                  } 신고하기`}
+              </ListItemText>
+            </MenuItem>
+          </Menu>
+        </>
+      )}
 
       {isMobile ? (
         <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">

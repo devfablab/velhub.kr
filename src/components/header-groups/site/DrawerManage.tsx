@@ -4,6 +4,7 @@ import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import ContactsOutlinedIcon from '@mui/icons-material/ContactsOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import DesignServicesOutlinedIcon from '@mui/icons-material/DesignServicesOutlined';
+import FormatListNumberedRoundedIcon from '@mui/icons-material/FormatListNumberedRounded';
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import ListOutlinedIcon from '@mui/icons-material/ListOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
@@ -41,8 +42,27 @@ function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | n
   return false;
 }
 
+function canAccessGuidelines(siteType: SiteType | null, siteRole: string | null, globalRole: string | null) {
+  if (globalRole === 'admin') {
+    return true;
+  }
+
+  if (siteType === 'blog') {
+    return siteRole === 'owner' || siteRole === 'manager';
+  }
+
+  return (
+    siteRole === 'owner' ||
+    siteRole === 'community-manager' ||
+    siteRole === 'board-manager' ||
+    siteRole === 'board-general-manager' ||
+    siteRole === 'board-assistant-manager'
+  );
+}
+
 export default function DrawerManage({ siteName, siteType, blogType, siteRole, globalRole, onClose }: Props) {
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
+  const showGuidelinesMenu = canAccessGuidelines(siteType, siteRole, globalRole);
   const isBlogOwner = siteType === 'blog' && (siteRole === 'owner' || globalRole === 'admin');
 
   return (
@@ -91,6 +111,15 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
           <span>콘텐츠 관리</span>
         </Anchor>
       </MenuItem>
+
+      {showGuidelinesMenu ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/guidelines`}>
+            <FormatListNumberedRoundedIcon fontSize="small" />
+            <span>가이드라인 관리</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
       {showAllManageMenus ? (
         <MenuItem onClick={onClose}>

@@ -134,7 +134,13 @@ export async function GET(request: NextRequest) {
     const ownerIds = [
       ...new Set(sitesData.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
     ];
-    const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(ownerIds, 'owner_domain');
+    let ownerIdsWithDomainFeature = new Set<string>();
+
+    try {
+      ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(ownerIds, 'owner_domain');
+    } catch {
+      // 멤버십 부가 기능 조회 실패가 공개 사이트 목록 자체를 막으면 안 됩니다.
+    }
 
     const sites = sitesData.map((site) => ({
       site_key: site.site_key,

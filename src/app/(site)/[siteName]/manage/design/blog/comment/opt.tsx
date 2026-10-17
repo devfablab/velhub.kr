@@ -480,6 +480,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </Stack>
                 </div>
               ) : null}
+              {isMobile ? (
+                <div className={styles['button-top']}>
+                  <button type="submit" className={`button ${styles.button}`} disabled={isSubmitDisabled}>
+                    저장
+                  </button>
+                </div>
+              ) : (
+                <Stack direction="row" justifyContent="flex-end">
+                  <button type="submit" className="button medium submit" disabled={isSubmitDisabled}>
+                    적용하기
+                  </button>
+                </Stack>
+              )}
             </div>
 
             <FormErrorDialog
@@ -488,20 +501,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
               messages={errorMessage ? [errorMessage] : []}
               onClose={() => setIsErrorDialogOpen(false)}
             />
-
-            {isMobile ? (
-              <div className={styles['button-top']}>
-                <button type="submit" className={`button ${styles.button}`} disabled={isSubmitDisabled}>
-                  저장
-                </button>
-              </div>
-            ) : (
-              <Stack direction="row" justifyContent="flex-end">
-                <button type="submit" className="button medium submit" disabled={isSubmitDisabled}>
-                  적용하기
-                </button>
-              </Stack>
-            )}
 
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
             <PopupMessage

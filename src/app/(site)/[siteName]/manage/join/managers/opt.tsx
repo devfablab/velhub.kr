@@ -1353,8 +1353,7 @@ export default function Opt({
                             select
                             value={assignManagerGroup}
                             onChange={(event) => {
-                              const nextGroup = event.target.value as AssignManagerGroup;
-                              setAssignManagerGroup(nextGroup);
+                              setAssignManagerGroup(event.target.value as AssignManagerGroup);
                               setAssignCommonRole('community-manager');
                               setAssignBoardId('');
                               setAssignBoardRole('board-general-manager');
@@ -1393,6 +1392,7 @@ export default function Opt({
                               <TextField
                                 select
                                 value={assignBoardId}
+                                slotProps={{ select: { displayEmpty: true } }}
                                 onChange={(event) => {
                                   const nextBoardId = event.target.value;
                                   const nextBoard = boards.find((board) => board.boardId === nextBoardId);
@@ -1584,8 +1584,7 @@ export default function Opt({
                           select
                           value={assignManagerGroup}
                           onChange={(event) => {
-                            const nextGroup = event.target.value as AssignManagerGroup;
-                            setAssignManagerGroup(nextGroup);
+                            setAssignManagerGroup(event.target.value as AssignManagerGroup);
                             setAssignCommonRole('community-manager');
                             setAssignBoardId('');
                             setAssignBoardRole('board-general-manager');
@@ -1625,6 +1624,7 @@ export default function Opt({
                             <TextField
                               select
                               value={assignBoardId}
+                              slotProps={{ select: { displayEmpty: true } }}
                               onChange={(event) => {
                                 const nextBoardId = event.target.value;
                                 const nextBoard = boards.find((board) => board.boardId === nextBoardId);
