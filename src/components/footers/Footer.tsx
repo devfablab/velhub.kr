@@ -1,5 +1,6 @@
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import Anchor from '../Anchor';
+import HostingProviderInfo from './HostingProviderInfo';
 import VhiHub from '../icons/VhiHub';
 import VhiStudios from '../icons/VhiStudios';
 import styles from '@/app/footer.module.sass';
@@ -55,7 +56,9 @@ export default function Footer() {
                 </div>
                 <div>
                   <dt>호스팅서비스제공자</dt>
-                  <dd>Vercel Inc. & Supabase Inc.</dd>
+                  <dd>
+                    <HostingProviderInfo />
+                  </dd>
                 </div>
               </div>
               <div>

@@ -53,6 +53,26 @@
               color: ds.$hex-bright
               opacity: .7
 
+              .hosting-provider
+                display: inline-flex
+                align-items: center
+                gap: ds.rem(4)
+
+                .hosting-provider-info
+                  display: inline-flex
+                  justify-content: center
+                  align-items: center
+                  width: ds.rem(16)
+                  height: ds.rem(16)
+                  padding: 0
+                  background: transparent
+                  color: inherit
+                  cursor: pointer
+
+                  svg
+                    width: ds.rem(12)
+                    height: ds.rem(12)
+
       > div
         @include ds.col
         display: flex
