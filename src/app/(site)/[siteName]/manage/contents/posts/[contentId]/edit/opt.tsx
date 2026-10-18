@@ -17,7 +17,7 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';

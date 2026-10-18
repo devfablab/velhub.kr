@@ -20,7 +20,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../../../menu';

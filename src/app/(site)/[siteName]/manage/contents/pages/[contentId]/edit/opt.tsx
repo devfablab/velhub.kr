@@ -18,7 +18,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';

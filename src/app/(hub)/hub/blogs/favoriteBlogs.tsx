@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Anchor from '@/components/Anchor';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
 import FolderModals, { type FolderActionError } from './folderModals';

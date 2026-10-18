@@ -21,7 +21,7 @@ import {
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { Box, FormControlLabel, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';

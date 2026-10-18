@@ -2,7 +2,7 @@
 
 import { formatDateTimeFull } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 

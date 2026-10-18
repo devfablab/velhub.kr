@@ -7,7 +7,7 @@ import { DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTh
 import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';

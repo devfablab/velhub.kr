@@ -8,7 +8,7 @@ import { FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui
 import type { Theme } from '@mui/material/styles';
 import { hasMultipleBlogAdLinkDomains } from '@/lib/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import BlogAdImageDialog from '@/components/service/blog/BlogAdImageDialog';

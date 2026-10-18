@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import DonationButton from '@/components/service/common/DonationButton';
 import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';

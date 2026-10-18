@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { normalizeText } from '@/lib/utils';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import styles from '@/app/manage.module.sass';
 
 type BlogSubscriptionMember = {

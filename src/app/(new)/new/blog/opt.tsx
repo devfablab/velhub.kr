@@ -34,8 +34,8 @@ import {
   SiteCreateFieldErrors,
   validateSiteCreateFields,
 } from '@/lib/site/createValidation.shared';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import PopupMessage from '@/components/PopupMessage';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
