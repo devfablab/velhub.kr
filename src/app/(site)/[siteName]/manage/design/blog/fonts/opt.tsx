@@ -252,7 +252,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           >
             <div className={`paper ${styles.paper}`}>
               <FormControl>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   적용 범위
                 </Typography>
                 <RadioGroup
@@ -269,12 +269,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             {(applyScope === 'subject' || applyScope === 'both') && (
               <div className={`paper ${styles.paper}`}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   제목
                 </Typography>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     서체
                   </Typography>
                   <Select
@@ -291,7 +291,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     자간
                   </Typography>
                   <Select
@@ -308,7 +308,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     행간
                   </Typography>
                   <Select
@@ -328,12 +328,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             {(applyScope === 'description' || applyScope === 'both') && (
               <div className={`paper ${styles.paper}`}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   본문
                 </Typography>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     서체
                   </Typography>
                   <Select
@@ -350,7 +350,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     크기
                   </Typography>
                   <Select
@@ -367,7 +367,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     자간
                   </Typography>
                   <Select
@@ -384,7 +384,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     행간
                   </Typography>
                   <Select
@@ -401,7 +401,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
                     마진
                   </Typography>
                   <Select
