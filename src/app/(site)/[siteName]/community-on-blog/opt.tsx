@@ -22,7 +22,7 @@ import {
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import ContentWithInlineLinks from '@/components/service/blog-community/ContentWithInlineLinks';
+import ContentWithInlineLinks from '@/components/service/blog/community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import ReportButton from '@/components/service/common/ReportButton';
 import ScreenState from '@/components/service/ScreenState';

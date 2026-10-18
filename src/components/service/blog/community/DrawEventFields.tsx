@@ -23,7 +23,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale/ko';
-import NumberField from '@/components/custom-ui/NumberField';
+import NumberField from '@/components/customUI/NumberField';
 import styles from '@/app/board.module.sass';
 
 export type BlogCommunityDrawState = {

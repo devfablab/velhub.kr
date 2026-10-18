@@ -30,7 +30,7 @@ import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
-import AppIconAvatar from '../custom-ui/AppIconAvatar';
+import AppIconAvatar from '../customUI/AppIconAvatar';
 import BlogSearch from '../header-groups/site/BlogSearch';
 import CommunitySearch from '../header-groups/site/CommunitySearch';
 import NavManage from '../header-groups/site/NavManage';

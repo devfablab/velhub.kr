@@ -39,7 +39,7 @@ import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
 import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
 import DrawerManage from '@/components/header-groups/site/DrawerManage';
