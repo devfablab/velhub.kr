@@ -168,8 +168,7 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
                   </>
                 )}
                 <div className={styles.tail}>
-                  <span>{post.site_label}</span> <PersonRoundedIcon />
-                  <em>{post.author_name}</em>{' '}
+                  <span>{post.site_label}</span>{' '}
                   {isHub ? (
                     <>
                       <VisibilityOutlinedIcon />

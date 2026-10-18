@@ -267,23 +267,33 @@
               display: flex
               flex-direction: row
               align-items: center
+              min-width: 0
               height: ds.rem(18)
               font-size: ds.rem(12)
 
-              em
-                font-style: normal
-
-              span, em
-                flex: 0
-                max-width: 33%
+              > span:first-child
+                flex: 0 1 auto
                 height: ds.rem(18)
-                overflow: clip
-                display: inline-flex
+                display: block
+                max-width: 57%
+                min-width: 0
+                overflow: hidden
+                text-overflow: ellipsis
+                white-space: nowrap
 
               svg
+                flex: 0 0 auto
                 margin: 0 ds.rem(3) 0 ds.rem(12)
                 width: ds.rem(12)
                 height: ds.rem(12)
+
+                ~ span
+                  flex: 0 0 auto
+                  max-width: none
+
+              time
+                flex: 0 0 auto
+                white-space: nowrap
 
             &::before
               content: ''
@@ -365,9 +375,12 @@
                 margin-right: ds.rem(12)
 
     .item
+      min-width: 0
+
       a, .skeleton
         display: flex
         flex-direction: column
+        min-width: 0
         background-color: ds.$hex-white
 
         html[data-theme="yellow-dark"] &
@@ -376,6 +389,7 @@
         .description-item
           display: flex
           flex-direction: row
+          min-width: 0
           gap: ds.rem(12)
 
           &.description-item-mini
@@ -386,6 +400,7 @@
         .description
           display: flex
           flex-direction: column
+          min-width: 0
           @include ds.col
 
         .thumbnail
@@ -434,6 +449,7 @@
           margin-top: ds.rem(12)
           display: flex
           flex-direction: column
+          min-width: 0
           font-size: ds.rem(12)
           gap: ds.rem(12)
           border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
@@ -462,7 +478,21 @@
           .tail-author, .tail-site
             display: flex
             align-items: center
+            width: 100%
+            min-width: 0
             height: ds.rem(24)
+
+            > strong
+              display: block
+              flex: 0 1 auto
+              min-width: 0
+              overflow: hidden
+              text-overflow: ellipsis
+              white-space: nowrap
+
+            > svg, > time
+              flex: 0 0 auto
+              white-space: nowrap
 
           .tail-author
             margin-top: ds.rem(12)
