@@ -695,10 +695,6 @@
     overflow: hidden
     border-radius: 12px
     gap: 1px
-    background-color: rgba(ds.$rgb-tertiary, .2)
-
-    html[data-theme="yellow-dark"] &
-      background-color: rgba(ds.$rgb-tertiary, .5)
 
     @include ds.mq(minSmall)
       &:has(.content-thumbnail-image:only-child)
@@ -1104,11 +1100,466 @@
             width: ds.rem(16)
             height: ds.rem(16)
 
-  &.blog-list
+  &.blog-list, &.blog-content
     max-width: ds.rem(807)
+    width: 100%
 
   &.blog-content
     max-width: ds.rem(807)
+    gap: ds.rem(27)
+
+    .blog-home-slider-section
+      display: flex
+      flex-direction: column
+
+      h2
+        @include ds.fw(neo, 800)
+        font-size: ds.rem(21)
+
+        @include ds.mq(maxMedium)
+          font-size: ds.rem(18)
+
+    .blog-home-list-section
+      display: flex
+      flex-direction: column
+      gap: ds.rem(12)
+      position: relative
+
+      h2
+        @include ds.fw(neo, 800)
+        font-size: ds.rem(21)
+
+        @include ds.mq(maxMedium)
+          font-size: ds.rem(18)
+
+      .see-more
+        position: absolute
+        top: 0
+        right: 0
+
+        a
+          display: inline-flex
+          align-items: center
+          gap: ds.rem(3)
+          font-size: ds.rem(14)
+          color: ds.$hex-secondary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
+
+          span
+            @include ds.fw(pre, 600)
+
+          svg
+            width: ds.rem(16)
+            height: ds.rem(16)
+
+    .blog-home-recent
+      display: flex
+      flex-direction: column
+      gap: ds.rem(27)
+
+    .blog-home-recent-loading
+      display: flex
+      justify-content: center
+      align-items: center
+      min-height: ds.rem(260)
+
+    .slider
+      margin-top: ds.rem(-32)
+      padding-top: ds.rem(38)
+
+      .slick-arrow
+        position: absolute
+        top: 0
+        z-index: 1
+
+        &.slick-prev
+          right: ds.rem(32)
+
+        &.slick-next
+          right: 0
+
+        button
+          background: none
+          padding: ds.rem(7)
+
+          svg
+            width: ds.rem(17)
+            height: ds.rem(17)
+
+      div
+        &[class~="slick-slide"]
+          display: flex
+          flex-direction: column
+          width: ds.rem(370)
+          padding-right: ds.rem(12)
+
+          @include ds.mq(maxExtraSmall)
+            width: calc(100vw - ds.rem(57))
+
+      a
+        display: flex
+        flex-direction: column
+        justify-content: flex-end
+        flex: 1
+        width: 100%
+
+      &.slider-thumbnail
+        div
+          &[class~="slick-slide"]
+            height: ds.rem(170)
+
+            a
+              border-radius: ds.rem(12)
+              padding: ds.rem(17)
+              height: ds.rem(170)!important
+              position: relative
+              overflow: hidden
+
+              strong, p, div
+                z-index: 1
+                position: relative
+
+              strong
+                @include ds.fw(neo, 800)
+                font-size: ds.rem(16)
+                color: ds.$hex-bright
+                overflow: hidden
+                overflow-wrap: anywhere
+                display: -webkit-box
+                -webkit-box-orient: vertical
+                -webkit-line-clamp: 1
+
+              p
+                font-size: ds.rem(14)
+                color: ds.$hex-light
+                opacity: 0.9
+                overflow: hidden
+                overflow-wrap: anywhere
+                display: -webkit-box
+                -webkit-box-orient: vertical
+                -webkit-line-clamp: 2
+
+              .tail
+                color: ds.$hex-light
+                opacity: 0.7
+                display: flex
+                flex-direction: row
+                align-items: center
+                min-width: 0
+                height: ds.rem(18)
+                font-size: ds.rem(12)
+
+                > span:first-child
+                  flex: 0 1 auto
+                  height: ds.rem(18)
+                  display: block
+                  max-width: 57%
+                  min-width: 0
+                  overflow: hidden
+                  text-overflow: ellipsis
+                  white-space: nowrap
+
+                svg
+                  flex: 0 0 auto
+                  margin: 0 ds.rem(3) 0 ds.rem(12)
+                  width: ds.rem(12)
+                  height: ds.rem(12)
+
+                  ~ span
+                    flex: 0 0 auto
+                    max-width: none
+
+                time
+                  flex: 0 0 auto
+                  white-space: nowrap
+
+              &::before
+                content: ''
+                display: block
+                position: absolute
+                inset: 0
+                background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%,rgba(0,0,0,0.5) 50%,rgba(0,0,0,1) 100%)
+
+    .blog-community-slider
+      position: relative
+      margin-top: ds.rem(-32)
+      padding-top: ds.rem(39)
+
+      .slick-arrow
+        position: absolute
+        top: 0
+        z-index: 1
+
+        &.slick-prev
+          right: ds.rem(32)
+
+        &.slick-next
+          right: 0
+
+        button
+          background: none
+          padding: ds.rem(7)
+
+          svg
+            width: ds.rem(17)
+            height: ds.rem(17)
+
+      :global(.slick-track)
+        display: flex!important
+        align-items: stretch
+
+      div
+        &[class~="slick-slide"]
+          height: auto
+          padding-right: ds.rem(12)
+
+          > div
+            height: 100%
+
+            > .blog-home-community-slide
+              height: 100%
+
+      .blog-home-community-slide
+        position: relative
+        height: 100%
+
+      .blog-home-community-report
+        position: absolute
+        z-index: 1
+        top: ds.rem(21)
+        right: ds.rem(21)
+
+      .blog-home-community-card
+        display: flex!important
+        flex-direction: column
+        justify-content: flex-start
+        align-items: stretch
+        height: 100%!important
+        min-height: var(--blog-community-card-height, auto)
+        padding: ds.rem(17)
+        border-radius: ds.rem(17)
+        background-color: ds.$hex-white
+        color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          background-color: ds.$hex-black
+          color: ds.$hex-bright
+
+      &.blog-community-slider-image
+        .blog-home-community-body > p
+          flex: 0 0 auto
+          min-height: calc(2 * 1.62em)
+          -webkit-line-clamp: 2
+
+    .blog-home-community-meta
+      display: flex
+      align-items: center
+      gap: ds.rem(7)
+      min-width: 0
+
+      > div
+        flex: 0 0 auto
+        width: ds.rem(34)
+        height: ds.rem(34)
+
+      > span
+        flex: 0 1 auto
+        display: flex
+        flex-direction: column
+        min-width: 0
+
+      strong
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+        @include ds.fw(pre, 600)
+        font-size: ds.rem(14)
+
+      small
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+        color: ds.$hex-secondary
+        font-size: ds.rem(13)
+        opacity: .7
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
+
+      > svg
+        flex: 0 0 auto
+        margin-left: auto
+        width: ds.rem(22)
+        height: ds.rem(22)
+
+    .blog-home-community-body
+      display: flex
+      flex: 1 1 auto
+      flex-direction: column
+      min-height: 0
+      padding-top: ds.rem(28)
+
+      > p
+        overflow: hidden
+        display: -webkit-box
+        -webkit-box-orient: vertical
+        -webkit-line-clamp: 20
+        overflow-wrap: anywhere
+        white-space: pre-wrap
+        line-height: 1.62
+        font-size: ds.rem(14)
+        color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
+
+    .blog-home-community-images
+      flex: 0 0 auto
+      width: 100%
+      aspect-ratio: 1 / 1!important
+      margin-top: ds.rem(12)
+
+      &.content-images
+        &:has(.content-thumbnail-image:only-child)
+          display: grid
+          background-color: rgba(ds.$rgb-tertiary, .2)
+          border-radius: ds.rem(13)
+
+          html[data-theme="yellow-dark"] &
+            background-color: rgba(ds.$rgb-tertiary, .5)
+
+        &:has(.content-thumbnail-image:nth-child(2)):not(:has(.content-thumbnail-image:nth-child(3)))
+          grid-template-columns: repeat(2, 1fr)
+
+        &:has(.content-thumbnail-image:nth-child(3)):not(:has(.content-thumbnail-image:nth-child(4)))
+          grid-template-columns: repeat(2, 1fr)
+          grid-template-rows: repeat(2, 1fr)
+
+          .content-thumbnail-image:first-child
+            grid-row: 1 / 3
+
+        &:has(.content-thumbnail-image:nth-child(4)):not(:has(.content-thumbnail-image:nth-child(5)))
+          grid-template-columns: repeat(2, 1fr)
+          grid-template-rows: repeat(2, 1fr)
+
+        &:has(.content-thumbnail-image:nth-child(5)):not(:has(.content-thumbnail-image:nth-child(6)))
+          grid-template-columns: repeat(6, 1fr)
+          grid-template-rows: repeat(2, 1fr)
+
+          .content-thumbnail-image:nth-child(1)
+            grid-column: 1 / 3
+
+          .content-thumbnail-image:nth-child(2)
+            grid-column: 3 / 5
+
+          .content-thumbnail-image:nth-child(3)
+            grid-column: 5 / 7
+
+          .content-thumbnail-image:nth-child(4)
+            grid-column: 1 / 4
+
+          .content-thumbnail-image:nth-child(5)
+            grid-column: 4 / 7
+
+        &:has(.content-thumbnail-image:nth-child(6)):not(:has(.content-thumbnail-image:nth-child(7)))
+          grid-template-columns: repeat(3, 1fr)
+          grid-template-rows: repeat(2, 1fr)
+
+        &:has(.content-thumbnail-image:nth-child(7)):not(:has(.content-thumbnail-image:nth-child(8)))
+          grid-template-columns: repeat(6, 1fr)
+          grid-template-rows: repeat(3, 1fr)
+
+          .content-thumbnail-image:nth-child(1)
+            grid-column: 1 / 3
+
+          .content-thumbnail-image:nth-child(2)
+            grid-column: 3 / 5
+
+          .content-thumbnail-image:nth-child(3)
+            grid-column: 5 / 7
+
+          .content-thumbnail-image:nth-child(4)
+            grid-column: 1 / 4
+
+          .content-thumbnail-image:nth-child(5)
+            grid-column: 4 / 7
+
+          .content-thumbnail-image:nth-child(6)
+            grid-column: 1 / 4
+
+          .content-thumbnail-image:nth-child(7)
+            grid-column: 4 / 7
+
+        &:has(.content-thumbnail-image:nth-child(8)):not(:has(.content-thumbnail-image:nth-child(9)))
+          grid-template-columns: repeat(6, 1fr)
+          grid-template-rows: repeat(3, 1fr)
+
+          .content-thumbnail-image:nth-child(1)
+            grid-column: 1 / 3
+
+          .content-thumbnail-image:nth-child(2)
+            grid-column: 3 / 5
+
+          .content-thumbnail-image:nth-child(3)
+            grid-column: 5 / 7
+
+          .content-thumbnail-image:nth-child(4)
+            grid-column: 1 / 3
+
+          .content-thumbnail-image:nth-child(5)
+            grid-column: 3 / 5
+
+          .content-thumbnail-image:nth-child(6)
+            grid-column: 5 / 7
+
+          .content-thumbnail-image:nth-child(7)
+            grid-column: 1 / 4
+
+          .content-thumbnail-image:nth-child(8)
+            grid-column: 4 / 7
+
+        &:has(.content-thumbnail-image:nth-child(9)):not(:has(.content-thumbnail-image:nth-child(10)))
+          grid-template-columns: repeat(3, 1fr)
+          grid-template-rows: repeat(3, 1fr)
+
+      .content-thumbnail-image:only-child
+        img
+          width: 100%
+          height: 100%
+          object-fit: cover
+
+    .blog-home-community-more
+      display: inline-flex
+      min-width: 1px
+      width: fit-content
+      padding-top: ds.rem(12)
+      color: ds.$hex-action
+      @include ds.fw(pre, 600)
+      font-size: ds.rem(13)
+
+      &.hidden
+        color: transparent
+
+    .blog-home-community-actions
+      display: inline-flex
+      align-items: center
+      margin-top: ds.rem(16)
+      color: ds.$hex-secondary
+      font-size: ds.rem(13)
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+      span
+        display: inline-flex
+        align-items: center
+        gap: ds.rem(4)
+
+      svg
+        width: ds.rem(18)
+        height: ds.rem(18)
 
     .blog
       ol

@@ -1,4 +1,5 @@
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/blogAds/server';
+import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/blogRecommendations/server';
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
@@ -69,6 +70,7 @@ type RequestBody = {
   prefixId?: string | null;
   isComment?: boolean | null;
   isPin?: boolean | null;
+  isRecommended?: boolean | null;
   drawType?: 'first_come' | 'random' | null;
   drawLimit?: number | null;
   drawEndsAt?: string | null;
@@ -1041,6 +1043,16 @@ export async function POST(request: Request, context: RouteContext) {
       } catch (promotionError) {
         await supabaseAdmin.from('posts').delete().eq('id', insertPost.data.id);
         throw promotionError;
+      }
+    }
+
+    if (rhizomeData.site_type === 'blog' && requestBody.isRecommended === true) {
+      try {
+        const recommendationContext = await getBlogRecommendationContext(siteName);
+        await addRecommendedBlogPost(recommendationContext, String(insertPost.data.id));
+      } catch (recommendationError) {
+        await supabaseAdmin.from('posts').delete().eq('id', insertPost.data.id);
+        throw recommendationError;
       }
     }
 

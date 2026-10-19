@@ -521,6 +521,7 @@ export async function GET(request: Request, context: RouteContext) {
         pages: (pageResult.data ?? []) as PageRow[],
         actions: {
           canPinPost: false,
+          canRecommendPost: false,
           canWritePost,
         },
         selectedSeries: null,
@@ -551,6 +552,7 @@ export async function GET(request: Request, context: RouteContext) {
         board: boardData,
         actions: {
           canPinPost: canManageContents,
+          canRecommendPost: rhizome.data.site_type === 'blog' && boardData.board_key === 'b' && canManageContents,
           canWritePost,
           canManageBoardSettings,
         },
@@ -633,6 +635,7 @@ export async function GET(request: Request, context: RouteContext) {
       board: boardData,
       actions: {
         canPinPost: canManageContents,
+        canRecommendPost: rhizome.data.site_type === 'blog' && boardData.board_key === 'b' && canManageContents,
         canWritePost,
         canManageBoardSettings,
       },

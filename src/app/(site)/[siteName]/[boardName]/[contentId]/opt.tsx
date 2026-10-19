@@ -239,6 +239,7 @@ type PostContent = {
   giscus_settings: GiscusSettings | null;
   post_count: number;
   is_pin: boolean;
+  is_recommended: boolean;
   author_name: string;
   author_avatar_url: string;
   author_level: AuthorLevel | null;
@@ -1151,6 +1152,7 @@ export default function Opt({
                         <PushPinRoundedIcon />
                       </i>
                     ) : null}
+                    {content.is_recommended ? <small>(추천 게시물) </small> : null}
                     {!isFeedBoard ? (
                       <strong>
                         {content.is_closed ? (

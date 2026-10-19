@@ -1,8 +1,10 @@
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { getVisibleBlogHomeAds } from '@/lib/blogAds/server';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import Blog from './blog';
+import Blog, { type BlogHomeData } from './blog';
 import Community from './community';
 
 type RouteContext = {
@@ -32,6 +34,26 @@ type BoardRow = {
   sort_order: number | null;
 };
 
+type CategoryRow = {
+  id: string;
+  category_key: string;
+  category_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  sort_order: number;
+};
+
+type SeriesRow = {
+  id: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  last_published_at: string | null;
+  created_at: string;
+  is_completed: boolean;
+};
+
 function getBoardContentSize(boardType: BoardType) {
   if (boardType === 'basic') {
     return 10;
@@ -40,6 +62,46 @@ function getBoardContentSize(boardType: BoardType) {
   }
 
   return 3;
+}
+
+async function getBlogHomeData(siteName: string): Promise<BlogHomeData | null> {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host');
+
+  if (!host) {
+    return null;
+  }
+
+  const protocol = requestHeaders.get('x-forwarded-proto') ?? 'http';
+  const response = await fetch(`${protocol}://${host}/api/site/${encodeURIComponent(siteName)}/blog-home`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.json() as Promise<BlogHomeData>;
+}
+
+function getBlogHomeImageUrl(bucket: 'category' | 'series', path: string | null) {
+  if (!path) {
+    return null;
+  }
+
+  return getSupabaseAdmin().storage.from(bucket).getPublicUrl(path).data.publicUrl ?? null;
+}
+
+function getSiteAvatarUrl(path: string | null) {
+  if (!path) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  return getSupabaseAdmin().storage.from('avatar').getPublicUrl(path).data.publicUrl ?? null;
 }
 
 export async function generateMetadata(context: RouteContext) {
@@ -82,10 +144,9 @@ export default async function Page(context: RouteContext) {
         .from('boards')
         .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
         .eq('site_id', rhizome.id)
+        .eq('board_key', 'b')
+        .eq('board_type', 'blog')
         .eq('is_active', true)
-        .neq('board_type', 'page')
-        .order('sort_order', { ascending: true })
-        .limit(1)
         .maybeSingle(),
     ]);
 
@@ -102,28 +163,60 @@ export default async function Page(context: RouteContext) {
           board={null}
           sitesInfo={sitesInfo}
           blogInfo={blogInfo.data}
-          blogContents={null}
+          hasPublishedPosts={false}
         />
       );
     }
 
     const blogBoard = blogBoardResult.data as BoardRow;
 
-    const blogPostList = await getPostList({
-      siteId: rhizome.id,
-      siteKey: normalizedSiteName,
-      siteType: rhizome.site_type,
-      boardId: blogBoard.id,
-      page: 1,
-      size: 10,
-      filter: 'all',
-      sessionCase: 'guest',
-      stigmaId: null,
-      sort: 'latest',
-      includePin: false,
-    });
+    const [homeData, postExistsResult, categoriesResult, seriesResult, ads] = await Promise.all([
+      getBlogHomeData(normalizedSiteName),
+      supabaseAdmin
+        .from('posts')
+        .select('id')
+        .eq('site_id', rhizome.id)
+        .eq('board_id', blogBoard.id)
+        .eq('is_closed', false)
+        .eq('is_wording_blinded', false)
+        .eq('published_status', 'published')
+        .limit(1),
+      supabaseAdmin
+        .from('board_categories')
+        .select('id, category_key, category_label, summary, thumbnail_image, sort_order')
+        .eq('site_id', rhizome.id)
+        .order('sort_order', { ascending: true })
+        .overrideTypes<CategoryRow[], { merge: false }>(),
+      supabaseAdmin
+        .from('board_series')
+        .select('id, series_key, series_label, summary, thumbnail_image, last_published_at, created_at, is_completed')
+        .eq('site_id', rhizome.id)
+        .order('last_published_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .overrideTypes<SeriesRow[], { merge: false }>(),
+      getVisibleBlogHomeAds(rhizome.id),
+    ]);
 
-    const blogContents: PostListItem[] = blogPostList.contents;
+    if (postExistsResult.error || categoriesResult.error || seriesResult.error) {
+      notFound();
+    }
+
+    const categories = (categoriesResult.data ?? []).map((category) => ({
+      id: category.id,
+      key: category.category_key,
+      label: category.category_label,
+      summary: category.summary,
+      imageUrl: getBlogHomeImageUrl('category', category.thumbnail_image),
+    }));
+    const series = (seriesResult.data ?? []).map((seriesItem) => ({
+      id: seriesItem.id,
+      key: seriesItem.series_key,
+      label: seriesItem.series_label,
+      summary: seriesItem.summary,
+      imageUrl: getBlogHomeImageUrl('series', seriesItem.thumbnail_image),
+      publishedAt: seriesItem.last_published_at,
+      isCompleted: seriesItem.is_completed,
+    }));
 
     return (
       <Blog
@@ -131,7 +224,13 @@ export default async function Page(context: RouteContext) {
         board={blogBoard}
         sitesInfo={sitesInfo}
         blogInfo={blogInfo.data}
-        blogContents={blogContents}
+        hasPublishedPosts={(postExistsResult.data ?? []).length > 0}
+        homeData={homeData}
+        categories={categories}
+        series={series}
+        ads={ads}
+        communityTitle={rhizome.site_label ?? ''}
+        communityAvatarUrl={getSiteAvatarUrl(rhizome.profile_picture)}
       />
     );
   }

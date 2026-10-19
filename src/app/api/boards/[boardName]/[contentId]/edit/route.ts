@@ -1,3 +1,8 @@
+import {
+  addRecommendedBlogPost,
+  getBlogRecommendationContext,
+  removeRecommendedBlogPost,
+} from '@/lib/blogRecommendations/server';
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
@@ -68,6 +73,7 @@ type RequestBody = {
   seriesKey?: string | null;
   prefixId?: string | null;
   isComment?: boolean | null;
+  isRecommended?: boolean | null;
   isPin?: boolean | null;
   drawType?: 'first_come' | 'random' | null;
   drawLimit?: number | null;
@@ -686,7 +692,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, published_at, poll, is_comment, draw_type, content_html, content_markdown, preview_html, preview_markdown, thumbnail_image',
+        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, published_at, poll, is_comment, is_recommended, draw_type, content_html, content_markdown, preview_html, preview_markdown, thumbnail_image',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
@@ -1105,6 +1111,22 @@ export async function PATCH(request: Request, context: RouteContext) {
           : action === 'publish'
             ? 'published'
             : currentPost.data.published_status;
+    const isBlogRecommendationTarget = rhizomeData.site_type === 'blog' && board.data.board_key === 'b';
+    const hasRecommendationChange = isBlogRecommendationTarget && typeof requestBody.isRecommended === 'boolean';
+    const shouldRecommendPost =
+      hasRecommendationChange && requestBody.isRecommended === true && nextPublishedStatus === 'published';
+    const shouldRemoveRecommendation =
+      hasRecommendationChange && currentPost.data.is_recommended === true && !shouldRecommendPost;
+    const shouldAddRecommendation =
+      hasRecommendationChange && currentPost.data.is_recommended !== true && shouldRecommendPost;
+    const recommendationContext =
+      shouldRemoveRecommendation || shouldAddRecommendation ? await getBlogRecommendationContext(siteName) : null;
+    const shouldRemoveRecommendationBeforeUpdate = shouldRemoveRecommendation && nextPublishedStatus !== 'published';
+
+    if (shouldRemoveRecommendationBeforeUpdate && recommendationContext) {
+      await removeRecommendedBlogPost(recommendationContext, String(currentPost.data.id));
+    }
+
     const previousSeriesId = currentPost.data.series_id ?? null;
     const shouldKeepCurrentSeriesIdx =
       currentPost.data.is_closed === false &&
@@ -1245,6 +1267,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (updatePost.error || !updatePost.data) {
       return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (shouldAddRecommendation && recommendationContext) {
+      await addRecommendedBlogPost(recommendationContext, String(updatePost.data.id));
+    }
+
+    if (shouldRemoveRecommendation && !shouldRemoveRecommendationBeforeUpdate && recommendationContext) {
+      await removeRecommendedBlogPost(recommendationContext, String(updatePost.data.id));
     }
 
     const previousEditorImagePaths = new Set([

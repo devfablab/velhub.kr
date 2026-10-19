@@ -9,6 +9,7 @@ import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import ListOutlinedIcon from '@mui/icons-material/ListOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import QueryStatsOutlinedIcon from '@mui/icons-material/QueryStatsOutlined';
+import RecommendOutlinedIcon from '@mui/icons-material/RecommendOutlined';
 import RememberMeOutlinedIcon from '@mui/icons-material/RememberMeOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
@@ -87,7 +88,7 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/manage/join`}>
             <ContactsOutlinedIcon fontSize="small" />
-            <span>가입 관리</span>
+            <span>가입</span>
           </Anchor>
         </MenuItem>
       ) : null}
@@ -100,7 +101,7 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
             ) : (
               <ManageAccountsOutlinedIcon fontSize="small" />
             )}
-            <span>{siteType === 'blog' ? '팀원 관리' : '멤버 관리'}</span>
+            <span>{siteType === 'blog' ? '팀원' : '멤버'}</span>
           </Anchor>
         </MenuItem>
       ) : null}
@@ -108,15 +109,24 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
       <MenuItem onClick={onClose}>
         <Anchor href={`/${siteName}/manage/contents/posts`}>
           <ListOutlinedIcon fontSize="small" />
-          <span>콘텐츠 관리</span>
+          <span>콘텐츠</span>
         </Anchor>
       </MenuItem>
+
+      {showAllManageMenus && siteType === 'blog' ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/recommended-posts`}>
+            <RecommendOutlinedIcon fontSize="small" />
+            <span>추천 포스팅</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
       {showGuidelinesMenu ? (
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/manage/guidelines`}>
             <FormatListNumberedRoundedIcon fontSize="small" />
-            <span>가이드라인 관리</span>
+            <span>가이드라인</span>
           </Anchor>
         </MenuItem>
       ) : null}
@@ -134,7 +144,7 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/manage/ads`}>
             <CampaignOutlinedIcon fontSize="small" />
-            <span>광고 관리</span>
+            <span>광고</span>
           </Anchor>
         </MenuItem>
       ) : null}
@@ -143,7 +153,7 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/manage/community-on-blog/posts`}>
             <InterestsRoundedIcon fontSize="small" />
-            <span>커뮤니티 관리</span>
+            <span>커뮤니티</span>
           </Anchor>
         </MenuItem>
       ) : null}
@@ -162,7 +172,7 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
           <MenuItem onClick={onClose}>
             <Anchor href={`/${siteName}/manage/reports`}>
               <ReportOutlinedIcon fontSize="small" />
-              <span>신고 관리</span>
+              <span>신고</span>
             </Anchor>
           </MenuItem>
 

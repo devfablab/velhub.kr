@@ -64,7 +64,7 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
     ...(showAllManageMenus && siteType === 'community'
       ? [
           {
-            label: '가입 관리',
+            label: '가입',
             href: `/${siteName}/manage/join`,
             startsWith: true,
           },
@@ -73,24 +73,27 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
     ...(showAllManageMenus
       ? [
           {
-            label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
+            label: siteType === 'blog' ? '팀원' : '멤버',
             href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
             startsWith: true,
           },
         ]
       : []),
     {
-      label: '콘텐츠 관리',
+      label: '콘텐츠',
       href: `/${siteName}/manage/contents`,
       startsWith: true,
     },
-    ...(isSiteStaff ? [{ label: '가이드라인 관리', href: `/${siteName}/manage/guidelines`, startsWith: true }] : []),
+    ...(showAllManageMenus && siteType === 'blog'
+      ? [{ label: '추천 포스팅', href: `/${siteName}/manage/recommended-posts`, startsWith: true }]
+      : []),
+    ...(isSiteStaff ? [{ label: '가이드라인', href: `/${siteName}/manage/guidelines`, startsWith: true }] : []),
     ...(showAllManageMenus
       ? [{ label: '단어차단 필터링', href: `/${siteName}/manage/denywords`, startsWith: true }]
       : []),
-    ...(isBlogOwner ? [{ label: '광고 관리', href: `/${siteName}/manage/ads`, startsWith: true }] : []),
+    ...(isBlogOwner ? [{ label: '광고', href: `/${siteName}/manage/ads`, startsWith: true }] : []),
     ...(showAllManageMenus && siteType === 'blog' && blogType !== 'team'
-      ? [{ label: '커뮤니티 관리', href: `/${siteName}/manage/community-on-blog/posts`, startsWith: true }]
+      ? [{ label: '커뮤니티', href: `/${siteName}/manage/community-on-blog/posts`, startsWith: true }]
       : []),
     ...(showAllManageMenus && siteType === 'community'
       ? [
@@ -104,7 +107,7 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
     ...(showAllManageMenus
       ? [
           {
-            label: '신고 관리',
+            label: '신고',
             href: `/${siteName}/manage/reports`,
             startsWith: true,
           },
@@ -136,7 +139,7 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
         <ol>
           <li className={isHomeCurrent ? styles.current : undefined} aria-current={isHomeCurrent ? 'page' : false}>
             <Anchor href={homeHref}>
-              <span>관리 홈</span>
+              <span>홈</span>
               <i />
             </Anchor>
           </li>

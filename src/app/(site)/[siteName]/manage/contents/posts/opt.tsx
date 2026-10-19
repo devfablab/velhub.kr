@@ -85,6 +85,7 @@ export type PostRow = {
   closed_at: string | null;
   closed_message: string | null;
   closed_by_name: string;
+  is_recommended: boolean;
 };
 
 type SitePublicResponse = {
@@ -277,6 +278,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<PostRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [recommendationPostId, setRecommendationPostId] = useState<string | null>(null);
   const [isOrderingBoards, setIsOrderingBoards] = useState(false);
   const [isBoardOrderChanged, setIsBoardOrderChanged] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
@@ -748,6 +750,45 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
   }
 
+  async function handleRecommendation(post: PostRow) {
+    if (recommendationPostId || post.published_status !== 'published' || post.is_closed) {
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      setRecommendationPostId(post.id);
+
+      const response = await fetch('/api/manage/recommended-posts', {
+        method: post.is_recommended ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          postId: post.id,
+        }),
+      });
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '추천 게시물 설정을 변경하지 못했습니다.');
+      }
+
+      setPosts((currentPosts) =>
+        currentPosts.map((currentPost) =>
+          currentPost.id === post.id ? { ...currentPost, is_recommended: !post.is_recommended } : currentPost,
+        ),
+      );
+    } catch (unknownError) {
+      setErrorMessage(unknownError instanceof Error ? unknownError.message : '추천 게시물 설정을 변경하지 못했습니다.');
+      setIsErrorDialogOpen(true);
+    } finally {
+      setRecommendationPostId(null);
+    }
+  }
+
   if (siteType === 'community') {
     return (
       <div className={`container ${styles.container}`}>
@@ -922,7 +963,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               }}
               size="small"
               sx={{ minWidth: 180 }}
-              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+              slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
             >
               {SIZE_OPTIONS.map((sizeOption) => (
                 <MenuItem key={sizeOption} value={sizeOption}>
@@ -1002,6 +1043,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         {post.closed_message || ''}
                       </TableCell>
                       <TableCell align="right">
+                        {siteType === 'blog' && post.published_status === 'published' && !post.is_closed ? (
+                          <button
+                            type="button"
+                            className={`button small ${post.is_recommended ? 'warning' : 'action'}`}
+                            onClick={() => void handleRecommendation(post)}
+                            disabled={recommendationPostId === post.id}
+                          >
+                            {post.is_recommended ? '추천 해제' : '추천'}
+                          </button>
+                        ) : null}
                         {post.is_closed ? (
                           post.closed_message === '데브허브 탈퇴 신청으로 인한 삭제' ||
                           post.closed_message === '정산 정보 오류로 인한 임시 잠금' ? (

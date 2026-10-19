@@ -258,6 +258,7 @@ export default function Opt({
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
   const [isComment, setIsComment] = useState(initialStatus?.commentProvider !== 'none');
+  const [isRecommended, setIsRecommended] = useState(false);
   const [publishTimeMode, setPublishTimeMode] = useState<PublishTimeMode>('now');
   const [scheduledPublishedAt, setScheduledPublishedAt] = useState<Date | null>(null);
   const ti = normalizeText(searchParams.get('t'));
@@ -614,6 +615,7 @@ export default function Opt({
           promotion: { ...promotion, items: isSubscriptionSeries ? promotion.items : [promotion.item] },
           publishedAt: publishTimeMode === 'scheduled' ? publishedAt : null,
           isComment: commentProvider === 'none' ? false : isComment,
+          isRecommended: publishTimeMode === 'now' ? isRecommended : false,
         }),
       });
 
@@ -892,6 +894,17 @@ export default function Opt({
                   label={isComment ? '댓글 열기' : '댓글 닫기'}
                 />
               ) : null}
+
+              <FormControlLabel
+                control={
+                  <IOSSwitch
+                    sx={{ m: 1 }}
+                    checked={isRecommended}
+                    onChange={(event) => setIsRecommended(event.target.checked)}
+                  />
+                }
+                label="추천 게시물 등록"
+              />
 
               <Stack direction="row" gap={1.5} justifyContent="space-between">
                 <Anchor href={`/${siteName}/manage/contents/posts`} className="button medium cancel">

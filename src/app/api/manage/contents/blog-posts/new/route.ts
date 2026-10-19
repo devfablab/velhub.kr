@@ -1,4 +1,5 @@
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/blogAds/server';
+import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/blogRecommendations/server';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -15,6 +16,7 @@ type RequestBody = {
   thumbnailHeight: number | string | null;
   publishedAt?: string | null;
   isComment?: boolean | null;
+  isRecommended?: boolean | null;
   promotion?: BlogPostPromotionInput | null;
 };
 
@@ -177,7 +179,10 @@ export async function POST(request: Request) {
 
     if (createdPostRecord.error || !createdPostRecord.data?.slug) {
       console.error('created blog post slug lookup failed', createdPostRecord.error);
-      return Response.json({ error: '블로그 글 주소를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.' }, { status: 500 });
+      return Response.json(
+        { error: '블로그 글 주소를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.' },
+        { status: 500 },
+      );
     }
 
     if (requestBody.promotion?.type && requestBody.promotion.type !== 'none') {
@@ -191,6 +196,16 @@ export async function POST(request: Request) {
       } catch (promotionError) {
         await supabaseAdmin.from('posts').delete().eq('id', createdPost.post_id);
         throw promotionError;
+      }
+    }
+
+    if (requestBody.isRecommended === true) {
+      try {
+        const recommendationContext = await getBlogRecommendationContext(siteName);
+        await addRecommendedBlogPost(recommendationContext, String(createdPost.post_id));
+      } catch (recommendationError) {
+        await supabaseAdmin.from('posts').delete().eq('id', createdPost.post_id);
+        throw recommendationError;
       }
     }
 

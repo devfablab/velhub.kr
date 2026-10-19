@@ -81,6 +81,7 @@ export type ContentResponse = {
     thumbnail_width: number | null;
     thumbnail_height: number | null;
     is_comment: boolean;
+    is_recommended: boolean;
     markdown_status: string | null;
   };
   categories?: CategoryRow[];
@@ -376,6 +377,7 @@ export default function Opt({
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
   const [isComment, setIsComment] = useState(initialContent?.content?.is_comment ?? false);
+  const [isRecommended, setIsRecommended] = useState(initialContent?.content?.is_recommended === true);
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -429,6 +431,10 @@ export default function Opt({
 
   function handleIsCommentChange(event: InputChangeEvent) {
     setIsComment(event.currentTarget.checked);
+  }
+
+  function handleIsRecommendedChange(event: InputChangeEvent) {
+    setIsRecommended(event.currentTarget.checked);
   }
 
   async function handleThumbnailFileChange(event: InputChangeEvent) {
@@ -704,6 +710,7 @@ export default function Opt({
           categories: selectedCategories,
           seriesKey: selectedSeriesKey || null,
           isComment: commentProvider === 'none' ? false : isComment,
+          isRecommended,
         }),
       });
 
@@ -950,6 +957,11 @@ export default function Opt({
                   label={isComment ? '댓글 열기' : '댓글 닫기'}
                 />
               ) : null}
+
+              <FormControlLabel
+                control={<IOSSwitch sx={{ m: 1 }} checked={isRecommended} onChange={handleIsRecommendedChange} />}
+                label="추천 게시물 등록"
+              />
 
               <Stack direction="row" gap={1.5} justifyContent="space-between">
                 <Anchor href={`/${siteName}/manage/contents/posts`} className="button medium cancel">

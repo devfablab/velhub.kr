@@ -70,27 +70,28 @@ export default function Opt({
     ...(showAllManageMenus
       ? [{ href: `/${siteName}/manage/settings`, label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보' }]
       : []),
-    ...(showAllManageMenus && siteType === 'community'
-      ? [{ href: `/${siteName}/manage/join`, label: '가입 관리' }]
-      : []),
+    ...(showAllManageMenus && siteType === 'community' ? [{ href: `/${siteName}/manage/join`, label: '가입' }] : []),
     ...(showAllManageMenus
       ? [
           {
             href: `/${siteName}/manage/${siteType === 'blog' ? 'team' : 'members'}`,
-            label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
+            label: siteType === 'blog' ? '팀원' : '멤버',
           },
         ]
       : []),
-    { href: `/${siteName}/manage/contents/posts`, label: '콘텐츠 관리' },
+    { href: `/${siteName}/manage/contents/posts`, label: '콘텐츠' },
+    ...(showAllManageMenus && siteType === 'blog'
+      ? [{ href: `/${siteName}/manage/recommended-posts`, label: '추천 포스팅' }]
+      : []),
     ...(showAllManageMenus ? [{ href: `/${siteName}/manage/denywords`, label: '단어차단 필터링' }] : []),
-    ...(isBlogOwner ? [{ href: `/${siteName}/manage/ads`, label: '광고 관리' }] : []),
+    ...(isBlogOwner ? [{ href: `/${siteName}/manage/ads`, label: '광고' }] : []),
     ...(showAllManageMenus && siteType === 'community'
       ? [{ href: `/${siteName}/manage/private`, label: '비공개 게시판' }]
       : []),
     ...(showAllManageMenus
       ? [
-          ...(isPersonalBlog ? [{ href: `/${siteName}/manage/community-on-blog/posts`, label: '커뮤니티 관리' }] : []),
-          { href: `/${siteName}/manage/reports`, label: '신고 관리' },
+          ...(isPersonalBlog ? [{ href: `/${siteName}/manage/community-on-blog/posts`, label: '커뮤니티' }] : []),
+          { href: `/${siteName}/manage/reports`, label: '신고' },
           {
             href:
               siteType === 'blog'

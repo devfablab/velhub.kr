@@ -87,6 +87,7 @@ export type BoardInfoResponse = {
   };
   actions?: {
     canPinPost?: boolean;
+    canRecommendPost?: boolean;
   };
   error?: string;
 };
@@ -116,6 +117,7 @@ export type ContentResponse = {
     published_status: 'draft' | 'published';
     is_comment: boolean;
     is_pin: boolean;
+    is_recommended: boolean;
     is_closed: boolean;
     is_locked: boolean;
     draw_type: 'first_come' | 'random' | null;
@@ -769,7 +771,9 @@ export default function Opt({
   const [galleryMinimumWarningOpen, setGalleryMinimumWarningOpen] = useState(false);
   const [isComment, setIsComment] = useState(initialContent?.content?.is_comment !== false);
   const [isPin, setIsPin] = useState(initialContent?.content?.is_pin === true);
+  const [isRecommended, setIsRecommended] = useState(initialContent?.content?.is_recommended === true);
   const [canPinPost] = useState(initialBoardInfo?.actions?.canPinPost === true);
+  const [canRecommendPost] = useState(initialBoardInfo?.actions?.canRecommendPost === true);
   const [markdownStatus] = useState<string | null>(initialBoardInfo?.board?.markdown_status ?? 'markdown_default');
   const initialPoll = initialContent?.content?.poll
     ? createPollStateFromPayload(initialContent.content.poll)
@@ -803,6 +807,7 @@ export default function Opt({
   const isGalleryBoard = boardType === 'gallery';
   const isYoutubeBoard = boardType === 'youtube';
   const isFeedBoard = boardType === 'feed';
+  const isBlogPost = !isCommunity && board?.board_key === 'b';
   const selectedSeries = useMemo(
     () => seriesList.find((series) => series.series_key === selectedSeriesKey) ?? null,
     [seriesList, selectedSeriesKey],
@@ -829,6 +834,7 @@ export default function Opt({
         selectedSeriesKey,
         isComment,
         isPin,
+        isRecommended,
         isPollEnabled,
         poll,
         isDrawEnabled,
@@ -852,6 +858,7 @@ export default function Opt({
         selectedSeriesKey: initialSeriesKey,
         isComment: initialContent?.content?.is_comment !== false,
         isPin: initialContent?.content?.is_pin === true,
+        isRecommended: initialContent?.content?.is_recommended === true,
         isPollEnabled: Boolean(initialContent?.content?.poll),
         poll: initialPoll,
         isDrawEnabled: Boolean(initialContent?.content?.draw_type),
@@ -1915,6 +1922,7 @@ export default function Opt({
           prefixId: selectedPrefixId || null,
           isComment,
           isPin: canPinPost ? isPin : false,
+          isRecommended: isBlogPost && canRecommendPost ? isRecommended : undefined,
           drawType: canUsePollAndDraw ? drawPayload.drawType : null,
           drawLimit: canUsePollAndDraw ? drawPayload.drawLimit : null,
           drawEndsAt: canUsePollAndDraw ? drawPayload.drawEndsAt : null,
@@ -2397,6 +2405,20 @@ export default function Opt({
                                 sx={{ m: 1 }}
                                 checked={isPin}
                                 onChange={(event: ChangeEvent<HTMLInputElement>) => setIsPin(event.target.checked)}
+                              />
+                            }
+                          />
+                        ) : null}
+                        {isBlogPost && canRecommendPost ? (
+                          <FormControlLabel
+                            label="추천 게시물 등록"
+                            control={
+                              <IOSSwitch
+                                sx={{ m: 1 }}
+                                checked={isRecommended}
+                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                                  setIsRecommended(event.target.checked)
+                                }
                               />
                             }
                           />

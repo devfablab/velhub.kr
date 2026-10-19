@@ -130,7 +130,7 @@ export async function getPostContent({
   const postQuery = supabaseAdmin
     .from('posts')
     .select(
-      'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, is_wording_blinded',
+      'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, is_recommended, is_wording_blinded',
     )
     .eq('site_id', siteId)
     .eq('board_id', boardId);

@@ -604,7 +604,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
 
     if (menu === 'community') {
       return [
-        { href: `/${siteName}/manage/community-on-blog/posts`, label: '커뮤니티 관리', startsWith: false },
+        { href: `/${siteName}/manage/community-on-blog/posts`, label: '커뮤니티', startsWith: false },
         { href: `/${siteName}/manage/community-on-blog/badge`, label: '멤버십팬 배지', startsWith: true },
       ];
     }
@@ -614,7 +614,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     }
 
     if (menu === 'guidelines') {
-      return [{ href: `/${siteName}/manage/guidelines`, label: '가이드라인 관리', startsWith: true }];
+      return [{ href: `/${siteName}/manage/guidelines`, label: '가이드라인', startsWith: true }];
     }
 
     if (menu === 'design') {
@@ -638,7 +638,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       return [
         { href: `/${siteName}/manage/join/conditions`, label: '가입정보' },
         { href: `/${siteName}/manage/join/approved`, label: '가입신청' },
-        { href: `/${siteName}/manage/join/invite`, label: '초대관리' },
+        { href: `/${siteName}/manage/join/invite`, label: '초대' },
         { href: `/${siteName}/manage/join/banned`, label: '가입불가' },
         { href: `/${siteName}/manage/join/managers`, label: '매니저' },
       ];

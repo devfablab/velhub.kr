@@ -94,6 +94,7 @@ export type BoardInfoResponse = {
   };
   actions?: {
     canPinPost?: boolean;
+    canRecommendPost?: boolean;
   };
   error?: string;
 };
@@ -643,7 +644,9 @@ export default function Opt({
   const [galleryMinimumWarningOpen, setGalleryMinimumWarningOpen] = useState(false);
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
+  const [isRecommended, setIsRecommended] = useState(false);
   const [canPinPost, setCanPinPost] = useState(initialBoardInfo?.actions?.canPinPost === true);
+  const [canRecommendPost, setCanRecommendPost] = useState(initialBoardInfo?.actions?.canRecommendPost === true);
   const [markdownStatus, setMarkdownStatus] = useState<string | null>(
     initialBoardInfo?.board?.markdown_status ?? 'markdown_default',
   );
@@ -681,6 +684,7 @@ export default function Opt({
   const isGalleryBoard = boardType === 'gallery';
   const isYoutubeBoard = boardType === 'youtube';
   const isFeedBoard = boardType === 'feed';
+  const isBlogPost = !isCommunity && selectedBoardKey === 'b';
   const canRegisterPaidPreview = (isBasicBoard || isGalleryBoard) && selectedSeries?.is_subscription === true;
   const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
@@ -863,6 +867,7 @@ export default function Opt({
       setPostType(nextPostType);
       setMarkdownStatus(nextMarkdownStatus);
       setCanPinPost(boardResult.actions?.canPinPost === true);
+      setCanRecommendPost(boardResult.actions?.canRecommendPost === true);
       setIsPin(false);
       setPrefixList([]);
       setSeriesList([]);
@@ -1845,6 +1850,7 @@ export default function Opt({
           prefixId: selectedPrefixId || null,
           isComment,
           isPin: canPinPost ? isPin : false,
+          isRecommended: isBlogPost && canRecommendPost && action === 'publish' ? isRecommended : false,
           drawType: canUsePollAndDraw ? drawPayload.drawType : null,
           drawLimit: canUsePollAndDraw ? drawPayload.drawLimit : null,
           drawEndsAt: canUsePollAndDraw ? drawPayload.drawEndsAt : null,
@@ -2295,6 +2301,20 @@ export default function Opt({
                                 sx={{ m: 1 }}
                                 checked={isPin}
                                 onChange={(event: ChangeEvent<HTMLInputElement>) => setIsPin(event.target.checked)}
+                              />
+                            }
+                          />
+                        ) : null}
+                        {isBlogPost && canRecommendPost ? (
+                          <FormControlLabel
+                            label="추천 게시물 등록"
+                            control={
+                              <IOSSwitch
+                                sx={{ m: 1 }}
+                                checked={isRecommended}
+                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                                  setIsRecommended(event.target.checked)
+                                }
                               />
                             }
                           />

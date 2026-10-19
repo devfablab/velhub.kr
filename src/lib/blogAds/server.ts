@@ -353,6 +353,46 @@ async function filterBlockedPromotionTargets({
   return rows.filter((row) => !blockedIds.has(row.id));
 }
 
+export async function getVisibleBlogHomeAds(siteId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const settings = await supabaseAdmin
+    .from('blog_ad_settings')
+    .select('is_enabled')
+    .eq('site_id', siteId)
+    .maybeSingle();
+
+  if (settings.error) {
+    throw new Error('광고 상태를 확인하지 못했습니다.');
+  }
+
+  if (settings.data?.is_enabled !== true) {
+    return [];
+  }
+
+  const adsResult = await supabaseAdmin
+    .from('blog_ads')
+    .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
+    .eq('site_id', siteId)
+    .is('post_id', null)
+    .is('deleted_at', null)
+    .order('sort_order');
+
+  if (adsResult.error) {
+    throw new Error('기본 광고를 불러오지 못했습니다.');
+  }
+
+  const visibleAds = await filterBlockedPromotionTargets({ target: 'blog_ad_id', rows: adsResult.data ?? [] });
+
+  return visibleAds.map((ad) => ({
+    id: ad.id,
+    productName: ad.product_name ?? '',
+    shopName: ad.shop_name ?? '',
+    thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
+    linkUrl: ad.link_url,
+    domain: getBlogAdDomain(ad.link_url),
+  }));
+}
+
 export async function getVisibleBlogPostPromotion({
   siteId,
   postId,
