@@ -419,7 +419,7 @@ export default function Opt({
         throw new Error('게시판 수정에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}/manage/contents/posts/c/${result.boardName}`);
+      router.replace(`/${siteName}/manage/contents/posts`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         showError(unknownError.message || '게시판 수정에 실패했습니다.');
@@ -554,17 +554,22 @@ export default function Opt({
                   />
                 </Stack>
 
-                {!hasSubscriptionSeries ? (
-                  <FormControl>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      게시판 상태
-                    </Typography>
-                    <FormControlLabel
-                      control={<IOSSwitch sx={{ m: 1 }} checked={isActive} onChange={handleIsActiveChange} />}
-                      label="활성화"
-                    />
-                  </FormControl>
-                ) : null}
+                <FormControl>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    게시판 상태
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <IOSSwitch
+                        sx={{ m: 1 }}
+                        checked={isActive}
+                        onChange={handleIsActiveChange}
+                        disabled={hasSubscriptionSeries}
+                      />
+                    }
+                    label="활성화"
+                  />
+                </FormControl>
 
                 <Stack gap={1}>
                   <Typography variant="subtitle2">목록 표시 개수 *</Typography>
