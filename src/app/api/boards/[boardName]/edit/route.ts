@@ -39,7 +39,7 @@ function isAllowedMarkdownStatus(value: string) {
 }
 
 function isAllowedWritePermission(value: string) {
-  return value === 'member' || value === 'manager' || value === 'community-manager' || value === 'owner';
+  return value === 'member' || value === 'manager';
 }
 
 function isAllowedPostType(value: string) {

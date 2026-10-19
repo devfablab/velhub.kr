@@ -2,7 +2,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type WritePermission = 'member' | 'manager' | 'community-manager' | 'owner';
+type WritePermission = 'member' | 'manager';
 
 type BoardRow = {
   id: string;
@@ -27,30 +27,21 @@ type CommunityManageRoleRow = {
   role: string | null;
 };
 
-const MANAGER_ROLES = [
-  'community-manager',
-  'board-manager',
-  'board-general-manager',
-  'board-assistant-manager',
-] as const;
+const COMMUNITY_MANAGER_ROLES = ['community-manager', 'board-manager'] as const;
 
 function normalizeWritePermission(value: string | null | undefined): WritePermission {
   const normalizedValue = normalizeText(value);
 
-  if (
-    normalizedValue === 'member' ||
-    normalizedValue === 'manager' ||
-    normalizedValue === 'community-manager' ||
-    normalizedValue === 'owner'
-  ) {
-    return normalizedValue;
-  }
-
-  return 'member';
+  return normalizedValue === 'member' ? 'member' : 'manager';
 }
 
 function isManagerRole(value: string) {
-  return MANAGER_ROLES.includes(value as (typeof MANAGER_ROLES)[number]);
+  return (
+    value === 'community-manager' ||
+    value === 'board-manager' ||
+    value === 'board-general-manager' ||
+    value === 'board-assistant-manager'
+  );
 }
 
 function canWriteBoard({
@@ -65,24 +56,20 @@ function canWriteBoard({
   managerRoles: string[];
 }) {
   const isAdmin = sessionCase === 'admin';
-  const isOwner = siteRole === 'owner';
   const isApprovedMember = sessionCase === 'member' || sessionCase === 'staff';
-  const isAnyManager = siteRole === 'manager' || managerRoles.some(isManagerRole);
-  const isCommunityManager = managerRoles.includes('community-manager');
+  const canWriteAsManager =
+    siteRole === 'owner' ||
+    managerRoles.some((role) => COMMUNITY_MANAGER_ROLES.includes(role as (typeof COMMUNITY_MANAGER_ROLES)[number]));
 
   if (writePermission === 'member') {
     return isAdmin || isApprovedMember;
   }
 
   if (writePermission === 'manager') {
-    return isAdmin || isOwner || isAnyManager;
+    return isAdmin || canWriteAsManager;
   }
 
-  if (writePermission === 'community-manager') {
-    return isAdmin || isOwner || isCommunityManager;
-  }
-
-  return isAdmin || isOwner;
+  return false;
 }
 
 export async function GET(request: Request) {

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
+import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import verifySession from '@/lib/session/verifySession';
 import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -11,6 +11,8 @@ import Opt, {
   type PrefixListResponse,
   type SeriesListResponse,
 } from './opt';
+
+export const dynamic = 'force-dynamic';
 
 type RouteContext = {
   params: Promise<{
@@ -44,8 +46,14 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  const isCommunity = rhizomeResult.data.site_type === 'community';
+  const communityResult = await supabaseAdmin
+    .from('communities')
+    .select('id')
+    .eq('site_id', rhizomeResult.data.id)
+    .maybeSingle();
+  const isCommunity = rhizomeResult.data.site_type === 'community' || Boolean(communityResult.data);
   let writePolicyMessage = '';
+  let writePolicyAction: { href: string; label: string } | undefined;
 
   if (isCommunity) {
     const session = await verifySession({
@@ -54,6 +62,10 @@ export default async function Page(context: RouteContext) {
 
     if (!session.authUserId || !session.stigmaId) {
       writePolicyMessage = '로그인 후 글을 작성할 수 있습니다.';
+      writePolicyAction = { href: '/auth/sign-in', label: '로그인하기' };
+    } else if (session.case === 'pending-member') {
+      writePolicyMessage = '가입 승인까지 기다려 주세요.';
+      writePolicyAction = { href: `/${siteName}`, label: '홈 이동' };
     } else {
       try {
         await assertCommunityPostWritePolicy({
@@ -77,6 +89,38 @@ export default async function Page(context: RouteContext) {
   const currentBoard = (initialBoards.data?.boards ?? []).find(
     (board) => board.is_active && board.board_type !== 'page' && board.board_key === boardName.toLowerCase(),
   );
+
+  if (isCommunity && !writePolicyMessage) {
+    if (!currentBoard) {
+      writePolicyMessage = '글 쓰기 권한이 없는 게시판입니다.';
+      writePolicyAction = { href: `/${siteName}`, label: '홈 이동' };
+    } else {
+      const session = await verifySession({
+        siteId: rhizomeResult.data.id,
+      });
+
+      if (!session.stigmaId) {
+        writePolicyMessage = '로그인 후 글을 작성할 수 있습니다.';
+        writePolicyAction = { href: '/auth/sign-in', label: '로그인하기' };
+      } else {
+        try {
+          await assertCommunityBoardWritePermission({
+            siteId: rhizomeResult.data.id,
+            boardId: currentBoard.id,
+            stigmaId: session.stigmaId,
+            sessionCase: session.case,
+          });
+        } catch (unknownError) {
+          writePolicyMessage =
+            unknownError instanceof Error
+              ? unknownError.message || '글 작성 권한이 없습니다.'
+              : '글 작성 권한이 없습니다.';
+          writePolicyAction = { href: `/${siteName}`, label: '홈 이동' };
+        }
+      }
+    }
+  }
+
   const initialBoardInfo = currentBoard
     ? await getSiteApiData<BoardInfoResponse>(
         `/api/boards/${currentBoard.board_key}?siteName=${normalizedSiteName}`,
@@ -117,6 +161,7 @@ export default async function Page(context: RouteContext) {
     <Opt
       isCommunity={isCommunity}
       writePolicyMessage={writePolicyMessage}
+      writePolicyAction={writePolicyAction}
       initialBoards={initialBoards.data}
       initialBoardInfo={initialBoardInfo.data}
       initialPrefixes={initialPrefixes.data}

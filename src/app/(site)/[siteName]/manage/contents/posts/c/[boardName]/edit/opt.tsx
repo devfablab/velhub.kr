@@ -32,7 +32,7 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 type PostType = 'none' | 'prefix' | 'series';
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
 type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
-type WritePermission = 'member' | 'manager' | 'community-manager' | 'owner';
+type WritePermission = 'member' | 'manager';
 
 export type BoardResponse = {
   board?: {
@@ -43,7 +43,7 @@ export type BoardResponse = {
     is_active: boolean;
     sort_order: number;
     markdown_status?: MarkdownStatus | null;
-    write_permission?: WritePermission | null;
+    write_permission?: string | null;
     post_per_page: number | null;
     post_type: PostType | null;
   };
@@ -80,8 +80,6 @@ const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
 const WRITE_PERMISSION_OPTIONS: { value: WritePermission; label: string }[] = [
   { value: 'member', label: '일반 멤버 가능' },
   { value: 'manager', label: '매니저 전용' },
-  { value: 'community-manager', label: '커뮤니티 매니저 전용' },
-  { value: 'owner', label: '운영자 전용' },
 ];
 
 function normalizeBoardKey(rawValue: string) {
@@ -130,7 +128,9 @@ export default function Opt({
   const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>(
     initialBoard?.markdown_status ?? 'markdown_default',
   );
-  const [writePermission, setWritePermission] = useState<WritePermission>(initialBoard?.write_permission ?? 'member');
+  const [writePermission, setWritePermission] = useState<WritePermission>(
+    initialBoard?.write_permission === 'member' ? 'member' : 'manager',
+  );
   const [postType, setPostType] = useState<PostType>(initialBoard?.post_type ?? 'none');
   const [isActive, setIsActive] = useState(initialBoard?.is_active ?? true);
 

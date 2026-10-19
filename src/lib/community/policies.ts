@@ -15,6 +15,10 @@ type CommunityManageRoleRow = {
   role: string | null;
 };
 
+type BoardWritePermissionRow = {
+  write_permission: string | null;
+};
+
 function getPostPolicyRequiredCommentCount(policyPost: string | null | undefined) {
   if (policyPost === 'comment_1') {
     return 1;
@@ -156,6 +160,83 @@ export async function assertCommunityPostWritePolicy({
 
   if (commentCount < requiredCommentCount) {
     throw new Error(`댓글 ${requiredCommentCount}개 등록 후 글을 작성할 수 있습니다.`);
+  }
+}
+
+export async function assertCommunityBoardWritePermission({
+  siteId,
+  boardId,
+  stigmaId,
+  sessionCase,
+}: {
+  siteId: string;
+  boardId: string;
+  stigmaId: string;
+  sessionCase: SessionCase;
+}) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', siteId).maybeSingle();
+
+  if (communityResult.error) {
+    throw new Error('커뮤니티 정보를 확인하지 못했습니다.');
+  }
+
+  if (!communityResult.data) {
+    return;
+  }
+
+  const boardResult = await supabaseAdmin.from('boards').select('write_permission').eq('id', boardId).maybeSingle();
+
+  if (boardResult.error || !boardResult.data) {
+    throw new Error('게시판 정보를 확인하지 못했습니다.');
+  }
+
+  const board = boardResult.data as BoardWritePermissionRow;
+  const writePermission = board.write_permission === 'member' ? 'member' : 'manager';
+
+  if (writePermission === 'member') {
+    if (sessionCase === 'admin' || sessionCase === 'staff' || sessionCase === 'member') {
+      return;
+    }
+
+    throw new Error('글 쓰기 권한이 없는 게시판입니다.');
+  }
+
+  if (sessionCase === 'admin') {
+    return;
+  }
+
+  const rhizomeStigma = await getRhizomeStigmaForPolicy({
+    supabaseAdmin,
+    siteId,
+    stigmaId,
+  });
+
+  if (!rhizomeStigma) {
+    throw new Error('글 쓰기 권한이 없는 게시판입니다.');
+  }
+
+  if (rhizomeStigma.role === 'owner') {
+    return;
+  }
+
+  const managerRoleResult = await supabaseAdmin
+    .from('community_manage_role')
+    .select('role')
+    .eq('community_id', communityResult.data.id)
+    .eq('manager_id', rhizomeStigma.id);
+
+  if (managerRoleResult.error) {
+    throw new Error('커뮤니티 매니저 권한을 확인하지 못했습니다.');
+  }
+
+  const canWrite = (managerRoleResult.data as CommunityManageRoleRow[]).some(
+    (managerRole) => managerRole.role === 'community-manager' || managerRole.role === 'board-manager',
+  );
+
+  if (!canWrite) {
+    throw new Error('글 쓰기 권한이 없는 게시판입니다.');
   }
 }
 

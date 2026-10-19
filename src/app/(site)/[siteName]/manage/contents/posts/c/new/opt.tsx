@@ -59,7 +59,7 @@ type BoardLabelCheckResponse = {
 type PostType = 'none' | 'prefix' | 'series';
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
 type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
-type WritePermission = 'member' | 'manager' | 'community-manager' | 'owner';
+type WritePermission = 'member' | 'manager';
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
@@ -72,8 +72,6 @@ const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
 const WRITE_PERMISSION_OPTIONS: { value: WritePermission; label: string }[] = [
   { value: 'member', label: '일반 멤버 가능' },
   { value: 'manager', label: '매니저 전용' },
-  { value: 'community-manager', label: '커뮤니티 매니저 전용' },
-  { value: 'owner', label: '운영자 전용' },
 ];
 
 function normalizeBoardKey(rawValue: string) {

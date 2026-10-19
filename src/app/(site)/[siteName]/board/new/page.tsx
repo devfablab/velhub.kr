@@ -8,6 +8,8 @@ import { getSiteApiData } from '../../../getSiteApiData';
 import Container from '../../menu';
 import Opt, { type BoardsResponse } from './opt';
 
+export const dynamic = 'force-dynamic';
+
 type RouteContext = {
   params: Promise<{
     siteName: string;
@@ -35,9 +37,15 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  const isCommunity = rhizomeResult.data.site_type === 'community';
+  const communityResult = await supabaseAdmin
+    .from('communities')
+    .select('id')
+    .eq('site_id', rhizomeResult.data.id)
+    .maybeSingle();
+  const isCommunity = rhizomeResult.data.site_type === 'community' || Boolean(communityResult.data);
 
   let writePolicyMessage = '';
+  let writePolicyAction: { href: string; label: string } | undefined;
 
   if (isCommunity) {
     const session = await verifySession({
@@ -46,6 +54,10 @@ export default async function Page(context: RouteContext) {
 
     if (!session.authUserId || !session.stigmaId) {
       writePolicyMessage = '로그인 후 글을 작성할 수 있습니다.';
+      writePolicyAction = { href: '/auth/sign-in', label: '로그인하기' };
+    } else if (session.case === 'pending-member') {
+      writePolicyMessage = '가입 승인까지 기다려 주세요.';
+      writePolicyAction = { href: `/${siteName}`, label: '홈 이동' };
     } else {
       try {
         await assertCommunityPostWritePolicy({
@@ -76,6 +88,7 @@ export default async function Page(context: RouteContext) {
       <Opt
         isCommunity={isCommunity}
         writePolicyMessage={writePolicyMessage}
+        writePolicyAction={writePolicyAction}
         initialBoards={initialBoards.data}
         initialError={initialBoards.error}
         guidelineDialogDataByBoard={guidelineDialogDataByBoard}

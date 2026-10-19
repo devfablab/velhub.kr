@@ -3,7 +3,7 @@ import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/blog
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
-import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
+import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
@@ -980,6 +980,13 @@ export async function POST(request: Request, context: RouteContext) {
             seriesId,
           })
         : null;
+
+    await assertCommunityBoardWritePermission({
+      siteId: rhizomeData.id,
+      boardId: board.data.id,
+      stigmaId: session.stigmaId,
+      sessionCase: session.case,
+    });
 
     await assertCommunityPostWritePolicy({
       siteId: rhizomeData.id,

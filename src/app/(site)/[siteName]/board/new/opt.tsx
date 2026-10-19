@@ -58,6 +58,10 @@ import styles from '@/app/board.module.sass';
 type Props = {
   isCommunity: boolean;
   writePolicyMessage?: string;
+  writePolicyAction?: {
+    href: string;
+    label: string;
+  };
   initialBoards: BoardsResponse | null;
   initialError: string;
   guidelineDialogDataByBoard: Record<string, SiteGuidelineDialogData | null>;
@@ -546,6 +550,7 @@ function buildDrawPayload(draw: DrawState): DrawPayload {
 export default function Opt({
   isCommunity,
   writePolicyMessage,
+  writePolicyAction,
   initialBoards,
   initialError,
   guidelineDialogDataByBoard,
@@ -554,6 +559,12 @@ export default function Opt({
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const theme = useTheme();
+  const resolvedWritePolicyAction =
+    writePolicyMessage === '로그인 후 글을 작성할 수 있습니다.'
+      ? { href: '/auth/sign-in', label: '로그인하기' }
+      : writePolicyMessage === '가입 승인까지 기다려 주세요.'
+        ? { href: `/${siteName}`, label: '홈 이동' }
+        : (writePolicyAction ?? { href: `/${siteName}/board`, label: '게시판으로 이동' });
 
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
@@ -1879,32 +1890,6 @@ export default function Opt({
     );
   }
 
-  if (boards.length === 0) {
-    return (
-      <div className="container">
-        {isCommunity && !isMobile ? (
-          <aside>
-            <SiteInfo />
-            <TableList />
-          </aside>
-        ) : null}
-        <div className={`${styles.content} content`}>
-          <h2>
-            <ListAltOutlinedIcon />
-            <span>새글 쓰기</span>
-          </h2>
-          <div className="paper page-info">
-            <ServiceNoDataIcon />
-            <p>글을 작성할 수 있는 게시판이 없습니다.</p>
-            <Anchor className="button medium action" href={`/${siteName}/board`}>
-              게시판으로 이동
-            </Anchor>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (writePolicyMessage) {
     return (
       <div className="container">
@@ -1922,8 +1907,34 @@ export default function Opt({
           <div className="paper page-warning">
             <ServiceWarningIcon />
             <p>{writePolicyMessage}</p>
-            <Anchor className="button medium action" href={`/${siteName}/board`}>
-              게시판으로 이동
+            <Anchor className="button medium action" href={resolvedWritePolicyAction.href}>
+              {resolvedWritePolicyAction.label}
+            </Anchor>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (boards.length === 0) {
+    return (
+      <div className="container">
+        {isCommunity && !isMobile ? (
+          <aside>
+            <SiteInfo />
+            <TableList />
+          </aside>
+        ) : null}
+        <div className={`${styles.content} content`}>
+          <h2>
+            <ListAltOutlinedIcon />
+            <span>새글 쓰기</span>
+          </h2>
+          <div className="paper page-info">
+            <ServiceNoDataIcon />
+            <p>글을 작성할 수 있는 게시판이 없습니다.</p>
+            <Anchor className="button medium action" href={writePolicyAction?.href ?? `/${siteName}/board`}>
+              {writePolicyAction?.label ?? '게시판으로 이동'}
             </Anchor>
           </div>
         </div>
