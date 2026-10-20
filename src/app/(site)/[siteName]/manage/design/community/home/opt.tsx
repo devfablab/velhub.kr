@@ -336,7 +336,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             {!hasHomeOrders ? (
               <div className={`paper ${styles.paper}`}>
-                <Typography variant="subtitle1">커뮤니티 홈 세팅이 필요합니다.</Typography>
+                <Typography variant="subtitle2">커뮤니티 홈 세팅이 필요합니다.</Typography>
                 <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
                 <Box>
                   <button type="submit" className="button medium submit" disabled={isInitializing}>
@@ -365,7 +365,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </DndContext>
                 )}
 
-                <Stack direction="row" gap={1} justifyContent="flex-end" sx={{ p: isMobile ? 2 : 0 }}>
+                <Stack direction="row" gap={1} justifyContent="space-between" sx={{ p: 2 }}>
                   <button
                     type="button"
                     className="button medium action"

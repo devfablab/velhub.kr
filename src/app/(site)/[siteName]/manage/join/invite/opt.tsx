@@ -264,7 +264,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
 
           {sortedInvites.length === 0 ? (
-            <ScreenState>생성된 초대가 없습니다.</ScreenState>
+            <ScreenState>초대 목록이 없습니다.</ScreenState>
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
               <Table size="small">

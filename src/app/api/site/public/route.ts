@@ -1,6 +1,8 @@
+import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -10,6 +12,7 @@ type BoardRow = {
   board_key: string;
   board_label: string;
   sort_order: number;
+  write_permission: string | null;
 };
 
 function onlyDigits(value: string | null | undefined) {
@@ -100,7 +103,7 @@ export async function GET(request: Request) {
     const boardsPromise = (async () => {
       return await supabaseAdmin
         .from('boards')
-        .select('id, board_type, board_key, board_label, sort_order')
+        .select('id, board_type, board_key, board_label, sort_order, write_permission')
         .eq('site_id', siteId)
         .order('sort_order', { ascending: true });
     })();
@@ -192,7 +195,11 @@ export async function GET(request: Request) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boardRows = (boardsRes?.data ?? []) as BoardRow[];
+    const session = siteType === 'community' ? await verifySession({ siteId }) : null;
+    const boardRows =
+      siteType === 'community' && session
+        ? await getVisibleCommunityBoards(siteName, session.case, (boardsRes?.data ?? []) as BoardRow[])
+        : ((boardsRes?.data ?? []) as BoardRow[]);
     const pageBoardIds = boardRows.filter((board) => board.board_type === 'page').map((board) => board.id);
     const pageSubjectMap = new Map<string, string>();
     const pageSlugMap = new Map<string, string>();

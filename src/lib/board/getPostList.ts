@@ -20,6 +20,7 @@ type GetPostListOptions = {
   includePin?: boolean;
   categoryId?: string | null;
   authorIds?: string[] | null;
+  excludedBoardIds?: string[] | null;
 };
 
 type PostImage = {
@@ -257,6 +258,7 @@ export async function getPostList({
   includePin = true,
   categoryId = null,
   authorIds = null,
+  excludedBoardIds = null,
 }: GetPostListOptions): Promise<GetPostListResult> {
   const supabaseAdmin = getSupabaseAdmin();
   const isStaff = sessionCase === 'staff';
@@ -265,6 +267,7 @@ export async function getPostList({
   const to = from + size - 1;
   const searchKeyword = normalizeText(keyword);
   const normalizedAuthorIds = Array.from(new Set((authorIds ?? []).map(normalizeText).filter(Boolean)));
+  const normalizedExcludedBoardIds = Array.from(new Set((excludedBoardIds ?? []).map(normalizeText).filter(Boolean)));
   const hasAuthorFilter = authorIds !== null;
   const shouldUsePinnedPosts = filter === 'all' && sort === 'latest' && includePin;
   const isAllBoardList = !boardId;
@@ -300,6 +303,10 @@ export async function getPostList({
         .order('created_at', { ascending: false });
     }
 
+    if (!boardId && normalizedExcludedBoardIds.length > 0) {
+      pinnedQuery = pinnedQuery.not('board_id', 'in', `(${normalizedExcludedBoardIds.join(',')})`);
+    }
+
     if (categoryId) {
       pinnedQuery = pinnedQuery.contains('categories', [categoryId]);
     }
@@ -329,6 +336,8 @@ export async function getPostList({
 
   if (boardId) {
     postsQuery = postsQuery.eq('board_id', boardId);
+  } else if (normalizedExcludedBoardIds.length > 0) {
+    postsQuery = postsQuery.not('board_id', 'in', `(${normalizedExcludedBoardIds.join(',')})`);
   }
 
   if (categoryId) {

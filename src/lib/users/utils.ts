@@ -182,7 +182,24 @@ export async function getStaffMembersAccess(siteName: string) {
     siteId: site.id,
   });
 
-  if (session.case !== 'staff' || !session.stigmaId) {
+  if (!session.stigmaId) {
+    return {
+      ok: false,
+      status: 403,
+      error: '접근 권한이 없습니다.',
+    } as const;
+  }
+
+  const membershipResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('role')
+    .eq('site_id', site.id)
+    .eq('user_id', session.stigmaId)
+    .maybeSingle();
+
+  const membershipRole = normalizeText(membershipResult.data?.role);
+
+  if (membershipResult.error || !['owner', 'manager'].includes(membershipRole)) {
     return {
       ok: false,
       status: 403,

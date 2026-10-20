@@ -201,22 +201,7 @@ export async function getCommunityManagerAccess(
   const community = communityResult.data as CommunityRow;
   const session = await verifySession({ siteId: rhizome.id });
 
-  let actorRhizomeStigmaId = session.rhizomeStigmaId;
-
-  if (session.case === 'admin' && session.stigmaId) {
-    const ownerMembershipResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('id')
-      .eq('site_id', rhizome.id)
-      .eq('role', 'owner')
-      .maybeSingle();
-
-    if (ownerMembershipResult.error || !ownerMembershipResult.data) {
-      throw new Error('운영자 정보를 확인하지 못했습니다.');
-    }
-
-    actorRhizomeStigmaId = ownerMembershipResult.data.id;
-  }
+  const actorRhizomeStigmaId = session.rhizomeStigmaId;
 
   if (!session.authUserId || !session.stigmaId || !actorRhizomeStigmaId) {
     throw new Error('접근 권한이 없습니다.');

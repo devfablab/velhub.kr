@@ -1,4 +1,5 @@
 import { canManageAllCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -14,6 +15,7 @@ type BoardRow = {
   site_id: string;
   created_at: string;
   post_per_page: number | null;
+  write_permission: string | null;
 };
 
 export async function GET(request: Request) {
@@ -101,29 +103,8 @@ export async function GET(request: Request) {
 
     let boardRows = (boards.data ?? []) as BoardRow[];
 
-    if (rhizome.data.site_type === 'community' && boardRows.some((board) => board.write_permission === 'manager')) {
-      let canAccessManagerBoards = session.case === 'admin' || session.case === 'staff';
-
-      if (!canAccessManagerBoards) {
-        try {
-          const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
-          canAccessManagerBoards = access.actor.communityRoles.some((role) =>
-            [
-              'owner',
-              'community-manager',
-              'board-manager',
-              'board-general-manager',
-              'board-assistant-manager',
-            ].includes(role),
-          );
-        } catch {
-          canAccessManagerBoards = false;
-        }
-      }
-
-      if (!canAccessManagerBoards) {
-        boardRows = boardRows.filter((board) => board.write_permission !== 'manager');
-      }
+    if (rhizome.data.site_type === 'community') {
+      boardRows = await getVisibleCommunityBoards(siteName, session.case, boardRows);
     }
 
     const currentBoardCount = boardRows.filter((board) => board.board_type !== 'page').length;

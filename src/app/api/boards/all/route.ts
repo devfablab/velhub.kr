@@ -1,8 +1,14 @@
 import { getPostList } from '@/lib/board/getPostList';
+import { canAccessManagerOnlyBoards, isManagerOnlyBoard } from '@/lib/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { findUserIdsByDisplayName } from '@/lib/users/findUsersByDisplayName';
 import { normalizeText } from '@/lib/utils';
+
+type BoardPermissionRow = {
+  id: string;
+  write_permission: string | null;
+};
 
 function parsePositiveInt(value: string | null, fallbackValue: number) {
   const parsedValue = Number(value);
@@ -79,6 +85,26 @@ export async function GET(request: Request) {
     const postListSessionCase =
       session.case === 'admin' || session.case === 'staff' ? 'staff' : session.case === 'member' ? 'member' : 'guest';
 
+    let excludedBoardIds: string[] = [];
+
+    if (rhizome.data.site_type === 'community') {
+      const boardsResult = await supabaseAdmin
+        .from('boards')
+        .select('id, write_permission')
+        .eq('site_id', rhizome.data.id)
+        .eq('write_permission', 'manager');
+
+      if (boardsResult.error) {
+        return Response.json({ error: '게시판 목록을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const managerOnlyBoards = (boardsResult.data ?? []) as BoardPermissionRow[];
+
+      if (managerOnlyBoards.some(isManagerOnlyBoard) && !(await canAccessManagerOnlyBoards(siteName, session.case))) {
+        excludedBoardIds = managerOnlyBoards.map((board) => board.id);
+      }
+    }
+
     const result = await getPostList({
       siteId: rhizome.data.id,
       siteKey: siteName,
@@ -93,6 +119,7 @@ export async function GET(request: Request) {
       sort,
       includePin,
       authorIds,
+      excludedBoardIds,
     });
 
     return Response.json({

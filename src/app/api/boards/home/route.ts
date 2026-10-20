@@ -1,4 +1,5 @@
 import { getPostList } from '@/lib/board/getPostList';
+import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -22,6 +23,7 @@ type BoardRow = {
   post_type: 'none' | 'prefix' | 'series' | null;
   is_active: boolean;
   sort_order: number | null;
+  write_permission: string | null;
 };
 
 function getBoardContentSize(boardType: BoardType) {
@@ -92,7 +94,9 @@ export async function GET(request: Request) {
 
     const boards = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
+      .select(
+        'id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order, write_permission',
+      )
       .eq('site_id', rhizomeData.id)
       .eq('is_active', true)
       .in('id', boardIds)
@@ -102,7 +106,8 @@ export async function GET(request: Request) {
       return Response.json({ error: '게시판 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boardMap = new Map(((boards.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
+    const visibleBoards = await getVisibleCommunityBoards(siteName, session.case, (boards.data ?? []) as BoardRow[]);
+    const boardMap = new Map(visibleBoards.map((board) => [board.id, board]));
     const postListSessionCase =
       session.case === 'admin' || session.case === 'staff' ? 'staff' : session.case === 'member' ? 'member' : 'guest';
 

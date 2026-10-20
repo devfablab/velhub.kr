@@ -110,7 +110,10 @@ export async function GET(request: NextRequest) {
 
     const candidateBatchSize = Math.max(limit * (isRelevanceSort ? 10 : 5), 100);
     const postsData: PostRow[] = [];
-    const boardMap = new Map<string, { id: string; board_type: string; board_key: string; site_id: string }>();
+    const boardMap = new Map<
+      string,
+      { id: string; board_type: string; board_key: string; site_id: string; write_permission: string | null }
+    >();
     const rhizomeMap = new Map<
       string,
       {
@@ -165,7 +168,7 @@ export async function GET(request: NextRequest) {
       const candidateBoardIds = [...new Set(candidatePosts.map((post) => post.board_id))];
       const boardsResult = await supabaseAdmin
         .from('boards')
-        .select('id, board_type, board_key, site_id')
+        .select('id, board_type, board_key, site_id, write_permission')
         .in('board_type', ['basic', 'blog', 'feed', 'gallery', 'youtube'])
         .in('id', candidateBoardIds);
 
@@ -173,7 +176,9 @@ export async function GET(request: NextRequest) {
         return Response.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const candidateBoards = boardsResult.data ?? [];
+      const candidateBoards = (boardsResult.data ?? []).filter(
+        (board) => !(board.board_type !== 'blog' && board.write_permission === 'manager'),
+      );
       const candidateBoardMap = new Map(candidateBoards.map((board) => [board.id, board]));
       const candidateSiteIds = [...new Set(candidateBoards.map((board) => board.site_id))];
       let rhizomesQuery = supabaseAdmin

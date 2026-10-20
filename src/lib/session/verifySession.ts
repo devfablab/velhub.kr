@@ -45,27 +45,12 @@ export default async function verifySession({ siteId }: VerifySessionParams): Pr
   const stigmaId = stigmaResult.data.id as string;
   const stigmaRole = normalizeText(stigmaResult.data.role);
 
-  if (stigmaRole === 'admin') {
-    let rhizomeStigmaId: string | null = null;
-
-    if (normalizedSiteId) {
-      const ownerMembershipResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('id')
-        .eq('site_id', normalizedSiteId)
-        .eq('role', 'owner')
-        .maybeSingle();
-
-      if (!ownerMembershipResult.error) {
-        rhizomeStigmaId = ownerMembershipResult.data?.id ?? null;
-      }
-    }
-
+  if (stigmaRole === 'admin' && !normalizedSiteId) {
     return {
       case: 'admin',
       authUserId,
       stigmaId,
-      rhizomeStigmaId,
+      rhizomeStigmaId: null,
     };
   }
 

@@ -2,7 +2,9 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getVisibleBlogHomeAds } from '@/lib/blogAds/server';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
+import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
 import { getSitePageMetadata } from '@/lib/seoSite';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Blog, { type BlogHomeData } from './blog';
 import Community from './community';
@@ -32,6 +34,7 @@ type BoardRow = {
   post_type: 'none' | 'prefix' | 'series' | null;
   is_active: boolean;
   sort_order: number | null;
+  write_permission: string | null;
 };
 
 type CategoryRow = {
@@ -266,19 +269,29 @@ export default async function Page(context: RouteContext) {
     }> = [];
 
     if (boardIds.length > 0) {
-      const boardResult = await supabaseAdmin
-        .from('boards')
-        .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
-        .eq('site_id', rhizome.id)
-        .eq('is_active', true)
-        .in('id', boardIds)
-        .neq('board_type', 'page');
+      const [boardResult, session] = await Promise.all([
+        supabaseAdmin
+          .from('boards')
+          .select(
+            'id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order, write_permission',
+          )
+          .eq('site_id', rhizome.id)
+          .eq('is_active', true)
+          .in('id', boardIds)
+          .neq('board_type', 'page'),
+        verifySession({ siteId: rhizome.id }),
+      ]);
 
       if (boardResult.error) {
         notFound();
       }
 
-      const boardMap = new Map(((boardResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
+      const visibleBoards = await getVisibleCommunityBoards(
+        normalizedSiteName,
+        session.case,
+        (boardResult.data ?? []) as BoardRow[],
+      );
+      const boardMap = new Map(visibleBoards.map((board) => [board.id, board]));
 
       homeBoards = await Promise.all(
         homeOrders
@@ -293,8 +306,13 @@ export default async function Page(context: RouteContext) {
               page: 1,
               size: getBoardContentSize(board.board_type),
               filter: 'all',
-              sessionCase: 'guest',
-              stigmaId: null,
+              sessionCase:
+                session.case === 'admin' || session.case === 'staff'
+                  ? 'staff'
+                  : session.case === 'member'
+                    ? 'member'
+                    : 'guest',
+              stigmaId: session.stigmaId,
               sort: 'latest',
               includePin: false,
             });

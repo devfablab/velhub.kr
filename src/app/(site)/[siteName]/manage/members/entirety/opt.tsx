@@ -769,7 +769,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
               size="small"
             />
           </Stack>
-          <button type="button" className="button medium submit" onClick={handleSearchNickname}>
+          <button type="button" className="button small action" onClick={handleSearchNickname}>
             검색
           </button>
         </Stack>
