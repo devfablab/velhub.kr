@@ -90,9 +90,19 @@ export default async function Page(context: RouteContext) {
     (board) => board.is_active && board.board_type !== 'page' && board.board_key === boardName.toLowerCase(),
   );
 
+  const requestedBoard = await supabaseAdmin
+    .from('boards')
+    .select('id, write_permission')
+    .eq('site_id', rhizomeResult.data.id)
+    .eq('board_key', boardName.toLowerCase())
+    .maybeSingle();
+
   if (isCommunity && !writePolicyMessage) {
     if (!currentBoard) {
-      writePolicyMessage = '글 쓰기 권한이 없는 게시판입니다.';
+      writePolicyMessage =
+        requestedBoard.data?.write_permission === 'manager'
+          ? '매니저 전용 게시판입니다.'
+          : '글 쓰기 권한이 없는 게시판입니다.';
       writePolicyAction = { href: `/${siteName}`, label: '홈 이동' };
     } else {
       const session = await verifySession({

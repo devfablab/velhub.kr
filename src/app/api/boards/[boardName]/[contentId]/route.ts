@@ -1105,7 +1105,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, markdown_status, site_id, post_type')
+      .select('id, board_key, board_label, board_type, markdown_status, site_id, post_type, write_permission')
       .eq('site_id', rhizomeData.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -1121,7 +1121,13 @@ export async function GET(request: Request, context: RouteContext) {
     if (rhizomeData.site_type === 'community') {
       try {
         const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
-        canManageContent = canManageContent || canManageCommunityBoardContents(access.actor, boardData.id);
+        const isCommunityManager = access.actor.communityRoles.some((role) =>
+          ['owner', 'community-manager', 'board-manager', 'board-general-manager', 'board-assistant-manager'].includes(
+            role,
+          ),
+        );
+        canManageContent =
+          canManageContent || isCommunityManager || canManageCommunityBoardContents(access.actor, boardData.id);
         canMovePost =
           access.actor.communityRoles.includes('owner') ||
           access.actor.communityRoles.includes('community-manager') ||
@@ -1133,6 +1139,10 @@ export async function GET(request: Request, context: RouteContext) {
         canManageContent = false;
         canMovePost = false;
       }
+    }
+
+    if (boardData.write_permission === 'manager' && !canManageContent) {
+      return NextResponse.json({ error: '매니저 전용 게시판입니다.' }, { status: 403 });
     }
 
     if (boardData.board_type === 'page') {

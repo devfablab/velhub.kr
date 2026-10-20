@@ -63,7 +63,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const markdownStatus = normalizeText(requestBody.markdownStatus);
     const writePermission = normalizeText(requestBody.writePermission);
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
-    const postType = normalizeText(requestBody.postType);
+    let postType = normalizeText(requestBody.postType);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -135,6 +135,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!currentBoard.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (currentBoard.data.write_permission === 'manager') {
+      postType = 'none';
     }
 
     let canEditBoard = session.case === 'staff' || session.case === 'admin';
@@ -213,7 +217,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         board_label: boardLabel,
         is_active: isActive,
         markdown_status: markdownStatus,
-        write_permission: writePermission,
+        write_permission: currentBoard.data.write_permission === 'manager' ? 'manager' : writePermission,
         post_type: postType,
       })
       .eq('id', currentBoard.data.id)

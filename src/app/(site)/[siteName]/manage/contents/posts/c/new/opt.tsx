@@ -21,6 +21,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../../menu';
@@ -120,6 +121,7 @@ export default function Opt({
   const [postPerPage, setPostPerPage] = useState(5);
   const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_off');
   const [writePermission, setWritePermission] = useState<WritePermission>('member');
+  const [isManagerOnly, setIsManagerOnly] = useState(false);
   const [postType, setPostType] = useState<PostType>('none');
   const [isChecking, setIsChecking] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
@@ -153,8 +155,8 @@ export default function Opt({
   }, [errorMessage]);
 
   const canUsePostType = useMemo(() => {
-    return boardType === 'basic' || boardType === 'gallery';
-  }, [boardType]);
+    return !isManagerOnly && (boardType === 'basic' || boardType === 'gallery');
+  }, [boardType, isManagerOnly]);
 
   function resetBoardLabelCheck() {
     setCheckedBoardLabel('');
@@ -199,6 +201,16 @@ export default function Opt({
 
   function handleWritePermissionChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setWritePermission(event.target.value as WritePermission);
+  }
+
+  function handleManagerOnlyChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const nextIsManagerOnly = event.target.checked;
+    setIsManagerOnly(nextIsManagerOnly);
+
+    if (nextIsManagerOnly) {
+      setWritePermission('manager');
+      setPostType('none');
+    }
   }
 
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -391,6 +403,7 @@ export default function Opt({
           isActive: true,
           markdownStatus,
           writePermission,
+          isManagerOnly,
           postPerPage,
           postType: canUsePostType ? postType : 'none',
         }),
@@ -463,22 +476,6 @@ export default function Opt({
                           <i style={{ width: 14, height: 14, marginRight: 8 }} />
                         )}
                         일반 게시판
-                      </MenuItem>
-                      <MenuItem value="gallery">
-                        {boardType === 'gallery' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        갤러리 게시판
-                      </MenuItem>
-                      <MenuItem value="youtube">
-                        {boardType === 'youtube' ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        유튜브 영상 공유 게시판
                       </MenuItem>
                       <MenuItem value="feed">
                         {boardType === 'feed' ? (
@@ -615,12 +612,18 @@ export default function Opt({
                     </TextField>
                   </Stack>
 
+                  <FormControlLabel
+                    control={<IOSSwitch sx={{ m: 1 }} checked={isManagerOnly} onChange={handleManagerOnlyChange} />}
+                    label="매니저 전용 게시판"
+                  />
+
                   <Stack gap={1}>
                     <Typography variant="subtitle2">글 작성 권한 *</Typography>
                     <TextField
                       select
                       value={writePermission}
                       onChange={handleWritePermissionChange}
+                      disabled={isManagerOnly}
                       fullWidth
                       size="small"
                     >

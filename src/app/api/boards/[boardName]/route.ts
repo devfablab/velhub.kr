@@ -486,7 +486,33 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const boardData = board.data as BoardRow;
-    const canWritePost = canWriteBlogPost(rhizome.data.site_type, session.case);
+    let canWritePost = canWriteBlogPost(rhizome.data.site_type, session.case);
+    if (rhizome.data.site_type === 'community' && boardData.write_permission === 'manager') {
+      let canAccessManagerBoard = session.case === 'admin' || session.case === 'staff';
+
+      if (!canAccessManagerBoard) {
+        try {
+          const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+          canAccessManagerBoard = access.actor.communityRoles.some((role) =>
+            [
+              'owner',
+              'community-manager',
+              'board-manager',
+              'board-general-manager',
+              'board-assistant-manager',
+            ].includes(role),
+          );
+        } catch {
+          canAccessManagerBoard = false;
+        }
+      }
+
+      if (!canAccessManagerBoard) {
+        return Response.json({ error: '매니저 전용 게시판입니다.' }, { status: 403 });
+      }
+
+      canWritePost = true;
+    }
     const isManageContentsRequest = requestUrl.searchParams.get('manageContents') === 'true';
     let canManageContents = session.case === 'staff' || session.case === 'admin';
     let canManageBoardSettings = session.case === 'staff' || session.case === 'admin';

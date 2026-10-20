@@ -84,7 +84,7 @@ export async function GET(request: Request) {
     let boardsQuery = supabaseAdmin
       .from('boards')
       .select(
-        'id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id, created_at, post_per_page',
+        'id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id, created_at, post_per_page, write_permission',
       )
       .eq('site_id', rhizome.data.id)
       .order('sort_order', { ascending: true });
@@ -99,7 +99,32 @@ export async function GET(request: Request) {
       return Response.json({ error: '게시판을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boardRows = (boards.data ?? []) as BoardRow[];
+    let boardRows = (boards.data ?? []) as BoardRow[];
+
+    if (rhizome.data.site_type === 'community' && boardRows.some((board) => board.write_permission === 'manager')) {
+      let canAccessManagerBoards = session.case === 'admin' || session.case === 'staff';
+
+      if (!canAccessManagerBoards) {
+        try {
+          const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+          canAccessManagerBoards = access.actor.communityRoles.some((role) =>
+            [
+              'owner',
+              'community-manager',
+              'board-manager',
+              'board-general-manager',
+              'board-assistant-manager',
+            ].includes(role),
+          );
+        } catch {
+          canAccessManagerBoards = false;
+        }
+      }
+
+      if (!canAccessManagerBoards) {
+        boardRows = boardRows.filter((board) => board.write_permission !== 'manager');
+      }
+    }
 
     const currentBoardCount = boardRows.filter((board) => board.board_type !== 'page').length;
 

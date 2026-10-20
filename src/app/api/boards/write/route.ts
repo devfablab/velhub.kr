@@ -27,7 +27,12 @@ type CommunityManageRoleRow = {
   role: string | null;
 };
 
-const COMMUNITY_MANAGER_ROLES = ['community-manager', 'board-manager'] as const;
+const COMMUNITY_MANAGER_ROLES = [
+  'community-manager',
+  'board-manager',
+  'board-general-manager',
+  'board-assistant-manager',
+] as const;
 
 function normalizeWritePermission(value: string | null | undefined): WritePermission {
   const normalizedValue = normalizeText(value);

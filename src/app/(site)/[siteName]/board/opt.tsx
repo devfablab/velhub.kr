@@ -321,7 +321,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
           isSearchMode ? (
             <ScreenState>검색 결과가 없습니다.</ScreenState>
           ) : (
-            <ScreenState>등록된 게시글이 없습니다.</ScreenState>
+            <ScreenState>첫 글을 써보세요!</ScreenState>
           )
         ) : isSearchMode ? (
           <div className="paper">

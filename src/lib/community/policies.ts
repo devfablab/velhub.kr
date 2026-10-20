@@ -231,8 +231,10 @@ export async function assertCommunityBoardWritePermission({
     throw new Error('커뮤니티 매니저 권한을 확인하지 못했습니다.');
   }
 
-  const canWrite = (managerRoleResult.data as CommunityManageRoleRow[]).some(
-    (managerRole) => managerRole.role === 'community-manager' || managerRole.role === 'board-manager',
+  const canWrite = (managerRoleResult.data as CommunityManageRoleRow[]).some((managerRole) =>
+    ['community-manager', 'board-manager', 'board-general-manager', 'board-assistant-manager'].includes(
+      managerRole.role ?? '',
+    ),
   );
 
   if (!canWrite) {

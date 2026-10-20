@@ -165,8 +165,8 @@ export default function Opt({
   }, [errorMessage]);
 
   const canUsePostType = useMemo(() => {
-    return boardType === 'basic' || boardType === 'gallery';
-  }, [boardType]);
+    return initialBoard?.write_permission !== 'manager' && (boardType === 'basic' || boardType === 'gallery');
+  }, [boardType, initialBoard?.write_permission]);
 
   function resetBoardLabelCheck() {
     setCheckedBoardLabel('');
@@ -609,27 +609,29 @@ export default function Opt({
                   </TextField>
                 </Stack>
 
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">글 작성 권한 *</Typography>
-                  <TextField
-                    select
-                    value={writePermission}
-                    onChange={handleWritePermissionChange}
-                    fullWidth
-                    size="small"
-                  >
-                    {WRITE_PERMISSION_OPTIONS.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {writePermission === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Stack>
+                {initialBoard?.write_permission !== 'manager' ? (
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">글 작성 권한 *</Typography>
+                    <TextField
+                      select
+                      value={writePermission}
+                      onChange={handleWritePermissionChange}
+                      fullWidth
+                      size="small"
+                    >
+                      {WRITE_PERMISSION_OPTIONS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {writePermission === option.value ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+                ) : null}
 
                 {canUsePostType ? (
                   <>

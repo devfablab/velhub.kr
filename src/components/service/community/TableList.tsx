@@ -92,7 +92,7 @@ export default function TableList({ writeHref }: Props) {
   const initialData = useSiteInitialData();
   const [currentBoards, setCurrentBoards] = useState<BoardItem[]>(() => initialData?.boards ?? []);
   const boards = currentBoards.filter((board) => board.is_active === true && board.board_type !== 'page');
-  const writeBoards = useMemo(() => initialData?.writeBoards ?? [], [initialData?.writeBoards]);
+  const [writeBoards, setWriteBoards] = useState<BoardItem[]>(() => initialData?.writeBoards ?? []);
   const [alertMessage, setAlertMessage] = useState('');
 
   useEffect(() => {
@@ -112,6 +112,20 @@ export default function TableList({ writeHref }: Props) {
 
         if (isMounted && Array.isArray(data.boards)) {
           setCurrentBoards(data.boards);
+        }
+      })
+      .catch(() => undefined);
+
+    void fetch(`/api/boards/write?siteName=${encodeURIComponent(siteName)}`)
+      .then(async (response) => {
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { boards?: BoardItem[] };
+
+        if (isMounted && Array.isArray(data.boards)) {
+          setWriteBoards(data.boards);
         }
       })
       .catch(() => undefined);

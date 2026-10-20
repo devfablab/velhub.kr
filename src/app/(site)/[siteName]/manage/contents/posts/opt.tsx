@@ -599,13 +599,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setErrorMessage('');
       setIsOrderingBoards(true);
 
-      const response = await fetch(`/api/boards/${boardName}/order?siteName=${siteName}`, {
+      const response = await fetch(`/api/boards/${boards[0].board_key}/order`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
+          siteName,
           boards: boards.map((board, index) => ({
             boardName: board.board_key,
             sortOrder: index + 1,

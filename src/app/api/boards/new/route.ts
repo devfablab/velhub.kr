@@ -11,6 +11,7 @@ type RequestBody = {
   isActive: boolean | null;
   markdownStatus: string | null;
   writePermission?: string | null;
+  isManagerOnly?: boolean | null;
   postPerPage?: number | null;
   postType?: 'none' | 'prefix' | 'series' | null;
 };
@@ -31,7 +32,7 @@ function hasInvalidBoardKeyCharacters(value: string) {
 }
 
 function isAllowedBoardType(value: string) {
-  return value === 'basic' || value === 'gallery' || value === 'youtube' || value === 'feed';
+  return value === 'basic' || value === 'feed';
 }
 
 function isAllowedMarkdownStatus(value: string) {
@@ -81,10 +82,11 @@ export async function POST(request: Request) {
     const boardLabel = normalizeText(requestBody.boardLabel);
     const boardType = normalizeText(requestBody.boardType).toLowerCase();
     const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_off';
-    const writePermission = normalizeText(requestBody.writePermission) || 'member';
+    const isManagerOnly = requestBody.isManagerOnly === true;
+    const writePermission = isManagerOnly ? 'manager' : normalizeText(requestBody.writePermission) || 'member';
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
     const postPerPage = normalizePostPerPage(requestBody.postPerPage);
-    const postType = requestBody.postType ?? 'none';
+    const postType = isManagerOnly ? 'none' : (requestBody.postType ?? 'none');
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });

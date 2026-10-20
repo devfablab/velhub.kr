@@ -428,10 +428,18 @@ export default function Opt({
       >
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper page-error">
-              <ServiceErrorIcon />
-              <p>{errorMessage}</p>
-            </div>
+            <ScreenState
+              kind="error"
+              action={
+                errorMessage === '매니저 전용 게시판입니다.' ? (
+                  <Anchor className="button medium action" href={`/${siteName}`}>
+                    홈 이동
+                  </Anchor>
+                ) : null
+              }
+            >
+              {errorMessage}
+            </ScreenState>
           </div>
         </div>
       </Container>
@@ -646,7 +654,7 @@ export default function Opt({
             isSearchMode ? (
               <div className="paper paper-error">검색 결과가 없습니다.</div>
             ) : (
-              <ScreenState>등록된 게시글이 없습니다.</ScreenState>
+              <ScreenState>첫 글을 써보세요!</ScreenState>
             )
           ) : isSearchMode ? (
             <div className="paper">
@@ -1081,7 +1089,7 @@ export default function Opt({
             </nav>
           ) : null}
 
-          {canWritePost ? (
+          {canWritePost && (!isCommunity || isMobile) ? (
             isMobile ? (
               <FabNew isCommunity={isCommunity} />
             ) : (
