@@ -612,11 +612,18 @@ export default function Opt({
                     </TextField>
                   </Stack>
 
-                  <FormControlLabel
-                    control={<IOSSwitch sx={{ m: 1 }} checked={isManagerOnly} onChange={handleManagerOnlyChange} />}
-                    label="매니저 전용 게시판"
-                  />
-
+                  <Stack gap={0}>
+                    <FormControlLabel
+                      control={<IOSSwitch sx={{ m: 1 }} checked={isManagerOnly} onChange={handleManagerOnlyChange} />}
+                      label="매니저 전용 게시판"
+                    />
+                    {isManagerOnly ? (
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>운영자와 매니저만 게시판을 이용하실 수 있어요</span>
+                      </p>
+                    ) : null}
+                  </Stack>
                   <Stack gap={1}>
                     <Typography variant="subtitle2">글 작성 권한 *</Typography>
                     <TextField
