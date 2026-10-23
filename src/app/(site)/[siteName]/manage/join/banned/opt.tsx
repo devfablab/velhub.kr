@@ -218,7 +218,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   return (
-    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
+    <Container pageTitle="가입 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
@@ -245,19 +245,27 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </div>
 
           <Stack gap={1.5}>
-            <Stack direction="row" gap={1.5} alignItems="center" justifyContent="space-between" sx={{ p: 2.5, pb: 0 }}>
+            <Stack
+              direction={isMobile ? 'column' : 'row'}
+              gap={isMobile ? undefined : 1.5}
+              alignItems={isMobile ? undefined : 'center'}
+              justifyContent={isMobile ? undefined : 'space-between'}
+              sx={{ p: isMobile ? 1.5 : 2.5, pb: 0 }}
+            >
               <Stack direction="row" gap={0.5} alignItems="center">
                 <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
                 <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
               </Stack>
-              <button
-                type="button"
-                className="button small action"
-                onClick={handleOpenDialog}
-                disabled={isSubmitting || selectedUserIds.length === 0}
-              >
-                가입불가 해제
-              </button>
+              <Stack direction="row" gap={1.5} sx={{ pl: isMobile ? 1.5 : undefined }}>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={handleOpenDialog}
+                  disabled={isSubmitting || selectedUserIds.length === 0}
+                >
+                  가입불가 해제
+                </button>
+              </Stack>
             </Stack>
 
             <div className={`paper ${styles.paper}`}>

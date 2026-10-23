@@ -111,6 +111,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [messageUser, setMessageUser] = useState<BlockedUserRow | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMinimal = useMediaQuery(theme.breakpoints.down(572));
 
   function showError(message: string, title: string | null = '멤버 관리') {
     setErrorMessage(message);
@@ -125,9 +128,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setErrorDialogTitle(title);
     setIsErrorDialogOpen(true);
   }
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const loadUsers = useCallback(async () => {
     const response = await fetch(`/api/manage/members/blocked?siteName=${siteName}`, {
@@ -361,7 +361,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </div>
 
           <Stack gap={1.5}>
-            <Stack direction="row" justifyContent="space-between" sx={{ p: 2.5, pb: 0 }}>
+            <Stack
+              direction={isMobile ? 'column' : 'row'}
+              gap={isMobile ? undefined : 1.5}
+              alignItems={isMobile ? undefined : 'center'}
+              justifyContent={isMobile ? undefined : 'space-between'}
+              sx={{ p: isMobile ? 1.5 : 2.5, pb: 0 }}
+            >
               <Stack direction="row" gap={0.5} alignItems="center">
                 <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
                 <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
@@ -398,43 +404,52 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {filteredUsers.map((user) => {
                 const statusChip = getBlockedUserStatusChip(user);
                 const blockTermEnded = hasBlockTermEnded(user.blockTerm);
-
                 return (
                   <div key={user.userId} className={styles['content-items']}>
-                    <Stack gap={1} direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Checkbox
-                        checked={selectedUserIds.includes(user.userId)}
-                        onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
-                        size="small"
-                      />
-                      <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.nickname} />
-                      <Stack gap={1}>
-                        <div className={styles.summary}>
-                          <span>{user.nickname}</span>
-                        </div>
-                        <div className={styles.status}>
-                          <div className={styles.info}>
-                            <p>
-                              {user.blockedBy} 님이 {user.blockedAt ? formatDate(user.blockedAt) : ''}에 활동정지
-                              처리함.
-                            </p>
-                            <p className={styles.reason}>{user.blockReason}</p>
+                    <Stack
+                      direction={isMinimal ? 'column' : 'row'}
+                      justifyContent={isMinimal ? undefined : 'space-between'}
+                      gap={isMinimal ? 2 : undefined}
+                    >
+                      <Stack direction="row" alignItems="flex-start" gap={1}>
+                        <Checkbox
+                          checked={selectedUserIds.includes(user.userId)}
+                          onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
+                          size="small"
+                        />
+                        <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.nickname} />
+                        <Stack gap={1}>
+                          <div className={styles.summary}>
+                            <span>{user.nickname}</span>
                           </div>
-                          <div className={styles.info}>
-                            <p>
-                              {user.blockTerm
-                                ? `${formatDate(user.blockTerm)}에 활동정지 ${blockTermEnded ? '해제됨.' : '해제 예정.'}`
-                                : '활동정지 해제가 결정되지 않았습니다.'}
-                            </p>
-                            {user.messageStatus ? (
-                              <button type="button" className="link-normal" onClick={() => setMessageUser(user)}>
-                                소명 내용 보기
-                              </button>
-                            ) : null}
+                          <div className={styles.status}>
+                            <div className={styles.info}>
+                              <p>
+                                {user.blockedBy} 님이 {user.blockedAt ? formatDate(user.blockedAt) : ''}에 활동정지
+                                처리함.
+                              </p>
+                              <p className={styles.reason}>{user.blockReason}</p>
+                            </div>
+                            <div className={styles.info}>
+                              <p>
+                                {user.blockTerm
+                                  ? `${formatDate(user.blockTerm)}에 활동정지 ${blockTermEnded ? '해제됨.' : '해제 예정.'}`
+                                  : '활동정지 해제가 결정되지 않았습니다.'}
+                              </p>
+                              {user.messageStatus ? (
+                                <button type="button" className="link-normal" onClick={() => setMessageUser(user)}>
+                                  소명 내용 보기
+                                </button>
+                              ) : null}
+                            </div>
                           </div>
+                        </Stack>
+                      </Stack>
+                      <Stack justifyContent="flex-end" direction="row">
+                        <div>
+                          <Chip label={statusChip.label} size="small" className={`chip ${statusChip.status}`} />
                         </div>
                       </Stack>
-                      <Chip label={statusChip.label} size="small" className={`chip ${statusChip.status}`} />
                     </Stack>
                   </div>
                 );

@@ -169,15 +169,15 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   const [inviteErrorMessage, setInviteErrorMessage] = useState('');
   const [inviteEmailError, setInviteEmailError] = useState('');
   const [pendingInviteEmailError, setPendingInviteEmailError] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMinimal = useMediaQuery(theme.breakpoints.down(572));
   const inviteErrorTitle =
     pendingInviteEmailError === '이미 초대된 멤버입니다.' || pendingInviteEmailError === '이미 가입한 팀원입니다.'
       ? '멤버 확인'
       : pendingInviteEmailError
         ? '초대 정보 확인'
         : null;
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   function showError(message: string, title: string | null) {
     setErrorMessage(message);
@@ -555,7 +555,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
           <div className={`paper ${styles.paper}`}>
             {sortedTeams.map((team) => (
               <div key={team.id} className={styles['content-items']}>
-                <Stack direction="row" justifyContent="space-between">
+                <Stack
+                  direction={isMinimal ? 'column' : 'row'}
+                  justifyContent={isMinimal ? undefined : 'space-between'}
+                  gap={isMinimal ? 2 : undefined}
+                >
                   <Stack direction="column">
                     <div className={`${styles.summary} ${styles['with-chip']}`}>
                       <p>
@@ -567,9 +571,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       <p>{formatDateTimeFull(team.approval_at)}부터 참여함</p>
                     </div>
                   </Stack>
-                  <Stack direction="column" gap={1}>
+                  <Stack justifyContent="flex-end" direction="row">
                     {!team.is_self ? (
-                      <>
+                      <div>
                         {getNextRole(team.role) ? (
                           <button
                             type="button"
@@ -588,7 +592,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                             {team.role === 'observer' ? '팀원으로 변경' : '차단'}
                           </button>
                         ) : null}
-                      </>
+                      </div>
                     ) : null}
                   </Stack>
                 </Stack>

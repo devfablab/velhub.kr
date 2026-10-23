@@ -42,13 +42,12 @@ export async function GET(request: Request) {
 
     const filteredMembers = members.filter((member) => {
       const nickname = normalizeText(member.nickname).toLowerCase();
-      const email = normalizeText(member.email).toLowerCase();
       const userName = normalizeText(member.userName).toLowerCase();
 
       return (
         (!isOwnerTransfer ||
           (member.rhizomeStigmaId !== access.actor.rhizomeStigmaId && member.userId !== access.rhizome.owner_id)) &&
-        (nickname.includes(keyword) || email.includes(keyword) || userName.includes(keyword))
+        (nickname.includes(keyword) || userName.includes(keyword))
       );
     });
 

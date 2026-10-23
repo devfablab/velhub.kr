@@ -409,14 +409,20 @@
     display: flex
     flex-direction: column
     justify-content: center
-    height: ds.rem(40)
+    min-height: ds.rem(40)
     font-size: ds.rem(14)
 
     &.with-chip
-      flex-direction: row
+      flex-direction: column
       justify-content: flex-start
-      align-items: center
-      gap: ds.rem(12)
+      align-items: flex-start
+      gap: ds.rem(3)
+
+      @include ds.mq(minSmall)
+        flex-direction: row
+        justify-content: flex-start
+        align-items: center
+        gap: ds.rem(12)
 
     span
       color: ds.$hex-secondary

@@ -486,7 +486,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
+      <Container pageTitle="가입 관리" pageBack={`/${siteName}/manage`} menu="join">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <Stack component="form" gap={3} onSubmit={handleSubmit}>

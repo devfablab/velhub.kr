@@ -98,6 +98,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMinimal = useMediaQuery(theme.breakpoints.down(572));
 
   const sortedInvites = useMemo(() => {
     return [...invites].sort((a, b) => {
@@ -250,7 +251,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   return (
-    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
+    <Container pageTitle="가입 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
@@ -265,17 +266,24 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <div className={`paper ${styles.paper}`}>
               {sortedInvites.map((invite) => (
                 <div key={invite.id} className={styles['content-items']}>
-                  <Stack direction="row" justifyContent="space-between">
+                  <Stack
+                    direction={isMinimal ? 'column' : 'row'}
+                    alignItems={isMinimal ? undefined : 'center'}
+                    justifyContent={isMinimal ? undefined : 'space-between'}
+                    gap={isMinimal ? 1.5 : undefined}
+                  >
                     <div className={styles.summary}>
                       <span>{maskEmail(invite.email)}</span>
                       <p>{formatDateTimeFull(invite.expires_at)}</p>
                     </div>
                     <div className={styles.buttons}>
-                      <Chip
-                        label={getInviteStatusLabel(invite.status)}
-                        size="small"
-                        className={`chip ${invite.status === 'pending' ? 'default' : invite.status === 'joined' ? 'success' : invite.status === 'expired' ? 'danger' : invite.status === 'cancelled' ? 'warning' : ''}`}
-                      />
+                      <div>
+                        <Chip
+                          label={getInviteStatusLabel(invite.status)}
+                          size="small"
+                          className={`chip ${invite.status === 'pending' ? 'default' : invite.status === 'joined' ? 'success' : invite.status === 'expired' ? 'danger' : invite.status === 'cancelled' ? 'warning' : ''}`}
+                        />
+                      </div>
                       <div>
                         {invite.status === 'pending' ? (
                           <button

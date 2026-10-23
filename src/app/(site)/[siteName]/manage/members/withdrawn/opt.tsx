@@ -136,6 +136,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [messageUser, setMessageUser] = useState<WithdrawnUserRow | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMinimal = useMediaQuery(theme.breakpoints.down(572));
 
   function showError(message: string, title: string | null = '멤버 관리') {
     setErrorMessage(message);
@@ -150,9 +153,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setErrorDialogTitle(title);
     setIsErrorDialogOpen(true);
   }
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const loadUsers = useCallback(async () => {
     const response = await fetch(`/api/manage/members/withdrawn?siteName=${siteName}`, {
@@ -446,7 +446,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
             ) : null}
           </div>
 
-          <Stack direction="row" justifyContent="space-between" gap={1.5} sx={{ p: 2.5, pb: 0 }}>
+          <Stack
+            direction={isMobile ? 'column' : 'row'}
+            gap={isMobile ? undefined : 1.5}
+            alignItems={isMobile ? undefined : 'center'}
+            justifyContent={isMobile ? undefined : 'space-between'}
+            sx={{ p: isMobile ? 1.5 : 2.5, pb: 0 }}
+          >
             <Stack direction="row" gap={0.5} alignItems="center">
               <Checkbox
                 checked={allFilteredSelected}
@@ -488,7 +494,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
             {filteredUsers.map((user) => {
               return (
                 <div key={user.userId} className={styles['content-items']}>
-                  <Stack gap={1} direction="row" justifyContent="space-between" alignItems="flex-start">
+                  <Stack
+                    direction={isMinimal ? 'column' : 'row'}
+                    justifyContent={isMinimal ? undefined : 'space-between'}
+                    gap={isMinimal ? 2 : undefined}
+                  >
                     <Stack gap={1} direction="row" alignItems="flex-start">
                       <Checkbox
                         checked={selectedUserIds.includes(user.userId)}
@@ -534,18 +544,22 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         </div>
                       </Stack>
                     </Stack>
-                    {user.restrictionType
-                      ? (() => {
-                          const messageStatusChip = getWithdrawnUserMessageStatusChip(user);
-                          return (
-                            <Chip
-                              label={messageStatusChip.label}
-                              size="small"
-                              className={`chip ${messageStatusChip.status}`}
-                            />
-                          );
-                        })()
-                      : null}
+                    <Stack justifyContent="flex-end" direction="row">
+                      <div>
+                        {user.restrictionType
+                          ? (() => {
+                              const messageStatusChip = getWithdrawnUserMessageStatusChip(user);
+                              return (
+                                <Chip
+                                  label={messageStatusChip.label}
+                                  size="small"
+                                  className={`chip ${messageStatusChip.status}`}
+                                />
+                              );
+                            })()
+                          : null}
+                      </div>
+                    </Stack>
                   </Stack>
                 </div>
               );

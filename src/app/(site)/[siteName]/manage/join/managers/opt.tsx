@@ -225,6 +225,7 @@ export default function Opt({
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [deletingIconId, setDeletingIconId] = useState('');
   const [dismissedActionError, setDismissedActionError] = useState('');
+  const isMinimal = useMediaQuery(theme.breakpoints.down(572));
   const selectedManager = useMemo(
     () => managers.find((manager) => manager.manageRoleId === selectedManagerRoleId) ?? null,
     [managers, selectedManagerRoleId],
@@ -850,33 +851,15 @@ export default function Opt({
 
       <Stack direction="column" gap={1}>
         <Stack sx={{ flexWrap: 'nowrap' }} direction="row" gap={3} alignItems="center">
-          <Stack gap={1} direction="row">
+          <Stack gap={1} direction="row" alignItems="center">
             <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
-              활동명
+              {selectedManager.nickname || selectedManager.userName}
             </Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-              {selectedManager.userName}
-            </Typography>
-          </Stack>
-          <Stack gap={1} direction="row">
-            <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
-              별명
-            </Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-              {selectedManager.nickname}
-            </Typography>
+            <Chip label={getRoleLabel(selectedManager.role)} size="small" />
           </Stack>
         </Stack>
 
         <Stack sx={{ flexWrap: 'nowrap' }} direction="row" gap={3} alignItems="center">
-          <Stack gap={1} direction="row">
-            <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
-              역할
-            </Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-              {getRoleLabel(selectedManager.role)}
-            </Typography>
-          </Stack>
           {selectedManager.boardLabel ? (
             <Stack gap={1} direction="row">
               <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
@@ -929,7 +912,7 @@ export default function Opt({
         </Stack>
       </Stack>
 
-      <Stack direction={isMobile ? 'column' : 'row'} gap={1} justifyContent={isMobile ? undefined : 'space-between'}>
+      <Stack direction="row" gap={1} justifyContent="space-between">
         {selectedManager.role !== 'board-general-manager' ? (
           <button
             type="button"
@@ -950,7 +933,7 @@ export default function Opt({
   ) : null;
 
   return (
-    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
+    <Container pageTitle="가입 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
@@ -987,9 +970,16 @@ export default function Opt({
               {managers.map((manager) => {
                 return (
                   <div key={manager.manageRoleId} className={styles['content-items']}>
-                    <Stack direction="row" justifyContent="space-between">
+                    <Stack
+                      direction={isMinimal ? 'column' : 'row'}
+                      justifyContent={isMinimal ? undefined : 'space-between'}
+                      gap={isMinimal ? 2 : undefined}
+                    >
                       <Stack gap={1} direction="row">
-                        <Avatar src={manager.avatarUrl || '/broken-image.jpg'} alt={manager.nickname || manager.userName} />
+                        <Avatar
+                          src={manager.avatarUrl || '/broken-image.jpg'}
+                          alt={manager.nickname || manager.userName}
+                        />
                         <Stack gap={1}>
                           <div className={`${styles.summary} ${styles['with-chip']}`}>
                             <span>{manager.nickname || manager.userName}</span>
@@ -1008,19 +998,23 @@ export default function Opt({
                           </div>
                         </Stack>
                       </Stack>
-                      <button
-                        className="button small normal"
-                        type="button"
-                        onClick={() => {
-                          setManagerEditErrorMessage('');
-                          setSelectedManagerRoleId(manager.manageRoleId);
-                          setMoveRole(manager.role);
-                          setMoveBoardId(manager.boardId ?? '');
-                          setIsManagerEditOpen(true);
-                        }}
-                      >
-                        역할 변경
-                      </button>
+                      <Stack justifyContent="flex-end" direction="row">
+                        <div>
+                          <button
+                            className="button small normal"
+                            type="button"
+                            onClick={() => {
+                              setManagerEditErrorMessage('');
+                              setSelectedManagerRoleId(manager.manageRoleId);
+                              setMoveRole(manager.role);
+                              setMoveBoardId(manager.boardId ?? '');
+                              setIsManagerEditOpen(true);
+                            }}
+                          >
+                            역할 변경
+                          </button>
+                        </div>
+                      </Stack>
                     </Stack>
                   </div>
                 );
@@ -1280,7 +1274,7 @@ export default function Opt({
                 <Stack component="form" gap={3} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
                   <Stack direction="row" gap={1} alignItems="center">
                     <TextField
-                      placeholder="별명 검색"
+                      placeholder="이름 검색"
                       value={searchKeyword}
                       onChange={handleSearchKeywordChange}
                       fullWidth
@@ -1317,9 +1311,7 @@ export default function Opt({
                                   }
                                 />
                               </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname || member.userName}
-                              </TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.nickname || member.userName}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
                                   ? '운영자'
@@ -1508,7 +1500,7 @@ export default function Opt({
                   ) : null}
                   <Stack direction="row" gap={1} alignItems="center" sx={{ paddingRight: '3px' }}>
                     <TextField
-                      placeholder="별명 검색"
+                      placeholder="이름 검색"
                       value={searchKeyword}
                       onChange={handleSearchKeywordChange}
                       fullWidth
@@ -1545,9 +1537,7 @@ export default function Opt({
                                   }
                                 />
                               </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname || member.userName}
-                              </TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.nickname || member.userName}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
                                   ? '운영자'

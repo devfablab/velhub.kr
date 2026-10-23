@@ -307,7 +307,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
         return previousValue;
       }
 
-      return selectableLevels[0].id;
+      return '';
     });
   }, [selectableLevels]);
 
@@ -984,7 +984,13 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                     또는
                   </Typography>
-                  <Select value={selectedLevelId} onChange={handleLevelSelectChange} size="small" fullWidth>
+                  <Select
+                    value={selectedLevelId}
+                    onChange={handleLevelSelectChange}
+                    size="small"
+                    fullWidth
+                    displayEmpty
+                  >
                     <MenuItem value="" disabled>
                       멤버등급 선택
                     </MenuItem>
@@ -1129,11 +1135,11 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
             <Stack gap={1.5}>
               <Stack sx={{ p: 0.5, pb: 0, pt: 0 }}>
                 <Stack
-                  direction="row"
-                  gap={1.5}
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{ p: 3.5, pt: 2.5, pb: 0 }}
+                  direction={isMobile ? 'column' : 'row'}
+                  gap={isMobile ? undefined : 1.5}
+                  alignItems={isMobile ? undefined : 'center'}
+                  justifyContent={isMobile ? undefined : 'space-between'}
+                  sx={{ p: isMobile ? 1.5 : 3.5, pt: 2.5, pb: 0 }}
                 >
                   <p className="alert warning">
                     <WarningAmberRoundedIcon />
@@ -1141,11 +1147,11 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                   </p>
                 </Stack>
                 <Stack
-                  direction="row"
-                  gap={1.5}
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{ p: 2.5, pt: 0, pb: 0 }}
+                  direction={isMobile ? 'column' : 'row'}
+                  gap={isMobile ? undefined : 1.5}
+                  alignItems={isMobile ? undefined : 'center'}
+                  justifyContent={isMobile ? undefined : 'space-between'}
+                  sx={{ p: isMobile ? 0.5 : 2.5, pt: 0, pb: 0 }}
                 >
                   <Stack direction="row" gap={0.5} alignItems="center">
                     <Checkbox
@@ -1156,9 +1162,11 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     />
                     <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
                   </Stack>
-                  <button type="button" className="button small action" onClick={() => setIsSearchOpen(true)}>
-                    멤버 검색
-                  </button>
+                  <Stack direction="row" gap={1.5} sx={{ pl: isMobile ? 1.5 : undefined }}>
+                    <button type="button" className="button small action" onClick={() => setIsSearchOpen(true)}>
+                      멤버 검색
+                    </button>
+                  </Stack>
                 </Stack>
               </Stack>
 
@@ -1172,10 +1180,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         onChange={(event) => handleToggleUser(user, event.currentTarget.checked)}
                         size="small"
                       />
-                      <Avatar
-                        src={user.avatar ?? '/default-avatar.png'}
-                        alt={getDisplayNickname(user)}
-                      />
+                      <Avatar src={user.avatar ?? '/default-avatar.png'} alt={getDisplayNickname(user)} />
                       <Stack gap={1}>
                         <div className={`${styles.summary} ${styles['with-chip']}`}>
                           <span>{getDisplayNickname(user)}</span>
