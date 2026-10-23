@@ -16,6 +16,10 @@ type RequestBody = {
   postType?: 'none' | 'prefix' | 'series' | null;
 };
 
+type BoardType = 'basic' | 'feed';
+type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
+type WritePermission = 'member' | 'manager';
+
 function normalizeBoardKey(rawValue: string | null | undefined) {
   return (rawValue ?? '')
     .trim()
@@ -31,15 +35,15 @@ function hasInvalidBoardKeyCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
 
-function isAllowedBoardType(value: string) {
+function isAllowedBoardType(value: string): value is BoardType {
   return value === 'basic' || value === 'feed';
 }
 
-function isAllowedMarkdownStatus(value: string) {
+function isAllowedMarkdownStatus(value: string): value is MarkdownStatus {
   return value === 'markdown_default' || value === 'markdown_on' || value === 'markdown_off';
 }
 
-function isAllowedWritePermission(value: string) {
+function isAllowedWritePermission(value: string): value is WritePermission {
   return value === 'member' || value === 'manager';
 }
 
@@ -128,11 +132,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '말머리/연재 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (boardType === 'gallery' && postType === 'prefix') {
-      return Response.json({ error: '갤러리 게시판에서는 말머리를 설정할 수 없습니다.' }, { status: 400 });
-    }
-
-    if (boardType !== 'basic' && boardType !== 'gallery' && postType !== 'none') {
+    if (boardType !== 'basic' && postType !== 'none') {
       return Response.json({ error: '해당 게시판 종류에서는 말머리와 연재를 설정할 수 없습니다.' }, { status: 400 });
     }
 
