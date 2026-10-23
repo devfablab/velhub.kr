@@ -6,18 +6,15 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
+  Avatar,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Drawer,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
   useMediaQuery,
@@ -29,12 +26,13 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import {
   type MemberRestrictionMessageStatus,
-  memberRestrictionMessageStatusLabels,
+  getStaffRestrictionMessageStatusLabel,
 } from '@/lib/users/memberRestrictionMessages';
 import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -43,7 +41,9 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 
 type BlockedUserRow = {
   userId: string;
+  avatarUrl: string | null;
   nickname: string;
+  userName: string;
   blockReason: string;
   blockedAt: string | null;
   blockTerm: string | null;
@@ -60,6 +60,34 @@ export type BlockedUsersResponse = {
 type ActionType = 'unblock' | 'kick' | 'ban' | null;
 
 type OptProps = { initialData: BlockedUsersResponse | null; initialError: string };
+
+function hasBlockTermEnded(blockTerm: string | null) {
+  if (!blockTerm) return false;
+
+  const termDate = new Date(blockTerm);
+  if (Number.isNaN(termDate.getTime())) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  termDate.setHours(0, 0, 0, 0);
+
+  return termDate <= today;
+}
+
+function getBlockedUserStatusChip(user: Pick<BlockedUserRow, 'blockTerm' | 'messageStatus'>) {
+  if (hasBlockTermEnded(user.blockTerm)) {
+    return { label: '활동정지 해제됨', status: 'default' } as const;
+  }
+
+  if (!user.messageStatus) {
+    return { label: '소명 미제출', status: 'danger' } as const;
+  }
+
+  return {
+    label: getStaffRestrictionMessageStatusLabel(user.messageStatus),
+    status: user.messageStatus === 'staff_replied' ? 'success' : 'warning',
+  } as const;
+}
 
 export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
@@ -123,7 +151,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return users;
     }
 
-    return users.filter((user) => normalizeText(user.nickname).toLowerCase().includes(keyword));
+    return users.filter((user) => {
+      return (
+        normalizeText(user.nickname).toLowerCase().includes(keyword) ||
+        normalizeText(user.userName).toLowerCase().includes(keyword)
+      );
+    });
   }, [appliedKeyword, users]);
 
   const allFilteredSelected =
@@ -315,34 +348,30 @@ export default function Opt({ initialData, initialError }: OptProps) {
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" gap={1.5} alignItems="center">
               <TextField
-                placeholder="별명 검색"
+                placeholder="이름 검색"
                 value={nicknameKeyword}
                 onChange={handleNicknameKeywordChange}
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch} aria-label="별명으로 검색">
+              <button type="button" className="button medium action" onClick={handleSearch} aria-label="이름으로 검색">
                 <SearchRoundedIcon />
               </button>
             </Stack>
           </div>
 
           <Stack gap={1.5}>
-            <Stack direction="row" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
-              <button
-                type="button"
-                className="button small action"
-                onClick={() => handleOpenActionDialog('unblock')}
-                disabled={isActionSubmitting}
-              >
-                활동 정지 해제
-              </button>
-              <Stack direction="row" gap={1.5} justifyContent="space-between">
+            <Stack direction="row" justifyContent="space-between" sx={{ p: 2.5, pb: 0 }}>
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
+                <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
+              </Stack>
+              <Stack direction="row" gap={1.5} alignItems="center">
                 <button
                   type="button"
                   className="button small warning"
                   onClick={() => handleOpenActionDialog('kick')}
-                  disabled={isActionSubmitting}
+                  disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
                   강제 탈퇴
                 </button>
@@ -350,73 +379,68 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   type="button"
                   className="button small warning"
                   onClick={() => handleOpenActionDialog('ban')}
-                  disabled={isActionSubmitting}
+                  disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
                   가입 불가
+                </button>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => handleOpenActionDialog('unblock')}
+                  disabled={isActionSubmitting || selectedUserIds.length === 0}
+                >
+                  활동 정지 해제
                 </button>
               </Stack>
             </Stack>
 
             <div className={`paper ${styles.paper}`}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
-                    </TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 사유</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리일</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 해제일</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리자</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 상태</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 메시지</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.userId}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedUserIds.includes(user.userId)}
-                          onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.nickname}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                        {user.blockReason}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.blockedAt ? formatDate(user.blockedAt) : ''}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.blockTerm ? formatDate(user.blockTerm) : ''}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.blockedBy}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.messageStatus ? memberRestrictionMessageStatusLabels[user.messageStatus] : '도착 전'}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.messageStatus ? (
-                          <button type="button" className="button small action" onClick={() => setMessageUser(user)}>
-                            메시지 보기
-                          </button>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+              {filteredUsers.map((user) => {
+                const statusChip = getBlockedUserStatusChip(user);
+                const blockTermEnded = hasBlockTermEnded(user.blockTerm);
 
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center">
-                        검색 결과가 없습니다.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
+                return (
+                  <div key={user.userId} className={styles['content-items']}>
+                    <Stack gap={1} direction="row" justifyContent="space-between" alignItems="flex-start">
+                      <Checkbox
+                        checked={selectedUserIds.includes(user.userId)}
+                        onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
+                        size="small"
+                      />
+                      <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.nickname} />
+                      <Stack gap={1}>
+                        <div className={styles.summary}>
+                          <span>{user.nickname}</span>
+                        </div>
+                        <div className={styles.status}>
+                          <div className={styles.info}>
+                            <p>
+                              {user.blockedBy} 님이 {user.blockedAt ? formatDate(user.blockedAt) : ''}에 활동정지
+                              처리함.
+                            </p>
+                            <p className={styles.reason}>{user.blockReason}</p>
+                          </div>
+                          <div className={styles.info}>
+                            <p>
+                              {user.blockTerm
+                                ? `${formatDate(user.blockTerm)}에 활동정지 ${blockTermEnded ? '해제됨.' : '해제 예정.'}`
+                                : '활동정지 해제가 결정되지 않았습니다.'}
+                            </p>
+                            {user.messageStatus ? (
+                              <button type="button" className="link-normal" onClick={() => setMessageUser(user)}>
+                                소명 내용 보기
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </Stack>
+                      <Chip label={statusChip.label} size="small" className={`chip ${statusChip.status}`} />
+                    </Stack>
+                  </div>
+                );
+              })}
+
+              {filteredUsers.length === 0 ? <ScreenState>검색 결과가 없습니다.</ScreenState> : null}
             </div>
           </Stack>
 

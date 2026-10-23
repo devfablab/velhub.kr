@@ -407,7 +407,7 @@ async function chargeDue(request: Request): Promise<Response> {
       });
 
       if (!subscription.owner_user_id) {
-        console.error('정산 대상 오너 정보가 없습니다.');
+        console.error('정산 대상 운영자 정보가 없습니다.');
 
         return Response.json({
           ok: false,

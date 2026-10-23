@@ -3,6 +3,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
+import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -30,6 +31,7 @@ type StigmaRow = {
   id: string;
   email: string | null;
   payment_email: string | null;
+  avatar: string | null;
   user_name: string | null;
   withdrawal_status?: string | null;
 };
@@ -293,7 +295,7 @@ export async function GET(request: Request) {
       stigmaIds.length > 0
         ? await access.supabaseAdmin
             .from('stigmas')
-            .select('id, email, payment_email, user_name, withdrawal_status')
+            .select('id, email, payment_email, avatar, user_name, withdrawal_status')
             .in('id', stigmaIds)
         : { data: [], error: null };
 
@@ -323,6 +325,7 @@ export async function GET(request: Request) {
 
         return {
           userId: membership.user_id,
+          avatarUrl: getStigmaAvatarUrl(stigma?.avatar),
           email: decryptNullable(stigma?.payment_email) || decryptNullable(stigma?.email) || '',
           userName: decryptNullable(stigma?.user_name) || '',
           nickname: getApplicantNickname(membership.nickname, stigma?.user_name),

@@ -4,6 +4,7 @@ import { loadRestrictionLastSenderMap } from '@/lib/users/memberRestrictionMessa
 import {
   decryptNullable,
   getStaffMembersAccess,
+  getStigmaAvatarUrl,
   getStigmaDisplayName,
   getStigmasByIds,
   getWithdrawnMemberships,
@@ -80,17 +81,19 @@ export async function GET(request: Request) {
       users: membershipResult.memberships.map((membership) => {
         const typedMembership = membership as MembershipRow;
         const targetUser = stigmaMap.get(typedMembership.user_id) ?? null;
-        const email =
-          decryptNullable(targetUser?.payment_email ?? null) || decryptNullable(targetUser?.email ?? null) || '';
         const nickname = normalizeText(typedMembership.nickname);
-        const emailWithNickname = nickname ? `${email} (${nickname})` : email;
+        const userName = decryptNullable(targetUser?.user_name ?? null) || '';
+        const displayName = nickname || userName;
 
         if (typedMembership.cleared_at) {
           const clearedByUser = typedMembership.cleared_by ? (stigmaMap.get(typedMembership.cleared_by) ?? null) : null;
 
           return {
             userId: typedMembership.user_id,
-            displayName: emailWithNickname,
+            avatarUrl: getStigmaAvatarUrl(targetUser?.avatar),
+            nickname,
+            userName,
+            displayName,
             reason: normalizeText(typedMembership.clear_reason) || '',
             processedAt: typedMembership.cleared_at,
             processedBy: getStigmaDisplayName(clearedByUser),
@@ -105,7 +108,10 @@ export async function GET(request: Request) {
 
           return {
             userId: typedMembership.user_id,
-            displayName: emailWithNickname,
+            avatarUrl: getStigmaAvatarUrl(targetUser?.avatar),
+            nickname,
+            userName,
+            displayName,
             reason: normalizeText(typedMembership.ban_reason) || '',
             processedAt: typedMembership.banned_at,
             processedBy: getStigmaDisplayName(bannedByUser),
@@ -121,7 +127,10 @@ export async function GET(request: Request) {
 
           return {
             userId: typedMembership.user_id,
-            displayName: emailWithNickname,
+            avatarUrl: getStigmaAvatarUrl(targetUser?.avatar),
+            nickname,
+            userName,
+            displayName,
             reason: normalizeText(typedMembership.kick_reason) || '',
             processedAt: typedMembership.kicked_at,
             processedBy: getStigmaDisplayName(kickedByUser),
@@ -134,10 +143,13 @@ export async function GET(request: Request) {
 
         return {
           userId: typedMembership.user_id,
-          displayName: emailWithNickname,
+          avatarUrl: getStigmaAvatarUrl(targetUser?.avatar),
+          nickname,
+          userName,
+          displayName,
           reason: normalizeText(typedMembership.withdraw_reason) || '',
           processedAt: typedMembership.withdrawn_at ?? null,
-          processedBy: nickname || email,
+          processedBy: nickname || userName,
           type: '임의탈퇴',
           restrictionType: null,
           messageStatus: null,

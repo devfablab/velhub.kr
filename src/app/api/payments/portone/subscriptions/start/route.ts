@@ -375,11 +375,11 @@ async function getOwnerStigma({ supabaseAdmin, ownerId }: { supabaseAdmin: Supab
   const ownerStigmaResult = await supabaseAdmin.from('stigmas').select('id, user_id').eq('id', ownerId).maybeSingle();
 
   if (ownerStigmaResult.error) {
-    throw new Error('사이트 오너 정보를 확인하지 못했습니다.');
+    throw new Error('사이트 운영자 정보를 확인하지 못했습니다.');
   }
 
   if (!ownerStigmaResult.data) {
-    throw new Error('사이트 오너 정보를 찾을 수 없습니다.');
+    throw new Error('사이트 운영자 정보를 찾을 수 없습니다.');
   }
 
   return ownerStigmaResult.data as OwnerStigmaRow;

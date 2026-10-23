@@ -682,6 +682,18 @@ a, button, select, input
     &:hover, &:focus-visible
       box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
+  &.normal
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    background-color: transparent
+    color: ds.$hex-secondary
+
+    html[data-theme="yellow-dark"] &
+      border: 1px solid rgba(ds.$rgb-tertiary, .5)
+      color: ds.$hex-light
+
+    &:hover, &:focus-visible
+      box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .1)
+
   &.close
     border: 1px solid transparent
     background-color: transparent
@@ -1546,6 +1558,17 @@ html[data-site-type='blog']
   padding: 0
 
 .MuiChip-root.chip
+  &.another
+    border-radius: ds.rem(3)!important
+    @include ds.fw(pre, 500)
+
+  &.outlined
+    background-color: transparent!important
+    color: rgba(ds.$rgb-secondary, .7)!important
+
+    html[data-theme="yellow-dark"] &
+      color: rgba(ds.$rgb-light, .7)!important
+
   &.default
     background-color: rgba(ds.$rgb-tertiary, .2)
     color: ds.$hex-secondary
@@ -1554,6 +1577,12 @@ html[data-site-type='blog']
       background-color: rgba(ds.$rgb-tertiary, .5)
       color: ds.$hex-light
 
+    &.outlined
+      border: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
   &.success
     background-color: ds.$hex-accent
     color: ds.$hex-white
@@ -1561,9 +1590,19 @@ html[data-site-type='blog']
     html[data-theme="yellow-dark"] &
       color: ds.$hex-black
 
+    &.outlined
+      border: 1px solid ds.$hex-accent
+
   &.warning
     background-color: ds.$hex-warning
     color: ds.$hex-white
 
-    html[data-theme="yellow-dark"] &
-      color: ds.$hex-black
+    &.outlined
+      border: 1px solid ds.$hex-warning
+
+  &.danger
+    background-color: rgba(ds.$rgb-secondary, .7)
+    color: ds.$hex-white
+
+    &.outlined
+      border: 1px solid rgba(ds.$rgb-secondary, .7)

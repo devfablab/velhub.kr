@@ -6,17 +6,13 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Drawer,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
   useMediaQuery,
@@ -66,11 +62,11 @@ function getInviteStatusLabel(status: string) {
   }
 
   if (status === 'expired') {
-    return '만료';
+    return '초대장 만료됨';
   }
 
   if (status === 'cancelled') {
-    return '취소';
+    return '취소완료';
   }
 
   return status;
@@ -266,23 +262,21 @@ export default function Opt({ initialData, initialError }: OptProps) {
           {sortedInvites.length === 0 ? (
             <ScreenState>초대 목록이 없습니다.</ScreenState>
           ) : (
-            <div className={`paper paper-p0 ${styles.paper}`}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>초대 이메일</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
-                    <TableCell>유효일</TableCell>
-                    <TableCell />
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {sortedInvites.map((invite) => (
-                    <TableRow key={invite.id}>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{maskEmail(invite.email)}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
-                      <TableCell align="right">
+            <div className={`paper ${styles.paper}`}>
+              {sortedInvites.map((invite) => (
+                <div key={invite.id} className={styles['content-items']}>
+                  <Stack direction="row" justifyContent="space-between">
+                    <div className={styles.summary}>
+                      <span>{maskEmail(invite.email)}</span>
+                      <p>{formatDateTimeFull(invite.expires_at)}</p>
+                    </div>
+                    <div className={styles.buttons}>
+                      <Chip
+                        label={getInviteStatusLabel(invite.status)}
+                        size="small"
+                        className={`chip ${invite.status === 'pending' ? 'default' : invite.status === 'joined' ? 'success' : invite.status === 'expired' ? 'danger' : invite.status === 'cancelled' ? 'warning' : ''}`}
+                      />
+                      <div>
                         {invite.status === 'pending' ? (
                           <button
                             type="button"
@@ -292,11 +286,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                             취소
                           </button>
                         ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                    </div>
+                  </Stack>
+                </div>
+              ))}
             </div>
           )}
 

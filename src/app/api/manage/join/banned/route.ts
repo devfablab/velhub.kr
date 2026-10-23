@@ -3,6 +3,7 @@ import {
   decryptNullable,
   getBannedMemberships,
   getStaffMembersAccess,
+  getStigmaAvatarUrl,
   getStigmaDisplayName,
   getStigmasByIds,
 } from '@/lib/users/utils';
@@ -62,13 +63,15 @@ export async function GET(request: Request) {
         const typedMembership = membership as MembershipRow;
         const bannedUser = stigmaMap.get(typedMembership.user_id) ?? null;
         const bannedByUser = typedMembership.banned_by ? (stigmaMap.get(typedMembership.banned_by) ?? null) : null;
-        const email =
-          decryptNullable(bannedUser?.payment_email ?? null) || decryptNullable(bannedUser?.email ?? null) || '';
         const nickname = normalizeText(typedMembership.nickname);
-        const displayName = nickname ? `${email} (${nickname})` : email;
+        const userName = decryptNullable(bannedUser?.user_name ?? null) || '';
+        const displayName = nickname || userName;
 
         return {
           userId: typedMembership.user_id,
+          avatarUrl: getStigmaAvatarUrl(bannedUser?.avatar),
+          nickname,
+          userName,
           displayName,
           reason: normalizeText(typedMembership.ban_reason) || '',
           processedAt: typedMembership.banned_at ?? null,

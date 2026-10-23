@@ -7,7 +7,9 @@ import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
+  Avatar,
   Box,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -26,8 +28,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDateTimeDetail } from '@/lib/utils';
-import { maskEmail, normalizeText } from '@/lib/utils';
+import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -46,6 +47,7 @@ type ManagerItem = {
   manageRoleId: string;
   rhizomeStigmaId: string;
   userId: string;
+  avatarUrl: string | null;
   nickname: string;
   email: string;
   userName: string;
@@ -234,7 +236,6 @@ export default function Opt({
   );
 
   const activeActionError = iconErrorMessage || managerEditErrorMessage || searchDialogErrorMessage || errorMessage;
-  const isEmailSearch = normalizeText(searchKeyword).includes('@');
   const actionErrorTitle = iconErrorMessage
     ? '아이콘 확인'
     : managerEditErrorMessage
@@ -896,7 +897,7 @@ export default function Opt({
             onChange={handleMoveRoleChange}
             size="small"
             fullWidth
-            InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+            slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
           >
             {roleOptions.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -913,7 +914,7 @@ export default function Opt({
               onChange={handleMoveBoardChange}
               size="small"
               fullWidth
-              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+              slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
             >
               <MenuItem value="" disabled>
                 게시판 선택
@@ -982,25 +983,34 @@ export default function Opt({
           {managers.length === 0 ? (
             <ScreenState>등록된 매니저가 없습니다.</ScreenState>
           ) : (
-            <div className={`paper paper-p0 ${styles.paper}`}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>역할</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>게시판</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>선정일</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {managers.map((manager) => {
-                    const isSelected = selectedManagerRoleId === manager.manageRoleId;
-
-                    return (
-                      <TableRow
-                        key={manager.manageRoleId}
-                        hover
-                        selected={isSelected}
+            <div className={`paper  ${styles.paper}`}>
+              {managers.map((manager) => {
+                return (
+                  <div key={manager.manageRoleId} className={styles['content-items']}>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Stack gap={1} direction="row">
+                        <Avatar src={manager.avatarUrl || '/broken-image.jpg'} alt={manager.nickname || manager.userName} />
+                        <Stack gap={1}>
+                          <div className={`${styles.summary} ${styles['with-chip']}`}>
+                            <span>{manager.nickname || manager.userName}</span>
+                            <Chip
+                              label={getRoleLabel(manager.role)}
+                              size="small"
+                              className="chip another outlined success"
+                            />
+                          </div>
+                          <div className={styles.info}>
+                            <p>
+                              {formatDateTime(manager.selectedAt || manager.createdAt)}에{' '}
+                              {manager.boardLabel ? `${manager.boardLabel} 게시판의 ` : ''} {getRoleLabel(manager.role)}
+                              에 위임됨.
+                            </p>
+                          </div>
+                        </Stack>
+                      </Stack>
+                      <button
+                        className="button small normal"
+                        type="button"
                         onClick={() => {
                           setManagerEditErrorMessage('');
                           setSelectedManagerRoleId(manager.manageRoleId);
@@ -1008,21 +1018,13 @@ export default function Opt({
                           setMoveBoardId(manager.boardId ?? '');
                           setIsManagerEditOpen(true);
                         }}
-                        sx={{ cursor: 'pointer' }}
                       >
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {manager.nickname || manager.userName || maskEmail(manager.email)}
-                        </TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(manager.role)}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{manager.boardLabel ?? ''}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {formatDateTime(manager.selectedAt || manager.createdAt)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        역할 변경
+                      </button>
+                    </Stack>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -1294,15 +1296,14 @@ export default function Opt({
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>선택</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>별명 또는 활동명</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>매니저 역할</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {searchResults.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4}>검색 결과가 없습니다.</TableCell>
+                            <TableCell colSpan={3}>검색 결과가 없습니다.</TableCell>
                           </TableRow>
                         ) : (
                           searchResults.map((member) => (
@@ -1317,12 +1318,7 @@ export default function Opt({
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname ||
-                                  member.userName ||
-                                  (isEmailSearch ? member.email : maskEmail(member.email))}
-                              </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {isEmailSearch ? member.email : maskEmail(member.email)}
+                                {member.nickname || member.userName}
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
@@ -1360,7 +1356,7 @@ export default function Opt({
                             }}
                             size="small"
                             fullWidth
-                            InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                            slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                           >
                             <MenuItem value="common">기타 매니저</MenuItem>
                             <MenuItem value="board">개별 게시판 매니저</MenuItem>
@@ -1378,7 +1374,7 @@ export default function Opt({
                               }
                               size="small"
                               fullWidth
-                              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                              slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                             >
                               <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
                               <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
@@ -1392,7 +1388,10 @@ export default function Opt({
                               <TextField
                                 select
                                 value={assignBoardId}
-                                slotProps={{ select: { displayEmpty: true } }}
+                                slotProps={{
+                                  input: { startAdornment: <SelectCheckAdornment /> },
+                                  select: { displayEmpty: true },
+                                }}
                                 onChange={(event) => {
                                   const nextBoardId = event.target.value;
                                   const nextBoard = boards.find((board) => board.boardId === nextBoardId);
@@ -1401,7 +1400,6 @@ export default function Opt({
                                   setAssignBoardRole(getInitialBoardRole(nextBoard));
                                 }}
                                 size="small"
-                                InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                               >
                                 <MenuItem value="" disabled>
                                   게시판 선택
@@ -1428,7 +1426,7 @@ export default function Opt({
                                   }
                                   size="small"
                                   fullWidth
-                                  InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                                 >
                                   <MenuItem
                                     value="board-general-manager"
@@ -1526,15 +1524,14 @@ export default function Opt({
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>선택</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>별명 또는 활동명</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>매니저 역할</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {searchResults.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4}>검색 결과가 없습니다.</TableCell>
+                            <TableCell colSpan={3}>검색 결과가 없습니다.</TableCell>
                           </TableRow>
                         ) : (
                           searchResults.map((member) => (
@@ -1549,12 +1546,7 @@ export default function Opt({
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.nickname ||
-                                  member.userName ||
-                                  (isEmailSearch ? member.email : maskEmail(member.email))}
-                              </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {isEmailSearch ? member.email : maskEmail(member.email)}
+                                {member.nickname || member.userName}
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.isOwner
@@ -1591,7 +1583,7 @@ export default function Opt({
                           }}
                           size="small"
                           sx={{ minWidth: 180 }}
-                          InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                          slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                         >
                           <MenuItem value="common">기타 매니저</MenuItem>
                           <MenuItem value="board">개별 게시판 매니저</MenuItem>
@@ -1610,7 +1602,7 @@ export default function Opt({
                             }
                             size="small"
                             sx={{ minWidth: 240 }}
-                            InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                            slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                           >
                             <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
                             <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
@@ -1624,7 +1616,10 @@ export default function Opt({
                             <TextField
                               select
                               value={assignBoardId}
-                              slotProps={{ select: { displayEmpty: true } }}
+                              slotProps={{
+                                input: { startAdornment: <SelectCheckAdornment /> },
+                                select: { displayEmpty: true },
+                              }}
                               onChange={(event) => {
                                 const nextBoardId = event.target.value;
                                 const nextBoard = boards.find((board) => board.boardId === nextBoardId);
@@ -1634,7 +1629,6 @@ export default function Opt({
                               }}
                               size="small"
                               fullWidth
-                              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
                             >
                               <MenuItem value="" disabled>
                                 게시판 선택
@@ -1661,7 +1655,7 @@ export default function Opt({
                                 }
                                 size="small"
                                 sx={{ minWidth: 240 }}
-                                InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                                slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                               >
                                 <MenuItem
                                   value="board-general-manager"

@@ -4,11 +4,11 @@ import { type JSX, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Avatar,
-  Box,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,11 +18,6 @@ import {
   Radio,
   RadioGroup,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
   useMediaQuery,
@@ -33,11 +28,12 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
-import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -150,10 +146,8 @@ type AppliedSearch =
     }
   | null;
 
-function getDisplayNickname(user: UserRow, showEmail = false) {
-  return (
-    user.membership.nickname || user.userName || (user.email ? (showEmail ? user.email : maskEmail(user.email)) : '')
-  );
+function getDisplayNickname(user: UserRow) {
+  return user.membership.nickname || user.userName;
 }
 
 function getNormalizedKeyword(value: string) {
@@ -317,8 +311,6 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
     });
   }, [selectableLevels]);
 
-  const isEmailSearch = Boolean(appliedSearch?.method === 'nickname' && appliedSearch.keyword.includes('@'));
-
   const filteredUsers = useMemo(() => {
     if (!appliedSearch) {
       return users;
@@ -331,7 +323,12 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
         return users;
       }
 
-      return users.filter((user) => getNormalizedKeyword(getDisplayNickname(user)).includes(keyword));
+      return users.filter((user) => {
+        return (
+          getNormalizedKeyword(user.membership.nickname || '').includes(keyword) ||
+          getNormalizedKeyword(user.userName).includes(keyword)
+        );
+      });
     }
 
     if (appliedSearch.detailType === 'date') {
@@ -752,7 +749,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
       <Stack gap={1}>
         <Typography variant="subtitle2">검색 방법</Typography>
         <RadioGroup row value={searchMethod} onChange={handleSearchMethodChange}>
-          <FormControlLabel value="nickname" control={<Radio />} label="별명 검색" />
+          <FormControlLabel value="nickname" control={<Radio />} label="이름 검색" />
           <FormControlLabel value="detail" control={<Radio />} label="상세 검색" />
         </RadioGroup>
       </Stack>
@@ -760,9 +757,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
       {searchMethod === 'nickname' ? (
         <Stack direction="column" gap={3}>
           <Stack direction="column" gap={1.5} sx={{ flex: '1 0 0%' }}>
-            <Typography variant="subtitle2">별명 검색</Typography>
+            <Typography variant="subtitle2">이름 검색</Typography>
             <TextField
-              placeholder="별명 검색"
+              placeholder="이름 검색"
               value={nicknameKeyword}
               onChange={handleNicknameKeywordChange}
               fullWidth
@@ -953,22 +950,6 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
               </Dialog>
             )}
 
-            <Stack justifyContent="space-between" direction="row" alignItems="center" sx={{ p: 2 }}>
-              <Typography variant="h6" component="h2">
-                커뮤니티 멤버 수 {filteredUsers.length}명
-              </Typography>
-              <div>
-                <button
-                  type="button"
-                  className="button medium action"
-                  aria-label="검색"
-                  onClick={() => setIsSearchOpen(true)}
-                >
-                  <SearchRoundedIcon sx={{ width: 20, height: 20 }} />
-                </button>
-              </div>
-            </Stack>
-
             <div className={`paper ${styles.paper}`}>
               <Stack direction="column" gap={1.5}>
                 <Stack direction="row" gap={1.5} alignItems="center">
@@ -1145,84 +1126,90 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
               </Stack>
             </div>
 
-            <div className={`paper ${styles.paper}`}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={allFilteredSelected}
-                        disabled={selectableFilteredUsers.length === 0}
-                        onChange={handleToggleAll}
-                      />
-                    </TableCell>
-                    <TableCell>별명</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>멤버 등급</TableCell>
-                    <TableCell>가입일</TableCell>
-                    <TableCell>최종방문일</TableCell>
-                    <TableCell>방문수</TableCell>
-                    <TableCell>게시글수</TableCell>
-                    <TableCell>댓글수</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.membership.user_id}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedUserIds.includes(user.membership.user_id)}
-                          disabled={!user.membership.is_selectable}
-                          onChange={(event) => handleToggleUser(user, event.currentTarget.checked)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" gap={1.5} alignItems="center">
-                          <Avatar
-                            src={user.avatar ?? '/default-avatar.png'}
-                            alt={getDisplayNickname(user, isEmailSearch)}
-                          />
-                          <Typography>{getDisplayNickname(user, isEmailSearch)}</Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.membership.role !== '멤버' ? (
-                          <Typography variant="body2">{user.membership.role}</Typography>
-                        ) : user.level ? (
-                          <Stack direction="row" gap={1} alignItems="center">
-                            {user.level.iconUrl ? (
-                              <Box
-                                component="img"
-                                src={user.level.iconUrl}
-                                alt={user.level.name}
-                                sx={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }}
-                              />
-                            ) : null}
-                            <Typography variant="body2">{user.level.name}</Typography>
-                          </Stack>
-                        ) : null}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.membership.approval_at ? formatDate(user.membership.approval_at) : ''}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.membership.last_checkin_at ? formatDate(user.membership.last_checkin_at) : ''}
-                      </TableCell>
-                      <TableCell>{user.membership.checkin_count}</TableCell>
-                      <TableCell>{user.membership.post_count}</TableCell>
-                      <TableCell>{user.membership.comment_count}</TableCell>
-                    </TableRow>
-                  ))}
+            <Stack gap={1.5}>
+              <Stack sx={{ p: 0.5, pb: 0, pt: 0 }}>
+                <Stack
+                  direction="row"
+                  gap={1.5}
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ p: 3.5, pt: 2.5, pb: 0 }}
+                >
+                  <p className="alert warning">
+                    <WarningAmberRoundedIcon />
+                    <span>운영자, 매니저는 선택하실 수 없습니다.</span>
+                  </p>
+                </Stack>
+                <Stack
+                  direction="row"
+                  gap={1.5}
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ p: 2.5, pt: 0, pb: 0 }}
+                >
+                  <Stack direction="row" gap={0.5} alignItems="center">
+                    <Checkbox
+                      checked={allFilteredSelected}
+                      disabled={selectableFilteredUsers.length === 0}
+                      onChange={handleToggleAll}
+                      size="small"
+                    />
+                    <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
+                  </Stack>
+                  <button type="button" className="button small action" onClick={() => setIsSearchOpen(true)}>
+                    멤버 검색
+                  </button>
+                </Stack>
+              </Stack>
 
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center">
-                        검색 결과가 없습니다.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </div>
+              <div className={`paper ${styles.paper}`}>
+                {filteredUsers.map((user) => (
+                  <div key={user.membership.user_id} className={styles['content-items']}>
+                    <Stack gap={1} direction="row" alignItems="flex-start">
+                      <Checkbox
+                        checked={selectedUserIds.includes(user.membership.user_id)}
+                        disabled={!user.membership.is_selectable}
+                        onChange={(event) => handleToggleUser(user, event.currentTarget.checked)}
+                        size="small"
+                      />
+                      <Avatar
+                        src={user.avatar ?? '/default-avatar.png'}
+                        alt={getDisplayNickname(user)}
+                      />
+                      <Stack gap={1}>
+                        <div className={`${styles.summary} ${styles['with-chip']}`}>
+                          <span>{getDisplayNickname(user)}</span>
+                          {user.membership.role !== '멤버' ? (
+                            <Chip label={user.membership.role} size="small" className="chip another outlined success" />
+                          ) : user.level ? (
+                            <span>
+                              {user.level.iconUrl ? (
+                                <img src={user.level.iconUrl} alt={user.level.name} width="20" height="20" />
+                              ) : null}
+                              {user.level.name}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className={styles.info}>
+                          <p>
+                            {user.membership.approval_at ? formatDate(user.membership.approval_at) : ''}에 가입
+                            {user.membership.last_checkin_at ? (
+                              <span>({formatDate(user.membership.last_checkin_at)} 마지막 로그인)</span>
+                            ) : null}
+                          </p>
+                          <p>
+                            방문 {user.membership.checkin_count}회. 포스팅 {user.membership.post_count}건. 댓글{' '}
+                            {user.membership.comment_count}건
+                          </p>
+                        </div>
+                      </Stack>
+                    </Stack>
+                  </div>
+                ))}
+
+                {filteredUsers.length === 0 ? <ScreenState>검색 결과가 없습니다.</ScreenState> : null}
+              </div>
+            </Stack>
 
             {isMobile ? (
               <Drawer

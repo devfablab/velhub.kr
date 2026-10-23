@@ -60,6 +60,18 @@ export const memberRestrictionMessageStatusLabels: Record<MemberRestrictionMessa
   staff_replied: '답변 보냄',
 };
 
+export function getStaffRestrictionMessageStatusLabel(status: MemberRestrictionMessageStatus | null) {
+  if (status === 'staff_new_appeal') {
+    return '소명 도착';
+  }
+
+  if (status === 'staff_replied') {
+    return '답변 완료';
+  }
+
+  return '소명 미제출';
+}
+
 export function getRestrictionInitialMessageCreatedAt(messages: MemberRestrictionMessage[], fallbackCreatedAt: string) {
   const appellantMessages = messages.filter((message) => message.senderType === 'appellant');
 

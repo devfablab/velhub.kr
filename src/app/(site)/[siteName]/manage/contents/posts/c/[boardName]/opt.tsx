@@ -559,7 +559,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               }}
               size="small"
               sx={{ minWidth: 180 }}
-              InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+              slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
             >
               {SIZE_OPTIONS.map((sizeOption) => (
                 <MenuItem key={sizeOption} value={sizeOption}>

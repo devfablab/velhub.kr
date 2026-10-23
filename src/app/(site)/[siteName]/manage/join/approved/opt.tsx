@@ -3,9 +3,9 @@
 import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import SearchIcon from '@mui/icons-material/Search';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
+  Avatar,
   Box,
   Checkbox,
   Dialog,
@@ -13,22 +13,17 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  IconButton,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { formatDateTimeDetail } from '@/lib/utils';
-import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
+import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -47,6 +42,7 @@ type AnsweredQuestionRow = {
 
 type JoinApplicantRow = {
   userId: string;
+  avatarUrl: string | null;
   email: string;
   userName: string;
   nickname: string;
@@ -90,6 +86,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMinimal = useMediaQuery(theme.breakpoints.down(572));
 
   function showError(message: string) {
     setErrorMessage(message);
@@ -119,14 +116,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
 
     return users.filter((user) => {
-      const email = normalizeText(user.email).toLowerCase();
       const userName = normalizeText(user.userName).toLowerCase();
       const nickname = normalizeText(user.nickname).toLowerCase();
 
-      return email.includes(keyword) || userName.includes(keyword) || nickname.includes(keyword);
+      return userName.includes(keyword) || nickname.includes(keyword);
     });
   }, [appliedKeyword, users]);
-  const isEmailSearch = normalizeText(appliedKeyword).includes('@');
 
   const allFilteredSelected =
     filteredUsers.length > 0 && filteredUsers.every((user) => selectedUserIds.includes(user.userId));
@@ -285,7 +280,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" gap={1.5} alignItems="center">
               <TextField
-                placeholder="이메일 또는 별명"
+                placeholder="이름 검색"
                 value={searchKeyword}
                 onChange={handleSearchKeywordChange}
                 fullWidth
@@ -295,7 +290,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 type="button"
                 className="button medium action"
                 onClick={handleSearch}
-                aria-label="이메일 또는 별명으로 검색"
+                aria-label="이름으로 검색"
               >
                 <SearchRoundedIcon />
               </button>
@@ -303,75 +298,60 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </div>
 
           <Stack gap={1.5}>
-            <Stack direction="row" gap={1.5} alignItems="center" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
-              <button
-                type="button"
-                className="button small action"
-                onClick={() => handleOpenConfirmAction('approve')}
-                disabled={isSubmitting}
-              >
-                가입 승인
-              </button>
-              <button
-                type="button"
-                className="button small warning"
-                onClick={() => handleOpenConfirmAction('reject')}
-                disabled={isSubmitting}
-              >
-                가입 거절
-              </button>
+            <Stack direction="row" gap={1.5} alignItems="center" justifyContent="space-between" sx={{ p: 2.5, pb: 0 }}>
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
+                <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
+              </Stack>
+              <Stack direction="row" gap={1.5}>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => handleOpenConfirmAction('approve')}
+                  disabled={isSubmitting || selectedUserIds.length === 0}
+                >
+                  가입 승인
+                </button>
+                <button
+                  type="button"
+                  className="button small warning"
+                  onClick={() => handleOpenConfirmAction('reject')}
+                  disabled={isSubmitting || selectedUserIds.length === 0}
+                >
+                  가입 거절
+                </button>
+              </Stack>
             </Stack>
 
             <div className={`paper ${styles.paper}`}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
-                    </TableCell>
-                    <TableCell>별명</TableCell>
-                    <TableCell>가입신청일</TableCell>
-                    <TableCell>거절</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.userId}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedUserIds.includes(user.userId)}
-                          onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.nickname || user.userName || (isEmailSearch ? user.email : maskEmail(user.email))}
-                        {user.isReApproval ? ' (재신청)' : ''}
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" gap={1} alignItems="center">
-                          <Typography sx={{ whiteSpace: 'nowrap' }}>{formatDateKorean(user.createdAt)}</Typography>
-                          <IconButton size="small" onClick={() => setSelectedUser(user)}>
-                            <SearchIcon fontSize="small" />
-                          </IconButton>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        {user.rejectedAt && user.rejectedBy
-                          ? `${user.rejectedBy} (${formatDate(user.rejectedAt)})`
-                          : ''}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        검색 결과가 없습니다.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
+              {filteredUsers.map((user) => (
+                <div key={user.userId} className={styles['content-items']}>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Stack gap={1} direction="row">
+                      <Checkbox
+                        checked={selectedUserIds.includes(user.userId)}
+                        onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
+                        size="small"
+                        className={styles.checkbox}
+                      />
+                      <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.nickname || user.userName} />
+                      <div className={styles.summary}>
+                        <span>
+                          {user.isReApproval ? '(재신청) ' : ''}
+                          {user.nickname || user.userName}
+                        </span>
+                        <p>{formatDateKorean(user.createdAt)} 가입신청</p>
+                      </div>
+                    </Stack>
+                    {user.answeredQuestions.length > 0 ? (
+                      <button className="button small normal" type="button" onClick={() => setSelectedUser(user)}>
+                        가입 답변
+                      </button>
+                    ) : null}
+                  </Stack>
+                </div>
+              ))}
+              {filteredUsers.length === 0 ? <ScreenState>검색 결과가 없습니다.</ScreenState> : null}
             </div>
           </Stack>
 

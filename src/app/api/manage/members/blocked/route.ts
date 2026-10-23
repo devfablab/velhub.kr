@@ -5,6 +5,7 @@ import {
   decryptNullable,
   getBlockedMemberships,
   getStaffMembersAccess,
+  getStigmaAvatarUrl,
   getStigmaDisplayName,
   getStigmasByIds,
 } from '@/lib/users/utils';
@@ -72,14 +73,14 @@ export async function GET(request: Request) {
         const typedMembership = membership as MembershipRow;
         const blockedUser = stigmaMap.get(typedMembership.user_id) ?? null;
         const blockedByUser = typedMembership.blocked_by ? (stigmaMap.get(typedMembership.blocked_by) ?? null) : null;
+        const nickname = normalizeText(typedMembership.nickname);
+        const userName = decryptNullable(blockedUser?.user_name ?? null) || '';
 
         return {
           userId: typedMembership.user_id,
-          nickname:
-            normalizeText(typedMembership.nickname) ||
-            decryptNullable(blockedUser?.payment_email ?? null) ||
-            decryptNullable(blockedUser?.email ?? null) ||
-            '',
+          avatarUrl: getStigmaAvatarUrl(blockedUser?.avatar),
+          nickname: nickname || userName,
+          userName,
           blockReason: normalizeText(typedMembership.block_reason) || '',
           blockedAt: typedMembership.blocked_at,
           blockTerm: typedMembership.block_term ?? null,

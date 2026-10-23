@@ -6,6 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -538,6 +539,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 운영자 교체
               </button>
             ) : null}
+            <button type="button" className="button small action" onClick={handleOpenInviteDialog}>
+              팀원초대
+            </button>
             <button
               type="button"
               className="button small cancel"
@@ -546,57 +550,50 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             >
               초대 목록
             </button>
-            <button type="button" className="button small action" onClick={handleOpenInviteDialog}>
-              팀원초대
-            </button>
           </Stack>
 
-          <div className={`paper paper-p0 ${styles.paper}`}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>이메일</TableCell>
-                  <TableCell>별명</TableCell>
-                  <TableCell>가입일</TableCell>
-                  <TableCell>역할</TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedTeams.map((team) => (
-                  <TableRow key={team.id} hover onClick={() => handleOpenDetail(team)} sx={{ cursor: 'pointer' }}>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{maskEmail(team.email)}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{team.name}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(team.approval_at)}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(team.role)}</TableCell>
-                    <TableCell onClick={(event) => event.stopPropagation()}>
-                      {!team.is_self ? (
-                        <Stack direction="row" gap={1}>
-                          {getNextRole(team.role) ? (
-                            <button
-                              type="button"
-                              className="button small action"
-                              onClick={() => handleOpenRoleDialog(team)}
-                            >
-                              역할 변경
-                            </button>
-                          ) : null}
-                          {team.role === 'member' || team.role === 'observer' ? (
-                            <button
-                              type="button"
-                              className="button small action"
-                              onClick={() => handleOpenObserverDialog(team)}
-                            >
-                              {team.role === 'observer' ? '팀원으로 변경' : '차단'}
-                            </button>
-                          ) : null}
-                        </Stack>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className={`paper ${styles.paper}`}>
+            {sortedTeams.map((team) => (
+              <div key={team.id} className={styles['content-items']}>
+                <Stack direction="row" justifyContent="space-between">
+                  <Stack direction="column">
+                    <div className={`${styles.summary} ${styles['with-chip']}`}>
+                      <p>
+                        {team.name} <span>({maskEmail(team.email)})</span>
+                      </p>
+                      <Chip label={getRoleLabel(team.role)} size="small" className="chip another outlined success" />
+                    </div>
+                    <div className={styles.info}>
+                      <p>{formatDateTimeFull(team.approval_at)}부터 참여함</p>
+                    </div>
+                  </Stack>
+                  <Stack direction="column" gap={1}>
+                    {!team.is_self ? (
+                      <>
+                        {getNextRole(team.role) ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => handleOpenRoleDialog(team)}
+                          >
+                            역할 변경
+                          </button>
+                        ) : null}
+                        {team.role === 'member' || team.role === 'observer' ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => handleOpenObserverDialog(team)}
+                          >
+                            {team.role === 'observer' ? '팀원으로 변경' : '차단'}
+                          </button>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </Stack>
+                </Stack>
+              </div>
+            ))}
           </div>
 
           {isMobile ? (
@@ -628,7 +625,10 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     onChange={(event) => setOwnerTransferTargetId(event.target.value)}
                     size="small"
                     fullWidth
-                    InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                    slotProps={{
+                      input: { startAdornment: <SelectCheckAdornment /> },
+                      select: { displayEmpty: true },
+                    }}
                   >
                     <MenuItem value="" disabled>
                       새 운영자 선택
@@ -695,7 +695,10 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       onChange={(event) => setOwnerTransferTargetId(event.target.value)}
                       size="small"
                       fullWidth
-                      InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                      slotProps={{
+                        input: { startAdornment: <SelectCheckAdornment /> },
+                        select: { displayEmpty: true },
+                      }}
                     >
                       <MenuItem value="" disabled>
                         새 운영자 선택
@@ -818,103 +821,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   }}
                 >
                   확인
-                </button>
-              </DialogActions>
-            </Dialog>
-          )}
-
-          {isMobile ? (
-            <Drawer
-              anchor="bottom"
-              open={Boolean(selectedTeam)}
-              onClose={handleCloseDetail}
-              className="VhiDrawer-bottom"
-            >
-              <h2>팀블로그 정보</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDetail}
-                aria-label="팀블로그 정보 창 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
-              <div className="VhiDrawer-bottom-content">
-                {selectedTeam ? (
-                  <Stack gap={2} sx={{ pt: 1 }}>
-                    <Box>
-                      <Typography variant="subtitle2">이메일</Typography>
-                      <Typography variant="body2">{maskEmail(selectedTeam.email)}</Typography>
-                    </Box>
-
-                    <Box>
-                      <Typography variant="subtitle2">별명</Typography>
-                      <Typography variant="body2">{selectedTeam.name}</Typography>
-                    </Box>
-
-                    <Box>
-                      <Typography variant="subtitle2">가입일</Typography>
-                      <Typography variant="body2">{formatDateTimeFull(selectedTeam.approval_at)}</Typography>
-                    </Box>
-
-                    <Box>
-                      <Typography variant="subtitle2">역할</Typography>
-                      <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
-                    </Box>
-                  </Stack>
-                ) : null}
-              </div>
-              <div className="drawer-dialog-actions">
-                <button type="button" className="button medium close" onClick={handleCloseDetail}>
-                  닫기
-                </button>
-              </div>
-            </Drawer>
-          ) : (
-            <Dialog
-              open={Boolean(selectedTeam)}
-              onClose={handleCloseDetail}
-              fullWidth
-              maxWidth="sm"
-              className="VhiDialog"
-            >
-              <DialogTitle>팀블로그 정보</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDetail}
-                aria-label="팀블로그 정보 창 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
-              <DialogContent>
-                {selectedTeam ? (
-                  <Stack gap={2} sx={{ pt: 1 }}>
-                    <Box>
-                      <Typography variant="subtitle2">이메일</Typography>
-                      <Typography variant="body2">{maskEmail(selectedTeam.email)}</Typography>
-                    </Box>
-
-                    <Box>
-                      <Typography variant="subtitle2">별명</Typography>
-                      <Typography variant="body2">{selectedTeam.name}</Typography>
-                    </Box>
-
-                    <Box>
-                      <Typography variant="subtitle2">가입일</Typography>
-                      <Typography variant="body2">{formatDateTimeFull(selectedTeam.approval_at)}</Typography>
-                    </Box>
-
-                    <Box>
-                      <Typography variant="subtitle2">역할</Typography>
-                      <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
-                    </Box>
-                  </Stack>
-                ) : null}
-              </DialogContent>
-              <DialogActions>
-                <button type="button" className="button medium submit" onClick={handleCloseDetail}>
-                  닫기
                 </button>
               </DialogActions>
             </Dialog>
@@ -1106,7 +1012,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                         onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
                         fullWidth
                         size="small"
-                        InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                       >
                         <MenuItem value="manager">매니저</MenuItem>
                         <MenuItem value="member">멤버</MenuItem>
@@ -1200,7 +1106,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                         onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
                         fullWidth
                         size="small"
-                        InputProps={{ startAdornment: <SelectCheckAdornment /> }}
+                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
                       >
                         <MenuItem value="manager">매니저</MenuItem>
                         <MenuItem value="member">멤버</MenuItem>
@@ -1264,7 +1170,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                             {invite.status === 'pending' ? (
                               <button
                                 type="button"
-                                className="button medium cancel"
+                                className="button small cancel"
                                 onClick={() => handleOpenCancelDialog(invite)}
                               >
                                 취소
@@ -1323,7 +1229,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                             {invite.status === 'pending' ? (
                               <button
                                 type="button"
-                                className="button medium cancel"
+                                className="button small cancel"
                                 onClick={() => handleOpenCancelDialog(invite)}
                               >
                                 취소

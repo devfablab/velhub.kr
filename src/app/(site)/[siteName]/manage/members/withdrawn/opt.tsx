@@ -8,7 +8,9 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
+  Avatar,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,13 +33,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import {
   type MemberRestrictionMessageStatus,
-  memberRestrictionMessageStatusLabels,
+  getStaffRestrictionMessageStatusLabel,
   type MemberRestrictionType,
 } from '@/lib/users/memberRestrictionMessages';
-import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -47,6 +50,9 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 
 type WithdrawnUserRow = {
   userId: string;
+  avatarUrl: string | null;
+  nickname: string;
+  userName: string;
   displayName: string;
   reason: string;
   processedAt: string | null;
@@ -79,15 +85,32 @@ function getUserSelectionType(user: WithdrawnUserRow): Exclude<SelectionType, nu
   return 'bannable';
 }
 
-type OptProps = { initialData: WithdrawnUsersResponse | null; initialError: string };
+function getWithdrawnUserTypeLabel(type: string) {
+  if (type === '임의탈퇴') return '임의 탈퇴';
+  if (type === '강제탈퇴') return '강제 탈퇴';
+  if (type === '가입불가') return '가입 불가';
 
-function getMaskedDisplayName(value: string, showEmail: boolean) {
-  if (showEmail) {
-    return value;
+  return type;
+}
+
+function getWithdrawnUserTypeChipClassName(type: string) {
+  const isDefault = type === '임의탈퇴' || type === '가입불가 해제됨';
+
+  return `chip another outlined ${isDefault ? 'default' : 'warning'}`;
+}
+
+function getWithdrawnUserMessageStatusChip(user: Pick<WithdrawnUserRow, 'messageStatus'>) {
+  if (!user.messageStatus) {
+    return { label: '소명 미제출', status: 'danger' } as const;
   }
 
-  return value.replace(/^([^\s()]+@[^\s()]+)/, (email) => maskEmail(email));
+  return {
+    label: getStaffRestrictionMessageStatusLabel(user.messageStatus),
+    status: user.messageStatus === 'staff_replied' ? 'success' : 'warning',
+  } as const;
 }
+
+type OptProps = { initialData: WithdrawnUsersResponse | null; initialError: string };
 
 export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
@@ -153,10 +176,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return users;
     }
 
-    return users.filter((user) => normalizeText(user.displayName).toLowerCase().includes(keyword));
+    return users.filter((user) => {
+      return (
+        normalizeText(user.nickname).toLowerCase().includes(keyword) ||
+        normalizeText(user.userName).toLowerCase().includes(keyword)
+      );
+    });
   }, [appliedKeyword, users]);
-  const isEmailSearch = normalizeText(appliedKeyword).includes('@');
-
   const selectionType = useMemo<SelectionType>(() => {
     const firstSelectedUserId = selectedUserIds[0];
 
@@ -400,7 +426,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" gap={1.5} alignItems="center">
               <TextField
-                placeholder="별명 검색"
+                placeholder="이름 검색"
                 value={nicknameKeyword}
                 onChange={handleNicknameKeywordChange}
                 fullWidth
@@ -420,132 +446,112 @@ export default function Opt({ initialData, initialError }: OptProps) {
             ) : null}
           </div>
 
-          {selectedUserIds.length > 0 ? (
-            <Stack direction="row" justifyContent="space-between" gap={1.5} sx={{ p: 2, pb: 0 }}>
-              {selectionType === 'banned' ? (
-                <button
-                  type="button"
-                  className="button small action"
-                  onClick={() => handleOpenActionDialog('unban')}
-                  disabled={isActionSubmitting}
-                >
-                  가입불가 해제
-                </button>
-              ) : null}
-
-              {selectionType === 'kicked' ? (
-                <>
-                  <button
-                    type="button"
-                    className="button small action"
-                    onClick={() => handleOpenActionDialog('unkick')}
-                    disabled={isActionSubmitting}
-                  >
-                    강제탈퇴 해제
-                  </button>
-
-                  <button
-                    type="button"
-                    className="button small warning"
-                    onClick={() => handleOpenActionDialog('ban')}
-                    disabled={isActionSubmitting}
-                  >
-                    가입불가
-                  </button>
-                </>
-              ) : null}
-
-              {selectionType === 'bannable' ? (
-                <button
-                  type="button"
-                  className="button small warning"
-                  onClick={() => handleOpenActionDialog('ban')}
-                  disabled={isActionSubmitting}
-                >
-                  가입불가
-                </button>
-              ) : null}
+          <Stack direction="row" justifyContent="space-between" gap={1.5} sx={{ p: 2.5, pb: 0 }}>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Checkbox
+                checked={allFilteredSelected}
+                onChange={handleToggleAll}
+                disabled={isActionSubmitting || filteredUsers.length === 0}
+                size="small"
+              />
+              <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
             </Stack>
-          ) : null}
+            <Stack direction="row" gap={1.5} alignItems="center">
+              <button
+                type="button"
+                className="button small action"
+                onClick={() => handleOpenActionDialog('unban')}
+                disabled={isActionSubmitting || selectionType !== 'banned'}
+              >
+                가입불가 해제
+              </button>
+              <button
+                type="button"
+                className="button small action"
+                onClick={() => handleOpenActionDialog('unkick')}
+                disabled={isActionSubmitting || selectionType !== 'kicked'}
+              >
+                강제탈퇴 해제
+              </button>
+              <button
+                type="button"
+                className="button small warning"
+                onClick={() => handleOpenActionDialog('ban')}
+                disabled={isActionSubmitting || (selectionType !== 'kicked' && selectionType !== 'bannable')}
+              >
+                가입불가
+              </button>
+            </Stack>
+          </Stack>
 
           <div className={`paper ${styles.paper}`}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={allFilteredSelected}
-                      onChange={handleToggleAll}
-                      disabled={isActionSubmitting || filteredUsers.length === 0}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일 (별명)</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 사유</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 처리일 (처리자)</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 종류</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 상태</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 메시지</TableCell>
-                </TableRow>
-              </TableHead>
+            {filteredUsers.map((user) => {
+              return (
+                <div key={user.userId} className={styles['content-items']}>
+                  <Stack gap={1} direction="row" justifyContent="space-between" alignItems="flex-start">
+                    <Stack gap={1} direction="row" alignItems="flex-start">
+                      <Checkbox
+                        checked={selectedUserIds.includes(user.userId)}
+                        onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
+                        disabled={
+                          isActionSubmitting || (selectionType !== null && getUserSelectionType(user) !== selectionType)
+                        }
+                        size="small"
+                      />
+                      <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.displayName} />
+                      <Stack gap={1}>
+                        <div className={styles.summary}>
+                          <span>{user.displayName}</span>
+                        </div>
+                        <div className={styles.status}>
+                          <div>
+                            <Chip
+                              label={getWithdrawnUserTypeLabel(user.type)}
+                              size="small"
+                              className={getWithdrawnUserTypeChipClassName(user.type)}
+                            />
+                          </div>
+                          <div className={styles.info}>
+                            <p>
+                              {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy}) 님이 ` : null}
+                            </p>
+                            <p className={styles.reason}>{user.reason}</p>
+                          </div>
+                          <div className={styles.info}>
+                            <p>
+                              {user.type === '강제탈퇴' && user.kickTerm
+                                ? `${formatDate(user.kickTerm)}에 재가입 가능`
+                                : user.type === '가입불가' && user.banTerm
+                                  ? `${formatDate(user.banTerm)}에 재가입 가능`
+                                  : null}
+                            </p>
+                            {user.restrictionType && user.messageStatus ? (
+                              <button type="button" className="link-normal" onClick={() => setMessageUser(user)}>
+                                소명 내용 보기
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </Stack>
+                    </Stack>
+                    {user.restrictionType
+                      ? (() => {
+                          const messageStatusChip = getWithdrawnUserMessageStatusChip(user);
+                          return (
+                            <Chip
+                              label={messageStatusChip.label}
+                              size="small"
+                              className={`chip ${messageStatusChip.status}`}
+                            />
+                          );
+                        })()
+                      : null}
+                  </Stack>
+                </div>
+              );
+            })}
 
-              <TableBody>
-                {filteredUsers.map((user) => {
-                  return (
-                    <TableRow key={user.userId}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedUserIds.includes(user.userId)}
-                          onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
-                          disabled={
-                            isActionSubmitting ||
-                            (selectionType !== null && getUserSelectionType(user) !== selectionType)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>{getMaskedDisplayName(user.displayName, isEmailSearch)}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-line' }}>{user.reason}</TableCell>
-                      <TableCell>
-                        {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.type === '강제탈퇴' && user.kickTerm
-                          ? `${user.type} (${formatDate(user.kickTerm)} 재가입 가능)`
-                          : user.type === '가입불가' && user.banTerm
-                            ? `${user.type} (${formatDate(user.banTerm)} 재가입 가능)`
-                            : user.type}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.restrictionType
-                          ? user.messageStatus
-                            ? memberRestrictionMessageStatusLabels[user.messageStatus]
-                            : '도착 전'
-                          : null}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.restrictionType && user.messageStatus ? (
-                          <button type="button" className="button small action" onClick={() => setMessageUser(user)}>
-                            메시지 보기
-                          </button>
-                        ) : user.restrictionType ? (
-                          '-'
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-
-                {filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7}>
-                      <p className="alert info">
-                        <InfoOutlineRoundedIcon />
-                        <span>검색 결과가 없습니다.</span>
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
+            {filteredUsers.length === 0 ? <ScreenState>검색 결과가 없습니다.</ScreenState> : null}
           </div>
         </div>
       </div>

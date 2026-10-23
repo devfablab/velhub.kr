@@ -465,7 +465,7 @@ export async function POST(request: NextRequest) {
     const siteOwnerStigmaId = await getStigmaId({
       supabaseAdmin,
       stigmaIdOrAuthUserId: site.owner_id,
-      errorMessage: '사이트 오너 정보를 확인하지 못했습니다.',
+      errorMessage: '사이트 운영자 정보를 확인하지 못했습니다.',
     });
 
     const postAuthorStigmaId = await getStigmaId({

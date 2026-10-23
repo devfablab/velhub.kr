@@ -7,6 +7,7 @@ import {
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';
 
 type RhizomeRow = {
@@ -53,6 +54,7 @@ type StigmaRow = {
   id: string;
   email: string | null;
   payment_email: string | null;
+  avatar: string | null;
   user_name: string | null;
 };
 
@@ -63,6 +65,7 @@ type GetCommunityManagerAccessOptions = {
 export type ActiveMemberSummary = {
   rhizomeStigmaId: string;
   userId: string;
+  avatarUrl: string | null;
   nickname: string;
   email: string;
   userName: string;
@@ -80,6 +83,7 @@ export type CommunityManagerListItem = {
   manageRoleId: string;
   rhizomeStigmaId: string;
   userId: string;
+  avatarUrl: string | null;
   nickname: string;
   email: string;
   userName: string;
@@ -317,7 +321,7 @@ export async function getActiveMembers(access: CommunityManagerAccess) {
 
   const stigmaResult =
     userIds.length > 0
-      ? await access.supabaseAdmin.from('stigmas').select('id, email, payment_email, user_name').in('id', userIds)
+      ? await access.supabaseAdmin.from('stigmas').select('id, email, payment_email, avatar, user_name').in('id', userIds)
       : { data: [], error: null };
 
   if (stigmaResult.error) {
@@ -332,6 +336,7 @@ export async function getActiveMembers(access: CommunityManagerAccess) {
     return {
       rhizomeStigmaId: member.id,
       userId: member.user_id,
+      avatarUrl: getStigmaAvatarUrl(stigma?.avatar),
       nickname: normalizeText(member.nickname),
       email: decryptNullable(stigma?.payment_email) || decryptNullable(stigma?.email),
       userName: decryptNullable(stigma?.user_name),
@@ -393,6 +398,7 @@ export async function buildCommunityManagerList(access: CommunityManagerAccess) 
         manageRoleId: row.id,
         rhizomeStigmaId: row.manager_id,
         userId: manager.userId,
+        avatarUrl: manager.avatarUrl,
         nickname: manager.nickname,
         email: manager.email,
         userName: manager.userName,

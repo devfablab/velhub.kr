@@ -90,6 +90,20 @@ export function decryptNullable(value: string | null | undefined) {
   }
 }
 
+export function getStigmaAvatarUrl(value: string | null | undefined) {
+  const avatar = normalizeText(value);
+
+  if (!avatar) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(avatar)) {
+    return avatar;
+  }
+
+  return getSupabaseAdmin().storage.from('avatar').getPublicUrl(avatar).data.publicUrl ?? null;
+}
+
 export function getLevelIconUrl(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 

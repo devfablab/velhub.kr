@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
+  Avatar,
   Checkbox,
   Dialog,
   DialogActions,
@@ -12,18 +13,15 @@ import {
   DialogTitle,
   Drawer,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, maskEmail, normalizeText } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -32,6 +30,9 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 
 type BannedUserRow = {
   userId: string;
+  avatarUrl: string | null;
+  nickname: string;
+  userName: string;
   displayName: string;
   reason: string;
   processedAt: string | null;
@@ -46,14 +47,6 @@ export type BannedUsersResponse = {
 };
 
 type OptProps = { initialData: BannedUsersResponse | null; initialError: string };
-
-function getMaskedDisplayName(value: string, showEmail: boolean) {
-  if (showEmail) {
-    return value;
-  }
-
-  return value.replace(/^([^\s()]+@[^\s()]+)/, (email) => maskEmail(email));
-}
 
 export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
@@ -109,10 +102,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
       return users;
     }
 
-    return users.filter((user) => normalizeText(user.displayName).toLowerCase().includes(keyword));
+    return users.filter((user) => {
+      return (
+        normalizeText(user.nickname).toLowerCase().includes(keyword) ||
+        normalizeText(user.userName).toLowerCase().includes(keyword)
+      );
+    });
   }, [appliedKeyword, users]);
-  const isEmailSearch = normalizeText(appliedKeyword).includes('@');
-
   const allFilteredSelected =
     filteredUsers.length > 0 && filteredUsers.every((user) => selectedUserIds.includes(user.userId));
 
@@ -236,67 +232,63 @@ export default function Opt({ initialData, initialError }: OptProps) {
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" gap={1.5} alignItems="center">
               <TextField
-                placeholder="별명 검색"
+                placeholder="이름 검색"
                 value={nicknameKeyword}
                 onChange={handleNicknameKeywordChange}
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch} aria-label="별명으로 검색">
+              <button type="button" className="button medium action" onClick={handleSearch} aria-label="이름으로 검색">
                 <SearchRoundedIcon />
               </button>
             </Stack>
           </div>
 
           <Stack gap={1.5}>
-            <Stack direction="row" gap={1.5} alignItems="center" sx={{ p: 2, pb: 0 }}>
-              <button type="button" className="button small action" onClick={handleOpenDialog} disabled={isSubmitting}>
+            <Stack direction="row" gap={1.5} alignItems="center" justifyContent="space-between" sx={{ p: 2.5, pb: 0 }}>
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
+                <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
+              </Stack>
+              <button
+                type="button"
+                className="button small action"
+                onClick={handleOpenDialog}
+                disabled={isSubmitting || selectedUserIds.length === 0}
+              >
                 가입불가 해제
               </button>
             </Stack>
 
-            <div className={`paper paper-p0 ${styles.paper}`}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
-                    </TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일 (별명)</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>가입불가 사유</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>가입불가 처리일 (처리자)</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>처리 종류</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.userId}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedUserIds.includes(user.userId)}
-                          onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {getMaskedDisplayName(user.displayName, isEmailSearch)}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{user.reason}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.type}</TableCell>
-                    </TableRow>
-                  ))}
+            <div className={`paper ${styles.paper}`}>
+              {filteredUsers.map((user) => (
+                <div key={user.userId} className={styles['content-items']}>
+                  <Stack gap={1} direction="row" alignItems="flex-start">
+                    <Checkbox
+                      checked={selectedUserIds.includes(user.userId)}
+                      onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
+                      size="small"
+                    />
+                    <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.displayName} />
+                    <Stack gap={1}>
+                      <div className={styles.summary}>
+                        <span>{user.displayName}</span>
+                      </div>
+                      <div className={styles.info}>
+                        {user.processedAt ? (
+                          <p>
+                            {user.processedBy} 님이
+                            {formatDate(user.processedAt)}에 처리함.
+                          </p>
+                        ) : null}
+                        <p className={styles.reason}>{user.reason}</p>
+                      </div>
+                    </Stack>
+                  </Stack>
+                </div>
+              ))}
 
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        검색 결과가 없습니다.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
+              {filteredUsers.length === 0 ? <ScreenState>검색 결과가 없습니다.</ScreenState> : null}
             </div>
           </Stack>
 

@@ -234,7 +234,7 @@ export async function GET(request: Request) {
         return {
           id: item.id,
           email: stigma?.email ?? '',
-          name: item.nickname || (stigma?.userName ? decrypt(stigma.userName) : ''),
+          name: normalizeText(item.nickname) || (stigma?.userName ? decrypt(stigma.userName) : ''),
           approval_at: item.approval_at,
           role: item.role,
           is_self: item.user_id === access.session.stigmaId,
