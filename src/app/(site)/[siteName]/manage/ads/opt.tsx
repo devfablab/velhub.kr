@@ -194,12 +194,12 @@ export default function Opt({
         {unavailableReason ? <ScreenState kind="error">{unavailableReason}</ScreenState> : null}
         {!unavailableReason && !initialData.isIdentityVerified ? (
           <>
-            <p>광고를 설정하려면 본인인증이 필요합니다.</p>
+            <Typography variant="subtitle2">광고를 설정하려면 본인인증이 필요합니다.</Typography>
             <IdentityVerificationButton onVerified={() => window.location.reload()} />
           </>
         ) : null}
         {!unavailableReason && initialData.isIdentityVerified && !initialData.isAtLeastAge14 ? (
-          <p>만 14세 미만은 광고를 설정할 수 없습니다.</p>
+          <Typography variant="subtitle2">만 14세 미만은 광고를 설정할 수 없습니다.</Typography>
         ) : null}
         {!unavailableReason && initialData.isIdentityVerified && initialData.isAtLeastAge14 ? (
           <Stack sx={{ p: 2 }}>

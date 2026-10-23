@@ -147,13 +147,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {initialError ? (
-            <>
-              <div className={`paper paper-error ${styles.paper}`}>{initialError}</div>
-              <ScreenState>페이지 목록을 불러오지 못했습니다.</ScreenState>
-            </>
+            <div className={`paper paper-error ${styles.paper}`}>{initialError}</div>
           ) : pages.length === 0 ? (
             <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
-              <Anchor href={`/${siteName}/manage/contents/pages/new`} className="button small submit">
+              <Anchor href={`/${siteName}/manage/contents/pages/new`} className="button small action">
                 페이지 추가
               </Anchor>
             </Stack>

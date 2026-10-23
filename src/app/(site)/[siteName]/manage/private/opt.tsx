@@ -8,6 +8,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
+  Box,
   Checkbox,
   Dialog,
   DialogActions,
@@ -243,10 +244,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <span>비공개 게시판의 기본 설정을 관리합니다.</span>
           </p>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <form onSubmit={(event) => void handleSave(event)}>
+          <Stack component="form" onSubmit={(event) => void handleSave(event)} gap={2} direction="column">
             <div className={`paper ${styles.paper}`}>
               <Stack gap={2}>
-                <Typography variant="h6">게시판 설정</Typography>
+                <Typography variant="subtitle2">게시판 설정</Typography>
                 <TextField
                   value={boardLabel}
                   onChange={(event) => setBoardLabel(event.target.value)}
@@ -268,7 +269,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <div className={`paper ${styles.paper}`}>
               <Stack gap={2}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h6">카테고리</Typography>
+                  <Typography variant="subtitle2">카테고리</Typography>
                   <button
                     type="button"
                     className="button small action"
@@ -306,7 +307,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 {isInstalled ? '수정 완료' : '설치 완료'}
               </button>
             </Stack>
-          </form>
+          </Stack>
         </div>
       </div>
       {isMobile ? (

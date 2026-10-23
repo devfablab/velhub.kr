@@ -117,7 +117,7 @@ export default function Opt({
               ) : (
                 <button
                   type="button"
-                  className="button medium submit"
+                  className="button medium action"
                   disabled={isSaving}
                   onClick={() => void handleChange(true)}
                 >
