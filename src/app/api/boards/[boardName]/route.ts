@@ -587,7 +587,11 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const page = parsePositiveInt(requestUrl.searchParams.get('page'), 1);
-    const size = parsePositiveInt(requestUrl.searchParams.get('size'), 10);
+    const defaultPostPerPage =
+      typeof boardData.post_per_page === 'number' && Number.isFinite(boardData.post_per_page)
+        ? Math.floor(boardData.post_per_page)
+        : 5;
+    const size = parsePositiveInt(requestUrl.searchParams.get('size'), defaultPostPerPage);
     const filter = normalizeText(requestUrl.searchParams.get('filter')).toLowerCase() === 'deleted' ? 'deleted' : 'all';
     const keyword = normalizeText(requestUrl.searchParams.get('keyword'));
     const sort = normalizeSort(requestUrl.searchParams.get('sort'));

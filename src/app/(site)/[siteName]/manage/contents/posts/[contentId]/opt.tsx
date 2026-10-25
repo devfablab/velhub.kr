@@ -968,6 +968,7 @@ export default function Opt({
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
+                      displayEmpty
                       labelId="detail-post-series-select-label"
                       value={selectedSeriesKey}
                       onChange={handleSeriesChange}
@@ -1050,6 +1051,7 @@ export default function Opt({
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <FormControl fullWidth size="small">
                       <Select
+                        displayEmpty
                         labelId="detail-post-series-select-label"
                         value={selectedSeriesKey}
                         onChange={handleSeriesChange}
