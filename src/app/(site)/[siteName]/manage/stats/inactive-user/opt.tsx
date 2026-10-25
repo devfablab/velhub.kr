@@ -406,15 +406,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <div className={`paper ${styles['stack-paper']}`}>
-            <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">일주일 전 비활동 유저 수</Typography>
-              <Typography variant="body2">{formatNumber(inactiveStats.summary.weekInactiveMemberCount)} 명</Typography>
-            </div>
+            <dl className={`paper ${styles.paper} ${styles.summary}`}>
+              <dt>일주일 전 비활동 유저 수</dt>
+              <dd>
+                {formatNumber(inactiveStats.summary.weekInactiveMemberCount)} <span>명</span>
+              </dd>
+            </dl>
 
-            <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">30일 이전 비활동 유저 수</Typography>
-              <Typography variant="body2">{formatNumber(inactiveStats.summary.monthInactiveMemberCount)} 명</Typography>
-            </div>
+            <dl className={`paper ${styles.paper} ${styles.summary}`}>
+              <dt>30일 이전 비활동 유저 수</dt>
+              <dd>
+                {formatNumber(inactiveStats.summary.monthInactiveMemberCount)} <span>명</span>
+              </dd>
+            </dl>
           </div>
 
           <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>

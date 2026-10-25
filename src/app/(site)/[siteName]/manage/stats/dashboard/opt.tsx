@@ -72,20 +72,20 @@ function formatNumber(value: number | null | undefined) {
 }
 
 function formatPercent(value: number | null | undefined) {
-  return `${Number(value ?? 0).toLocaleString('ko-KR', {
+  return Number(value ?? 0).toLocaleString('ko-KR', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 1,
-  })}%`;
+  });
 }
 
 function StatCard({ label, value }: StatCardProps) {
   return (
-    <div className={`paper ${styles.paper}`}>
-      <Typography variant="subtitle2">{label}</Typography>
-      <Typography variant="body2" sx={{ textAlign: 'right' }}>
-        {value}
-      </Typography>
-    </div>
+    <dl className={`paper ${styles.paper} ${styles.summary}`}>
+      <dt>{label}</dt>
+      <dd>
+        {value} <span>명</span>
+      </dd>
+    </dl>
   );
 }
 
@@ -135,10 +135,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
             접속자수 통계
           </Typography>
           <div className={`paper ${styles['stack-paper']}`}>
-            <StatCard label="오늘 접속자 수" value={`${formatNumber(dashboard.visits.today)} 명`} />
-            <StatCard label="일주일 접속자 수" value={`${formatNumber(dashboard.visits.week)} 명`} />
-            <StatCard label="30일 접속자 수" value={`${formatNumber(dashboard.visits.month)} 명`} />
-            <StatCard label="총 접속자 수" value={`${formatNumber(dashboard.visits.total)} 명`} />
+            <StatCard label="오늘 접속자 수" value={formatNumber(dashboard.visits.today)} />
+            <StatCard label="일주일 접속자 수" value={formatNumber(dashboard.visits.week)} />
+            <StatCard label="30일 접속자 수" value={formatNumber(dashboard.visits.month)} />
+            <StatCard label="총 접속자 수" value={formatNumber(dashboard.visits.total)} />
           </div>
 
           {siteType === 'community' && dashboard.community ? (
@@ -148,19 +148,20 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </Typography>
 
               <div className={`paper ${styles['stack-paper']}`}>
-                <div className={`paper ${styles.paper}`}>
-                  <Typography variant="subtitle2">오늘 신규 가입자 수</Typography>
-                  <Typography variant="body2">
-                    {formatNumber(dashboard.community.todayJoin.approved)} 명 (비승인{' '}
-                    {formatNumber(dashboard.community.todayJoin.unapproved)} 명 포함)
-                  </Typography>
-                </div>
-                <StatCard
-                  label="일주일 가입자 수"
-                  value={`${formatNumber(dashboard.community.approvedJoin.week)} 명`}
-                />
-                <StatCard label="30일 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.month)} 명`} />
-                <StatCard label="총 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.total)} 명`} />
+                <dl className={`paper ${styles.paper} ${styles.summary}`}>
+                  <dt>오늘 신규 가입자 수</dt>
+                  <dd>
+                    <p>
+                      {formatNumber(dashboard.community.todayJoin.approved)} <span>명</span>
+                    </p>
+                    <p className={styles.sub}>
+                      (비승인 {formatNumber(dashboard.community.todayJoin.unapproved)} 명 포함)
+                    </p>
+                  </dd>
+                </dl>
+                <StatCard label="일주일 가입자 수" value={formatNumber(dashboard.community.approvedJoin.week)} />
+                <StatCard label="30일 가입자 수" value={formatNumber(dashboard.community.approvedJoin.month)} />
+                <StatCard label="총 가입자 수" value={formatNumber(dashboard.community.approvedJoin.total)} />
               </div>
               <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
                 비활동 유저 통계
@@ -169,11 +170,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className={`paper ${styles['stack-paper']}`}>
                 <StatCard
                   label="일주일 전 마지막 접속 유저 수"
-                  value={`${formatNumber(dashboard.community.inactiveMembers.week)} 명`}
+                  value={formatNumber(dashboard.community.inactiveMembers.week)}
                 />
                 <StatCard
                   label="30일 이전 마지막 접속 유저 수"
-                  value={`${formatNumber(dashboard.community.inactiveMembers.month)} 명`}
+                  value={formatNumber(dashboard.community.inactiveMembers.month)}
                 />
               </div>
             </>
@@ -181,14 +182,18 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
           {siteType === 'blog' && dashboard.blog ? (
             <>
-              <div className={`paper ${styles.paper}`}>
-                <Typography variant="subtitle2">재방문율</Typography>
-                <Typography variant="body2">
-                  {formatPercent(dashboard.blog.revisit.rate)} (재방문{' '}
-                  {formatNumber(dashboard.blog.revisit.revisitVisitors)} 명 / 전체
-                  {formatNumber(dashboard.blog.revisit.totalVisitors)} 명)
-                </Typography>
-              </div>
+              <dl className={`paper ${styles.paper} ${styles.summary}`}>
+                <dt>재방문율</dt>
+                <dd>
+                  <p>
+                    {formatPercent(dashboard.blog.revisit.rate)} <span>%</span>
+                  </p>
+                  <p className={styles.sub}>
+                    (재방문 {formatNumber(dashboard.blog.revisit.revisitVisitors)} 명 / 전체
+                    {formatNumber(dashboard.blog.revisit.totalVisitors)} 명)
+                  </p>
+                </dd>
+              </dl>
 
               <div className={`paper ${styles['paper-table']}`}>
                 <Typography variant="subtitle2">인기글 순위</Typography>

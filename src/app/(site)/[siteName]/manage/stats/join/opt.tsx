@@ -397,18 +397,24 @@ export default function Opt({ initialData, initialError }: OptProps) {
             가입자수 요약
           </Typography>
           <div className={`paper ${styles['stack-paper']}`}>
-            <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">오늘 신규 가입자 수</Typography>
-              <Typography variant="body2">
-                {formatNumber(joinStats.summary.todayTotalJoinCount)} 명{' / '}
-                승인 {formatNumber(joinStats.summary.todayApprovedJoinCount)} 명{' / '}
-                비승인 {formatNumber(joinStats.summary.todayUnapprovedJoinCount)} 명
-              </Typography>
-            </div>
-            <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">총 가입자 수</Typography>
-              <Typography variant="body2">{formatNumber(joinStats.summary.totalApprovedJoinCount)} 명</Typography>
-            </div>
+            <dl className={`paper ${styles.paper} ${styles.summary}`}>
+              <dt>오늘 신규 가입자 수</dt>
+              <dd>
+                <p>
+                  {formatNumber(joinStats.summary.todayTotalJoinCount)} <span>명</span>
+                </p>
+                <p className={styles.sub}>
+                  (승인 {formatNumber(joinStats.summary.todayApprovedJoinCount)} 명{' / '}
+                  비승인 {formatNumber(joinStats.summary.todayUnapprovedJoinCount)} 명)
+                </p>
+              </dd>
+            </dl>
+            <dl className={`paper ${styles.paper} ${styles.summary}`}>
+              <dt>총 가입자 수</dt>
+              <dd>
+                {formatNumber(joinStats.summary.totalApprovedJoinCount)} <span>명</span>
+              </dd>
+            </dl>
           </div>
 
           <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>

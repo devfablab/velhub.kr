@@ -38,8 +38,31 @@
     display: grid
     grid-template-columns: repeat(2, 1fr)
 
+    @include ds.mq(maxExtraSmall)
+      grid-template-columns: repeat(1, 1fr)
+
     .paper
       gap: 0
+
+  dl.summary
+    dt
+      color: rgba(ds.$rgb-secondary, .7)
+      font-size: ds.rem(14)
+
+    dd
+      @include ds.fw(neo, 700)
+      font-size: ds.rem(32)
+      text-align: right
+
+      span
+        @include ds.fw(neo, 500)
+        font-size: ds.rem(18)
+
+      p.sub
+        @include ds.fw(pre, 500)
+        font-size: ds.rem(14)
+        opacity: .5
+        line-height: 1
 
   .paper-table
     a
