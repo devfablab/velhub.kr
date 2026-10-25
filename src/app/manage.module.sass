@@ -495,6 +495,11 @@
   @include ds.mq(minSmall)
     grid-template-columns: repeat(2, 1fr)
 
+    .content-items
+      &:nth-of-type(1), &:nth-of-type(2)
+        padding-top: 0
+        border-top: 0!important
+
   .content-items
     padding-top: ds.rem(12)
     border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
@@ -502,7 +507,7 @@
     html[data-theme="yellow-dark"] &
       border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
 
-    &:nth-of-type(1), &:nth-of-type(2)
+    &:nth-of-type(1)
       padding-top: 0
       border-top: 0!important
 
