@@ -181,7 +181,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [items, setItems] = useState<LinkItem[]>(
     Array.isArray(initialData?.links) ? toLinkItems(initialData.links) : [],
   );
+  const [savedItemCount, setSavedItemCount] = useState(initialData?.links?.length ?? 0);
   const [isSaving, setIsSaving] = useState(false);
+  const validItems = items.filter((item) => item.service && item.account.trim());
+  const isSaveDisabled = isSaving || (validItems.length === 0 && !(items.length === 0 && savedItemCount > 0));
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const theme = useTheme();
@@ -260,13 +263,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   async function handleSave() {
+    if (isSaveDisabled) return;
     try {
-      if (items.some((item) => !item.service || !item.account.trim())) {
-        setErrorMessage('빈 데이터가 있습니다.');
-        setIsErrorDialogOpen(true);
-        return;
-      }
-
       setErrorMessage('');
       setIsSaving(true);
 
@@ -278,7 +276,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         credentials: 'include',
         body: JSON.stringify({
           siteName,
-          links: items.map((item) => ({
+          links: validItems.map((item) => ({
             service: item.service,
             account: item.account.trim(),
           })),
@@ -297,6 +295,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         throw new Error('소셜 링크 저장에 실패했습니다.');
       }
 
+      setSavedItemCount(result.links.length);
       setItems(
         result.links.map((link) => ({
           localId: createLocalId(),
@@ -364,12 +363,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`} disabled={isSaving}>
+                    <button type="submit" className={`button ${styles.button}`} disabled={isSaveDisabled}>
                       저장
                     </button>
                   </div>
                 ) : (
-                  <button type="submit" className="button medium submit" disabled={isSaving}>
+                  <button type="submit" className="button medium submit" disabled={isSaveDisabled}>
                     저장
                   </button>
                 )}

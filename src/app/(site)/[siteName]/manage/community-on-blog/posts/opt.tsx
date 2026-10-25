@@ -7,7 +7,7 @@ import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
-import Container from '../menu';
+import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
 export type BlogCommunityManageResponse = {

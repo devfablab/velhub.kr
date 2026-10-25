@@ -109,7 +109,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   if (!dashboard?.site || !dashboard.visits) {
     return (
-      <Container pageTitle="통계" pageBack={`/${siteName}/manage`}>
+      <Container pageTitle="통계" pageBack={`/${siteName}/manage`} menu="stats">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <ScreenState kind="error">{errorMessage || '통계 정보를 불러오지 못했습니다.'}</ScreenState>
@@ -196,7 +196,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>순위</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>순위</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>글</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>조회수</TableCell>
                       </TableRow>
@@ -207,7 +207,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           const href = getPostHref(siteName, post);
                           return (
                             <TableRow key={post.id}>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{index + 1}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{index + 1}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {href ? <Anchor href={href}>{post.subject}</Anchor> : post.subject}
                               </TableCell>

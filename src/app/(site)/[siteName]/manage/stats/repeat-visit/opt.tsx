@@ -7,10 +7,10 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Cell,
   Pie,
   PieChart,
   ResponsiveContainer,
+  Sector,
   Tooltip,
   XAxis,
   YAxis,
@@ -248,11 +248,8 @@ function RepeatVisitPieChart({ summary }: { summary: NonNullable<RepeatVisitResp
             );
           }}
           labelLine={false}
-        >
-          {data.map((item) => (
-            <Cell key={item.name} fill={item.color} />
-          ))}
-        </Pie>
+          shape={(props) => <Sector {...props} fill={props.payload.color} />}
+        />
       </PieChart>
     </ResponsiveContainer>
   );

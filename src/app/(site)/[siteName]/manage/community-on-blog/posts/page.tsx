@@ -1,4 +1,4 @@
-import Opt, { type BlogCommunityManageResponse } from '../opt';
+import Opt, { type BlogCommunityManageResponse } from './opt';
 import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 export default async function Page({ params }: { params: Promise<{ siteName: string }> }) {
