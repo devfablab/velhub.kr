@@ -21,12 +21,8 @@ import {
   Pagination,
   PaginationItem,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -484,16 +480,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   연재 관리
                 </Anchor>
               ) : null}
-
-              {isMobile ? null : (
-                <>
-                  {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-                    <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
-                      삭제
-                    </button>
-                  ) : null}
-                </>
-              )}
             </Stack>
 
             <Stack direction="row" justifyContent="flex-end">
@@ -516,18 +502,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
               justifyContent={isMobile ? 'space-between' : 'flex-end'}
               sx={{ width: '100%' }}
             >
-              {isMobile ? (
-                <>
-                  {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-                    <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
-                      삭제
-                    </button>
-                  ) : (
-                    <i />
-                  )}
-                </>
-              ) : null}
-
               <ButtonGroup size={isMobile ? 'small' : 'medium'}>
                 <Button
                   LinkComponent={NextLink}
@@ -578,109 +552,107 @@ export default function Opt({ initialData, initialError }: OptProps) {
             onClose={() => setIsErrorDialogOpen(false)}
           />
 
+          <Stack
+            direction={isMobile ? 'column' : 'row'}
+            gap={isMobile ? undefined : 1.5}
+            alignItems={isMobile ? undefined : 'center'}
+            justifyContent={isMobile ? undefined : 'space-between'}
+            sx={{ p: isMobile ? 1.5 : 2.5, pb: 0 }}
+          >
+            <Stack direction="row" gap={1.5} alignItems="center">
+              <Stack direction="row" alignItems="center">
+                <Checkbox
+                  checked={isAllCurrentPageChecked}
+                  indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
+                  onChange={handleToggleAllCurrentPage}
+                  size="small"
+                />
+                <Typography variant="subtitle2">{selectedIds.length}개의 게시물이 선택됨</Typography>
+              </Stack>
+              <Stack direction="row" gap={1.5} alignItems="center">
+                <button
+                  type="button"
+                  className="button small danger"
+                  disabled={selectedIds.length === 0 || currentFilter === 'deleted'}
+                  onClick={handleOpenBulkDeleteDialog}
+                >
+                  삭제
+                </button>
+              </Stack>
+            </Stack>
+          </Stack>
+
           <Box sx={{ position: 'relative' }}>
-            <div className={`paper paper-p0 ${styles.paper}`}>
+            <div className={`paper ${styles.paper} ${styles['paper-items']}`}>
               {contents.length === 0 ? (
                 <ScreenState>{currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}</ScreenState>
               ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={isAllCurrentPageChecked}
-                          indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
-                          onChange={handleToggleAllCurrentPage}
-                        />
-                      </TableCell>
-                      <TableCell />
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>조회수</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>작성일</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>작성자</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
-                      <TableCell />
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {contents.map((content) => (
-                      <TableRow key={content.id}>
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={selectedIds.includes(content.id)}
-                            onChange={() => handleToggleOne(content.id)}
-                          />
-                        </TableCell>
-
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {content.is_pin ? <PushPinIcon fontSize="small" /> : (content.series_idx ?? content.idx)}
-                        </TableCell>
-
-                        <TableCell>
-                          <Stack direction="row" gap={1}>
+                contents.map((content) => (
+                  <div key={content.id} className={styles['content-items']}>
+                    <Stack direction="row" alignItems="flex-start">
+                      <Checkbox
+                        checked={selectedIds.includes(content.id)}
+                        onChange={() => handleToggleOne(content.id)}
+                        size="small"
+                      />
+                      <Stack direction="column" gap={0.5} sx={{ width: '100%' }}>
+                        <div className={styles.title}>
+                          <p>
+                            {content.is_pin ? <PushPinIcon fontSize="small" aria-label="상단 고정" /> : null}
                             {content.published_status === 'draft' ? (
                               <Chip label="임시저장글" color="warning" size="small" />
                             ) : null}
                             {content.prefix_label ? (
                               <Chip label={content.prefix_label} size="small" variant="outlined" />
                             ) : null}
-
-                            <Anchor
-                              href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
-                              className="link-normal"
-                            >
-                              {content.subject}
-                            </Anchor>
-                          </Stack>
-                        </TableCell>
-
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {typeof content.post_count === 'number' ? content.post_count : 0}
-                        </TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.author_name}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.closed_by_name}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
-                        </TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap', overflowWrap: 'anywhere' }}>
-                          {content.closed_message}
-                        </TableCell>
-
-                        <TableCell align="right">
+                          </p>
+                          <Anchor
+                            href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
+                            className="link-normal"
+                          >
+                            {content.subject}
+                          </Anchor>
+                        </div>
+                        {content.closed_by_name && content.closed_at ? (
+                          <div className={styles.delete}>
+                            <p>
+                              {content.closed_by_name} 님이 {formatDateTimeDetail(content.closed_at)}에 삭제함.
+                            </p>
+                            {content.closed_message ? <p>{content.closed_message}</p> : null}
+                          </div>
+                        ) : null}
+                        <p className={styles.author}>
+                          {content.author_name} · {formatDateTimeDetail(content.created_at)}
+                        </p>
+                        <Stack justifyContent="flex-end" direction="row" gap={1.5}>
                           {content.is_closed ? (
-                            <>
-                              {!content.is_locked ? (
-                                <button
-                                  type="button"
-                                  className="button small action"
-                                  onClick={() => handleOpenRestoreDialog(content)}
-                                >
-                                  복구
-                                </button>
-                              ) : (
-                                <button type="button" className="button small action" disabled>
-                                  복구 불가
-                                </button>
-                              )}
-                            </>
+                            !content.is_locked ? (
+                              <button
+                                type="button"
+                                className="button small action"
+                                onClick={() => handleOpenRestoreDialog(content)}
+                              >
+                                복구
+                              </button>
+                            ) : (
+                              <button type="button" className="button small action" disabled>
+                                복구 불가
+                              </button>
+                            )
                           ) : (
                             <button
                               type="button"
-                              className="button small danger"
+                              className="button small warning"
                               onClick={() => handleOpenSingleDeleteDialog(content)}
                             >
                               삭제
                             </button>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </Stack>
+                      </Stack>
+                    </Stack>
+                  </div>
+                ))
               )}
 
               <Backdrop

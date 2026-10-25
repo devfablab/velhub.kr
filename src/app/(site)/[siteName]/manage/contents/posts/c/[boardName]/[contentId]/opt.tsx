@@ -7,6 +7,7 @@ import { Box, Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/mate
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import ManagePostActions from '@/components/service/community/ManagePostActions';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -51,7 +52,7 @@ export type ContentResponse = {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
     markdown_status: string;
     site_id: string;
-    post_type: 'none' | 'prefix' | 'series';
+    post_type: 'none' | 'prefix' | 'series' | 'both';
   };
   content?: {
     id: string;
@@ -77,6 +78,7 @@ export type ContentResponse = {
     created_at: string;
     author_name: string;
     is_closed?: boolean;
+    is_locked?: boolean;
     closed_at?: string | null;
     closed_message?: string | null;
     closed_by_name?: string;
@@ -96,6 +98,9 @@ export type ContentResponse = {
   series?: SeriesRow | null;
   isAuthor?: boolean;
   isStaff?: boolean;
+  canManageContent?: boolean;
+  canEditContent?: boolean;
+  canDeleteContent?: boolean;
   error?: string;
 };
 
@@ -115,9 +120,9 @@ export default function Opt({
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const [board] = useState<ContentResponse['board'] | null>(initialContent?.board ?? null);
-  const [content] = useState<ContentResponse['content'] | null>(initialContent?.content ?? null);
-  const [series] = useState<SeriesRow | null>(initialContent?.series ?? null);
+  const board = initialContent?.board ?? null;
+  const content = initialContent?.content ?? null;
+  const series = initialContent?.series ?? null;
   const [isAuthor] = useState(initialContent?.isAuthor ?? false);
   const [isStaff] = useState(initialContent?.isStaff ?? false);
   const [errorMessage] = useState(initialError || '');
@@ -156,6 +161,20 @@ export default function Opt({
             title={null}
             messages={errorMessage ? [errorMessage] : []}
             onClose={() => setIsErrorDialogOpen(false)}
+          />
+
+          <ManagePostActions
+            siteName={siteName}
+            boardName={boardName}
+            contentId={contentId}
+            postType={board.post_type}
+            boardType={board.board_type}
+            isClosed={Boolean(content.is_closed)}
+            isLocked={Boolean(content.is_locked)}
+            canEdit={initialContent?.canEditContent ?? (isAuthor || isStaff)}
+            canDelete={initialContent?.canDeleteContent ?? (isAuthor || isStaff)}
+            canRestore={initialContent?.canManageContent ?? isStaff}
+            isAuthor={isAuthor}
           />
 
           {content.is_closed ? <div className={`paper paper-error ${styles.paper}`}>삭제된 글입니다.</div> : null}

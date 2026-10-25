@@ -1158,7 +1158,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   />
                 ) : (
                   <Typography variant="subtitle2">
-                    {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+                    {deleteMode === 'single' ? '이 게시물을 삭제하시겠어요?' : '선택한 게시물을 삭제하시겠어요?'}
                   </Typography>
                 )}
 
@@ -1237,7 +1237,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     />
                   ) : (
                     <Typography variant="subtitle2">
-                      {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+                      {deleteMode === 'single' ? '이 게시물을 삭제하시겠어요?' : '선택한 게시물을 삭제하시겠어요?'}
                     </Typography>
                   )}
 
