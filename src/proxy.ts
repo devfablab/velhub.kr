@@ -576,11 +576,14 @@ function getSecondaryRedirectPath({
 export async function proxy(request: NextRequest) {
   let pathname = request.nextUrl.pathname;
 
+  if (pathname === '/broken-image.jpg') {
+    return new NextResponse(null, { status: 404 });
+  }
+
   if (
     pathname.startsWith('/_next/') ||
     pathname === '/favicon.ico' ||
     pathname.startsWith('/favicon/') ||
-    pathname === '/broken-image.jpg' ||
     pathname === '/dummy.webp' ||
     pathname === '/together.webp'
   ) {

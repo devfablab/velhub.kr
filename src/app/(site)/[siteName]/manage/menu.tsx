@@ -766,7 +766,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                       </li>
                     ) : (
                       <li className={styles['VhiMenu-profile']}>
-                        <Avatar src="" alt="" />
+                        <Avatar src={undefined} alt="" />
                         <div className={styles['VhiMenu-profile-info']}>
                           <em>로그인이 필요합니다</em>
                         </div>

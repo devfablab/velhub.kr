@@ -244,7 +244,7 @@ export default function HeaderConcierge() {
                   <NotificationButton isMobile={false} />
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
-                      src={userProfile.avatarUrl || '/broken-image.jpg'}
+                      src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
                       alt={userProfile.name || ''}
                       sx={{ width: 24, height: 24 }}
                     />
@@ -278,7 +278,7 @@ export default function HeaderConcierge() {
                   <NotificationButton isMobile={false} />
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
-                      src={userProfile.avatarUrl || '/broken-image.jpg'}
+                      src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
                       alt={userProfile.name || ''}
                       sx={{ width: 24, height: 24 }}
                     />
@@ -330,7 +330,7 @@ export default function HeaderConcierge() {
               </li>
             ) : (
               <li className={styles['VhiMenu-profile']}>
-                <Avatar src="" alt="" />
+                <Avatar src={undefined} alt="" />
                 <div className={styles['VhiMenu-profile-info']}>
                   <em>로그인이 필요합니다</em>
                 </div>

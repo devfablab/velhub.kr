@@ -38,8 +38,8 @@ import { getSupabaseBrowser } from '@/lib/supabase';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
-import SecondaryMenu from '@/components/header-groups/lounge/SecondaryMenu';
 import LoungeSearch from '@/components/header-groups/lounge/Search';
+import SecondaryMenu from '@/components/header-groups/lounge/SecondaryMenu';
 import NotificationButton from '@/components/service/common/NotificationButton';
 import { ServiceLogo } from '@/components/Svgs';
 import { useLoungeHeader } from './lounge/shared/LoungeHeaderContext';
@@ -231,7 +231,7 @@ export default function Container({ children }: ContainerProps) {
                     sx={{ width: 24, height: 24 }}
                   >
                     <Avatar
-                      src={userProfile.avatarUrl || '/broken-image.jpg'}
+                      src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
                       alt={userProfile.name || ''}
                       sx={{ width: 24, height: 24 }}
                     />
@@ -280,7 +280,7 @@ export default function Container({ children }: ContainerProps) {
                           </li>
                         ) : (
                           <li className={styles['VhiMenu-profile']}>
-                            <Avatar src="" alt="" />
+                            <Avatar src={undefined} alt="" />
                             <div className={styles['VhiMenu-profile-info']}>
                               <em>로그인이 필요합니다</em>
                             </div>
