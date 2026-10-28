@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
+import { r2Storage } from '@/lib/r2Storage';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -47,7 +48,7 @@ function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   if (!normalizedPath) return null;
   if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) return normalizedPath;
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath);
+  const publicUrl = r2Storage.from(bucket).getPublicUrl(normalizedPath);
   return publicUrl.data.publicUrl ?? null;
 }
 

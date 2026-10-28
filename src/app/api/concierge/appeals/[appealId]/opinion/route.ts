@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { r2Storage } from '@/lib/r2Storage';
 import {
   appealOpinionFields,
   appealOpinionPositionOptions,
@@ -333,7 +334,7 @@ export async function POST(request: Request, context: RouteContext) {
     const validOpinionFile = opinionFile!;
     const now = new Date().toISOString();
     uploadedPath = `${appeal.id}/${randomUUID()}.pdf`;
-    const uploadResult = await supabaseAdmin.storage.from(BUCKET).upload(uploadedPath, validOpinionFile, {
+    const uploadResult = await r2Storage.from(BUCKET).upload(uploadedPath, validOpinionFile, {
       contentType: 'application/pdf',
       upsert: false,
     });
@@ -376,7 +377,7 @@ export async function POST(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (updateResult.error || !updateResult.data) {
-      await supabaseAdmin.storage.from(BUCKET).remove([uploadedPath]);
+      await r2Storage.from(BUCKET).remove([uploadedPath]);
       uploadedPath = '';
       return Response.json({ error: '소명 의견서를 저장하지 못했습니다.' }, { status: 500 });
     }
@@ -403,7 +404,7 @@ export async function POST(request: Request, context: RouteContext) {
     return Response.json({ ok: true });
   } catch (unknownError) {
     if (uploadedPath) {
-      await getSupabaseAdmin().storage.from(BUCKET).remove([uploadedPath]);
+      await r2Storage.from(BUCKET).remove([uploadedPath]);
     }
 
     console.error('[concierge/appeals/opinion] unexpected error', unknownError);

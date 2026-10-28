@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getMembershipFeatures } from '@/lib/memberships/features';
+import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -8,7 +9,7 @@ import { normalizeText } from '@/lib/utils';
 function getAvatarUrl(path: string | null) {
   if (!path) return null;
   if (/^https?:\/\//.test(path)) return path;
-  return getSupabaseAdmin().storage.from('avatar').getPublicUrl(path).data.publicUrl ?? null;
+  return r2Storage.from('avatar').getPublicUrl(path).data.publicUrl ?? null;
 }
 
 function decryptUserName(value: string) {

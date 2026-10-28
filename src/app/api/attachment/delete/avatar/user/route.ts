@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const removeResult = await supabaseAdmin.storage.from(AVATAR_BUCKET).remove([targetPath]);
+    const removeResult = await r2Storage.from(AVATAR_BUCKET).remove([targetPath]);
 
     if (removeResult.error) {
       return Response.json({ error: '아바타 삭제에 실패했습니다.' }, { status: 500 });

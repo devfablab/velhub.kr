@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/privateBoard/access';
+import { r2Storage } from '@/lib/r2Storage';
 import { normalizeText } from '@/lib/utils';
 
 function getFallbackAuthorName(value: string | null | undefined) {
@@ -81,9 +82,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
   if (images.error) return Response.json({ error: '첨부 이미지를 불러오지 못했습니다.' }, { status: 500 });
   const postImages = await Promise.all(
     (images.data ?? []).map(async (image) => {
-      const signedUrl = await result.access.supabaseAdmin.storage
-        .from('private-post-images')
-        .createSignedUrl(image.storage_path, 60 * 60);
+      const signedUrl = await r2Storage.from('private-post-images').createSignedUrl(image.storage_path, 60 * 60);
 
       return {
         id: image.id,
@@ -115,9 +114,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
     (replyImages.data ?? []).map(async (image) => {
       if (!image.private_post_reply_id) return;
 
-      const signedUrl = await result.access.supabaseAdmin.storage
-        .from('private-post-images')
-        .createSignedUrl(image.storage_path, 60 * 60);
+      const signedUrl = await r2Storage.from('private-post-images').createSignedUrl(image.storage_path, 60 * 60);
       const url = signedUrl.data?.signedUrl;
 
       if (!url) return;
@@ -150,7 +147,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
   const authorAvatarUrl = avatarValue
     ? /^https?:\/\//i.test(avatarValue)
       ? avatarValue
-      : (result.access.supabaseAdmin.storage.from('avatar').getPublicUrl(avatarValue).data.publicUrl ?? '')
+      : (r2Storage.from('avatar').getPublicUrl(avatarValue).data.publicUrl ?? '')
     : '';
   const repliesWithAuthors = await Promise.all(
     visibleReplies.map(async (reply) => {
@@ -181,7 +178,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
         author_avatar_url: replyAvatarValue
           ? /^https?:\/\//i.test(replyAvatarValue)
             ? replyAvatarValue
-            : (result.access.supabaseAdmin.storage.from('avatar').getPublicUrl(replyAvatarValue).data.publicUrl ?? '')
+            : (r2Storage.from('avatar').getPublicUrl(replyAvatarValue).data.publicUrl ?? '')
           : '',
       };
     }),
@@ -291,7 +288,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pos
         .webp({ quality: 85 })
         .toBuffer({ resolveWithObject: true });
       const storagePath = `${result.access.site.id}/${postId}/${reply.data.id}/${crypto.randomUUID()}.webp`;
-      const upload = await result.access.supabaseAdmin.storage
+      const upload = await r2Storage
         .from('private-post-images')
         .upload(storagePath, converted.data, { contentType: 'image/webp', upsert: false });
 
@@ -314,8 +311,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pos
       if (insertImages.error) throw new Error('이미지 저장에 실패했습니다.');
     }
   } catch (error) {
-    if (uploadedPaths.length)
-      await result.access.supabaseAdmin.storage.from('private-post-images').remove(uploadedPaths);
+    if (uploadedPaths.length) await r2Storage.from('private-post-images').remove(uploadedPaths);
     await result.access.supabaseAdmin.from('private_post_replies').delete().eq('id', reply.data.id);
     return Response.json(
       { error: error instanceof Error ? error.message : '답변 등록에 실패했습니다.' },
@@ -403,7 +399,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ post
         .webp({ quality: 85 })
         .toBuffer({ resolveWithObject: true });
       const storagePath = `${result.access.site.id}/${postId}/${crypto.randomUUID()}.webp`;
-      const upload = await result.access.supabaseAdmin.storage
+      const upload = await r2Storage
         .from('private-post-images')
         .upload(storagePath, converted.data, { contentType: 'image/webp', upsert: false });
 
@@ -417,8 +413,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ post
       });
     }
   } catch (error) {
-    if (uploadedPaths.length)
-      await result.access.supabaseAdmin.storage.from('private-post-images').remove(uploadedPaths);
+    if (uploadedPaths.length) await r2Storage.from('private-post-images').remove(uploadedPaths);
     return Response.json(
       { error: error instanceof Error ? error.message : '이미지 업로드에 실패했습니다.' },
       { status: 500 },
@@ -437,8 +432,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ post
     .eq('site_id', result.access.site.id);
 
   if (update.error) {
-    if (uploadedPaths.length)
-      await result.access.supabaseAdmin.storage.from('private-post-images').remove(uploadedPaths);
+    if (uploadedPaths.length) await r2Storage.from('private-post-images').remove(uploadedPaths);
     return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
   }
 
@@ -456,7 +450,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ post
     );
 
     if (insertImages.error) {
-      await result.access.supabaseAdmin.storage.from('private-post-images').remove(uploadedPaths);
+      await r2Storage.from('private-post-images').remove(uploadedPaths);
       return Response.json({ error: '첨부 이미지 저장에 실패했습니다.' }, { status: 500 });
     }
   }
@@ -473,9 +467,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ post
 
     if (deleteImages.error) return Response.json({ error: '첨부 이미지 삭제에 실패했습니다.' }, { status: 500 });
 
-    await result.access.supabaseAdmin.storage
-      .from('private-post-images')
-      .remove(removedImages.map((image) => image.storage_path));
+    await r2Storage.from('private-post-images').remove(removedImages.map((image) => image.storage_path));
   }
 
   return Response.json({ ok: true });

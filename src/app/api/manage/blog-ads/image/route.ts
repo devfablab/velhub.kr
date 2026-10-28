@@ -7,6 +7,7 @@ import {
   getBlogAdIdentityStatus,
   getBlogAdSiteContext,
 } from '@/lib/blogAds/server';
+import { r2Storage } from '@/lib/r2Storage';
 import { normalizeText } from '@/lib/utils';
 
 export async function POST(request: Request) {
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     const path = `${context.siteId}/${crypto.randomUUID()}.webp`;
-    const uploaded = await context.supabaseAdmin.storage.from(BLOG_AD_BUCKET).upload(path, output, {
+    const uploaded = await r2Storage.from(BLOG_AD_BUCKET).upload(path, output, {
       contentType: 'image/webp',
       upsert: false,
     });
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     return Response.json({
       ok: true,
       path,
-      url: context.supabaseAdmin.storage.from(BLOG_AD_BUCKET).getPublicUrl(path).data.publicUrl ?? '',
+      url: r2Storage.from(BLOG_AD_BUCKET).getPublicUrl(path).data.publicUrl ?? '',
     });
   } catch (error) {
     return Response.json(

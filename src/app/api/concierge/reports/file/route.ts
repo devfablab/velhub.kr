@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const signedUrlResult = await supabaseAdmin.storage.from(bucket).createSignedUrl(path, 60);
+    const signedUrlResult = await r2Storage.from(bucket).createSignedUrl(path, 60);
 
     if (signedUrlResult.error || !signedUrlResult.data.signedUrl) {
       console.error('[concierge/reports/file] signed url error', signedUrlResult.error);

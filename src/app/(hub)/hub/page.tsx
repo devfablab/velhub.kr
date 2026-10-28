@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -56,7 +57,7 @@ function getAvatarUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrlResult = supabaseAdmin.storage.from('avatar').getPublicUrl(normalizedValue);
+  const publicUrlResult = r2Storage.from('avatar').getPublicUrl(normalizedValue);
 
   return publicUrlResult.data.publicUrl ?? '';
 }

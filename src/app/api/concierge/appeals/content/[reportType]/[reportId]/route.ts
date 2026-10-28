@@ -1,4 +1,5 @@
 import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
+import { r2Storage } from '@/lib/r2Storage';
 import { getReportAppealCategory } from '@/lib/reports/appeals';
 import { guidelineReportCategories } from '@/lib/reports/guidelines';
 import verifySession from '@/lib/session/verifySession';
@@ -332,7 +333,7 @@ function getPublicPostImageUrl(path: unknown) {
     return '';
   }
 
-  return getSupabaseAdmin().storage.from('post').getPublicUrl(normalizedPath).data.publicUrl ?? '';
+  return r2Storage.from('post').getPublicUrl(normalizedPath).data.publicUrl ?? '';
 }
 
 function normalizePoll(value: unknown): PollData | null {

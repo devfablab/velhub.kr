@@ -1,4 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -179,7 +180,7 @@ export async function GET(request: Request) {
     let profilePictureUrl = '';
 
     if (rawProfilePicture) {
-      const publicUrl = supabaseAdmin.storage.from('avatar').getPublicUrl(rawProfilePicture);
+      const publicUrl = r2Storage.from('avatar').getPublicUrl(rawProfilePicture);
       profilePictureUrl = publicUrl.data.publicUrl ?? '';
     }
 
@@ -187,7 +188,7 @@ export async function GET(request: Request) {
     let profileLogoUrl = '';
 
     if (rawProfileLogo) {
-      const publicUrl = supabaseAdmin.storage.from('site-logo').getPublicUrl(rawProfileLogo);
+      const publicUrl = r2Storage.from('site-logo').getPublicUrl(rawProfileLogo);
       profileLogoUrl = publicUrl.data.publicUrl ?? '';
     }
 

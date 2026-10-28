@@ -1,4 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import { getLibraryStatus } from '@/lib/session/libraryStatus';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -38,7 +39,7 @@ function getPublicUrl(bucket: string, path: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath);
+  const publicUrl = r2Storage.from(bucket).getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? null;
 }

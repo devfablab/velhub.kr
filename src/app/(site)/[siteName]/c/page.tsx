@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -40,7 +41,7 @@ function getCategoryImageUrl(path: string | null) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('category').getPublicUrl(normalizedPath);
+  const publicUrl = r2Storage.from('category').getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
 }

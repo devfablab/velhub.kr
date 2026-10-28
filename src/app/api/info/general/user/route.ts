@@ -1,6 +1,7 @@
 import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -18,7 +19,7 @@ function isExternalAvatarUrl(value: string) {
 
 function getSupabaseAvatarPublicUrl(path: string) {
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrlResult = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+  const publicUrlResult = r2Storage.from(AVATAR_BUCKET).getPublicUrl(path);
   return publicUrlResult.data.publicUrl ?? '';
 }
 

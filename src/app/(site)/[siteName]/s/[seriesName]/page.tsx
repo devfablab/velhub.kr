@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSeriesPageMetadata } from '@/lib/seoSite';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -107,7 +108,7 @@ function getPublicPostImageUrl(path: string | null | undefined) {
   const supabaseAdmin = getSupabaseAdmin();
   const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
 
-  return supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath).data.publicUrl ?? '';
+  return r2Storage.from(bucket).getPublicUrl(normalizedPath).data.publicUrl ?? '';
 }
 
 function normalizePostImages(value: unknown) {

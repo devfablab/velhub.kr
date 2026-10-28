@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -24,7 +25,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ inquiryId:
     (item) => !item.deleted_at && ['bug_evidence', 'payment_evidence'].includes(item.attachment_type),
   );
   const { data: signed } = evidence
-    ? await db.storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
+    ? await r2Storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
     : { data: null };
   return Response.json({
     inquiry: {

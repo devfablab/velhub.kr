@@ -1,4 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import { getStaffMessageStatus, type GuidelineAppealSenderType } from '@/lib/reports/guidelineAppeals';
 import {
   guidelineReportCategories,
@@ -111,7 +112,7 @@ function getPublicPostImageUrl(path: string | null | undefined) {
 
   const supabaseAdmin = getSupabaseAdmin();
   const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
-  const publicUrl = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath);
+  const publicUrl = r2Storage.from(bucket).getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
 }

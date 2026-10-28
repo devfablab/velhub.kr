@@ -1,4 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getR2PublicUrl } from '@/lib/r2Public';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -192,19 +193,9 @@ function getPostImageUrl(path: string | null) {
     return null;
   }
 
-  if (/^https?:\/\//i.test(normalizedPath)) {
-    return normalizedPath;
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  if (!supabaseUrl) {
-    return null;
-  }
-
   const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
 
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${normalizedPath}`;
+  return getR2PublicUrl(bucket, normalizedPath) || null;
 }
 
 function normalizePostImages(value: unknown): PostImage[] | null {

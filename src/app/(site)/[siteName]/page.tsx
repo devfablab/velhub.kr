@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getVisibleBlogHomeAds } from '@/lib/blogAds/server';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
 import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -92,7 +93,7 @@ function getBlogHomeImageUrl(bucket: 'category' | 'series', path: string | null)
     return null;
   }
 
-  return getSupabaseAdmin().storage.from(bucket).getPublicUrl(path).data.publicUrl ?? null;
+  return r2Storage.from(bucket).getPublicUrl(path).data.publicUrl ?? null;
 }
 
 function getSiteAvatarUrl(path: string | null) {
@@ -104,7 +105,7 @@ function getSiteAvatarUrl(path: string | null) {
     return path;
   }
 
-  return getSupabaseAdmin().storage.from('avatar').getPublicUrl(path).data.publicUrl ?? null;
+  return r2Storage.from('avatar').getPublicUrl(path).data.publicUrl ?? null;
 }
 
 export async function generateMetadata(context: RouteContext) {

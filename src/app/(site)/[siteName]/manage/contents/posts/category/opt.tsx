@@ -31,6 +31,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { getR2PublicUrl } from '@/lib/r2Public';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
@@ -146,13 +147,12 @@ function isValidCategoryKey(value: string) {
 
 function getCategoryImageUrl(value: string) {
   const imagePath = normalizeText(value);
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 
-  if (!supabaseUrl || !imagePath) {
+  if (!imagePath) {
     return '';
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/category/${imagePath}`;
+  return getR2PublicUrl('category', imagePath);
 }
 
 function buildCheckUrl({

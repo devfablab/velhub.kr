@@ -1,4 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
@@ -101,7 +102,7 @@ export function getStigmaAvatarUrl(value: string | null | undefined) {
     return avatar;
   }
 
-  return getSupabaseAdmin().storage.from('avatar').getPublicUrl(avatar).data.publicUrl ?? null;
+  return r2Storage.from('avatar').getPublicUrl(avatar).data.publicUrl ?? null;
 }
 
 export function getLevelIconUrl(value: string | null | undefined) {
@@ -112,7 +113,7 @@ export function getLevelIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(LEVEL_ICON_BUCKET).getPublicUrl(normalizedValue);
+  const publicUrl = r2Storage.from(LEVEL_ICON_BUCKET).getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? '';
 }

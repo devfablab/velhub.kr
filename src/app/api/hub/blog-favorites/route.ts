@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -41,7 +42,7 @@ function getPublicUrl(bucket: string, value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedValue);
+  const publicUrl = r2Storage.from(bucket).getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? null;
 }

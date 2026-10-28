@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import { getSiteOgAccess, SITE_OG_BUCKET } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '삭제할 이미지 경로가 올바르지 않습니다.' }, { status: 400 });
     }
 
-    const deleteResult = await access.supabaseAdmin.storage.from(SITE_OG_BUCKET).remove([storagePath]);
+    const deleteResult = await r2Storage.from(SITE_OG_BUCKET).remove([storagePath]);
 
     if (deleteResult.error) {
       return Response.json({ error: '오픈그래프 이미지 삭제에 실패했습니다.' }, { status: 500 });

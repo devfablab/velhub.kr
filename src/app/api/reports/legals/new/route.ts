@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { r2Storage } from '@/lib/r2Storage';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
@@ -600,7 +601,7 @@ async function uploadFiles(reportId: string, files: File[]) {
     const path = `${reportId}/${randomUUID()}.pdf`;
     const arrayBuffer = await file.arrayBuffer();
 
-    const uploadResult = await supabaseAdmin.storage.from('report-legals').upload(path, arrayBuffer, {
+    const uploadResult = await r2Storage.from('report-legals').upload(path, arrayBuffer, {
       contentType: 'application/pdf',
       upsert: false,
     });

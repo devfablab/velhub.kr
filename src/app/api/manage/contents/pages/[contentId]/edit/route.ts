@@ -1,4 +1,5 @@
 import { canManageCommunityPages, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -134,13 +135,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     const removedEditorPaths = [...previousEditorPaths].filter((path) => !nextEditorPaths.has(path));
 
     if (removedEditorPaths.length > 0) {
-      const removalResult = await supabaseAdmin.storage.from('post').remove(removedEditorPaths);
+      const removalResult = await r2Storage.from('post').remove(removedEditorPaths);
       if (removalResult.error) console.error('페이지 본문 이미지 삭제에 실패했습니다.', removalResult.error);
     }
 
     const nextOgImage = normalizeText(requestBody.ogImage);
     if (pageResult.data.og_image && pageResult.data.og_image !== nextOgImage) {
-      const removalResult = await supabaseAdmin.storage.from('og-image').remove([pageResult.data.og_image]);
+      const removalResult = await r2Storage.from('og-image').remove([pageResult.data.og_image]);
       if (removalResult.error) console.error('페이지 오픈그래프 이미지 삭제에 실패했습니다.', removalResult.error);
     }
 

@@ -1,4 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getR2PublicUrl } from '@/lib/r2Public';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -27,19 +29,9 @@ function getPostImageUrl(path: string | null) {
     return null;
   }
 
-  if (/^https?:\/\//i.test(normalizedPath)) {
-    return normalizedPath;
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  if (!supabaseUrl) {
-    return null;
-  }
-
   const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
 
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${normalizedPath}`;
+  return getR2PublicUrl(bucket, normalizedPath) || null;
 }
 
 function getDisplayName(value: string | null) {
@@ -72,7 +64,7 @@ async function getPostAuthors(userIds: string[]) {
       {
         name: getDisplayName(stigma.user_name),
         avatarUrl: stigma.avatar
-          ? (supabaseAdmin.storage.from('avatar').getPublicUrl(stigma.avatar).data.publicUrl ?? null)
+          ? (r2Storage.from('avatar').getPublicUrl(stigma.avatar).data.publicUrl ?? null)
           : null,
       },
     ]),

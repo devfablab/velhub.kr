@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
       ?.toLowerCase()
       .replace(/[^a-z0-9]/g, '') || 'file';
   const storagePath = `${currentStigma.stigmaId}/${inquiryId}/${crypto.randomUUID()}.${extension}`;
-  const { error: uploadError } = await db.storage.from(bucket).upload(storagePath, file, {
+  const { error: uploadError } = await r2Storage.from(bucket).upload(storagePath, file, {
     contentType: file.type,
     upsert: false,
   });
@@ -65,10 +66,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
     { onConflict: 'inquiry_id,attachment_type' },
   );
   if (saveError) {
-    await db.storage.from(bucket).remove([storagePath]);
+    await r2Storage.from(bucket).remove([storagePath]);
     return Response.json({ error: '증빙 파일 정보를 저장하지 못했습니다.' }, { status: 500 });
   }
-  if (previous?.storage_path) await db.storage.from(bucket).remove([previous.storage_path]);
+  if (previous?.storage_path) await r2Storage.from(bucket).remove([previous.storage_path]);
 
   if (isRequestedEvidence) {
     const now = new Date().toISOString();

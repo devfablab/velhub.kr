@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import path from 'path';
 import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -43,7 +44,7 @@ function getPublicImageUrl(image: string | null | undefined) {
     return '';
   }
 
-  const publicUrl = getSupabaseAdmin().storage.from(BUCKET_NAME).getPublicUrl(normalizedImage);
+  const publicUrl = r2Storage.from(BUCKET_NAME).getPublicUrl(normalizedImage);
   return publicUrl.data.publicUrl ?? '';
 }
 
@@ -142,7 +143,7 @@ async function removeImages(paths: string[]) {
     return;
   }
 
-  await getSupabaseAdmin().storage.from(BUCKET_NAME).remove(paths);
+  await r2Storage.from(BUCKET_NAME).remove(paths);
 }
 
 export async function GET(request: Request) {
@@ -252,7 +253,7 @@ export async function POST(request: Request) {
 
         const extension = path.extname(fileValue.name).toLowerCase();
         const imagePath = `${communityId}/${crypto.randomUUID()}${extension}`;
-        const uploadResult = await access.supabaseAdmin.storage
+        const uploadResult = await r2Storage
           .from(BUCKET_NAME)
           .upload(imagePath, Buffer.from(await fileValue.arrayBuffer()), {
             contentType: fileValue.type,

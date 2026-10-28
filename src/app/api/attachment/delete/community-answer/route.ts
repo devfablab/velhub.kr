@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const removeResult = await supabaseAdmin.storage.from(COMMUNITY_ANSWER_BUCKET).remove([filePath]);
+    const removeResult = await r2Storage.from(COMMUNITY_ANSWER_BUCKET).remove([filePath]);
 
     if (removeResult.error) {
       return Response.json({ error: removeResult.error.message || '이미지 삭제에 실패했습니다.' }, { status: 500 });

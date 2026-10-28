@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import path from 'path';
 import sharp from 'sharp';
 import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSiteOgAccess } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
 
     const filePath = `site/${access.siteId}/${crypto.randomUUID()}${outputExtension}`;
 
-    const uploadResult = await access.supabaseAdmin.storage.from(AVATAR_BUCKET).upload(filePath, uploadBuffer, {
+    const uploadResult = await r2Storage.from(AVATAR_BUCKET).upload(filePath, uploadBuffer, {
       contentType,
       upsert: false,
     });
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
       return Response.json({ error: uploadResult.error.message || '스토리지 업로드에 실패했습니다.' }, { status: 500 });
     }
 
-    const publicUrlResult = access.supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(filePath);
+    const publicUrlResult = r2Storage.from(AVATAR_BUCKET).getPublicUrl(filePath);
 
     return Response.json({
       ok: true,

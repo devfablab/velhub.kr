@@ -1,5 +1,6 @@
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -102,7 +103,7 @@ export function getBlogAdPublicImageUrl(path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
   if (!normalizedPath) return null;
 
-  return getSupabaseAdmin().storage.from(BLOG_AD_BUCKET).getPublicUrl(normalizedPath).data.publicUrl ?? null;
+  return r2Storage.from(BLOG_AD_BUCKET).getPublicUrl(normalizedPath).data.publicUrl ?? null;
 }
 
 export function getRequiredBlogAdImageUrl(path: string | null | undefined) {

@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const deleteResult = await supabaseAdmin.storage.from(POST_BUCKET).remove([path]);
+    const deleteResult = await r2Storage.from(POST_BUCKET).remove([path]);
 
     if (deleteResult.error) {
       return Response.json({ error: '이미지 삭제에 실패했습니다.' }, { status: 500 });

@@ -1,5 +1,6 @@
 import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -160,7 +161,7 @@ export async function GET(_request: Request, context: RouteContext) {
     let profilePictureUrl = '';
 
     if (rawProfilePicture) {
-      const publicUrl = access.supabaseAdmin.storage.from('avatar').getPublicUrl(rawProfilePicture);
+      const publicUrl = r2Storage.from('avatar').getPublicUrl(rawProfilePicture);
       profilePictureUrl = publicUrl.data.publicUrl ?? '';
     }
 
@@ -168,7 +169,7 @@ export async function GET(_request: Request, context: RouteContext) {
     let profileLogoUrl = '';
 
     if (rawProfileLogo) {
-      const publicUrl = access.supabaseAdmin.storage.from('site-logo').getPublicUrl(rawProfileLogo);
+      const publicUrl = r2Storage.from('site-logo').getPublicUrl(rawProfileLogo);
       profileLogoUrl = publicUrl.data.publicUrl ?? '';
     }
 
@@ -176,7 +177,7 @@ export async function GET(_request: Request, context: RouteContext) {
     let siteOgImageUrl = '';
 
     if (rawSiteOgImage) {
-      const publicUrl = access.supabaseAdmin.storage.from('site-og').getPublicUrl(rawSiteOgImage);
+      const publicUrl = r2Storage.from('site-og').getPublicUrl(rawSiteOgImage);
       siteOgImageUrl = publicUrl.data.publicUrl ?? '';
     }
 
@@ -184,7 +185,7 @@ export async function GET(_request: Request, context: RouteContext) {
     let promotionImageUrl = '';
 
     if (rawPromotionImage) {
-      const publicUrl = access.supabaseAdmin.storage.from('promotion-image').getPublicUrl(rawPromotionImage);
+      const publicUrl = r2Storage.from('promotion-image').getPublicUrl(rawPromotionImage);
       promotionImageUrl = publicUrl.data.publicUrl ?? '';
     }
 

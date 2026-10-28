@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
         .filter((item) => item.storage_bucket === bucket)
         .map((item) => item.storage_path);
       if (!bucketPaths.length) continue;
-      const { error: removeError } = await db.storage.from(bucket).remove(bucketPaths);
+      const { error: removeError } = await r2Storage.from(bucket).remove(bucketPaths);
       if (removeError) return Response.json({ error: '보관기간 만료 파일을 삭제하지 못했습니다.' }, { status: 500 });
     }
     await db

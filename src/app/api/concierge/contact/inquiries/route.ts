@@ -3,6 +3,7 @@ import { inquirySubtypes, isInquiryType } from '@/lib/concierge/inquiries';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { MEMBERSHIP_FEATURES } from '@/lib/memberships/catalog';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
+import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -701,7 +702,7 @@ export async function POST(request: NextRequest) {
   }
   if (inquiryType === 'minor_purchase_cancellation' && familyRelationCertificate) {
     const storagePath = `${currentStigma.userId}/${inquiry.id}/${crypto.randomUUID()}.pdf`;
-    const { error: uploadError } = await db.storage
+    const { error: uploadError } = await r2Storage
       .from(FAMILY_RELATION_CERTIFICATE_BUCKET)
       .upload(storagePath, familyRelationCertificate, {
         contentType: 'application/pdf',
@@ -721,7 +722,7 @@ export async function POST(request: NextRequest) {
       submitted_at: new Date().toISOString(),
     });
     if (attachmentError) {
-      await db.storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([storagePath]);
+      await r2Storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([storagePath]);
       await db.from('inquiries').delete().eq('id', inquiry.id);
       return Response.json({ error: '가족관계증명서 제출 정보를 저장하지 못했습니다.' }, { status: 500 });
     }

@@ -4,6 +4,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -166,7 +167,7 @@ function getAvatarUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(normalizedValue);
+  const publicUrl = r2Storage.from(AVATAR_BUCKET).getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -179,7 +180,7 @@ function getLevelIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(LEVEL_ICON_BUCKET).getPublicUrl(targetPath);
+  const publicUrl = r2Storage.from(LEVEL_ICON_BUCKET).getPublicUrl(targetPath);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -192,7 +193,7 @@ function getManagerIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(MANAGER_ICON_BUCKET).getPublicUrl(targetPath);
+  const publicUrl = r2Storage.from(MANAGER_ICON_BUCKET).getPublicUrl(targetPath);
 
   return publicUrl.data.publicUrl ?? '';
 }

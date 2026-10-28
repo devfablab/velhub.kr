@@ -1,5 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -42,7 +43,7 @@ function getPublicPostImageUrl(path: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('post').getPublicUrl(normalizedPath);
+  const publicUrl = r2Storage.from('post').getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
 }

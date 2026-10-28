@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { r2Storage } from '@/lib/r2Storage';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
@@ -551,7 +552,7 @@ async function uploadCopyrightProofFiles(reportId: string, files: File[]) {
     const path = `${reportId}/${randomUUID()}.pdf`;
     const arrayBuffer = await file.arrayBuffer();
 
-    const uploadResult = await supabaseAdmin.storage.from('report-rights').upload(path, arrayBuffer, {
+    const uploadResult = await r2Storage.from('report-rights').upload(path, arrayBuffer, {
       contentType: 'application/pdf',
       upsert: false,
     });
@@ -578,7 +579,7 @@ async function uploadRightsReportFile(reportId: string, directory: string, file:
   const path = `${reportId}/${directory}/${randomUUID()}.pdf`;
   const arrayBuffer = await file.arrayBuffer();
 
-  const uploadResult = await supabaseAdmin.storage.from('report-rights').upload(path, arrayBuffer, {
+  const uploadResult = await r2Storage.from('report-rights').upload(path, arrayBuffer, {
     contentType: 'application/pdf',
     upsert: false,
   });
@@ -760,7 +761,7 @@ export async function POST(request: Request) {
       }
     } catch (uploadError) {
       if (uploadedReportFiles.length > 0) {
-        await supabaseAdmin.storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
+        await r2Storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
       }
 
       throw uploadError;
@@ -814,7 +815,7 @@ export async function POST(request: Request) {
       console.error('[reports/rights/new] insert error', insertResult.error);
 
       if (uploadedReportFiles.length > 0) {
-        await supabaseAdmin.storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
+        await r2Storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
       }
 
       return Response.json({ error: '신고를 접수하지 못했습니다.' }, { status: 500 });
@@ -871,11 +872,11 @@ export async function POST(request: Request) {
       await supabaseAdmin.from('report_rights').delete().eq('id', reportId);
 
       if (uploadedCopyrightProofFiles.length > 0) {
-        await supabaseAdmin.storage.from('report-rights').remove(uploadedCopyrightProofFiles.map((file) => file.path));
+        await r2Storage.from('report-rights').remove(uploadedCopyrightProofFiles.map((file) => file.path));
       }
 
       if (uploadedReportFiles.length > 0) {
-        await supabaseAdmin.storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
+        await r2Storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
       }
 
       return Response.json({ error: '신고 대상을 숨김 처리하지 못했습니다.' }, { status: 500 });

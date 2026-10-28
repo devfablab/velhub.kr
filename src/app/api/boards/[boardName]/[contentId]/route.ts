@@ -4,6 +4,7 @@ import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/li
 import { decrypt } from '@/lib/encryption/decrypt';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -176,7 +177,7 @@ function getPublicPostImageUrl(path: string | null | undefined) {
 
   const supabaseAdmin = getSupabaseAdmin();
   const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
-  const publicUrl = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath);
+  const publicUrl = r2Storage.from(bucket).getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -193,7 +194,7 @@ function getAvatarUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(normalizedValue);
+  const publicUrl = r2Storage.from(AVATAR_BUCKET).getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -206,7 +207,7 @@ function getLevelIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(LEVEL_ICON_BUCKET).getPublicUrl(targetPath);
+  const publicUrl = r2Storage.from(LEVEL_ICON_BUCKET).getPublicUrl(targetPath);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -219,7 +220,7 @@ function getManagerIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(MANAGER_ICON_BUCKET).getPublicUrl(targetPath);
+  const publicUrl = r2Storage.from(MANAGER_ICON_BUCKET).getPublicUrl(targetPath);
 
   return publicUrl.data.publicUrl ?? '';
 }

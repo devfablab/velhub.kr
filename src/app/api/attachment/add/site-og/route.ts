@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSiteOgAccess, MAX_SITE_OG_FILE_SIZE, SITE_OG_BUCKET, SITE_OG_IMAGE_TYPES } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     const storagePath = `${access.siteId}/${crypto.randomUUID()}.webp`;
-    const uploadResult = await access.supabaseAdmin.storage.from(SITE_OG_BUCKET).upload(storagePath, outputBuffer, {
+    const uploadResult = await r2Storage.from(SITE_OG_BUCKET).upload(storagePath, outputBuffer, {
       contentType: 'image/webp',
       upsert: false,
     });
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '오픈그래프 이미지 업로드에 실패했습니다.' }, { status: 500 });
     }
 
-    const publicUrlResult = access.supabaseAdmin.storage.from(SITE_OG_BUCKET).getPublicUrl(storagePath);
+    const publicUrlResult = r2Storage.from(SITE_OG_BUCKET).getPublicUrl(storagePath);
 
     return Response.json({
       ok: true,

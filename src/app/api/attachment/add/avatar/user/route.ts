@@ -1,4 +1,5 @@
 import path from 'path';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const uploadResult = await supabaseAdmin.storage.from(AVATAR_BUCKET).upload(filePath, fileBuffer, {
+    const uploadResult = await r2Storage.from(AVATAR_BUCKET).upload(filePath, fileBuffer, {
       contentType: getSafeMimeType(detectedMimeType),
       upsert: false,
     });
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
       return Response.json({ error: uploadResult.error.message || '스토리지 업로드에 실패했습니다.' }, { status: 500 });
     }
 
-    const publicUrlResult = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(filePath);
+    const publicUrlResult = r2Storage.from(AVATAR_BUCKET).getPublicUrl(filePath);
 
     return Response.json({
       ok: true,

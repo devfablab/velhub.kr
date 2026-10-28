@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { EMPTY_SITE_CREATE_FIELD_ERRORS, validateSiteCreateFields } from '@/lib/site/createValidation.shared';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -113,7 +114,7 @@ async function uploadProfilePicture({
   const outputExtension = shouldConvertToWebp ? '.webp' : '.svg';
   const storagePath = `site/${authUserId}/${crypto.randomUUID()}${outputExtension}`;
 
-  const uploadResult = await supabaseAdmin.storage.from(AVATAR_BUCKET).upload(storagePath, uploadBuffer, {
+  const uploadResult = await r2Storage.from(AVATAR_BUCKET).upload(storagePath, uploadBuffer, {
     contentType,
     upsert: false,
   });
@@ -289,7 +290,7 @@ export async function POST(request: Request) {
 
     if (rpcResult.error || !rpcResult.data) {
       if (uploadedProfilePicture) {
-        await supabaseAdmin.storage.from(AVATAR_BUCKET).remove([uploadedProfilePicture]);
+        await r2Storage.from(AVATAR_BUCKET).remove([uploadedProfilePicture]);
       }
 
       console.error('create_community_site rpc 실패:', rpcResult.error);

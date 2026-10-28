@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
 
     const storagePath = getExtensionlessFilePath(session.authUserId, folder);
 
-    const uploadResult = await supabaseAdmin.storage.from(POST_BUCKET).upload(storagePath, outputBuffer, {
+    const uploadResult = await r2Storage.from(POST_BUCKET).upload(storagePath, outputBuffer, {
       contentType: 'image/webp',
       upsert: false,
     });
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '이미지 업로드에 실패했습니다.' }, { status: 500 });
     }
 
-    const publicUrlResult = supabaseAdmin.storage.from(POST_BUCKET).getPublicUrl(storagePath);
+    const publicUrlResult = r2Storage.from(POST_BUCKET).getPublicUrl(storagePath);
 
     return Response.json({
       ok: true,

@@ -1,4 +1,5 @@
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -171,25 +172,8 @@ function addOgImagePath(pathSet: Set<string>, value: unknown) {
 
   try {
     const imageUrl = new URL(path);
-    const publicBucketPath = '/storage/v1/object/public/og-image/';
-    const authenticatedBucketPath = '/storage/v1/object/authenticated/og-image/';
-    const publicPathIndex = imageUrl.pathname.indexOf(publicBucketPath);
-    const authenticatedPathIndex = imageUrl.pathname.indexOf(authenticatedBucketPath);
-
-    if (publicPathIndex !== -1) {
-      const objectPath = decodeURIComponent(imageUrl.pathname.slice(publicPathIndex + publicBucketPath.length));
-
-      if (objectPath) {
-        pathSet.add(objectPath);
-      }
-
-      return;
-    }
-
-    if (authenticatedPathIndex !== -1) {
-      const objectPath = decodeURIComponent(
-        imageUrl.pathname.slice(authenticatedPathIndex + authenticatedBucketPath.length),
-      );
+    if (imageUrl.hostname === 'og-images.dist.velhub.xyz') {
+      const objectPath = decodeURIComponent(imageUrl.pathname.replace(/^\//, ''));
 
       if (objectPath) {
         pathSet.add(objectPath);
@@ -208,7 +192,7 @@ async function removeStorageFiles(bucket: string, paths: string[], errorMessage:
   const supabaseAdmin = getSupabaseAdmin();
 
   for (let index = 0; index < paths.length; index += 100) {
-    const removeResult = await supabaseAdmin.storage.from(bucket).remove(paths.slice(index, index + 100));
+    const removeResult = await r2Storage.from(bucket).remove(paths.slice(index, index + 100));
 
     if (removeResult.error) {
       throw new Error(errorMessage);

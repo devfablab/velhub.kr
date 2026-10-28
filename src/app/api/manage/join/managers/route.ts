@@ -6,6 +6,7 @@ import {
   getCommunityManagerAccess,
 } from '@/lib/community/communityManager/utils';
 import { getOwnerTransferAvailability } from '@/lib/community/ownerTransfers';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -51,7 +52,7 @@ function getManagerIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(BUCKET_NAME).getPublicUrl(targetPath);
+  const publicUrl = r2Storage.from(BUCKET_NAME).getPublicUrl(targetPath);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -74,7 +75,7 @@ async function deleteStorageFile(iconValue: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  await supabaseAdmin.storage.from(BUCKET_NAME).remove([targetPath]);
+  await r2Storage.from(BUCKET_NAME).remove([targetPath]);
 }
 
 async function checkAccess(siteName: string) {
@@ -363,7 +364,7 @@ export async function PUT(request: Request) {
 
     const filePath = `site/${access.rhizome.id}/${role}-${Date.now()}${uploadExtension}`;
 
-    const uploadResult = await access.supabaseAdmin.storage.from(BUCKET_NAME).upload(filePath, uploadBuffer, {
+    const uploadResult = await r2Storage.from(BUCKET_NAME).upload(filePath, uploadBuffer, {
       contentType: uploadContentType,
       upsert: false,
     });
@@ -383,7 +384,7 @@ export async function PUT(request: Request) {
       .eq('site_id', access.rhizome.id);
 
     if (updateResult.error) {
-      await access.supabaseAdmin.storage.from(BUCKET_NAME).remove([filePath]);
+      await r2Storage.from(BUCKET_NAME).remove([filePath]);
       return Response.json({ error: '아이콘 저장에 실패했습니다.' }, { status: 500 });
     }
 

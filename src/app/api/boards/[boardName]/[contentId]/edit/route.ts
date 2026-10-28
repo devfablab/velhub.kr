@@ -8,6 +8,7 @@ import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -277,10 +278,9 @@ function getEditorImagePaths(value: string | null | undefined) {
     const source = match[1];
 
     try {
-      const pathname = new URL(source).pathname;
-      const marker = '/storage/v1/object/public/post/';
-      const markerIndex = pathname.indexOf(marker);
-      const path = markerIndex >= 0 ? decodeURIComponent(pathname.slice(markerIndex + marker.length)) : '';
+      const imageUrl = new URL(source);
+      const pathname = imageUrl.pathname;
+      const path = imageUrl.hostname === 'posts.dist.velhub.xyz' ? decodeURIComponent(pathname.replace(/^\//, '')) : '';
 
       if (path.startsWith('editor/')) {
         paths.add(path);
@@ -1292,7 +1292,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const removedEditorImagePaths = [...previousEditorImagePaths].filter((path) => !nextEditorImagePaths.has(path));
 
     if (removedEditorImagePaths.length > 0) {
-      const removeResult = await supabaseAdmin.storage.from('post').remove(removedEditorImagePaths);
+      const removeResult = await r2Storage.from('post').remove(removedEditorImagePaths);
 
       if (removeResult.error) {
         console.error('[boards/edit] editor image cleanup failed', removeResult.error);
@@ -1300,7 +1300,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (currentPost.data.thumbnail_image && currentPost.data.thumbnail_image !== finalThumbnailImage) {
-      const removeResult = await supabaseAdmin.storage.from('og-image').remove([currentPost.data.thumbnail_image]);
+      const removeResult = await r2Storage.from('og-image').remove([currentPost.data.thumbnail_image]);
       if (removeResult.error) console.error('[boards/edit] thumbnail cleanup failed', removeResult.error);
     }
 

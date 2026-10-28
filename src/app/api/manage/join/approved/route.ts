@@ -1,6 +1,7 @@
 import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
 import { getStigmaAvatarUrl } from '@/lib/users/utils';
@@ -131,7 +132,7 @@ function getCommunityAnswerImageUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(COMMUNITY_ANSWER_BUCKET).getPublicUrl(storagePath);
+  const publicUrl = r2Storage.from(COMMUNITY_ANSWER_BUCKET).getPublicUrl(storagePath);
 
   return publicUrl.data.publicUrl ?? '';
 }

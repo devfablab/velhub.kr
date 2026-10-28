@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/privateBoard/access';
+import { r2Storage } from '@/lib/r2Storage';
 import { normalizeText } from '@/lib/utils';
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
         .webp({ quality: 85 })
         .toBuffer({ resolveWithObject: true });
       const storagePath = `${access.site.id}/${post.data.id}/${crypto.randomUUID()}.webp`;
-      const upload = await access.supabaseAdmin.storage
+      const upload = await r2Storage
         .from('private-post-images')
         .upload(storagePath, converted.data, { contentType: 'image/webp', upsert: false });
       if (upload.error) throw new Error('이미지 업로드에 실패했습니다.');
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
       if (insertImages.error) throw new Error('이미지 저장에 실패했습니다.');
     }
   } catch (error) {
-    if (uploadedPaths.length) await access.supabaseAdmin.storage.from('private-post-images').remove(uploadedPaths);
+    if (uploadedPaths.length) await r2Storage.from('private-post-images').remove(uploadedPaths);
     await access.supabaseAdmin.from('private_posts').delete().eq('id', post.data.id);
     return Response.json(
       { error: error instanceof Error ? error.message : '글 작성에 실패했습니다.' },

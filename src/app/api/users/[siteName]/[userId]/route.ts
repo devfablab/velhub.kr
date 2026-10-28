@@ -1,5 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -106,7 +107,7 @@ function getAvatarUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('avatar').getPublicUrl(normalizedValue);
+  const publicUrl = r2Storage.from('avatar').getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -119,7 +120,7 @@ function getLevelIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('lv-icon').getPublicUrl(normalizedValue);
+  const publicUrl = r2Storage.from('lv-icon').getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -132,7 +133,7 @@ function getManagerIconUrl(value: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('manager_icon').getPublicUrl(normalizedValue);
+  const publicUrl = r2Storage.from('manager_icon').getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? '';
 }

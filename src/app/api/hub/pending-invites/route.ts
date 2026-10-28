@@ -1,3 +1,4 @@
+import { getR2PublicUrl } from '@/lib/r2Public';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -57,17 +58,7 @@ function getStorageImageUrl(bucket: string, path: string | null) {
     return null;
   }
 
-  if (/^https?:\/\//i.test(normalizedPath)) {
-    return normalizedPath;
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  if (!supabaseUrl) {
-    return null;
-  }
-
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${normalizedPath}`;
+  return getR2PublicUrl(bucket, normalizedPath) || null;
 }
 
 export async function GET() {

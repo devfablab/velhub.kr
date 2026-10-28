@@ -1,4 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -70,7 +71,7 @@ function getProfilePictureUrl(profilePicture: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('avatar').getPublicUrl(normalizedProfilePicture);
+  const publicUrl = r2Storage.from('avatar').getPublicUrl(normalizedProfilePicture);
 
   return publicUrl.data.publicUrl ?? '';
 }

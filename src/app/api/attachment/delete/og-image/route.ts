@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const deleteResult = await supabaseAdmin.storage.from('og-image').remove([path]);
+    const deleteResult = await r2Storage.from('og-image').remove([path]);
 
     if (deleteResult.error) {
       return Response.json({ error: '오픈그래프 이미지 삭제에 실패했습니다.' }, { status: 500 });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
+import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
 const MAX_FILE_SIZE = 1024 * 1024;
 const COVER_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
@@ -19,9 +19,8 @@ export async function POST(request: Request) {
   if (file.size <= 0 || file.size >= MAX_FILE_SIZE)
     return NextResponse.json({ message: '이미지는 1MB 미만이어야 합니다.' }, { status: 400 });
 
-  const supabaseAdmin = getSupabaseAdmin();
   const uploadedPath = `user/${crypto.randomUUID()}.webp`;
-  const upload = await supabaseAdmin.storage
+  const upload = await r2Storage
     .from('cover-image')
     .upload(uploadedPath, file, { contentType: file.type, upsert: false });
 
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: '이미지를 업로드하지 못했습니다.' }, { status: 500 });
   }
 
-  const publicUrl = supabaseAdmin.storage.from('cover-image').getPublicUrl(uploadedPath).data.publicUrl;
+  const publicUrl = r2Storage.from('cover-image').getPublicUrl(uploadedPath).data.publicUrl;
 
   return NextResponse.json({ url: publicUrl });
 }

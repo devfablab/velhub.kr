@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, isValidActivityName } from '@/lib/auth/emailSignUp';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { r2PublicStorage } from '@/lib/r2Public';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
@@ -52,8 +52,6 @@ export default function UserInfo({
   initialError: string;
 }) {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
-  const supabase = getSupabaseBrowser();
-
   const [isLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -88,7 +86,7 @@ export default function UserInfo({
       return value;
     }
 
-    const publicUrlResult = supabase.storage.from('avatar').getPublicUrl(value);
+    const publicUrlResult = r2PublicStorage.from('avatar').getPublicUrl(value);
 
     return publicUrlResult.data.publicUrl || '/broken-image.jpg';
   }

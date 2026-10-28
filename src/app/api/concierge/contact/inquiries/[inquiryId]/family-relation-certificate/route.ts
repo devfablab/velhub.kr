@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
+import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (isCertificateRequired && file instanceof File) {
     const storagePath = `${currentStigma.userId}/${inquiryId}/${crypto.randomUUID()}.pdf`;
-    const { error: uploadError } = await supabaseAdmin.storage.from(bucket).upload(storagePath, file, {
+    const { error: uploadError } = await r2Storage.from(bucket).upload(storagePath, file, {
       contentType: 'application/pdf',
       upsert: false,
     });
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     );
 
     if (attachmentError) {
-      await supabaseAdmin.storage.from(bucket).remove([storagePath]);
+      await r2Storage.from(bucket).remove([storagePath]);
       return Response.json({ error: '가족관계증명서 제출 기록을 저장하지 못했습니다.' }, { status: 500 });
     }
     if (existingAttachment?.storage_path) {
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           .maybeSingle(),
       ]);
       if (!identityReference && !inquiryReference)
-        await supabaseAdmin.storage.from(bucket).remove([existingAttachment.storage_path]);
+        await r2Storage.from(bucket).remove([existingAttachment.storage_path]);
     }
   }
 

@@ -3,6 +3,7 @@ import { registerBlogCommunityFirstComeDraw } from '@/lib/blogCommunity/draw';
 import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
@@ -29,7 +30,7 @@ function getAvatarUrl(value: string | null | undefined) {
   if (!avatar) return '';
   if (avatar.startsWith('https://') || avatar.startsWith('http://')) return avatar;
 
-  return getSupabaseAdmin().storage.from('avatar').getPublicUrl(avatar).data.publicUrl ?? '';
+  return r2Storage.from('avatar').getPublicUrl(avatar).data.publicUrl ?? '';
 }
 
 async function assertPost(siteId: string, contentId: string) {

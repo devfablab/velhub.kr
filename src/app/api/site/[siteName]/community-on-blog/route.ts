@@ -7,6 +7,7 @@ import {
 import { normalizeBlogCommunityDraw } from '@/lib/blogCommunity/draw';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
@@ -325,11 +326,11 @@ export async function POST(request: Request, context: RouteContext) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const webp = await sharp(buffer).webp({ quality: 90 }).toBuffer();
         const path = getStoragePath(feature.siteId, postResult.data.id, index);
-        const upload = await supabaseAdmin.storage
+        const upload = await r2Storage
           .from('blog-community')
           .upload(path, webp, { contentType: 'image/webp', upsert: false });
         if (upload.error) throw upload.error;
-        const url = supabaseAdmin.storage.from('blog-community').getPublicUrl(path).data.publicUrl;
+        const url = r2Storage.from('blog-community').getPublicUrl(path).data.publicUrl;
         uploadedImages.push({ post_id: postResult.data.id, image_url: url, sort_order: index });
       } catch {
         imageUploadError = true;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
@@ -81,7 +82,7 @@ async function uploadBusinessLicenseFile(userId: string, file: File) {
   const supabaseAdmin = getSupabaseAdmin();
   const filePath = `${userId}/${crypto.randomUUID()}.pdf`;
 
-  const { error } = await supabaseAdmin.storage.from(BUSINESS_LICENSE_BUCKET).upload(filePath, file, {
+  const { error } = await r2Storage.from(BUSINESS_LICENSE_BUCKET).upload(filePath, file, {
     contentType: file.type,
     upsert: false,
   });
@@ -103,7 +104,7 @@ async function uploadGuardianDocumentFile(userId: string, file: File) {
   const supabaseAdmin = getSupabaseAdmin();
   const filePath = `${userId}/settlement/${crypto.randomUUID()}.pdf`;
 
-  const { error } = await supabaseAdmin.storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).upload(filePath, file, {
+  const { error } = await r2Storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).upload(filePath, file, {
     contentType: file.type,
     upsert: false,
   });
@@ -264,7 +265,7 @@ export async function POST(request: NextRequest) {
       if (parentError) {
         await supabaseAdmin.from('chorogons_banque').delete().eq('chorogon_id', settlementRow.id);
         if (guardianDocumentUrl)
-          await supabaseAdmin.storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([guardianDocumentUrl]);
+          await r2Storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([guardianDocumentUrl]);
         return NextResponse.json({ message: '법정대리인 정보를 저장하지 못했습니다.' }, { status: 500 });
       }
     }

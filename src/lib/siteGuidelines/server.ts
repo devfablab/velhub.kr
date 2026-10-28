@@ -1,4 +1,5 @@
 import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import { r2Storage } from '@/lib/r2Storage';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -456,7 +457,7 @@ function getAvatarUrl(value: string | null | undefined) {
     return avatar;
   }
 
-  return getSupabaseAdmin().storage.from('avatar').getPublicUrl(avatar).data.publicUrl ?? null;
+  return r2Storage.from('avatar').getPublicUrl(avatar).data.publicUrl ?? null;
 }
 
 export type SiteGuidelineDialogData = {

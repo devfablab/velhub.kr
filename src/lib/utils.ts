@@ -1,3 +1,4 @@
+import { r2PublicStorage } from './r2Public';
 import { getSupabaseBrowser } from './supabase';
 
 type DateInput = string | Date | null | undefined;
@@ -128,7 +129,7 @@ export function getOgImageUrl(value: string) {
     return '';
   }
 
-  const { data } = getSupabaseBrowser().storage.from('og-image').getPublicUrl(imagePath);
+  const { data } = r2PublicStorage.from('og-image').getPublicUrl(imagePath);
 
   return data.publicUrl || '';
 }

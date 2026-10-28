@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -31,7 +32,7 @@ function getAvatarUrl(value: string | null | undefined) {
   if (!avatar) return null;
   if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar;
 
-  return getSupabaseAdmin().storage.from(AVATAR_BUCKET).getPublicUrl(avatar).data.publicUrl || null;
+  return r2Storage.from(AVATAR_BUCKET).getPublicUrl(avatar).data.publicUrl || null;
 }
 
 function createMemberHash(memberId: string) {

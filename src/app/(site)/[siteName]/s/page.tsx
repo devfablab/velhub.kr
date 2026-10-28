@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { r2Storage } from '@/lib/r2Storage';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -37,7 +38,7 @@ function getSeriesImageUrl(path: string | null) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('series').getPublicUrl(normalizedPath);
+  const publicUrl = r2Storage.from('series').getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
 }

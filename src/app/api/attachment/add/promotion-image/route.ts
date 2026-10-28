@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
+import { r2Storage } from '@/lib/r2Storage';
 import {
   getSitePromotionAccess,
   MAX_SITE_PROMOTION_FILE_SIZE,
@@ -54,18 +55,16 @@ export async function POST(request: Request) {
     }
 
     const storagePath = `${access.siteId}/${crypto.randomUUID()}.webp`;
-    const uploadResult = await access.supabaseAdmin.storage
-      .from(SITE_PROMOTION_BUCKET)
-      .upload(storagePath, outputBuffer, {
-        contentType: 'image/webp',
-        upsert: false,
-      });
+    const uploadResult = await r2Storage.from(SITE_PROMOTION_BUCKET).upload(storagePath, outputBuffer, {
+      contentType: 'image/webp',
+      upsert: false,
+    });
 
     if (uploadResult.error) {
       return Response.json({ error: '프로모션 이미지 업로드에 실패했습니다.' }, { status: 500 });
     }
 
-    const publicUrl = access.supabaseAdmin.storage.from(SITE_PROMOTION_BUCKET).getPublicUrl(storagePath);
+    const publicUrl = r2Storage.from(SITE_PROMOTION_BUCKET).getPublicUrl(storagePath);
 
     return Response.json({ ok: true, path: storagePath, url: publicUrl.data.publicUrl ?? '' });
   } catch (unknownError) {

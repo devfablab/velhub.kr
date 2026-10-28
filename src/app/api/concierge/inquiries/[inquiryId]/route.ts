@@ -7,6 +7,7 @@ import {
 } from '@/lib/concierge/inquiries';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
+import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -56,7 +57,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
     (item) => !item.deleted_at && ['bug_evidence', 'payment_evidence'].includes(item.attachment_type),
   );
   const { data: signedEvidence } = evidence
-    ? await supabaseAdmin.storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
+    ? await r2Storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
     : { data: null };
 
   let parent = null;
@@ -90,7 +91,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
         : identity?.parent_relationship_document_url
           ? ['business-license', 'family-relation-certificates']
           : []) {
-        const { data: signed } = await supabaseAdmin.storage.from(bucket).createSignedUrl(documentPath, 600);
+        const { data: signed } = await r2Storage.from(bucket).createSignedUrl(documentPath, 600);
         if (signed?.signedUrl) {
           certificateUrl = signed.signedUrl;
           break;

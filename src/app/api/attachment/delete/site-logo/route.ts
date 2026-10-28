@@ -1,3 +1,4 @@
+import { r2Storage } from '@/lib/r2Storage';
 import { getSiteOgAccess } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
     }
 
-    const removeResult = await access.supabaseAdmin.storage.from(SITE_LOGO_BUCKET).remove([path]);
+    const removeResult = await r2Storage.from(SITE_LOGO_BUCKET).remove([path]);
     if (removeResult.error) {
       return Response.json({ error: '사이트 로고 삭제에 실패했습니다.' }, { status: 500 });
     }
