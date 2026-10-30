@@ -22,6 +22,7 @@ const r2ImageHostnames = [
 
 const nextConfig: NextConfig = {
   /* config options here */
+  transpilePackages: ['@uiw/react-md-editor', '@uiw/react-markdown-preview'],
   images: {
     remotePatterns: [
       {
@@ -41,6 +42,12 @@ const nextConfig: NextConfig = {
         hostname: 'i.ytimg.com',
         port: '',
         pathname: '/vi_webp/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+        port: '',
+        pathname: '/**',
       },
     ],
   },

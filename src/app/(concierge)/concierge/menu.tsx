@@ -20,6 +20,7 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
+import ScienceOutlinedIcon from '@mui/icons-material/ScienceOutlined';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
@@ -324,6 +325,12 @@ export default function Container({ children }: ContainerProps) {
                       <Anchor href="/concierge/explains">
                         <BalanceOutlinedIcon fontSize="small" />
                         <span>소명센터</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="labs" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/labs">
+                        <ScienceOutlinedIcon fontSize="small" />
+                        <span>기능 연구소</span>
                       </Anchor>
                     </MenuItem>
                     {userProfile.globalRole === 'admin' ? (

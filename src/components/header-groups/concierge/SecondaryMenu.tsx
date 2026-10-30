@@ -38,6 +38,10 @@ const secondaryMenus = [
     href: '/concierge/explains',
     label: '소명센터',
   },
+  {
+    href: '/concierge/labs',
+    label: '기능 연구소',
+  },
 ];
 
 type SecondaryMenuProps = {
