@@ -1,18 +1,16 @@
 'use client';
 
-import { type ChangeEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
-  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
   Stack,
-  styled,
   TextField,
   Typography,
   useMediaQuery,
@@ -25,6 +23,7 @@ import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
 
 type LegalType = 'illegal_info' | 'illegal_filming' | 'privacy';
 
@@ -80,18 +79,6 @@ export type SettlementResponse = {
   } | null;
   message?: string;
 };
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
 
 const maxFileSize = 5 * 1024 * 1024;
 
@@ -248,7 +235,7 @@ function toggleArrayValue(values: string[], value: string) {
   return [...values, value];
 }
 
-function getFileError(files: File[]) {
+function getFileError(files: ConciergeUploadedFile[]) {
   if (files.length === 0) {
     return '파일을 첨부해 주세요.';
   }
@@ -258,32 +245,16 @@ function getFileError(files: File[]) {
   }
 
   const invalidFile = files.find(
-    (file) => file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf'),
+    (file) => file.mimeType !== 'application/pdf' || !file.fileName.toLowerCase().endsWith('.pdf'),
   );
 
   if (invalidFile) {
     return 'PDF 파일만 첨부할 수 있습니다.';
   }
 
-  const oversizedFile = files.find((file) => file.size > maxFileSize);
+  const oversizedFile = files.find((file) => file.fileSize > maxFileSize);
 
   if (oversizedFile) {
-    return 'PDF 파일은 1개당 5MB 이하만 첨부할 수 있습니다.';
-  }
-
-  return '';
-}
-
-function getSingleFileError(file: File, currentFiles: File[]) {
-  if (currentFiles.length >= 2) {
-    return '파일은 최대 2개까지 첨부할 수 있습니다.';
-  }
-
-  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
-    return 'PDF 파일만 첨부할 수 있습니다.';
-  }
-
-  if (file.size > maxFileSize) {
     return 'PDF 파일은 1개당 5MB 이하만 첨부할 수 있습니다.';
   }
 
@@ -333,7 +304,8 @@ export default function Opt({
 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<ConciergeUploadedFile[]>([]);
+  const [hasIncompleteUpload, setHasIncompleteUpload] = useState(false);
 
   const [requestType, setRequestType] = useState('');
   const [illegalInfoCategories, setIllegalInfoCategories] = useState<string[]>([]);
@@ -438,29 +410,9 @@ export default function Opt({
     setPrivacyReportType(changeEvent.target.value);
   }
 
-  function handleFileChange(changeEvent: ChangeEvent<HTMLInputElement>) {
-    const file = changeEvent.currentTarget.files?.[0] ?? null;
-
-    changeEvent.currentTarget.value = '';
-
-    if (!file) {
-      return;
-    }
-
-    const fileError = getSingleFileError(file, files);
-
-    if (fileError) {
-      showValidationErrors({ attachment: fileError }, '첨부 파일 확인');
-      return;
-    }
-
+  function handleFileChange(nextFiles: ConciergeUploadedFile[]) {
     clearFieldError('attachment');
-    setFiles((currentFiles) => [...currentFiles, file]);
-  }
-
-  function handleRemoveFile(fileIndex: number) {
-    setFiles((currentFiles) => currentFiles.filter((file, index) => index !== fileIndex));
-    clearFieldError('attachment');
+    setFiles(nextFiles);
   }
 
   function validateInputs(): FieldErrors {
@@ -536,9 +488,7 @@ export default function Opt({
     formData.append('email', email.trim());
     formData.append('phone', phone.trim());
 
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
+    formData.append('temporaryFiles', JSON.stringify(files));
 
     formData.append('requestType', requestType);
 
@@ -742,31 +692,15 @@ export default function Opt({
           </Typography>
 
           <Stack direction="column" gap={1} sx={{ width: '100%' }}>
-            <Stack gap={1} sx={{ width: '100%' }}>
-              {files.map((file, fileIndex) => (
-                <Stack
-                  key={`${file.name}-${file.size}-${fileIndex}`}
-                  direction="row"
-                  gap={1}
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
-                  <Typography variant="subtitle2">{file.name}</Typography>
-                  <button type="button" className="button small danger" onClick={() => handleRemoveFile(fileIndex)}>
-                    파일 삭제
-                  </button>
-                </Stack>
-              ))}
-            </Stack>
-
-            {files.length < 2 ? (
-              <Box>
-                <Button component="label" className="button small action">
-                  파일 추가
-                  <VisuallyHiddenInput type="file" accept="application/pdf,.pdf" onChange={handleFileChange} />
-                </Button>
-              </Box>
-            ) : null}
+            <ConciergeFileUploader
+              accept="application/pdf,.pdf"
+              onChange={handleFileChange}
+              maxFiles={2}
+              maxTotalFileSize={maxFileSize * 2}
+              onUploadStateChange={setHasIncompleteUpload}
+              purpose="legal_report"
+              value={files}
+            />
 
             <p className="alert warning">
               <WarningAmberRoundedIcon />
@@ -1541,7 +1475,7 @@ export default function Opt({
         {renderTypeForm()}
 
         <Stack direction="row" justifyContent="flex-end">
-          <button type="submit" className="button medium submit" disabled={submitting}>
+          <button type="submit" className="button medium submit" disabled={submitting || hasIncompleteUpload}>
             {submitting ? '접수 중' : '신고 접수'}
           </button>
         </Stack>

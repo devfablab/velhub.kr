@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { r2Storage } from '@/lib/r2Storage';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
@@ -100,6 +100,12 @@ type UploadedCopyrightProofFile = {
 };
 
 type UploadedReportFile = UploadedCopyrightProofFile;
+type TemporaryReportFile = {
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  storagePath: string;
+};
 type FieldErrors = Record<string, string>;
 
 const maxCopyrightProofFileSize = 2 * 1024 * 1024;
@@ -177,16 +183,30 @@ function getPostSlugValue(value: string | null) {
   return value?.trim() || null;
 }
 
-function getCopyrightProofFiles(formData: FormData) {
-  return formData
-    .getAll('copyrightProofFiles')
-    .filter((value): value is File => value instanceof File && value.size > 0);
+function getTemporaryFiles(formData: FormData, key: string) {
+  const value = getFormStringValue(formData, key);
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (file): file is TemporaryReportFile =>
+            typeof file === 'object' &&
+            file !== null &&
+            typeof file.fileName === 'string' &&
+            typeof file.fileSize === 'number' &&
+            typeof file.mimeType === 'string' &&
+            typeof file.storagePath === 'string',
+        )
+      : [];
+  } catch {
+    return [];
+  }
 }
 
-function getSingleFormFile(formData: FormData, key: string) {
-  const files = formData.getAll(key).filter((value): value is File => value instanceof File && value.size > 0);
-
-  return files.length === 1 ? files[0] : null;
+function getSingleTemporaryFile(formData: FormData, key: string) {
+  const [file] = getTemporaryFiles(formData, key);
+  return file ?? null;
 }
 
 function getReasonType(formData: FormData): RightsReasonType | null {
@@ -227,20 +247,23 @@ function validationError(fieldErrors: FieldErrors) {
   return Response.json({ error: errors[0], errors, fieldErrors }, { status: 400 });
 }
 
-function validateCopyrightProofFiles(files: File[]) {
+function validateCopyrightProofFiles(files: TemporaryReportFile[], userId: string) {
   if (files.length > 5) {
     return '저작물 원본임을 증명할 수 있는 PDF는 최대 5개까지 첨부할 수 있습니다.';
   }
 
   const invalidFile = files.find(
-    (file) => file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf'),
+    (file) =>
+      file.mimeType !== 'application/pdf' ||
+      !file.fileName.toLowerCase().endsWith('.pdf') ||
+      !file.storagePath.startsWith(`temp/concierge/${userId}/rights_report/`),
   );
 
   if (invalidFile) {
     return '저작물 원본임을 증명할 수 있는 파일은 PDF만 첨부할 수 있습니다.';
   }
 
-  const oversizedFile = files.find((file) => file.size > maxCopyrightProofFileSize);
+  const oversizedFile = files.find((file) => file.fileSize > maxCopyrightProofFileSize);
 
   if (oversizedFile) {
     return '저작물 원본임을 증명할 수 있는 PDF는 1개당 2MB 이하만 첨부할 수 있습니다.';
@@ -249,17 +272,34 @@ function validateCopyrightProofFiles(files: File[]) {
   return '';
 }
 
-function validateRightsReportFile(file: File | null, label: string) {
+function validateRightsReportFile(file: TemporaryReportFile | null, label: string, userId: string) {
   if (!file) {
     return `${label}를 첨부해 주세요.`;
   }
 
-  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+  if (
+    file.mimeType !== 'application/pdf' ||
+    !file.fileName.toLowerCase().endsWith('.pdf') ||
+    !file.storagePath.startsWith(`temp/concierge/${userId}/rights_report/`)
+  ) {
     return `${label}는 PDF 파일만 첨부할 수 있습니다.`;
   }
 
-  if (file.size >= maxRightsReportFileSize) {
+  if (file.fileSize >= maxRightsReportFileSize) {
     return `${label}는 10MB 미만의 PDF 파일만 첨부할 수 있습니다.`;
+  }
+
+  return '';
+}
+
+async function verifyFiles(files: TemporaryReportFile[], userId: string) {
+  for (const file of files) {
+    const error = await verifyConciergeTemporaryFile({
+      bucket: 'report-rights',
+      file,
+      prefix: `temp/concierge/${userId}/rights_report/`,
+    });
+    if (error) return error;
   }
 
   return '';
@@ -544,57 +584,13 @@ async function resolveTargetValues({
   };
 }
 
-async function uploadCopyrightProofFiles(reportId: string, files: File[]) {
-  const supabaseAdmin = getSupabaseAdmin();
-  const uploadedFiles: UploadedCopyrightProofFile[] = [];
-
-  for (const file of files) {
-    const path = `${reportId}/${randomUUID()}.pdf`;
-    const arrayBuffer = await file.arrayBuffer();
-
-    const uploadResult = await r2Storage.from('report-rights').upload(path, arrayBuffer, {
-      contentType: 'application/pdf',
-      upsert: false,
-    });
-
-    if (uploadResult.error) {
-      console.error('[reports/rights/new] upload error', uploadResult.error);
-      throw new Error('파일 업로드에 실패했습니다.');
-    }
-
-    uploadedFiles.push({
-      bucket: 'report-rights',
-      path,
-      name: file.name,
-      type: file.type || 'application/pdf',
-      size: file.size,
-    });
-  }
-
-  return uploadedFiles;
-}
-
-async function uploadRightsReportFile(reportId: string, directory: string, file: File) {
-  const supabaseAdmin = getSupabaseAdmin();
-  const path = `${reportId}/${directory}/${randomUUID()}.pdf`;
-  const arrayBuffer = await file.arrayBuffer();
-
-  const uploadResult = await r2Storage.from('report-rights').upload(path, arrayBuffer, {
-    contentType: 'application/pdf',
-    upsert: false,
-  });
-
-  if (uploadResult.error) {
-    console.error('[reports/rights/new] upload error', uploadResult.error);
-    throw new Error('파일 업로드에 실패했습니다.');
-  }
-
+function toUploadedReportFile(file: TemporaryReportFile) {
   return {
     bucket: 'report-rights',
-    path,
-    name: file.name,
-    type: file.type || 'application/pdf',
-    size: file.size,
+    path: file.storagePath,
+    name: file.fileName,
+    type: file.mimeType,
+    size: file.fileSize,
   } satisfies UploadedReportFile;
 }
 
@@ -630,14 +626,14 @@ export async function POST(request: Request) {
     const reporterCapacityValue = getFormStringValue(formData, 'reporterCapacity');
     const rightsHolderName = getFormStringValue(formData, 'rightsHolderName');
     const rightsHolderPhone = getFormStringValue(formData, 'rightsHolderPhone');
-    const rightsHolderProofFile = getSingleFormFile(formData, 'rightsHolderProofFile');
+    const rightsHolderProofFile = getSingleTemporaryFile(formData, 'rightsHolderProofFile');
     const delegationStartedOn = getFormStringValue(formData, 'delegationStartedOn');
     const delegationEndedOn = getFormStringValue(formData, 'delegationEndedOn');
-    const powerOfAttorneyFile = getSingleFormFile(formData, 'powerOfAttorneyFile');
+    const powerOfAttorneyFile = getSingleTemporaryFile(formData, 'powerOfAttorneyFile');
     const infringementReason = getFormStringValue(formData, 'infringementReason');
-    const infringementEvidenceFile = getSingleFormFile(formData, 'infringementEvidenceFile');
+    const infringementEvidenceFile = getSingleTemporaryFile(formData, 'infringementEvidenceFile');
     const copyrightOriginalUrls = getFormStringArray(formData, 'copyrightOriginalUrls');
-    const copyrightProofFiles = getCopyrightProofFiles(formData);
+    const copyrightProofFiles = getTemporaryFiles(formData, 'copyrightProofFiles');
 
     const targetType = inferTargetType({
       targetTypeValue,
@@ -685,6 +681,7 @@ export async function POST(request: Request) {
       const proofFileError = validateRightsReportFile(
         rightsHolderProofFile,
         rightsOwnerType === 'organization' ? '단체 증빙서류' : '피해자 신분증',
+        currentStigma.userId,
       );
       if (proofFileError) fieldErrors.rightsHolderProofFile = proofFileError;
     }
@@ -694,13 +691,17 @@ export async function POST(request: Request) {
       } else if (delegationStartedOn! > delegationEndedOn!) {
         fieldErrors.delegationPeriod = '위임 종료일은 시작일보다 빠를 수 없습니다.';
       }
-      const attorneyFileError = validateRightsReportFile(powerOfAttorneyFile, '위임장');
+      const attorneyFileError = validateRightsReportFile(powerOfAttorneyFile, '위임장', currentStigma.userId);
       if (attorneyFileError) fieldErrors.powerOfAttorneyFile = attorneyFileError;
     }
     if (usesOwnerDetails && !infringementReason)
       fieldErrors.infringementReason = '권리침해 내용 및 신고 사유를 입력해 주세요.';
     if (usesOwnerDetails) {
-      const evidenceFileError = validateRightsReportFile(infringementEvidenceFile, '권리침해 증빙자료');
+      const evidenceFileError = validateRightsReportFile(
+        infringementEvidenceFile,
+        '권리침해 증빙자료',
+        currentStigma.userId,
+      );
       if (evidenceFileError) fieldErrors.infringementEvidenceFile = evidenceFileError;
     }
 
@@ -710,7 +711,7 @@ export async function POST(request: Request) {
         fieldErrors.copyrightOriginalUrls = '저작물 원본 URL은 최대 10개까지 입력할 수 있습니다.';
       if (copyrightOriginalUrls.some((url) => !isValidHttpUrl(url)))
         fieldErrors.copyrightOriginalUrls = '저작물 원본 URL을 올바른 주소 형식으로 입력해 주세요.';
-      const fileErrorMessage = validateCopyrightProofFiles(copyrightProofFiles);
+      const fileErrorMessage = validateCopyrightProofFiles(copyrightProofFiles, currentStigma.userId);
       if (fileErrorMessage) fieldErrors.copyrightProofFiles = fileErrorMessage;
       if (copyrightOriginalUrls.length === 0 && copyrightProofFiles.length === 0) {
         fieldErrors.copyrightEvidence =
@@ -719,6 +720,15 @@ export async function POST(request: Request) {
     }
 
     if (Object.keys(fieldErrors).length > 0) return validationError(fieldErrors);
+
+    const uploadedFiles = [
+      ...(reasonType === 'copyright' ? copyrightProofFiles : []),
+      ...(requiresRightsHolderDetails && rightsHolderProofFile ? [rightsHolderProofFile] : []),
+      ...(usesOwnerDetails && reporterCapacity === 'proxy' && powerOfAttorneyFile ? [powerOfAttorneyFile] : []),
+      ...(usesOwnerDetails && infringementEvidenceFile ? [infringementEvidenceFile] : []),
+    ];
+    const uploadError = await verifyFiles(uploadedFiles, currentStigma.userId);
+    if (uploadError) return validationError({ attachment: uploadError });
 
     const targetValues = await resolveTargetValues({
       targetType,
@@ -733,39 +743,16 @@ export async function POST(request: Request) {
     }
 
     const reportId = randomUUID();
-    const uploadedCopyrightProofFiles = await uploadCopyrightProofFiles(reportId, copyrightProofFiles);
+    const uploadedCopyrightProofFiles = copyrightProofFiles.map(toUploadedReportFile);
     const supabaseAdmin = getSupabaseAdmin();
-    const uploadedReportFiles: UploadedReportFile[] = [];
-    let uploadedRightsHolderProofFile: UploadedReportFile | null = null;
-    let uploadedPowerOfAttorneyFile: UploadedReportFile | null = null;
-    let uploadedInfringementEvidenceFile: UploadedReportFile | null = null;
-
-    try {
-      if (requiresRightsHolderDetails && rightsHolderProofFile) {
-        uploadedRightsHolderProofFile = await uploadRightsReportFile(reportId, 'rights-holder', rightsHolderProofFile);
-        uploadedReportFiles.push(uploadedRightsHolderProofFile);
-      }
-
-      if (usesOwnerDetails && reporterCapacity === 'proxy' && powerOfAttorneyFile) {
-        uploadedPowerOfAttorneyFile = await uploadRightsReportFile(reportId, 'power-of-attorney', powerOfAttorneyFile);
-        uploadedReportFiles.push(uploadedPowerOfAttorneyFile);
-      }
-
-      if (usesOwnerDetails && infringementEvidenceFile) {
-        uploadedInfringementEvidenceFile = await uploadRightsReportFile(
-          reportId,
-          'infringement-evidence',
-          infringementEvidenceFile,
-        );
-        uploadedReportFiles.push(uploadedInfringementEvidenceFile);
-      }
-    } catch (uploadError) {
-      if (uploadedReportFiles.length > 0) {
-        await r2Storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
-      }
-
-      throw uploadError;
-    }
+    const uploadedRightsHolderProofFile =
+      requiresRightsHolderDetails && rightsHolderProofFile ? toUploadedReportFile(rightsHolderProofFile) : null;
+    const uploadedPowerOfAttorneyFile =
+      usesOwnerDetails && reporterCapacity === 'proxy' && powerOfAttorneyFile
+        ? toUploadedReportFile(powerOfAttorneyFile)
+        : null;
+    const uploadedInfringementEvidenceFile =
+      usesOwnerDetails && infringementEvidenceFile ? toUploadedReportFile(infringementEvidenceFile) : null;
 
     const insertResult = await supabaseAdmin
       .from('report_rights')
@@ -813,10 +800,6 @@ export async function POST(request: Request) {
 
     if (insertResult.error) {
       console.error('[reports/rights/new] insert error', insertResult.error);
-
-      if (uploadedReportFiles.length > 0) {
-        await r2Storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
-      }
 
       return Response.json({ error: '신고를 접수하지 못했습니다.' }, { status: 500 });
     }
@@ -870,14 +853,6 @@ export async function POST(request: Request) {
     if (contentUpdateResult?.error) {
       console.error('[reports/rights/new] content hide error', contentUpdateResult.error);
       await supabaseAdmin.from('report_rights').delete().eq('id', reportId);
-
-      if (uploadedCopyrightProofFiles.length > 0) {
-        await r2Storage.from('report-rights').remove(uploadedCopyrightProofFiles.map((file) => file.path));
-      }
-
-      if (uploadedReportFiles.length > 0) {
-        await r2Storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
-      }
 
       return Response.json({ error: '신고 대상을 숨김 처리하지 못했습니다.' }, { status: 500 });
     }

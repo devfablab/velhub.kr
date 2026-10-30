@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { r2Storage } from '@/lib/r2Storage';
+import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -26,24 +26,19 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
   if (!isInitialEvidence && !isRequestedEvidence)
     return Response.json({ error: '현재 증빙 파일을 첨부할 수 있는 문의가 아닙니다.' }, { status: 400 });
 
-  const formData = await request.formData();
-  const file = formData.get('file');
-  if (!(file instanceof File) || !allowedMimeTypes.has(file.type))
+  const body = (await request.json().catch(() => null)) as { file?: unknown } | null;
+  const file = body?.file as { fileName?: unknown; fileSize?: unknown; mimeType?: unknown; storagePath?: unknown } | null;
+  if (!file || !allowedMimeTypes.has(String(file.mimeType)))
     return Response.json({ error: 'PDF, JPG, PNG 또는 WEBP 파일만 첨부할 수 있습니다.' }, { status: 400 });
-  if (file.size > 1024 * 1024) return Response.json({ error: '첨부 파일은 1MB 이하만 가능합니다.' }, { status: 400 });
-
-  const extension =
-    file.name
-      .split('.')
-      .pop()
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]/g, '') || 'file';
-  const storagePath = `${currentStigma.stigmaId}/${inquiryId}/${crypto.randomUUID()}.${extension}`;
-  const { error: uploadError } = await r2Storage.from(bucket).upload(storagePath, file, {
-    contentType: file.type,
-    upsert: false,
+  if (typeof file.fileSize !== 'number' || file.fileSize > 1024 * 1024) return Response.json({ error: '첨부 파일은 1MB 이하만 가능합니다.' }, { status: 400 });
+  if (typeof file.storagePath !== 'string' || !file.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/contact_evidence/`)) return Response.json({ error: '첨부 파일 경로가 올바르지 않습니다.' }, { status: 400 });
+  const uploadError = await verifyConciergeTemporaryFile({
+    bucket,
+    file: file as { fileSize: number; mimeType: string; storagePath: string },
+    prefix: `temp/concierge/${currentStigma.userId}/contact_evidence/`,
   });
-  if (uploadError) return Response.json({ error: '증빙 파일을 업로드하지 못했습니다.' }, { status: 500 });
+  if (uploadError) return Response.json({ error: uploadError }, { status: 400 });
+  const storagePath = file.storagePath;
 
   const attachmentType = inquiry.inquiry_type === 'bug_report' ? 'bug_evidence' : 'payment_evidence';
   const { data: previous } = await db
@@ -58,7 +53,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
       attachment_type: attachmentType,
       storage_path: storagePath,
       storage_bucket: bucket,
-      mime_type: file.type,
+      mime_type: String(file.mimeType),
       submitted_by_stigma_id: currentStigma.stigmaId,
       submitted_at: new Date().toISOString(),
       deleted_at: null,
@@ -66,10 +61,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
     { onConflict: 'inquiry_id,attachment_type' },
   );
   if (saveError) {
-    await r2Storage.from(bucket).remove([storagePath]);
     return Response.json({ error: '증빙 파일 정보를 저장하지 못했습니다.' }, { status: 500 });
   }
-  if (previous?.storage_path) await r2Storage.from(bucket).remove([previous.storage_path]);
 
   if (isRequestedEvidence) {
     const now = new Date().toISOString();

@@ -1,22 +1,11 @@
 'use client';
 
-import { ChangeEvent, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import {
-  Box,
-  Chip,
-  Divider,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Stack,
-  TextField,
-  Typography,
-  styled,
-} from '@mui/material';
+import { Box, Chip, Divider, FormControlLabel, Radio, RadioGroup, Stack, TextField, Typography } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import {
   inquiryInformationRequestLabels,
@@ -33,6 +22,7 @@ import Anchor from '@/components/Anchor';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
+import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
 import InquiryDetails from '@/components/service/concierge/InquiryDetails';
 import ResponsivePopup from '../../../ResponsivePopup';
 import styles from '@/app/concierge.module.sass';
@@ -54,6 +44,7 @@ export type Inquiry = {
   inquiry_bug_details: Parameters<typeof InquiryDetails>[0]['bugDetails'];
   inquiry_payment_details: Parameters<typeof InquiryDetails>[0]['paymentDetails'];
   evidenceUrl: string | null;
+  attachments: NonNullable<Parameters<typeof InquiryDetails>[0]['attachments']>;
   created_at: string;
   information_request_type: InquiryInformationRequestType | null;
   information_requested_at: string | null;
@@ -67,18 +58,6 @@ export type Inquiry = {
   }[];
 };
 
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
-
 export default function Opt({
   initialInquiry,
   initialError,
@@ -88,9 +67,8 @@ export default function Opt({
 }) {
   const { inquiryId } = useParams<{ inquiryId: string }>();
   const searchParams = useSearchParams();
-  const certificateInputRef = useRef<HTMLInputElement | null>(null);
   const [inquiry, setInquiry] = useState<Inquiry | null>(initialInquiry);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<ConciergeUploadedFile | null>(null);
   const [error, setError] = useState(initialError);
   const [success, setSuccess] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -123,25 +101,20 @@ export default function Opt({
     setError('');
     setSuccess('');
     setUploading(true);
-    const formData = new FormData();
-    formData.set('file', file);
-    if (guardianIdentityVerificationId) {
-      formData.set('identityVerificationId', guardianIdentityVerificationId);
-    }
     const isFamilyCertificate =
       inquiry?.information_request_type === 'family_relation_certificate' ||
       inquiry?.information_request_type === 'guardian_identity_and_family_relation_certificate';
     const endpoint = isFamilyCertificate ? 'family-relation-certificate' : 'evidence';
     const response = await fetch(`/api/concierge/contact/inquiries/${inquiryId}/${endpoint}`, {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file, identityVerificationId: guardianIdentityVerificationId }),
     });
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
     if (!response.ok) setError(result?.error ?? '파일을 제출하지 못했습니다.');
     else {
       setSuccess(isFamilyCertificate ? '가족관계증명서 PDF를 제출했습니다.' : '증빙 파일을 제출했습니다.');
       setFile(null);
-      if (certificateInputRef.current) certificateInputRef.current.value = '';
       await load();
     }
     setUploading(false);
@@ -254,16 +227,15 @@ export default function Opt({
     setIsWithdrawConfirmOpen(false);
   }
 
-  function chooseFile(event: ChangeEvent<HTMLInputElement>) {
-    const selectedFile = event.target.files?.[0] ?? null;
+  function chooseFile(files: ConciergeUploadedFile[]) {
+    const selectedFile = files[0] ?? null;
     if (
       selectedFile &&
       inquiry?.information_request_type !== 'family_relation_certificate' &&
-      selectedFile.size > 1024 * 1024
+      selectedFile.fileSize > 1024 * 1024
     ) {
       setFile(null);
       setError('첨부 파일은 1MB 이하만 가능합니다.');
-      event.target.value = '';
       return;
     }
     setError('');
@@ -272,7 +244,6 @@ export default function Opt({
 
   function removeFile() {
     setFile(null);
-    if (certificateInputRef.current) certificateInputRef.current.value = '';
   }
 
   async function savePaymentControl() {
@@ -378,6 +349,7 @@ export default function Opt({
               linkedPayment={firstOrder?.payments}
               paymentLabel={firstOrder?.payment_label}
               evidenceUrl={inquiry.evidenceUrl}
+              attachments={inquiry.attachments}
             />
           );
         })()}
@@ -532,34 +504,25 @@ export default function Opt({
           ) : null}
 
           {inquiry.information_request_type !== 'guardian_identity_verification' ? (
-            <>
-              <VisuallyHiddenInput
-                ref={certificateInputRef}
-                type="file"
-                accept={
-                  inquiry.information_request_type === 'family_relation_certificate' ||
-                  inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate'
-                    ? 'application/pdf,.pdf'
-                    : 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
-                }
-                onChange={chooseFile}
-              />
-              <Stack direction="row" gap={1} alignItems="center">
-                <button
-                  type="button"
-                  className="button small action"
-                  onClick={() => certificateInputRef.current?.click()}
-                >
-                  파일 선택
-                </button>
-                {file ? (
-                  <button type="button" className="button small danger" onClick={removeFile}>
-                    파일 삭제
-                  </button>
-                ) : null}
-              </Stack>
-              {file ? <Typography variant="body2">{file.name}</Typography> : null}
-            </>
+            <ConciergeFileUploader
+              accept={
+                inquiry.information_request_type === 'family_relation_certificate' ||
+                inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate'
+                  ? 'application/pdf,.pdf'
+                  : 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
+              }
+              onChange={chooseFile}
+              onUploadStateChange={setUploading}
+              purpose={
+                inquiry.information_request_type === 'family_relation_certificate' ||
+                inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate'
+                  ? 'family_relation_certificate'
+                  : 'contact_evidence'
+              }
+              value={file ? [file] : []}
+              addLabel="파일 선택"
+              disabled={uploading}
+            />
           ) : null}
 
           <Box>

@@ -11,14 +11,12 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Button,
   FormControl,
   FormControlLabel,
   InputAdornment,
   Radio,
   RadioGroup,
   Stack,
-  styled,
   TextField,
   Typography,
   useMediaQuery,
@@ -38,6 +36,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
 import styles from '@/app/concierge.module.sass';
 
 type ReportTargetType = 'site' | 'board' | 'post' | 'comment';
@@ -78,18 +77,6 @@ export type SettlementResponse = {
   } | null;
   message?: string;
 };
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
 
 const maxCopyrightProofFileSize = 2 * 1024 * 1024;
 const maxRightsReportFileSize = 10 * 1024 * 1024;
@@ -207,28 +194,28 @@ function getRightsReportCategoryTitle(value: RightsReportCategory | '') {
   return rightsReportCategoryOptions.find((option) => option.value === value)?.label ?? '권리침해 신고';
 }
 
-function getSingleCopyrightProofFileError(file: File, currentFiles: File[]) {
+function getSingleCopyrightProofFileError(file: ConciergeUploadedFile, currentFiles: ConciergeUploadedFile[]) {
   if (currentFiles.length >= 5) {
     return '저작물 원본임을 증명할 수 있는 PDF는 최대 5개까지 첨부할 수 있습니다.';
   }
 
-  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+  if (file.mimeType !== 'application/pdf' || !file.fileName.toLowerCase().endsWith('.pdf')) {
     return '저작물 원본임을 증명할 수 있는 파일은 PDF만 첨부할 수 있습니다.';
   }
 
-  if (file.size > maxCopyrightProofFileSize) {
+  if (file.fileSize > maxCopyrightProofFileSize) {
     return '저작물 원본임을 증명할 수 있는 PDF는 1개당 2MB 이하만 첨부할 수 있습니다.';
   }
 
   return '';
 }
 
-function getRightsReportFileError(file: File, label: string) {
-  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+function getRightsReportFileError(file: ConciergeUploadedFile, label: string) {
+  if (file.mimeType !== 'application/pdf' || !file.fileName.toLowerCase().endsWith('.pdf')) {
     return `${label}는 PDF 파일만 첨부할 수 있습니다.`;
   }
 
-  if (file.size >= maxRightsReportFileSize) {
+  if (file.fileSize >= maxRightsReportFileSize) {
     return `${label}는 10MB 미만의 PDF 파일만 첨부할 수 있습니다.`;
   }
 
@@ -309,16 +296,17 @@ export default function Opt({
   const [reporterCapacity, setReporterCapacity] = useState<ReporterCapacity | ''>('');
   const [rightsHolderName, setRightsHolderName] = useState('');
   const [rightsHolderPhone, setRightsHolderPhone] = useState('');
-  const [rightsHolderProofFile, setRightsHolderProofFile] = useState<File | null>(null);
+  const [rightsHolderProofFile, setRightsHolderProofFile] = useState<ConciergeUploadedFile | null>(null);
   const [delegationStartedOn, setDelegationStartedOn] = useState<Date | null>(null);
   const [delegationEndedOn, setDelegationEndedOn] = useState<Date | null>(null);
-  const [powerOfAttorneyFile, setPowerOfAttorneyFile] = useState<File | null>(null);
+  const [powerOfAttorneyFile, setPowerOfAttorneyFile] = useState<ConciergeUploadedFile | null>(null);
   const [infringementReason, setInfringementReason] = useState('');
-  const [infringementEvidenceFile, setInfringementEvidenceFile] = useState<File | null>(null);
+  const [infringementEvidenceFile, setInfringementEvidenceFile] = useState<ConciergeUploadedFile | null>(null);
 
   const [copyrightOriginalUrlInput, setCopyrightOriginalUrlInput] = useState('');
   const [copyrightOriginalUrls, setCopyrightOriginalUrls] = useState<string[]>([]);
-  const [copyrightProofFiles, setCopyrightProofFiles] = useState<File[]>([]);
+  const [copyrightProofFiles, setCopyrightProofFiles] = useState<ConciergeUploadedFile[]>([]);
+  const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
 
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -455,31 +443,6 @@ export default function Opt({
     clearFieldError('reporterCapacity');
   }
 
-  function handleSinglePdfFileChange(
-    changeEvent: ChangeEvent<HTMLInputElement>,
-    label: string,
-    field: string,
-    setFile: (file: File | null) => void,
-  ) {
-    const file = changeEvent.currentTarget.files?.[0] ?? null;
-
-    changeEvent.currentTarget.value = '';
-
-    if (!file) {
-      return;
-    }
-
-    const fileError = getRightsReportFileError(file, label);
-
-    if (fileError) {
-      showValidationErrors({ [field]: fileError });
-      return;
-    }
-
-    setFile(file);
-    clearFieldError(field);
-  }
-
   function handleAddCopyrightOriginalUrl() {
     const nextUrl = copyrightOriginalUrlInput.trim();
 
@@ -507,29 +470,8 @@ export default function Opt({
     clearFieldError('copyrightOriginalUrls');
   }
 
-  function handleCopyrightProofFileChange(changeEvent: ChangeEvent<HTMLInputElement>) {
-    const file = changeEvent.currentTarget.files?.[0] ?? null;
-
-    changeEvent.currentTarget.value = '';
-
-    if (!file) {
-      return;
-    }
-
-    const fileError = getSingleCopyrightProofFileError(file, copyrightProofFiles);
-
-    if (fileError) {
-      showValidationErrors({ copyrightProofFiles: fileError });
-      return;
-    }
-
-    setCopyrightProofFiles((currentFiles) => [...currentFiles, file]);
-    clearFieldError('copyrightProofFiles');
-  }
-
-  function handleRemoveCopyrightProofFile(fileIndex: number) {
-    setCopyrightProofFiles((currentFiles) => currentFiles.filter((file, index) => index !== fileIndex));
-    clearFieldError('copyrightProofFiles');
+  function setUploadState(field: string, isUploading: boolean) {
+    setUploadingFields((current) => ({ ...current, [field]: isUploading }));
   }
 
   function validateInputs(): FieldErrors {
@@ -677,26 +619,16 @@ export default function Opt({
       );
       formData.append('infringementReason', infringementReason.trim());
 
-      if (rightsHolderProofFile) {
-        formData.append('rightsHolderProofFile', rightsHolderProofFile);
-      }
-
-      if (powerOfAttorneyFile) {
-        formData.append('powerOfAttorneyFile', powerOfAttorneyFile);
-      }
-
-      if (infringementEvidenceFile) {
-        formData.append('infringementEvidenceFile', infringementEvidenceFile);
-      }
+      formData.append('rightsHolderProofFile', JSON.stringify(rightsHolderProofFile));
+      formData.append('powerOfAttorneyFile', JSON.stringify(powerOfAttorneyFile));
+      formData.append('infringementEvidenceFile', JSON.stringify(infringementEvidenceFile));
     }
 
     copyrightOriginalUrls.forEach((url) => {
       formData.append('copyrightOriginalUrls', url);
     });
 
-    copyrightProofFiles.forEach((file) => {
-      formData.append('copyrightProofFiles', file);
-    });
+    formData.append('copyrightProofFiles', JSON.stringify(copyrightProofFiles));
 
     try {
       setSubmitting(true);
@@ -1151,8 +1083,8 @@ export default function Opt({
     helper,
   }: {
     label: string;
-    file: File | null;
-    setFile: (file: File | null) => void;
+    file: ConciergeUploadedFile | null;
+    setFile: (file: ConciergeUploadedFile | null) => void;
     field: string;
     helper?: ReactNode;
   }) {
@@ -1160,32 +1092,16 @@ export default function Opt({
       <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
         <RequiredFieldLabel isMobile={isMobile}>{label}</RequiredFieldLabel>
         <Stack gap={1} sx={{ width: '100%', pt: 1 }}>
-          {file ? (
-            <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-              <Typography variant="body2">{file.name}</Typography>
-              <button
-                type="button"
-                className="button small danger"
-                onClick={() => {
-                  setFile(null);
-                  clearFieldError(field);
-                }}
-              >
-                파일 삭제
-              </button>
-            </Stack>
-          ) : (
-            <Box>
-              <Button component="label" className="button small action">
-                파일 추가
-                <VisuallyHiddenInput
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  onChange={(changeEvent) => handleSinglePdfFileChange(changeEvent, label, field, setFile)}
-                />
-              </Button>
-            </Box>
-          )}
+          <ConciergeFileUploader
+            accept="application/pdf,.pdf"
+            onChange={(files) => {
+              setFile(files[0] ?? null);
+              clearFieldError(field);
+            }}
+            onUploadStateChange={(isUploading) => setUploadState(field, isUploading)}
+            purpose="rights_report"
+            value={file ? [file] : []}
+          />
           {helper}
           {renderFieldError(field)}
           <p className="alert warning">
@@ -1465,37 +1381,18 @@ export default function Opt({
           </Typography>
 
           <Stack gap={1} sx={{ width: '100%' }}>
-            {copyrightProofFiles.map((file, fileIndex) => (
-              <Stack
-                key={`${file.name}-${file.size}-${fileIndex}`}
-                direction="row"
-                gap={1}
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <Typography variant="body2">{file.name}</Typography>
-                <button
-                  type="button"
-                  className="button small danger"
-                  onClick={() => handleRemoveCopyrightProofFile(fileIndex)}
-                >
-                  파일 삭제
-                </button>
-              </Stack>
-            ))}
-
-            {copyrightProofFiles.length < 5 ? (
-              <Box>
-                <Button component="label" className="button small action">
-                  파일 추가
-                  <VisuallyHiddenInput
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    onChange={handleCopyrightProofFileChange}
-                  />
-                </Button>
-              </Box>
-            ) : null}
+            <ConciergeFileUploader
+              accept="application/pdf,.pdf"
+              maxFiles={5}
+              maxTotalFileSize={maxCopyrightProofFileSize * 5}
+              onChange={(files) => {
+                setCopyrightProofFiles(files);
+                clearFieldError('copyrightProofFiles');
+              }}
+              onUploadStateChange={(isUploading) => setUploadState('copyrightProofFiles', isUploading)}
+              purpose="rights_report"
+              value={copyrightProofFiles}
+            />
 
             <p className="alert warning">
               <WarningAmberRoundedIcon />
@@ -1565,7 +1462,7 @@ export default function Opt({
           </Stack>
         </Stack>
         <Stack direction="row" justifyContent="flex-end">
-          <button type="submit" className="button medium submit" disabled={submitting || reporterLoading}>
+          <button type="submit" className="button medium submit" disabled={submitting || reporterLoading || Object.values(uploadingFields).some(Boolean)}>
             {submitting ? '접수 중' : '신고 접수'}
           </button>
         </Stack>

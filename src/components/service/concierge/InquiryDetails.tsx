@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material';
 import { inquirySubtypes, type InquiryType } from '@/lib/concierge/inquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
-import Anchor from '@/components/Anchor';
+import ConciergeFileList from './ConciergeFileList';
 
 type BugDetail = {
   page_url: string;
@@ -46,6 +46,7 @@ type Props = {
   linkedPayment?: LinkedPayment | LinkedPayment[] | null;
   paymentLabel?: string | null;
   evidenceUrl?: string | null;
+  attachments?: { id: string; name: string; href: string }[];
 };
 
 const recurrenceLabels: Record<string, string> = {
@@ -113,6 +114,7 @@ export default function InquiryDetails({
   linkedPayment,
   paymentLabel,
   evidenceUrl,
+  attachments = [],
 }: Props) {
   const subtypeLabel = inquirySubtypes[inquiryType].find((item) => item.value === inquirySubtype)?.label;
   const bug = one(bugDetails);
@@ -234,12 +236,10 @@ export default function InquiryDetails({
           </Stack>
         </>
       )}
-      {evidenceUrl ? (
-        <Stack direction="row">
-          <Anchor href={evidenceUrl} target="_blank" rel="noreferrer" className="button small action">
-            첨부 자료 확인
-          </Anchor>
-        </Stack>
+      {attachments.length > 0 ? (
+        <ConciergeFileList files={attachments} />
+      ) : evidenceUrl ? (
+        <ConciergeFileList files={[{ name: '첨부 자료', href: evidenceUrl }]} />
       ) : null}
     </Stack>
   );

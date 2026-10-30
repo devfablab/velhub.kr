@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
+import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { r2Storage } from '@/lib/r2Storage';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
@@ -43,6 +43,13 @@ type UploadedAttachment = {
   name: string;
   type: string;
   size: number;
+};
+
+type TemporaryAttachment = {
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  storagePath: string;
 };
 
 async function notifyReportReceived({
@@ -161,10 +168,26 @@ function getPostSlugValue(value: string | null) {
 }
 
 function getFiles(formData: FormData) {
-  return formData.getAll('files').filter((value): value is File => value instanceof File && value.size > 0);
+  const value = getFormStringValue(formData, 'temporaryFiles');
+  if (!value) return [];
+  try {
+    const files = JSON.parse(value) as unknown;
+    if (!Array.isArray(files)) return [];
+    return files.filter(
+      (file): file is TemporaryAttachment =>
+        typeof file === 'object' &&
+        file !== null &&
+        typeof file.fileName === 'string' &&
+        typeof file.fileSize === 'number' &&
+        typeof file.mimeType === 'string' &&
+        typeof file.storagePath === 'string',
+    );
+  } catch {
+    return [];
+  }
 }
 
-function validateFiles(files: File[]) {
+function validateFiles(files: TemporaryAttachment[], userId: string) {
   if (files.length === 0) {
     return '파일을 첨부해 주세요.';
   }
@@ -174,17 +197,33 @@ function validateFiles(files: File[]) {
   }
 
   const invalidFile = files.find(
-    (file) => file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf'),
+    (file) =>
+      file.mimeType !== 'application/pdf' ||
+      !file.fileName.toLowerCase().endsWith('.pdf') ||
+      !file.storagePath.startsWith(`temp/concierge/${userId}/legal_report/`),
   );
 
   if (invalidFile) {
     return 'PDF 파일만 첨부할 수 있습니다.';
   }
 
-  const oversizedFile = files.find((file) => file.size > maxPdfFileSize);
+  const oversizedFile = files.find((file) => file.fileSize > maxPdfFileSize);
 
   if (oversizedFile) {
     return 'PDF 파일은 1개당 10MB 이하만 첨부할 수 있습니다.';
+  }
+
+  return '';
+}
+
+async function verifyFiles(files: TemporaryAttachment[], userId: string) {
+  for (const file of files) {
+    const error = await verifyConciergeTemporaryFile({
+      bucket: 'report-legals',
+      file,
+      prefix: `temp/concierge/${userId}/legal_report/`,
+    });
+    if (error) return error;
   }
 
   return '';
@@ -593,34 +632,17 @@ function validateLegalTypeInputs(legalType: LegalType, formData: FormData) {
   return '신고 유형이 올바르지 않습니다.';
 }
 
-async function uploadFiles(reportId: string, files: File[]) {
-  const supabaseAdmin = getSupabaseAdmin();
-  const uploadedFiles: UploadedAttachment[] = [];
-
-  for (const file of files) {
-    const path = `${reportId}/${randomUUID()}.pdf`;
-    const arrayBuffer = await file.arrayBuffer();
-
-    const uploadResult = await r2Storage.from('report-legals').upload(path, arrayBuffer, {
-      contentType: 'application/pdf',
-      upsert: false,
-    });
-
-    if (uploadResult.error) {
-      console.error('[reports/legals/new] upload error', uploadResult.error);
-      throw new Error('파일 업로드에 실패했습니다.');
-    }
-
-    uploadedFiles.push({
-      bucket: 'report-legals',
-      path,
-      name: file.name,
-      type: file.type || 'application/pdf',
-      size: file.size,
-    });
-  }
-
-  return uploadedFiles;
+function getUploadedFiles(files: TemporaryAttachment[]) {
+  return files.map(
+    (file) =>
+      ({
+        bucket: 'report-legals',
+        path: file.storagePath,
+        name: file.fileName,
+        type: file.mimeType,
+        size: file.fileSize,
+      }) satisfies UploadedAttachment,
+  );
 }
 
 export async function POST(request: Request) {
@@ -682,9 +704,11 @@ export async function POST(request: Request) {
     if (!phone) return validationError({ phone: '휴대폰 또는 전화번호를 입력해 주세요.' });
 
     const files = getFiles(formData);
-    const fileErrorMessage = validateFiles(files);
+    const fileErrorMessage = validateFiles(files, currentStigma.userId);
 
     if (fileErrorMessage) return validationError({ attachment: fileErrorMessage });
+    const uploadError = await verifyFiles(files, currentStigma.userId);
+    if (uploadError) return validationError({ attachment: uploadError });
 
     const typeErrorMessage = validateLegalTypeInputs(legalType, formData);
 
@@ -703,7 +727,7 @@ export async function POST(request: Request) {
     }
 
     const reportId = randomUUID();
-    const attachments = await uploadFiles(reportId, files);
+    const attachments = getUploadedFiles(files);
     const supabaseAdmin = getSupabaseAdmin();
 
     const insertResult = await supabaseAdmin.from('report_legals').insert({

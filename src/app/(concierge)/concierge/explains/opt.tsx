@@ -5,8 +5,6 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
-  Box,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -14,7 +12,6 @@ import {
   Drawer,
   FormControl,
   Stack,
-  styled,
   Table,
   TableBody,
   TableCell,
@@ -48,6 +45,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
@@ -134,18 +132,6 @@ type ContentForm = {
   poll: PollData | null;
   commentContent: string;
 };
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
 
 const cellSx = { whiteSpace: 'nowrap' } as const;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -513,7 +499,8 @@ export default function Opt({
   const [opinionValues, setOpinionValues] = useState<Record<string, string>>({});
   const [contentRequest, setContentRequest] = useState<ReportAppealContentRequest | ''>('');
   const [modificationContent, setModificationContent] = useState('');
-  const [opinionFile, setOpinionFile] = useState<File | null>(null);
+  const [opinionFile, setOpinionFile] = useState<ConciergeUploadedFile | null>(null);
+  const [opinionFileUploading, setOpinionFileUploading] = useState(false);
   const [contentItem, setContentItem] = useState<AppealCenterItem | null>(null);
   const [contentResponse, setContentResponse] = useState<ContentResponse | null>(null);
   const [contentForm, setContentForm] = useState<ContentForm | null>(null);
@@ -624,9 +611,9 @@ export default function Opt({
     if (contentRequest === 'edit_and_review' && !modificationContent.trim())
       fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
     if (!opinionFile) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
-    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf'))
+    else if (opinionFile.mimeType !== 'application/pdf' || !opinionFile.fileName.toLowerCase().endsWith('.pdf'))
       fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
-    else if (opinionFile.size >= MAX_FILE_SIZE)
+    else if (opinionFile.fileSize >= MAX_FILE_SIZE)
       fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
     if (Object.keys(fieldErrors).length > 0) {
       showOpinionValidationErrors(fieldErrors);
@@ -647,7 +634,7 @@ export default function Opt({
       formData.set('opinionData', JSON.stringify(opinionValues));
       formData.set('contentRequest', contentRequest);
       formData.set('modificationContent', modificationContent.trim());
-      formData.set('file', selectedOpinionFile);
+      formData.set('file', JSON.stringify(selectedOpinionFile));
       const response = await fetch(`/api/concierge/appeals/${opinionItem.appeal.id}/opinion`, {
         method: 'POST',
         credentials: 'include',
@@ -1066,29 +1053,17 @@ export default function Opt({
                 ) : null}
                 <Stack gap={0.5}>
                   <Typography variant="subtitle2">첨부자료</Typography>
-                  {opinionFile ? (
-                    <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-                      <Typography variant="body2">{opinionFile.name}</Typography>
-                      <button type="button" className="button small danger" onClick={() => setOpinionFile(null)}>
-                        파일 삭제
-                      </button>
-                    </Stack>
-                  ) : (
-                    <Box>
-                      <Button component="label" className="button small action">
-                        파일 추가
-                        <VisuallyHiddenInput
-                          type="file"
-                          accept="application/pdf,.pdf"
-                          onChange={(event) => {
-                            setOpinionFile(event.currentTarget.files?.[0] ?? null);
-                            event.currentTarget.value = '';
-                            clearOpinionFieldError('opinionFile');
-                          }}
-                        />
-                      </Button>
-                    </Box>
-                  )}
+                  <ConciergeFileUploader
+                    accept="application/pdf,.pdf"
+                    onChange={(files) => {
+                      setOpinionFile(files[0] ?? null);
+                      clearOpinionFieldError('opinionFile');
+                    }}
+                    onUploadStateChange={setOpinionFileUploading}
+                    purpose="appeal_opinion"
+                    value={opinionFile ? [opinionFile] : []}
+                    disabled={actionLoading}
+                  />
                   <p className="alert warning">
                     <WarningAmberRoundedIcon />
                     <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
@@ -1102,7 +1077,7 @@ export default function Opt({
             <button type="button" className="button medium close" disabled={actionLoading} onClick={closeOpinion}>
               취소
             </button>
-            <button type="button" className="button medium submit" disabled={actionLoading} onClick={submitOpinion}>
+            <button type="button" className="button medium submit" disabled={actionLoading || opinionFileUploading} onClick={submitOpinion}>
               제출
             </button>
           </div>
@@ -1297,29 +1272,17 @@ export default function Opt({
                 ) : null}
                 <Stack gap={0.5}>
                   <Typography variant="subtitle2">첨부자료</Typography>
-                  {opinionFile ? (
-                    <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-                      <Typography variant="body2">{opinionFile.name}</Typography>
-                      <button type="button" className="button small danger" onClick={() => setOpinionFile(null)}>
-                        파일 삭제
-                      </button>
-                    </Stack>
-                  ) : (
-                    <Box>
-                      <Button component="label" className="button small action">
-                        파일 추가
-                        <VisuallyHiddenInput
-                          type="file"
-                          accept="application/pdf,.pdf"
-                          onChange={(event) => {
-                            setOpinionFile(event.currentTarget.files?.[0] ?? null);
-                            event.currentTarget.value = '';
-                            clearOpinionFieldError('opinionFile');
-                          }}
-                        />
-                      </Button>
-                    </Box>
-                  )}
+                  <ConciergeFileUploader
+                    accept="application/pdf,.pdf"
+                    onChange={(files) => {
+                      setOpinionFile(files[0] ?? null);
+                      clearOpinionFieldError('opinionFile');
+                    }}
+                    onUploadStateChange={setOpinionFileUploading}
+                    purpose="appeal_opinion"
+                    value={opinionFile ? [opinionFile] : []}
+                    disabled={actionLoading}
+                  />
                   <p className="alert warning">
                     <WarningAmberRoundedIcon />
                     <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
@@ -1333,7 +1296,7 @@ export default function Opt({
             <button type="button" className="cancel-button" disabled={actionLoading} onClick={closeOpinion}>
               취소
             </button>
-            <button type="button" disabled={actionLoading} onClick={submitOpinion}>
+            <button type="button" disabled={actionLoading || opinionFileUploading} onClick={submitOpinion}>
               제출
             </button>
           </DialogActions>

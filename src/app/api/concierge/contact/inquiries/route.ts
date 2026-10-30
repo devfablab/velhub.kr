@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
+import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
 import { inquirySubtypes, isInquiryType } from '@/lib/concierge/inquiries';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { MEMBERSHIP_FEATURES } from '@/lib/memberships/catalog';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
-import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -432,24 +432,8 @@ export async function POST(request: NextRequest) {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
-  const isMultipart = request.headers.get('content-type')?.includes('multipart/form-data');
-  let body: Record<string, unknown> | null = null;
-  let familyRelationCertificate: File | null = null;
-  if (isMultipart) {
-    const formData = await request.formData();
-    const payload = formData.get('payload');
-    if (typeof payload === 'string') {
-      try {
-        body = (JSON.parse(payload) as Record<string, unknown>) ?? null;
-      } catch {
-        return validationError({ inquiry: '문의 입력 정보를 확인해 주세요.' });
-      }
-    }
-    const file = formData.get('familyRelationCertificate');
-    if (file instanceof File) familyRelationCertificate = file;
-  } else {
-    body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  }
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  const attachment = body?.attachment as { fileName?: unknown; fileSize?: unknown; mimeType?: unknown; storagePath?: unknown } | null;
   const inquiryType = body?.inquiryType;
   const inquirySubtype = getText(body?.inquirySubtype);
   const title = getText(body?.title);
@@ -543,15 +527,39 @@ export async function POST(request: NextRequest) {
   if (inquiryType === 'minor_purchase_cancellation' && !paymentId)
     return validationError({ paymentId: '청약취소를 요청할 결제를 선택해 주세요.' });
   if (inquiryType === 'minor_purchase_cancellation') {
-    if (!familyRelationCertificate || familyRelationCertificate.size === 0)
+    if (!attachment || !attachment.fileSize)
       return validationError({ evidence: '가족관계증명서 PDF를 첨부해 주세요.' });
     if (
-      familyRelationCertificate.type !== 'application/pdf' ||
-      !familyRelationCertificate.name.toLowerCase().endsWith('.pdf')
+      attachment.mimeType !== 'application/pdf' ||
+      typeof attachment.fileName !== 'string' ||
+      !attachment.fileName.toLowerCase().endsWith('.pdf') ||
+      typeof attachment.storagePath !== 'string' ||
+      !attachment.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/minor_family_relation_certificate/`)
     )
       return validationError({ evidence: '가족관계증명서는 PDF 파일만 첨부할 수 있습니다.' });
-    if (familyRelationCertificate.size > MAX_FAMILY_RELATION_CERTIFICATE_SIZE)
+    if (typeof attachment.fileSize !== 'number' || attachment.fileSize > MAX_FAMILY_RELATION_CERTIFICATE_SIZE)
       return validationError({ evidence: '가족관계증명서 PDF는 1MB 이하만 첨부할 수 있습니다.' });
+    const uploadError = await verifyConciergeTemporaryFile({
+      bucket: FAMILY_RELATION_CERTIFICATE_BUCKET,
+      file: attachment as { fileSize: number; mimeType: string; storagePath: string },
+      prefix: `temp/concierge/${currentStigma.userId}/minor_family_relation_certificate/`,
+    });
+    if (uploadError) return validationError({ evidence: uploadError });
+  }
+  if (
+    (inquiryType === 'bug_report' || inquiryType === 'payment_refund_error') &&
+    attachment &&
+    typeof attachment.fileSize === 'number' &&
+    typeof attachment.mimeType === 'string' &&
+    typeof attachment.storagePath === 'string' &&
+    attachment.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/contact_evidence/`)
+  ) {
+    const uploadError = await verifyConciergeTemporaryFile({
+      bucket: 'inquiry-attachments',
+      file: attachment as { fileSize: number; mimeType: string; storagePath: string },
+      prefix: `temp/concierge/${currentStigma.userId}/contact_evidence/`,
+    });
+    if (uploadError) return validationError({ evidence: uploadError });
   }
 
   const db = getSupabaseAdmin();
@@ -700,31 +708,40 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '문의에 결제를 연결하지 못했습니다.' }, { status: 500 });
     }
   }
-  if (inquiryType === 'minor_purchase_cancellation' && familyRelationCertificate) {
-    const storagePath = `${currentStigma.userId}/${inquiry.id}/${crypto.randomUUID()}.pdf`;
-    const { error: uploadError } = await r2Storage
-      .from(FAMILY_RELATION_CERTIFICATE_BUCKET)
-      .upload(storagePath, familyRelationCertificate, {
-        contentType: 'application/pdf',
-        upsert: false,
-      });
-    if (uploadError) {
-      await db.from('inquiries').delete().eq('id', inquiry.id);
-      return Response.json({ error: '가족관계증명서를 업로드하지 못했습니다.' }, { status: 500 });
-    }
+  if (inquiryType === 'minor_purchase_cancellation' && attachment && typeof attachment.storagePath === 'string') {
     const { error: attachmentError } = await db.from('inquiry_attachments').insert({
       inquiry_id: inquiry.id,
       attachment_type: 'family_relation_certificate',
-      storage_path: storagePath,
+      storage_path: attachment.storagePath,
       storage_bucket: FAMILY_RELATION_CERTIFICATE_BUCKET,
-      mime_type: 'application/pdf',
+      mime_type: attachment.mimeType,
       submitted_by_stigma_id: currentStigma.stigmaId,
       submitted_at: new Date().toISOString(),
     });
     if (attachmentError) {
-      await r2Storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([storagePath]);
       await db.from('inquiries').delete().eq('id', inquiry.id);
       return Response.json({ error: '가족관계증명서 제출 정보를 저장하지 못했습니다.' }, { status: 500 });
+    }
+  }
+  if (
+    (inquiryType === 'bug_report' || inquiryType === 'payment_refund_error') &&
+    attachment &&
+    typeof attachment.storagePath === 'string' &&
+    typeof attachment.mimeType === 'string' &&
+    attachment.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/contact_evidence/`)
+  ) {
+    const { error: attachmentError } = await db.from('inquiry_attachments').insert({
+      inquiry_id: inquiry.id,
+      attachment_type: inquiryType === 'bug_report' ? 'bug_evidence' : 'payment_evidence',
+      storage_path: attachment.storagePath,
+      storage_bucket: 'inquiry-attachments',
+      mime_type: attachment.mimeType,
+      submitted_by_stigma_id: currentStigma.stigmaId,
+      submitted_at: new Date().toISOString(),
+    });
+    if (attachmentError) {
+      await db.from('inquiries').delete().eq('id', inquiry.id);
+      return Response.json({ error: '증빙 파일 정보를 저장하지 못했습니다.' }, { status: 500 });
     }
   }
   await db

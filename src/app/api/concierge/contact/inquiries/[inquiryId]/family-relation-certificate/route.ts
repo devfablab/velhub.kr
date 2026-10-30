@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
+import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
-import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -16,9 +16,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const { inquiryId } = await params;
-  const formData = await request.formData();
-  const file = formData.get('file');
-  const identityVerificationId = formData.get('identityVerificationId');
+  const body = (await request.json().catch(() => null)) as { file?: unknown; identityVerificationId?: unknown } | null;
+  const file = body?.file as { fileName?: unknown; fileSize?: unknown; mimeType?: unknown; storagePath?: unknown } | null;
+  const identityVerificationId = body?.identityVerificationId ?? null;
 
   if (identityVerificationId && typeof identityVerificationId !== 'string') {
     return Response.json({ error: '잘못된 본인인증 정보입니다.' }, { status: 400 });
@@ -59,15 +59,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   if (isCertificateRequired) {
-    if (!(file instanceof File) || file.size === 0) {
+    if (!file || !file.fileSize) {
       return Response.json({ error: '가족관계증명서 PDF를 선택해 주세요.' }, { status: 400 });
     }
 
-    if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+    if (file.mimeType !== 'application/pdf' || typeof file.fileName !== 'string' || !file.fileName.toLowerCase().endsWith('.pdf')) {
       return Response.json({ error: '가족관계증명서는 PDF 파일만 제출할 수 있습니다.' }, { status: 400 });
     }
 
-    if (file.size > maxFileSize) {
+    if (typeof file.fileSize !== 'number' || file.fileSize > maxFileSize) {
       return Response.json({ error: '가족관계증명서 PDF는 10MB 이하만 제출할 수 있습니다.' }, { status: 400 });
     }
   }
@@ -82,16 +82,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   }
 
-  if (isCertificateRequired && file instanceof File) {
-    const storagePath = `${currentStigma.userId}/${inquiryId}/${crypto.randomUUID()}.pdf`;
-    const { error: uploadError } = await r2Storage.from(bucket).upload(storagePath, file, {
-      contentType: 'application/pdf',
-      upsert: false,
+  if (isCertificateRequired && file) {
+    if (typeof file.storagePath !== 'string' || !file.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/family_relation_certificate/`)) return Response.json({ error: '첨부 파일 경로가 올바르지 않습니다.' }, { status: 400 });
+    const uploadError = await verifyConciergeTemporaryFile({
+      bucket,
+      file: file as { fileSize: number; mimeType: string; storagePath: string },
+      prefix: `temp/concierge/${currentStigma.userId}/family_relation_certificate/`,
     });
-
-    if (uploadError) {
-      return Response.json({ error: '가족관계증명서 업로드에 실패했습니다.' }, { status: 500 });
-    }
+    if (uploadError) return Response.json({ error: uploadError }, { status: 400 });
+    const storagePath = file.storagePath;
 
     const { data: existingAttachment } = await supabaseAdmin
       .from('inquiry_attachments')
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         attachment_type: 'family_relation_certificate',
         storage_path: storagePath,
         storage_bucket: bucket,
-        mime_type: 'application/pdf',
+        mime_type: file.mimeType as string,
         submitted_by_stigma_id: currentStigma.stigmaId,
         submitted_at: new Date().toISOString(),
         deleted_at: null,
@@ -115,7 +114,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     );
 
     if (attachmentError) {
-      await r2Storage.from(bucket).remove([storagePath]);
       return Response.json({ error: '가족관계증명서 제출 기록을 저장하지 못했습니다.' }, { status: 500 });
     }
     if (existingAttachment?.storage_path) {
@@ -135,8 +133,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           .limit(1)
           .maybeSingle(),
       ]);
-      if (!identityReference && !inquiryReference)
-        await r2Storage.from(bucket).remove([existingAttachment.storage_path]);
     }
   }
 

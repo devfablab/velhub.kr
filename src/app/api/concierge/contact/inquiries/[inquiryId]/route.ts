@@ -2,6 +2,12 @@ import { r2Storage } from '@/lib/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+const attachmentLabels: Record<string, string> = {
+  bug_evidence: '버그 신고 증빙 파일',
+  family_relation_certificate: '가족관계증명서',
+  payment_evidence: '결제 문의 증빙 파일',
+};
+
 export async function GET(_: Request, { params }: { params: Promise<{ inquiryId: string }> }) {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
@@ -24,13 +30,34 @@ export async function GET(_: Request, { params }: { params: Promise<{ inquiryId:
   const evidence = data.inquiry_attachments.find(
     (item) => !item.deleted_at && ['bug_evidence', 'payment_evidence'].includes(item.attachment_type),
   );
-  const { data: signed } = evidence
-    ? await r2Storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
-    : { data: null };
+  const [{ data: signed }, attachments] = await Promise.all([
+    evidence
+      ? await r2Storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
+      : Promise.resolve({ data: null }),
+    Promise.all(
+      data.inquiry_attachments
+        .filter((item) => !item.deleted_at)
+        .map(async (item) => {
+          const { data: attachmentUrl } = await r2Storage
+            .from(item.storage_bucket)
+            .createSignedUrl(item.storage_path, 600);
+          return attachmentUrl?.signedUrl
+            ? {
+                id: item.id,
+                name: attachmentLabels[item.attachment_type] ?? '첨부 파일',
+                href: attachmentUrl.signedUrl,
+              }
+            : null;
+        }),
+    ),
+  ]);
   return Response.json({
     inquiry: {
       ...data,
       evidenceUrl: signed?.signedUrl ?? null,
+      attachments: attachments.filter(
+        (attachment): attachment is NonNullable<typeof attachment> => attachment !== null,
+      ),
       parentRelationshipVerifiedAt: identity?.parent_relationship_verified_at ?? null,
     },
   });

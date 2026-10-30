@@ -266,3 +266,79 @@
 
   @include ds.mq(minMedium)
     grid-template-columns: repeat(2, 1fr)
+
+.concierge-file-uploader
+  display: flex
+  flex-direction: column
+  gap: ds.rem(7)
+
+.concierge-file-uploader-picker
+  display: flex
+  align-items: center
+  gap: ds.rem(8)
+
+  > span
+    white-space: nowrap
+    @include ds.fw(pre, 600)
+    font-size: ds.rem(13)
+    color: ds.$hex-secondary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+.concierge-file-list
+  display: grid
+  margin: 0
+  padding: 0
+  list-style: none
+
+  li
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: ds.rem(27)
+    border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
+    padding-top: ds.rem(7)
+
+    html[data-theme="yellow-dark"] &
+      border-color: rgba(ds.$rgb-tertiary, .5)
+
+    &:first-of-type
+      padding-top: 0
+      border-top: 0
+
+.concierge-file-link
+  display: flex
+  min-width: 0
+  flex-direction: column
+  gap: ds.rem(2)
+
+  &:is(a):focus-visible, &:is(a):hover
+    strong
+      color: ds.$hex-accent
+
+  strong
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+    @include ds.fw(pre, 500)
+    font-size: ds.rem(14)
+    color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright
+
+  span
+    color: ds.$hex-secondary
+    font-size: ds.rem(12)
+    opacity: .7
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+.concierge-file-actions
+  display: flex
+  flex-shrink: 0
+  flex-wrap: wrap
+  justify-content: flex-end
+  gap: ds.rem(8)

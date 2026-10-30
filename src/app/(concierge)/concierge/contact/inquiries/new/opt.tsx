@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, type SubmitEventHandler, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, type SubmitEventHandler, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -14,7 +14,6 @@ import {
   Stack,
   TextField,
   Typography,
-  styled,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -29,6 +28,7 @@ import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
+import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
 
 export type PaymentRow = {
   id: string;
@@ -96,18 +96,6 @@ const donationTypes = [
   { value: 'series_donation', label: '연재 후원' },
 ];
 
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
-
 function getOperatingSystem(userAgent: string) {
   if (/Windows NT/i.test(userAgent)) {
     return 'Windows';
@@ -148,7 +136,6 @@ export default function Opt({
   const requestedPaymentId = searchParams.get('paymentId')?.trim() ?? '';
   const isAutoMinorCancellation =
     searchParams.get('inquiryType') === 'minor_purchase_cancellation' && Boolean(requestedPaymentId);
-  const evidenceInputRef = useRef<HTMLInputElement | null>(null);
   const payments = initialPayments;
   const cancellationPayments = initialCancellationPayments;
   const cancellationAvailableAt = initialCancellationAvailableAt;
@@ -183,7 +170,8 @@ export default function Opt({
   const [attemptedAmount, setAttemptedAmount] = useState('');
   const [searchingTargets, setSearchingTargets] = useState(false);
   const [displayedMessage, setDisplayedMessage] = useState('');
-  const [evidence, setEvidence] = useState<File | null>(null);
+  const [evidence, setEvidence] = useState<ConciergeUploadedFile | null>(null);
+  const [hasIncompleteUpload, setHasIncompleteUpload] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -337,16 +325,10 @@ export default function Opt({
           userAgent: navigator.userAgent,
         },
       };
-      const formData = new FormData();
-      if (isMinorCancellation && evidence) {
-        formData.set('payload', JSON.stringify(payload));
-        formData.set('familyRelationCertificate', evidence);
-      }
+      const requestPayload = { ...payload, attachment: evidence };
       const response = await fetch(
         '/api/concierge/contact/inquiries',
-        isMinorCancellation
-          ? { method: 'POST', body: formData }
-          : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestPayload) },
       );
       const result = (await response.json().catch(() => null)) as {
         inquiry?: { id: string };
@@ -370,20 +352,6 @@ export default function Opt({
         return;
       }
 
-      if (evidence && (isBug || isPaymentProblem)) {
-        const formData = new FormData();
-        formData.set('file', evidence);
-        const uploadResponse = await fetch(`/api/concierge/contact/inquiries/${result.inquiry.id}/evidence`, {
-          method: 'POST',
-          body: formData,
-        });
-        await uploadResponse.json().catch(() => null);
-        if (!uploadResponse.ok) {
-          router.push('/concierge/contact/inquiries/done?attachment=failed');
-          return;
-        }
-      }
-
       router.push('/concierge/contact/inquiries/done');
     } catch {
       setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
@@ -391,28 +359,26 @@ export default function Opt({
     }
   }
 
-  function chooseEvidence(event: ChangeEvent<HTMLInputElement>) {
-    const selectedFile = event.target.files?.[0] ?? null;
+  function chooseEvidence(files: ConciergeUploadedFile[]) {
+    const selectedFile = files[0] ?? null;
     setError('');
     const allowedTypes = isMinorCancellation
       ? ['application/pdf']
       : ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-    if (selectedFile && !allowedTypes.includes(selectedFile.type)) {
+    if (selectedFile && !allowedTypes.includes(selectedFile.mimeType)) {
       setEvidence(null);
       const message = isMinorCancellation
         ? '가족관계증명서는 PDF 파일만 등록할 수 있습니다.'
         : '첨부 파일은 PDF, JPG, PNG 또는 WEBP 파일만 등록할 수 있습니다.';
       setError(message);
       setErrorDialog({ title: '첨부 파일 확인', messages: [message] });
-      event.target.value = '';
       return;
     }
-    if (selectedFile && selectedFile.size > 1024 * 1024) {
+    if (selectedFile && selectedFile.fileSize > 1024 * 1024) {
       setEvidence(null);
       const message = '첨부 파일은 1MB 이하만 가능합니다.';
       setError(message);
       setErrorDialog({ title: '첨부 파일 확인', messages: [message] });
-      event.target.value = '';
       return;
     }
     setEvidence(selectedFile);
@@ -421,7 +387,6 @@ export default function Opt({
 
   function removeEvidence() {
     setEvidence(null);
-    if (evidenceInputRef.current) evidenceInputRef.current.value = '';
   }
 
   function resetAttemptedTarget() {
@@ -1147,27 +1112,18 @@ export default function Opt({
                     : '이미지는 PNG, JPG, WEBP 형식만 가능하며 1MB 이하만 첨부할 수 있습니다. PDF 파일도 첨부할 수 있습니다.'}
                 </span>
               </p>
-              <VisuallyHiddenInput
-                ref={evidenceInputRef}
-                type="file"
+              <ConciergeFileUploader
                 accept={
                   isMinorCancellation
                     ? 'application/pdf,.pdf'
                     : 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
                 }
                 onChange={chooseEvidence}
+                onUploadStateChange={setHasIncompleteUpload}
+                purpose={isMinorCancellation ? 'minor_family_relation_certificate' : 'contact_evidence'}
+                value={evidence ? [evidence] : []}
+                addLabel="파일 선택"
               />
-              <Stack direction="row" gap={1} alignItems="center">
-                <button type="button" className="button small action" onClick={() => evidenceInputRef.current?.click()}>
-                  파일 선택
-                </button>
-                {evidence ? (
-                  <button type="button" className="button small danger" onClick={removeEvidence}>
-                    파일 삭제
-                  </button>
-                ) : null}
-              </Stack>
-              {evidence ? <Typography variant="body2">{evidence.name}</Typography> : null}
               {fieldErrors.evidence ? (
                 <p className="alert error">
                   <ErrorOutlineRoundedIcon />
@@ -1210,7 +1166,7 @@ export default function Opt({
             뒤로가기
           </Anchor>
           {!inquiryUnavailableReason ? (
-            <button type="submit" className="button medium submit" disabled={isSubmitting}>
+            <button type="submit" className="button medium submit" disabled={isSubmitting || hasIncompleteUpload}>
               {isSubmitting ? '접수 중' : '문의 접수'}
             </button>
           ) : null}

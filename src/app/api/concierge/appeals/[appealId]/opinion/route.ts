@@ -1,6 +1,5 @@
-import { randomUUID } from 'crypto';
+import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { r2Storage } from '@/lib/r2Storage';
 import {
   appealOpinionFields,
   appealOpinionPositionOptions,
@@ -49,6 +48,12 @@ type ReportRow = {
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const BUCKET = 'report-appeals';
 type FieldErrors = Record<string, string>;
+type TemporaryOpinionFile = {
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  storagePath: string;
+};
 
 function normalizeUnknownText(value: unknown) {
   return typeof value === 'string' ? normalizeText(value) : '';
@@ -247,7 +252,19 @@ export async function POST(request: Request, context: RouteContext) {
     const modificationContent = normalizeUnknownText(formData.get('modificationContent')) || null;
     const opinionData = parseOpinionData(formData.get('opinionData'));
     const fileValue = formData.get('file');
-    const opinionFile = fileValue instanceof File ? fileValue : null;
+    let opinionFile: TemporaryOpinionFile | null = null;
+    if (typeof fileValue === 'string') {
+      try {
+        const parsed = JSON.parse(fileValue) as unknown;
+        if (
+          typeof parsed === 'object' && parsed !== null &&
+          typeof (parsed as { fileName?: unknown }).fileName === 'string' &&
+          typeof (parsed as { fileSize?: unknown }).fileSize === 'number' &&
+          typeof (parsed as { mimeType?: unknown }).mimeType === 'string' &&
+          typeof (parsed as { storagePath?: unknown }).storagePath === 'string'
+        ) opinionFile = parsed as TemporaryOpinionFile;
+      } catch {}
+    }
 
     const fieldErrors: FieldErrors = {};
     if (!disputedParts) fieldErrors.disputedParts = '인정하거나 이의를 제기하는 부분을 입력해 주세요.';
@@ -255,10 +272,10 @@ export async function POST(request: Request, context: RouteContext) {
       fieldErrors.contentRequest = '게시물 · 댓글 처리 요청을 선택해 주세요.';
     if (contentRequest === 'edit_and_review' && !modificationContent)
       fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
-    if (!opinionFile || opinionFile.size <= 0) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
-    else if (opinionFile.type !== 'application/pdf' || !opinionFile.name.toLowerCase().endsWith('.pdf'))
+    if (!opinionFile || opinionFile.fileSize <= 0) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
+    else if (opinionFile.mimeType !== 'application/pdf' || !opinionFile.fileName.toLowerCase().endsWith('.pdf') || !opinionFile.storagePath.startsWith(`temp/concierge/${session.authUserId}/appeal_opinion/`))
       fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
-    else if (opinionFile.size >= MAX_FILE_SIZE)
+    else if (opinionFile.fileSize >= MAX_FILE_SIZE)
       fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -330,19 +347,17 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (Object.keys(fieldErrors).length > 0) return validationError(fieldErrors);
 
+    const uploadError = await verifyConciergeTemporaryFile({
+      bucket: BUCKET,
+      file: opinionFile!,
+      prefix: `temp/concierge/${session.authUserId}/appeal_opinion/`,
+    });
+    if (uploadError) return Response.json({ error: uploadError }, { status: 400 });
+
     const normalizedOpinionData = opinionValidation!.normalizedValues;
     const validOpinionFile = opinionFile!;
     const now = new Date().toISOString();
-    uploadedPath = `${appeal.id}/${randomUUID()}.pdf`;
-    const uploadResult = await r2Storage.from(BUCKET).upload(uploadedPath, validOpinionFile, {
-      contentType: 'application/pdf',
-      upsert: false,
-    });
-
-    if (uploadResult.error) {
-      console.error('[concierge/appeals/opinion] upload error', uploadResult.error);
-      return Response.json({ error: '첨부자료를 업로드하지 못했습니다.' }, { status: 500 });
-    }
+    uploadedPath = validOpinionFile.storagePath;
 
     if (contentRequest === 'edit_and_review') {
       await setEditPermission(report, now);
@@ -360,9 +375,9 @@ export async function POST(request: Request, context: RouteContext) {
         opinion_file: {
           bucket: BUCKET,
           path: uploadedPath,
-          name: validOpinionFile.name,
-          size: validOpinionFile.size,
-          type: 'application/pdf',
+          name: validOpinionFile.fileName,
+          size: validOpinionFile.fileSize,
+          type: validOpinionFile.mimeType,
         },
         content_request: contentRequest,
         modification_content: modificationContent,
@@ -377,7 +392,6 @@ export async function POST(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (updateResult.error || !updateResult.data) {
-      await r2Storage.from(BUCKET).remove([uploadedPath]);
       uploadedPath = '';
       return Response.json({ error: '소명 의견서를 저장하지 못했습니다.' }, { status: 500 });
     }
@@ -403,10 +417,6 @@ export async function POST(request: Request, context: RouteContext) {
 
     return Response.json({ ok: true });
   } catch (unknownError) {
-    if (uploadedPath) {
-      await r2Storage.from(BUCKET).remove([uploadedPath]);
-    }
-
     console.error('[concierge/appeals/opinion] unexpected error', unknownError);
 
     if (unknownError instanceof Error) {
