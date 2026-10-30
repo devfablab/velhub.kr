@@ -6,6 +6,7 @@ import {
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { r2Storage } from '@/lib/r2Storage';
@@ -79,6 +80,7 @@ type RequestBody = {
   drawType?: 'first_come' | 'random' | null;
   drawLimit?: number | null;
   drawEndsAt?: string | null;
+  attachments?: unknown;
 };
 
 type SubscriptionNotificationRow = {
@@ -704,6 +706,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (currentPost.error || !currentPost.data) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
+    const currentPostId = currentPost.data.id;
 
     const isStaff = session.case === 'staff' || session.case === 'admin';
     const isAuthor = currentPost.data.user_id === session.stigmaId;
@@ -733,6 +736,61 @@ export async function PATCH(request: Request, context: RouteContext) {
       if (memberRoleResult.data?.role !== 'member') {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
+    }
+
+    const shouldUpdateAttachments = requestBody.attachments !== undefined;
+    const attachmentInputs = shouldUpdateAttachments ? normalizePostAttachmentInputs(requestBody.attachments) : [];
+
+    if (shouldUpdateAttachments && !['basic', 'blog'].includes(board.data.board_type)) {
+      return Response.json({ error: '일반 게시판과 블로그 글에만 파일을 첨부할 수 있습니다.' }, { status: 400 });
+    }
+
+    const existingAttachmentsResult = shouldUpdateAttachments
+      ? await supabaseAdmin
+          .from('post_attachments')
+          .select('id, storage_path, file_name, file_size, content_type, sort_order')
+          .eq('post_id', currentPostId)
+          .order('sort_order')
+      : { data: [], error: null };
+
+    if (existingAttachmentsResult.error) {
+      return Response.json({ error: '첨부 파일을 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const existingAttachmentByPath = new Map(
+      (existingAttachmentsResult.data ?? []).map((attachment) => [attachment.storage_path, attachment]),
+    );
+    const newAttachmentInputs = attachmentInputs.filter((attachment) => !existingAttachmentByPath.has(attachment.storagePath));
+    const resolvedNewAttachments = await resolvePostAttachments({
+      attachments: newAttachmentInputs,
+      siteId: rhizomeData.id,
+      userId: session.authUserId,
+    });
+    const resolvedNewAttachmentByPath = new Map(
+      resolvedNewAttachments.map((attachment) => [attachment.storagePath, attachment]),
+    );
+    const resolvedAttachments = attachmentInputs.map((attachment) => {
+      const existingAttachment = existingAttachmentByPath.get(attachment.storagePath);
+
+      if (existingAttachment) {
+        return {
+          contentType: existingAttachment.content_type,
+          fileName: existingAttachment.file_name,
+          fileSize: existingAttachment.file_size,
+          storagePath: existingAttachment.storage_path,
+        };
+      }
+
+      return resolvedNewAttachmentByPath.get(attachment.storagePath) as (typeof resolvedNewAttachments)[number];
+    });
+
+    const totalAttachmentFileSize = resolvedAttachments.reduce(
+      (total, attachment) => total + attachment.fileSize,
+      0,
+    );
+
+    if (totalAttachmentFileSize > 10 * 1024 * 1024) {
+      return Response.json({ error: '첨부 파일의 전체 용량은 10MB 이하만 가능합니다.' }, { status: 400 });
     }
 
     let resolvedDrawType: DrawType = null;
@@ -1267,6 +1325,69 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (updatePost.error || !updatePost.data) {
       return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (shouldUpdateAttachments) {
+      const nextAttachmentPaths = new Set(resolvedAttachments.map((attachment) => attachment.storagePath));
+      const removedAttachments = (existingAttachmentsResult.data ?? []).filter(
+        (attachment) => !nextAttachmentPaths.has(attachment.storage_path),
+      );
+      const newAttachments = resolvedAttachments.filter(
+        (attachment) => !existingAttachmentByPath.has(attachment.storagePath),
+      );
+
+      if (removedAttachments.length > 0) {
+        const deleteAttachmentRows = await supabaseAdmin
+          .from('post_attachments')
+          .delete()
+          .in(
+            'id',
+            removedAttachments.map((attachment) => attachment.id),
+          );
+
+        if (deleteAttachmentRows.error) {
+          return Response.json({ error: '첨부 파일을 삭제하지 못했습니다.' }, { status: 500 });
+        }
+      }
+
+      if (newAttachments.length > 0) {
+        const insertAttachments = await supabaseAdmin.from('post_attachments').insert(
+          newAttachments.map((attachment) => ({
+            content_type: attachment.contentType,
+            file_name: attachment.fileName,
+            file_size: attachment.fileSize,
+            post_id: currentPostId,
+            sort_order: attachmentInputs.findIndex((item) => item.storagePath === attachment.storagePath),
+            storage_path: attachment.storagePath,
+          })),
+        );
+
+        if (insertAttachments.error) {
+          return Response.json({ error: '첨부 파일을 저장하지 못했습니다.' }, { status: 500 });
+        }
+      }
+
+      const reorderAttachmentResults = await Promise.all(
+        resolvedAttachments.map((attachment, sortOrder) =>
+          supabaseAdmin
+            .from('post_attachments')
+            .update({ sort_order: sortOrder })
+            .eq('post_id', currentPostId)
+            .eq('storage_path', attachment.storagePath),
+        ),
+      );
+
+      if (reorderAttachmentResults.some((result) => result.error)) {
+        return Response.json({ error: '첨부 파일 순서를 저장하지 못했습니다.' }, { status: 500 });
+      }
+
+      if (removedAttachments.length > 0) {
+        const removeResult = await r2Storage.from('post').remove(removedAttachments.map((attachment) => attachment.storage_path));
+
+        if (removeResult.error) {
+          console.error('[boards/edit] attachment cleanup failed', removeResult.error);
+        }
+      }
     }
 
     if (shouldAddRecommendation && recommendationContext) {

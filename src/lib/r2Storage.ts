@@ -10,6 +10,19 @@ type StorageError = {
   message: string;
 };
 
+type UploadRequest = {
+  method: 'DELETE' | 'GET' | 'POST' | 'PUT';
+  key: string;
+  uploadId?: string;
+  partNumber?: number;
+};
+
+type SignedUploadRequest = {
+  url: string;
+  key?: string;
+  headers?: Record<string, string>;
+};
+
 let publicR2Client: S3Client | null = null;
 let privateR2Client: S3Client | null = null;
 
@@ -150,6 +163,33 @@ function createBucketStorage(bucket: string) {
         return { data: null, error: toStorageError(error) };
       }
     },
+    async getObjectMetadata(value: string) {
+      const objectPath = getR2ObjectPath(value);
+
+      try {
+        const [{ HeadObjectCommand }, client] = await Promise.all([
+          import('@aws-sdk/client-s3'),
+          getR2Client(isPublicBucket),
+        ]);
+        const result = await client.send(
+          new HeadObjectCommand({
+            Bucket: r2Bucket,
+            Key: objectPath,
+          }),
+        );
+
+        return {
+          data: {
+            contentDisposition: result.ContentDisposition ?? null,
+            contentLength: result.ContentLength ?? null,
+            contentType: result.ContentType ?? null,
+          },
+          error: null,
+        };
+      } catch (error) {
+        return { data: null, error: toStorageError(error) };
+      }
+    },
   };
 }
 
@@ -158,3 +198,90 @@ export const r2Storage = {
     return createBucketStorage(bucket);
   },
 };
+
+export async function createR2UploadSignature(
+  bucket: string,
+  request: UploadRequest,
+  options: {
+    contentDisposition?: string;
+    resolvedKey?: string;
+  } = {},
+): Promise<SignedUploadRequest> {
+  const r2Bucket = resolveR2BucketName(bucket);
+  const key = getR2ObjectPath(options.resolvedKey ?? request.key);
+
+  if (!key) {
+    throw new Error('업로드 파일 경로가 유효하지 않습니다.');
+  }
+
+  const [{ getSignedUrl }, commands, client] = await Promise.all([
+    import('@aws-sdk/s3-request-presigner'),
+    import('@aws-sdk/client-s3'),
+    getR2Client(isR2PublicBucket(bucket)),
+  ]);
+  const input = {
+    Bucket: r2Bucket,
+    Key: key,
+  };
+  let url: string;
+
+  if (request.method === 'POST' && request.uploadId) {
+    url = await getSignedUrl(
+      client,
+      new commands.CompleteMultipartUploadCommand({
+        ...input,
+        UploadId: request.uploadId,
+      }),
+      { expiresIn: 60 * 15 },
+    );
+  } else if (request.method === 'POST') {
+    url = await getSignedUrl(
+      client,
+      new commands.CreateMultipartUploadCommand({
+        ...input,
+        ContentDisposition: options.contentDisposition,
+      }),
+      { expiresIn: 60 * 15 },
+    );
+  } else if (request.method === 'PUT' && request.uploadId && request.partNumber) {
+    url = await getSignedUrl(
+      client,
+      new commands.UploadPartCommand({
+        ...input,
+        PartNumber: request.partNumber,
+        UploadId: request.uploadId,
+      }),
+      { expiresIn: 60 * 15 },
+    );
+  } else if (request.method === 'GET' && request.uploadId) {
+    url = await getSignedUrl(
+      client,
+      new commands.ListPartsCommand({
+        ...input,
+        UploadId: request.uploadId,
+      }),
+      { expiresIn: 60 * 15 },
+    );
+  } else if (request.method === 'DELETE' && request.uploadId) {
+    url = await getSignedUrl(
+      client,
+      new commands.AbortMultipartUploadCommand({
+        ...input,
+        UploadId: request.uploadId,
+      }),
+      { expiresIn: 60 * 15 },
+    );
+  } else if (request.method === 'DELETE') {
+    url = await getSignedUrl(client, new commands.DeleteObjectCommand(input), { expiresIn: 60 * 15 });
+  } else {
+    url = await getSignedUrl(client, new commands.PutObjectCommand(input), { expiresIn: 60 * 15 });
+  }
+
+  const headers = options.contentDisposition ? { 'content-disposition': options.contentDisposition } : undefined;
+
+  return {
+    url,
+    ...(options.resolvedKey ? { key } : {}),
+    ...(headers ? { headers } : {}),
+  };
+}

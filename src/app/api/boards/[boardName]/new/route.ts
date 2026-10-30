@@ -4,6 +4,7 @@ import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
 import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/community/policies';
+import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
@@ -76,6 +77,7 @@ type RequestBody = {
   drawEndsAt?: string | null;
   publishedAt?: string | null;
   promotion?: BlogPostPromotionInput | null;
+  attachments?: unknown;
 };
 
 function normalizePublishedAt(value: unknown) {
@@ -680,6 +682,18 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '페이지 게시판에는 글을 작성할 수 없습니다.' }, { status: 403 });
     }
 
+    const attachmentInputs = normalizePostAttachmentInputs(requestBody.attachments);
+
+    if (attachmentInputs.length > 0 && !['basic', 'blog'].includes(board.data.board_type)) {
+      return Response.json({ error: '일반 게시판과 블로그 글에만 파일을 첨부할 수 있습니다.' }, { status: 400 });
+    }
+
+    const attachments = await resolvePostAttachments({
+      attachments: attachmentInputs,
+      siteId: rhizomeData.id,
+      userId: session.authUserId,
+    });
+
     let resolvedDrawType: DrawType = null;
     let resolvedDrawLimit: number | null = null;
     let resolvedDrawEndsAt: string | null = null;
@@ -1037,6 +1051,25 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (insertPost.error || !insertPost.data) {
       return Response.json({ error: '글 작성에 실패했습니다.' }, { status: 500 });
+    }
+    const postId = insertPost.data.id;
+
+    if (attachments.length > 0) {
+      const attachmentResult = await supabaseAdmin.from('post_attachments').insert(
+        attachments.map((attachment, index) => ({
+          content_type: attachment.contentType,
+          file_name: attachment.fileName,
+          file_size: attachment.fileSize,
+          post_id: postId,
+          sort_order: index,
+          storage_path: attachment.storagePath,
+        })),
+      );
+
+      if (attachmentResult.error) {
+        await supabaseAdmin.from('posts').delete().eq('id', postId);
+        return Response.json({ error: '첨부 파일을 저장하지 못했습니다.' }, { status: 500 });
+      }
     }
 
     if (rhizomeData.site_type === 'blog' && requestBody.promotion?.type && requestBody.promotion.type !== 'none') {

@@ -193,6 +193,13 @@ type PostContent = {
   can_view_subscription_comments: boolean;
   board_series_count: number;
   is_post_donation_available: boolean;
+  attachments?: Array<{
+    file_name: string;
+    file_size: number;
+    id: string;
+    storage_path: string;
+    url: string;
+  }>;
 };
 
 type SeriesItem = {
@@ -795,10 +802,10 @@ export default function Opt({
           </Drawer>
         ) : (
           <Dialog
-          open={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
-          maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
+            open={deleteDialogOpen}
+            onClose={() => setDeleteDialogOpen(false)}
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle className={styles['dialog-title']}>글 삭제</DialogTitle>
             <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
@@ -1208,6 +1215,20 @@ export default function Opt({
                       themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
                       className="viewer"
                     />
+                  ) : null}
+                  {content.attachments && content.attachments.length > 0 ? (
+                    <div className={`${styles['content-attachments']} paper`}>
+                      <ul>
+                        {content.attachments.map((attachment) => (
+                          <li key={attachment.id}>
+                            <a href={attachment.url} download={attachment.file_name}>
+                              <strong>{attachment.file_name}</strong>
+                              <span>{`${Math.ceil(attachment.file_size / 1024)}KB`}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ) : null}
                   {hashtags.length > 0 ? (
                     <div className={styles['content-tags']}>

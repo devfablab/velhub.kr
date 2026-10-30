@@ -108,6 +108,30 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+function getOperatingSystem(userAgent: string) {
+  if (/Windows NT/i.test(userAgent)) {
+    return 'Windows';
+  }
+
+  if (/Android/i.test(userAgent)) {
+    return 'Android';
+  }
+
+  if (/(iPhone|iPad|iPod)/i.test(userAgent)) {
+    return 'iOS';
+  }
+
+  if (/Mac OS X/i.test(userAgent)) {
+    return 'macOS';
+  }
+
+  if (/Linux/i.test(userAgent)) {
+    return 'Linux';
+  }
+
+  return 'unknown';
+}
+
 export default function Opt({
   initialPayments,
   initialCancellationPayments,
@@ -306,7 +330,7 @@ export default function Opt({
         environment: {
           browserName: navigator.userAgent.match(/(Edg|Chrome|Firefox|Safari)\/?\s*([\d.]*)/i)?.[1] ?? 'unknown',
           browserVersion: navigator.userAgent.match(/(Edg|Chrome|Firefox|Version)\/?\s*([\d.]*)/i)?.[2] ?? '',
-          operatingSystem: navigator.platform,
+          operatingSystem: getOperatingSystem(navigator.userAgent),
           deviceType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop',
           viewportWidth: window.innerWidth,
           viewportHeight: window.innerHeight,

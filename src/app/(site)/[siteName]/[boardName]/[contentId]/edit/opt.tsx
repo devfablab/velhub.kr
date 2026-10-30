@@ -53,6 +53,7 @@ import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
 import SiteInfo from '@/components/service/community/SiteInfo';
+import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/service/common/PostAttachmentUploader';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
 import { ServiceErrorIcon } from '@/components/Svgs';
@@ -123,6 +124,12 @@ export type ContentResponse = {
     draw_type: 'first_come' | 'random' | null;
     draw_limit: number | null;
     draw_ends_at: string | null;
+    attachments?: Array<{
+      file_name: string;
+      file_size: number;
+      storage_path: string;
+      url: string;
+    }>;
   };
   prefixes?: PrefixRow[];
   series?: SeriesRow | null;
@@ -763,6 +770,14 @@ export default function Opt({
   const [thumbnailDialogPreviewUrl, setThumbnailDialogPreviewUrl] = useState('');
   const [thumbnailDialogMessage, setThumbnailDialogMessage] = useState('');
   const [images, setImages] = useState<PostImageRow[]>(initialContent?.content?.images ?? []);
+  const [attachments, setAttachments] = useState<PostAttachmentValue[]>(() =>
+    (initialContent?.content?.attachments ?? []).map((attachment) => ({
+      fileName: attachment.file_name,
+      fileSize: attachment.file_size,
+      storagePath: attachment.storage_path,
+      url: attachment.url,
+    })),
+  );
   const [galleryBlobImages, setGalleryBlobImages] = useState<GalleryBlobImage[]>([]);
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [galleryDialogImages, setGalleryDialogImages] = useState<PostImageRow[]>([]);
@@ -797,6 +812,7 @@ export default function Opt({
   const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
   const [isUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [hasIncompleteAttachmentUpload, setHasIncompleteAttachmentUpload] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [wordingViolationFields, setWordingViolationFields] = useState<string[]>(
     () => initialContent?.wordingViolationFields ?? [],
@@ -830,6 +846,7 @@ export default function Opt({
         youtubeCreatedAt,
         thumbnailImage,
         images,
+        attachments,
         selectedPrefixId,
         selectedSeriesKey,
         isComment,
@@ -854,6 +871,12 @@ export default function Opt({
         youtubeCreatedAt: formatDateValue(parseDateValue(initialContent?.content?.youtube_created_at)),
         thumbnailImage: initialContent?.content?.thumbnail_image ?? '',
         images: initialContent?.content?.images ?? [],
+        attachments: (initialContent?.content?.attachments ?? []).map((attachment) => ({
+          fileName: attachment.file_name,
+          fileSize: attachment.file_size,
+          storagePath: attachment.storage_path,
+          url: attachment.url,
+        })),
         selectedPrefixId: initialPrefixId,
         selectedSeriesKey: initialSeriesKey,
         isComment: initialContent?.content?.is_comment !== false,
@@ -870,6 +893,7 @@ export default function Opt({
       contentHtml,
       contentMarkdown,
       contentSimple,
+      attachments,
       draw,
       galleryBlobImages,
       images,
@@ -891,6 +915,7 @@ export default function Opt({
       initialContent?.content?.content_html,
       initialContent?.content?.content_markdown,
       initialContent?.content?.content_simple,
+      initialContent?.content?.attachments,
       initialContent?.content?.draw_type,
       initialContent?.content?.images,
       initialContent?.content?.is_comment,
@@ -1834,6 +1859,11 @@ export default function Opt({
   async function handleSubmit(action: 'draft' | 'publish' | 'update', event: FormSubmitEvent) {
     event.preventDefault();
 
+    if (hasIncompleteAttachmentUpload) {
+      setErrorMessage('첨부 파일 업로드가 끝난 뒤 저장해주세요.');
+      return;
+    }
+
     if (
       isSubmittingDraft ||
       isSubmittingPublish ||
@@ -1926,6 +1956,7 @@ export default function Opt({
           drawType: canUsePollAndDraw ? drawPayload.drawType : null,
           drawLimit: canUsePollAndDraw ? drawPayload.drawLimit : null,
           drawEndsAt: canUsePollAndDraw ? drawPayload.drawEndsAt : null,
+          attachments: isBasicBoard ? attachments : undefined,
         }),
       });
 
@@ -2383,6 +2414,17 @@ export default function Opt({
                     </>
                   ) : null}
 
+                  {isBasicBoard ? (
+                    <PostAttachmentUploader
+                      boardName={boardName}
+                      disabled={isSubmittingDraft || isSubmittingPublish}
+                      onChange={setAttachments}
+                      onUploadStateChange={setHasIncompleteAttachmentUpload}
+                      siteName={siteName}
+                      value={attachments}
+                    />
+                  ) : null}
+
                   <div className="paper">
                     <div className={styles['post-option']}>
                       <FormGroup row>
@@ -2435,7 +2477,10 @@ export default function Opt({
                   <button
                     type="submit"
                     disabled={
-                      isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)
+                      isSubmittingDraft ||
+                      isSubmittingPublish ||
+                      hasIncompleteAttachmentUpload ||
+                      (publishedStatus === 'published' && !hasPostChanges)
                     }
                     className={`button ${styles.button}`}
                   >
@@ -2451,7 +2496,7 @@ export default function Opt({
                   <button
                     type="button"
                     className={`${styles.button} button`}
-                    disabled={isSubmittingDraft || isSubmittingPublish}
+                    disabled={isSubmittingDraft || isSubmittingPublish || hasIncompleteAttachmentUpload}
                     onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
                   >
                     임시 저장
@@ -2460,7 +2505,10 @@ export default function Opt({
                 <button
                   type="submit"
                   disabled={
-                    isSubmittingDraft || isSubmittingPublish || (publishedStatus === 'published' && !hasPostChanges)
+                    isSubmittingDraft ||
+                    isSubmittingPublish ||
+                    hasIncompleteAttachmentUpload ||
+                    (publishedStatus === 'published' && !hasPostChanges)
                   }
                   className={`${styles.submit} button`}
                 >

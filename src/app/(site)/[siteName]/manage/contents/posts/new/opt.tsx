@@ -33,6 +33,7 @@ import BlogPostPromotionFields, {
   type BlogPromotionStatus,
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
+import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/service/common/PostAttachmentUploader';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -244,11 +245,14 @@ export default function Opt({
   const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const availableSeries = seriesList.filter((series) => !series.is_completed);
   const isSubscriptionSeries = Boolean(
     seriesList.find((series) => series.series_key === selectedSeriesKey)?.is_subscription,
   );
   const canRegisterPaidPreview = isSubscriptionSeries;
   const [promotion, setPromotion] = useState<BlogPromotionValue>(emptyBlogPromotion);
+  const [attachments, setAttachments] = useState<PostAttachmentValue[]>([]);
+  const [hasIncompleteAttachmentUpload, setHasIncompleteAttachmentUpload] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [fieldErrors, setFieldErrors] = useState<{ subject?: string; content?: string; scheduled?: string }>({});
   const [formErrorDialog, setFormErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(
@@ -561,6 +565,13 @@ export default function Opt({
       return;
     }
 
+    if (hasIncompleteAttachmentUpload) {
+      const message = '첨부 파일 업로드가 끝난 뒤 저장해주세요.';
+      setErrorMessage(message);
+      setFormErrorDialog({ title: '글쓰기', messages: [message] });
+      return;
+    }
+
     const publishedAt = publishTimeMode === 'scheduled' ? getScheduledPublishedAtIsoString() : '';
 
     if (publishTimeMode === 'scheduled' && !publishedAt) {
@@ -616,6 +627,7 @@ export default function Opt({
           publishedAt: publishTimeMode === 'scheduled' ? publishedAt : null,
           isComment: commentProvider === 'none' ? false : isComment,
           isRecommended: publishTimeMode === 'now' ? isRecommended : false,
+          attachments,
         }),
       });
 
@@ -719,47 +731,57 @@ export default function Opt({
                 <TextField placeholder="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
               </Stack>
 
-              <Stack gap={1}>
-                <Typography variant="subtitle2">연재 선택</Typography>
-                <FormControl fullWidth size="small">
-                  <Select labelId="post-series-select-label" value={selectedSeriesKey} onChange={handleSeriesChange}>
-                    <MenuItem value="">
-                      <ListItemText primary="선택 안함" />
-                    </MenuItem>
-                    {seriesList
-                      .filter((series) => !series.is_completed)
-                      .map((series) => (
+              {availableSeries.length > 0 ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">연재 선택</Typography>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      displayEmpty
+                      labelId="post-series-select-label"
+                      value={selectedSeriesKey}
+                      onChange={handleSeriesChange}
+                    >
+                      <MenuItem value="">
+                        <ListItemText primary="선택 안함" />
+                      </MenuItem>
+                      {availableSeries.map((series) => (
                         <MenuItem key={series.id} value={series.series_key}>
                           <ListItemText primary={series.series_label} />
                         </MenuItem>
                       ))}
-                  </Select>
-                </FormControl>
-              </Stack>
+                    </Select>
+                  </FormControl>
+                </Stack>
+              ) : null}
 
-              <Stack gap={1}>
-                <Typography variant="subtitle2">카테고리 선택</Typography>
-                <FormControl fullWidth size="small">
-                  <Select
-                    labelId="post-category-select-label"
-                    multiple
-                    value={selectedCategories}
-                    onChange={handleCategoryChange}
-                    renderValue={(selected) =>
-                      categories
-                        .filter((category) => selected.includes(category.category_key))
-                        .map((category) => category.category_label)
-                        .join(', ')
-                    }
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.category_key}>
-                        <ListItemText primary={category.category_label} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
+              {categories.length > 0 ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">카테고리 선택</Typography>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      displayEmpty
+                      labelId="post-category-select-label"
+                      multiple
+                      value={selectedCategories}
+                      onChange={handleCategoryChange}
+                      renderValue={(selected) =>
+                        selected.length === 0
+                          ? '선택 안함'
+                          : categories
+                              .filter((category) => selected.includes(category.category_key))
+                              .map((category) => category.category_label)
+                              .join(', ')
+                      }
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.category_key}>
+                          <ListItemText primary={category.category_label} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Stack>
+              ) : null}
 
               <BlogPostPromotionFields
                 siteName={siteName}
@@ -856,6 +878,15 @@ export default function Opt({
                 ) : null}
               </Stack>
 
+              <PostAttachmentUploader
+                boardName={boardName ?? 'b'}
+                disabled={isSubmitting}
+                onChange={setAttachments}
+                onUploadStateChange={setHasIncompleteAttachmentUpload}
+                siteName={siteName}
+                value={attachments}
+              />
+
               <Stack gap={1}>
                 <Typography variant="subtitle2">블로그 글 출간시간 선택 *</Typography>
                 <RadioGroup value={publishTimeMode} onChange={handlePublishTimeModeChange}>
@@ -912,12 +943,20 @@ export default function Opt({
                 </Anchor>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                    <button
+                      type="submit"
+                      className={`button ${styles.button}`}
+                      disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                    >
                       저장
                     </button>
                   </div>
                 ) : (
-                  <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                  <button
+                    type="submit"
+                    className="button medium submit"
+                    disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                  >
                     저장
                   </button>
                 )}

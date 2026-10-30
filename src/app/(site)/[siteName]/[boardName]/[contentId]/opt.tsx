@@ -256,6 +256,13 @@ type PostContent = {
   can_view_subscription_comments: boolean;
   board_series_count: number;
   is_post_donation_available: boolean;
+  attachments?: Array<{
+    file_name: string;
+    file_size: number;
+    id: string;
+    storage_path: string;
+    url: string;
+  }>;
   promotion?: {
     sponsorship: { id: string; sponsorName: string; linkUrl: string; targetType: 'postAd' } | null;
     ads: {
@@ -1118,6 +1125,20 @@ export default function Opt({
                       {paidContentMoreButton}
                     </>
                   ) : null}
+                  {content.attachments && content.attachments.length > 0 ? (
+                    <div className={`${styles['content-attachments']} paper`}>
+                      <ul>
+                        {content.attachments.map((attachment) => (
+                          <li key={attachment.id}>
+                            <a href={attachment.url} download={attachment.file_name}>
+                              <strong>{attachment.file_name}</strong>
+                              <span>{`${Math.ceil(attachment.file_size / 1024)}KB`}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                   {hashtags.length > 0 ? (
                     <div className={styles['content-tags']}>
                       {hashtags.map((hashtag) => (
@@ -1448,6 +1469,20 @@ export default function Opt({
                       />
                       {paidContentMoreButton}
                     </>
+                  ) : null}
+                  {content.attachments && content.attachments.length > 0 ? (
+                    <div className={`${styles['content-attachments']} paper`}>
+                      <ul>
+                        {content.attachments.map((attachment) => (
+                          <li key={attachment.id}>
+                            <a href={attachment.url} download={attachment.file_name}>
+                              <strong>{attachment.file_name}</strong>
+                              <span>{`${Math.ceil(attachment.file_size / 1024)}KB`}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ) : null}
                   {hashtags.length > 0 ? (
                     <div className={styles['content-tags']}>

@@ -1,5 +1,6 @@
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/blogAds/server';
 import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/blogRecommendations/server';
+import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -18,6 +19,7 @@ type RequestBody = {
   isComment?: boolean | null;
   isRecommended?: boolean | null;
   promotion?: BlogPostPromotionInput | null;
+  attachments?: unknown;
 };
 
 function normalizePublishedAt(value: unknown) {
@@ -117,6 +119,12 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    const attachments = await resolvePostAttachments({
+      attachments: normalizePostAttachmentInputs(requestBody.attachments),
+      siteId: rhizome.data.id,
+      userId: session.authUserId,
+    });
+
     const existingBlogBoard = await supabaseAdmin
       .from('boards')
       .select('id')
@@ -171,6 +179,25 @@ export async function POST(request: Request) {
     }
 
     const createdPost = post.data[0];
+
+    if (attachments.length > 0) {
+      const attachmentResult = await supabaseAdmin.from('post_attachments').insert(
+        attachments.map((attachment, index) => ({
+          content_type: attachment.contentType,
+          file_name: attachment.fileName,
+          file_size: attachment.fileSize,
+          post_id: createdPost.post_id,
+          sort_order: index,
+          storage_path: attachment.storagePath,
+        })),
+      );
+
+      if (attachmentResult.error) {
+        await supabaseAdmin.from('posts').delete().eq('id', createdPost.post_id);
+        return Response.json({ error: '첨부 파일을 저장하지 못했습니다.' }, { status: 500 });
+      }
+    }
+
     const createdPostRecord = await supabaseAdmin
       .from('posts')
       .select('slug')

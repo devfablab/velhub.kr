@@ -50,6 +50,7 @@ import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
 import SiteInfo from '@/components/service/community/SiteInfo';
+import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/service/common/PostAttachmentUploader';
 import TableList from '@/components/service/community/TableList';
 import YoutubePreview, { type ValidationResult, validateYoutubeVideo } from '@/components/service/YoutubePreview';
 import { ServiceNoDataIcon, ServiceWarningIcon } from '@/components/Svgs';
@@ -636,6 +637,8 @@ export default function Opt({
   const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
   const [isUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [attachments, setAttachments] = useState<PostAttachmentValue[]>([]);
+  const [hasIncompleteAttachmentUpload, setHasIncompleteAttachmentUpload] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError || initialBoards?.error || '');
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -1741,6 +1744,11 @@ export default function Opt({
       return;
     }
 
+    if (hasIncompleteAttachmentUpload) {
+      setErrorMessage('첨부 파일 업로드가 끝난 뒤 저장해주세요.');
+      return;
+    }
+
     if (
       isSubmittingDraft ||
       isSubmittingPublish ||
@@ -1832,6 +1840,7 @@ export default function Opt({
           drawType: canUsePollAndDraw ? drawPayload.drawType : null,
           drawLimit: canUsePollAndDraw ? drawPayload.drawLimit : null,
           drawEndsAt: canUsePollAndDraw ? drawPayload.drawEndsAt : null,
+          attachments: isBasicBoard ? attachments : [],
         }),
       });
 
@@ -2236,6 +2245,17 @@ export default function Opt({
                   </div>
                 ) : null}
 
+                {isBasicBoard && selectedBoardKey ? (
+                  <PostAttachmentUploader
+                    boardName={selectedBoardKey}
+                    disabled={isSubmittingDraft || isSubmittingPublish}
+                    onChange={setAttachments}
+                    onUploadStateChange={setHasIncompleteAttachmentUpload}
+                    siteName={siteName}
+                    value={attachments}
+                  />
+                ) : null}
+
                 <div className="paper">
                   <div className={styles['post-option']}>
                     <FormGroup row>
@@ -2274,7 +2294,7 @@ export default function Opt({
                 <button
                   type="submit"
                   className={`button ${styles.button}`}
-                  disabled={isSubmittingDraft || isSubmittingPublish}
+                  disabled={isSubmittingDraft || isSubmittingPublish || hasIncompleteAttachmentUpload}
                 >
                   저장
                 </button>
@@ -2287,14 +2307,14 @@ export default function Opt({
               <button
                 type="button"
                 className={`${styles.button} button`}
-                disabled={isSubmittingDraft || isSubmittingPublish}
+                disabled={isSubmittingDraft || isSubmittingPublish || hasIncompleteAttachmentUpload}
                 onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
               >
                 임시 저장
               </button>
               <button
                 type="submit"
-                disabled={isSubmittingDraft || isSubmittingPublish}
+                disabled={isSubmittingDraft || isSubmittingPublish || hasIncompleteAttachmentUpload}
                 className={`${styles.submit} button`}
               >
                 저장

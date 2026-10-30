@@ -26,6 +26,7 @@ import BlogPostPromotionFields, {
   emptyBlogPromotion,
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
+import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/service/common/PostAttachmentUploader';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -83,6 +84,12 @@ export type ContentResponse = {
     is_comment: boolean;
     is_recommended: boolean;
     markdown_status: string | null;
+    attachments?: Array<{
+      file_name: string;
+      file_size: number;
+      storage_path: string;
+      url: string;
+    }>;
   };
   categories?: CategoryRow[];
   series?: SeriesRow | null;
@@ -344,6 +351,15 @@ export default function Opt({
     initialContent?.content?.thumbnail_height ?? null,
   );
   const [promotion, setPromotion] = useState<BlogPromotionValue>(() => promotionFromResponse(initialPromotion));
+  const [attachments, setAttachments] = useState<PostAttachmentValue[]>(() =>
+    (initialContent?.content?.attachments ?? []).map((attachment) => ({
+      fileName: attachment.file_name,
+      fileSize: attachment.file_size,
+      storagePath: attachment.storage_path,
+      url: attachment.url,
+    })),
+  );
+  const [hasIncompleteAttachmentUpload, setHasIncompleteAttachmentUpload] = useState(false);
   const [promotionLoaded] = useState(Boolean(initialPromotion));
   const [hasBoard, setHasBoard] = useState(initialStatus?.hasBoard || false);
   const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
@@ -672,6 +688,13 @@ export default function Opt({
       return;
     }
 
+    if (hasIncompleteAttachmentUpload) {
+      const message = '첨부 파일 업로드가 끝난 뒤 저장해주세요.';
+      setErrorMessage(message);
+      setFormErrorDialog({ title: '글 수정', messages: [message] });
+      return;
+    }
+
     const nextErrors: { subject?: string; content?: string } = {};
     if (!subject.trim()) nextErrors.subject = '제목을 입력해주세요.';
     if (!hasEditorContent(contentHtml)) nextErrors.content = '내용을 입력해주세요.';
@@ -711,6 +734,7 @@ export default function Opt({
           seriesKey: selectedSeriesKey || null,
           isComment: commentProvider === 'none' ? false : isComment,
           isRecommended,
+          attachments,
         }),
       });
 
@@ -951,6 +975,15 @@ export default function Opt({
                 ) : null}
               </Stack>
 
+              <PostAttachmentUploader
+                boardName={boardName ?? 'b'}
+                disabled={isSubmitting}
+                onChange={setAttachments}
+                onUploadStateChange={setHasIncompleteAttachmentUpload}
+                siteName={siteName}
+                value={attachments}
+              />
+
               {commentProvider !== 'none' ? (
                 <FormControlLabel
                   control={<IOSSwitch sx={{ m: 1 }} checked={isComment} onChange={handleIsCommentChange} />}
@@ -969,12 +1002,20 @@ export default function Opt({
                 </Anchor>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                    <button
+                      type="submit"
+                      className={`button ${styles.button}`}
+                      disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                    >
                       저장
                     </button>
                   </div>
                 ) : (
-                  <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                  <button
+                    type="submit"
+                    className="button medium submit"
+                    disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                  >
                     저장
                   </button>
                 )}

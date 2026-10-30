@@ -82,6 +82,13 @@ type PostResponse = {
     thumbnail_height: number | null;
     author_name: string;
     is_closed: boolean;
+    attachments?: Array<{
+      id: string;
+      file_name: string;
+      file_size: number;
+      storage_path: string;
+      url: string;
+    }>;
   };
   categories?: CategoryRow[];
   series?: SeriesRow | null;
@@ -515,6 +522,22 @@ export default function Opt({
                   <Box sx={{ p: 3, pr: 0, pl: 0 }}>
                     <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
                   </Box>
+
+                  {post.attachments?.length ? (
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">첨부 파일</Typography>
+                      <Stack gap={0.5}>
+                        {post.attachments.map((attachment) => (
+                          <Stack key={attachment.id} direction="row" gap={1} alignItems="center">
+                            <a href={attachment.url} download={attachment.file_name} className="button small action">
+                              {attachment.file_name}
+                            </a>
+                            <Typography variant="body2">{`${Math.ceil(attachment.file_size / 1024)}KB`}</Typography>
+                          </Stack>
+                        ))}
+                      </Stack>
+                    </Stack>
+                  ) : null}
 
                   <Stack direction="row" justifyContent="space-between">
                     <Anchor href={`/${siteName}/manage/contents/posts`} className="button medium cancel">

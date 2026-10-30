@@ -2759,3 +2759,174 @@
 .guideline-area
   flex-direction: row
   justify-content: space-between
+
+.content-attachments
+  ul
+    display: flex
+    flex-direction: column
+    margin: 0
+    padding: 0
+    list-style: none
+
+  li
+    padding: ds.rem(7) 0
+    border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+    html[data-theme="yellow-dark"] &
+      border-top-color: rgba(ds.$rgb-tertiary, .5)
+
+    &:first-of-type
+      padding-top: 0
+      border-top: 0
+
+    a
+      display: flex
+      flex-direction: column
+      gap: ds.rem(2)
+
+      &:focus-visible, &:hover
+        strong
+          color: ds.$hex-accent
+
+    strong
+      @include ds.fw(pre, 500)
+      font-size: ds.rem(14)
+      color: ds.$hex-primary
+
+    span
+      color: ds.$hex-secondary
+      font-size: ds.rem(12)
+      opacity: .7
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+.attachment-uploader
+  display: flex
+  flex-direction: column
+
+  @include ds.mq(minSmall)
+    gap: ds.rem(7)
+
+  h3
+    margin: 0
+    @include ds.fw(neo, 700)
+    font-size: ds.rem(18)
+
+.attachment-uploader-header
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: ds.rem(16)
+
+  .attachment-uploader-headline
+    display: flex
+    flex-direction: column
+    gap: ds.rem(3)
+
+  p
+    @include ds.fw(pre, 500)
+    font-size: ds.rem(14)
+    color: ds.$hex-secondary
+    opacity: .7
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+  @include ds.mq(maxMedium)
+    align-items: stretch
+    flex-direction: column
+
+.attachment-uploader-picker
+  display: flex
+  align-items: center
+  gap: ds.rem(8)
+  flex-shrink: 0
+
+  > span
+    white-space: nowrap
+    @include ds.fw(pre, 600)
+    font-size: ds.rem(13)
+    color: ds.$hex-secondary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+.attachment-uploader-list
+  display: grid
+
+.attachment-uploader-item
+  display: flex
+  justify-content: space-between
+  align-items: center
+  gap: ds.rem(27)
+  border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
+  padding-top: ds.rem(7)
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-tertiary, .5)
+
+  &:first-of-type
+    border-top: 0
+    padding-top: 0
+
+  &.attachment-deleting
+    opacity: .2
+    user-drag: none
+    cursor: default
+
+  .attachment-uploader-status
+    @include ds.col
+
+  strong, span
+    display: block
+
+  strong
+    font-size: ds.rem(14)
+    @include ds.fw(pre, 500)
+    color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright
+
+  span
+    margin-top: ds.rem(4)
+    font-size: ds.rem(12)
+    color: ds.$hex-secondary
+    opacity: .7
+
+    &.upload-error
+      color: ds.$hex-warning!important
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+  progress
+    display: block
+    margin-top: ds.rem(8)
+    width: 100%
+    height: ds.rem(12)
+    border-radius: 10px
+    background-color: transparent
+    appearance: none
+
+    &.upload-error::-webkit-progress-value
+      background-color: ds.$hex-warning
+
+    &::-webkit-progress-bar
+      background-color: rgba(ds.$rgb-tertiary, .1)
+      border-radius: ds.rem(12)
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$rgb-tertiary, .5)
+
+    &::-webkit-progress-value
+      background-color: ds.$hex-accent
+      border-radius: ds.rem(12)
+      min-width: ds.rem(12)
+
+.attachment-uploader-actions
+  display: flex
+  flex-wrap: wrap
+  justify-content: flex-end
+  gap: ds.rem(8)

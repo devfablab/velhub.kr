@@ -1600,6 +1600,18 @@ export async function GET(request: Request, context: RouteContext) {
             seriesId: postData.series_id,
           })
         : { sponsorship: null, ads: [] };
+    const attachmentResult =
+      ['basic', 'blog'].includes(boardData.board_type)
+        ? await supabaseAdmin
+            .from('post_attachments')
+            .select('id, file_name, file_size, storage_path, sort_order')
+            .eq('post_id', postData.id)
+            .order('sort_order')
+        : { data: [], error: null };
+
+    if (attachmentResult.error) {
+      return NextResponse.json({ error: '첨부 파일을 불러오지 못했습니다.' }, { status: 500 });
+    }
 
     return NextResponse.json({
       board: boardData,
@@ -1645,6 +1657,13 @@ export async function GET(request: Request, context: RouteContext) {
         is_post_donation_available: isPostDonationAvailable,
         paid_preview_html: registeredPaidPreview?.html ?? null,
         paid_preview_markdown: registeredPaidPreview?.markdown ?? null,
+        attachments: (attachmentResult.data ?? []).map((attachment) => ({
+          file_name: attachment.file_name,
+          file_size: attachment.file_size,
+          id: attachment.id,
+          storage_path: attachment.storage_path,
+          url: r2Storage.from('post').getPublicUrl(attachment.storage_path).data.publicUrl,
+        })),
         promotion,
       },
       categories,
