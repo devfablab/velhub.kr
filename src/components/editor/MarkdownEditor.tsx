@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-export const IMAGE_INPUT_ID = 'labs-image-file-input';
+export const IMAGE_INPUT_ID = 'image-file-input';
 
 const MarkdownEditorClient = dynamic(() => import('./MarkdownEditorClient'), {
   ssr: false,

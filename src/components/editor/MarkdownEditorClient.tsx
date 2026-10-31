@@ -2,9 +2,8 @@
 
 import type React from 'react';
 import MDEditor, { commands, type ICommand } from '@uiw/react-md-editor';
-import styles from '@/app/markdownEditor.module.sass';
 
-export const IMAGE_INPUT_ID = 'labs-image-file-input';
+export const IMAGE_INPUT_ID = 'image-file-input';
 
 const HeadingIcon = () => (
   <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
@@ -236,7 +235,7 @@ export default function MarkdownEditorClient({
   onDrop,
 }: Props) {
   return (
-    <div className={styles.editorWrapper} data-color-mode={themeMode} onPaste={onPaste} onDrop={onDrop}>
+    <div className="markdown-editor-wrapper" data-color-mode={themeMode} onPaste={onPaste} onDrop={onDrop}>
       <MDEditor
         commands={githubCommands}
         extraCommands={githubExtraCommands}
@@ -252,7 +251,7 @@ export default function MarkdownEditorClient({
         components={{
           preview: (source) => {
             if (!source || !source.trim()) {
-              return <div className={styles.emptyPreview}>미리 볼 내용이 없습니다.</div>;
+              return <div className="empty-preview">미리 볼 내용이 없습니다.</div>;
             }
             return <MDEditor.Markdown source={source} />;
           },
