@@ -44,9 +44,7 @@ async function getR2Client(isPublicBucket: boolean) {
   }
 
   const { S3Client } = await import('@aws-sdk/client-s3');
-  const accessKeyId = getRequiredEnvironmentValue(
-    isPublicBucket ? 'R2_ACCESS_KEY_ID' : 'R2_PRIVATE_ACCESS_KEY_ID',
-  );
+  const accessKeyId = getRequiredEnvironmentValue(isPublicBucket ? 'R2_ACCESS_KEY_ID' : 'R2_PRIVATE_ACCESS_KEY_ID');
   const secretAccessKey = getRequiredEnvironmentValue(
     isPublicBucket ? 'R2_SECRET_ACCESS_KEY' : 'R2_PRIVATE_SECRET_ACCESS_KEY',
   );
@@ -204,6 +202,7 @@ export async function createR2UploadSignature(
   request: UploadRequest,
   options: {
     contentDisposition?: string;
+    contentType?: string;
     resolvedKey?: string;
   } = {},
 ): Promise<SignedUploadRequest> {
@@ -240,6 +239,7 @@ export async function createR2UploadSignature(
       new commands.CreateMultipartUploadCommand({
         ...input,
         ContentDisposition: options.contentDisposition,
+        ContentType: options.contentType,
       }),
       { expiresIn: 60 * 15 },
     );
@@ -277,11 +277,14 @@ export async function createR2UploadSignature(
     url = await getSignedUrl(client, new commands.PutObjectCommand(input), { expiresIn: 60 * 15 });
   }
 
-  const headers = options.contentDisposition ? { 'content-disposition': options.contentDisposition } : undefined;
+  const headers = {
+    ...(options.contentDisposition ? { 'content-disposition': options.contentDisposition } : {}),
+    ...(options.contentType ? { 'content-type': options.contentType } : {}),
+  };
 
   return {
     url,
     ...(options.resolvedKey ? { key } : {}),
-    ...(headers ? { headers } : {}),
+    ...(Object.keys(headers).length > 0 ? { headers } : {}),
   };
 }

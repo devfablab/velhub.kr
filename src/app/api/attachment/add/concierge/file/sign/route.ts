@@ -49,7 +49,12 @@ function getFileName(value: string) {
 }
 
 function getExtension(value: string) {
-  const extension = getFileName(value).split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') ?? '';
+  const extension =
+    getFileName(value)
+      .split('.')
+      .pop()
+      ?.toLowerCase()
+      .replace(/[^a-z0-9]/g, '') ?? '';
   return extension || null;
 }
 
@@ -58,9 +63,7 @@ function getContentDisposition(fileName: string) {
 }
 
 function getPolicy(value: unknown) {
-  return typeof value === 'string' && value in uploadPolicies
-    ? uploadPolicies[value as ConciergeUploadPurpose]
-    : null;
+  return typeof value === 'string' && value in uploadPolicies ? uploadPolicies[value as ConciergeUploadPurpose] : null;
 }
 
 function normalizeUploadRequest(value: UploadRequest) {
@@ -112,6 +115,7 @@ export async function POST(request: Request) {
       const storagePath = `${prefix}${crypto.randomUUID()}.${extension}`;
       const signed = await createR2UploadSignature(policy.bucket, uploadRequest, {
         contentDisposition: getContentDisposition(name),
+        contentType: type,
         resolvedKey: storagePath,
       });
 

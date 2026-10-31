@@ -87,7 +87,9 @@ export default function ConciergeFileUploader({
   const fileCount = value.length + pendingUppyFiles.length;
 
   useEffect(() => {
-    const uploadingStoragePaths = new Set((uppyReference.current?.getFiles() ?? []).map(getStoragePath).filter(Boolean));
+    const uploadingStoragePaths = new Set(
+      (uppyReference.current?.getFiles() ?? []).map(getStoragePath).filter(Boolean),
+    );
     existingFilesReference.current = value.filter((file) => !uploadingStoragePaths.has(file.storagePath));
   }, [value]);
 
@@ -136,8 +138,12 @@ export default function ConciergeFileUploader({
         setErrorMessage('');
         return true;
       },
+      restrictions: {
+        allowedFileTypes: accept.split(',').map((value) => value.trim()),
+        maxNumberOfFiles: maxFiles,
+      },
     }).use(AwsS3, {
-      generateObjectKey: (file) => file.name,
+      generateObjectKey: (file) => file.id,
       limit: 1,
       shouldUseMultipart: true,
       signRequest: async (request) => {
@@ -152,9 +158,18 @@ export default function ConciergeFileUploader({
           headers: { 'Content-Type': 'application/json' },
           method: 'POST',
         });
-        const result = (await response.json()) as { error?: string; headers?: Record<string, string>; key?: string; url?: string };
+        const result = (await response.json()) as {
+          error?: string;
+          headers?: Record<string, string>;
+          key?: string;
+          url?: string;
+        };
         if (!response.ok || !result.url) throw new Error(result.error ?? '파일 업로드를 준비하지 못했습니다.');
-        return { ...(result.headers ? { headers: result.headers } : {}), ...(result.key ? { key: result.key } : {}), url: result.url };
+        return {
+          ...(result.headers ? { headers: result.headers } : {}),
+          ...(result.key ? { key: result.key } : {}),
+          url: result.url,
+        };
       },
     });
     uppyReference.current = uppy;
@@ -199,7 +214,8 @@ export default function ConciergeFileUploader({
       try {
         uppy.addFile({ data: file, name: file.name, source: 'concierge-file', type: file.type });
       } catch (error) {
-        if (error instanceof Error && error.message === 'Cannot add the file because onBeforeFileAdded returned false.') continue;
+        if (error instanceof Error && error.message === 'Cannot add the file because onBeforeFileAdded returned false.')
+          continue;
         setErrorMessage(error instanceof Error ? error.message : '파일을 추가하지 못했습니다.');
       }
     }
@@ -221,7 +237,9 @@ export default function ConciergeFileUploader({
       if (!deleteResponse.ok) throw new Error('파일을 삭제하지 못했습니다.');
       if (fileId) uppyReference.current?.removeFile(fileId);
       else {
-        existingFilesReference.current = existingFilesReference.current.filter((file) => file.storagePath !== storagePath);
+        existingFilesReference.current = existingFilesReference.current.filter(
+          (file) => file.storagePath !== storagePath,
+        );
         const uploadedFile = uppyReference.current?.getFiles().find((file) => getStoragePath(file) === storagePath);
         if (uploadedFile) uppyReference.current?.removeFile(uploadedFile.id);
         onChangeReference.current([...existingFilesReference.current]);
@@ -239,17 +257,48 @@ export default function ConciergeFileUploader({
         {fileCount < maxFiles ? (
           <Button component="label" className="button small action" disabled={disabled}>
             {addLabel}
-            <VisuallyHiddenInput accept={accept} disabled={disabled} multiple={maxFiles > 1} onChange={handleFilesChange} type="file" />
+            <VisuallyHiddenInput
+              accept={accept}
+              disabled={disabled}
+              multiple={maxFiles > 1}
+              onChange={handleFilesChange}
+              type="file"
+            />
           </Button>
         ) : null}
         <span>{`첨부 ${fileCount}/${maxFiles}`}</span>
       </div>
-      {errorMessage ? <p className="alert error"><ErrorOutlineRoundedIcon /><span>{errorMessage}</span></p> : null}
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
       {fileCount > 0 ? (
         <ul className={`${styles['concierge-file-list']} paper`}>
           {value.map((file) => {
             const isDeleting = deletingStoragePaths.includes(file.storagePath);
-            return <li key={file.storagePath}><div className={styles['concierge-file-link']}><strong>{file.fileName}</strong><span>{`${formatFileSize(file.fileSize)} · 업로드 완료`}</span></div><div className={styles['concierge-file-actions']}><button type="button" className="button small danger" disabled={disabled || isDeleting} onClick={() => void removeFile(file.storagePath)}>{isDeleting ? '삭제중' : '삭제'}</button></div></li>;
+            return (
+              <li
+                key={file.storagePath}
+                className={`${styles['concierge-file-item']} ${isDeleting ? styles['concierge-file-deleting'] : ''}`}
+              >
+                <div className={styles['concierge-file-status']}>
+                  <strong>{file.fileName}</strong>
+                  <span>{`${formatFileSize(file.fileSize)} · 업로드 완료`}</span>
+                </div>
+                <div className={styles['concierge-file-actions']}>
+                  <button
+                    type="button"
+                    className="button small danger"
+                    disabled={disabled || isDeleting}
+                    onClick={() => void removeFile(file.storagePath)}
+                  >
+                    {isDeleting ? '삭제중' : '삭제'}
+                  </button>
+                </div>
+              </li>
+            );
           })}
           {pendingUppyFiles.map((file) => {
             const uploaded = typeof file.progress.bytesUploaded === 'number' ? file.progress.bytesUploaded : 0;
@@ -258,7 +307,52 @@ export default function ConciergeFileUploader({
             const status = getStatus(file, activeUploadFileIds.includes(file.id));
             const storagePath = getStoragePath(file);
             const isDeleting = Boolean(storagePath && deletingStoragePaths.includes(storagePath));
-            return <li key={file.id}><div className={styles['concierge-file-link']}><strong>{file.name}</strong><span>{`${file.error || status} · ${formatFileSize(uploaded)} / ${formatFileSize(total)} (${progress}%)`}</span><progress max="100" value={progress} /></div><div className={styles['concierge-file-actions']}>{!file.progress.uploadComplete && status !== '업로드 실패' ? <button type="button" className="button small action" disabled={disabled} onClick={() => uppyReference.current?.pauseResume(file.id)}>{status === '일시 중지' ? '재개' : '일시 중지'}</button> : null}{status === '업로드 실패' ? <button type="button" className="button small action" disabled={disabled} onClick={() => uppyReference.current?.retryUpload(file.id)}>{uploaded > 0 ? '재개' : '다시 시도'}</button> : null}<button type="button" className="button small danger" disabled={disabled || isDeleting} onClick={() => storagePath ? void removeFile(storagePath, file.id) : uppyReference.current?.removeFile(file.id)}>{isDeleting ? '삭제중' : '삭제'}</button></div></li>;
+            return (
+              <li
+                key={file.id}
+                className={`${styles['concierge-file-item']} ${isDeleting ? styles['concierge-file-deleting'] : ''}`}
+              >
+                <div className={styles['concierge-file-status']}>
+                  <strong>{file.name}</strong>
+                  <span className={file.error ? styles['upload-error'] : undefined}>
+                    {file.error || status} · {formatFileSize(uploaded)} / {formatFileSize(total)} ({progress}%)
+                  </span>
+                  <progress max="100" value={progress} className={file.error ? styles['upload-error'] : undefined} />
+                </div>
+                <div className={styles['concierge-file-actions']}>
+                  {!file.progress.uploadComplete && status !== '업로드 실패' ? (
+                    <button
+                      type="button"
+                      className="button small action"
+                      disabled={disabled}
+                      onClick={() => uppyReference.current?.pauseResume(file.id)}
+                    >
+                      {status === '일시 중지' ? '재개' : '일시 중지'}
+                    </button>
+                  ) : null}
+                  {status === '업로드 실패' ? (
+                    <button
+                      type="button"
+                      className="button small action"
+                      disabled={disabled}
+                      onClick={() => uppyReference.current?.retryUpload(file.id)}
+                    >
+                      {uploaded > 0 ? '재개' : '다시 시도'}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="button small danger"
+                    disabled={disabled || isDeleting}
+                    onClick={() =>
+                      storagePath ? void removeFile(storagePath, file.id) : uppyReference.current?.removeFile(file.id)
+                    }
+                  >
+                    {isDeleting ? '삭제중' : '삭제'}
+                  </button>
+                </div>
+              </li>
+            );
           })}
         </ul>
       ) : null}
