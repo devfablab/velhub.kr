@@ -1,11 +1,10 @@
 'use client';
 
-import { SyntheticEvent, useState } from 'react';
+import { SyntheticEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import {
   Avatar,
-  Box,
   Button,
   Chip,
   Dialog,
@@ -13,8 +12,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Divider,
   FormControl,
+  FormHelperText,
+  IconButton,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -23,13 +23,18 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { LABS_STATUSES, LabsStatus } from '@/lib/github/labs';
-import { formatDateTimeDetail } from '@/lib/utils';
+import { LABS_CATEGORIES, LABS_STATUSES, LabsCategory, LabsStatus } from '@/lib/github/labs';
+import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEditor';
 import MarkdownPreview from '@/components/editor/MarkdownPreview';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import { getStatusColor } from '../opt';
+import ScreenState from '@/components/service/ScreenState';
 import type { LabsIssueRow } from '../page';
+import styles from '@/app/concierge.module.sass';
+
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
 type CommentItem = {
   id: number;
@@ -52,6 +57,7 @@ type Props = {
     body: string;
     state: 'open' | 'closed';
     createdAt: string;
+    closedAt?: string | null;
   };
   initialComments: CommentItem[];
   isAuthor: boolean;
@@ -68,16 +74,169 @@ export default function Opt({
 }: Props) {
   const router = useRouter();
   const theme = useTheme();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [dbIssue, setDbIssue] = useState<LabsIssueRow>(initialDbIssue);
+  const [issueBody, setIssueBody] = useState(initialGitHubIssue?.body || '');
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
+
+  // Issue inline edit state
+  const [isEditingIssue, setIsEditingIssue] = useState(false);
+  const [editIssueContent, setEditIssueContent] = useState(initialGitHubIssue?.body || '');
+  const [isSavingIssue, setIsSavingIssue] = useState(false);
+
+  // Title & category inline edit state
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(initialDbIssue.title);
+  const [editCategory, setEditCategory] = useState<LabsCategory>(initialDbIssue.category);
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
+
+  // Comment inline edit state
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editCommentBody, setEditCommentBody] = useState('');
+  const [isSavingComment, setIsSavingComment] = useState(false);
+
+  // New comment state
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  // Upload target: determines which state gets the uploaded image from the toolbar button
+  const [activeUploadTarget, setActiveUploadTarget] = useState<'issue' | 'newComment' | 'editComment'>('newComment');
+
   const [isCancelling, setIsCancelling] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const currentStatus = dbIssue.status;
+  const isClosed = currentStatus === '반영 완료' || currentStatus === '반려됨';
+  const isReopened =
+    !isClosed && Math.abs(new Date(dbIssue.updated_at).getTime() - new Date(dbIssue.created_at).getTime()) > 1000;
+
+  async function handleUploadImageForTarget(file: File, target: 'issue' | 'newComment' | 'editComment') {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setErrorMessage(`지원하지 않는 이미지 형식입니다: ${file.name}`);
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setErrorMessage(`이미지 하나당 최대 1MB 이하여야 합니다: ${file.name}`);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('images', file);
+    formData.set('issueNumber', String(issueNumber));
+
+    const placeholder = `![${file.name}](업로드 중...)`;
+
+    if (target === 'issue') {
+      setEditIssueContent((previousContent) => (previousContent || '') + `\n${placeholder}\n`);
+    } else if (target === 'editComment') {
+      setEditCommentBody((previousBody) => (previousBody || '') + `\n${placeholder}\n`);
+    } else {
+      setNewComment((previousNew) => (previousNew || '') + `\n${placeholder}\n`);
+    }
+
+    try {
+      const response = await fetch(`/api/concierge/labs/${issueNumber}/images`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || '이미지 업로드에 실패했습니다.');
+
+      const realMarkdown = `![${file.name}](${result.rawUrl})`;
+
+      if (target === 'issue') {
+        setEditIssueContent((previousContent) => (previousContent || '').replace(placeholder, realMarkdown));
+      } else if (target === 'editComment') {
+        setEditCommentBody((previousBody) => (previousBody || '').replace(placeholder, realMarkdown));
+      } else {
+        setNewComment((previousNew) => (previousNew || '').replace(placeholder, realMarkdown));
+      }
+    } catch (error) {
+      if (target === 'issue') {
+        setEditIssueContent((previousContent) => (previousContent || '').replace(placeholder, ''));
+      } else if (target === 'editComment') {
+        setEditCommentBody((previousBody) => (previousBody || '').replace(placeholder, ''));
+      } else {
+        setNewComment((previousNew) => (previousNew || '').replace(placeholder, ''));
+      }
+      setErrorMessage(error instanceof Error ? error.message : '이미지 업로드에 실패했습니다.');
+    }
+  }
+
+  function handleIssuePaste(event: React.ClipboardEvent) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) void handleUploadImageForTarget(file, 'issue');
+      }
+    }
+  }
+
+  function handleIssueDrop(event: React.DragEvent) {
+    const files = event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      if (file.type.startsWith('image/')) {
+        event.preventDefault();
+        void handleUploadImageForTarget(file, 'issue');
+      }
+    }
+  }
+
+  function handleCommentEditPaste(event: React.ClipboardEvent) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) void handleUploadImageForTarget(file, 'editComment');
+      }
+    }
+  }
+
+  function handleCommentEditDrop(event: React.DragEvent) {
+    const files = event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      if (file.type.startsWith('image/')) {
+        event.preventDefault();
+        void handleUploadImageForTarget(file, 'editComment');
+      }
+    }
+  }
+
+  function handleNewCommentPaste(event: React.ClipboardEvent) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) void handleUploadImageForTarget(file, 'newComment');
+      }
+    }
+  }
+
+  function handleNewCommentDrop(event: React.DragEvent) {
+    const files = event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      if (file.type.startsWith('image/')) {
+        event.preventDefault();
+        void handleUploadImageForTarget(file, 'newComment');
+      }
+    }
+  }
 
   async function handleAdminStatusChange(event: SelectChangeEvent<string>) {
     const nextStatus = event.target.value as LabsStatus;
@@ -93,8 +252,103 @@ export default function Opt({
 
       setDbIssue((prev) => ({ ...prev, status: nextStatus }));
       router.refresh();
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : '상태 변경 중 오류가 발생했습니다.');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '상태 변경 중 오류가 발생했습니다.');
+    }
+  }
+
+  async function handleSaveTitle() {
+    if (!editTitle.trim()) return;
+
+    setIsSavingTitle(true);
+    try {
+      const response = await fetch(`/api/concierge/labs/${issueNumber}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          category: editCategory,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || '제목 수정에 실패했습니다.');
+
+      setDbIssue((prev) => ({
+        ...prev,
+        title: editTitle.trim(),
+        category: editCategory,
+      }));
+      setIsEditingTitle(false);
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '제목 수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingTitle(false);
+    }
+  }
+
+  async function handleSaveIssue() {
+    if (!editIssueContent.trim()) return;
+
+    setIsSavingIssue(true);
+    try {
+      const response = await fetch(`/api/concierge/labs/${issueNumber}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: editIssueContent.trim(),
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || '이슈 수정에 실패했습니다.');
+
+      setIssueBody(editIssueContent.trim());
+      setIsEditingIssue(false);
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '이슈 수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingIssue(false);
+    }
+  }
+
+  async function handleSaveComment(commentId: number) {
+    if (!editCommentBody.trim()) return;
+
+    setIsSavingComment(true);
+    try {
+      const response = await fetch(`/api/concierge/labs/${issueNumber}/comments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId,
+          body: editCommentBody.trim(),
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || '댓글 수정에 실패했습니다.');
+
+      setComments((prev) =>
+        prev.map((commentItem) =>
+          commentItem.id === commentId
+            ? {
+                ...commentItem,
+                body: result.comment.body,
+                updatedAt: result.comment.updatedAt || new Date().toISOString(),
+              }
+            : commentItem,
+        ),
+      );
+      setEditingCommentId(null);
+      setEditCommentBody('');
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '댓글 수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingComment(false);
     }
   }
 
@@ -113,8 +367,8 @@ export default function Opt({
       setDbIssue((prev) => ({ ...prev, status: '반려됨' }));
       setIsCancelConfirmOpen(false);
       router.refresh();
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : '취소 처리 중 오류가 발생했습니다.');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '취소 처리 중 오류가 발생했습니다.');
     } finally {
       setIsCancelling(false);
     }
@@ -141,155 +395,303 @@ export default function Opt({
           id: result.comment.id,
           body: result.comment.body,
           createdAt: result.comment.createdAt,
-          updatedAt: result.comment.createdAt,
-          author: { login: 'admin', avatarUrl: '' },
+          updatedAt: result.comment.updatedAt || result.comment.createdAt,
+          author: result.comment.author || { login: 'admin', avatarUrl: '' },
         },
       ]);
       setNewComment('');
       router.refresh();
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : '댓글 작성 중 오류가 발생했습니다.');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '댓글 작성 중 오류가 발생했습니다.');
     } finally {
       setIsSubmittingComment(false);
     }
   }
 
   return (
-    <Stack gap={3}>
-      <div className="paper">
-        <Stack gap={2}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Chip label={dbIssue.category} size="small" variant="outlined" />
-              <Chip label={currentStatus} size="small" color={getStatusColor(currentStatus)} />
-              <Typography variant="body2" sx={{ opacity: 0.6 }}>
-                #{issueNumber}
-              </Typography>
-            </Stack>
+    <div className={styles.labs}>
+      <input
+        id={IMAGE_INPUT_ID}
+        ref={fileInputRef}
+        type="file"
+        accept={ALLOWED_IMAGE_TYPES.join(',')}
+        multiple
+        style={{ display: 'none' }}
+        onChange={(event) => {
+          if (event.target.files) {
+            Array.from(event.target.files).forEach((file) =>
+              void handleUploadImageForTarget(file, activeUploadTarget),
+            );
+            event.target.value = '';
+          }
+        }}
+      />
 
-            <Stack direction="row" alignItems="center" gap={1}>
-              {isAdmin ? (
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <Select value={currentStatus} onChange={(e) => void handleAdminStatusChange(e)} displayEmpty>
-                    {LABS_STATUSES.map((st) => (
-                      <MenuItem key={st} value={st}>
-                        {st}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              ) : null}
-
-              {isAuthor && currentStatus !== '반려됨' ? (
-                <>
-                  <Anchor href={`/concierge/labs/${issueNumber}/edit`} className="button small close">
-                    수정하기
-                  </Anchor>
-                  <Button size="small" color="error" variant="outlined" onClick={() => setIsCancelConfirmOpen(true)}>
-                    제안 취소
-                  </Button>
-                </>
-              ) : null}
-            </Stack>
-          </Stack>
-
-          <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
-            {dbIssue.title}
-          </Typography>
-
-          <Stack direction="row" alignItems="center" gap={2} sx={{ fontSize: '0.85rem', opacity: 0.7 }}>
-            <span>작성자: {dbIssue.user_name}</span>
-            <span>등록일: {formatDateTimeDetail(dbIssue.created_at)}</span>
-          </Stack>
-
-          <Divider sx={{ my: 1 }} />
-
-          <Box sx={{ minHeight: 120, py: 1 }}>
-            <MarkdownPreview source={initialGitHubIssue?.body || '내용이 없습니다.'} themeMode={theme.palette.mode} />
-          </Box>
-
-          {initialGitHubIssue?.htmlUrl ? (
-            <Stack direction="row" justifyContent="flex-end">
-              <a
-                href={initialGitHubIssue.htmlUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.85rem' }}
+      <div className={styles.headlines}>
+        {isEditingTitle ? (
+          <Stack direction="row" alignItems="center" gap={1} sx={{ my: 1, flexWrap: 'wrap' }}>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={editCategory}
+                onChange={(event) => setEditCategory(event.target.value as LabsCategory)}
               >
-                <span>GitHub에서 보기</span>
-                <OpenInNewRoundedIcon sx={{ fontSize: 16 }} />
-              </a>
-            </Stack>
-          ) : null}
-        </Stack>
+                {LABS_CATEGORIES.map((categoryItem) => (
+                  <MenuItem key={categoryItem} value={categoryItem}>
+                    {categoryItem}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              value={editTitle}
+              onChange={(event) => setEditTitle(event.target.value)}
+              placeholder="제목을 입력하세요"
+              sx={{ flex: 1, minWidth: 200 }}
+            />
+            <button
+              type="button"
+              className="button small submit"
+              onClick={() => void handleSaveTitle()}
+              disabled={isSavingTitle || !editTitle.trim()}
+            >
+              {isSavingTitle ? '저장 중...' : '저장'}
+            </button>
+            <button
+              type="button"
+              className="button small close"
+              onClick={() => {
+                setIsEditingTitle(false);
+                setEditTitle(dbIssue.title);
+                setEditCategory(dbIssue.category);
+              }}
+              disabled={isSavingTitle}
+            >
+              취소
+            </button>
+          </Stack>
+        ) : (
+          <h1>
+            {dbIssue.title} <span>#{issueNumber}</span>
+            {(isAuthor || isAdmin) && currentStatus !== '반려됨' ? (
+              <IconButton
+                size="small"
+                onClick={() => setIsEditingTitle(true)}
+                title="제목 수정"
+                sx={{ ml: 1, verticalAlign: 'middle' }}
+              >
+                <EditRoundedIcon fontSize="small" />
+              </IconButton>
+            ) : null}
+          </h1>
+        )}
+        <div className={styles.chips}>
+          <Chip label={currentStatus} className="chip outlined warning" />
+          <Chip label={dbIssue.category} className="chip outlined success" />
+        </div>
       </div>
 
-      {/* Comments Section */}
       <div className="paper">
-        <Stack gap={2}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            답변 및 진행 내역 ({comments.length})
-          </Typography>
+        <div className={styles['issue-header']}>
+          <div className={styles['issue-header-profile']}>
+            <div className={styles.avatar}>
+              <Avatar sx={{ width: 24, height: 24 }} />
+              <span>{dbIssue.user_name}</span>
+            </div>
+            {isClosed ? (
+              <time>{formatTimeAgo(initialGitHubIssue?.closedAt || dbIssue.updated_at)}에 닫힘</time>
+            ) : isReopened ? (
+              <time>{formatTimeAgo(dbIssue.updated_at)}에 다시 열림</time>
+            ) : (
+              <time>{formatTimeAgo(dbIssue.created_at)}에 등록됨</time>
+            )}
+          </div>
+          <div className={styles['issue-header-actions']}>
+            {isAdmin ? (
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <Select value={currentStatus} onChange={(event) => void handleAdminStatusChange(event)} displayEmpty>
+                  {LABS_STATUSES.map((statusItem) => (
+                    <MenuItem key={statusItem} value={statusItem}>
+                      {statusItem}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : null}
 
-          {comments.length === 0 ? (
-            <Typography variant="body2" sx={{ opacity: 0.6, py: 2 }}>
-              아직 등록된 답변이나 진행 내역이 없습니다.
-            </Typography>
-          ) : (
-            <Stack gap={2}>
-              {comments.map((comment) => (
-                <div key={comment.id} className="paper" style={{ padding: '1rem', background: 'rgba(0,0,0,0.02)' }}>
-                  <Stack gap={1}>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Stack direction="row" alignItems="center" gap={1}>
-                        <Avatar src={comment.author.avatarUrl} sx={{ width: 24, height: 24 }} />
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          {comment.author.login}
-                        </Typography>
-                      </Stack>
-                      <Typography variant="caption" sx={{ opacity: 0.6 }}>
-                        {formatDateTimeDetail(comment.createdAt)}
-                      </Typography>
-                    </Stack>
-                    <Box sx={{ pt: 0.5 }}>
-                      <MarkdownPreview source={comment.body} themeMode={theme.palette.mode} />
-                    </Box>
-                  </Stack>
-                </div>
-              ))}
+            {(isAuthor || isAdmin) && currentStatus !== '반려됨' && !isEditingIssue ? (
+              <button
+                type="button"
+                className="button small normal"
+                onClick={() => {
+                  setActiveUploadTarget('issue');
+                  setEditIssueContent(issueBody);
+                  setIsEditingIssue(true);
+                }}
+              >
+                수정
+              </button>
+            ) : null}
+
+            {isAuthor && currentStatus !== '반려됨' ? (
+              <button type="button" className="button small danger" onClick={() => setIsCancelConfirmOpen(true)}>
+                제안 취소
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {isEditingIssue ? (
+          <div
+            style={{ marginTop: '0.75rem' }}
+            onClickCapture={() => setActiveUploadTarget('issue')}
+            onFocusCapture={() => setActiveUploadTarget('issue')}
+          >
+            <MarkdownEditor
+              value={editIssueContent}
+              onChange={setEditIssueContent}
+              placeholder="제안 상세 내용을 작성해 주세요."
+              themeMode={theme.palette.mode}
+              onPaste={handleIssuePaste}
+              onDrop={handleIssueDrop}
+            />
+            <FormHelperText>이미지는 하나당 최대 1MB (PNG, JPG, WEBP, GIF) 지원됩니다.</FormHelperText>
+            <Stack direction="row" justifyContent="flex-end" gap={1} sx={{ mt: 1.5 }}>
+              <button
+                type="button"
+                className="button small close"
+                onClick={() => {
+                  setIsEditingIssue(false);
+                  setEditIssueContent(issueBody);
+                }}
+                disabled={isSavingIssue}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button small submit"
+                onClick={() => void handleSaveIssue()}
+                disabled={isSavingIssue || !editIssueContent.trim()}
+              >
+                {isSavingIssue ? '저장 중...' : '저장'}
+              </button>
             </Stack>
-          )}
+          </div>
+        ) : (
+          <MarkdownPreview source={issueBody || '내용이 없습니다.'} themeMode={theme.palette.mode} />
+        )}
+      </div>
 
-          {isAdmin ? (
-            <form onSubmit={(e) => void handleCommentSubmit(e)} style={{ marginTop: '1rem' }}>
-              <Stack gap={1.5}>
-                <Typography variant="subtitle2">관리자 답변 작성</Typography>
-                <TextField
-                  size="small"
-                  multiline
-                  minRows={3}
-                  placeholder="답변 및 진행 상황을 작성해 주세요 (GitHub 이슈에 코멘트로 등록됩니다)"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  fullWidth
-                />
-                <Stack direction="row" justifyContent="flex-end">
-                  <button
-                    type="submit"
-                    disabled={isSubmittingComment || !newComment.trim()}
-                    className="button small submit"
+      <div className="paper">
+        <h2>응답하라! 💃</h2>
+
+        {comments.length === 0 ? (
+          <ScreenState>아직 등록된 답변이나 진행 내역이 없습니다.</ScreenState>
+        ) : (
+          <Stack gap={2}>
+            {comments.map((comment) => (
+              <div key={comment.id} className="paper">
+                <div className={styles['issue-header']}>
+                  <div className={styles['issue-header-profile']}>
+                    <div className={styles.avatar}>
+                      <Avatar src={comment.author.avatarUrl} sx={{ width: 24, height: 24 }} />
+                      <span>{comment.author.login}</span>
+                    </div>
+                    <time>{formatTimeAgo(comment.createdAt)}</time>
+                  </div>
+                  {isAdmin && editingCommentId !== comment.id ? (
+                    <div className={styles['issue-header-actions']}>
+                      <button
+                        type="button"
+                        className="button small normal"
+                        onClick={() => {
+                          setActiveUploadTarget('editComment');
+                          setEditingCommentId(comment.id);
+                          setEditCommentBody(comment.body);
+                        }}
+                      >
+                        수정
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
+                {editingCommentId === comment.id ? (
+                  <div
+                    style={{ marginTop: '0.75rem' }}
+                    onClickCapture={() => setActiveUploadTarget('editComment')}
+                    onFocusCapture={() => setActiveUploadTarget('editComment')}
                   >
-                    {isSubmittingComment ? '작성 중...' : '답변 등록'}
-                  </button>
-                </Stack>
+                    <MarkdownEditor
+                      value={editCommentBody}
+                      onChange={setEditCommentBody}
+                      placeholder="답변 내용을 입력해 주세요."
+                      themeMode={theme.palette.mode}
+                      onPaste={handleCommentEditPaste}
+                      onDrop={handleCommentEditDrop}
+                    />
+                    <FormHelperText>이미지는 하나당 최대 1MB (PNG, JPG, WEBP, GIF) 지원됩니다.</FormHelperText>
+                    <Stack direction="row" justifyContent="flex-end" gap={1} sx={{ mt: 1.5 }}>
+                      <button
+                        type="button"
+                        className="button small close"
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditCommentBody('');
+                        }}
+                        disabled={isSavingComment}
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="button"
+                        className="button small submit"
+                        onClick={() => void handleSaveComment(comment.id)}
+                        disabled={isSavingComment || !editCommentBody.trim()}
+                      >
+                        {isSavingComment ? '저장 중...' : '저장'}
+                      </button>
+                    </Stack>
+                  </div>
+                ) : (
+                  <MarkdownPreview source={comment.body} themeMode={theme.palette.mode} />
+                )}
+              </div>
+            ))}
+          </Stack>
+        )}
+
+        {isAdmin ? (
+          <form
+            onSubmit={(event) => void handleCommentSubmit(event)}
+            style={{ marginTop: '1rem' }}
+            onClickCapture={() => setActiveUploadTarget('newComment')}
+            onFocusCapture={() => setActiveUploadTarget('newComment')}
+          >
+            <Stack gap={1.5}>
+              <Typography variant="subtitle2">관리자 답변 작성</Typography>
+              <MarkdownEditor
+                value={newComment}
+                onChange={setNewComment}
+                placeholder="답변 및 진행 상황을 작성해 주세요 (GitHub 이슈에 코멘트로 등록됩니다). 이미지를 복사/붙여넣기하거나 드래그하여 첨부할 수 있습니다."
+                themeMode={theme.palette.mode}
+                onPaste={handleNewCommentPaste}
+                onDrop={handleNewCommentDrop}
+              />
+              <FormHelperText>이미지는 하나당 최대 1MB (PNG, JPG, WEBP, GIF) 지원됩니다.</FormHelperText>
+              <Stack direction="row" justifyContent="flex-end">
+                <button
+                  type="submit"
+                  disabled={isSubmittingComment || !newComment.trim()}
+                  className="button small submit"
+                >
+                  {isSubmittingComment ? '등록 중' : '답변 등록'}
+                </button>
               </Stack>
-            </form>
-          ) : (
-            <Typography variant="caption" sx={{ opacity: 0.5, textAlign: 'center', py: 1 }}>
-              답변 및 댓글 작성은 관리자만 가능합니다.
-            </Typography>
-          )}
-        </Stack>
+            </Stack>
+          </form>
+        ) : null}
       </div>
 
       <Stack direction="row" justifyContent="flex-end">
@@ -298,7 +700,6 @@ export default function Opt({
         </Anchor>
       </Stack>
 
-      {/* Cancel Confirmation Dialog */}
       <Dialog open={isCancelConfirmOpen} onClose={() => setIsCancelConfirmOpen(false)}>
         <DialogTitle>제안 취소</DialogTitle>
         <DialogContent>
@@ -320,6 +721,6 @@ export default function Opt({
         messages={[errorMessage]}
         onClose={() => setErrorMessage('')}
       />
-    </Stack>
+    </div>
   );
 }

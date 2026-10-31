@@ -337,8 +337,6 @@ export default function Opt({
                       >
                         <CloseRoundedIcon />
                       </button>
-                      {/* Local object URLs are only used for the unsaved image preview. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={image.previewUrl} alt="" />
                     </div>
                   ))}
@@ -407,8 +405,6 @@ export default function Opt({
                       >
                         <CloseRoundedIcon />
                       </button>
-                      {/* Local object URLs are only used for the unsaved image preview. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={image.previewUrl} alt="" />
                     </div>
                   ))}

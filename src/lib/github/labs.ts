@@ -144,13 +144,19 @@ export async function updateGitHubIssue({
 
   if (category || status) {
     const current = await getGitHubIssue({ issueNumber });
-    const existingLabels = current.labels.map((l) => l.name);
-    const otherLabels = existingLabels.filter((l) => !l.startsWith('type: ') && !l.startsWith('status: '));
+    const existingLabels = current.labels.map((labelItem) => labelItem.name);
+    const otherLabels = existingLabels.filter(
+      (labelItem) => !labelItem.startsWith('type: ') && !labelItem.startsWith('status: '),
+    );
 
     const nextCategory =
-      category || existingLabels.find((l) => l.startsWith('type: '))?.replace('type: ', '') || '기능 개선';
+      category ||
+      existingLabels.find((labelItem) => labelItem.startsWith('type: '))?.replace('type: ', '') ||
+      '기능 개선';
     const nextStatus =
-      status || existingLabels.find((l) => l.startsWith('status: '))?.replace('status: ', '') || '미확인';
+      status ||
+      existingLabels.find((labelItem) => labelItem.startsWith('status: '))?.replace('status: ', '') ||
+      '미확인';
 
     payload.labels = [...otherLabels, `type: ${nextCategory}`, `status: ${nextStatus}`];
   }
@@ -177,6 +183,7 @@ export async function updateGitHubIssue({
     state: data.state as 'open' | 'closed',
     labels: (data.labels as Array<{ name: string }>) || [],
     updatedAt: data.updated_at as string,
+    closedAt: (data.closed_at as string | null) || null,
   };
 }
 
@@ -203,6 +210,7 @@ export async function getGitHubIssue({ issueNumber }: { issueNumber: number }) {
     labels: (data.labels as Array<{ name: string }>) || [],
     createdAt: data.created_at as string,
     updatedAt: data.updated_at as string,
+    closedAt: (data.closed_at as string | null) || null,
     author: {
       login: data.user?.login as string,
       avatarUrl: data.user?.avatar_url as string,
@@ -279,5 +287,45 @@ export async function createGitHubIssueComment({ issueNumber, body }: { issueNum
     id: data.id as number,
     body: data.body as string,
     createdAt: data.created_at as string,
+    updatedAt: data.updated_at as string,
+    author: {
+      login: data.user?.login || 'admin',
+      avatarUrl: data.user?.avatar_url || '',
+    },
+  };
+}
+
+export async function updateGitHubIssueComment({
+  commentId,
+  body,
+}: {
+  commentId: number;
+  body: string;
+}) {
+  const { token, owner, repo } = getGitHubConfig();
+
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}`, {
+    method: 'PATCH',
+    headers: {
+      ...getHeaders(token),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ body }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'GitHub 댓글 수정에 실패했습니다.');
+  }
+
+  return {
+    id: data.id as number,
+    body: data.body as string,
+    createdAt: data.created_at as string,
+    updatedAt: data.updated_at as string,
+    author: {
+      login: data.user?.login || 'admin',
+      avatarUrl: data.user?.avatar_url || '',
+    },
   };
 }

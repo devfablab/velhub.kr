@@ -12,7 +12,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { getStigmaDisplayName } from '@/lib/users/utils';
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
 export async function GET(request: NextRequest) {
   const db = getSupabaseAdmin();
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: `지원하지 않는 이미지 형식입니다: ${file.name}` }, { status: 400 });
     }
     if (file.size > MAX_IMAGE_SIZE) {
-      return Response.json({ error: `이미지 용량은 10MB 이하여야 합니다: ${file.name}` }, { status: 400 });
+      return Response.json({ error: `이미지 하나당 최대 1MB 이하여야 합니다: ${file.name}` }, { status: 400 });
     }
   }
 

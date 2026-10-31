@@ -1,10 +1,6 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-
-const MarkdownPreviewClient = dynamic(() => import('./MarkdownPreviewClient'), {
-  ssr: false,
-});
+import MarkdownPreviewClient from './MarkdownPreviewClient';
 
 type Props = {
   source: string;

@@ -52,7 +52,6 @@ export default function LinkPreviewCard({ siteName, title, description, image, h
             {shouldShowSiteName ? <cite>{siteName}</cite> : null}
             <em>{displayDomain}</em>
           </div>
-          {/* <pre>{JSON.stringify(debug, null, 2)}</pre> */}
         </div>
       </Anchor>
     </div>

@@ -295,7 +295,6 @@ export default function FavoriteBlogs({
       />
 
       <div className={styles['join-sites']}>
-        {/* Default Folder */}
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ fontSize: '1.2em', marginBottom: '8px' }}>기본 폴더</h3>
           {defaultFolderBlogs.length > 0 ? (
@@ -305,7 +304,6 @@ export default function FavoriteBlogs({
           )}
         </div>
 
-        {/* Custom Folders */}
         {folders.map((folder) => {
           const folderBlogs = blogs.filter((b) => b.folderId === folder.id).sort((a, b) => a.sortOrder - b.sortOrder);
           return (
@@ -324,7 +322,6 @@ export default function FavoriteBlogs({
         })}
       </div>
 
-      {/* Floating Move Button */}
       {selectedSiteIds.size > 0 && (
         <div
           style={{

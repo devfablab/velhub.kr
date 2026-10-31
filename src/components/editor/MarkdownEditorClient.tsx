@@ -2,6 +2,7 @@
 
 import type React from 'react';
 import MDEditor, { commands, type ICommand } from '@uiw/react-md-editor';
+import remarkBreaks from 'remark-breaks';
 
 export const IMAGE_INPUT_ID = 'image-file-input';
 
@@ -95,48 +96,12 @@ const tabPreview: ICommand = {
   },
 };
 
-const title1: ICommand = {
-  ...commands.heading1,
-  buttonProps: { 'aria-label': '제목 1 (H1)', title: '제목 1 (H1)' },
-  icon: <span style={{ fontSize: 16, fontWeight: 700 }}>H1 제목 1</span>,
-};
-
-const title2: ICommand = {
-  ...commands.heading2,
-  buttonProps: { 'aria-label': '제목 2 (H2)', title: '제목 2 (H2)' },
-  icon: <span style={{ fontSize: 15, fontWeight: 700 }}>H2 제목 2</span>,
-};
-
-const title3: ICommand = {
+const headingCommand: ICommand = {
   ...commands.heading3,
-  buttonProps: { 'aria-label': '제목 3 (H3)', title: '제목 3 (H3)' },
-  icon: <span style={{ fontSize: 14, fontWeight: 600 }}>H3 제목 3</span>,
-};
-
-const title4: ICommand = {
-  ...commands.heading4,
-  buttonProps: { 'aria-label': '제목 4 (H4)', title: '제목 4 (H4)' },
-  icon: <span style={{ fontSize: 13, fontWeight: 600 }}>H4 제목 4</span>,
-};
-
-const title5: ICommand = {
-  ...commands.heading5,
-  buttonProps: { 'aria-label': '제목 5 (H5)', title: '제목 5 (H5)' },
-  icon: <span style={{ fontSize: 12, fontWeight: 500 }}>H5 제목 5</span>,
-};
-
-const title6: ICommand = {
-  ...commands.heading6,
-  buttonProps: { 'aria-label': '제목 6 (H6)', title: '제목 6 (H6)' },
-  icon: <span style={{ fontSize: 12, fontWeight: 400 }}>H6 제목 6</span>,
-};
-
-const headingGroup: ICommand = commands.group([title1, title2, title3, title4, title5, title6], {
   name: 'heading',
-  groupName: 'heading',
-  buttonProps: { 'aria-label': '제목 (H)', title: '제목 (H)' },
+  buttonProps: { 'aria-label': '제목 추가 (###)', title: '제목 추가 (###)' },
   icon: <HeadingIcon />,
-});
+};
 
 const boldCommand: ICommand = {
   ...commands.bold,
@@ -201,7 +166,7 @@ const imageCommand: ICommand = {
 const githubCommands: ICommand[] = [tabWrite, tabPreview];
 
 const githubExtraCommands: ICommand[] = [
-  headingGroup,
+  headingCommand,
   boldCommand,
   italicCommand,
   quoteCommand,
@@ -248,12 +213,15 @@ export default function MarkdownEditorClient({
         textareaProps={{
           placeholder,
         }}
+        previewOptions={{
+          remarkPlugins: [remarkBreaks],
+        }}
         components={{
           preview: (source) => {
             if (!source || !source.trim()) {
               return <div className="empty-preview">미리 볼 내용이 없습니다.</div>;
             }
-            return <MDEditor.Markdown source={source} />;
+            return <MDEditor.Markdown source={source} remarkPlugins={[remarkBreaks]} />;
           },
         }}
       />

@@ -8,7 +8,7 @@ type Props = {
 };
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
 export async function POST(request: NextRequest, { params }: Props) {
   const { issueNumber: issueNumberParam } = await params;
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   if (file.size > MAX_IMAGE_SIZE) {
-    return Response.json({ error: '이미지 용량은 10MB 이하여야 합니다.' }, { status: 400 });
+    return Response.json({ error: '이미지 하나당 최대 1MB 이하여야 합니다.' }, { status: 400 });
   }
 
   try {

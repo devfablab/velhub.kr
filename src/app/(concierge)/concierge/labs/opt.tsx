@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { ChangeEvent, SyntheticEvent, useState } from 'react';
+import { ChangeEvent, SyntheticEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import AdjustRoundedIcon from '@mui/icons-material/AdjustRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import {
   Chip,
   FormControl,
@@ -13,21 +15,14 @@ import {
   Select,
   SelectChangeEvent,
   Stack,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
   TextField,
-  Typography,
 } from '@mui/material';
 import { LABS_CATEGORIES, LABS_STATUSES, LabsStatus } from '@/lib/github/labs';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
 import type { LabsIssueRow } from './page';
+import styles from '@/app/concierge.module.sass';
 
 type Props = {
   initialIssues: LabsIssueRow[];
@@ -42,7 +37,24 @@ type Props = {
   initialError: string | null;
 };
 
-const cellSx = { whiteSpace: 'nowrap' } as const;
+type TabMenuItem = {
+  href: string;
+  label: string;
+  category?: string;
+  startsWith?: boolean;
+};
+
+function isCurrentTab(currentCategory: string, item: TabMenuItem) {
+  if (item.category !== undefined) {
+    return (item.category ?? '') === currentCategory;
+  }
+
+  if (item.startsWith) {
+    return currentCategory === item.href || currentCategory.startsWith(`${item.href}/`);
+  }
+
+  return currentCategory === item.href;
+}
 
 export function getStatusColor(status: LabsStatus): 'default' | 'warning' | 'info' | 'success' | 'error' {
   switch (status) {
@@ -80,6 +92,22 @@ export default function Opt({
   const [search, setSearch] = useState(initialSearch);
   const [isMy, setIsMy] = useState(initialIsMy);
 
+  useEffect(() => {
+    setCategory(initialCategory);
+  }, [initialCategory]);
+
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
+
+  useEffect(() => {
+    setIsMy(initialIsMy);
+  }, [initialIsMy]);
+
   function updateQuery(nextParams: {
     category?: string;
     status?: string;
@@ -105,11 +133,6 @@ export default function Opt({
     router.push(`/concierge/labs${queryString ? `?${queryString}` : ''}`);
   }
 
-  function handleCategoryTabChange(_event: React.SyntheticEvent, newValue: string) {
-    setCategory(newValue);
-    updateQuery({ category: newValue, page: 1 });
-  }
-
   function handleStatusChange(event: SelectChangeEvent<string>) {
     const nextStatus = event.target.value;
     setStatus(nextStatus);
@@ -130,24 +153,51 @@ export default function Opt({
     updateQuery({ page: newPage });
   }
 
-  return (
-    <Stack gap={2.5}>
-      <Typography variant="body2" sx={{ opacity: 0.8 }}>
-        데브허브의 새로운 기능 제안이나 버그, 개선 요청을 자유롭게 남겨주세요.
-      </Typography>
+  function getCategoryHref(targetCategory?: string) {
+    const params = new URLSearchParams();
+    if (targetCategory) params.set('category', targetCategory);
+    if (status) params.set('status', status);
+    if (search) params.set('search', search);
+    if (isMy) params.set('my', 'true');
+    const queryString = params.toString();
+    return `/concierge/labs${queryString ? `?${queryString}` : ''}`;
+  }
 
-      <Tabs
-        value={category}
-        onChange={handleCategoryTabChange}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ borderBottom: 1, borderColor: 'divider' }}
-      >
-        <Tab label="전체 카테고리" value="" />
-        {LABS_CATEGORIES.map((cat) => (
-          <Tab key={cat} label={cat} value={cat} />
-        ))}
-      </Tabs>
+  const tabMenuItems: TabMenuItem[] = [
+    {
+      href: getCategoryHref(),
+      label: '전체 카테고리',
+      category: '',
+    },
+    ...LABS_CATEGORIES.map((categoryItem) => ({
+      href: getCategoryHref(categoryItem),
+      label: categoryItem,
+      category: categoryItem,
+    })),
+  ];
+
+  return (
+    <div className={styles.labs}>
+      <div className={styles.tabs}>
+        <ul className="content">
+          {tabMenuItems.map((item) => {
+            const isCurrent = isCurrentTab(category, item);
+            return (
+              <li
+                key={item.href}
+                className={isCurrent ? styles.current : undefined}
+                aria-current={isCurrent ? 'page' : undefined}
+              >
+                <Anchor href={item.href}>{item.label}</Anchor>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      <div className={styles.headline}>
+        <h1>기능 연구소</h1>
+        <p>데브허브의 새로운 기능 제안이나 버그, 개선 요청을 자유롭게 남겨주세요.</p>
+      </div>
 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
@@ -155,40 +205,42 @@ export default function Opt({
         justifyContent="space-between"
         gap={1.5}
       >
+        <div className={styles.actions}>
+          {isLoggedIn ? (
+            <Anchor href="/concierge/labs/new" className="button medium submit">
+              <span>제안하기</span>
+            </Anchor>
+          ) : null}
+          <span>총 {initialTotal}건</span>
+          {isLoggedIn ? (
+            <Chip
+              label="내 제안 보기"
+              size="small"
+              className={`chip ${isMy ? 'success' : 'default outlined'}`}
+              onClick={() => handleToggleMy(!isMy)}
+              clickable
+            />
+          ) : null}
+        </div>
+
         <Stack direction="row" alignItems="center" gap={1}>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select value={status} onChange={handleStatusChange} displayEmpty>
+          <FormControl size="small">
+            <Select value={status} onChange={handleStatusChange} displayEmpty size="small">
               <MenuItem value="">전체 상태</MenuItem>
-              {LABS_STATUSES.map((st) => (
-                <MenuItem key={st} value={st}>
-                  {st}
+              {LABS_STATUSES.map((statusItem) => (
+                <MenuItem key={statusItem} value={statusItem}>
+                  {statusItem}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          {isLoggedIn ? (
-            <Chip
-              label="내가 쓴 제안"
-              variant={isMy ? 'filled' : 'outlined'}
-              color={isMy ? 'primary' : 'default'}
-              onClick={() => handleToggleMy(!isMy)}
-              clickable
-            />
-          ) : null}
-
-          <Typography variant="caption" sx={{ opacity: 0.7 }}>
-            총 {initialTotal}건
-          </Typography>
-        </Stack>
-
-        <Stack direction="row" alignItems="center" gap={1}>
           <form onSubmit={handleSearchSubmit}>
             <TextField
               size="small"
               placeholder="제목 검색"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -200,13 +252,6 @@ export default function Opt({
               }}
             />
           </form>
-
-          {isLoggedIn ? (
-            <Anchor href="/concierge/labs/new" className="button medium action">
-              <AddRoundedIcon fontSize="small" />
-              <span>제안하기</span>
-            </Anchor>
-          ) : null}
         </Stack>
       </Stack>
 
@@ -215,39 +260,41 @@ export default function Opt({
       {!initialError && initialIssues.length === 0 ? <ScreenState>등록된 제안이 없습니다.</ScreenState> : null}
 
       {initialIssues.length > 0 ? (
-        <div className="paper">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={cellSx}>번호</TableCell>
-                <TableCell sx={cellSx}>카테고리</TableCell>
-                <TableCell>제목</TableCell>
-                <TableCell sx={cellSx}>상태</TableCell>
-                <TableCell sx={cellSx}>작성자</TableCell>
-                <TableCell sx={cellSx}>등록일</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {initialIssues.map((issue) => (
-                <TableRow key={issue.id}>
-                  <TableCell sx={cellSx}>#{issue.github_issue_number}</TableCell>
-                  <TableCell sx={cellSx}>
-                    <Chip label={issue.category} size="small" variant="outlined" />
-                  </TableCell>
-                  <TableCell>
+        <div className={`paper ${styles.issues}`}>
+          {initialIssues.map((issue) => {
+            const isClosed = issue.status === '반영 완료' || issue.status === '반려됨';
+            const isReopened =
+              !isClosed &&
+              Math.abs(new Date(issue.updated_at).getTime() - new Date(issue.created_at).getTime()) > 1000;
+            return (
+              <div className={styles['issue-item']} key={issue.id}>
+                <div className={`${styles.status} ${isClosed ? styles['status-closed'] : styles['status-open']}`}>
+                  {isClosed ? <TaskAltRoundedIcon /> : <AdjustRoundedIcon />}
+                </div>
+                <div className={styles.summary}>
+                  <div className={styles.link}>
                     <Anchor href={`/concierge/labs/${issue.github_issue_number}`} className="link">
                       {issue.title}
                     </Anchor>
-                  </TableCell>
-                  <TableCell sx={cellSx}>
-                    <Chip label={issue.status} size="small" color={getStatusColor(issue.status)} />
-                  </TableCell>
-                  <TableCell sx={cellSx}>{issue.user_name}</TableCell>
-                  <TableCell sx={cellSx}>{formatTimeAgo(issue.created_at)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <div className={styles.chips}>
+                      <Chip label={issue.status} size="small" className="chip outlined warning" />
+                      <Chip label={issue.category} size="small" className="chip outlined success" />
+                    </div>
+                  </div>
+                  <div className={styles.info}>
+                    <span>{issue.user_name}</span> ·{' '}
+                    {isClosed ? (
+                      <time>{formatTimeAgo(issue.updated_at)}에 닫힘</time>
+                    ) : isReopened ? (
+                      <time>{formatTimeAgo(issue.updated_at)}에 다시 열림</time>
+                    ) : (
+                      <time>{formatTimeAgo(issue.created_at)}에 등록됨</time>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : null}
 
@@ -262,6 +309,6 @@ export default function Opt({
           />
         </Stack>
       ) : null}
-    </Stack>
+    </div>
   );
 }

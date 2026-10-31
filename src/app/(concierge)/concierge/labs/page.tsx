@@ -74,7 +74,6 @@ export default async function Page({ searchParams }: Props) {
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles.minimal}`}>
-          <h1>기능 연구소</h1>
           <Opt
             initialIssues={(data as LabsIssueRow[]) ?? []}
             initialTotal={total}

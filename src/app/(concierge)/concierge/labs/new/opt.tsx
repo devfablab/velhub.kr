@@ -10,7 +10,7 @@ import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEdit
 import FormErrorDialog from '@/components/FormErrorDialog';
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
 export default function Opt() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function Opt() {
         return;
       }
       if (file.size > MAX_IMAGE_SIZE) {
-        setErrorMessage(`이미지 용량은 10MB 이하여야 합니다: ${file.name}`);
+        setErrorMessage(`이미지 하나당 최대 1MB 이하여야 합니다: ${file.name}`);
         return;
       }
 
@@ -55,9 +55,9 @@ export default function Opt() {
     if (!items) return;
 
     const files: File[] = [];
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.startsWith('image/')) {
-        const file = items[i].getAsFile();
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
         if (file) files.push(file);
       }
     }
@@ -72,9 +72,9 @@ export default function Opt() {
     if (!files || files.length === 0) return;
 
     const imageFiles: File[] = [];
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].type.startsWith('image/')) {
-        imageFiles.push(files[i]);
+    for (const file of Array.from(files)) {
+      if (file.type.startsWith('image/')) {
+        imageFiles.push(file);
       }
     }
 
@@ -133,23 +133,23 @@ export default function Opt() {
       }
 
       router.push(`/concierge/labs/${result.issueNumber}`);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : '등록 중 오류가 발생했습니다.');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '등록 중 오류가 발생했습니다.');
       setIsSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)}>
+    <form onSubmit={(event) => void handleSubmit(event)}>
       <Stack gap={2.5}>
         <FormControl fullWidth size="small">
-          <Select value={category} onChange={(e) => setCategory(e.target.value as LabsCategory)} displayEmpty>
+          <Select value={category} onChange={(event) => setCategory(event.target.value as LabsCategory)} displayEmpty>
             <MenuItem value="" disabled>
               카테고리 선택
             </MenuItem>
-            {LABS_CATEGORIES.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
+            {LABS_CATEGORIES.map((categoryItem) => (
+              <MenuItem key={categoryItem} value={categoryItem}>
+                {categoryItem}
               </MenuItem>
             ))}
           </Select>
@@ -159,7 +159,7 @@ export default function Opt() {
           size="small"
           placeholder="제안 제목을 입력해 주세요"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(event) => setTitle(event.target.value)}
           required
           fullWidth
         />
@@ -173,10 +173,10 @@ export default function Opt() {
             accept="image/png,image/jpeg,image/webp,image/gif"
             multiple
             style={{ display: 'none' }}
-            onChange={(e) => {
-              if (e.target.files) {
-                handleAddFiles(e.target.files);
-                e.target.value = '';
+            onChange={(event) => {
+              if (event.target.files) {
+                handleAddFiles(event.target.files);
+                event.target.value = '';
               }
             }}
           />
@@ -189,7 +189,7 @@ export default function Opt() {
             onPaste={handlePaste}
             onDrop={handleDrop}
           />
-          <FormHelperText>이미지는 최대 10MB (PNG, JPG, WEBP, GIF) 지원됩니다.</FormHelperText>
+          <FormHelperText>이미지는 하나당 최대 1MB (PNG, JPG, WEBP, GIF) 지원됩니다.</FormHelperText>
         </Stack>
 
         <Stack direction="row" justifyContent="flex-end" gap={2}>

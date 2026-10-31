@@ -47,9 +47,9 @@ export async function GET(request: NextRequest, { params }: Props) {
       isAuthor,
       isAdmin,
     });
-  } catch (err) {
+  } catch (error) {
     return Response.json(
-      { error: err instanceof Error ? err.message : 'GitHub 이슈를 불러오지 못했습니다.' },
+      { error: error instanceof Error ? error.message : 'GitHub 이슈를 불러오지 못했습니다.' },
       { status: 500 },
     );
   }
@@ -108,8 +108,8 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     updatesForDb.status = '반려됨';
   }
 
-  // 2. Author edit title, content, category
-  if (isAuthor) {
+  // 2. Author or Admin edit title, content, category
+  if (isAuthor || isAdmin) {
     if (title && typeof title === 'string') updatesForDb.title = title.trim();
     if (category && isLabsCategory(category)) updatesForDb.category = category;
   }
@@ -144,8 +144,8 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     }
 
     return Response.json({ ok: true });
-  } catch (err) {
-    console.error('Issue patch error:', err);
-    return Response.json({ error: err instanceof Error ? err.message : '이슈 수정에 실패했습니다.' }, { status: 500 });
+  } catch (error) {
+    console.error('Issue patch error:', error);
+    return Response.json({ error: error instanceof Error ? error.message : '이슈 수정에 실패했습니다.' }, { status: 500 });
   }
 }

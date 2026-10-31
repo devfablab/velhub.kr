@@ -49,8 +49,8 @@ export default async function Page({ params }: Props) {
     ]);
     gitHubIssue = fetchedIssue;
     comments = fetchedComments;
-  } catch (err) {
-    console.error('Failed to load GitHub data:', err);
+  } catch (error) {
+    console.error('Failed to load GitHub data:', error);
   }
 
   const isAuthor = Boolean(current?.userId && current.userId === dbIssue.user_id);
@@ -60,7 +60,6 @@ export default async function Page({ params }: Props) {
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles.minimal}`}>
-          <h1>기능 연구소 제안 상세</h1>
           <Opt
             issueNumber={issueNumber}
             initialDbIssue={dbIssue}
