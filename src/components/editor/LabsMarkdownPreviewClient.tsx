@@ -1,16 +1,18 @@
 'use client';
 
-import MarkdownPreview from '@uiw/react-markdown-preview';
+import MDEditor from '@uiw/react-md-editor';
 
 type Props = {
   source: string;
   themeMode?: 'light' | 'dark';
 };
 
+const Markdown = MDEditor.Markdown;
+
 export default function LabsMarkdownPreviewClient({ source, themeMode = 'light' }: Props) {
   return (
     <div data-color-mode={themeMode}>
-      <MarkdownPreview source={source} />
+      <Markdown source={source} />
     </div>
   );
 }
