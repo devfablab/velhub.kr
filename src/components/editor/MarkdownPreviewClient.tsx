@@ -9,7 +9,7 @@ type Props = {
 
 const Markdown = MDEditor.Markdown;
 
-export default function LabsMarkdownPreviewClient({ source, themeMode = 'light' }: Props) {
+export default function MarkdownPreviewClient({ source, themeMode = 'light' }: Props) {
   return (
     <div data-color-mode={themeMode}>
       <Markdown source={source} />

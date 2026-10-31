@@ -26,7 +26,7 @@ import { useTheme } from '@mui/material/styles';
 import { LABS_STATUSES, LabsStatus } from '@/lib/github/labs';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import LabsMarkdownPreview from '@/components/editor/LabsMarkdownPreview';
+import MarkdownPreview from '@/components/editor/MarkdownPreview';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { getStatusColor } from '../opt';
 import type { LabsIssueRow } from '../page';
@@ -205,10 +205,7 @@ export default function Opt({
           <Divider sx={{ my: 1 }} />
 
           <Box sx={{ minHeight: 120, py: 1 }}>
-            <LabsMarkdownPreview
-              source={initialGitHubIssue?.body || '내용이 없습니다.'}
-              themeMode={theme.palette.mode}
-            />
+            <MarkdownPreview source={initialGitHubIssue?.body || '내용이 없습니다.'} themeMode={theme.palette.mode} />
           </Box>
 
           {initialGitHubIssue?.htmlUrl ? (
@@ -255,7 +252,7 @@ export default function Opt({
                       </Typography>
                     </Stack>
                     <Box sx={{ pt: 0.5 }}>
-                      <LabsMarkdownPreview source={comment.body} themeMode={theme.palette.mode} />
+                      <MarkdownPreview source={comment.body} themeMode={theme.palette.mode} />
                     </Box>
                   </Stack>
                 </div>

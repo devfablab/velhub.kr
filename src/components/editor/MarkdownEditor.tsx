@@ -2,9 +2,9 @@
 
 import dynamic from 'next/dynamic';
 
-export const LABS_IMAGE_INPUT_ID = 'labs-image-file-input';
+export const IMAGE_INPUT_ID = 'labs-image-file-input';
 
-const LabsMarkdownEditorClient = dynamic(() => import('./LabsMarkdownEditorClient'), {
+const MarkdownEditorClient = dynamic(() => import('./MarkdownEditorClient'), {
   ssr: false,
 });
 
@@ -18,6 +18,6 @@ type Props = {
   onDrop?: (event: React.DragEvent) => void;
 };
 
-export default function LabsMarkdownEditor(props: Props) {
-  return <LabsMarkdownEditorClient {...props} />;
+export default function MarkdownEditor(props: Props) {
+  return <MarkdownEditorClient {...props} />;
 }

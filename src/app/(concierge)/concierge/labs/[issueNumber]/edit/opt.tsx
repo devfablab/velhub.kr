@@ -6,7 +6,7 @@ import { FormControl, FormHelperText, MenuItem, Select, Stack, TextField, Typogr
 import { useTheme } from '@mui/material/styles';
 import { LABS_CATEGORIES, LabsCategory } from '@/lib/github/labs';
 import Anchor from '@/components/Anchor';
-import LabsMarkdownEditor, { LABS_IMAGE_INPUT_ID } from '@/components/editor/LabsMarkdownEditor';
+import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import type { LabsIssueRow } from '../../page';
 
@@ -161,7 +161,7 @@ export default function Opt({ issueNumber, initialDbIssue, initialGitHubIssue }:
         <Stack gap={1}>
           <Typography variant="subtitle2">내용</Typography>
           <input
-            id={LABS_IMAGE_INPUT_ID}
+            id={IMAGE_INPUT_ID}
             ref={fileInputRef}
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
@@ -175,7 +175,7 @@ export default function Opt({ issueNumber, initialDbIssue, initialGitHubIssue }:
             }}
           />
 
-          <LabsMarkdownEditor
+          <MarkdownEditor
             value={content}
             onChange={setContent}
             placeholder="제안하실 상세 내용을 작성해 주세요. 이미지를 복사/붙여넣기하거나 드래그하여 첨부할 수 있습니다."
