@@ -49,6 +49,7 @@ type Props = {
   initialPopularPosts: BoardPostCountResponse | null;
   initialSubscriptionStatus: SubscriptionStatusResponse | null;
   initialDonationStatus: DonationStatusResponse | null;
+  seriesOptions: SelectedSeries[];
   pageSizeOptions: number[];
   defaultPageSize: number;
 };
@@ -281,6 +282,7 @@ export default function Opt({
   initialPopularPosts,
   initialSubscriptionStatus,
   initialDonationStatus,
+  seriesOptions,
   pageSizeOptions,
   defaultPageSize,
 }: Props) {
@@ -393,6 +395,16 @@ export default function Opt({
     updateRoute(1, searchKeyword, nextSeriesName, nextPageSize);
   }
 
+  function handleSeriesChange(event: SelectChangeEvent) {
+    const nextSeriesName = normalizeText(event.target.value).toLowerCase();
+
+    if (nextSeriesName === seriesNameParam) {
+      return;
+    }
+
+    updateRoute(1, searchKeyword, nextSeriesName);
+  }
+
   function handleSeriesClick(seriesKey: string | null) {
     const nextSeriesName = normalizeText(seriesKey).toLowerCase();
 
@@ -405,6 +417,7 @@ export default function Opt({
 
   const isSearchMode = Boolean(searchKeyword || authorName);
   const seriesNameParam = normalizeText(searchParams.get('seriesName')).toLowerCase();
+  const hasSeriesOptions = isCommunity && seriesOptions.length > 0;
   const getContentHref = (slug: string) => {
     const contentPath = `/${siteName}/${boardName}/${slug}`;
 
@@ -478,6 +491,8 @@ export default function Opt({
                   isCommunity={isCommunity}
                   initialSubscriptionStatus={initialSubscriptionStatus}
                   initialDonationStatus={initialDonationStatus}
+                  seriesOptions={seriesOptions}
+                  selectedSeriesKey={seriesNameParam}
                 />
               ) : (
                 <h2>
@@ -528,6 +543,18 @@ export default function Opt({
           )}
 
           <div className={styles['board-search-container']}>
+            {hasSeriesOptions ? (
+              <FormControl size="small" className={styles['series-select']}>
+                <Select value={seriesNameParam} onChange={handleSeriesChange} displayEmpty aria-label="연재 선택">
+                  <MenuItem value="">연재 선택</MenuItem>
+                  {seriesOptions.map((series) => (
+                    <MenuItem key={series.series_key} value={series.series_key}>
+                      {series.series_label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : null}
             <FormControl size="small" className={styles['page-size-select']}>
               <Select value={String(pageSize)} onChange={handlePageSizeChange} aria-label="페이지당 게시글 수">
                 {pageSizeOptions.map((sizeOption) => (

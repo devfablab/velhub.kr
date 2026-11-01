@@ -16,6 +16,14 @@ import type { BoardPostCountResponse } from '@/components/service/community/Boar
 import { getSiteApiData } from '../../getSiteApiData';
 import Opt, { type BoardListResponse } from './opt';
 
+type SeriesListResponse = {
+  series?: Array<{
+    id: string;
+    series_key: string;
+    series_label: string;
+  }>;
+};
+
 type RouteContext = {
   params: Promise<{
     siteName: string;
@@ -86,7 +94,7 @@ export default async function Page(context: SearchContext) {
   if (typeof searchParams.seriesName === 'string' && searchParams.seriesName)
     queryParams.set('seriesName', searchParams.seriesName);
   if (typeof searchParams.author === 'string' && searchParams.author) queryParams.set('author', searchParams.author);
-  const [initial, initialPopularPosts] = await Promise.all([
+  const [initial, initialPopularPosts, initialSeries] = await Promise.all([
     getSiteApiData<BoardListResponse>(
       `/api/boards/${normalizedBoardName}?${queryParams.toString()}`,
       '전체 게시글을 불러오지 못했습니다.',
@@ -95,6 +103,12 @@ export default async function Page(context: SearchContext) {
       `/api/boards/${normalizedBoardName}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
       '인기글을 불러오지 못했습니다.',
     ),
+    isCommunity
+      ? getSiteApiData<SeriesListResponse>(
+          `/api/boards/${normalizedBoardName}/series?siteName=${normalizedSiteName}`,
+          '연재 목록을 불러오지 못했습니다.',
+        )
+      : Promise.resolve({ data: null, error: '' }),
   ]);
   const selectedSeries = initial.data?.selectedSeries;
   const [initialSubscriptionStatus, initialDonationStatus] = await Promise.all([
@@ -131,6 +145,7 @@ export default async function Page(context: SearchContext) {
       initialPopularPosts={initialPopularPosts.data}
       initialSubscriptionStatus={initialSubscriptionStatus.data}
       initialDonationStatus={initialDonationStatus.data}
+      seriesOptions={initialSeries.data?.series ?? []}
       pageSizeOptions={[...pageSizeOptions]}
       defaultPageSize={defaultPageSize}
     />

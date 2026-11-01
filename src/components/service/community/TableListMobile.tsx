@@ -1,7 +1,7 @@
 'use client';
 
 import { MouseEvent, useEffect, useMemo, useState } from 'react';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname, useSearchParams } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -49,6 +49,8 @@ type Props = {
   writeHref?: string;
   initialSubscriptionStatus?: SubscriptionStatusResponse | null;
   initialDonationStatus?: DonationStatusResponse | null;
+  seriesOptions?: SelectedSeries[];
+  selectedSeriesKey?: string;
 };
 
 function isWritePath(pathname: string, siteName: string) {
@@ -90,19 +92,21 @@ export default function TableListMobile({
   writeHref,
   initialSubscriptionStatus,
   initialDonationStatus,
+  seriesOptions = [],
+  selectedSeriesKey = '',
 }: Props) {
   const params = useParams();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName);
   const initialData = useSiteInitialData();
   const [currentBoards, setCurrentBoards] = useState<BoardItem[]>(() => (initialData?.boards ?? []) as BoardItem[]);
-  const boards = currentBoards.filter(
-    (item) => item.is_active === true && item.board_type !== 'page',
-  ) as BoardItem[];
+  const boards = currentBoards.filter((item) => item.is_active === true && item.board_type !== 'page') as BoardItem[];
   const writeBoards = useMemo(() => (initialData?.writeBoards ?? []) as BoardItem[], [initialData?.writeBoards]);
   const [alertMessage, setAlertMessage] = useState('');
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [seriesMenuAnchorEl, setSeriesMenuAnchorEl] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!siteName) {
@@ -135,6 +139,7 @@ export default function TableListMobile({
   const isMobile = !isNotMobile;
 
   const isMenuOpen = Boolean(menuAnchorEl);
+  const isSeriesMenuOpen = Boolean(seriesMenuAnchorEl);
 
   const resolvedWriteHref = writeHref ?? (boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`);
   const shouldShowWriteLink = useMemo(
@@ -170,114 +175,185 @@ export default function TableListMobile({
     setMenuAnchorEl(null);
   };
 
+  const handleSeriesMenuOpen = (event: MouseEvent<HTMLButtonElement>) => {
+    setSeriesMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleSeriesMenuClose = () => {
+    setSeriesMenuAnchorEl(null);
+  };
+
+  const selectedSeriesLabel =
+    seriesOptions.find((series) => series.series_key === selectedSeriesKey)?.series_label ?? '연재 선택';
+
+  const getSeriesHref = (seriesKey: string) => {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+
+    nextSearchParams.delete('page');
+
+    if (seriesKey) {
+      nextSearchParams.set('seriesName', seriesKey);
+    } else {
+      nextSearchParams.delete('seriesName');
+    }
+
+    const queryString = nextSearchParams.toString();
+    return queryString ? `/${siteName}/${boardName}?${queryString}` : `/${siteName}/${boardName}`;
+  };
+
   return (
-    <div className={`${styles['table-list-header']} paper`}>
-      <div className={styles['board-subject']}>
-        <div className={styles['board-selector']}>
-          <button type="button" onClick={handleMenuOpen} aria-haspopup="menu" aria-expanded={isMenuOpen}>
-            <span>{selectedBoardLabel}</span>
-            <KeyboardArrowDownRoundedIcon />
-          </button>
+    <>
+      <div className={`${styles['table-list-header']} paper`}>
+        <div className={styles['board-subject']}>
+          <div className={styles['board-selector']}>
+            <button type="button" onClick={handleMenuOpen} aria-haspopup="menu" aria-expanded={isMenuOpen}>
+              <span>{selectedBoardLabel}</span>
+              <KeyboardArrowDownRoundedIcon />
+            </button>
 
-          <Menu anchorEl={menuAnchorEl} open={isMenuOpen} onClose={handleMenuClose} className="VhiMenu-popover">
-            <MenuItem onClick={handleMenuClose}>
-              <Anchor href={`/${siteName}/board`} className={!boardName ? 'current' : undefined}>
-                {!boardName ? <CheckRoundedIcon /> : <i />}
-                <span>최신글 보기</span>
-              </Anchor>
-            </MenuItem>
+            <Menu anchorEl={menuAnchorEl} open={isMenuOpen} onClose={handleMenuClose} className="VhiMenu-popover">
+              <MenuItem onClick={handleMenuClose}>
+                <Anchor href={`/${siteName}/board`} className={!boardName ? 'current' : undefined}>
+                  {!boardName ? <CheckRoundedIcon /> : <i />}
+                  <span>최신글 보기</span>
+                </Anchor>
+              </MenuItem>
 
-            {boards.map((board) => {
-              const isSelected = board.board_key === boardName;
+              {boards.map((board) => {
+                const isSelected = board.board_key === boardName;
 
-              return (
-                <MenuItem key={board.id} onClick={handleMenuClose}>
-                  <Anchor href={`/${siteName}/${board.board_key}`} className={isSelected ? 'current' : undefined}>
-                    {isSelected ? <CheckRoundedIcon /> : <i />}
-                    <span>{board.board_label}</span>
+                return (
+                  <MenuItem key={board.id} onClick={handleMenuClose}>
+                    <Anchor href={`/${siteName}/${board.board_key}`} className={isSelected ? 'current' : undefined}>
+                      {isSelected ? <CheckRoundedIcon /> : <i />}
+                      <span>{board.board_label}</span>
+                    </Anchor>
+                  </MenuItem>
+                );
+              })}
+            </Menu>
+          </div>
+          {boardName && board ? (
+            <>
+              {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
+                <>
+                  <SubscriptionButton
+                    siteName={siteName}
+                    boardName={boardName}
+                    board={board}
+                    selectedSeries={selectedSeries}
+                    selectedBoard={true}
+                    initialStatus={initialSubscriptionStatus}
+                  />
+                  <DonationButton
+                    siteName={siteName}
+                    targetType="series"
+                    boardName={boardName}
+                    seriesName={selectedSeries.series_key}
+                    initialStatus={initialDonationStatus}
+                  />
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+        {shouldRenderWriteLink ? (
+          <div className={styles['board-post']}>
+            <ReportButton targetType="board" siteName={siteName} boardName={boardName} />
+            <Anchor href={resolvedWriteHref} aria-label="글쓰기">
+              <EditRoundedIcon />
+            </Anchor>
+          </div>
+        ) : (
+          <i />
+        )}
+
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={Boolean(alertMessage)}
+            onClose={() => setAlertMessage('')}
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          >
+            <h2>안내</h2>
+            <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
+              <CloseRoundedIcon />
+            </button>
+            <div className="VhiDrawer-bottom-content">
+              <DialogContentText>{alertMessage}</DialogContentText>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button type="button" onClick={() => setAlertMessage('')} className="button medium submit">
+                확인
+              </button>
+            </div>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={Boolean(alertMessage)}
+            onClose={() => setAlertMessage('')}
+            fullWidth
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
+          >
+            <DialogTitle>안내</DialogTitle>
+            <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
+              <CloseRoundedIcon />
+            </button>
+            <DialogContent>
+              <DialogContentText>{alertMessage}</DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <button type="button" onClick={() => setAlertMessage('')}>
+                확인
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
+      </div>
+      {seriesOptions.length > 0 ? (
+        <div className={`${styles['table-list-header']} ${styles['series-selector']} paper`}>
+          <div className={styles['board-subject']}>
+            <div className={styles['board-selector']}>
+              <button
+                type="button"
+                onClick={handleSeriesMenuOpen}
+                aria-haspopup="menu"
+                aria-expanded={isSeriesMenuOpen}
+              >
+                <span>{selectedSeriesLabel}</span>
+                <KeyboardArrowDownRoundedIcon />
+              </button>
+
+              <Menu
+                anchorEl={seriesMenuAnchorEl}
+                open={isSeriesMenuOpen}
+                onClose={handleSeriesMenuClose}
+                className="VhiMenu-popover"
+              >
+                <MenuItem onClick={handleSeriesMenuClose}>
+                  <Anchor href={getSeriesHref('')} className={!selectedSeriesKey ? 'current' : undefined}>
+                    {!selectedSeriesKey ? <CheckRoundedIcon /> : <i />}
+                    <span>연재 선택</span>
                   </Anchor>
                 </MenuItem>
-              );
-            })}
-          </Menu>
-        </div>
-        {boardName && board ? (
-          <>
-            {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
-              <>
-                <SubscriptionButton
-                  siteName={siteName}
-                  boardName={boardName}
-                  board={board}
-                  selectedSeries={selectedSeries}
-                  selectedBoard={true}
-                  initialStatus={initialSubscriptionStatus}
-                />
-                <DonationButton
-                  siteName={siteName}
-                  targetType="series"
-                  boardName={boardName}
-                  seriesName={selectedSeries.series_key}
-                  initialStatus={initialDonationStatus}
-                />
-              </>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-      {shouldRenderWriteLink ? (
-        <div className={styles['board-post']}>
-          <ReportButton targetType="board" siteName={siteName} boardName={boardName} />
-          <Anchor href={resolvedWriteHref} aria-label="글쓰기">
-            <EditRoundedIcon />
-          </Anchor>
-        </div>
-      ) : (
-        <i />
-      )}
+                {seriesOptions.map((series) => {
+                  const isSelected = series.series_key === selectedSeriesKey;
 
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={Boolean(alertMessage)}
-          onClose={() => setAlertMessage('')}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
-        >
-          <h2>안내</h2>
-          <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
-          <div className="VhiDrawer-bottom-content">
-            <DialogContentText>{alertMessage}</DialogContentText>
+                  return (
+                    <MenuItem key={series.series_key} onClick={handleSeriesMenuClose}>
+                      <Anchor href={getSeriesHref(series.series_key)} className={isSelected ? 'current' : undefined}>
+                        {isSelected ? <CheckRoundedIcon /> : <i />}
+                        <span>{series.series_label}</span>
+                      </Anchor>
+                    </MenuItem>
+                  );
+                })}
+              </Menu>
+            </div>
           </div>
-          <div className="drawer-dialog-actions">
-            <button type="button" onClick={() => setAlertMessage('')} className="button medium submit">
-              확인
-            </button>
-          </div>
-        </Drawer>
-      ) : (
-        <Dialog
-          open={Boolean(alertMessage)}
-          onClose={() => setAlertMessage('')}
-          fullWidth
-          maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
-        >
-          <DialogTitle>안내</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <DialogContentText>{alertMessage}</DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" onClick={() => setAlertMessage('')}>
-              확인
-            </button>
-          </DialogActions>
-        </Dialog>
-      )}
-    </div>
+        </div>
+      ) : null}
+    </>
   );
 }
