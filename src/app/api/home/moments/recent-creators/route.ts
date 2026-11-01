@@ -52,6 +52,34 @@ function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   return publicUrl.data.publicUrl ?? null;
 }
 
+async function getPublicPostThumbnailUrl(path: string | null | undefined) {
+  const normalizedPath = normalizeText(path);
+
+  if (!normalizedPath) return null;
+
+  if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
+    return normalizedPath;
+  }
+
+  if (/^(thumbnail|images|editor)\//.test(normalizedPath)) {
+    return getPublicImageUrl('post', normalizedPath);
+  }
+
+  if (!normalizedPath.includes('/')) {
+    return getPublicImageUrl('og-image', normalizedPath);
+  }
+
+  for (const bucket of ['post', 'og-image', 'blog-ad-images']) {
+    const metadataResult = await r2Storage.from(bucket).getObjectMetadata(normalizedPath);
+
+    if (!metadataResult.error) {
+      return getPublicImageUrl(bucket, normalizedPath);
+    }
+  }
+
+  return null;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '100', 10);
@@ -146,6 +174,16 @@ export async function GET(request: Request) {
       ),
     );
     const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(ownerIds, 'owner_domain');
+    const thumbnailPaths = Array.from(
+      new Set(visibleRecentPosts.map((post) => normalizeText(post.thumbnail_image)).filter(Boolean)),
+    );
+    const thumbnailUrlMap = new Map(
+      await Promise.all(
+        thumbnailPaths.map(
+          async (thumbnailPath) => [thumbnailPath, await getPublicPostThumbnailUrl(thumbnailPath)] as const,
+        ),
+      ),
+    );
 
     const postUserIds = Array.from(new Set(visibleRecentPosts.map((post) => post.user_id).filter(Boolean)));
     const stigmasMap = new Map<string, StigmaRow>();
@@ -198,7 +236,7 @@ export async function GET(request: Request) {
         content_html: post.content_html,
         image:
           Array.isArray(post.images) && post.images.length > 0 ? getPublicImageUrl('post', post.images[0].path) : null,
-        thumbnail_image: getPublicImageUrl('og-image', post.thumbnail_image),
+        thumbnail_image: thumbnailUrlMap.get(normalizeText(post.thumbnail_image)) ?? null,
         youtube_id: post.youtube_id,
         post_count: post.post_count,
       };
