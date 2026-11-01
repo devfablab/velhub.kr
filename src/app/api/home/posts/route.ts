@@ -78,36 +78,6 @@ function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   return publicUrl.data.publicUrl ?? null;
 }
 
-async function getPublicPostThumbnailUrl(path: string | null | undefined) {
-  const normalizedPath = normalizeText(path);
-
-  if (!normalizedPath) {
-    return null;
-  }
-
-  if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
-    return normalizedPath;
-  }
-
-  if (/^(thumbnail|images|editor)\//.test(normalizedPath)) {
-    return getPublicImageUrl('post', normalizedPath);
-  }
-
-  if (!normalizedPath.includes('/')) {
-    return getPublicImageUrl('og-image', normalizedPath);
-  }
-
-  for (const bucket of ['post', 'og-image', 'blog-ad-images']) {
-    const metadataResult = await r2Storage.from(bucket).getObjectMetadata(normalizedPath);
-
-    if (!metadataResult.error) {
-      return getPublicImageUrl(bucket, normalizedPath);
-    }
-  }
-
-  return null;
-}
-
 function extractYoutubeId(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 
@@ -263,25 +233,6 @@ export async function GET(request: NextRequest) {
     }
 
     const visiblePosts = postsData.slice(0, limit);
-    const thumbnailPaths = Array.from(
-      new Set(
-        visiblePosts
-          .filter((post) => {
-            const boardType = boardMap.get(post.board_id)?.board_type;
-            return boardType === 'basic' || boardType === 'blog';
-          })
-          .map((post) => normalizeText(post.thumbnail_image))
-          .filter(Boolean),
-      ),
-    );
-    const thumbnailUrlMap = new Map(
-      await Promise.all(
-        thumbnailPaths.map(
-          async (thumbnailPath) => [thumbnailPath, await getPublicPostThumbnailUrl(thumbnailPath)] as const,
-        ),
-      ),
-    );
-
     const siteIds = [...rhizomeMap.keys()];
     const ownerIds = [
       ...new Set(
@@ -418,7 +369,7 @@ export async function GET(request: NextRequest) {
           ...base,
           subject: post.subject,
           content_html: post.content_html,
-          thumbnail_image: thumbnailUrlMap.get(normalizeText(post.thumbnail_image)) ?? null,
+          thumbnail_image: getPublicImageUrl('post', post.thumbnail_image),
         };
       }
 
