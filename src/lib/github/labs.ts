@@ -64,7 +64,7 @@ export async function createGitHubIssue({
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || 'GitHub 이슈 생성에 실패했습니다.');
+    throw new Error(data.message || '이슈 생성에 실패했습니다.');
   }
 
   return {
@@ -172,7 +172,7 @@ export async function updateGitHubIssue({
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || 'GitHub 이슈 수정에 실패했습니다.');
+    throw new Error(data.message || '이슈 수정에 실패했습니다.');
   }
 
   return {
@@ -198,7 +198,7 @@ export async function getGitHubIssue({ issueNumber }: { issueNumber: number }) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || 'GitHub 이슈 조회에 실패했습니다.');
+    throw new Error(data.message || '이슈 조회에 실패했습니다.');
   }
 
   return {
@@ -295,13 +295,7 @@ export async function createGitHubIssueComment({ issueNumber, body }: { issueNum
   };
 }
 
-export async function updateGitHubIssueComment({
-  commentId,
-  body,
-}: {
-  commentId: number;
-  body: string;
-}) {
+export async function updateGitHubIssueComment({ commentId, body }: { commentId: number; body: string }) {
   const { token, owner, repo } = getGitHubConfig();
 
   const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}`, {

@@ -430,9 +430,7 @@ export default function Opt({
         multiple
         onChange={(event) => {
           if (event.target.files) {
-            Array.from(event.target.files).forEach((file) =>
-              void handleUploadImageForTarget(file, activeUploadTarget),
-            );
+            Array.from(event.target.files).forEach((file) => void handleUploadImageForTarget(file, activeUploadTarget));
             event.target.value = '';
           }
         }}
@@ -442,10 +440,7 @@ export default function Opt({
         {isEditingTitle ? (
           <Stack direction="row" alignItems="center" gap={1} sx={{ my: 1, flexWrap: 'wrap' }}>
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={editCategory}
-                onChange={(event) => setEditCategory(event.target.value as LabsCategory)}
-              >
+              <Select value={editCategory} onChange={(event) => setEditCategory(event.target.value as LabsCategory)}>
                 {LABS_CATEGORIES.map((categoryItem) => (
                   <MenuItem key={categoryItem} value={categoryItem}>
                     {categoryItem}
@@ -691,7 +686,7 @@ export default function Opt({
               <MarkdownEditor
                 value={newComment}
                 onChange={setNewComment}
-                placeholder="답변 및 진행 상황을 작성해 주세요 (GitHub 이슈에 코멘트로 등록됩니다). 이미지를 복사/붙여넣기하거나 드래그하여 첨부할 수 있습니다."
+                placeholder="답변 및 진행 상황을 작성해 주세요. 이미지를 복사/붙여넣기하거나 드래그하여 첨부할 수 있습니다."
                 themeMode={theme.palette.mode}
                 onPaste={handleNewCommentPaste}
                 onDrop={handleNewCommentDrop}
