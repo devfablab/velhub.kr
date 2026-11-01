@@ -1634,83 +1634,84 @@ html[data-site-type='blog']
     border-radius: 8px 8px 0 0
     min-height: 42px
 
-  .w-md-editor-toolbar > ul:first-of-type
-    display: flex
-    align-items: flex-end
-    gap: 4px
-    margin-bottom: -1px
-    z-index: 2
-
-    > li
-      margin: 0
-      padding: 0
+  .w-md-editor-toolbar > ul
+    &:first-of-type
       display: flex
+      align-items: flex-end
+      gap: 4px
+      margin-bottom: -1px
+      z-index: 2
 
-      > button
-        height: auto
-        background: transparent
-        border: 1px solid transparent
-        border-bottom: 1px solid transparent
-        border-radius: 6px 6px 0 0
-        padding: 6px 14px
-        font-size: 13px
-        font-weight: 500
-        cursor: pointer
-        color: #656d76
-        transition: all 0.15s ease
-        line-height: 20px
-        white-space: nowrap
+      > li
+        margin: 0
+        padding: 0
+        display: flex
 
-        &:hover
+        > button
+          height: auto
+          background: transparent
+          border: 1px solid transparent
+          border-bottom: 1px solid transparent
+          border-radius: 6px 6px 0 0
+          padding: 6px 14px
+          font-size: 13px
+          font-weight: 500
+          cursor: pointer
+          color: #656d76
+          transition: all 0.15s ease
+          line-height: 20px
+          white-space: nowrap
+
+          &:hover
+            color: #1f2328
+            background-color: transparent
+
+        &.active > button
+          background-color: #ffffff
+          border-color: rgba(0, 0, 0, 0.12)
+          border-bottom-color: #ffffff !important
           color: #1f2328
-          background-color: transparent
+          font-weight: 600
 
-      &.active > button
-        background-color: #ffffff
-        border-color: rgba(0, 0, 0, 0.12)
-        border-bottom-color: #ffffff !important
-        color: #1f2328
-        font-weight: 600
-
-  .w-md-editor-toolbar > ul:last-of-type
-    display: flex
-    align-items: center
-    gap: 2px
-    padding-bottom: 6px
-
-    > li
-      position: relative
+    &:last-of-type
       display: flex
       align-items: center
+      gap: 2px
+      padding-bottom: 6px
 
-      > button
-        height: 28px
-        width: 28px
-        min-width: 28px
-        padding: 0
-        margin: 0 1px
-        border: none
-        border-radius: 6px
+      > li
+        position: relative
         display: flex
         align-items: center
-        justify-content: center
-        background: transparent
-        color: #656d76
-        cursor: pointer
-        transition: background-color 0.15s ease, color 0.15s ease
 
-        svg
-          width: 16px
-          height: 16px
+        > button
+          height: 28px
+          width: 28px
+          min-width: 28px
+          padding: 0
+          margin: 0 1px
+          border: none
+          border-radius: 6px
+          display: flex
+          align-items: center
+          justify-content: center
+          background: transparent
+          color: #656d76
+          cursor: pointer
+          transition: background-color 0.15s ease, color 0.15s ease
 
-        &:hover:not(:disabled)
-          background-color: rgba(0, 0, 0, 0.08)
-          color: #1f2328
+          svg
+            width: 16px
+            height: 16px
 
-        &:disabled
-          opacity: 0.35
-          cursor: not-allowed
-          pointer-events: none
+          &:hover:not(:disabled)
+            background-color: rgba(0, 0, 0, 0.08)
+            color: #1f2328
+
+          &:disabled
+            opacity: 0.35
+            cursor: not-allowed
+            pointer-events: none
 
   .w-md-editor-toolbar-divider
     height: 16px
@@ -1809,3 +1810,21 @@ html[data-site-type='blog']
 
     .empty-preview
       color: #848d97
+
+.wmde-markdown
+  p, li
+    font-size: ds.rem(14)
+
+  a
+    color: ds.$hex-action!important
+    text-decoration: underline!important
+
+  ul
+    list-style-type: circle
+
+  ol
+    list-style-type: decimal
+
+  ul, ol
+    padding-left: ds.rem(27)
+    margin-bottom: ds.rem(16)

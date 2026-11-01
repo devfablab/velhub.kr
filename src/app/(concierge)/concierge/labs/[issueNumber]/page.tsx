@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getGitHubIssue, getGitHubIssueComments, LabsIssueComment } from '@/lib/github/labs';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import Container from '../../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';
@@ -53,6 +54,23 @@ export default async function Page({ params }: Props) {
     console.error('Failed to load GitHub data:', error);
   }
 
+  let authorAvatar: string | null = null;
+  if (dbIssue.user_id) {
+    const { data: authorStigma } = await db
+      .from('stigmas')
+      .select('avatar')
+      .or(`user_id.eq.${dbIssue.user_id},id.eq.${dbIssue.user_id}`)
+      .maybeSingle();
+
+    if (authorStigma?.avatar) {
+      authorAvatar = getStigmaAvatarUrl(authorStigma.avatar);
+    }
+  }
+
+  if (!authorAvatar && gitHubIssue?.author?.avatarUrl) {
+    authorAvatar = gitHubIssue.author.avatarUrl;
+  }
+
   const isAuthor = Boolean(current?.userId && current.userId === dbIssue.user_id);
   const isAdmin = Boolean(current?.role === 'admin');
 
@@ -67,6 +85,7 @@ export default async function Page({ params }: Props) {
             initialComments={comments}
             isAuthor={isAuthor}
             isAdmin={isAdmin}
+            authorAvatar={authorAvatar}
           />
         </div>
       </div>

@@ -263,9 +263,6 @@ export default function Opt({
         <div className={`paper ${styles.issues}`}>
           {initialIssues.map((issue) => {
             const isClosed = issue.status === '반영 완료' || issue.status === '반려됨';
-            const isReopened =
-              !isClosed &&
-              Math.abs(new Date(issue.updated_at).getTime() - new Date(issue.created_at).getTime()) > 1000;
             return (
               <div className={styles['issue-item']} key={issue.id}>
                 <div className={`${styles.status} ${isClosed ? styles['status-closed'] : styles['status-open']}`}>
@@ -285,8 +282,6 @@ export default function Opt({
                     <span>{issue.user_name}</span> ·{' '}
                     {isClosed ? (
                       <time>{formatTimeAgo(issue.updated_at)}에 닫힘</time>
-                    ) : isReopened ? (
-                      <time>{formatTimeAgo(issue.updated_at)}에 다시 열림</time>
                     ) : (
                       <time>{formatTimeAgo(issue.created_at)}에 등록됨</time>
                     )}

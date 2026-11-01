@@ -22,7 +22,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { LABS_CATEGORIES, LABS_STATUSES, LabsCategory, LabsStatus } from '@/lib/github/labs';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -32,6 +32,18 @@ import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
 import type { LabsIssueRow } from '../page';
 import styles from '@/app/concierge.module.sass';
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
 const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
@@ -62,6 +74,7 @@ type Props = {
   initialComments: CommentItem[];
   isAuthor: boolean;
   isAdmin: boolean;
+  authorAvatar?: string | null;
 };
 
 export default function Opt({
@@ -71,6 +84,7 @@ export default function Opt({
   initialComments,
   isAuthor,
   isAdmin,
+  authorAvatar,
 }: Props) {
   const router = useRouter();
   const theme = useTheme();
@@ -109,8 +123,6 @@ export default function Opt({
 
   const currentStatus = dbIssue.status;
   const isClosed = currentStatus === '반영 완료' || currentStatus === '반려됨';
-  const isReopened =
-    !isClosed && Math.abs(new Date(dbIssue.updated_at).getTime() - new Date(dbIssue.created_at).getTime()) > 1000;
 
   async function handleUploadImageForTarget(file: File, target: 'issue' | 'newComment' | 'editComment') {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -410,13 +422,12 @@ export default function Opt({
 
   return (
     <div className={styles.labs}>
-      <input
+      <VisuallyHiddenInput
         id={IMAGE_INPUT_ID}
         ref={fileInputRef}
         type="file"
         accept={ALLOWED_IMAGE_TYPES.join(',')}
         multiple
-        style={{ display: 'none' }}
         onChange={(event) => {
           if (event.target.files) {
             Array.from(event.target.files).forEach((file) =>
@@ -495,13 +506,15 @@ export default function Opt({
         <div className={styles['issue-header']}>
           <div className={styles['issue-header-profile']}>
             <div className={styles.avatar}>
-              <Avatar sx={{ width: 24, height: 24 }} />
+              <Avatar
+                src={authorAvatar || '/broken-image.jpg'}
+                alt={dbIssue.user_name || ''}
+                sx={{ width: 24, height: 24 }}
+              />
               <span>{dbIssue.user_name}</span>
             </div>
             {isClosed ? (
               <time>{formatTimeAgo(initialGitHubIssue?.closedAt || dbIssue.updated_at)}에 닫힘</time>
-            ) : isReopened ? (
-              <time>{formatTimeAgo(dbIssue.updated_at)}에 다시 열림</time>
             ) : (
               <time>{formatTimeAgo(dbIssue.created_at)}에 등록됨</time>
             )}
@@ -595,7 +608,11 @@ export default function Opt({
                 <div className={styles['issue-header']}>
                   <div className={styles['issue-header-profile']}>
                     <div className={styles.avatar}>
-                      <Avatar src={comment.author.avatarUrl} sx={{ width: 24, height: 24 }} />
+                      <Avatar
+                        src={comment.author.avatarUrl || '/broken-image.jpg'}
+                        alt={comment.author.login || ''}
+                        sx={{ width: 24, height: 24 }}
+                      />
                       <span>{comment.author.login}</span>
                     </div>
                     <time>{formatTimeAgo(comment.createdAt)}</time>

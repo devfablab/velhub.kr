@@ -3,11 +3,23 @@
 import { SyntheticEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormControl, FormHelperText, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { LABS_CATEGORIES, LabsCategory } from '@/lib/github/labs';
 import Anchor from '@/components/Anchor';
 import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
 const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
@@ -166,13 +178,12 @@ export default function Opt() {
 
         <Stack gap={1}>
           <Typography variant="subtitle2">내용</Typography>
-          <input
+          <VisuallyHiddenInput
             id={IMAGE_INPUT_ID}
             ref={fileInputRef}
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
             multiple
-            style={{ display: 'none' }}
             onChange={(event) => {
               if (event.target.files) {
                 handleAddFiles(event.target.files);
