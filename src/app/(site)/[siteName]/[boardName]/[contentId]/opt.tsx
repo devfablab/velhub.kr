@@ -1173,7 +1173,6 @@ export default function Opt({
                         <PushPinRoundedIcon />
                       </i>
                     ) : null}
-                    {content.is_recommended ? <small>(추천 게시물) </small> : null}
                     {!isFeedBoard ? (
                       <strong>
                         {content.is_closed ? (
