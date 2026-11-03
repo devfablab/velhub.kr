@@ -1,9 +1,36 @@
 import { NextResponse } from 'next/server';
+import { getCreatorFollowCounts } from '@/lib/creator/following';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getR2PublicUrl } from '@/lib/r2Public';
 import { r2Storage } from '@/lib/r2Storage';
+import { getPostContentText } from '@/lib/reports/manage';
+import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+
+type CreatorBoardType = 'basic' | 'blog' | 'feed' | 'gallery' | 'youtube';
+type PostImage = { path?: string | null };
+
+function isCreatorBoardType(value: string | null): value is CreatorBoardType {
+  return value === 'basic' || value === 'blog' || value === 'feed' || value === 'gallery' || value === 'youtube';
+}
+
+function getContentExcerpt(value: string) {
+  const content = normalizeText(value).replace(/\s+/g, ' ');
+  const characters = Array.from(content);
+
+  if (characters.length <= 127) return content;
+
+  return `${characters.slice(0, 126).join('')}…`;
+}
+
+function getFirstImageUrl(value: unknown) {
+  if (!Array.isArray(value)) return null;
+
+  const path = normalizeText((value[0] as PostImage | undefined)?.path);
+  return path ? getR2PublicUrl('post', path) : null;
+}
 
 function getAvatarUrl(path: string | null) {
   if (!path) return null;
@@ -50,21 +77,51 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   if (linksResult.error || stigmaResult.error || seriesResult.error)
     return NextResponse.json({ message: '작가 정보를 불러오지 못했습니다.' }, { status: 500 });
 
+  const authorState = currentStigma ? await getAuthorState(currentStigma.stigmaId) : { isAuthor: false };
+  const isOwner = currentStigma?.stigmaId === creator.user_id;
+  const viewerCreatorResult =
+    currentStigma && !isOwner && authorState.isAuthor
+      ? await supabaseAdmin.from('creators').select('handle_name').eq('user_id', currentStigma.stigmaId).maybeSingle()
+      : { data: null, error: null };
+  const followResult =
+    currentStigma && !isOwner
+      ? await supabaseAdmin
+          .from('creator_follows')
+          .select('id')
+          .eq('follower_id', currentStigma.stigmaId)
+          .eq('creator_id', creator.id)
+          .maybeSingle()
+      : { data: null, error: null };
+
+  if (viewerCreatorResult.error || followResult.error)
+    return NextResponse.json({ message: '작가 정보를 불러오지 못했습니다.' }, { status: 500 });
+
   const series = seriesResult.data ?? [];
   const seriesIds = series.map((item) => item.id);
   const tab = new URL(_.url).searchParams.get('tab') || 'all';
+  const { getMembershipFeatures } = await import('@/lib/memberships/features');
+  const [features, viewerFeatures] = await Promise.all([
+    getMembershipFeatures(creator.user_id),
+    currentStigma && !isOwner ? getMembershipFeatures(currentStigma.stigmaId) : Promise.resolve(null),
+  ]);
+  const hasBranding = features.has('creator_branding');
+  const canUseSeriesPosts = features.has('creator_posts') || viewerFeatures?.has('creator_posts') === true;
+  const selectedTab = canUseSeriesPosts && tab === 'series' ? 'series' : 'all';
 
   let postsQuery = supabaseAdmin
     .from('posts')
-    .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
+    .select(
+      'id, site_id, board_id, series_id, subject, slug, published_at, summary, content_html, content_markdown, content_simple, images, youtube_id',
+      { count: 'exact' },
+    )
     .eq('user_id', creator.user_id)
     .eq('published_status', 'published')
     .eq('is_closed', false)
     .eq('is_wording_blinded', false);
 
-  const shouldQueryPosts = tab !== 'series' || seriesIds.length > 0;
+  const shouldQueryPosts = selectedTab !== 'series' || seriesIds.length > 0;
 
-  if (tab === 'series' && seriesIds.length > 0) {
+  if (selectedTab === 'series' && seriesIds.length > 0) {
     postsQuery = postsQuery.in('series_id', seriesIds);
   }
 
@@ -85,7 +142,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     posts.length
       ? supabaseAdmin
           .from('boards')
-          .select('id, board_key')
+          .select('id, board_key, board_type')
           .in('id', [...new Set(posts.map((post) => post.board_id))])
       : { data: [], error: null },
   ]);
@@ -94,13 +151,9 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   const siteMap = new Map(
     (sitesResult.data ?? []).map((site) => [site.id, { key: site.site_key, label: site.site_label }]),
   );
-  const boardMap = new Map((boardsResult.data ?? []).map((board) => [board.id, board.board_key]));
+  const boardMap = new Map((boardsResult.data ?? []).map((board) => [board.id, board]));
   const seriesMap = new Map(series.map((item) => [item.id, item.series_label]));
-
-  const { getMembershipFeatures } = await import('@/lib/memberships/features');
-  const features = await getMembershipFeatures(creator.user_id);
-  const hasBranding = features.has('creator_branding');
-  const hasCreatorPosts = features.has('creator_posts');
+  const followCounts = await getCreatorFollowCounts(creator.id, creator.user_id);
 
   return NextResponse.json({
     creator: {
@@ -109,6 +162,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
       introduction: hasBranding ? creator.introduction : null,
       activityName: decryptUserName(stigmaResult.data?.user_name ?? '') ?? '작가',
       profileImage: getAvatarUrl(stigmaResult.data?.avatar ?? null),
+      ...followCounts,
       links: hasBranding
         ? (linksResult.data ?? []).map((link) => ({
             id: link.id,
@@ -119,17 +173,46 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
         : [],
     },
     hasBranding,
-    hasCreatorPosts,
-    posts: posts.map((post) => ({
-      id: post.id,
-      subject: post.subject ?? '제목 없음',
-      publishedAt: post.published_at,
-      seriesLabel: post.series_id ? (seriesMap.get(post.series_id) ?? '연재') : '단편',
-      siteLabel: siteMap.get(post.site_id)?.label ?? '사이트',
-      url: `/${siteMap.get(post.site_id)?.key ?? ''}/${boardMap.get(post.board_id) ?? ''}/${post.slug ?? ''}`,
-    })),
+    canUseSeriesPosts,
+    tab: selectedTab,
+    posts: posts.flatMap((post) => {
+      const board = boardMap.get(post.board_id);
+      if (!board || !isCreatorBoardType(board.board_type)) return [];
+
+      return [
+        {
+          id: post.id,
+          subject: post.subject ?? '제목 없음',
+          publishedAt: post.published_at,
+          seriesLabel: post.series_id ? (seriesMap.get(post.series_id) ?? '연재') : '단편',
+          siteLabel: siteMap.get(post.site_id)?.label ?? '사이트',
+          url: `/${siteMap.get(post.site_id)?.key ?? ''}/${board.board_key}/${post.slug ?? ''}`,
+          boardType: board.board_type,
+          content: getContentExcerpt(
+            getPostContentText({
+              boardType: board.board_type,
+              contentHtml: post.content_html,
+              contentMarkdown: post.content_markdown,
+              contentSimple: post.content_simple,
+              summary: post.summary,
+              youtubeUrl: null,
+            }),
+          ),
+          image: board.board_type === 'gallery' ? getFirstImageUrl(post.images) : null,
+          youtubeId: board.board_type === 'youtube' ? post.youtube_id : null,
+          creator: {
+            activityName: decryptUserName(stigmaResult.data?.user_name ?? '') ?? '작가',
+            handleName: creator.handle_name,
+            profileImage: getAvatarUrl(stigmaResult.data?.avatar ?? null),
+          },
+        },
+      ];
+    }),
     total: postsResult.count ?? 0,
     page,
-    isOwner: currentStigma?.stigmaId === creator.user_id,
+    isOwner,
+    canUseCreatorLibrary: authorState.isAuthor,
+    viewerCreatorHandleName: viewerCreatorResult.data?.handle_name ?? null,
+    isFollowing: Boolean(followResult.data),
   });
 }

@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt, { Response } from './opt';
 
-type Props = { params: Promise<{ handleName: string }> };
+type Props = { params: Promise<{ handleName: string }>; searchParams: Promise<{ tab?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handleName } = await params;
@@ -38,21 +38,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${handleName} 작가님의 서재` };
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { handleName } = await params;
-  let initialData: (Response & { hasCreatorPosts?: boolean }) | null = null;
+  const { tab } = await searchParams;
+  const selectedTab = tab === 'series' ? 'series' : 'all';
+  let initialData: Response | null = null;
   let initialError = '';
   try {
     const headerList = await headers();
+    const cookieStore = await cookies();
     const response = await fetch(
-      `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/creator/${handleName}?page=1&tab=all`,
-      { cache: 'no-store' },
+      `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/creator/${handleName}?page=1&tab=${selectedTab}`,
+      { headers: { cookie: cookieStore.toString() }, cache: 'no-store' },
     );
-    const result = (await response.json()) as Response & { hasCreatorPosts?: boolean; message?: string };
+    const result = (await response.json()) as Response & { message?: string };
     if (!response.ok) throw new Error(result.message ?? '작가 정보를 불러오지 못했습니다.');
     initialData = result;
   } catch (error) {
     initialError = error instanceof Error ? error.message : '작가 정보를 불러오지 못했습니다.';
   }
-  return <Opt handleName={handleName} initialData={initialData} initialError={initialError} />;
+  return (
+    <Opt
+      handleName={handleName}
+      initialData={initialData}
+      initialError={initialError}
+      initialMenu={initialData?.canUseSeriesPosts && selectedTab === 'series' ? 'series' : 'all'}
+    />
+  );
 }

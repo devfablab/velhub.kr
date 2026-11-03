@@ -139,6 +139,17 @@ type sitesHitsResponse = {
   sites: SitesHitsData[];
 };
 
+export type CreatorLibrariesResponse = {
+  creators: Array<{
+    handleName: string;
+    activityName: string;
+    profileImage: string | null;
+    coverImage: string | null;
+    introduction: string | null;
+    createdAt: string;
+  }>;
+};
+
 export type PostsResponse = {
   posts: PostItem[];
 };
@@ -158,6 +169,7 @@ export type SlickProps = {
   sitesData?: SitesResponse;
   sitesCreatedData?: sitesCreatedResponse;
   sitesHitsData?: sitesHitsResponse;
+  creatorLibrariesData?: CreatorLibrariesResponse;
   postsData?: PostsResponse;
   isHub?: boolean;
 };
@@ -165,6 +177,7 @@ export type SlickProps = {
 export type ListProps = {
   orderType?: 'newest' | 'hits';
   postsApiPath?: string;
+  initialData?: PostsResponse | null;
   onPostsLoaded?: (count: number) => void;
 };
 
@@ -177,7 +190,7 @@ export default async function Home() {
   let postsPublishedData = null;
   try {
     const [sitesCreatedResponse, postsPublishedResponse] = await Promise.all([
-      fetch(`${baseUrl}/api/home/sites?limit=10&sortBy=created_at`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/api/home/new-sites`, { cache: 'no-store' }),
       fetch(`${baseUrl}/api/home/posts?limit=20`, { cache: 'no-store' }),
     ]);
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { r2Storage } from '@/lib/r2Storage';
+import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
 
 const MAX_FILE_SIZE = 1024 * 1024;
@@ -8,6 +9,10 @@ const COVER_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 export async function POST(request: Request) {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return NextResponse.json({ message: '로그인이 필요합니다.' }, { status: 401 });
+
+  const authorState = await getAuthorState(currentStigma.stigmaId);
+  if (!authorState.isAuthor)
+    return NextResponse.json({ message: '작가만 서재 커버를 등록할 수 있습니다.' }, { status: 403 });
 
   const formData = await request.formData().catch(() => null);
   const value = formData?.get('file');

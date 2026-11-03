@@ -75,6 +75,17 @@ function getPostViewCookieName(siteKey: string, boardKey: string, idx: number) {
   return `PS_${encrypt(siteKey)}_${encrypt(boardKey)}_${encrypt(String(idx))}`;
 }
 
+function getKoreaDate() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const values = new Map(parts.map((part) => [part.type, part.value]));
+  return `${values.get('year')}-${values.get('month')}-${values.get('day')}`;
+}
+
 async function getUserDisplayName(siteId: string, userId: string | null | undefined) {
   const normalizedUserId = normalizeText(userId);
 
@@ -244,6 +255,13 @@ export async function getPostContent({
 
       if (!updateViewResult.error && updateViewResult.data) {
         postCount = Number(updateViewResult.data.post_count ?? postCount + 1);
+        const viewStatsResult = await supabaseAdmin.rpc('increment_post_daily_view_count', {
+          p_post_id: post.data.id,
+          p_view_date: getKoreaDate(),
+        });
+        if (viewStatsResult.error) {
+          console.error('[post-view] daily statistics update error', viewStatsResult.error);
+        }
         viewCookie = {
           name: viewCookieName,
           value: '1',

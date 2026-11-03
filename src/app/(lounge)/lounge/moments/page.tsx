@@ -1,8 +1,15 @@
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
+import {
+  getMostReadMomentPosts,
+  getNewMomentCreators,
+  getNewMomentSites,
+  getRecentMomentPosts,
+  getRisingMomentCreators,
+  getTrendingMomentPosts,
+} from '@/lib/lounge/moments';
 import { originTitle, Seo } from '@/lib/seo';
-import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
+import type { PostsResponse } from '../../page';
 import Aside from '../aside';
 import List from '../list';
 import Slick from '../slick';
@@ -21,54 +28,68 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = `${protocol}://${host}`;
-
-  let supportCreatorsData = null;
-  let supportCreatorsError = '';
-
-  try {
-    const supportCreatorsResponse = await fetch(`${baseUrl}/api/home/moments/support?limit=10`, {
-      cache: 'no-store',
-    });
-    if (supportCreatorsResponse.ok) {
-      supportCreatorsData = await supportCreatorsResponse.json();
-    } else {
-      supportCreatorsError = '서포트 작가를 불러오지 못했습니다.';
+  async function getMomentData<T>(load: () => Promise<T>): Promise<T | null> {
+    try {
+      return await load();
+    } catch {
+      return null;
     }
-
-  } catch (error) {
-    console.error('Fetch Failed:', error);
-    supportCreatorsError ||= '서포트 작가를 불러오지 못했습니다.';
   }
+
+  function toPostsData(posts: Awaited<ReturnType<typeof getRecentMomentPosts>>): PostsResponse {
+    return { posts: posts as unknown as PostsResponse['posts'] };
+  }
+
+  const [newSitesData, newCreatorsData, risingCreatorsData, recentPostsData, trendingPostsData, popularPostsData] =
+    await Promise.all([
+      getMomentData(async () => ({ sites: await getNewMomentSites() })),
+      getMomentData(async () => ({ creators: await getNewMomentCreators() })),
+      getMomentData(async () => ({ creators: await getRisingMomentCreators() })),
+      getMomentData(async () => toPostsData(await getRecentMomentPosts())),
+      getMomentData(async () => toPostsData(await getTrendingMomentPosts())),
+      getMomentData(async () => toPostsData(await getMostReadMomentPosts())),
+    ]);
 
   return (
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
-          <section>
-            <h2>서포트 작가전 🚀</h2>
-            {supportCreatorsError ? (
-              <ScreenState kind="error">{supportCreatorsError}</ScreenState>
-            ) : supportCreatorsData && (supportCreatorsData.sites || supportCreatorsData.posts) ? (
-              <Slick
-                sitesHitsData={supportCreatorsData.sites ? supportCreatorsData : undefined}
-                postsData={supportCreatorsData.posts ? supportCreatorsData : undefined}
-              />
-            ) : (
-              <ScreenState>아직 등록된 서포트 작가가 없습니다.</ScreenState>
-            )}
-          </section>
-          <section>
-            <h2>서포트 크리에이터 ✨</h2>
-            <List orderType="newest" postsApiPath="/api/home/moments/support?limit=100" />
-          </section>
-          <section>
-            <h2>작가들에게 무슨 일이 있나요? 🧐</h2>
-            <List orderType="newest" postsApiPath="/api/home/moments/recent-creators?limit=100" />
-          </section>
+          {newSitesData?.sites.length ? (
+            <section>
+              <h2>새로 문 연 공간 👋</h2>
+              <Slick sitesCreatedData={newSitesData} />
+            </section>
+          ) : null}
+          {newCreatorsData?.creators.length ? (
+            <section>
+              <h2>인사해 주세요 👋</h2>
+              <Slick creatorLibrariesData={newCreatorsData} />
+            </section>
+          ) : null}
+          {risingCreatorsData?.creators.length ? (
+            <section>
+              <h2>인기 급상승 서재 🔥</h2>
+              <Slick creatorLibrariesData={risingCreatorsData} />
+            </section>
+          ) : null}
+          {recentPostsData?.posts.length ? (
+            <section>
+              <h2>작가들에게 무슨 일이 있나요? 🧐</h2>
+              <List orderType="newest" initialData={recentPostsData} />
+            </section>
+          ) : null}
+          {trendingPostsData?.posts.length ? (
+            <section>
+              <h2>인기 급상승 글 🔥</h2>
+              <List orderType="hits" initialData={trendingPostsData} />
+            </section>
+          ) : null}
+          {popularPostsData?.posts.length ? (
+            <section>
+              <h2>지금 많이 읽는 글 👀</h2>
+              <List orderType="hits" initialData={popularPostsData} />
+            </section>
+          ) : null}
         </div>
         <Aside />
       </div>

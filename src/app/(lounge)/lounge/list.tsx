@@ -220,15 +220,22 @@ function LoadingHitsCards() {
   );
 }
 
-export default function List({ orderType, postsApiPath, onPostsLoaded }: ListProps) {
+export default function List({ orderType, postsApiPath, initialData, onPostsLoaded }: ListProps) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-  const [loadedPostsData, setLoadedPostsData] = useState<PostsResponse | null>(null);
+  const [loadedPostsData, setLoadedPostsData] = useState<PostsResponse | null>(initialData ?? null);
   const listPostsApiPath = postsApiPath ?? '/api/home/posts?limit=20';
 
   useEffect(() => {
     let isMounted = true;
+
+    if (initialData) {
+      onPostsLoaded?.(initialData.posts.length);
+      return () => {
+        isMounted = false;
+      };
+    }
 
     async function loadPosts() {
       try {
@@ -249,9 +256,9 @@ export default function List({ orderType, postsApiPath, onPostsLoaded }: ListPro
     return () => {
       isMounted = false;
     };
-  }, [listPostsApiPath, onPostsLoaded]);
+  }, [initialData, listPostsApiPath, onPostsLoaded]);
 
-  const resolvedPostsData = loadedPostsData;
+  const resolvedPostsData = initialData ?? loadedPostsData;
 
   function getYoutubeThumbnailUrl(videoId: string) {
     return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
@@ -322,10 +329,12 @@ export default function List({ orderType, postsApiPath, onPostsLoaded }: ListPro
                     <div className={styles.tail}>
                       <div className={styles['tail-author']}>
                         <Avatar
-                          src={post.author_avatar || '/broken-image.jpg'}
+                          src={post.author_avatar ?? undefined}
                           alt={post.author_name}
                           sx={{ width: 24, height: 24, fontSize: 12 }}
-                        />
+                        >
+                          {post.author_name.slice(0, 1)}
+                        </Avatar>
                         <strong>{post.author_name}</strong>
                         <ScheduleRoundedIcon />
                         <time>{formatTimeAgo(post.published_at)}</time>
@@ -513,10 +522,12 @@ export default function List({ orderType, postsApiPath, onPostsLoaded }: ListPro
                   </div>
                   <div className={styles['tail-author']}>
                     <Avatar
-                      src={post.author_avatar || '/broken-image.jpg'}
+                      src={post.author_avatar ?? undefined}
                       alt={post.author_name}
                       sx={{ width: 24, height: 24, fontSize: 12 }}
-                    />
+                    >
+                      {post.author_name.slice(0, 1)}
+                    </Avatar>
                     <strong>{post.author_name}</strong>
                   </div>
                   <div className={styles['tail-date']}>

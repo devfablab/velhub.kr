@@ -287,7 +287,6 @@ export default function Opt({
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState(initialError);
-  const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
   const load = useCallback(
@@ -312,14 +311,9 @@ export default function Opt({
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
-    setIsMounted(true);
   }, [setThemeMode]);
 
   useEffect(() => {
-    if (!isMounted) {
-      return;
-    }
-
     applyThemeMode(themeMode);
 
     const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
@@ -335,20 +329,23 @@ export default function Opt({
     return () => {
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
-  }, [isMounted, themeMode]);
-
-  useEffect(() => {
-    if (!isMounted) {
-      return;
-    }
-  }, [isMounted]);
+  }, [themeMode]);
 
   if (message)
     return (
       <main className={styles['my-library']}>
         <div className={styles.container}>
           <div className={`content ${styles.content}`}>
-            <ScreenState kind="error">{message}</ScreenState>
+            <ScreenState
+              kind="error"
+              action={
+                <Anchor href="/" className="button medium action">
+                  라운지로 이동
+                </Anchor>
+              }
+            >
+              {message}
+            </ScreenState>
           </div>
         </div>
       </main>

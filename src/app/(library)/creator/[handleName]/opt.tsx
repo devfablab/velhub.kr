@@ -18,25 +18,22 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
+import { Box, Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
-import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
+import Profile from './profile';
+import CreatorTimelinePosts, { type CreatorTimelinePost } from './timelinePosts';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
-type Post = {
-  id: string;
+type Post = CreatorTimelinePost & {
   subject: string;
-  url: string;
   siteLabel: string;
   seriesLabel: string;
-  publishedAt: string | null;
 };
 type CreatorLink = { id?: string; label: string; url: string };
 type CreatorProfile = {
@@ -47,12 +44,21 @@ type CreatorProfile = {
   links: CreatorLink[];
 };
 export type Response = {
-  creator: CreatorProfile & { activityName: string; profileImage: string | null };
+  creator: CreatorProfile & {
+    activityName: string;
+    profileImage: string | null;
+    followingCount: number;
+    followerCount: number;
+  };
   hasBranding?: boolean;
+  canUseSeriesPosts: boolean;
   posts: Post[];
   total: number;
   page: number;
   isOwner: boolean;
+  canUseCreatorLibrary: boolean;
+  viewerCreatorHandleName: string | null;
+  isFollowing: boolean;
 };
 
 const VisuallyHiddenInput = styled('input')({
@@ -194,7 +200,7 @@ function SortableLinkItem({
   );
 }
 
-function ProfileForm({
+export function ProfileForm({
   profile,
   onCancel,
   onSaved,
@@ -298,7 +304,7 @@ function ProfileForm({
   };
 
   return (
-    <div className="paper" style={{ marginTop: 72 }}>
+    <div className="paper" style={{ marginTop: 72, marginBottom: 27 }}>
       <h1>바이오 수정</h1>
       <VisuallyHiddenInput
         ref={fileRef}
@@ -427,24 +433,27 @@ export default function Opt({
   handleName,
   initialData,
   initialError,
+  initialMenu,
 }: {
   handleName: string;
-  initialData: (Response & { hasCreatorPosts?: boolean }) | null;
+  initialData: Response | null;
   initialError: string;
+  initialMenu: 'all' | 'series';
 }) {
-  const [data, setData] = useState<(Response & { hasCreatorPosts?: boolean }) | null>(initialData);
+  const [data, setData] = useState<Response | null>(initialData);
   const [page, setPage] = useState(1);
-  const [tab, setTab] = useState<'all' | 'series'>('all');
+  const [menu, setMenu] = useState<'all' | 'series'>(initialMenu);
   const [editing, setEditing] = useState(false);
+  const [following, setFollowing] = useState(initialData?.isFollowing ?? false);
+  const [followSubmitting, setFollowSubmitting] = useState(false);
   const [message, setMessage] = useState(initialError);
-  const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
   const load = useCallback(
-    async (nextPage: number, nextTab: 'all' | 'series') => {
+    async (nextPage: number, nextMenu: 'all' | 'series') => {
       try {
         setMessage('');
-        const response = await fetch(`/api/creator/${handleName}?page=${nextPage}&tab=${nextTab}`);
+        const response = await fetch(`/api/creator/${handleName}?page=${nextPage}&tab=${nextMenu}`);
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message ?? '작가 정보를 불러오지 못했습니다.');
         setData(payload);
@@ -455,22 +464,35 @@ export default function Opt({
     [handleName],
   );
 
-  function changePage(nextPage: number, nextTab = tab) {
+  function changePage(nextPage: number, nextMenu = menu) {
     setPage(nextPage);
-    setTab(nextTab);
-    void load(nextPage, nextTab);
+    setMenu(nextMenu);
+    void load(nextPage, nextMenu);
   }
+
+  const toggleFollow = async () => {
+    if (!data || followSubmitting) return;
+
+    setFollowSubmitting(true);
+    try {
+      const response = await fetch(`/api/creator/${handleName}/follow`, {
+        method: following ? 'DELETE' : 'POST',
+      });
+      const payload = (await response.json()) as { isFollowing?: boolean; message?: string };
+      if (!response.ok) throw new Error(payload.message ?? '서재 팔로우를 변경하지 못했습니다.');
+      setFollowing(Boolean(payload.isFollowing));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '서재 팔로우를 변경하지 못했습니다.');
+    } finally {
+      setFollowSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
-    setIsMounted(true);
   }, [setThemeMode]);
 
   useEffect(() => {
-    if (!isMounted) {
-      return;
-    }
-
     applyThemeMode(themeMode);
 
     const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
@@ -486,13 +508,7 @@ export default function Opt({
     return () => {
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
-  }, [isMounted, themeMode]);
-
-  useEffect(() => {
-    if (!isMounted) {
-      return;
-    }
-  }, [isMounted]);
+  }, [themeMode]);
 
   if (message)
     return (
@@ -509,134 +525,77 @@ export default function Opt({
   const totalPages = Math.ceil(data.total / 50);
   const creator = data.creator;
   return (
-    <main className={styles['my-library']}>
-      <div className={styles.back}>
-        <Anchor href="/" className={styles.backlink}>
-          <ArrowBackRoundedIcon />
-          <span>라운지로 돌아가기</span>
-        </Anchor>
-      </div>
-      <div className={`${styles['user-cover']} ${creator.coverImage ? styles['user-cover-image-container'] : ''}`}>
-        {creator.coverImage ? (
-          <div className={styles['user-cover-image']} style={{ backgroundImage: `url(${creator.coverImage})` }}>
-            <div className={styles['dummy-before']} />
-            <div className={styles['dummy-after']} />
-          </div>
-        ) : null}
-      </div>
-      <div className={styles.container}>
-        <div className={`content ${styles.content}`}>
-          <div className={styles['user-bio']}>
-            {editing && data.isOwner ? (
-              <ProfileForm
-                profile={creator}
-                onCancel={() => setEditing(false)}
-                onSaved={(next) => {
-                  setData((current) => (current ? { ...current, creator: { ...current.creator, ...next } } : current));
-                  setEditing(false);
-                }}
-              />
-            ) : (
-              <>
-                <Avatar
-                  src={creator.profileImage || '/broken-image.jpg'}
-                  alt={creator.activityName}
-                  sx={{ width: 72, height: 72 }}
-                />
-                <div className={styles['user-bio-name']}>
-                  <h1>{creator.activityName} 작가</h1>
-                  <Typography variant="subtitle2">@{creator.handleName}</Typography>
-                </div>
-                {data.isOwner && data.hasBranding ? (
-                  <div className={styles['user-bio-action']}>
-                    <button type="button" className="button small action" onClick={() => setEditing(true)}>
-                      수정
-                    </button>
-                  </div>
-                ) : null}
-
-                {creator.introduction ? (
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {creator.introduction}
-                  </Typography>
-                ) : null}
-                {creator.links.length ? (
-                  <ul className={styles['user-bio-links']}>
-                    {creator.links.map((link) => (
-                      <li key={link.id ?? link.url}>
-                        <Anchor href={link.url}>{link.label}</Anchor>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </>
-            )}
-          </div>
-          {data.hasCreatorPosts ? (
-            <Stack gap={2}>
-              <Stack direction="row" gap={1} sx={{ mb: 1 }}>
-                <button
-                  type="button"
-                  className={`button medium ${tab === 'all' ? 'submit' : 'action'}`}
-                  onClick={() => changePage(1, 'all')}
-                >
-                  전체글
-                </button>
-                <button
-                  type="button"
-                  className={`button medium ${tab === 'series' ? 'submit' : 'action'}`}
-                  onClick={() => changePage(1, 'series')}
-                >
-                  연재글
-                </button>
-              </Stack>
-
-              {data.posts.length ? (
-                <ul className={`paper ${styles['user-posts']}`}>
-                  {data.posts.map((post) => (
-                    <li key={post.id}>
-                      <button type="button" onClick={() => openPost(post.url)} className="paper">
-                        <strong>{post.subject}</strong>
-                        <span className={styles['post-label']}>
-                          <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
-                        </span>
-                        <time>{post.publishedAt ? formatTimeAgo(post.publishedAt) : '-'}</time>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <ScreenState>작성한 글이 없습니다.</ScreenState>
-              )}
-              {totalPages > 1 ? (
-                <Stack direction="row" justifyContent="center" gap={1}>
-                  <button
-                    type="button"
-                    className="button small action"
-                    disabled={page <= 1}
-                    onClick={() => changePage(page - 1)}
-                  >
-                    이전
+    <Profile
+      creator={creator}
+      currentMenu={menu}
+      canUseSeriesPosts={data.canUseSeriesPosts}
+      isOwner={data.isOwner}
+      canUseCreatorLibrary={data.canUseCreatorLibrary}
+      viewerCreatorHandleName={data.viewerCreatorHandleName}
+      hasBranding={Boolean(data.hasBranding)}
+      isEditing={editing}
+      editingContent={
+        <ProfileForm
+          profile={creator}
+          onCancel={() => setEditing(false)}
+          onSaved={(next) => {
+            setData((current) => (current ? { ...current, creator: { ...current.creator, ...next } } : current));
+            setEditing(false);
+          }}
+        />
+      }
+      following={following}
+      followSubmitting={followSubmitting}
+      onEdit={() => setEditing(true)}
+      onToggleFollow={toggleFollow}
+      onMenuChange={(nextMenu) => changePage(1, nextMenu)}
+    >
+      <Stack gap={2} sx={{ mt: 2 }}>
+        {data.isOwner ? (
+          data.posts.length ? (
+            <ul className={`paper ${styles['user-posts']}`}>
+              {data.posts.map((post) => (
+                <li key={post.id}>
+                  <button type="button" onClick={() => openPost(post.url)}>
+                    <strong>{post.subject}</strong>
+                    <span className={styles['post-label']}>
+                      <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
+                    </span>
+                    <time>{post.publishedAt ? formatTimeAgo(post.publishedAt) : '-'}</time>
                   </button>
-                  <Typography variant="body2">
-                    {page} / {totalPages}
-                  </Typography>
-                  <button
-                    type="button"
-                    className="button small action"
-                    disabled={page >= totalPages}
-                    onClick={() => changePage(page + 1)}
-                  >
-                    다음
-                  </button>
-                </Stack>
-              ) : null}
-            </Stack>
+                </li>
+              ))}
+            </ul>
           ) : (
-            <ScreenState kind="error">작가 개인 사정에 의해 이용이 중단된 프로필입니다.</ScreenState>
-          )}
-        </div>
-      </div>
-    </main>
+            <ScreenState>작성한 글이 없습니다.</ScreenState>
+          )
+        ) : (
+          <CreatorTimelinePosts posts={data.posts} emptyMessage="작성한 글이 없습니다." />
+        )}
+        {totalPages > 1 ? (
+          <Stack direction="row" justifyContent="center" gap={1}>
+            <button
+              type="button"
+              className="button small action"
+              disabled={page <= 1}
+              onClick={() => changePage(page - 1)}
+            >
+              이전
+            </button>
+            <Typography variant="body2">
+              {page} / {totalPages}
+            </Typography>
+            <button
+              type="button"
+              className="button small action"
+              disabled={page >= totalPages}
+              onClick={() => changePage(page + 1)}
+            >
+              다음
+            </button>
+          </Stack>
+        ) : null}
+      </Stack>
+    </Profile>
   );
 }

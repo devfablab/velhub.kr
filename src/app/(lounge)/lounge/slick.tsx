@@ -39,7 +39,7 @@ function PrevArrow(props: ArrowProps) {
   );
 }
 
-export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHub }: SlickProps) {
+export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrariesData, postsData, isHub }: SlickProps) {
   const settings = {
     className: styles.slider,
     dots: false,
@@ -106,6 +106,29 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
                 ) : site.member_count ? (
                   <span>{site.member_count.toLocaleString()}명 가입</span>
                 ) : null}
+              </Anchor>
+            </div>
+          ))}
+        </Slider>
+      </div>
+    );
+  }
+
+  if (creatorLibrariesData) {
+    return (
+      <div className={`${styles.slider} ${styles['slider-hits-sites']}`}>
+        <Slider {...settings}>
+          {creatorLibrariesData.creators.map((creator) => (
+            <div key={creator.handleName}>
+              <Anchor
+                href={`/creator/${creator.handleName}`}
+                style={{
+                  background: `${creator.coverImage ? `url(${creator.coverImage})` : 'url(/dummy.webp)'} no-repeat center / cover`,
+                }}
+              >
+                <strong>{creator.activityName} 작가</strong>
+                <p>{creator.introduction}</p>
+                <span>@{creator.handleName}</span>
               </Anchor>
             </div>
           ))}

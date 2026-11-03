@@ -54,17 +54,24 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     return NextResponse.json({ message: '독자 정보를 불러오지 못했습니다.' }, { status: 500 });
 
   const series = seriesResult.data ?? [];
-  const postsResult = await supabaseAdmin
+  let postsQuery = supabaseAdmin
     .from('posts')
     .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
     .eq('user_id', creator.user_id)
     .eq('published_status', 'published')
-    .eq('is_closed', false)
-    .or(`is_wording_blinded.eq.false,user_id.eq.${currentStigma?.stigmaId ?? ''}`)
-    .order('published_at', { ascending: false })
-    .range(from, from + 99);
+    .eq('is_closed', false);
 
-  if (postsResult.error) return NextResponse.json({ message: '내가 쓴 글을 불러오지 못했습니다.' }, { status: 500 });
+  postsQuery = currentStigma?.stigmaId
+    ? postsQuery.or(`is_wording_blinded.eq.false,user_id.eq.${currentStigma.stigmaId}`)
+    : postsQuery.eq('is_wording_blinded', false);
+
+  const postsResult = await postsQuery.order('published_at', { ascending: false }).range(from, from + 99);
+
+  if (postsResult.error)
+    return NextResponse.json(
+      { message: '독자 서재의 글 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' },
+      { status: 500 },
+    );
 
   const posts = postsResult.data ?? [];
   const [sitesResult, boardsResult] = await Promise.all([
