@@ -1,11 +1,11 @@
 import { cache } from 'react';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
-import { r2Storage } from '@/lib/clients/r2Storage';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 const PERIOD_DAYS = [1, 3, 5, 7, 15, 27, 50, 70, 90, 120, 150, 170, 200, 230, 250, 270, 300, 330, 365];
@@ -40,6 +40,9 @@ type SiteRow = {
   profile_picture: string | null;
   promotion_image: string | null;
   custom_domain: string | null;
+  member_count: number | null;
+  post_count: number | null;
+  profile_logo: string | null;
 };
 
 type BoardRow = {
@@ -47,6 +50,7 @@ type BoardRow = {
   site_id: string;
   board_key: string;
   board_type: 'basic' | 'blog' | 'feed' | 'gallery' | 'youtube';
+  write_permission: string | null;
 };
 
 type MomentPostRow = {
@@ -86,6 +90,16 @@ export type MomentSiteCard = {
   site_type: 'blog' | 'community';
   created_at: string;
 };
+
+export type MomentSiteHitCard = MomentSiteCard & {
+  member_count: number | null;
+  post_count: number | null;
+  profile_picture: string | null;
+  promotion_image: string | null;
+  profile_logo: string | null;
+};
+
+export type MomentAudience = 'creator' | 'owner' | 'newbie' | 'all';
 
 export type MomentPostCard = {
   post_id: string;
@@ -209,19 +223,74 @@ const getMomentCreators = cache(async (): Promise<MomentCreator[]> => {
   });
 });
 
-export async function getNewMomentSites(limit = 20, momentOnly = true): Promise<MomentSiteCard[]> {
-  const creatorUserIds = momentOnly ? (await getMomentCreators()).map((creator) => creator.userId) : [];
-  if (momentOnly && creatorUserIds.length === 0) return [];
+const getMomentOwnerUserIds = cache(async (): Promise<string[]> => {
+  const supabaseAdmin = getSupabaseAdmin();
+  const sitesResult = await supabaseAdmin
+    .from('rhizomes')
+    .select('owner_id')
+    .in('site_type', ['blog', 'community'])
+    .eq('visibility_type', 'public')
+    .eq('is_shutdown', false)
+    .or('is_blocked.eq.false,is_blocked.is.null')
+    .not('owner_id', 'is', null)
+    .limit(5000);
+
+  if (sitesResult.error) throw sitesResult.error;
+
+  const ownerUserIds = [...new Set((sitesResult.data ?? []).flatMap((site) => (site.owner_id ? [site.owner_id] : [])))];
+  if (!ownerUserIds.length) return [];
+
+  return [...(await getUsersWithMembershipFeature(ownerUserIds, 'owner_lounge'))];
+});
+
+const getMomentAudienceUserIds = cache(async (audience: Exclude<MomentAudience, 'all'>): Promise<string[]> => {
+  if (audience === 'creator') {
+    return (await getMomentCreators()).map((creator) => creator.userId);
+  }
+
+  const ownerUserIds = await getMomentOwnerUserIds();
+  if (audience === 'owner') return ownerUserIds;
+
+  const creatorUserIds = (await getMomentCreators()).map((creator) => creator.userId);
+  return [...new Set([...creatorUserIds, ...ownerUserIds])];
+});
+
+async function getMomentSitesForAudience(audience: Exclude<MomentAudience, 'all'>): Promise<SiteRow[]> {
+  const ownerUserIds = await getMomentAudienceUserIds(audience);
+  if (!ownerUserIds.length) return [];
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const sitesResult = await supabaseAdmin
+    .from('rhizomes')
+    .select(
+      'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
+    )
+    .in('owner_id', ownerUserIds)
+    .in('site_type', ['blog', 'community'])
+    .eq('visibility_type', 'public')
+    .eq('is_shutdown', false)
+    .or('is_blocked.eq.false,is_blocked.is.null')
+    .limit(5000);
+
+  if (sitesResult.error) throw sitesResult.error;
+  return (sitesResult.data ?? []) as SiteRow[];
+}
+
+export async function getNewMomentSites(limit = 20, audience: MomentAudience = 'creator'): Promise<MomentSiteCard[]> {
+  const audienceUserIds = audience === 'all' ? null : await getMomentAudienceUserIds(audience);
+  if (audienceUserIds && audienceUserIds.length === 0) return [];
 
   const supabaseAdmin = getSupabaseAdmin();
   let sitesQuery = supabaseAdmin
     .from('rhizomes')
-    .select('id, owner_id, site_key, site_label, summary, site_type, profile_picture, promotion_image, custom_domain')
+    .select(
+      'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
+    )
     .in('site_type', ['blog', 'community'])
     .eq('visibility_type', 'public')
     .eq('is_shutdown', false)
     .or('is_blocked.eq.false,is_blocked.is.null');
-  if (momentOnly) sitesQuery = sitesQuery.in('owner_id', creatorUserIds);
+  if (audienceUserIds) sitesQuery = sitesQuery.in('owner_id', audienceUserIds);
   const sitesResult = await sitesQuery.limit(5000);
 
   if (sitesResult.error) throw sitesResult.error;
@@ -357,155 +426,187 @@ export async function getRisingMomentCreators(limit = 20): Promise<MomentCreator
     }));
 }
 
-const getMomentPosts = cache(async (): Promise<{ posts: MomentPostCard[]; sourceRows: MomentPostRow[] }> => {
-  const creators = await getMomentCreators();
-  const creatorByUserId = new Map(creators.map((creator) => [creator.userId, creator]));
-  const userIds = [...creatorByUserId.keys()];
-  if (userIds.length === 0) return { posts: [], sourceRows: [] };
+const getMomentPosts = cache(
+  async (
+    audience: Exclude<MomentAudience, 'all'> = 'creator',
+  ): Promise<{ posts: MomentPostCard[]; sourceRows: MomentPostRow[] }> => {
+    const creators = audience === 'creator' ? await getMomentCreators() : [];
+    const creatorByUserId = new Map(creators.map((creator) => [creator.userId, creator]));
+    const userIds = [...creatorByUserId.keys()];
+    if (audience === 'creator' && userIds.length === 0) return { posts: [], sourceRows: [] };
 
-  const supabaseAdmin = getSupabaseAdmin();
-  const postsResult = await supabaseAdmin
-    .from('posts')
-    .select(
-      'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, published_at, series_id',
-    )
-    .in('user_id', userIds)
-    .eq('published_status', 'published')
-    .eq('is_closed', false)
-    .eq('is_wording_blinded', false)
-    .not('published_at', 'is', null)
-    .order('published_at', { ascending: false })
-    .limit(5000);
+    const supabaseAdmin = getSupabaseAdmin();
+    let postsQuery = supabaseAdmin
+      .from('posts')
+      .select(
+        'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, published_at, series_id',
+      )
+      .eq('published_status', 'published')
+      .eq('is_closed', false)
+      .eq('is_wording_blinded', false)
+      .not('published_at', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(5000);
+    if (audience === 'creator') postsQuery = postsQuery.in('user_id', userIds);
 
-  if (postsResult.error) throw postsResult.error;
-  const postRows = (postsResult.data ?? []) as MomentPostRow[];
-  if (postRows.length === 0) return { posts: [], sourceRows: [] };
+    const postsResult = await postsQuery;
+    if (postsResult.error) throw postsResult.error;
+    const postRows = (postsResult.data ?? []) as MomentPostRow[];
+    if (postRows.length === 0) return { posts: [], sourceRows: [] };
 
-  const boardIds = [...new Set(postRows.map((post) => post.board_id))];
-  const boardsResult = await supabaseAdmin
-    .from('boards')
-    .select('id, site_id, board_key, board_type')
-    .in('id', boardIds)
-    .in('board_type', ['basic', 'blog', 'feed', 'gallery', 'youtube']);
+    const boardIds = [...new Set(postRows.map((post) => post.board_id))];
+    const boardsResult = await supabaseAdmin
+      .from('boards')
+      .select('id, site_id, board_key, board_type, write_permission')
+      .in('id', boardIds)
+      .in('board_type', ['basic', 'blog', 'feed', 'gallery', 'youtube']);
 
-  if (boardsResult.error) throw boardsResult.error;
-  const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
-  const siteIds = [...new Set([...boardById.values()].map((board) => board.site_id))];
-  if (siteIds.length === 0) return { posts: [], sourceRows: [] };
+    if (boardsResult.error) throw boardsResult.error;
+    const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
+    const siteIds = [...new Set([...boardById.values()].map((board) => board.site_id))];
+    if (siteIds.length === 0) return { posts: [], sourceRows: [] };
 
-  const sitesResult = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, owner_id, site_key, site_label, summary, site_type, profile_picture, promotion_image, custom_domain')
-    .in('id', siteIds)
-    .in('site_type', ['blog', 'community'])
-    .eq('visibility_type', 'public')
-    .eq('is_shutdown', false)
-    .or('is_blocked.eq.false,is_blocked.is.null');
-
-  if (sitesResult.error) throw sitesResult.error;
-  const siteById = new Map(((sitesResult.data ?? []) as SiteRow[]).map((site) => [site.id, site]));
-  const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(
-    [...siteById.values()].map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)),
-    'owner_domain',
-  );
-
-  const resolvedRows = postRows.filter((post) => {
-    const board = boardById.get(post.board_id);
-    const site = board ? siteById.get(board.site_id) : null;
-    if (!board || !site) return false;
-    return site.site_type === 'blog' || Boolean(post.series_id);
-  });
-
-  const posts: MomentPostCard[] = resolvedRows.flatMap<MomentPostCard>((post): MomentPostCard[] => {
-    const board = boardById.get(post.board_id);
-    const site = board ? siteById.get(board.site_id) : null;
-    const creator = creatorByUserId.get(post.user_id);
-    if (!board || !site || !creator) return [];
-
-    const base: MomentPostCard = {
-      post_id: post.id,
-      author_id: post.user_id,
-      site_key: site.site_key,
-      site_url: getPublicSiteUrl({
-        siteKey: site.site_key,
-        customDomain: site.custom_domain,
-        hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
-      }),
-      site_label: site.site_label,
-      site_type: site.site_type,
-      profile_picture: toPublicUrl('avatar', site.profile_picture),
-      promotion_image: toPublicUrl('promotion-image', site.promotion_image),
-      slug: String(post.slug),
-      board_key: board.board_key,
-      board_type: board.board_type,
-      author_name: creator.activityName,
-      author_avatar: creator.profileImage,
-      published_at: post.published_at,
-    };
-
-    if (board.board_type === 'gallery') {
-      return [
-        {
-          ...base,
-          subject: post.subject,
-          summary: post.summary,
-          content_html: post.content_html,
-          image: Array.isArray(post.images) ? toPublicUrl('post', post.images[0]?.path) : null,
-        },
-      ];
+    let sitesQuery = supabaseAdmin
+      .from('rhizomes')
+      .select(
+        'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
+      )
+      .in('id', siteIds)
+      .in('site_type', ['blog', 'community'])
+      .eq('visibility_type', 'public')
+      .eq('is_shutdown', false)
+      .or('is_blocked.eq.false,is_blocked.is.null');
+    if (audience !== 'creator') {
+      const audienceUserIds = await getMomentAudienceUserIds(audience);
+      if (!audienceUserIds.length) return { posts: [], sourceRows: [] };
+      sitesQuery = sitesQuery.in('owner_id', audienceUserIds);
     }
 
-    if (board.board_type === 'youtube') {
-      return [
-        {
-          ...base,
-          subject: post.subject,
-          summary: post.summary,
-          thumbnail_image: toPublicUrl('post', post.thumbnail_image),
-          thumbnail_width: post.thumbnail_width,
-          thumbnail_height: post.thumbnail_height,
-          youtube_id: post.youtube_id,
-        },
-      ];
-    }
+    const sitesResult = await sitesQuery;
+    if (sitesResult.error) throw sitesResult.error;
+    const siteById = new Map(((sitesResult.data ?? []) as SiteRow[]).map((site) => [site.id, site]));
+    const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(
+      [...siteById.values()].map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)),
+      'owner_domain',
+    );
 
-    if (board.board_type === 'feed') {
-      return [
-        {
-          ...base,
-          content_simple: post.content_simple,
-          image: Array.isArray(post.images) ? toPublicUrl('post', post.images[0]?.path) : null,
-        },
-      ];
-    }
-
-    return [
-      {
-        ...base,
-        subject: post.subject,
-        content_html: post.content_html,
-        thumbnail_image: toPublicUrl('post', post.thumbnail_image),
-      },
-    ];
-  });
-
-  const visiblePostIds = new Set(posts.map((post) => `${post.site_key}:${post.board_key}:${post.slug}`));
-  return {
-    posts,
-    sourceRows: resolvedRows.filter((post) => {
+    const resolvedRows = postRows.filter((post) => {
       const board = boardById.get(post.board_id);
       const site = board ? siteById.get(board.site_id) : null;
-      return Boolean(board && site && visiblePostIds.has(`${site.site_key}:${board.board_key}:${post.slug}`));
-    }),
-  };
-});
+      if (!board || !site) return false;
+      if (audience === 'newbie') return !(board.board_type !== 'blog' && board.write_permission === 'manager');
+      return site.site_type === 'blog' || Boolean(post.series_id);
+    });
+    const postUserIds = [...new Set(resolvedRows.map((post) => post.user_id).filter(Boolean))];
+    const stigmasResult = postUserIds.length
+      ? await supabaseAdmin.from('stigmas').select('id, user_name, avatar').in('id', postUserIds)
+      : { data: [], error: null };
+    if (stigmasResult.error) throw stigmasResult.error;
+    const stigmaById = new Map((stigmasResult.data ?? []).map((stigma) => [stigma.id, stigma]));
+
+    const posts: MomentPostCard[] = resolvedRows.flatMap<MomentPostCard>((post): MomentPostCard[] => {
+      const board = boardById.get(post.board_id);
+      const site = board ? siteById.get(board.site_id) : null;
+      const creator = creatorByUserId.get(post.user_id);
+      const stigma = stigmaById.get(post.user_id);
+      if (!board || !site || (audience === 'creator' && !creator)) return [];
+      let authorName = creator?.activityName ?? '작성자';
+      if (!creator && stigma?.user_name) {
+        try {
+          authorName = decrypt(stigma.user_name);
+        } catch {
+          // 복호화할 수 없는 활동명은 기본 이름으로 표시한다.
+        }
+      }
+
+      const base: MomentPostCard = {
+        post_id: post.id,
+        author_id: post.user_id,
+        site_key: site.site_key,
+        site_url: getPublicSiteUrl({
+          siteKey: site.site_key,
+          customDomain: site.custom_domain,
+          hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
+        }),
+        site_label: site.site_label,
+        site_type: site.site_type,
+        profile_picture: toPublicUrl('avatar', site.profile_picture),
+        promotion_image: toPublicUrl('promotion-image', site.promotion_image),
+        slug: String(post.slug),
+        board_key: board.board_key,
+        board_type: board.board_type,
+        author_name: authorName,
+        author_avatar: creator?.profileImage ?? toPublicUrl('avatar', stigma?.avatar),
+        published_at: post.published_at,
+      };
+
+      if (board.board_type === 'gallery') {
+        return [
+          {
+            ...base,
+            subject: post.subject,
+            summary: post.summary,
+            content_html: post.content_html,
+            image: Array.isArray(post.images) ? toPublicUrl('post', post.images[0]?.path) : null,
+          },
+        ];
+      }
+
+      if (board.board_type === 'youtube') {
+        return [
+          {
+            ...base,
+            subject: post.subject,
+            summary: post.summary,
+            thumbnail_image: toPublicUrl('post', post.thumbnail_image),
+            thumbnail_width: post.thumbnail_width,
+            thumbnail_height: post.thumbnail_height,
+            youtube_id: post.youtube_id,
+          },
+        ];
+      }
+
+      if (board.board_type === 'feed') {
+        return [
+          {
+            ...base,
+            content_simple: post.content_simple,
+            image: Array.isArray(post.images) ? toPublicUrl('post', post.images[0]?.path) : null,
+          },
+        ];
+      }
+
+      return [
+        {
+          ...base,
+          subject: post.subject,
+          content_html: post.content_html,
+          thumbnail_image: toPublicUrl('post', post.thumbnail_image),
+        },
+      ];
+    });
+
+    const visiblePostIds = new Set(posts.map((post) => `${post.site_key}:${post.board_key}:${post.slug}`));
+    return {
+      posts,
+      sourceRows: resolvedRows.filter((post) => {
+        const board = boardById.get(post.board_id);
+        const site = board ? siteById.get(board.site_id) : null;
+        return Boolean(board && site && visiblePostIds.has(`${site.site_key}:${board.board_key}:${post.slug}`));
+      }),
+    };
+  },
+);
 
 function getPostKey(post: MomentPostCard) {
   return `${post.site_key}:${post.board_key}:${post.slug}`;
 }
 
-export async function getRecentMomentPosts(limit = 50): Promise<MomentPostCard[]> {
-  const { posts } = await getMomentPosts();
+export async function getRecentMomentPosts(
+  limit = 50,
+  audience: Exclude<MomentAudience, 'all'> = 'creator',
+): Promise<MomentPostCard[]> {
+  const { posts } = await getMomentPosts(audience);
   const byAuthor = (items: MomentPostCard[]) => {
     const seenAuthors = new Set<string>();
     return items.filter((post) => {
@@ -564,8 +665,12 @@ async function getPostScoreMap(
   return scoreMap;
 }
 
-async function getRankedMomentPosts(limit: number, table: 'post_likes' | 'post_view_daily_stats') {
-  const { posts } = await getMomentPosts();
+async function getRankedMomentPosts(
+  limit: number,
+  table: 'post_likes' | 'post_view_daily_stats',
+  audience: Exclude<MomentAudience, 'all'> = 'creator',
+) {
+  const { posts } = await getMomentPosts(audience);
   const postById = new Map(posts.map((post) => [post.post_id, post]));
   const scoreMap = await getPostScoreMap([...postById.keys()], table);
 
@@ -597,10 +702,81 @@ async function getRankedMomentPosts(limit: number, table: 'post_likes' | 'post_v
   return [...ranked, ...fallback].slice(0, limit);
 }
 
-export async function getTrendingMomentPosts(limit = 50) {
-  return getRankedMomentPosts(limit, 'post_likes');
+export async function getRisingMomentSites(limit = 20): Promise<MomentSiteHitCard[]> {
+  const [sites, momentPosts] = await Promise.all([getMomentSitesForAudience('owner'), getMomentPosts('owner')]);
+  if (!sites.length) return [];
+
+  const posts = momentPosts.posts;
+  const scoreMap = await getPostScoreMap(
+    posts.map((post) => post.post_id),
+    'post_likes',
+  );
+  const postsBySiteKey = new Map<string, MomentPostCard[]>();
+  posts.forEach((post) => {
+    const sitePosts = postsBySiteKey.get(post.site_key) ?? [];
+    sitePosts.push(post);
+    postsBySiteKey.set(post.site_key, sitePosts);
+  });
+  const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(
+    sites.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)),
+    'owner_domain',
+  );
+  const toCard = (site: SiteRow): MomentSiteHitCard => ({
+    site_key: site.site_key,
+    site_url: getPublicSiteUrl({
+      siteKey: site.site_key,
+      customDomain: site.custom_domain,
+      hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
+    }),
+    site_label: site.site_label,
+    summary: site.summary,
+    site_type: site.site_type,
+    created_at: '',
+    profile_picture: toPublicUrl('avatar', site.profile_picture),
+    profile_logo: toPublicUrl('profile_logo', site.profile_logo),
+    promotion_image: toPublicUrl('promotion-image', site.promotion_image),
+    member_count: site.member_count,
+    post_count: site.post_count,
+  });
+
+  for (const days of PERIOD_DAYS) {
+    const start = getDateBefore(days);
+    const ranked = sites
+      .map((site) => ({
+        site,
+        score: (postsBySiteKey.get(site.site_key) ?? []).reduce(
+          (total, post) =>
+            total +
+            (scoreMap.get(post.post_id) ?? [])
+              .filter((entry) => entry.createdAt >= start)
+              .reduce((postTotal, entry) => postTotal + entry.score, 0),
+          0,
+        ),
+      }))
+      .filter((item) => item.score > 0)
+      .sort((left, right) => right.score - left.score || left.site.site_label.localeCompare(right.site.site_label));
+    if (ranked.length >= limit) return ranked.slice(0, limit).map(({ site }) => toCard(site));
+  }
+
+  const totalScores = new Map<string, number>();
+  posts.forEach((post) => {
+    const score = (scoreMap.get(post.post_id) ?? []).reduce((total, entry) => total + entry.score, 0);
+    totalScores.set(post.site_key, (totalScores.get(post.site_key) ?? 0) + score);
+  });
+  return [...sites]
+    .sort(
+      (left, right) =>
+        (totalScores.get(right.site_key) ?? 0) - (totalScores.get(left.site_key) ?? 0) ||
+        left.site_label.localeCompare(right.site_label),
+    )
+    .slice(0, limit)
+    .map(toCard);
 }
 
-export async function getMostReadMomentPosts(limit = 50) {
-  return getRankedMomentPosts(limit, 'post_view_daily_stats');
+export async function getTrendingMomentPosts(limit = 50, audience: Exclude<MomentAudience, 'all'> = 'creator') {
+  return getRankedMomentPosts(limit, 'post_likes', audience);
+}
+
+export async function getMostReadMomentPosts(limit = 50, audience: Exclude<MomentAudience, 'all'> = 'creator') {
+  return getRankedMomentPosts(limit, 'post_view_daily_stats', audience);
 }
