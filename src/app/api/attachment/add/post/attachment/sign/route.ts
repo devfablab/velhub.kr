@@ -1,7 +1,7 @@
-import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/community/policies';
-import { createR2UploadSignature } from '@/lib/r2Storage';
+import { createR2UploadSignature } from '@/lib/clients/r2Storage';
+import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 const POST_BUCKET = 'post';

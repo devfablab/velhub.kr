@@ -1,5 +1,5 @@
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 function isMinorAge(birthDate: string | null | undefined) {
   if (!birthDate) return false;

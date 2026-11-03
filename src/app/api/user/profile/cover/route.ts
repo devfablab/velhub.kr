@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 
 const MAX_FILE_SIZE = 1024 * 1024;

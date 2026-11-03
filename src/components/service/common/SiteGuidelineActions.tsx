@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import ReportButton from '@/components/service/common/ReportButton';
 import SiteGuidelineDialog from '@/components/service/common/SiteGuidelineDialog';
 import styles from '@/app/board.module.sass';

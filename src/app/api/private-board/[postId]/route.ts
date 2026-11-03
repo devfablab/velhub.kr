@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/privateBoard/access';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/service/community/privateBoardAccess';
 import { normalizeText } from '@/lib/utils';
 
 function getFallbackAuthorName(value: string | null | undefined) {

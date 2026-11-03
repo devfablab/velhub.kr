@@ -36,7 +36,7 @@ import {
 import Avatar from '@mui/material/Avatar';
 import { getNotFoundPageMessage } from '@/lib/pageError';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
-import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
@@ -448,6 +448,7 @@ export default function Opt({
   const [canEditContent] = useState(initialData?.canEditContent === true);
   const [canDeleteContent] = useState(initialData?.canDeleteContent === true);
   const [canMovePost] = useState(initialData?.canMovePost === true);
+  const [currentTime] = useState(() => Date.now());
   const [isSeriesMoveDialogOpen, setIsSeriesMoveDialogOpen] = useState(false);
   const [isPostMoveDialogOpen, setIsPostMoveDialogOpen] = useState(false);
   const [moveBoards, setMoveBoards] = useState<MoveBoard[]>([]);
@@ -497,7 +498,7 @@ export default function Opt({
       return false;
     }
 
-    return date.getTime() <= Date.now();
+    return date.getTime() <= currentTime;
   }
 
   function openGalleryViewer(index: number) {
@@ -785,7 +786,7 @@ export default function Opt({
     );
   }
 
-  const canEdit = canEditContent && !content.is_closed && !(canManageContent && content.is_locked);
+  const canEdit = canEditContent && !content.is_closed;
   const canDelete = canDeleteContent && !content.is_closed && !content.is_locked;
   const requiresDeleteReason = canManageContent && !isAuthor;
   const isBasicBoard = board.board_type === 'basic';
@@ -1191,7 +1192,7 @@ export default function Opt({
                         ) : null}
                         {content.published_status === 'unknown' &&
                         content.published_at &&
-                        new Date(content.published_at).getTime() > Date.now() ? (
+                        new Date(content.published_at).getTime() > currentTime ? (
                           <small>(예약글) </small>
                         ) : null}
                         {content.subject}

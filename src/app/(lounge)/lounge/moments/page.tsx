@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { originTitle, Seo } from '@/lib/seo';
 import {
   getMostReadMomentPosts,
   getNewMomentCreators,
@@ -6,8 +7,7 @@ import {
   getRecentMomentPosts,
   getRisingMomentCreators,
   getTrendingMomentPosts,
-} from '@/lib/lounge/moments';
-import { originTitle, Seo } from '@/lib/seo';
+} from '@/lib/service/lounge/loungeMoments';
 import Container from '../../menu';
 import type { PostsResponse } from '../../page';
 import Aside from '../aside';

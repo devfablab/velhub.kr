@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
-import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler/server';
+import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler.server';
 
 type RouteContext = {
   params: Promise<{

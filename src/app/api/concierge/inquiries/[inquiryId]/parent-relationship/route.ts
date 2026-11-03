@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';

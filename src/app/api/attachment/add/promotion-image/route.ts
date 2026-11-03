@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   getSitePromotionAccess,
   MAX_SITE_PROMOTION_FILE_SIZE,

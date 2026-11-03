@@ -1,13 +1,13 @@
 import path from 'path';
 import sharp from 'sharp';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   buildCommunityManagerList,
   getBoardSummaries,
   getCommunityManagerAccess,
-} from '@/lib/community/communityManager/utils';
-import { getOwnerTransferAvailability } from '@/lib/community/ownerTransfers';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+} from '@/lib/service/community/communityManager/utils';
+import { getOwnerTransferAvailability } from '@/lib/service/community/ownerTransfers';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 const BUCKET_NAME = 'manager_icon';

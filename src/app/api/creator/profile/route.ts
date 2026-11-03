@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type CreatorLinkInput = { label?: unknown; url?: unknown; sortOrder?: unknown };
 const INTRODUCTION_MIN_LENGTH = 2;

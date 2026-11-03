@@ -1,16 +1,16 @@
 import sharp from 'sharp';
+import { decrypt } from '@/lib/encryption/decrypt';
+import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   getBlogCommunityContext,
   getBlogCommunityEnablement,
   assertBlogCommunityUse,
-} from '@/lib/blogCommunity/access';
-import { normalizeBlogCommunityDraw } from '@/lib/blogCommunity/draw';
-import { decrypt } from '@/lib/encryption/decrypt';
-import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+} from '@/lib/service/blog/blogCommunity/access';
+import { normalizeBlogCommunityDraw } from '@/lib/service/blog/blogCommunity/draw';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
-import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

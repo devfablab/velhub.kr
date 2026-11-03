@@ -4,7 +4,7 @@ import { SyntheticEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormControl, FormHelperText, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import { LABS_CATEGORIES, LabsCategory } from '@/lib/github/labs';
+import { LABS_CATEGORIES, LabsCategory } from '@/lib/service/concierge/githubLabs';
 import Anchor from '@/components/Anchor';
 import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';

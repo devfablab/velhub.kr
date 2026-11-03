@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   createIdentityVerificationId,
   createPortOneIdentityRequest,
   extractVerifiedIdentity,
   getPortOneIdentityVerification,
 } from '@/lib/identity/portone';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 
 type GuardianVerifyBody = {
   identityVerificationId?: string;

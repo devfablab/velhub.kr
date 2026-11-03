@@ -1,9 +1,9 @@
 import { type NextRequest } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type PostRow = {
@@ -76,6 +76,16 @@ function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   const publicUrl = r2Storage.from(bucket).getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? null;
+}
+
+function getPostThumbnailImageUrl(path: string | null | undefined) {
+  const normalizedPath = normalizeText(path);
+
+  if (!normalizedPath) {
+    return null;
+  }
+
+  return getPublicImageUrl(normalizedPath.includes('/') ? 'post' : 'og-image', normalizedPath);
 }
 
 function extractYoutubeId(value: string | null | undefined) {
@@ -345,7 +355,7 @@ export async function GET(request: NextRequest) {
           ...base,
           subject: post.subject,
           summary: post.summary,
-          thumbnail_image: getPublicImageUrl('post', post.thumbnail_image),
+          thumbnail_image: getPostThumbnailImageUrl(post.thumbnail_image),
           thumbnail_width: post.thumbnail_width,
           thumbnail_height: post.thumbnail_height,
           youtube_id: post.youtube_id || extractYoutubeId(post.youtube_url),
@@ -369,7 +379,7 @@ export async function GET(request: NextRequest) {
           ...base,
           subject: post.subject,
           content_html: post.content_html,
-          thumbnail_image: getPublicImageUrl('post', post.thumbnail_image),
+          thumbnail_image: getPostThumbnailImageUrl(post.thumbnail_image),
         };
       }
 

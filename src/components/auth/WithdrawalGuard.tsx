@@ -13,7 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { ACCOUNT_WITHDRAWAL_GRACE_MS } from '@/lib/users/accountWithdrawal.shared';
 import { formatDateTimeDetail } from '@/lib/utils';
 import { useAuthState } from './AuthStateProvider';

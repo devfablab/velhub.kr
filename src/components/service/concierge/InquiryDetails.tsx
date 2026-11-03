@@ -1,5 +1,5 @@
 import { Stack, Typography } from '@mui/material';
-import { inquirySubtypes, type InquiryType } from '@/lib/concierge/inquiries';
+import { inquirySubtypes, type InquiryType } from '@/lib/service/concierge/conciergeInquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import ConciergeFileList from './ConciergeFileList';
 

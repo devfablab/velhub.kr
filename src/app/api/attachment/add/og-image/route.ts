@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 
 const MAX_OG_IMAGE_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_OG_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);

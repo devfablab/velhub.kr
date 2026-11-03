@@ -33,7 +33,7 @@ import {
 import Avatar from '@mui/material/Avatar';
 import { getNotFoundPageMessage } from '@/lib/pageError';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
-import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';

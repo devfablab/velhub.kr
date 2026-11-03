@@ -1,6 +1,6 @@
 import { getPastDueGraceDays } from '@/lib/payments/refunds';
 import { SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE, PAYMENT_TARGET_TYPE } from '@/lib/payments/types';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 

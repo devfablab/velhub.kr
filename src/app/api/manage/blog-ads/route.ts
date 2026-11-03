@@ -1,4 +1,4 @@
-import { getBlogAdIdentityStatus, getBlogAdSiteContext } from '@/lib/blogAds/server';
+import { getBlogAdIdentityStatus, getBlogAdSiteContext } from '@/lib/service/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 
 export async function GET(request: Request) {

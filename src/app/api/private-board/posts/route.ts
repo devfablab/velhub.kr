@@ -1,6 +1,6 @@
 import sharp from 'sharp';
-import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/privateBoard/access';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/service/community/privateBoardAccess';
 import { normalizeText } from '@/lib/utils';
 
 const MAX_IMAGE_SIZE = 1024 * 1024;

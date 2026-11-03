@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getVisibleBlogPostPromotion } from '@/lib/blogAds/server';
-import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getVisibleBlogPostPromotion } from '@/lib/service/blog/blogAds/server';
+import {
+  canManageCommunityBoardContents,
+  getCommunityManagerAccess,
+} from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { canManageBlogContents } from '@/lib/site/contentAccess';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getWordingProfilerViolationFields } from '@/lib/wordingProfiler/server';
+import { getWordingProfilerViolationFields } from '@/lib/wordingProfiler.server';
 
 type RouteContext = {
   params: Promise<{
@@ -1142,6 +1146,17 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
+    if (rhizomeData.site_type === 'blog' && !canManageContent && session.stigmaId) {
+      const membershipResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role, is_approval')
+        .eq('site_id', rhizomeData.id)
+        .eq('user_id', session.stigmaId)
+        .maybeSingle();
+
+      canManageContent = canManageBlogContents(membershipResult.data);
+    }
+
     if (boardData.write_permission === 'manager' && !canManageContent) {
       return NextResponse.json({ error: '매니저 전용 게시판입니다.' }, { status: 403 });
     }
@@ -1218,22 +1233,8 @@ export async function GET(request: Request, context: RouteContext) {
     if (postData.is_wording_blinded === true && !isAuthor) {
       return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
-    let canDeleteContent = canManageContent || isAuthor;
-    let canEditContent = canManageContent || isAuthor;
-
-    if (rhizomeData.site_type === 'blog' && isAuthor && !isStaff) {
-      const memberRoleResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('role')
-        .eq('site_id', rhizomeData.id)
-        .eq('user_id', session.stigmaId)
-        .maybeSingle();
-
-      const isBlogMember = memberRoleResult.data?.role === 'member';
-
-      canDeleteContent = isBlogMember;
-      canEditContent = isBlogMember;
-    }
+    const canDeleteContent = canManageContent || isAuthor;
+    const canEditContent = canManageContent || isAuthor;
 
     const hasDeletedPostPermanentPurchase =
       postData.is_closed === true &&
@@ -1600,14 +1601,13 @@ export async function GET(request: Request, context: RouteContext) {
             seriesId: postData.series_id,
           })
         : { sponsorship: null, ads: [] };
-    const attachmentResult =
-      ['basic', 'blog'].includes(boardData.board_type)
-        ? await supabaseAdmin
-            .from('post_attachments')
-            .select('id, file_name, file_size, storage_path, sort_order')
-            .eq('post_id', postData.id)
-            .order('sort_order')
-        : { data: [], error: null };
+    const attachmentResult = ['basic', 'blog'].includes(boardData.board_type)
+      ? await supabaseAdmin
+          .from('post_attachments')
+          .select('id, file_name, file_size, storage_path, sort_order')
+          .eq('post_id', postData.id)
+          .order('sort_order')
+      : { data: [], error: null };
 
     if (attachmentResult.error) {
       return NextResponse.json({ error: '첨부 파일을 불러오지 못했습니다.' }, { status: 500 });

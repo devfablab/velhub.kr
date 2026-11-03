@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getPartnershipProposal } from '@/lib/partnerships/server';
+import { getPartnershipProposal } from '@/lib/service/concierge/partnerships.server';
 import Container from '../../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';

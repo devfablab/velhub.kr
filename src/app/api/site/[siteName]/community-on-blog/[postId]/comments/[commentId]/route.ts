@@ -1,8 +1,8 @@
-import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
-import { isNumericContentSlug } from '@/lib/contentSlug';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { isNumericContentSlug } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
-import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler/server';
+import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler.server';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string; commentId: string }> };
 
@@ -54,7 +54,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     const content = normalizeText(typeof body?.content === 'string' ? body.content : '');
     if (!content) return Response.json({ error: '댓글을 입력해주세요.' }, { status: 400 });
     if (await hasWordingProfilerViolation(feature.siteId, { content })) {
-      return Response.json({ code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_COMMENT_EDIT_ERROR, fields: ['content'] }, { status: 400 });
+      return Response.json(
+        { code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_COMMENT_EDIT_ERROR, fields: ['content'] },
+        { status: 400 },
+      );
     }
     const result = await supabaseAdmin
       .from('blog_community_comments')

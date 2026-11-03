@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 
 export async function GET() {
   const sessionClaims = await getSessionClaims();

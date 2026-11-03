@@ -1,6 +1,6 @@
 import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 

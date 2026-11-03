@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
-import { createInviteEmailProof } from '@/lib/invites/emailProof';
+import { createInviteEmailProof } from '@/lib/auth/inviteEmailProof';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

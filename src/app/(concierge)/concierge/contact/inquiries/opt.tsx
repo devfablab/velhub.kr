@@ -6,7 +6,7 @@ import {
   inquiryTypeLabels,
   type InquiryStatus,
   type InquiryType,
-} from '@/lib/concierge/inquiries';
+} from '@/lib/service/concierge/conciergeInquiries';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
@@ -38,7 +38,9 @@ export default function Opt({
     <div className={styles.inquiry}>
       {initialLoginRequired ? <LoginRequiredScreen /> : null}
       {!initialLoginRequired && error ? <ScreenState kind="error">{error}</ScreenState> : null}
-      {!initialLoginRequired && !error && inquiries.length === 0 ? <ScreenState>문의 내역이 없습니다.</ScreenState> : null}
+      {!initialLoginRequired && !error && inquiries.length === 0 ? (
+        <ScreenState>문의 내역이 없습니다.</ScreenState>
+      ) : null}
       {!initialLoginRequired && inquiries.length > 0 ? (
         <div className={`paper ${styles['inquiry-items']}`}>
           {inquiries.map((inquiry) => (
@@ -58,14 +60,16 @@ export default function Opt({
           ))}
         </div>
       ) : null}
-      {!initialLoginRequired ? <Stack direction="row" justifyContent="flex-end" gap={2}>
-        <Anchor href="/concierge/contact" className="button medium close">
-          뒤로가기
-        </Anchor>
-        <Anchor href="/concierge/contact/inquiries/new" className="button medium action">
-          문의하기
-        </Anchor>
-      </Stack> : null}
+      {!initialLoginRequired ? (
+        <Stack direction="row" justifyContent="flex-end" gap={2}>
+          <Anchor href="/concierge/contact" className="button medium close">
+            뒤로가기
+          </Anchor>
+          <Anchor href="/concierge/contact/inquiries/new" className="button medium action">
+            문의하기
+          </Anchor>
+        </Stack>
+      ) : null}
     </div>
   );
 }

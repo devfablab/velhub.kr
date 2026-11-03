@@ -1,4 +1,4 @@
-import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import Opt, { type BlogCommunityPostResponse } from './opt';
 import { getSiteApiData } from '@/app/(site)/getSiteApiData';

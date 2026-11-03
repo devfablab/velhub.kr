@@ -13,7 +13,7 @@ import {
   type ReportAppealCategory,
 } from '@/lib/reports/appeals';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -257,12 +257,14 @@ export async function POST(request: Request, context: RouteContext) {
       try {
         const parsed = JSON.parse(fileValue) as unknown;
         if (
-          typeof parsed === 'object' && parsed !== null &&
+          typeof parsed === 'object' &&
+          parsed !== null &&
           typeof (parsed as { fileName?: unknown }).fileName === 'string' &&
           typeof (parsed as { fileSize?: unknown }).fileSize === 'number' &&
           typeof (parsed as { mimeType?: unknown }).mimeType === 'string' &&
           typeof (parsed as { storagePath?: unknown }).storagePath === 'string'
-        ) opinionFile = parsed as TemporaryOpinionFile;
+        )
+          opinionFile = parsed as TemporaryOpinionFile;
       } catch {}
     }
 
@@ -273,7 +275,11 @@ export async function POST(request: Request, context: RouteContext) {
     if (contentRequest === 'edit_and_review' && !modificationContent)
       fieldErrors.modificationContent = '수정 예정 내용을 입력해 주세요.';
     if (!opinionFile || opinionFile.fileSize <= 0) fieldErrors.opinionFile = '첨부자료 PDF를 선택해 주세요.';
-    else if (opinionFile.mimeType !== 'application/pdf' || !opinionFile.fileName.toLowerCase().endsWith('.pdf') || !opinionFile.storagePath.startsWith(`temp/concierge/${session.authUserId}/appeal_opinion/`))
+    else if (
+      opinionFile.mimeType !== 'application/pdf' ||
+      !opinionFile.fileName.toLowerCase().endsWith('.pdf') ||
+      !opinionFile.storagePath.startsWith(`temp/concierge/${session.authUserId}/appeal_opinion/`)
+    )
       fieldErrors.opinionFile = '첨부자료는 PDF 파일만 등록할 수 있습니다.';
     else if (opinionFile.fileSize >= MAX_FILE_SIZE)
       fieldErrors.opinionFile = '첨부자료는 10MB 미만의 PDF 파일만 등록할 수 있습니다.';

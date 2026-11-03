@@ -28,8 +28,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { normalizeCustomDomain } from '@/lib/customDomain';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import { normalizeCustomDomain } from '@/lib/site/customDomain';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';

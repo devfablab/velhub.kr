@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
-import { isInquiryType, inquiryTypes } from '@/lib/concierge/inquiries';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { isInquiryType, inquiryTypes } from '@/lib/service/concierge/conciergeInquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function GET(request: NextRequest) {
   const currentStigma = await getCurrentStigma();

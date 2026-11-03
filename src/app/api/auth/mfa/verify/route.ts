@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { consumeTotpRecoveryCode } from '@/lib/auth/totpRecovery.server';
-import { redis } from '@/lib/redis';
-import { clearCurrentSessionClaimsCache, getSessionClaims } from '@/lib/session';
+import { redis } from '@/lib/clients/redis';
+import { clearCurrentSessionClaimsCache, getSessionClaims } from '@/lib/session/server';
 
 const RECOVERY_FAILURE_LIMIT = 5;
 const RECOVERY_FAILURE_WINDOW_SECONDS = 15 * 60;

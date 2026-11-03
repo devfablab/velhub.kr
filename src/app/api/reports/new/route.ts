@@ -1,8 +1,8 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isGuidelineReportCategory, isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type ReportRequestBody = {

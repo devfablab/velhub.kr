@@ -3,7 +3,7 @@ import { sendMinorPurchaseCancellationAdjustmentEmail } from '@/lib/notification
 import { cancelPortOnePayment, getPortOnePayment, getPortOnePaymentFromResponse } from '@/lib/payments/portone';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function POST(_: Request, { params }: { params: Promise<{ inquiryId: string }> }) {
   const admin = await getCurrentStigma();

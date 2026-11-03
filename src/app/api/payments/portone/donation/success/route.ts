@@ -17,9 +17,9 @@ import {
 import { getPaymentPolicyMs } from '@/lib/payments/refunds';
 import { createOwnerPaymentSplits } from '@/lib/payments/splits';
 import { PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, REFUND_POLICY } from '@/lib/payments/types';
-import { getMailFrom, getResendClient } from '@/lib/resend';
+import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;

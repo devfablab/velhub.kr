@@ -25,7 +25,7 @@ import {
   getSocialActivityName,
   validateSocialSignUpFields,
 } from '@/lib/auth/socialSignUp';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import styles from '@/app/auth.module.sass';
 

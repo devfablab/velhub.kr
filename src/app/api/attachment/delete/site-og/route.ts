@@ -1,4 +1,4 @@
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSiteOgAccess, SITE_OG_BUCKET } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 

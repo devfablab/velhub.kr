@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { useAuthState } from './AuthStateProvider';
 
 export default function LogoutButton() {

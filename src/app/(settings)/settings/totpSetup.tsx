@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';

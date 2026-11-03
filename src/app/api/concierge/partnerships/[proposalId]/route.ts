@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getPartnershipProposal } from '@/lib/partnerships/server';
+import { getPartnershipProposal } from '@/lib/service/concierge/partnerships.server';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ proposalId: string }> }) {
   const { proposalId } = await params;

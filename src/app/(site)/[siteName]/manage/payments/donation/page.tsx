@@ -1,6 +1,6 @@
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { detectAdult } from '@/lib/service/detectAdult.server';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import type { SettlementResponse } from '@/components/service/common/SettlementForm';
 import Container from '../../menu';
 import Opt, { type DonationManageResponse } from './opt';

@@ -1,19 +1,23 @@
+import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
+import { isSoloBlog } from '@/lib/board/seriesAuthor';
+import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   addRecommendedBlogPost,
   getBlogRecommendationContext,
   removeRecommendedBlogPost,
-} from '@/lib/blogRecommendations/server';
-import { isSoloBlog } from '@/lib/board/seriesAuthor';
-import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
-import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
-import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { r2Storage } from '@/lib/r2Storage';
+} from '@/lib/service/blog/blogRecommendations.server';
+import {
+  canManageCommunityBoardContents,
+  getCommunityManagerAccess,
+} from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { canManageBlogContents } from '@/lib/site/contentAccess';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler/server';
+import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler.server';
 
 type RouteContext = {
   params: Promise<{
@@ -721,21 +725,19 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
-    if (!canManageContent && !isAuthor) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (rhizomeData.site_type === 'blog' && isAuthor && !isStaff) {
-      const memberRoleResult = await supabaseAdmin
+    if (rhizomeData.site_type === 'blog' && !canManageContent) {
+      const membershipResult = await supabaseAdmin
         .from('rhizome_stigmas')
-        .select('role')
+        .select('role, is_approval')
         .eq('site_id', rhizomeData.id)
         .eq('user_id', session.stigmaId)
         .maybeSingle();
 
-      if (memberRoleResult.data?.role !== 'member') {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
+      canManageContent = canManageBlogContents(membershipResult.data);
+    }
+
+    if (!canManageContent && !isAuthor) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const shouldUpdateAttachments = requestBody.attachments !== undefined;
@@ -760,7 +762,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const existingAttachmentByPath = new Map(
       (existingAttachmentsResult.data ?? []).map((attachment) => [attachment.storage_path, attachment]),
     );
-    const newAttachmentInputs = attachmentInputs.filter((attachment) => !existingAttachmentByPath.has(attachment.storagePath));
+    const newAttachmentInputs = attachmentInputs.filter(
+      (attachment) => !existingAttachmentByPath.has(attachment.storagePath),
+    );
     const resolvedNewAttachments = await resolvePostAttachments({
       attachments: newAttachmentInputs,
       siteId: rhizomeData.id,
@@ -784,10 +788,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return resolvedNewAttachmentByPath.get(attachment.storagePath) as (typeof resolvedNewAttachments)[number];
     });
 
-    const totalAttachmentFileSize = resolvedAttachments.reduce(
-      (total, attachment) => total + attachment.fileSize,
-      0,
-    );
+    const totalAttachmentFileSize = resolvedAttachments.reduce((total, attachment) => total + attachment.fileSize, 0);
 
     if (totalAttachmentFileSize > 10 * 1024 * 1024) {
       return Response.json({ error: '첨부 파일의 전체 용량은 10MB 이하만 가능합니다.' }, { status: 400 });
@@ -1382,7 +1383,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
 
       if (removedAttachments.length > 0) {
-        const removeResult = await r2Storage.from('post').remove(removedAttachments.map((attachment) => attachment.storage_path));
+        const removeResult = await r2Storage
+          .from('post')
+          .remove(removedAttachments.map((attachment) => attachment.storage_path));
 
         if (removeResult.error) {
           console.error('[boards/edit] attachment cleanup failed', removeResult.error);

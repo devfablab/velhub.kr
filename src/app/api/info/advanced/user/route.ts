@@ -1,6 +1,6 @@
-import { getSessionClaims } from '@/lib/session';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
 type ProfileRow = {
   auto_login: boolean | null;

@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { createInviteEmailProof } from '@/lib/invites/emailProof';
+import { createInviteEmailProof } from '@/lib/auth/inviteEmailProof';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

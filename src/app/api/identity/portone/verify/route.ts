@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
 import { assertActiveIdentityVerificationRequest } from '@/lib/identity/verificationRequest';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 
 type SuccessRequestBody = {
   identityVerificationId?: string;

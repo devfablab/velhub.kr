@@ -6,9 +6,9 @@ import {
   LabsCategory,
   LabsStatus,
   updateGitHubIssue,
-} from '@/lib/github/labs';
+} from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type Props = {
   params: Promise<{ issueNumber: string }>;
@@ -146,6 +146,9 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     return Response.json({ ok: true });
   } catch (error) {
     console.error('Issue patch error:', error);
-    return Response.json({ error: error instanceof Error ? error.message : '이슈 수정에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : '이슈 수정에 실패했습니다.' },
+      { status: 500 },
+    );
   }
 }

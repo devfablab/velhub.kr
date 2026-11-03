@@ -23,7 +23,7 @@ import {
   Typography,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import { LABS_CATEGORIES, LABS_STATUSES, LabsCategory, LabsStatus } from '@/lib/github/labs';
+import { LABS_CATEGORIES, LABS_STATUSES, LabsCategory, LabsStatus } from '@/lib/service/concierge/githubLabs';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEditor';

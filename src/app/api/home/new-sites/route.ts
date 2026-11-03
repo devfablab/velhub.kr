@@ -1,4 +1,4 @@
-import { getNewMomentSites } from '@/lib/lounge/moments';
+import { getNewMomentSites } from '@/lib/service/lounge/loungeMoments';
 
 export async function GET() {
   try {

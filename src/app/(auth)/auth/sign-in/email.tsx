@@ -19,7 +19,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies.client';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
 import DarkThemeProvider from '../DarkThemeProvider';
 import HCaptchaBox from './hCaptcha';

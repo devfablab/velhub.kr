@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
 const BUSINESS_LICENSE_BUCKET = 'business-license';
 const FAMILY_RELATION_CERTIFICATE_BUCKET = 'family-relation-certificates';

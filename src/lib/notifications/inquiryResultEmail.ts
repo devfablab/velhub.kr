@@ -1,4 +1,4 @@
-import { getMailFrom, getResendClient } from '@/lib/resend';
+import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 
 function escapeHtml(value: string) {
   return value.replace(

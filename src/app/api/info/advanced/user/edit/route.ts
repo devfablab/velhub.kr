@@ -1,7 +1,7 @@
-import { redis } from '@/lib/redis';
-import { getSessionClaims } from '@/lib/session';
+import { redis } from '@/lib/clients/redis';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
 type ThemeMode = 'light' | 'system' | 'dark';
 

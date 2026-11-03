@@ -13,7 +13,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';

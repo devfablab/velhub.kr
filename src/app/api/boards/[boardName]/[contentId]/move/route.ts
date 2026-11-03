@@ -1,8 +1,8 @@
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { getSessionClaims } from '@/lib/session';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {

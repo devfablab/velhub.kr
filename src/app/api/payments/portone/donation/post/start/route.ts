@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import { assertCommunityCommentWritePolicy } from '@/lib/community/policies';
 import { getKoreanAge } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
@@ -9,8 +8,9 @@ import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPaymentOrder } from '@/lib/payments/paymentOrder';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { assertCommunityCommentWritePolicy } from '@/lib/service/community/policies';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type Body = {

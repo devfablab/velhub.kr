@@ -1,9 +1,13 @@
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
-import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { getSessionClaims } from '@/lib/session';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import {
+  canManageCommunityBoardContents,
+  getCommunityManagerAccess,
+} from '@/lib/service/community/communityManager/utils';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { canManageBlogContents } from '@/lib/site/contentAccess';
 import { ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE, ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
 import { normalizeText } from '@/lib/utils';
 
@@ -171,18 +175,6 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const isAuthor = post.data.user_id === currentStigma.stigmaId;
     let canManageContent = isStaff || session.case === 'admin';
-    let canDeleteOwnBlogPost = false;
-
-    if (rhizome.data.site_type === 'blog' && isAuthor && !isStaff) {
-      const memberRoleResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('role')
-        .eq('site_id', rhizome.data.id)
-        .eq('user_id', currentStigma.stigmaId)
-        .maybeSingle();
-
-      canDeleteOwnBlogPost = memberRoleResult.data?.role === 'member';
-    }
 
     if (rhizome.data.site_type === 'community' && !canManageContent) {
       try {
@@ -193,15 +185,20 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
+    if (rhizome.data.site_type === 'blog' && !canManageContent) {
+      const membershipResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role, is_approval')
+        .eq('site_id', rhizome.data.id)
+        .eq('user_id', currentStigma.stigmaId)
+        .maybeSingle();
+
+      canManageContent = canManageBlogContents(membershipResult.data);
+    }
+
     if (action === 'close') {
-      if (rhizome.data.site_type === 'blog') {
-        if (!isStaff && !canDeleteOwnBlogPost) {
-          return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-        }
-      } else {
-        if (!canManageContent && !isAuthor) {
-          return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-        }
+      if (!canManageContent && !isAuthor) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
 
       if (post.data.is_closed === true) {

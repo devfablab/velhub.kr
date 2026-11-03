@@ -1,9 +1,9 @@
 import crypto from 'crypto';
 import { type EmailSignUpFieldErrors, validateEmailSignUpFields } from '@/lib/auth/emailSignUp';
+import { verifyInviteEmailProof } from '@/lib/auth/inviteEmailProof';
+import { getMailFrom, getResendClient } from '@/lib/clients/resend';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
-import { verifyInviteEmailProof } from '@/lib/invites/emailProof';
-import { getMailFrom, getResendClient } from '@/lib/resend';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
 type EmailSignUpRequestBody = {
   email: string | null;

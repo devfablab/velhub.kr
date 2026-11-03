@@ -1,9 +1,9 @@
 import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getReportAppealCategory } from '@/lib/reports/appeals';
 import { guidelineReportCategories } from '@/lib/reports/guidelines';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type ContentRouteContext = {
@@ -166,7 +166,9 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
       ? { data: null, error: null }
       : await supabaseAdmin
           .from('report_appeals')
-          .select('id, admin_status, appellant_status, content_request, edit_completed_at, opinion_submitted_at, updated_at')
+          .select(
+            'id, admin_status, appellant_status, content_request, edit_completed_at, opinion_submitted_at, updated_at',
+          )
           .eq('report_type', reportType)
           .eq('report_id', report.id)
           .maybeSingle();
@@ -572,7 +574,8 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
           .from('report_appeals')
           .update({ updated_at: now })
           .eq('id', result.appeal.id);
-        if (appealUpdate.error) return Response.json({ error: '댓글 수정 기록을 저장하지 못했습니다.' }, { status: 500 });
+        if (appealUpdate.error)
+          return Response.json({ error: '댓글 수정 기록을 저장하지 못했습니다.' }, { status: 500 });
       }
 
       return Response.json({ ok: true });

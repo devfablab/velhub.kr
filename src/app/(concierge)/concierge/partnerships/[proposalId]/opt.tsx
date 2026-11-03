@@ -2,7 +2,7 @@
 
 import { type SubmitEventHandler, useState } from 'react';
 import { Chip, Stack, TextField, Typography } from '@mui/material';
-import type { PartnershipProposalDetail } from '@/lib/partnerships';
+import type { PartnershipProposalDetail } from '@/lib/service/concierge/partnerships';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';

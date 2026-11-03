@@ -28,7 +28,7 @@ import {
   validateEmailSignUpFields,
 } from '@/lib/auth/emailSignUp';
 import { PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import DarkThemeProvider from '../DarkThemeProvider';

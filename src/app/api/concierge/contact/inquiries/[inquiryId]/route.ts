@@ -1,6 +1,6 @@
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const attachmentLabels: Record<string, string> = {
   bug_evidence: '버그 신고 증빙 파일',

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCreatorFollowedLibraries } from '@/lib/creator/following';
+import { getCreatorFollowedLibraries } from '@/lib/service/lounge/creatorFollowing';
 import { getCurrentStigma } from '@/lib/session/utils';
 
 export async function GET(_: Request, context: { params: Promise<{ handleName: string }> }) {

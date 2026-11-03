@@ -1,4 +1,4 @@
-import { getTrendingMomentPosts } from '@/lib/lounge/moments';
+import { getTrendingMomentPosts } from '@/lib/service/lounge/loungeMoments';
 
 export async function GET() {
   try {

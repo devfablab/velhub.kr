@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 async function getFollowTarget(handleName: string, currentStigmaId: string) {
   const authorState = await getAuthorState(currentStigmaId);

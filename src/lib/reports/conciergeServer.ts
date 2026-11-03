@@ -26,7 +26,7 @@ import {
   type ReportStatus,
   reportStatusLabels,
 } from '@/lib/reports/manage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 
 type RawReport = {

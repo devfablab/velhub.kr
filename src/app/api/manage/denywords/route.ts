@@ -1,11 +1,14 @@
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = { siteName?: string | null; words?: unknown };
 
 function normalizeWord(value: unknown) {
-  return (typeof value === 'string' ? value : '').replace(/\s+/g, '').replace(/[^\p{L}]/gu, '').trim();
+  return (typeof value === 'string' ? value : '')
+    .replace(/\s+/g, '')
+    .replace(/[^\p{L}]/gu, '')
+    .trim();
 }
 
 function normalizeWords(value: unknown) {
@@ -62,7 +65,10 @@ export async function GET(request: Request) {
       words: (words.data ?? []).map((word) => ({ id: word.id, word: word.word })),
     });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : '차단 단어를 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : '차단 단어를 불러오지 못했습니다.' },
+      { status: 500 },
+    );
   }
 }
 
@@ -108,6 +114,9 @@ export async function PUT(request: Request) {
 
     return Response.json({ siteType: access.site.site_type, words: [] });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : '차단 단어 저장에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : '차단 단어 저장에 실패했습니다.' },
+      { status: 500 },
+    );
   }
 }

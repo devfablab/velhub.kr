@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
-import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';

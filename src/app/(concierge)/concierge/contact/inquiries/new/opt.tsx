@@ -19,10 +19,15 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
-import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { MEMBERSHIP_FEATURES, type MembershipFeatureKey, type MembershipType } from '@/lib/memberships/catalog';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import {
+  inquirySubtypes,
+  inquiryTypeLabels,
+  inquiryTypes,
+  type InquiryType,
+} from '@/lib/service/concierge/conciergeInquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';

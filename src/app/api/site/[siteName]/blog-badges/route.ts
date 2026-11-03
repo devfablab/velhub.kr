@@ -1,8 +1,8 @@
 import sharp from 'sharp';
-import { getBlogCommunityEnablement } from '@/lib/blogCommunity/access';
-import { getR2ObjectPath } from '@/lib/r2Public';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getR2ObjectPath } from '@/lib/clients/r2Public';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getBlogCommunityEnablement } from '@/lib/service/blog/blogCommunity/access';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const PERIODS = [0, 1, 3, 6, 12, 24, 36, 48, 60];
 const MAX_SIZE = 1024 * 1024;

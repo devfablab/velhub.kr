@@ -1,11 +1,11 @@
-import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
-import { completeBlogCommunityRandomDraw, normalizeBlogCommunityDraw } from '@/lib/blogCommunity/draw';
-import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import { completeBlogCommunityRandomDraw, normalizeBlogCommunityDraw } from '@/lib/service/blog/blogCommunity/draw';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { isNumericContentSlug } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
-import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler/server';
+import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler.server';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string }> };
 const MAX_CONTENT_LENGTH = 10_000;

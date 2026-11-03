@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getGitHubIssue, getGitHubIssueComments, LabsIssueComment } from '@/lib/github/labs';
+import { getGitHubIssue, getGitHubIssueComments, LabsIssueComment } from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import Container from '../../menu';
 import Opt from './opt';

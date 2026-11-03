@@ -17,7 +17,7 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { LABS_CATEGORIES, LABS_STATUSES, LabsStatus } from '@/lib/github/labs';
+import { LABS_CATEGORIES, LABS_STATUSES, LabsStatus } from '@/lib/service/concierge/githubLabs';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';

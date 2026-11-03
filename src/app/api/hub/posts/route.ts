@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function GET(_: Request) {
   const page = Math.max(1, Number(new URL(_.url).searchParams.get('page') ?? '1') || 1);

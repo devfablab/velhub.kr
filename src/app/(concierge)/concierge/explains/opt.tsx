@@ -45,7 +45,9 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
-import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
+import ConciergeFileUploader, {
+  type ConciergeUploadedFile,
+} from '@/components/service/concierge/ConciergeFileUploader';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
@@ -1077,7 +1079,12 @@ export default function Opt({
             <button type="button" className="button medium close" disabled={actionLoading} onClick={closeOpinion}>
               취소
             </button>
-            <button type="button" className="button medium submit" disabled={actionLoading || opinionFileUploading} onClick={submitOpinion}>
+            <button
+              type="button"
+              className="button medium submit"
+              disabled={actionLoading || opinionFileUploading}
+              onClick={submitOpinion}
+            >
               제출
             </button>
           </div>

@@ -1,11 +1,11 @@
 import { isValidActivityName } from '@/lib/auth/emailSignUp';
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { getCustomDomainError, normalizeCustomDomain } from '@/lib/customDomain';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { cancelPortOnePayment } from '@/lib/payments/portone';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getCustomDomainError, normalizeCustomDomain } from '@/lib/site/customDomain';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {

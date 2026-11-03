@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSiteOgAccess, MAX_SITE_OG_FILE_SIZE, SITE_OG_BUCKET, SITE_OG_IMAGE_TYPES } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 

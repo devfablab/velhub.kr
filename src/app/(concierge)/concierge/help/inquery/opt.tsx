@@ -23,7 +23,9 @@ import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
-import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
+import ConciergeFileUploader, {
+  type ConciergeUploadedFile,
+} from '@/components/service/concierge/ConciergeFileUploader';
 
 type LegalType = 'illegal_info' | 'illegal_filming' | 'privacy';
 

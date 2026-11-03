@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { createLookupHash, encrypt } from '@/lib/encryption/encrypt';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
@@ -6,8 +7,7 @@ import {
   assertActiveIdentityVerificationRequest,
   consumeIdentityVerificationRequest,
 } from '@/lib/identity/verificationRequest';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 import { maskEmail } from '@/lib/utils';
 
 type SuccessRequestBody = {

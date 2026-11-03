@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
-import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
@@ -138,19 +138,25 @@ export default async function Page(context: RouteContext) {
         '구독 상태를 확인하지 못했습니다.',
       )
     : Promise.resolve({ data: null, error: '' });
-  const [[countResult], initialPoll, initialComments, initialSubscriptionStatus, initialLinkPreviews, guidelineDialogData] =
-    await Promise.all([
-      countAndReadPromise,
-      initialPollPromise,
-      initialCommentsPromise,
-      initialSubscriptionStatusPromise,
-      getLinkPreviews(initial.data?.content?.content_simple),
-      getSiteGuidelineDialogData({
-        siteName: normalizedSiteName,
-        target: 'board',
-        boardId: boardResult.data.id,
-      }),
-    ]);
+  const [
+    [countResult],
+    initialPoll,
+    initialComments,
+    initialSubscriptionStatus,
+    initialLinkPreviews,
+    guidelineDialogData,
+  ] = await Promise.all([
+    countAndReadPromise,
+    initialPollPromise,
+    initialCommentsPromise,
+    initialSubscriptionStatusPromise,
+    getLinkPreviews(initial.data?.content?.content_simple),
+    getSiteGuidelineDialogData({
+      siteName: normalizedSiteName,
+      target: 'board',
+      boardId: boardResult.data.id,
+    }),
+  ]);
 
   if (typeof countResult?.data?.postCount === 'number' && initial.data?.content) {
     initial.data.content.post_count = countResult.data.postCount;

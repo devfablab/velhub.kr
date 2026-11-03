@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Giscus from '@giscus/react';
 import { DiscussionEmbed } from 'disqus-react';
-import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import CommentList from '@/components/comments/CommentList';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import SiteGuidelineActions from '../service/common/SiteGuidelineActions';

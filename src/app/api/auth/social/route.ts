@@ -1,9 +1,9 @@
 import crypto from 'crypto';
 import { EMAIL_PATTERN, isValidActivityName } from '@/lib/auth/emailSignUp';
 import { type SocialSignUpFieldErrors, validateSocialSignUpFields } from '@/lib/auth/socialSignUp';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 
 type SocialRequestBody = {
   authUserId?: string | null;

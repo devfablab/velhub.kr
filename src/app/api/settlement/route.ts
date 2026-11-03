@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { IdentityProfileRow, serializeSettlementProfile, SettlementProfileRow } from '@/lib/settlement/profile';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   const sessionClaims = await getSessionClaims();

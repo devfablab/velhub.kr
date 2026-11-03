@@ -3,7 +3,7 @@ import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.s
 import { encrypt } from '@/lib/encryption/encrypt';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const bucket = 'family-relation-certificates';
 const maxFileSize = 10 * 1024 * 1024;

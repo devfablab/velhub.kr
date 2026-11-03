@@ -1,4 +1,8 @@
-import { getSiteGuidelineManagementContext, isSiteGuidelineType, saveSiteGuideline } from '@/lib/siteGuidelines/server';
+import {
+  getSiteGuidelineManagementContext,
+  isSiteGuidelineType,
+  saveSiteGuideline,
+} from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
 
 type SaveRequestBody = {

@@ -1,6 +1,6 @@
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSiteOgAccess } from '@/lib/service/siteOgImage';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

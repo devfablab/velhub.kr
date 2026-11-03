@@ -6,9 +6,9 @@ import {
   LabsCategory,
   updateGitHubIssue,
   uploadGitHubImage,
-} from '@/lib/github/labs';
+} from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getStigmaDisplayName } from '@/lib/users/utils';
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];

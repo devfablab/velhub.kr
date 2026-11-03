@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function GET() {
   if (process.env.NEXT_PUBLIC_APP_ENV !== 'test') {

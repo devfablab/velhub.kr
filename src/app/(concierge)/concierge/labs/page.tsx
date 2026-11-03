@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import { LabsCategory, LabsStatus } from '@/lib/github/labs';
+import { LabsCategory, LabsStatus } from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import Container from '../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';

@@ -1,5 +1,5 @@
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type HomeOrderRow = {

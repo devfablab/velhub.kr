@@ -1,7 +1,7 @@
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getWordingProfilerViolationFields } from '@/lib/wordingProfiler/server';
+import { getWordingProfilerViolationFields } from '@/lib/wordingProfiler.server';
 
 type RouteContext = {
   params: Promise<{

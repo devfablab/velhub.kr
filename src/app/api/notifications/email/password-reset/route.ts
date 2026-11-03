@@ -1,5 +1,5 @@
-import { getMailFrom, getResendClient } from '@/lib/resend';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getMailFrom, getResendClient } from '@/lib/clients/resend';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type RequestBody = {
   email?: string | null;

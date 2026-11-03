@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getCreatorFollowCounts } from '@/lib/creator/following';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getR2PublicUrl } from '@/lib/r2Public';
-import { r2Storage } from '@/lib/r2Storage';
+import { getR2PublicUrl } from '@/lib/clients/r2Public';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getPostContentText } from '@/lib/reports/manage';
+import { getCreatorFollowCounts } from '@/lib/service/lounge/creatorFollowing';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type CreatorBoardType = 'basic' | 'blog' | 'feed' | 'gallery' | 'youtube';

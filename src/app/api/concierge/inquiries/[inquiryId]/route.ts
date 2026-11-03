@@ -1,15 +1,15 @@
 import { NextRequest } from 'next/server';
+import { decrypt } from '@/lib/encryption/decrypt';
+import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   isInquiryInformationRequestType,
   inquiryResolutionLabels,
   isInquiryResolutionCode,
   isResolutionAllowedForInquiryType,
-} from '@/lib/concierge/inquiries';
-import { decrypt } from '@/lib/encryption/decrypt';
-import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
-import { r2Storage } from '@/lib/r2Storage';
+} from '@/lib/service/concierge/conciergeInquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type RouteContext = { params: Promise<{ inquiryId: string }> };
 

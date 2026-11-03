@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   ACCOUNT_WITHDRAWAL_GRACE_MS,
   ACCOUNT_WITHDRAWAL_STATUS,

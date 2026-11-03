@@ -16,13 +16,15 @@ import {
   type InquiryResolutionCode,
   type InquiryStatus,
   type InquiryType,
-} from '@/lib/concierge/inquiries';
+} from '@/lib/service/concierge/conciergeInquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
-import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
+import ConciergeFileUploader, {
+  type ConciergeUploadedFile,
+} from '@/components/service/concierge/ConciergeFileUploader';
 import InquiryDetails from '@/components/service/concierge/InquiryDetails';
 import ResponsivePopup from '../../../ResponsivePopup';
 import styles from '@/app/concierge.module.sass';

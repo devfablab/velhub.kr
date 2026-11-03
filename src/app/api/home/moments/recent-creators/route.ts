@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type PostRow = {
@@ -136,7 +136,13 @@ export async function GET(request: Request) {
     const boardMap = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
     const visibleRecentPosts = uniqueRecentPosts.filter(
       (post): post is PostRow & { site_id: string; board_id: string; slug: number } =>
-        Boolean(post.site_id && siteMap.has(post.site_id) && post.board_id && boardMap.has(post.board_id) && post.slug !== null),
+        Boolean(
+          post.site_id &&
+          siteMap.has(post.site_id) &&
+          post.board_id &&
+          boardMap.has(post.board_id) &&
+          post.slug !== null,
+        ),
     );
     const ownerIds = Array.from(
       new Set(

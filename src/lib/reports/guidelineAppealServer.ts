@@ -7,7 +7,7 @@ import {
 } from '@/lib/reports/guidelineAppeals';
 import { guidelineReportCategories } from '@/lib/reports/guidelines';
 import { getReportCategoryTitle } from '@/lib/reports/manage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type GuidelineReportRow = {

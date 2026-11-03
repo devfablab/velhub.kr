@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type PageProps = {

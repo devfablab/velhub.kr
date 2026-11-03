@@ -1,7 +1,7 @@
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getR2PublicUrl } from '@/lib/r2Public';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getR2PublicUrl } from '@/lib/clients/r2Public';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -63,9 +63,7 @@ async function getPostAuthors(userIds: string[]) {
       stigma.id,
       {
         name: getDisplayName(stigma.user_name),
-        avatarUrl: stigma.avatar
-          ? (r2Storage.from('avatar').getPublicUrl(stigma.avatar).data.publicUrl ?? null)
-          : null,
+        avatarUrl: stigma.avatar ? (r2Storage.from('avatar').getPublicUrl(stigma.avatar).data.publicUrl ?? null) : null,
       },
     ]),
   );

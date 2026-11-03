@@ -1,6 +1,6 @@
-import { getCustomDomainError, normalizeCustomDomain } from '@/lib/customDomain';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
+import { getCustomDomainError, normalizeCustomDomain } from '@/lib/site/customDomain';
 
 type RequestBody = {
   customDomain?: unknown;

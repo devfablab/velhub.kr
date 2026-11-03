@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Grid } from '@mui/material';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 import Headline from './headline';
 import UserInfo from './info';
 import LoginMethod from './loginMethod';

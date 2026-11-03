@@ -1,14 +1,14 @@
-import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
-import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/service/community/policies';
+import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
-import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
 
 type RouteContext = {
   params: Promise<{

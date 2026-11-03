@@ -1,8 +1,8 @@
 import crypto from 'crypto';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 
 const AVATAR_BUCKET = 'avatar';
 

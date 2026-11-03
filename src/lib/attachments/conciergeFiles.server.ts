@@ -1,4 +1,4 @@
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 
 type ConciergeTemporaryFile = {
   fileSize: number;

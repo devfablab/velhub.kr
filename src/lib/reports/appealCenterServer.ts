@@ -7,7 +7,7 @@ import {
   type ReportAppealDatabaseRow,
 } from '@/lib/reports/appeals';
 import { legalTypeLabels, legalValueLabels, rightsReasonTypeLabels } from '@/lib/reports/concierge';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type ReportType = 'legal' | 'rights';
@@ -418,7 +418,9 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
     const appeal = appealByReport.get(`${report.reportType}:${report.id}`) ?? null;
     const deadline = getReportAppealDeadline(report.created_at);
     const targetUpdatedAt = isBlogTarget
-      ? (blogComment ? appeal?.updatedAt ?? null : blogPost?.edited_at ?? null)
+      ? blogComment
+        ? (appeal?.updatedAt ?? null)
+        : (blogPost?.edited_at ?? null)
       : (comment?.updated_at ?? post?.updated_at ?? null);
     const targetExpAt = isBlogTarget ? null : (comment?.exp_at ?? post?.exp_at ?? null);
     const hasEditedAfterPermission = Boolean(

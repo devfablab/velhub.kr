@@ -1,8 +1,8 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type Mode = 'blocked_until_adult' | 'guardian_auth_required';
 

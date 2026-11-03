@@ -1,9 +1,9 @@
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { hasMembershipFeature } from '@/lib/memberships/features';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 import { getPublicSiteContentUrl, getPublicSiteUrl } from '@/lib/siteUrl';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RpcLatestPost = {

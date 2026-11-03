@@ -1,7 +1,7 @@
 import { getPostList } from '@/lib/board/getPostList';
-import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
+import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';

@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 import { normalizeText } from '@/lib/utils';
 import Container from './menu';
 import PendingInvite, { PendingInviteResponse } from './pendingInvite';

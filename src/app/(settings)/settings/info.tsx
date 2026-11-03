@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, isValidActivityName } from '@/lib/auth/emailSignUp';
-import { r2PublicStorage } from '@/lib/r2Public';
+import { r2PublicStorage } from '@/lib/clients/r2Public';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCreatorFollowedLibraries } from '@/lib/creator/following';
+import { getCreatorFollowedLibraries } from '@/lib/service/lounge/creatorFollowing';
 import { getCurrentStigma } from '@/lib/session/utils';
 import Opt, { FollowersResponse } from './opt';
 

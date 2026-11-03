@@ -9,7 +9,7 @@ import {
   inquiryTypes,
   type InquiryStatus,
   type InquiryType,
-} from '@/lib/concierge/inquiries';
+} from '@/lib/service/concierge/conciergeInquiries';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';

@@ -1,4 +1,8 @@
-import { BLOG_AD_REPORT_REASON_LABELS, getBlogAdSiteContext, isBlogAdReportReason } from '@/lib/blogAds/server';
+import {
+  BLOG_AD_REPORT_REASON_LABELS,
+  getBlogAdSiteContext,
+  isBlogAdReportReason,
+} from '@/lib/service/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ siteName: string; adId: string }> };
@@ -49,7 +53,8 @@ export async function POST(request: Request, context: RouteContext) {
               ? target.data.product_name
               : ((target.data as { sponsor_name?: string | null; product_name?: string | null }).sponsor_name ??
                 target.data.product_name),
-          shopName: targetType === 'ad' ? target.data.shop_name : (target.data as { shop_name?: string | null }).shop_name,
+          shopName:
+            targetType === 'ad' ? target.data.shop_name : (target.data as { shop_name?: string | null }).shop_name,
           thumbnailImage: target.data.thumbnail_image,
           linkUrl: target.data.link_url,
         },

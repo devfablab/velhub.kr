@@ -1,7 +1,7 @@
 import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
-import { getMailFrom, getResendClient } from '@/lib/resend';
+import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
 import { getSiteMembership, getStaffMembersAccess, isCommunityStaffMembership } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';

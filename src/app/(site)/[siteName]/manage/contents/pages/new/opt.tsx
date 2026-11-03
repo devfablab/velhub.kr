@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Box, InputAdornment, Stack, styled, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';

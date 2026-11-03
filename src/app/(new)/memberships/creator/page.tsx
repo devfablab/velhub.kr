@@ -5,7 +5,7 @@ import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
 import Opt, { type Eligibility, type MembershipStatusResponse } from './opt';
 import styles from '@/app/memberships.module.sass';

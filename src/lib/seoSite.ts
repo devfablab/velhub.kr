@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type OgType =

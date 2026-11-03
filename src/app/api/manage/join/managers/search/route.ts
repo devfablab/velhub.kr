@@ -3,8 +3,8 @@ import {
   getActiveMembers,
   getBoardSummaries,
   getCommunityManagerAccess,
-} from '@/lib/community/communityManager/utils';
-import { getOwnerTransferAvailability } from '@/lib/community/ownerTransfers';
+} from '@/lib/service/community/communityManager/utils';
+import { getOwnerTransferAvailability } from '@/lib/service/community/ownerTransfers';
 import { normalizeText } from '@/lib/utils';
 
 export async function GET(request: Request) {

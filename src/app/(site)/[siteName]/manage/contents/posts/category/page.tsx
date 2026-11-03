@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 import type { StatusResponse, CategoryListResponse } from './opt';

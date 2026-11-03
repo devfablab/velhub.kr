@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { FormControl } from '@mui/material';
-import { validateFavoriteFolderLabel } from '@/lib/hub/favoriteFolder.shared';
+import { validateFavoriteFolderLabel } from '@/lib/service/hubFavoriteFolder.shared';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';

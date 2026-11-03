@@ -17,7 +17,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';

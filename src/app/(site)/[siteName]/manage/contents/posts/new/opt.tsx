@@ -560,6 +560,13 @@ export default function Opt({
       return;
     }
 
+    if (isUploadingThumbnail) {
+      const message = '오픈그래프 이미지 업로드가 끝난 뒤 저장해주세요.';
+      setErrorMessage(message);
+      setFormErrorDialog({ title: '글쓰기', messages: [message] });
+      return;
+    }
+
     if (!hasBoard && authority !== 'admin' && authority !== 'staff') {
       setErrorMessage('최초 글은 스텝만 작성 가능합니다');
       return;
@@ -946,7 +953,7 @@ export default function Opt({
                     <button
                       type="submit"
                       className={`button ${styles.button}`}
-                      disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                      disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                     >
                       저장
                     </button>
@@ -955,7 +962,7 @@ export default function Opt({
                   <button
                     type="submit"
                     className="button medium submit"
-                    disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                    disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                   >
                     저장
                   </button>

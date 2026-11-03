@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
-import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
+import { assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
 import verifySession from '@/lib/session/verifySession';
-import { getCommunityBoardGuidelineDialogDataByBoard } from '@/lib/siteGuidelines/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getCommunityBoardGuidelineDialogDataByBoard } from '@/lib/site/siteGuidelines.server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Container from '../../menu';

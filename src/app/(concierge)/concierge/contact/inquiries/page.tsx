@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
-import type { InquiryStatus, InquiryType } from '@/lib/concierge/inquiries';
+import type { InquiryStatus, InquiryType } from '@/lib/service/concierge/conciergeInquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
 import Container from '../../menu';
 import Opt from './opt';

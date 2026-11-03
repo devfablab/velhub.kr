@@ -1,5 +1,5 @@
 import { issueTotpRecoveryCode } from '@/lib/auth/totpRecovery.server';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 
 export async function POST() {
   try {

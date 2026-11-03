@@ -2,9 +2,8 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import crypto from 'crypto';
-import { clearChannelWorksResponseCookies } from '@/lib/channelWorks/cookies.server';
 import { encrypt } from '@/lib/encryption/encrypt';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type NaverState = {
   stateToken: string;
@@ -33,6 +32,14 @@ type NaverProfileResponse = {
     email?: string;
   };
 };
+
+function clearChannelWorksResponseCookies(request: NextRequest, response: NextResponse) {
+  for (const cookie of request.cookies.getAll()) {
+    if (cookie.name.startsWith('ch-')) {
+      response.cookies.delete(cookie.name);
+    }
+  }
+}
 
 function getSupabaseUrl() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

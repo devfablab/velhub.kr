@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCreatorFollowingTimeline } from '@/lib/creator/following';
+import { getCreatorFollowingTimeline } from '@/lib/service/lounge/creatorFollowing';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';

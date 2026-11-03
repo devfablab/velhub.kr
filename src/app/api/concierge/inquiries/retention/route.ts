@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function POST(request: NextRequest) {
   const secret = process.env.CRON_SECRET;

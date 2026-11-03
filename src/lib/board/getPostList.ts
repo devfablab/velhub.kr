@@ -1,6 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getR2PublicUrl } from '@/lib/r2Public';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getR2PublicUrl } from '@/lib/clients/r2Public';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SessionCase = 'guest' | 'member' | 'staff';

@@ -14,7 +14,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';

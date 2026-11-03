@@ -6,7 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import GoogleIcon from '@mui/icons-material/Google';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import VhiKakao from '../icons/VhiKakao';
 import VhiNaver from '../icons/VhiNaver';
 import styles from '@/app/auth.module.sass';

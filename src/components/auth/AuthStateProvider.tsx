@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Snackbar } from '@mui/material';
 import { usePathname } from 'next/navigation';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 
 type AuthStateContextValue = {
   isReady: boolean;

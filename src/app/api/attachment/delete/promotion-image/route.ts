@@ -1,4 +1,4 @@
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSitePromotionAccess, SITE_PROMOTION_BUCKET } from '@/lib/service/sitePromotionImage';
 import { normalizeText } from '@/lib/utils';
 

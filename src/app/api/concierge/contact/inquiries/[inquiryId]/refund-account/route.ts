@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ inquiryId: string }> }) {
   const current = await getCurrentStigma();

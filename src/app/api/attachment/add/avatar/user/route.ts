@@ -1,7 +1,7 @@
 import path from 'path';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 
 const AVATAR_BUCKET = 'avatar';
 const MAX_AVATAR_FILE_SIZE = 5 * 1024 * 1024;

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { Typography } from '@mui/material';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSiteApiData } from '../../getSiteApiData';
 import Container from '../menu';
 import Opt, { type JoinResponse } from './opt';

@@ -1,10 +1,10 @@
 import path from 'path';
 import sharp from 'sharp';
 import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
-import { refreshCommunitySiteMemberLevels } from '@/lib/community/communityLevels/refreshMemberLevel';
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { refreshCommunitySiteMemberLevels } from '@/lib/service/community/refreshMemberLevel';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type LevelRequirementType = 'manual' | 'automatic';

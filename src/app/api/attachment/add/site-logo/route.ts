@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import path from 'path';
 import sharp from 'sharp';
 import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSiteOgAccess } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 

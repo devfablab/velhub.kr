@@ -1,9 +1,9 @@
-import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
-import { getSessionClaims } from '@/lib/session';
+import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
+import { getSessionClaims } from '@/lib/session/server';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type BoardRow = {

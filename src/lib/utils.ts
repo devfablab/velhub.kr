@@ -1,5 +1,5 @@
-import { r2PublicStorage } from './r2Public';
-import { getSupabaseBrowser } from './supabase';
+import { r2PublicStorage } from './clients/r2Public';
+import { getSupabaseBrowser } from './clients/supabase';
 
 type DateInput = string | Date | null | undefined;
 
@@ -120,6 +120,10 @@ export function normalizeText(value: string | string[] | null | undefined) {
   }
 
   return '';
+}
+
+export function isNumericContentSlug(value: string) {
+  return /^\d+$/.test(value);
 }
 
 export function getOgImageUrl(value: string) {

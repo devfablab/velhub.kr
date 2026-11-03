@@ -35,7 +35,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';

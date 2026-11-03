@@ -1,6 +1,6 @@
-import { getR2PublicUrl } from '@/lib/r2Public';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getR2PublicUrl } from '@/lib/clients/r2Public';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 import { normalizeText } from '@/lib/utils';
 
 type InviteRow = {

@@ -1,5 +1,5 @@
 import { PAYMENT_SPLIT_RECEIVER_TYPE } from '@/lib/payments/types';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 

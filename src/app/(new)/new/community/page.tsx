@@ -5,7 +5,7 @@ import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import { ServiceErrorIcon } from '@/components/Svgs';

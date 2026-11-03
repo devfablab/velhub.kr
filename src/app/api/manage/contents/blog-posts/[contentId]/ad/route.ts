@@ -8,7 +8,7 @@ import {
   isImmediateBlogAdReport,
   isSubscriptionSeriesPost,
   isValidBlogAdUrl,
-} from '@/lib/blogAds/server';
+} from '@/lib/service/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ contentId: string }> };

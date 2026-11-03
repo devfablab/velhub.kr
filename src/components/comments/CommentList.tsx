@@ -6,7 +6,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import { Avatar } from '@mui/material';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
-import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import CommentForm from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
 import FormErrorDialog from '@/components/FormErrorDialog';

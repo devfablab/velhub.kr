@@ -79,6 +79,7 @@ export type ContentResponse = {
     paid_preview_html: string | null;
     paid_preview_markdown: string | null;
     thumbnail_image: string | null;
+    thumbnail_image_url?: string | null;
     thumbnail_width: number | null;
     thumbnail_height: number | null;
     is_comment: boolean;
@@ -345,7 +346,7 @@ export default function Opt({
   const [paidPreviewMarkdown, setPaidPreviewMarkdown] = useState(initialContent?.content?.paid_preview_markdown ?? '');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [thumbnailImage, setThumbnailImage] = useState(initialContent?.content?.thumbnail_image ?? '');
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState(initialContent?.content?.thumbnail_image_url ?? '');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(initialContent?.content?.thumbnail_width ?? null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(
     initialContent?.content?.thumbnail_height ?? null,
@@ -487,8 +488,6 @@ export default function Opt({
         image.src = imageUrl;
       });
 
-      const previousThumbnailImage = thumbnailImage;
-
       const formData = new FormData();
       formData.append('file', selectedFile);
 
@@ -502,19 +501,6 @@ export default function Opt({
 
       if (!response.ok) {
         throw new Error(result.error ?? '썸네일 이미지 업로드에 실패했습니다.');
-      }
-
-      if (previousThumbnailImage) {
-        await fetch('/api/attachment/delete/og-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: previousThumbnailImage,
-          }),
-        });
       }
 
       setThumbnailImage(result.ogImage ?? '');
@@ -676,6 +662,13 @@ export default function Opt({
     event.preventDefault();
 
     if (isSubmitting) {
+      return;
+    }
+
+    if (isUploadingThumbnail) {
+      const message = '오픈그래프 이미지 업로드가 끝난 뒤 저장해주세요.';
+      setErrorMessage(message);
+      setFormErrorDialog({ title: '글 수정', messages: [message] });
       return;
     }
     if (!promotionLoaded) {
@@ -1005,7 +998,7 @@ export default function Opt({
                     <button
                       type="submit"
                       className={`button ${styles.button}`}
-                      disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                      disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                     >
                       저장
                     </button>
@@ -1014,7 +1007,7 @@ export default function Opt({
                   <button
                     type="submit"
                     className="button medium submit"
-                    disabled={isSubmitting || hasIncompleteAttachmentUpload}
+                    disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                   >
                     저장
                   </button>

@@ -5,7 +5,7 @@ import {
   getBlogAdPublicImageUrl,
   getBlogAdSiteContext,
   isImmediateBlogAdReport,
-} from '@/lib/blogAds/server';
+} from '@/lib/service/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 import Container from '../menu';
 import Opt from './opt';

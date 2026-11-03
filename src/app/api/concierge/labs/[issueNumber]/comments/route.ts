@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { createGitHubIssueComment, getGitHubIssueComments } from '@/lib/github/labs';
+import { createGitHubIssueComment, getGitHubIssueComments } from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
 
 type Props = {
@@ -27,13 +27,7 @@ function getHeaders(token: string) {
   };
 }
 
-async function updateGitHubCommentInternal({
-  commentId,
-  body,
-}: {
-  commentId: number;
-  body: string;
-}) {
+async function updateGitHubCommentInternal({ commentId, body }: { commentId: number; body: string }) {
   const { token, owner, repo } = getGitHubConfig();
 
   const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}`, {
@@ -114,7 +108,10 @@ export async function POST(request: NextRequest, { params }: Props) {
 
     return Response.json({ ok: true, comment });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : '댓글 작성에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : '댓글 작성에 실패했습니다.' },
+      { status: 500 },
+    );
   }
 }
 
@@ -156,6 +153,9 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
     return Response.json({ ok: true, comment: updatedComment });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : '댓글 수정에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : '댓글 수정에 실패했습니다.' },
+      { status: 500 },
+    );
   }
 }

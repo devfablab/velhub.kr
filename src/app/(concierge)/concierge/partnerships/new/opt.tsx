@@ -4,7 +4,7 @@ import { ChangeEvent, type SubmitEventHandler, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, styled } from '@mui/material';
-import type { PartnershipFormInfo } from '@/lib/partnerships';
+import type { PartnershipFormInfo } from '@/lib/service/concierge/partnerships';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';

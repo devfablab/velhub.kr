@@ -1,4 +1,4 @@
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import {
   decryptNullable,
   getBannedMemberships,

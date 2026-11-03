@@ -15,7 +15,7 @@ import {
   type InquiryResolutionCode,
   type InquiryStatus,
   type InquiryType,
-} from '@/lib/concierge/inquiries';
+} from '@/lib/service/concierge/conciergeInquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import PopupMessage from '@/components/PopupMessage';

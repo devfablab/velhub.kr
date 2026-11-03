@@ -3,7 +3,7 @@ import { isMembershipType } from '@/lib/memberships/catalog';
 import { getMembershipFeatures } from '@/lib/memberships/features';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function GET() {
   const currentStigma = await getCurrentStigma();

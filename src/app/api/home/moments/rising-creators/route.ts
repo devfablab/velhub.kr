@@ -1,4 +1,4 @@
-import { getRisingMomentCreators } from '@/lib/lounge/moments';
+import { getRisingMomentCreators } from '@/lib/service/lounge/loungeMoments';
 
 export async function GET() {
   try {

@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getPartnershipFormInfo } from '@/lib/partnerships/server';
+import { getPartnershipFormInfo } from '@/lib/service/concierge/partnerships.server';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import Opt from './opt';

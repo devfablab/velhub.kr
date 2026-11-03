@@ -208,7 +208,10 @@ export default async function Page() {
 
           <section className={`paper ${styles.paper}`}>
             <h2>결제수단</h2>
-            <BillingMethods billingMethods={result.billingMethods} isIdentityVerified={identityStatus.data?.exists === true} />
+            <BillingMethods
+              billingMethods={result.billingMethods}
+              isIdentityVerified={identityStatus.data?.exists === true}
+            />
           </section>
 
           <section className={`paper ${styles.paper} ${styles.history}`}>

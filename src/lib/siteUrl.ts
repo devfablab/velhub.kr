@@ -1,4 +1,4 @@
-import { normalizeCustomDomain } from './customDomain';
+import { normalizeCustomDomain } from './site/customDomain';
 
 export function getPublicSiteUrl({
   siteKey,

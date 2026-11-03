@@ -30,8 +30,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
-import { getR2PublicUrl } from '@/lib/r2Public';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';

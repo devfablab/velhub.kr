@@ -1,16 +1,16 @@
-import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/blogAds/server';
-import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/blogRecommendations/server';
+import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
-import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
-import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/community/policies';
-import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
+import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/service/blog/blogRecommendations.server';
+import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
+import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
-import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
 
 type RouteContext = {
   params: Promise<{

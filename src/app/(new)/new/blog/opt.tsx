@@ -26,7 +26,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { isValidActivityName } from '@/lib/auth/emailSignUp';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import {
   EMPTY_SITE_CREATE_FIELD_ERRORS,
   getSiteKeyError,

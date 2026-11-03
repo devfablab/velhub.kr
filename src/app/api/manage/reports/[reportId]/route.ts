@@ -1,4 +1,5 @@
 import { reorderSeriesIdx } from '@/lib/board/seriesIdx';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { type GuidelineReportCategory, isGuidelineReportCategory } from '@/lib/reports/guidelines';
 import {
   getReportCategoryTitle,
@@ -8,10 +9,9 @@ import {
   type ReportManageTargetType,
   type ReportStatus,
 } from '@/lib/reports/manage';
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {

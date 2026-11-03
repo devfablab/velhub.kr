@@ -1,6 +1,6 @@
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const statusLabel = (status: string) =>
   ({ paid: '결제 완료', refunded: '환불 완료', partially_refunded: '부분 환불', failed: '결제 실패' })[status] ??

@@ -1,12 +1,12 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getVisibleBlogHomeAds } from '@/lib/blogAds/server';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
-import { getVisibleCommunityBoards } from '@/lib/community/managerOnlyBoards';
-import { r2Storage } from '@/lib/r2Storage';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSitePageMetadata } from '@/lib/seoSite';
+import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
+import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import Blog, { type BlogHomeData } from './blog';
 import Community from './community';
 

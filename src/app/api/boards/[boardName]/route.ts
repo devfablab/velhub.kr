@@ -1,13 +1,14 @@
 import { getPostList } from '@/lib/board/getPostList';
+import { decrypt } from '@/lib/encryption/decrypt';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   canManageCommunityBoardContents,
   canManageCommunityBoardSettings,
   getCommunityManagerAccess,
-} from '@/lib/community/communityManager/utils';
-import { decrypt } from '@/lib/encryption/decrypt';
-import { r2Storage } from '@/lib/r2Storage';
+} from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { canManageBlogContents } from '@/lib/site/contentAccess';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { findUserIdsByDisplayName } from '@/lib/users/findUsersByDisplayName';
 import { normalizeText } from '@/lib/utils';
 
@@ -526,6 +527,21 @@ export async function GET(request: Request, context: RouteContext) {
       } catch {
         canManageContents = false;
       }
+
+      if (!canManageContents) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+    }
+
+    if (isManageContentsRequest && rhizome.data.site_type === 'blog' && !canManageContents) {
+      const membershipResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role, is_approval')
+        .eq('site_id', rhizome.data.id)
+        .eq('user_id', session.stigmaId)
+        .maybeSingle();
+
+      canManageContents = canManageBlogContents(membershipResult.data);
 
       if (!canManageContents) {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });

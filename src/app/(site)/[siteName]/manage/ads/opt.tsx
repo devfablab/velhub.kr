@@ -6,7 +6,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
-import { hasMultipleBlogAdLinkDomains } from '@/lib/blogAds/validation';
+import { hasMultipleBlogAdLinkDomains } from '@/lib/service/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';

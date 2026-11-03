@@ -1,4 +1,4 @@
-import { createR2UploadSignature } from '@/lib/r2Storage';
+import { createR2UploadSignature } from '@/lib/clients/r2Storage';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';
 

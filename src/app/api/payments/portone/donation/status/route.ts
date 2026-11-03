@@ -3,7 +3,7 @@ import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/paym
 import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
 import { PAYMENT_TARGET_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SiteRow = {

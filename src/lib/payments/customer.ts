@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 export async function getPaymentCustomerName(authUserId: string) {

@@ -1,7 +1,7 @@
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getSessionClaims } from '@/lib/session/server';
 import {
   type MemberRestrictionMessage,
   type MemberRestrictionMessageSenderType,

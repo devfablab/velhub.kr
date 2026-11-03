@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import FormErrorDialog from '@/components/FormErrorDialog';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];

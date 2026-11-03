@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import path from 'path';
-import { getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type ServiceValue = 'toonation' | 'kakaotalk' | 'discord';

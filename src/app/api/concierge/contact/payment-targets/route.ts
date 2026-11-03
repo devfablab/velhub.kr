@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 function text(value: string | null) {
   return value?.trim() ?? '';

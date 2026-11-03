@@ -7,7 +7,7 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;

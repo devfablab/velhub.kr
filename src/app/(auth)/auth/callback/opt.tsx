@@ -17,7 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies.client';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/auth.module.sass';

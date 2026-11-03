@@ -1,12 +1,12 @@
-import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/blogCommunity/access';
-import { registerBlogCommunityFirstComeDraw } from '@/lib/blogCommunity/draw';
-import { isNumericContentSlug } from '@/lib/contentSlug';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import { registerBlogCommunityFirstComeDraw } from '@/lib/service/blog/blogCommunity/draw';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { isNumericContentSlug } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
-import { hasWordingProfilerViolation } from '@/lib/wordingProfiler/server';
+import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string }> };
 
@@ -65,7 +65,9 @@ export async function GET(_request: Request, context: RouteContext) {
     const supabaseAdmin = getSupabaseAdmin();
     const commentsResult = await supabaseAdmin
       .from('blog_community_comments')
-      .select('id, user_id, parent_id, reply_to_id, content, created_at, is_deleted, deleted_at, is_blinded, is_wording_blinded')
+      .select(
+        'id, user_id, parent_id, reply_to_id, content, created_at, is_deleted, deleted_at, is_blinded, is_wording_blinded',
+      )
       .eq('site_id', feature.siteId)
       .eq('post_id', postData.id)
       .order('created_at');
@@ -102,7 +104,14 @@ export async function GET(_request: Request, context: RouteContext) {
         parent_id: comment.parent_id,
         reply_to_id: comment.reply_to_id,
         reply_to_author_name: replyToAuthor?.name ?? '',
-        content: isWordingBlinded && !isMe ? null : isDeleted ? '삭제된 댓글입니다.' : isBlinded ? '숨김 처리된 댓글입니다.' : comment.content,
+        content:
+          isWordingBlinded && !isMe
+            ? null
+            : isDeleted
+              ? '삭제된 댓글입니다.'
+              : isBlinded
+                ? '숨김 처리된 댓글입니다.'
+                : comment.content,
         is_deleted: isDeleted,
         deleted_at: comment.deleted_at,
         is_locked: false,

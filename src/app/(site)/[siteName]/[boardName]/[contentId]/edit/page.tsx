@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
-import { getSiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../../getSiteApiData';
 import Opt, {

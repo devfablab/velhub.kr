@@ -1,13 +1,13 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   BLOG_AD_BUCKET,
   BLOG_AD_IMAGE_TYPES,
   MAX_BLOG_AD_IMAGE_SIZE,
   getBlogAdIdentityStatus,
   getBlogAdSiteContext,
-} from '@/lib/blogAds/server';
-import { r2Storage } from '@/lib/r2Storage';
+} from '@/lib/service/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 
 export async function POST(request: Request) {

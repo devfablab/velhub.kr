@@ -7,8 +7,8 @@ import {
   getBlogAdSiteContext,
   isImmediateBlogAdReport,
   isValidBlogAdUrl,
-} from '@/lib/blogAds/server';
-import { hasMultipleBlogAdLinkDomains } from '@/lib/blogAds/validation';
+} from '@/lib/service/blog/blogAds/server';
+import { hasMultipleBlogAdLinkDomains } from '@/lib/service/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
 
 type Item = { id?: unknown; productName?: unknown; thumbnailImage?: unknown; linkUrl?: unknown };

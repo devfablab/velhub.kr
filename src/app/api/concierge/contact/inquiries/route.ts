@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
-import { inquirySubtypes, isInquiryType } from '@/lib/concierge/inquiries';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { MEMBERSHIP_FEATURES } from '@/lib/memberships/catalog';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
+import { inquirySubtypes, isInquiryType } from '@/lib/service/concierge/conciergeInquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const MINOR_CANCELLATION_COOLDOWN_MS = 15 * 24 * 60 * 60 * 1000;
 const FAMILY_RELATION_CERTIFICATE_BUCKET = 'family-relation-certificates';
@@ -433,7 +433,12 @@ export async function POST(request: NextRequest) {
   if (!currentStigma) return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  const attachment = body?.attachment as { fileName?: unknown; fileSize?: unknown; mimeType?: unknown; storagePath?: unknown } | null;
+  const attachment = body?.attachment as {
+    fileName?: unknown;
+    fileSize?: unknown;
+    mimeType?: unknown;
+    storagePath?: unknown;
+  } | null;
   const inquiryType = body?.inquiryType;
   const inquirySubtype = getText(body?.inquirySubtype);
   const title = getText(body?.title);

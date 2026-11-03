@@ -1,4 +1,7 @@
-import { getBlogRecommendationContext, searchRecommendedBlogPosts } from '@/lib/blogRecommendations/server';
+import {
+  getBlogRecommendationContext,
+  searchRecommendedBlogPosts,
+} from '@/lib/service/blog/blogRecommendations.server';
 import { normalizeText } from '@/lib/utils';
 
 function getErrorStatus(error: unknown) {

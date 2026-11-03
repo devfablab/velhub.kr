@@ -1,5 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/privateBoard/access';
+import { getPrivateBoardAccess, getPrivateBoardSiteName } from '@/lib/service/community/privateBoardAccess';
 import { normalizeText } from '@/lib/utils';
 
 const PAGE_SIZE = 20;

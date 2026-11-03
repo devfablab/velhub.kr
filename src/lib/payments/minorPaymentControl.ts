@@ -1,6 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export type MinorPaymentControlResult = { guardianIdentityVerificationId: string | null; error: string | null };
 

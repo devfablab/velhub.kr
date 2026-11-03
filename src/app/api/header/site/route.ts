@@ -1,10 +1,10 @@
-import { refreshCommunityMemberLevel } from '@/lib/community/communityLevels/refreshMemberLevel';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { r2Storage } from '@/lib/r2Storage';
-import { getSessionClaims } from '@/lib/session';
+import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import { getLibraryStatus } from '@/lib/session/libraryStatus';
+import { getSessionClaims } from '@/lib/session/server';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SiteType = 'blog' | 'community';

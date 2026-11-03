@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAuthHealth, isSupabaseAuthOutage } from '@/lib/auth/health.server';
-import { updateSession } from '@/lib/session';
+import { updateSession } from '@/lib/session/server';
 import { normalizeText } from '@/lib/utils';
 
 type CommunityManageRole =

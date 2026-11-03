@@ -20,7 +20,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import type { SiteGuidelineDialogData } from '@/lib/siteGuidelines/server';
+import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import CommentList, { type CommentsResponse } from '@/components/comments/CommentList';

@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import { getSessionClaims } from '@/lib/session/server';
 
 export async function GET() {
   const sessionClaims = await getSessionClaims();

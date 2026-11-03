@@ -1,7 +1,7 @@
 'use client';
 
 import { Stack, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
-import type { PartnershipProposalRow } from '@/lib/partnerships';
+import type { PartnershipProposalRow } from '@/lib/service/concierge/partnerships';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';

@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { createLookupHash } from '@/lib/encryption/encrypt';
-import { getMailFrom, getResendClient } from '@/lib/resend';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getMailFrom, getResendClient } from '@/lib/clients/resend';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

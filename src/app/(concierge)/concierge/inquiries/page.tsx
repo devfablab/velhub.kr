@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { inquiryTypes, type InquiryStatus, type InquiryType } from '@/lib/concierge/inquiries';
+import { inquiryTypes, type InquiryStatus, type InquiryType } from '@/lib/service/concierge/conciergeInquiries';
 import verifySession from '@/lib/session/verifySession';
 import Container from '../menu';
 import Opt from './opt';

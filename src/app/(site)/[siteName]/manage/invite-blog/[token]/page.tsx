@@ -1,5 +1,5 @@
-import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSessionClaims } from '@/lib/session/server';
 import Opt from './opt';
 import type { InviteResponse } from './opt';
 import { getSiteApiData } from '@/app/(site)/getSiteApiData';

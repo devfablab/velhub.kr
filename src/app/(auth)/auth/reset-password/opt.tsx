@@ -17,7 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { isValidPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import Container from '../container';
 import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';

@@ -1,8 +1,12 @@
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
-import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/communityManager/utils';
+import {
+  canManageCommunityBoardContents,
+  getCommunityManagerAccess,
+} from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { canManageBlogContents } from '@/lib/site/contentAccess';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type Context = { params: Promise<{ boardName: string; contentId: string }> };
@@ -36,16 +40,16 @@ async function getContext(request: Request, context: Context) {
     const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
     canManage = canManageCommunityBoardContents(access.actor, board.data.id);
   }
-  if (!canManage && post.data.user_id !== session.stigmaId) throw new Error('접근 권한이 없습니다.');
-  if (site.data.site_type === 'blog' && post.data.user_id === session.stigmaId && !canManage) {
+  if (site.data.site_type === 'blog' && !canManage) {
     const membership = await db
       .from('rhizome_stigmas')
-      .select('role')
+      .select('role, is_approval')
       .eq('site_id', site.data.id)
       .eq('user_id', session.stigmaId)
       .maybeSingle();
-    if (membership.error || membership.data?.role !== 'member') throw new Error('접근 권한이 없습니다.');
+    canManage = canManageBlogContents(membership.data);
   }
+  if (!canManage && post.data.user_id !== session.stigmaId) throw new Error('접근 권한이 없습니다.');
   if (post.data.is_closed || post.data.is_locked || ['page', 'youtube'].includes(board.data.board_type))
     throw new Error('설정을 변경할 수 없는 글입니다.');
   const soloBlog = await isSoloBlog({ supabaseAdmin: db, siteId: site.data.id, siteType: site.data.site_type });

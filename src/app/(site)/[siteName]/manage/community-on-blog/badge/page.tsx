@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { Typography } from '@mui/material';
-import { getBlogCommunityEnablement } from '@/lib/blogCommunity/access';
+import { getBlogCommunityEnablement } from '@/lib/service/blog/blogCommunity/access';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import Opt from './opt';
@@ -13,7 +13,7 @@ export default async function Page({ params }: { params: Promise<{ siteName: str
   const enabled = feature.isEnabled;
   const badges = enabled
     ? await (async () => {
-        const { getSupabaseAdmin } = await import('@/lib/supabase');
+        const { getSupabaseAdmin } = await import('@/lib/clients/supabase');
         const result = await getSupabaseAdmin()
           .from('blog_subscription_badges')
           .select('subscription_months, image_url')

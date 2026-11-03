@@ -28,7 +28,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { format, isValid } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -36,7 +36,9 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
-import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
+import ConciergeFileUploader, {
+  type ConciergeUploadedFile,
+} from '@/components/service/concierge/ConciergeFileUploader';
 import styles from '@/app/concierge.module.sass';
 
 type ReportTargetType = 'site' | 'board' | 'post' | 'comment';
@@ -1462,7 +1464,11 @@ export default function Opt({
           </Stack>
         </Stack>
         <Stack direction="row" justifyContent="flex-end">
-          <button type="submit" className="button medium submit" disabled={submitting || reporterLoading || Object.values(uploadingFields).some(Boolean)}>
+          <button
+            type="submit"
+            className="button medium submit"
+            disabled={submitting || reporterLoading || Object.values(uploadingFields).some(Boolean)}
+          >
             {submitting ? '접수 중' : '신고 접수'}
           </button>
         </Stack>

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { uploadGitHubImage } from '@/lib/github/labs';
+import { uploadGitHubImage } from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type Props = {
   params: Promise<{ issueNumber: string }>;
