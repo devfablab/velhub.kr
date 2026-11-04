@@ -1,13 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import ScreenState from '@/components/service/ScreenState';
+import Profile, { type ReaderProfile } from './profile';
+import CreatorTimelinePosts, { type CreatorTimelinePost } from '@/app/(library)/creator/[handleName]/timelinePosts';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -19,19 +20,37 @@ type Post = {
   seriesLabel: string;
   publishedAt: string;
 };
-type UserProfile = {
-  id?: string;
-  handleName: string;
-  coverImage: string | null;
-  introduction: string | null;
-};
-export type Response = {
-  user: UserProfile & { activityName: string; profileImage: string | null };
-  posts: Post[];
+type LibraryResponse = {
+  user: ReaderProfile;
   total: number;
   page: number;
   isOwner: boolean;
 };
+
+type ReaderResponse = LibraryResponse & {
+  posts: Post[];
+  followingPosts: CreatorTimelinePost[];
+  followingLibraries: Array<{
+    id: string;
+    activityName: string;
+    handleName: string;
+    profileImage: string | null;
+    introduction: string | null;
+  }>;
+  hasFollowingLibraries: boolean;
+  tab: 'all' | 'following';
+};
+
+type CreatorLibraryResponse = LibraryResponse & {
+  libraryType: 'creator';
+  posts: CreatorTimelinePost[];
+};
+
+export type Response = ReaderResponse | CreatorLibraryResponse;
+
+function isCreatorLibraryResponse(data: Response): data is CreatorLibraryResponse {
+  return 'libraryType' in data && data.libraryType === 'creator';
+}
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -106,9 +125,9 @@ function ProfileForm({
   onCancel,
   onSaved,
 }: {
-  profile: UserProfile;
+  profile: ReaderProfile;
   onCancel: () => void;
-  onSaved: (profile: UserProfile) => void;
+  onSaved: (profile: ReaderProfile) => void;
 }) {
   const [introduction, setIntroduction] = useState(profile.introduction ?? '');
   const [coverImage, setCoverImage] = useState(profile.coverImage ?? '');
@@ -290,10 +309,10 @@ export default function Opt({
   const { themeMode, setThemeMode } = useThemeMode();
 
   const load = useCallback(
-    async (nextPage: number) => {
+    async (nextPage: number, nextTab: 'all' | 'following') => {
       try {
         setMessage('');
-        const response = await fetch(`/api/user/${handleName}?page=${nextPage}`);
+        const response = await fetch(`/api/user/${handleName}?page=${nextPage}&tab=${nextTab}`);
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message ?? '유저 정보를 불러오지 못했습니다.');
         setData(payload);
@@ -306,7 +325,8 @@ export default function Opt({
 
   function changePage(nextPage: number) {
     setPage(nextPage);
-    void load(nextPage);
+    const nextTab = data && !isCreatorLibraryResponse(data) ? data.tab : 'all';
+    void load(nextPage, nextTab);
   }
 
   useEffect(() => {
@@ -355,104 +375,93 @@ export default function Opt({
   const totalPages = Math.ceil(data.total / 100);
   const user = data.user;
   return (
-    <main className={styles['my-library']}>
-      <div className={styles.back}>
-        <Anchor href="/" className={styles.backlink}>
-          <ArrowBackRoundedIcon />
-          <span>라운지로 돌아가기</span>
-        </Anchor>
-      </div>
-      <div className={`${styles['user-cover']} ${user.coverImage ? styles['user-cover-image-container'] : ''}`}>
-        {user.coverImage ? (
-          <div className={styles['user-cover-image']} style={{ backgroundImage: `url(${user.coverImage})` }}>
-            <div className={styles['dummy-before']} />
-            <div className={styles['dummy-after']} />
-          </div>
-        ) : null}
-      </div>
-      <div className={styles.container}>
-        <div className={`content ${styles.content}`}>
-          <div className={styles['user-bio']}>
-            {editing && data.isOwner ? (
-              <ProfileForm
-                profile={user}
-                onCancel={() => setEditing(false)}
-                onSaved={(next) => {
-                  setData((current) => (current ? { ...current, user: { ...current.user, ...next } } : current));
-                  setEditing(false);
-                }}
-              />
-            ) : (
-              <>
-                <Avatar
-                  src={user.profileImage || '/broken-image.jpg'}
-                  alt={user.activityName}
-                  sx={{ width: 72, height: 72 }}
-                />
-                <div className={styles['user-bio-name']}>
-                  <h1>{user.activityName}</h1>
-                  <Typography variant="subtitle2">@{user.handleName}</Typography>
-                </div>
-                {data.isOwner ? (
-                  <div className={styles['user-bio-action']}>
-                    <button type="button" className="button small action" onClick={() => setEditing(true)}>
-                      수정
-                    </button>
-                  </div>
-                ) : null}
-
-                {user.introduction ? (
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {user.introduction}
-                  </Typography>
-                ) : null}
-              </>
-            )}
-          </div>
-          <Stack gap={2}>
-            {data.posts.length ? (
-              <ul className={`paper ${styles['user-posts']}`}>
-                {data.posts.map((post) => (
-                  <li key={post.id}>
-                    <button type="button" onClick={() => openPost(post.url)} className="paper">
-                      <strong>{post.subject}</strong>
-                      <span className={styles['post-label']}>
-                        <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
-                      </span>
-                      <time>{formatTimeAgo(post.publishedAt)}</time>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <ScreenState>작성한 글이 없습니다.</ScreenState>
-            )}
-            {totalPages > 1 ? (
-              <Stack direction="row" justifyContent="center" gap={1}>
-                <button
-                  type="button"
-                  className="button small action"
-                  disabled={page <= 1}
-                  onClick={() => changePage(page - 1)}
-                >
-                  이전
+    <Profile
+      user={user}
+      currentMenu={!isCreatorLibraryResponse(data) ? data.tab : 'all'}
+      isOwner={data.isOwner}
+      hasFollowingLibraries={!isCreatorLibraryResponse(data) && data.hasFollowingLibraries}
+      isEditing={editing}
+      editingContent={
+        <ProfileForm
+          profile={user}
+          onCancel={() => setEditing(false)}
+          onSaved={(next) => {
+            setData((current) => (current ? { ...current, user: { ...current.user, ...next } } : current));
+            setEditing(false);
+          }}
+        />
+      }
+      onEdit={() => setEditing(true)}
+    >
+      <Stack gap={2}>
+        {isCreatorLibraryResponse(data) ? (
+          <CreatorTimelinePosts posts={data.posts} emptyMessage="표시할 글이 없습니다." />
+        ) : data.tab === 'following' ? (
+          data.isOwner ? (
+            <CreatorTimelinePosts
+              posts={data.followingPosts}
+              emptyMessage="팔로우한 작가의 글이 없습니다."
+              returnToUserHandle={user.handleName}
+            />
+          ) : data.followingLibraries.length ? (
+            <ul className={`paper ${styles['creator-followed-libraries']}`}>
+              {data.followingLibraries.map((library) => (
+                <li key={library.id}>
+                  <Anchor href={`/creator/${library.handleName}?fromUser=${encodeURIComponent(user.handleName)}`}>
+                    <Avatar src={library.profileImage ?? undefined} alt={library.activityName}>
+                      {library.activityName.slice(0, 1)}
+                    </Avatar>
+                    <div className={styles.user}>
+                      <strong>{library.activityName} 작가</strong> <em>@{library.handleName}</em>
+                    </div>
+                  </Anchor>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ScreenState>팔로잉한 서재가 없습니다.</ScreenState>
+          )
+        ) : data.posts.length ? (
+          <ul className={`paper ${styles['user-posts']}`}>
+            {data.posts.map((post) => (
+              <li key={post.id}>
+                <button type="button" onClick={() => openPost(post.url)}>
+                  <strong>{post.subject}</strong>
+                  <span className={styles['post-label']}>
+                    <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
+                  </span>
+                  <time>{formatTimeAgo(post.publishedAt)}</time>
                 </button>
-                <Typography variant="body2">
-                  {page} / {totalPages}
-                </Typography>
-                <button
-                  type="button"
-                  className="button small action"
-                  disabled={page >= totalPages}
-                  onClick={() => changePage(page + 1)}
-                >
-                  다음
-                </button>
-              </Stack>
-            ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ScreenState>작성한 글이 없습니다.</ScreenState>
+        )}
+        {totalPages > 1 ? (
+          <Stack direction="row" justifyContent="center" gap={1}>
+            <button
+              type="button"
+              className="button small action"
+              disabled={page <= 1}
+              onClick={() => changePage(page - 1)}
+            >
+              이전
+            </button>
+            <Typography variant="body2">
+              {page} / {totalPages}
+            </Typography>
+            <button
+              type="button"
+              className="button small action"
+              disabled={page >= totalPages}
+              onClick={() => changePage(page + 1)}
+            >
+              다음
+            </button>
           </Stack>
-        </div>
-      </div>
-    </main>
+        ) : null}
+      </Stack>
+    </Profile>
   );
 }

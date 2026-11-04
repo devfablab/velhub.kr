@@ -57,6 +57,7 @@ export type Response = {
   page: number;
   isOwner: boolean;
   canUseCreatorLibrary: boolean;
+  canFollowCreatorLibrary: boolean;
   viewerCreatorHandleName: string | null;
   isFollowing: boolean;
 };
@@ -434,11 +435,13 @@ export default function Opt({
   initialData,
   initialError,
   initialMenu,
+  returnToUserHandle,
 }: {
   handleName: string;
   initialData: Response | null;
   initialError: string;
   initialMenu: 'all' | 'series';
+  returnToUserHandle: string | null;
 }) {
   const [data, setData] = useState<Response | null>(initialData);
   const [page, setPage] = useState(1);
@@ -531,7 +534,9 @@ export default function Opt({
       canUseSeriesPosts={data.canUseSeriesPosts}
       isOwner={data.isOwner}
       canUseCreatorLibrary={data.canUseCreatorLibrary}
+      canFollowCreatorLibrary={data.canFollowCreatorLibrary}
       viewerCreatorHandleName={data.viewerCreatorHandleName}
+      returnToUserHandle={returnToUserHandle}
       hasBranding={Boolean(data.hasBranding)}
       isEditing={editing}
       editingContent={
@@ -561,7 +566,7 @@ export default function Opt({
                     <span className={styles['post-label']}>
                       <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
                     </span>
-                    <time>{post.publishedAt ? formatTimeAgo(post.publishedAt) : '-'}</time>
+                    <time>{formatTimeAgo(post.publishedAt)}</time>
                   </button>
                 </li>
               ))}

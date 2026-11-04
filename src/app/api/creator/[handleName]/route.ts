@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { decrypt } from '@/lib/encryption/decrypt';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { getPostContentText } from '@/lib/reports/manage';
 import { getCreatorFollowCounts } from '@/lib/service/lounge/creatorFollowing';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type CreatorBoardType = 'basic' | 'blog' | 'feed' | 'gallery' | 'youtube';
@@ -212,6 +212,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     page,
     isOwner,
     canUseCreatorLibrary: authorState.isAuthor,
+    canFollowCreatorLibrary: authorState.isAuthor || viewerFeatures?.has('affetto_my_posts') === true,
     viewerCreatorHandleName: viewerCreatorResult.data?.handle_name ?? null,
     isFollowing: Boolean(followResult.data),
   });

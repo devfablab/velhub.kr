@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
-import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 import Opt, { Response } from './opt';
 
-type Props = { params: Promise<{ handleName: string }>; searchParams: Promise<{ tab?: string }> };
+type Props = { params: Promise<{ handleName: string }>; searchParams: Promise<{ tab?: string; fromUser?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handleName } = await params;
@@ -40,8 +40,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params, searchParams }: Props) {
   const { handleName } = await params;
-  const { tab } = await searchParams;
+  const { tab, fromUser } = await searchParams;
   const selectedTab = tab === 'series' ? 'series' : 'all';
+  const returnToUserHandle = normalizeText(fromUser).toLowerCase() || null;
   let initialData: Response | null = null;
   let initialError = '';
   try {
@@ -63,6 +64,7 @@ export default async function Page({ params, searchParams }: Props) {
       initialData={initialData}
       initialError={initialError}
       initialMenu={initialData?.canUseSeriesPosts && selectedTab === 'series' ? 'series' : 'all'}
+      returnToUserHandle={returnToUserHandle}
     />
   );
 }

@@ -65,6 +65,7 @@ export default function Opt({
       canUseSeriesPosts={owner.hasCreatorPosts}
       isOwner
       canUseCreatorLibrary
+      canFollowCreatorLibrary={canUseCreatorLibrary}
       hasBranding={owner.hasBranding}
       isEditing={editing}
       editingContent={

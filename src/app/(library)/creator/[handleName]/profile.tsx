@@ -26,7 +26,9 @@ type Props = {
   canUseSeriesPosts: boolean;
   isOwner: boolean;
   canUseCreatorLibrary: boolean;
+  canFollowCreatorLibrary: boolean;
   viewerCreatorHandleName?: string | null;
+  returnToUserHandle?: string | null;
   hasBranding?: boolean;
   isEditing?: boolean;
   editingContent?: ReactNode;
@@ -44,7 +46,9 @@ export default function Profile({
   canUseSeriesPosts,
   isOwner,
   canUseCreatorLibrary,
+  canFollowCreatorLibrary,
   viewerCreatorHandleName = null,
+  returnToUserHandle = null,
   hasBranding = false,
   isEditing = false,
   editingContent,
@@ -55,12 +59,25 @@ export default function Profile({
   onMenuChange,
   children,
 }: Props) {
-  const followingHref = `/creator/${creator.handleName}/following`;
-  const backHref = !isOwner && viewerCreatorHandleName ? `/creator/${viewerCreatorHandleName}` : '/';
-  const backLabel = !isOwner && viewerCreatorHandleName ? '나의 서재로 돌아가기' : '라운지로 돌아가기';
+  const returnToUserQuery = returnToUserHandle ? `?fromUser=${encodeURIComponent(returnToUserHandle)}` : '';
+  const followingHref = `/creator/${creator.handleName}/following${returnToUserQuery}`;
+  const backHref = returnToUserHandle
+    ? `/user/${encodeURIComponent(returnToUserHandle)}`
+    : !isOwner && viewerCreatorHandleName
+      ? `/creator/${viewerCreatorHandleName}`
+      : '/';
+  const backLabel = returnToUserHandle
+    ? '독자의 서재로 돌아가기'
+    : !isOwner && viewerCreatorHandleName
+      ? '나의 서재로 돌아가기'
+      : '라운지로 돌아가기';
 
   function renderPostMenu(menu: 'all' | 'series', label: string) {
-    const href = menu === 'all' ? `/creator/${creator.handleName}` : `/creator/${creator.handleName}?tab=series`;
+    const params = new URLSearchParams();
+    if (menu === 'series') params.set('tab', 'series');
+    if (returnToUserHandle) params.set('fromUser', returnToUserHandle);
+    const query = params.toString();
+    const href = `/creator/${creator.handleName}${query ? `?${query}` : ''}`;
     const isCurrent = currentMenu === menu;
 
     return (
@@ -120,7 +137,7 @@ export default function Profile({
                       </button>
                     </div>
                   ) : null}
-                  {!isOwner && canUseCreatorLibrary && onToggleFollow ? (
+                  {!isOwner && canFollowCreatorLibrary && onToggleFollow ? (
                     <div className={styles['user-bio-action']}>
                       <button
                         type="button"
@@ -173,19 +190,18 @@ export default function Profile({
               {renderPostMenu('all', '전체글')}
               {canUseSeriesPosts ? renderPostMenu('series', '연재글') : null}
               {isOwner && canUseCreatorLibrary ? (
-                <li className={currentMenu === 'following' ? styles.current : undefined}>
-                  <Anchor href={followingHref} aria-current={currentMenu === 'following' ? 'page' : undefined}>
-                    작가들의 서재
-                  </Anchor>
+                <li
+                  className={currentMenu === 'following' ? styles.current : undefined}
+                  aria-current={currentMenu === 'following' ? 'page' : undefined}
+                >
+                  <Anchor href={followingHref}>작가들의 서재</Anchor>
                 </li>
               ) : !isOwner ? (
-                <li className={currentMenu === 'followers' ? styles.current : undefined}>
-                  <Anchor
-                    href={`/creator/${creator.handleName}/followers`}
-                    aria-current={currentMenu === 'followers' ? 'page' : undefined}
-                  >
-                    팔로잉한 서재
-                  </Anchor>
+                <li
+                  className={currentMenu === 'followers' ? styles.current : undefined}
+                  aria-current={currentMenu === 'followers' ? 'page' : undefined}
+                >
+                  <Anchor href={`/creator/${creator.handleName}/followers${returnToUserQuery}`}>팔로잉한 서재</Anchor>
                 </li>
               ) : null}
             </ul>

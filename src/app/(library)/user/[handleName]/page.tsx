@@ -1,11 +1,12 @@
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
-import { decrypt } from '@/lib/encryption/decrypt';
+import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 import Opt, { Response } from './opt';
 
-type Props = { params: Promise<{ handleName: string }> };
+type Props = { params: Promise<{ handleName: string }>; searchParams: Promise<{ tab?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handleName } = await params;
@@ -38,15 +39,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${handleName} 독자의 서재` };
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { handleName } = await params;
+  const { tab } = await searchParams;
+  if (tab === 'following') redirect(`/user/${handleName}/following`);
   let initialData: Response | null = null;
   let initialError = '';
   try {
     const headerList = await headers();
+    const cookieStore = await cookies();
     const response = await fetch(
       `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/user/${handleName}?page=1`,
-      { cache: 'no-store' },
+      { headers: { cookie: cookieStore.toString() }, cache: 'no-store' },
     );
     const result = (await response.json()) as Response & { message?: string };
     if (!response.ok) throw new Error(result.message ?? '유저 정보를 불러오지 못했습니다.');

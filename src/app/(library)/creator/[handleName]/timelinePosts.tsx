@@ -74,9 +74,11 @@ function PostContent({ post }: { post: CreatorTimelinePost }) {
 export default function CreatorTimelinePosts({
   posts,
   emptyMessage,
+  returnToUserHandle,
 }: {
   posts: CreatorTimelinePost[];
   emptyMessage: string;
+  returnToUserHandle?: string | null;
 }) {
   if (!posts.length) return <ScreenState>{emptyMessage}</ScreenState>;
 
@@ -84,7 +86,10 @@ export default function CreatorTimelinePosts({
     <ul className={`paper ${styles['creator-following-posts']}`}>
       {posts.map((post) => (
         <li key={post.id}>
-          <Anchor href={`/creator/${post.creator.handleName}`} className={styles['creator-following-profile']}>
+          <Anchor
+            href={`/creator/${post.creator.handleName}${returnToUserHandle ? `?fromUser=${encodeURIComponent(returnToUserHandle)}` : ''}`}
+            className={styles['creator-following-profile']}
+          >
             <Avatar src={post.creator.profileImage ?? undefined} alt={post.creator.activityName}>
               {post.creator.activityName.slice(0, 1)}
             </Avatar>

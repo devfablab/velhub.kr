@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getMembershipFeatures } from '@/lib/memberships/features';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 async function getFollowTarget(handleName: string, currentStigmaId: string) {
-  const authorState = await getAuthorState(currentStigmaId);
-  if (!authorState.isAuthor) {
-    return { error: NextResponse.json({ message: '작가만 서재를 팔로우할 수 있습니다.' }, { status: 403 }) };
+  const [authorState, membershipFeatures] = await Promise.all([
+    getAuthorState(currentStigmaId),
+    getMembershipFeatures(currentStigmaId),
+  ]);
+  if (!authorState.isAuthor && !membershipFeatures.has('affetto_my_posts')) {
+    return {
+      error: NextResponse.json({ message: '서재 이용자만 작가의 서재를 팔로우할 수 있습니다.' }, { status: 403 }),
+    };
   }
 
   const supabaseAdmin = getSupabaseAdmin();

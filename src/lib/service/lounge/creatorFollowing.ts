@@ -1,9 +1,9 @@
-import { decrypt } from '@/lib/encryption/decrypt';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { getPostContentText } from '@/lib/reports/manage';
 import { getAuthorState } from '@/lib/session/author';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 export type CreatorFollowingPost = {
@@ -82,6 +82,7 @@ export type CreatorFollowedLibraries = {
   isOwner: boolean;
   canUseSeriesPosts: boolean;
   canUseCreatorLibrary: boolean;
+  canFollowCreatorLibrary: boolean;
   viewerCreatorHandleName: string | null;
   isFollowing: boolean;
 };
@@ -324,6 +325,7 @@ export async function getCreatorFollowedLibraries(
       isOwner,
       canUseSeriesPosts,
       canUseCreatorLibrary: viewerAuthorState.isAuthor,
+      canFollowCreatorLibrary: viewerAuthorState.isAuthor || viewerMembershipFeatures?.has('affetto_my_posts') === true,
       viewerCreatorHandleName: viewerAuthorState.isAuthor ? (viewerCreatorResult.data?.handle_name ?? null) : null,
       isFollowing: Boolean(followResult.data),
     };
@@ -365,6 +367,7 @@ export async function getCreatorFollowedLibraries(
     isOwner,
     canUseSeriesPosts,
     canUseCreatorLibrary: viewerAuthorState.isAuthor,
+    canFollowCreatorLibrary: viewerAuthorState.isAuthor || viewerMembershipFeatures?.has('affetto_my_posts') === true,
     viewerCreatorHandleName: viewerAuthorState.isAuthor ? (viewerCreatorResult.data?.handle_name ?? null) : null,
     isFollowing: Boolean(followResult.data),
   };

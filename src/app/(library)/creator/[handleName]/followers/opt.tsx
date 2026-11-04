@@ -31,6 +31,7 @@ export type FollowersResponse = {
   isOwner: boolean;
   canUseSeriesPosts: boolean;
   canUseCreatorLibrary: boolean;
+  canFollowCreatorLibrary: boolean;
   viewerCreatorHandleName: string | null;
   isFollowing: boolean;
 };
@@ -38,9 +39,11 @@ export type FollowersResponse = {
 export default function Opt({
   initialData,
   initialError,
+  returnToUserHandle,
 }: {
   initialData: FollowersResponse | null;
   initialError: string;
+  returnToUserHandle: string | null;
 }) {
   const [data, setData] = useState(initialData);
   const [message, setMessage] = useState(initialError);
@@ -76,7 +79,9 @@ export default function Opt({
       canUseSeriesPosts={data.canUseSeriesPosts}
       isOwner={data.isOwner}
       canUseCreatorLibrary={data.canUseCreatorLibrary}
+      canFollowCreatorLibrary={data.canFollowCreatorLibrary}
       viewerCreatorHandleName={data.viewerCreatorHandleName}
+      returnToUserHandle={returnToUserHandle}
       hasBranding={data.owner.hasBranding}
       following={data.isFollowing}
       followSubmitting={followSubmitting}
@@ -86,7 +91,9 @@ export default function Opt({
         <ul className={`paper ${styles['creator-followed-libraries']}`}>
           {data.libraries.map((library) => (
             <li key={library.id}>
-              <Anchor href={`/creator/${library.handleName}`}>
+              <Anchor
+                href={`/creator/${library.handleName}${returnToUserHandle ? `?fromUser=${encodeURIComponent(returnToUserHandle)}` : ''}`}
+              >
                 <Avatar src={library.profileImage ?? undefined} alt={library.activityName}>
                   {library.activityName.slice(0, 1)}
                 </Avatar>
