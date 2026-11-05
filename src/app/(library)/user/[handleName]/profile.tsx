@@ -70,9 +70,11 @@ export default function Profile({
               editingContent
             ) : (
               <>
-                <Avatar src={user.profileImage ?? undefined} alt={user.activityName} sx={{ width: 72, height: 72 }}>
-                  {user.activityName.slice(0, 1)}
-                </Avatar>
+                <Avatar
+                  src={user.activityName ? user.profileImage || '/broken-image.jpg' : undefined}
+                  alt={user.activityName || ''}
+                  sx={{ width: 72, height: 72 }}
+                />
                 <div className={styles['user-bio-title-row']}>
                   <div className={styles['user-bio-name']}>
                     <h1>{user.activityName}</h1>

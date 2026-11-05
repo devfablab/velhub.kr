@@ -329,12 +329,10 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                     <div className={styles.tail}>
                       <div className={styles['tail-author']}>
                         <Avatar
-                          src={post.author_avatar ?? undefined}
+                          src={post.author_name ? post.author_avatar || '/broken-image.jpg' : undefined}
                           alt={post.author_name}
-                          sx={{ width: 24, height: 24, fontSize: 12 }}
-                        >
-                          {post.author_name.slice(0, 1)}
-                        </Avatar>
+                          sx={{ width: 24, height: 24 }}
+                        />
                         <strong>{post.author_name}</strong>
                         <ScheduleRoundedIcon />
                         <time>{formatTimeAgo(post.published_at)}</time>
@@ -522,12 +520,10 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                   </div>
                   <div className={styles['tail-author']}>
                     <Avatar
-                      src={post.author_avatar ?? undefined}
+                      src={post.author_name ? post.author_avatar || '/broken-image.jpg' : undefined}
                       alt={post.author_name}
-                      sx={{ width: 24, height: 24, fontSize: 12 }}
-                    >
-                      {post.author_name.slice(0, 1)}
-                    </Avatar>
+                      sx={{ width: 24, height: 24 }}
+                    />
                     <strong>{post.author_name}</strong>
                   </div>
                   <div className={styles['tail-date']}>

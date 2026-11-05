@@ -90,9 +90,10 @@ export default function CreatorTimelinePosts({
             href={`/creator/${post.creator.handleName}${returnToUserHandle ? `?fromUser=${encodeURIComponent(returnToUserHandle)}` : ''}`}
             className={styles['creator-following-profile']}
           >
-            <Avatar src={post.creator.profileImage ?? undefined} alt={post.creator.activityName}>
-              {post.creator.activityName.slice(0, 1)}
-            </Avatar>
+            <Avatar
+              src={post.creator.activityName ? post.creator.profileImage || '/broken-image.jpg' : undefined}
+              alt={post.creator.activityName || ''}
+            />
             <div className={styles.user}>
               <strong>{post.creator.activityName} 작가</strong>
               <em>@{post.creator.handleName}</em>

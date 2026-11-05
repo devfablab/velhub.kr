@@ -408,9 +408,10 @@ export default function Opt({
               {data.followingLibraries.map((library) => (
                 <li key={library.id}>
                   <Anchor href={`/creator/${library.handleName}?fromUser=${encodeURIComponent(user.handleName)}`}>
-                    <Avatar src={library.profileImage ?? undefined} alt={library.activityName}>
-                      {library.activityName.slice(0, 1)}
-                    </Avatar>
+                    <Avatar
+                      src={library.activityName ? library.profileImage || '/broken-image.jpg' : undefined}
+                      alt={library.activityName || ''}
+                    />
                     <div className={styles.user}>
                       <strong>{library.activityName} 작가</strong> <em>@{library.handleName}</em>
                     </div>

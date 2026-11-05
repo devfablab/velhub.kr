@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
-import { Avatar, Box, Chip } from '@mui/material';
+import { Avatar } from '@mui/material';
 import type { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -47,6 +47,8 @@ function getThumbnail(post: HubPostDisplay) {
 export default function HubPostListItem({ post, date, dateLabel, description, onClick, badges }: Props) {
   const thumbnail = getThumbnail(post);
   const content = getDescription(post, description);
+  const authorName = post.authorName.trim();
+  const authorImage = authorName ? post.authorImage || '/broken-image.jpg' : undefined;
 
   const item = (
     <>
@@ -58,14 +60,8 @@ export default function HubPostListItem({ post, date, dateLabel, description, on
         </div>
         <div className={styles.tail}>
           <div className={styles['tail-author']}>
-            <Avatar
-              src={post.authorImage ?? undefined}
-              alt={post.authorName}
-              sx={{ width: 24, height: 24, fontSize: 12 }}
-            >
-              {post.authorName.slice(0, 1)}
-            </Avatar>
-            <strong>{post.authorName}</strong>
+            <Avatar src={authorImage} alt={authorName} sx={{ width: 24, height: 24 }} />
+            <strong>{authorName}</strong>
             <ScheduleRoundedIcon />
             <time aria-label={dateLabel}>{formatTimeAgo(date)}</time>
           </div>

@@ -119,12 +119,10 @@ export default function Profile({
             ) : (
               <>
                 <Avatar
-                  src={creator.profileImage ?? undefined}
-                  alt={creator.activityName}
+                  src={creator.activityName ? creator.profileImage || '/broken-image.jpg' : undefined}
+                  alt={creator.activityName || ''}
                   sx={{ width: 72, height: 72 }}
-                >
-                  {creator.activityName.slice(0, 1)}
-                </Avatar>
+                />
                 <div className={styles['user-bio-title-row']}>
                   <div className={styles['user-bio-name']}>
                     <h1>{creator.activityName} 작가</h1>

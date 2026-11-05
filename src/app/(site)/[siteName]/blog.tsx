@@ -119,7 +119,6 @@ type Props = {
   series?: BlogHomeSeries[];
   ads?: BlogHomeAd[];
   communityTitle?: string;
-  communityAvatarUrl?: string | null;
 };
 
 type SliderArrowProps = {
@@ -224,12 +223,10 @@ function BlogCommunityCarousel({
   posts,
   siteName,
   communityTitle,
-  communityAvatarUrl,
 }: {
   posts: BlogHomeCommunityPost[];
   siteName: string;
   communityTitle: string;
-  communityAvatarUrl: string | null;
 }) {
   const containerReference = useRef<HTMLDivElement | null>(null);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
@@ -307,7 +304,10 @@ function BlogCommunityCarousel({
               data-blog-home-community-card
             >
               <div className={styles['blog-home-community-meta']}>
-                <Avatar src={communityAvatarUrl ?? undefined} alt="" />
+                <Avatar
+                  src={post.authorName ? post.authorAvatarUrl || '/broken-image.jpg' : undefined}
+                  alt={post.authorName}
+                />
                 <span>
                   <strong>{post.authorName}</strong>
                   <small>
@@ -482,7 +482,6 @@ export default function Blog(props: Props) {
                 posts={props.homeData.communityPosts}
                 siteName={props.siteName}
                 communityTitle={props.communityTitle ?? ''}
-                communityAvatarUrl={props.communityAvatarUrl ?? null}
               />
             </section>
           ) : null}
