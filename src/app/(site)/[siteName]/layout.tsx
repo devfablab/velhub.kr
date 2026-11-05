@@ -1,7 +1,7 @@
 import { cache, type ReactNode, Suspense } from 'react';
 import type { Metadata } from 'next';
-import { detectAdult } from '@/lib/service/detectAdult.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { detectAdult } from '@/lib/service/detectAdult.server';
 import { normalizeText } from '@/lib/utils';
 import FooterSite from '@/components/footers/Site';
 import HeaderSite from '@/components/headers/Site';
@@ -202,6 +202,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
         purchase_available?: boolean;
         has_categories?: boolean;
         has_series?: boolean;
+        has_shopping?: boolean;
       };
     }>(`/api/site/public?siteName=${siteName}`, '메뉴를 불러오지 못했습니다.'),
     getSiteApiData<{ count?: number }>('/api/notifications/unread-count', '알림을 불러오지 못했습니다.'),
@@ -247,6 +248,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
             purchaseAvailable: Boolean(siteMenu.data?.siteInfo?.purchase_available),
             hasCategories: Boolean(siteMenu.data?.siteInfo?.has_categories),
             hasSeries: Boolean(siteMenu.data?.siteInfo?.has_series),
+            hasShopping: header.data?.siteType === 'blog' && siteMenu.data?.siteInfo?.has_shopping === true,
             hasBlogCommunity:
               blogCommunity.data?.feature?.isPersonalBlog === true &&
               blogCommunity.data?.feature?.isEnabled === true &&

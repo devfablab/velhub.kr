@@ -52,6 +52,7 @@ type InitialData = {
   purchaseAvailable: boolean;
   hasCategories: boolean;
   hasSeries: boolean;
+  hasShopping: boolean;
   hasBlogCommunity: boolean;
 };
 

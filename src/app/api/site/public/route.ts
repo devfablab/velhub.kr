@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
 import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
 import { getSessionClaims } from '@/lib/session/server';
 import verifySession from '@/lib/session/verifySession';
@@ -132,6 +133,8 @@ export async function GET(request: Request) {
             supabaseAdmin.from('blog_communities').select('is_enabled').eq('site_id', siteId).maybeSingle(),
           ])
         : Promise.resolve(null);
+    const hasShoppingPromise =
+      siteType === 'blog' ? getVisibleBlogHomeAds(siteId).then((ads) => ads.length > 0) : Promise.resolve(false);
     const privateBoardPromise =
       siteType === 'community'
         ? (async () => {
@@ -167,6 +170,7 @@ export async function GET(request: Request) {
       siteLimitResult,
       hasOwnerDomainFeature,
       blogCommunityResult,
+      hasShopping,
     ] = await Promise.all([
       chorogonPromise,
       boardsPromise,
@@ -177,6 +181,7 @@ export async function GET(request: Request) {
       siteLimitPromise,
       hasOwnerDomainPromise,
       blogCommunityPromise,
+      hasShoppingPromise,
     ]);
 
     const [blogResult, blogCommunityConfigResult] = blogCommunityResult ?? [null, null];
@@ -253,6 +258,7 @@ export async function GET(request: Request) {
         has_series: !seriesRes.error && Number(seriesRes.count ?? 0) > 0,
         blog_type: blogResult?.data?.blog_type ?? null,
         is_blog_community_enabled: blogCommunityConfigResult?.data?.is_enabled === true,
+        has_shopping: hasShopping,
       },
       menus: boardRows.map((board) => ({
         id: board.id,

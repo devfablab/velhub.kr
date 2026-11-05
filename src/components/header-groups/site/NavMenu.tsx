@@ -39,6 +39,7 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
   const hasCategories = isBlog && initialData?.hasCategories === true;
   const hasSeries = initialData?.hasSeries === true;
+  const hasShopping = isBlog && initialData?.hasShopping === true;
   const hasBlogCommunity = isBlog && initialData?.hasBlogCommunity === true;
 
   const homeHref = `/${siteName}`;
@@ -57,10 +58,12 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const isCategoryHrefCurrent = pathname === categoryHref || pathname.startsWith(`${categoryHref}/`);
 
   const seriesHref = `/${siteName}/s`;
+  const shoppingHref = `/${siteName}/shopping`;
   const blogCommunityHref = `/${siteName}/community-on-blog`;
   const blogCommunityLabel = `${siteHeader?.siteLabel || siteName} 커뮤니티`;
   const isBlogCommunityCurrent = isCurrentPath(pathname, blogCommunityHref);
   const isSeriesHrefCurrent = pathname === seriesHref || pathname.startsWith(`${seriesHref}/`);
+  const isShoppingHrefCurrent = isCurrentPath(pathname, shoppingHref);
 
   return (
     <div className={styles.navigationbar}>
@@ -149,6 +152,17 @@ export default function NavMenu({ siteName, isBlog }: Props) {
               </li>
             );
           })}
+          {hasShopping ? (
+            <li
+              className={isShoppingHrefCurrent ? styles.current : undefined}
+              aria-current={isShoppingHrefCurrent ? 'page' : false}
+            >
+              <Anchor href={shoppingHref}>
+                <span>쇼핑</span>
+                <i />
+              </Anchor>
+            </li>
+          ) : null}
           {isBlog && menus.length > 1 && hasBlogCommunity ? (
             <li
               className={isBlogCommunityCurrent ? styles.current : undefined}

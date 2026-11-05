@@ -12,6 +12,7 @@ import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import WysiwygOutlinedIcon from '@mui/icons-material/WysiwygOutlined';
 import { MenuItem } from '@mui/material';
 import Anchor from '@/components/Anchor';
@@ -79,6 +80,7 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
   const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
   const hasCategories = isBlog && initialData?.hasCategories === true;
   const hasSeries = initialData?.hasSeries === true;
+  const hasShopping = isBlog && initialData?.hasShopping === true;
   const hasBlogCommunity = isBlog && initialData?.hasBlogCommunity === true;
 
   const allHref = `/${siteName}/board`;
@@ -153,6 +155,14 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
           </MenuItem>
         );
       })}
+      {hasShopping ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/shopping`}>
+            <ShoppingBagOutlinedIcon fontSize="small" />
+            <span>쇼핑</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
       {isBlog && menus.length > 1 && hasBlogCommunity ? (
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/community-on-blog`}>
