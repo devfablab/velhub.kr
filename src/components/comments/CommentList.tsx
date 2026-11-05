@@ -78,6 +78,8 @@ type CommentWithReplies = CommentData & {
   children?: CommentData[];
 };
 
+type CommentSort = 'popular' | 'latest';
+
 function getCommentCount(nextComments: CommentData[]): number {
   return nextComments.reduce<number>((totalCount, comment) => {
     const nextComment = comment as CommentWithReplies;
@@ -123,6 +125,50 @@ function updateCommentReactionState({
   }));
 }
 
+function addComment(comments: CommentData[], nextComment: CommentData): CommentData[] {
+  if (!nextComment.parent_id) {
+    return [nextComment, ...comments];
+  }
+
+  return comments.map((comment) => {
+    if (comment.id !== nextComment.parent_id) {
+      return comment;
+    }
+
+    return {
+      ...comment,
+      replies: [...comment.replies, nextComment],
+    };
+  });
+}
+
+function sortComments(comments: CommentData[], sort: CommentSort, newestCommentId: string) {
+  return [...comments].sort((firstComment, secondComment) => {
+    if (firstComment.is_pinned !== secondComment.is_pinned) {
+      return firstComment.is_pinned ? -1 : 1;
+    }
+
+    if (firstComment.id === newestCommentId || secondComment.id === newestCommentId) {
+      return firstComment.id === newestCommentId ? -1 : 1;
+    }
+
+    if (sort === 'popular') {
+      const firstPopularity = firstComment.like_count - firstComment.dislike_count;
+      const secondPopularity = secondComment.like_count - secondComment.dislike_count;
+
+      if (firstPopularity !== secondPopularity) {
+        return secondPopularity - firstPopularity;
+      }
+
+      if (firstComment.dislike_count !== secondComment.dislike_count) {
+        return firstComment.dislike_count - secondComment.dislike_count;
+      }
+    }
+
+    return new Date(secondComment.created_at).getTime() - new Date(firstComment.created_at).getTime();
+  });
+}
+
 export default function CommentList({
   siteName,
   boardName,
@@ -149,6 +195,8 @@ export default function CommentList({
   const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? '');
   const [isCommunity, setIsCommunity] = useState(initialData?.isCommunity === true);
   const [boardLabel, setBoardLabel] = useState(initialData?.boardLabel ?? '');
+  const [commentSort, setCommentSort] = useState<CommentSort>('popular');
+  const [newestCommentId, setNewestCommentId] = useState('');
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -184,6 +232,7 @@ export default function CommentList({
       setBoardLabel(result.boardLabel ?? '');
 
       setComments(Array.isArray(result.comments) ? result.comments : []);
+      setNewestCommentId('');
       setMySelfAvatarUrl(result.mySelfAvatarUrl ?? '');
       setMyPollChoice(result.myPollChoice ?? null);
       setCanWrite(result.actions?.canWrite === true);
@@ -230,7 +279,18 @@ export default function CommentList({
         throw new Error(result.error ?? '댓글 작성에 실패했습니다.');
       }
 
-      await loadComments();
+      if (!result.comment) {
+        throw new Error('작성한 댓글을 불러오지 못했습니다.');
+      }
+
+      const createdComment = result.comment;
+
+      setComments((previousComments) => addComment(previousComments, createdComment));
+
+      if (!createdComment.parent_id) {
+        setNewestCommentId(createdComment.id);
+      }
+
       setActiveReplyTargetId('');
     } catch (unknownError) {
       const nextErrorMessage =
@@ -481,6 +541,7 @@ export default function CommentList({
 
   const commentCount = getCommentCount(comments);
   const pinnedCommentId = comments.find((comment) => comment.is_pinned)?.id ?? '';
+  const sortedComments = sortComments(comments, commentSort, newestCommentId);
 
   return (
     <section className={`${styles['comment-section']} paper`}>
@@ -561,8 +622,24 @@ export default function CommentList({
       ) : null}
 
       <div className={styles['comment-items']}>
-        {comments.length > 0 ? (
-          comments.map((comment) => (
+        <div className={styles['comment-items-sorting']}>
+          <button
+            type="button"
+            className={`button small ${commentSort === 'popular' ? 'submit' : 'action'}`}
+            onClick={() => setCommentSort('popular')}
+          >
+            인기순
+          </button>
+          <button
+            type="button"
+            className={`button small ${commentSort === 'latest' ? 'submit' : 'action'}`}
+            onClick={() => setCommentSort('latest')}
+          >
+            최신순
+          </button>
+        </div>
+        {sortedComments.length > 0 ? (
+          sortedComments.map((comment) => (
             <CommentItem
               key={comment.id}
               siteName={siteName}

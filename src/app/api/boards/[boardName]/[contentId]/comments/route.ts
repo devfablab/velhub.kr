@@ -818,10 +818,7 @@ export async function GET(request: Request, context: RouteContext) {
         { status: 403 },
       );
     }
-    const canPinComment =
-      target.data.siteType === 'community' &&
-      Boolean(session.stigmaId) &&
-      (session.stigmaId === target.data.postAuthorId || canManageComment);
+    const canPinComment = Boolean(session.stigmaId) && canManageComment;
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -1203,8 +1200,7 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
-    const canPinComment =
-      target.data.siteType === 'community' && (session.stigmaId === target.data.postAuthorId || canManageComment);
+    const canPinComment = Boolean(session.stigmaId) && canManageComment;
 
     const commentMap = new Map([[insertResult.data.id, insertResult.data as CommentRow]]);
     const authorMap = new Map<string, Awaited<ReturnType<typeof getUserDisplayInfo>>>();

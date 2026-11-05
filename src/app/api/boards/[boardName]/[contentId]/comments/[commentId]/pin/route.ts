@@ -1,6 +1,6 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -35,10 +35,6 @@ async function getPinTarget({
 
   if (siteResult.error || !siteResult.data) {
     return { error: Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 }), data: null };
-  }
-
-  if (siteResult.data.site_type !== 'community') {
-    return { error: Response.json({ error: '커뮤니티 댓글만 고정할 수 있습니다.' }, { status: 403 }), data: null };
   }
 
   const boardResult = await supabaseAdmin
@@ -86,9 +82,9 @@ async function getPinTarget({
     error: null,
     data: {
       siteId: siteResult.data.id as string,
+      siteType: siteResult.data.site_type as 'blog' | 'community',
       boardId: boardResult.data.id as string,
       postId: postResult.data.id as string,
-      postAuthorId: postResult.data.user_id as string,
       comment: commentResult.data,
     },
   };
@@ -97,13 +93,13 @@ async function getPinTarget({
 async function canPinComment({
   siteName,
   boardId,
-  postAuthorId,
   siteId,
+  siteType,
 }: {
   siteName: string;
   boardId: string;
-  postAuthorId: string;
   siteId: string;
+  siteType: 'blog' | 'community';
 }) {
   const session = await verifySession({ siteId });
 
@@ -111,8 +107,27 @@ async function canPinComment({
     return { allowed: false, session };
   }
 
-  if (session.stigmaId === postAuthorId || session.case === 'staff' || session.case === 'admin') {
+  if (session.case === 'staff' || session.case === 'admin') {
     return { allowed: true, session };
+  }
+
+  const membershipResult = await getSupabaseAdmin()
+    .from('rhizome_stigmas')
+    .select('id, role')
+    .eq('site_id', siteId)
+    .eq('user_id', session.stigmaId)
+    .maybeSingle();
+
+  if (membershipResult.error || !membershipResult.data) {
+    return { allowed: false, session };
+  }
+
+  if (membershipResult.data.role === 'owner') {
+    return { allowed: true, session };
+  }
+
+  if (siteType === 'blog') {
+    return { allowed: false, session };
   }
 
   try {
@@ -164,7 +179,7 @@ async function updatePin(request: Request, context: RouteContext, isPinned: bool
       siteName,
       siteId: target.data.siteId,
       boardId: target.data.boardId,
-      postAuthorId: target.data.postAuthorId,
+      siteType: target.data.siteType,
     });
 
     if (!permission.session.authUserId || !permission.session.stigmaId) {
