@@ -1,5 +1,4 @@
 import { r2PublicStorage } from './clients/r2Public';
-import { getSupabaseBrowser } from './clients/supabase';
 
 type DateInput = string | Date | null | undefined;
 

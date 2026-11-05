@@ -1,28 +1,23 @@
 'use client';
 
-import { formatDateSimple } from '@/lib/utils';
-import Anchor from '@/components/Anchor';
+import type { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import ScreenState from '@/components/service/ScreenState';
+import HubPostListItem from './HubPostListItem';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
 
 type PostLikeRow = {
   id: string;
-  title: string;
-  authorName: string;
-  siteName: string;
   likedAt: string;
-  href: string;
+  post: HubPostDisplay;
 };
 
 type CommentLikeRow = {
   id: string;
   comment: string;
-  postTitle: string;
-  siteName: string;
   likedAt: string;
-  href: string;
+  post: HubPostDisplay;
 };
 
 export type LikedResponse = {
@@ -55,42 +50,30 @@ export default function Liked({ initialData, initialError }: Props) {
       {postLikes.length === 0 && commentLikes.length === 0 ? (
         <ScreenState>하나도 맘에 든 글이 없으셨나봐요 😭</ScreenState>
       ) : (
-        <div className={`paper ${styles['likey-sites']}`}>
+        <div className={styles['hub-list-groups']}>
           {postLikes.length > 0 ? (
-            <div className={styles.items}>
-              <h3>좋은 글</h3>
-              <ol>
+            <div>
+              <h3>포스팅</h3>
+              <ol className={`${styles.list} ${styles['list-newest']} paper`}>
                 {postLikes.map((post) => (
-                  <li key={post.id}>
-                    <Anchor href={post.href}>
-                      <strong aria-label="글 제목">{post.title}</strong>
-                      <cite aria-label="작성자">{post.authorName}</cite>
-                      <div className={styles.tail}>
-                        <em aria-label="사이트명">{post.siteName}</em>
-                        <time aria-label="좋아요 누른 일시">{formatDateSimple(post.likedAt)}</time>
-                      </div>
-                    </Anchor>
-                  </li>
+                  <HubPostListItem key={post.id} post={post.post} date={post.likedAt} dateLabel="좋아요 누른 일시" />
                 ))}
               </ol>
             </div>
           ) : null}
 
           {commentLikes.length > 0 ? (
-            <div className={styles.items}>
-              <h3>좋은 댓글</h3>
-              <ol>
+            <div>
+              <h3>댓글</h3>
+              <ol className={`${styles.list} ${styles['list-newest']} paper`}>
                 {commentLikes.map((comment) => (
-                  <li key={comment.id}>
-                    <Anchor href={comment.href}>
-                      <p aria-label="댓글">{comment.comment}</p>
-                      <strong aria-label="글 제목">{comment.postTitle}</strong>
-                      <div className={styles.tail}>
-                        <em aria-label="사이트명">{comment.siteName}</em>
-                        <time aria-label="좋아요 누른 일시">{formatDateSimple(comment.likedAt)}</time>
-                      </div>
-                    </Anchor>
-                  </li>
+                  <HubPostListItem
+                    key={comment.id}
+                    post={comment.post}
+                    date={comment.likedAt}
+                    dateLabel="좋아요 누른 일시"
+                    description={comment.comment}
+                  />
                 ))}
               </ol>
             </div>

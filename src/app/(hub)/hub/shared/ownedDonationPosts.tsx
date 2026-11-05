@@ -4,12 +4,14 @@ import { useRef, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Chip, useTheme } from '@mui/material';
 import { getLinkPreview, type LinkPreviewData } from '@/lib/service/getLinkPreview';
+import type { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import { formatDateSimple, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import HubPostListItem from './HubPostListItem';
 import ResponsivePopup from './ResponsivePopup';
 import boardStyles from '@/app/board.module.sass';
 import styles from '@/app/hub.module.sass';
@@ -21,15 +23,12 @@ type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed' | 'page' | 'blog';
 type PostRow = {
   id: string;
   siteName: string;
-  siteLabel: string;
-  siteType: SiteType;
   boardName: string;
   contentId: string;
-  title: string;
-  authorName: string;
   createdAt: string;
   isClosed: boolean;
   kinds: PostKind[];
+  post: HubPostDisplay;
 };
 
 export type PostsResponse = {
@@ -339,29 +338,26 @@ export default function OwnedDonationPosts({ initialData, initialError }: Props)
   const preview = <PostPreview response={contentResponse} errorMessage={contentErrorMessage} />;
 
   return (
-    <section className={`paper ${styles.paper} ${styles.history} ${styles['owned-posts']}`}>
+    <section className={`paper ${styles.paper} ${styles['owned-posts']}`}>
       <h2>소장/후원글</h2>
-      <div className={styles.items}>
-        <ol>
+      <div>
+        <ol className={`${styles.list} ${styles['list-newest']}`}>
           {posts.map((post) => (
-            <li key={post.id}>
-              <button type="button" onClick={() => void openPreview(post)}>
-                <span className={styles['owned-post-title']}>
-                  <strong aria-label="글 제목">{post.title}</strong>
+            <HubPostListItem
+              key={post.id}
+              post={post.post}
+              date={post.createdAt}
+              dateLabel="작성일"
+              onClick={() => void openPreview(post)}
+              badges={
+                <span className={styles['owned-post-chips']}>
                   {post.isClosed ? <em>삭제된 연재글</em> : null}
-                  <span className={styles['owned-post-chips']}>
-                    {post.kinds.map((kind) => (
-                      <Chip key={kind} label={getKindLabel(kind)} size="small" />
-                    ))}
-                  </span>
+                  {post.kinds.map((kind) => (
+                    <Chip key={kind} label={getKindLabel(kind)} size="small" />
+                  ))}
                 </span>
-                <cite aria-label="작성자">{post.authorName}</cite>
-                <div className={styles.tail}>
-                  <em aria-label="사이트명">{post.siteLabel}</em>
-                  <time aria-label="작성일">{formatDateSimple(post.createdAt)}</time>
-                </div>
-              </button>
-            </li>
+              }
+            />
           ))}
         </ol>
       </div>

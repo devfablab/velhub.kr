@@ -1,8 +1,8 @@
 'use client';
 
-import { formatDateSimple } from '@/lib/utils';
-import Anchor from '@/components/Anchor';
+import type { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import ScreenState from '@/components/service/ScreenState';
+import HubPostListItem from './HubPostListItem';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -10,11 +10,8 @@ type HistoryType = 'read' | 'saved';
 
 type PostRow = {
   id: string;
-  title: string;
-  authorName: string;
-  siteName: string;
   date: string;
-  href: string;
+  post: HubPostDisplay;
 };
 
 export type PostsResponse = {
@@ -58,19 +55,10 @@ export default function PostHistory({ type, initialData, initialError }: Props) 
       {posts.length === 0 ? (
         <p>좋은 글, 좋은 생각.</p>
       ) : (
-        <div className={styles.items}>
-          <ol>
+        <div>
+          <ol className={`${styles.list} ${styles['list-newest']}`}>
             {posts.map((post) => (
-              <li key={post.id}>
-                <Anchor href={post.href}>
-                  <strong aria-label="글 제목">{post.title}</strong>
-                  <cite aria-label="작성자">{post.authorName}</cite>
-                  <div className={styles.tail}>
-                    <em aria-label="사이트명">{post.siteName}</em>
-                    <time aria-label={getDateLabel(type)}>{formatDateSimple(post.date)}</time>
-                  </div>
-                </Anchor>
-              </li>
+              <HubPostListItem key={post.id} post={post.post} date={post.date} dateLabel={getDateLabel(type)} />
             ))}
           </ol>
         </div>

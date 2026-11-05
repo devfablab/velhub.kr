@@ -222,12 +222,11 @@ export default function FavoriteBlogs({
   const renderSite = (blog: FavoriteBlogRow) => (
     <div
       key={blog.id}
-      className={`${styles['join-site']} ${dragOverItem?.id === blog.id ? 'drag-over' : ''}`}
+      className={`paper ${styles.item} ${styles['favorite-site']} ${dragOverItem?.id === blog.id ? 'drag-over' : ''}`}
       draggable
       onDragStart={(e) => handleDragStart(e, blog)}
       onDragOver={(e) => handleDragOver(e, blog)}
       onDrop={(e) => handleDrop(e, blog)}
-      style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
     >
       <input
         type="checkbox"
@@ -239,24 +238,31 @@ export default function FavoriteBlogs({
           setSelectedSiteIds(newSet);
         }}
       />
-      <div className={styles['join-site-info']} style={{ flex: 1, paddingLeft: 0 }}>
-        <div className={styles['site-name']}>
-          {blog.profileLogoUrl ? (
-            <img src={blog.profileLogoUrl} alt="" />
-          ) : (
-            <>
-              <AppIconAvatar src={blog.profilePictureUrl || null} alt={blog.siteLabel} size={58} />
+      <div className={styles['description-item']}>
+        <div className={styles.description}>
+          <div className={styles.info}>
+            <span className={styles['favorite-site-name']}>
+              {blog.profileLogoUrl ? (
+                <img src={blog.profileLogoUrl} alt="" />
+              ) : (
+                <>
+                  <AppIconAvatar src={blog.profilePictureUrl || null} alt={blog.siteLabel} size={24} />
+                </>
+              )}
               <strong>{blog.siteLabel}</strong>
-            </>
-          )}
-          <em>
-            {blog.visibilityLabel} {blog.isShutdown ? '(운영중지)' : null}
-          </em>
+            </span>
+            <p>
+              {blog.visibilityLabel} {blog.isShutdown ? '(운영중지)' : null}
+            </p>
+          </div>
+          <div className={styles.tail}>
+            <div className={styles['tail-container']}>
+              <Anchor href={blog.href} className="button small action">
+                블로그 이동
+              </Anchor>
+            </div>
+          </div>
         </div>
-
-        <Anchor href={blog.href} className="button action small">
-          블로그 이동
-        </Anchor>
       </div>
     </div>
   );
@@ -273,7 +279,7 @@ export default function FavoriteBlogs({
 
   return (
     <section className={`paper ${styles.paper} ${styles.join}`}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div className={styles['section-headline']}>
         <h2>즐겨찾는 블로그</h2>
         <button type="button" className="button small action" onClick={() => setIsAddFolderOpen(true)}>
           폴더 추가
@@ -294,11 +300,11 @@ export default function FavoriteBlogs({
         onMoveSites={handleMoveSites}
       />
 
-      <div className={styles['join-sites']}>
-        <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '1.2em', marginBottom: '8px' }}>기본 폴더</h3>
+      <div className={styles['hub-list-groups']}>
+        <div>
+          <h3>기본 폴더</h3>
           {defaultFolderBlogs.length > 0 ? (
-            defaultFolderBlogs.map(renderSite)
+            <div className={`${styles.list} ${styles['list-newest']}`}>{defaultFolderBlogs.map(renderSite)}</div>
           ) : (
             <ScreenState>항목이 없습니다.</ScreenState>
           )}
@@ -307,16 +313,18 @@ export default function FavoriteBlogs({
         {folders.map((folder) => {
           const folderBlogs = blogs.filter((b) => b.folderId === folder.id).sort((a, b) => a.sortOrder - b.sortOrder);
           return (
-            <div key={folder.id} style={{ marginBottom: '24px' }}>
-              <div
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}
-              >
-                <h3 style={{ fontSize: '1.2em' }}>{folder.label}</h3>
+            <div key={folder.id}>
+              <div className={styles['section-headline']}>
+                <h3>{folder.label}</h3>
                 <button type="button" className="button small" onClick={() => setEditFolder(folder)}>
                   폴더 수정
                 </button>
               </div>
-              {folderBlogs.length > 0 ? folderBlogs.map(renderSite) : <ScreenState>항목이 없습니다.</ScreenState>}
+              {folderBlogs.length > 0 ? (
+                <div className={`${styles.list} ${styles['list-newest']}`}>{folderBlogs.map(renderSite)}</div>
+              ) : (
+                <ScreenState>항목이 없습니다.</ScreenState>
+              )}
             </div>
           );
         })}

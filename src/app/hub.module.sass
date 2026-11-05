@@ -343,6 +343,217 @@
       flex-direction: column
       gap: ds.rem(7)
 
+  .hub-list-groups
+    display: flex
+    flex-direction: column
+    gap: ds.rem(23)
+
+    h3
+      margin-bottom: ds.rem(8)
+
+  .section-headline
+    display: flex
+    justify-content: space-between
+    align-items: center
+    gap: ds.rem(12)
+    margin-bottom: ds.rem(16)
+
+  .list
+    display: flex
+    flex-direction: column
+    gap: ds.rem(17)
+
+    &.list-newest
+      grid-template-columns: none
+      gap: 0
+
+  .item
+    min-width: 0
+    border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
+    padding: ds.rem(17) 0
+
+    html[data-theme="yellow-dark"] &
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+    &:first-of-type
+      padding-top: 0
+      border-top: 0!important
+
+    &:last-of-type
+      padding-bottom: 0
+
+    > .description-item
+      display: flex
+      flex-direction: row
+      gap: ds.rem(12)
+      min-width: 0
+      width: 100%
+      padding: 0
+      border: 0
+      background-color: transparent
+      color: ds.$hex-primary
+      text-align: left
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-bright
+
+      &:hover, &:focus-visible
+        .info
+          strong
+            text-decoration: underline
+
+    .description
+      display: flex
+      flex-direction: column
+      min-width: 0
+      flex: 1
+
+    .thumbnail
+      flex: none
+      overflow: hidden
+      width: ds.rem(96)
+      height: ds.rem(96)
+      border-radius: ds.rem(8)
+
+      img
+        width: 100%
+        height: 100%
+        object-fit: cover
+
+    .info
+      display: flex
+      flex-direction: column
+      gap: ds.rem(6)
+      min-width: 0
+
+      strong
+        @include ds.fw(neo, 600)
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+        font-size: ds.rem(14)
+        color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
+
+      p
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+        font-size: ds.rem(14)
+        color: ds.$hex-secondary
+        opacity: .7
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
+
+    .tail
+      display: flex
+      flex-direction: column
+      gap: ds.rem(7)
+      margin-top: ds.rem(12)
+      color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+    .tail-author, .tail-site
+      display: flex
+      align-items: center
+      gap: ds.rem(7)
+      min-width: 0
+      font-size: ds.rem(12)
+
+      strong
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+        font-size: inherit
+
+      svg
+        flex: none
+        width: ds.rem(16)
+        height: ds.rem(16)
+
+      time
+        flex: none
+        white-space: nowrap
+
+    .tail-container
+      display: flex
+      align-items: center
+      gap: ds.rem(7)
+      min-width: 0
+      padding-top: ds.rem(12)
+      font-size: ds.rem(12)
+
+      em
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+        font-style: normal
+
+      time
+        flex: none
+        white-space: nowrap
+
+  .favorite-site
+    display: grid
+    grid-template-columns: auto minmax(0, 1fr)
+    align-items: center
+    gap: ds.rem(12)
+
+  .favorite-site-name
+    display: flex
+    align-items: center
+    gap: ds.rem(7)
+    min-width: 0
+
+    img
+      flex: none
+      width: auto
+      max-width: ds.rem(72)
+      height: ds.rem(24)
+      object-fit: contain
+
+    strong
+      min-width: 0
+
+  .owned-posts
+    .owned-post-title
+      display: flex
+      align-items: center
+      gap: ds.rem(7)
+      min-width: 0
+
+      > strong
+        flex: 1
+
+      em
+        flex: none
+        font-size: ds.rem(12)
+        font-style: normal
+        color: ds.$hex-warning
+
+    .owned-post-chips
+      display: inline-flex
+      flex: none
+      gap: ds.rem(5)
+
+      :global(.MuiChip-root)
+        height: ds.rem(22)
+        color: ds.$hex-primary
+        background-color: rgba(ds.$rgb-accent, .22)
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
+
+      :global(.MuiChip-label)
+        padding: 0 ds.rem(8)
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(11)
+
   .items
     ol
       display: flex

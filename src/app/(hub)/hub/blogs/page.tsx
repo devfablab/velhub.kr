@@ -102,9 +102,9 @@ export default async function SectionJoinSites() {
   const [favorites, folders, liked, saved, read, owned] = await Promise.all([
     load<FavoriteBlogsResponse>('/api/hub/blog-favorites', '즐겨찾는 블로그를 불러오지 못했습니다.'),
     load<{ folders?: Folder[] }>('/api/hub/favorite-folders', '폴더를 불러오지 못했습니다.'),
-    load<LikedResponse>('/api/hub/liked?siteType=blog&limit=3', '좋아요 목록을 불러오지 못했습니다.'),
-    load<PostsResponse>('/api/hub/saved-posts?siteType=blog&limit=3', '저장한 글을 불러오지 못했습니다.'),
-    load<PostsResponse>('/api/hub/read-posts?siteType=blog&limit=3', '읽은 글을 불러오지 못했습니다.'),
+    load<LikedResponse>('/api/hub/liked?siteType=blog', '좋아요 목록을 불러오지 못했습니다.'),
+    load<PostsResponse>('/api/hub/saved-posts?siteType=blog', '저장한 글을 불러오지 못했습니다.'),
+    load<PostsResponse>('/api/hub/read-posts?siteType=blog', '읽은 글을 불러오지 못했습니다.'),
     load<OwnedDonationPostsResponse>(
       '/api/hub/owned-donation-posts?siteType=blog',
       '소장/후원글 목록을 불러오지 못했습니다.',

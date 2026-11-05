@@ -99,9 +99,9 @@ export default async function SectionJoinSites() {
     }
   };
   const [liked, saved, read, owned] = await Promise.all([
-    load<LikedResponse>('/api/hub/liked?siteType=community&limit=3', '좋아요 목록을 불러오지 못했습니다.'),
-    load<PostsResponse>('/api/hub/saved-posts?siteType=community&limit=3', '저장한 글을 불러오지 못했습니다.'),
-    load<PostsResponse>('/api/hub/read-posts?siteType=community&limit=3', '읽은 글을 불러오지 못했습니다.'),
+    load<LikedResponse>('/api/hub/liked?siteType=community', '좋아요 목록을 불러오지 못했습니다.'),
+    load<PostsResponse>('/api/hub/saved-posts?siteType=community', '저장한 글을 불러오지 못했습니다.'),
+    load<PostsResponse>('/api/hub/read-posts?siteType=community', '읽은 글을 불러오지 못했습니다.'),
     load<OwnedDonationPostsResponse>(
       '/api/hub/owned-donation-posts?siteType=community',
       '소장/후원글 목록을 불러오지 못했습니다.',
