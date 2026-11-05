@@ -25,19 +25,12 @@ export default async function Page() {
   const host = headerList.get('host');
   const protocol = headerList.get('x-forwarded-proto') || 'http';
   const baseUrl = `${protocol}://${host}`;
-  let sitesHitsData = null;
   let postsHitsData = null;
-  try {
-    const [sitesHitsResponse, postsHitsResponse] = await Promise.all([
-      fetch(`${baseUrl}/api/home/sites?limit=10&membership=owner&siteType=blog`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=blog`, { cache: 'no-store' }),
-    ]);
 
-    if (!sitesHitsResponse.ok) {
-      console.error('Sites API Error:', sitesHitsResponse.status, await sitesHitsResponse.text());
-    } else {
-      sitesHitsData = await sitesHitsResponse.json();
-    }
+  try {
+    const postsHitsResponse = await fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=blog`, {
+      cache: 'no-store',
+    });
 
     if (!postsHitsResponse.ok) {
       console.error('Posts API Error:', postsHitsResponse.status, await postsHitsResponse.text());
@@ -53,10 +46,6 @@ export default async function Page() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <AuthSection />
-          <section>
-            <h2>오너 멤버십 추천 블로그 💃</h2>
-            <Slick sitesHitsData={sitesHitsData} />
-          </section>
           <section>
             <h2>인기 발행글 🥰</h2>
             <Slick postsData={postsHitsData} isHub={true} />
