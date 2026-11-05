@@ -1,7 +1,7 @@
-import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import { r2Storage } from '@/lib/clients/r2Storage';
-import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
+import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -51,6 +51,7 @@ type StoredReportFile = {
 };
 
 type ResetDeleteTable =
+  | 'comment_dislikes'
   | 'comment_likes'
   | 'post_comments'
   | 'post_draws'
@@ -664,6 +665,13 @@ export async function POST(request: Request, context: RouteContext) {
         '기존 권리 신고 첨부파일을 삭제하지 못했습니다.',
       );
 
+      await deleteRowsByIds({
+        supabaseAdmin,
+        table: 'comment_dislikes',
+        column: 'comment_id',
+        ids: commentIds,
+        errorMessage: '기존 댓글 싫어요를 삭제하지 못했습니다.',
+      });
       await deleteRowsByIds({
         supabaseAdmin,
         table: 'comment_likes',

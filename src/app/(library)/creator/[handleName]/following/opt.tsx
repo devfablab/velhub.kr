@@ -64,8 +64,8 @@ export default function Opt({
       currentMenu="following"
       canUseSeriesPosts={owner.hasCreatorPosts}
       isOwner
-      canUseCreatorLibrary
-      canFollowCreatorLibrary={canUseCreatorLibrary}
+      canUseCreatorLibrary={true}
+      canFollowCreatorLibrary={true}
       hasBranding={owner.hasBranding}
       isEditing={editing}
       editingContent={

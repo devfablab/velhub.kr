@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
@@ -90,6 +90,8 @@ export type CommentData = {
   poll_choice: PollChoice | null;
   like_count: number;
   is_liked: boolean;
+  dislike_count: number;
+  is_disliked: boolean;
   replies: CommentData[];
 };
 
@@ -102,6 +104,7 @@ type Props = {
   boardLabel: string;
   reportTargetType?: ReportTargetType;
   isCommentLikeEnabled?: boolean;
+  isCommentDislikeEnabled?: boolean;
   comment: CommentData;
   depth?: 0 | 1;
   activeReplyTargetId: string;
@@ -118,6 +121,7 @@ type Props = {
   onBlind: (commentId: string) => Promise<void>;
   onUnblind: (commentId: string) => Promise<void>;
   onLike: (commentId: string) => Promise<void>;
+  onDislike: (commentId: string) => Promise<void>;
   pinnedCommentId: string;
   onPin: (commentId: string, isPinned: boolean) => Promise<void>;
 };
@@ -159,6 +163,7 @@ export default function CommentItem({
   boardLabel,
   reportTargetType = 'comment',
   isCommentLikeEnabled = true,
+  isCommentDislikeEnabled = false,
   comment,
   depth = 0,
   activeReplyTargetId,
@@ -175,12 +180,14 @@ export default function CommentItem({
   onBlind,
   onUnblind,
   onLike,
+  onDislike,
   pinnedCommentId,
   onPin,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
-  const [isLiking, setIsLiking] = useState(false);
+  const [isReacting, setIsReacting] = useState(false);
+  const isReactingRef = useRef(false);
 
   const roleLabel = getAuthorRoleLabel(comment.author_role);
   const isReplyFormOpen = activeReplyTargetId === comment.id;
@@ -288,15 +295,32 @@ export default function CommentItem({
   }
 
   async function handleLike() {
-    if (isLiking) {
+    if (isReactingRef.current) {
       return;
     }
 
     try {
-      setIsLiking(true);
+      isReactingRef.current = true;
+      setIsReacting(true);
       await onLike(comment.id);
     } finally {
-      setIsLiking(false);
+      isReactingRef.current = false;
+      setIsReacting(false);
+    }
+  }
+
+  async function handleDislike() {
+    if (isReactingRef.current) {
+      return;
+    }
+
+    try {
+      isReactingRef.current = true;
+      setIsReacting(true);
+      await onDislike(comment.id);
+    } finally {
+      isReactingRef.current = false;
+      setIsReacting(false);
     }
   }
 
@@ -421,9 +445,24 @@ export default function CommentItem({
           <time>{formatDateTime(comment.created_at)}</time>
 
           {isCommentLikeEnabled && !comment.is_deleted && !comment.is_blinded ? (
-            <button type="button" onClick={() => void handleLike()} disabled={isSubmitting || isLiking}>
-              {comment.is_liked ? '좋아요 취소' : '좋아요'}
-              {comment.like_count > 0 ? ` ${comment.like_count}` : null}
+            <button
+              type="button"
+              onClick={() => void handleLike()}
+              disabled={isSubmitting || isReacting}
+              className={comment.is_liked ? styles.active : undefined}
+            >
+              좋아요
+            </button>
+          ) : null}
+
+          {isCommentDislikeEnabled && !comment.is_deleted && !comment.is_blinded ? (
+            <button
+              type="button"
+              onClick={() => void handleDislike()}
+              disabled={isSubmitting || isReacting}
+              className={comment.is_disliked ? styles.active : undefined}
+            >
+              싫어요
             </button>
           ) : null}
 
@@ -481,6 +520,7 @@ export default function CommentItem({
                 boardLabel={boardLabel}
                 reportTargetType={reportTargetType}
                 isCommentLikeEnabled={isCommentLikeEnabled}
+                isCommentDislikeEnabled={isCommentDislikeEnabled}
                 key={reply.id}
                 comment={reply}
                 depth={1}
@@ -494,6 +534,7 @@ export default function CommentItem({
                 onBlind={onBlind}
                 onUnblind={onUnblind}
                 onLike={onLike}
+                onDislike={onDislike}
                 pinnedCommentId={pinnedCommentId}
                 onPin={onPin}
                 avatarUrl={avatarUrl}

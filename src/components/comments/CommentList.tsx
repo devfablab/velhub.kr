@@ -64,10 +64,12 @@ type CommentPinResponse = {
   error?: string;
 };
 
-type CommentLikeResponse = {
+type CommentReactionResponse = {
   ok?: boolean;
   isLiked?: boolean;
   likeCount?: number;
+  isDisliked?: boolean;
+  dislikeCount?: number;
   error?: string;
 };
 
@@ -89,26 +91,34 @@ function getCommentCount(nextComments: CommentData[]): number {
   }, 0);
 }
 
-function updateCommentLikeState({
+function updateCommentReactionState({
   comments,
   commentId,
   isLiked,
   likeCount,
+  isDisliked,
+  dislikeCount,
 }: {
   comments: CommentData[];
   commentId: string;
   isLiked: boolean;
   likeCount: number;
+  isDisliked: boolean;
+  dislikeCount: number;
 }): CommentData[] {
   return comments.map((comment) => ({
     ...comment,
     is_liked: comment.id === commentId ? isLiked : comment.is_liked,
     like_count: comment.id === commentId ? likeCount : comment.like_count,
-    replies: updateCommentLikeState({
+    is_disliked: comment.id === commentId ? isDisliked : comment.is_disliked,
+    dislike_count: comment.id === commentId ? dislikeCount : comment.dislike_count,
+    replies: updateCommentReactionState({
       comments: comment.replies,
       commentId,
       isLiked,
       likeCount,
+      isDisliked,
+      dislikeCount,
     }),
   }));
 }
@@ -189,7 +199,10 @@ export default function CommentList({
 
   useEffect(() => {
     if (initialData) return;
-    void loadComments();
+
+    queueMicrotask(() => {
+      void loadComments();
+    });
   }, [initialData, loadComments]);
 
   async function createComment(content: string, parentId: string | null): Promise<string | void> {
@@ -376,18 +389,20 @@ export default function CommentList({
         credentials: 'include',
       });
 
-      const result = (await response.json()) as CommentLikeResponse;
+      const result = (await response.json()) as CommentReactionResponse;
 
       if (!response.ok) {
         throw new Error(result.error ?? '댓글 좋아요를 처리하지 못했습니다.');
       }
 
       setComments((previousComments) =>
-        updateCommentLikeState({
+        updateCommentReactionState({
           comments: previousComments,
           commentId,
           isLiked: result.isLiked === true,
           likeCount: typeof result.likeCount === 'number' ? result.likeCount : 0,
+          isDisliked: result.isDisliked === true,
+          dislikeCount: typeof result.dislikeCount === 'number' ? result.dislikeCount : 0,
         }),
       );
     } catch (unknownError) {
@@ -395,6 +410,40 @@ export default function CommentList({
         setErrorMessage(unknownError.message || '댓글 좋아요를 처리하지 못했습니다.');
       } else {
         setErrorMessage('댓글 좋아요를 처리하지 못했습니다.');
+      }
+    }
+  }
+
+  async function dislikeComment(commentId: string) {
+    try {
+      setErrorMessage('');
+
+      const response = await fetch(getApiUrl(`/${commentId}/dislike`), {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as CommentReactionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '댓글 싫어요를 처리하지 못했습니다.');
+      }
+
+      setComments((previousComments) =>
+        updateCommentReactionState({
+          comments: previousComments,
+          commentId,
+          isLiked: result.isLiked === true,
+          likeCount: typeof result.likeCount === 'number' ? result.likeCount : 0,
+          isDisliked: result.isDisliked === true,
+          dislikeCount: typeof result.dislikeCount === 'number' ? result.dislikeCount : 0,
+        }),
+      );
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '댓글 싫어요를 처리하지 못했습니다.');
+      } else {
+        setErrorMessage('댓글 싫어요를 처리하지 못했습니다.');
       }
     }
   }
@@ -524,6 +573,7 @@ export default function CommentList({
               boardLabel={boardLabel}
               reportTargetType={reportTargetType}
               isCommentLikeEnabled={isCommentLikeEnabled}
+              isCommentDislikeEnabled={isCommentLikeEnabled}
               comment={comment}
               avatarUrl={mySelfAvatarUrl}
               myPollChoiceLabel={myPollChoice?.label ?? ''}
@@ -539,6 +589,7 @@ export default function CommentList({
               onBlind={blindComment}
               onUnblind={unblindComment}
               onLike={likeComment}
+              onDislike={dislikeComment}
               pinnedCommentId={pinnedCommentId}
               onPin={pinComment}
             />

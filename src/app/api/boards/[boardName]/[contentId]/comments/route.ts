@@ -1,12 +1,12 @@
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
-import { r2Storage } from '@/lib/clients/r2Storage';
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/service/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
 
@@ -101,6 +101,8 @@ type CommentItem = {
   poll_choice: PollChoice | null;
   like_count: number;
   is_liked: boolean;
+  dislike_count: number;
+  is_disliked: boolean;
   replies: CommentItem[];
 };
 
@@ -632,6 +634,8 @@ async function buildCommentItem({
   pollChoiceMap,
   commentLikeCountMap,
   likedCommentIdSet,
+  commentDislikeCountMap,
+  dislikedCommentIdSet,
 }: {
   comment: CommentRow;
   commentMap: Map<string, CommentRow>;
@@ -646,6 +650,8 @@ async function buildCommentItem({
   pollChoiceMap: Map<string, PollChoice>;
   commentLikeCountMap: Map<string, number>;
   likedCommentIdSet: Set<string>;
+  commentDislikeCountMap: Map<string, number>;
+  dislikedCommentIdSet: Set<string>;
 }) {
   let author = authorMap.get(comment.user_id);
 
@@ -724,6 +730,8 @@ async function buildCommentItem({
     poll_choice: pollChoiceMap.get(comment.user_id) ?? null,
     like_count: commentLikeCountMap.get(comment.id) ?? 0,
     is_liked: likedCommentIdSet.has(comment.id),
+    dislike_count: commentDislikeCountMap.get(comment.id) ?? 0,
+    is_disliked: dislikedCommentIdSet.has(comment.id),
     replies: [],
   } satisfies CommentItem;
 }
@@ -852,19 +860,30 @@ export async function GET(request: Request, context: RouteContext) {
     const pollChoiceMap = new Map<string, PollChoice>();
     const commentLikeCountMap = new Map<string, number>();
     const likedCommentIdSet = new Set<string>();
+    const commentDislikeCountMap = new Map<string, number>();
+    const dislikedCommentIdSet = new Set<string>();
     let myPollChoice: PollChoice | null = null;
 
     if (commentIds.length > 0) {
-      const commentLikesResult = await supabaseAdmin
-        .from('comment_likes')
-        .select('comment_id, user_id')
-        .eq('site_id', target.data.siteId)
-        .eq('board_id', target.data.boardId)
-        .eq('post_id', target.data.postId)
-        .in('comment_id', commentIds);
+      const [commentLikesResult, commentDislikesResult] = await Promise.all([
+        supabaseAdmin
+          .from('comment_likes')
+          .select('comment_id, user_id')
+          .eq('site_id', target.data.siteId)
+          .eq('board_id', target.data.boardId)
+          .eq('post_id', target.data.postId)
+          .in('comment_id', commentIds),
+        supabaseAdmin
+          .from('comment_dislikes')
+          .select('comment_id, user_id')
+          .eq('site_id', target.data.siteId)
+          .eq('board_id', target.data.boardId)
+          .eq('post_id', target.data.postId)
+          .in('comment_id', commentIds),
+      ]);
 
-      if (commentLikesResult.error) {
-        return Response.json({ error: '댓글 좋아요 정보를 불러오지 못했습니다.' }, { status: 500 });
+      if (commentLikesResult.error || commentDislikesResult.error) {
+        return Response.json({ error: '댓글 반응 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
       (commentLikesResult.data ?? []).forEach((like) => {
@@ -879,6 +898,21 @@ export async function GET(request: Request, context: RouteContext) {
 
         if (session.stigmaId && userId === session.stigmaId) {
           likedCommentIdSet.add(commentId);
+        }
+      });
+
+      (commentDislikesResult.data ?? []).forEach((dislike) => {
+        const commentId = normalizeText(dislike.comment_id);
+        const userId = normalizeText(dislike.user_id);
+
+        if (!commentId) {
+          return;
+        }
+
+        commentDislikeCountMap.set(commentId, (commentDislikeCountMap.get(commentId) ?? 0) + 1);
+
+        if (session.stigmaId && userId === session.stigmaId) {
+          dislikedCommentIdSet.add(commentId);
         }
       });
     }
@@ -927,6 +961,8 @@ export async function GET(request: Request, context: RouteContext) {
           pollChoiceMap,
           commentLikeCountMap,
           likedCommentIdSet,
+          commentDislikeCountMap,
+          dislikedCommentIdSet,
         }),
       ),
     );
@@ -1187,6 +1223,8 @@ export async function POST(request: Request, context: RouteContext) {
       pollChoiceMap: new Map(),
       commentLikeCountMap: new Map(),
       likedCommentIdSet: new Set(),
+      commentDislikeCountMap: new Map(),
+      dislikedCommentIdSet: new Set(),
     });
 
     return Response.json({
