@@ -108,6 +108,7 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
 export type InitialMenuResponse = {
   menus?: MenuRow[];
   hasSeries?: boolean;
+  privateBoardLabel?: string | null;
   error?: string;
 };
 type OptProps = { initialData: InitialMenuResponse | null; initialError: string };
@@ -128,6 +129,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const siteName = normalizeText(params.siteName);
   const [menus, setMenus] = useState<MenuRow[]>(initialData?.menus ?? []);
   const hasSeries = initialData?.hasSeries === true;
+  const privateBoardLabel = normalizeText(initialData?.privateBoardLabel);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
@@ -320,6 +322,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       {menus.map((menu) => (
                         <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
                       ))}
+
+                      {privateBoardLabel ? (
+                        <div className={`paper ${styles.paper}`}>
+                          <Typography>{privateBoardLabel}</Typography>
+                        </div>
+                      ) : null}
                     </Stack>
                   </SortableContext>
                 </DndContext>

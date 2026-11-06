@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     }
 
     const isBlog = access.siteType === 'blog';
-    const [boards, categories, series, blogCommunity, hasShopping] = await Promise.all([
+    const [boards, categories, series, blogCommunity, hasShopping, privateBoard] = await Promise.all([
       access.supabaseAdmin
         .from('boards')
         .select('id, board_type, board_label, sort_order')
@@ -97,9 +97,13 @@ export async function GET(request: Request) {
       isBlog ? getBlogCommunityContext(siteName) : Promise.resolve(null),
       // 쇼핑 노출 조건은 서비스 메뉴와 동일하게 노출 중인 블로그 홈 광고 존재 여부 기준
       isBlog ? getVisibleBlogHomeAds(access.siteId).then((ads) => ads.length > 0) : Promise.resolve(false),
+      // 비공개 게시판은 서비스 메뉴와 동일하게 커뮤니티에서만 노출
+      access.siteType === 'community'
+        ? access.supabaseAdmin.from('private_boards').select('board_label').eq('site_id', access.siteId).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
-    if (boards.error || categories.error || series.error) {
+    if (boards.error || categories.error || series.error || privateBoard.error) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -131,6 +135,7 @@ export async function GET(request: Request) {
       hasSeries: (series.count ?? 0) > 0,
       hasBlogCommunity: blogCommunity?.canUse === true,
       hasShopping,
+      privateBoardLabel: normalizeText(privateBoard.data?.board_label),
       siteLabel: access.siteLabel,
       menus: boardRows.map((board) => ({
         id: board.id,
