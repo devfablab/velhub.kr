@@ -4,10 +4,14 @@
 
 Next.js 15 + TypeScript 쇼핑몰 프론트엔드. API 서버는 별도 저장소.
 
+## 대답 조건
+
+한국어로 대답해 주세요.
+
 ## 개발환경
 
 - Next.js
-- Vercel (Production Hosting)
+- Vercel (Production Hosting. Github push시 자동으로 deploy됨)
 - Supabase (Auth, DB)
 - Cloudflare R2 (File Storage)
 

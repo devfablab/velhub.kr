@@ -1,5 +1,7 @@
-import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
+import { getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
 type ApplyRequestBody = {
@@ -12,7 +14,11 @@ type ApplyRequestBody = {
 async function checkAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
-  const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_label').eq('site_key', siteName).maybeSingle();
+  const rhizome = await supabaseAdmin
+    .from('rhizomes')
+    .select('id, site_label, site_type')
+    .eq('site_key', siteName)
+    .maybeSingle();
 
   if (rhizome.error || !rhizome.data) {
     return {
@@ -39,6 +45,7 @@ async function checkAccess(siteName: string) {
     status: 200,
     siteId: rhizome.data.id,
     siteLabel: rhizome.data.site_label,
+    siteType: rhizome.data.site_type,
     supabaseAdmin,
   } as const;
 }
@@ -58,7 +65,8 @@ export async function GET(request: Request) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const [boards, categories, series, blogCommunity] = await Promise.all([
+    const isBlog = access.siteType === 'blog';
+    const [boards, categories, series, blogCommunity, hasShopping] = await Promise.all([
       access.supabaseAdmin
         .from('boards')
         .select('id, board_type, board_label, sort_order')
@@ -72,10 +80,13 @@ export async function GET(request: Request) {
         .from('board_series')
         .select('id', { count: 'exact', head: true })
         .eq('site_id', access.siteId),
-      access.supabaseAdmin.from('blog_communities').select('is_enabled').eq('site_id', access.siteId).maybeSingle(),
+      // 블로그 커뮤니티 노출 조건은 서비스 메뉴(NavMenu/DrawerMenu)와 동일하게 canUse 기준
+      isBlog ? getBlogCommunityContext(siteName) : Promise.resolve(null),
+      // 쇼핑 노출 조건은 서비스 메뉴와 동일하게 노출 중인 블로그 홈 광고 존재 여부 기준
+      isBlog ? getVisibleBlogHomeAds(access.siteId).then((ads) => ads.length > 0) : Promise.resolve(false),
     ]);
 
-    if (boards.error || categories.error || series.error || blogCommunity.error) {
+    if (boards.error || categories.error || series.error) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -105,7 +116,8 @@ export async function GET(request: Request) {
     return Response.json({
       hasCategories: (categories.count ?? 0) > 0,
       hasSeries: (series.count ?? 0) > 0,
-      hasBlogCommunity: blogCommunity.data?.is_enabled === true,
+      hasBlogCommunity: blogCommunity?.canUse === true,
+      hasShopping,
       siteLabel: access.siteLabel,
       menus: boardRows.map((board) => ({
         id: board.id,

@@ -111,6 +111,7 @@ export type InitialMenuResponse = {
   menus?: MenuRow[];
   hasCategories?: boolean;
   hasSeries?: boolean;
+  hasShopping?: boolean;
   hasBlogCommunity?: boolean;
   siteLabel?: string | null;
   error?: string;
@@ -134,6 +135,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [menus, setMenus] = useState<MenuRow[]>(initialData?.menus ?? []);
   const hasCategories = initialData?.hasCategories === true;
   const hasSeries = initialData?.hasSeries === true;
+  const hasShopping = initialData?.hasShopping === true;
   const hasBlogCommunity = initialData?.hasBlogCommunity === true;
   const siteLabel = normalizeText(initialData?.siteLabel);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -335,6 +337,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           onOpenRenameDialog={handleOpenRenameDialog}
                         />
                       ))}
+
+                      {menus.length > 1 && hasShopping ? (
+                        <div className={`paper ${styles.paper}`}>
+                          <Typography>쇼핑</Typography>
+                        </div>
+                      ) : null}
 
                       {menus.length > 1 && hasBlogCommunity ? (
                         <div className={`paper ${styles.paper}`}>
