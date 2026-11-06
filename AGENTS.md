@@ -4,6 +4,13 @@
 
 Next.js 15 + TypeScript 쇼핑몰 프론트엔드. API 서버는 별도 저장소.
 
+## 개발환경
+
+- Next.js
+- Vercel (Production Hosting)
+- Supabase (Auth, DB)
+- Cloudflare R2 (File Storage)
+
 ## 명령어
 
 - 설치: `pnpm install`
