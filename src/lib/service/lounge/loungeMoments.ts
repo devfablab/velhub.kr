@@ -8,7 +8,7 @@ import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { normalizeText } from '@/lib/utils';
 
-const PERIOD_DAYS = [1, 3, 5, 7, 15, 27, 50, 70, 90, 120, 150, 170, 200, 230, 250, 270, 300, 330, 365];
+export const PERIOD_DAYS = [1, 3, 5, 7, 15, 27, 50, 70, 90, 120, 150, 170, 200, 230, 250, 270, 300, 330, 365];
 
 type CreatorRow = {
   id: string;
@@ -127,8 +127,29 @@ export type MomentPostCard = {
   youtube_id?: string | null;
 };
 
-function getDateBefore(days: number) {
+export function getDateBefore(days: number) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+// Supabase(PostgREST)는 요청당 최대 1000건(max_rows)만 반환하므로 range로 나눠 읽는다.
+const PAGE_ROWS = 1000;
+
+export async function fetchPagedRows<T>(
+  load: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  maxRows = Number.POSITIVE_INFINITY,
+): Promise<T[]> {
+  const rows: T[] = [];
+
+  for (let from = 0; from < maxRows; from += PAGE_ROWS) {
+    const to = Math.min(from + PAGE_ROWS, maxRows) - 1;
+    const result = await load(from, to);
+    if (result.error) throw result.error;
+    const page = result.data ?? [];
+    rows.push(...page);
+    if (page.length < to - from + 1) break;
+  }
+
+  return rows;
 }
 
 function toPublicUrl(bucket: string, path: string | null | undefined) {
@@ -156,12 +177,13 @@ function pickWithDynamicPeriod<T>(
 
 const getMomentCreators = cache(async (): Promise<MomentCreator[]> => {
   const supabaseAdmin = getSupabaseAdmin();
-  const creatorsResult = await supabaseAdmin
-    .from('creators')
-    .select('id, user_id, handle_name, cover_image, introduction, created_at');
-
-  if (creatorsResult.error) throw creatorsResult.error;
-  const creatorRows = (creatorsResult.data ?? []) as CreatorRow[];
+  const creatorRows = await fetchPagedRows<CreatorRow>((from, to) =>
+    supabaseAdmin
+      .from('creators')
+      .select('id, user_id, handle_name, cover_image, introduction, created_at')
+      .order('id', { ascending: true })
+      .range(from, to),
+  );
   const userIds = [...new Set(creatorRows.map((creator) => creator.user_id))];
   if (userIds.length === 0) return [];
 
@@ -225,19 +247,22 @@ const getMomentCreators = cache(async (): Promise<MomentCreator[]> => {
 
 const getMomentOwnerUserIds = cache(async (): Promise<string[]> => {
   const supabaseAdmin = getSupabaseAdmin();
-  const sitesResult = await supabaseAdmin
-    .from('rhizomes')
-    .select('owner_id')
-    .in('site_type', ['blog', 'community'])
-    .eq('visibility_type', 'public')
-    .eq('is_shutdown', false)
-    .or('is_blocked.eq.false,is_blocked.is.null')
-    .not('owner_id', 'is', null)
-    .limit(5000);
+  const sites = await fetchPagedRows<{ owner_id: string | null }>(
+    (from, to) =>
+      supabaseAdmin
+        .from('rhizomes')
+        .select('owner_id')
+        .in('site_type', ['blog', 'community'])
+        .eq('visibility_type', 'public')
+        .eq('is_shutdown', false)
+        .or('is_blocked.eq.false,is_blocked.is.null')
+        .not('owner_id', 'is', null)
+        .order('id', { ascending: true })
+        .range(from, to),
+    5000,
+  );
 
-  if (sitesResult.error) throw sitesResult.error;
-
-  const ownerUserIds = [...new Set((sitesResult.data ?? []).flatMap((site) => (site.owner_id ? [site.owner_id] : [])))];
+  const ownerUserIds = [...new Set(sites.flatMap((site) => (site.owner_id ? [site.owner_id] : [])))];
   if (!ownerUserIds.length) return [];
 
   return [...(await getUsersWithMembershipFeature(ownerUserIds, 'owner_lounge'))];
@@ -260,20 +285,22 @@ async function getMomentSitesForAudience(audience: Exclude<MomentAudience, 'all'
   if (!ownerUserIds.length) return [];
 
   const supabaseAdmin = getSupabaseAdmin();
-  const sitesResult = await supabaseAdmin
-    .from('rhizomes')
-    .select(
-      'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
-    )
-    .in('owner_id', ownerUserIds)
-    .in('site_type', ['blog', 'community'])
-    .eq('visibility_type', 'public')
-    .eq('is_shutdown', false)
-    .or('is_blocked.eq.false,is_blocked.is.null')
-    .limit(5000);
-
-  if (sitesResult.error) throw sitesResult.error;
-  return (sitesResult.data ?? []) as SiteRow[];
+  return fetchPagedRows<SiteRow>(
+    (from, to) =>
+      supabaseAdmin
+        .from('rhizomes')
+        .select(
+          'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
+        )
+        .in('owner_id', ownerUserIds)
+        .in('site_type', ['blog', 'community'])
+        .eq('visibility_type', 'public')
+        .eq('is_shutdown', false)
+        .or('is_blocked.eq.false,is_blocked.is.null')
+        .order('id', { ascending: true })
+        .range(from, to),
+    5000,
+  );
 }
 
 export async function getNewMomentSites(limit = 20, audience: MomentAudience = 'creator'): Promise<MomentSiteCard[]> {
@@ -281,39 +308,43 @@ export async function getNewMomentSites(limit = 20, audience: MomentAudience = '
   if (audienceUserIds && audienceUserIds.length === 0) return [];
 
   const supabaseAdmin = getSupabaseAdmin();
-  let sitesQuery = supabaseAdmin
-    .from('rhizomes')
-    .select(
-      'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
-    )
-    .in('site_type', ['blog', 'community'])
-    .eq('visibility_type', 'public')
-    .eq('is_shutdown', false)
-    .or('is_blocked.eq.false,is_blocked.is.null');
-  if (audienceUserIds) sitesQuery = sitesQuery.in('owner_id', audienceUserIds);
-  const sitesResult = await sitesQuery.limit(5000);
+  const sites = await fetchPagedRows<SiteRow>((from, to) => {
+    let sitesQuery = supabaseAdmin
+      .from('rhizomes')
+      .select(
+        'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
+      )
+      .in('site_type', ['blog', 'community'])
+      .eq('visibility_type', 'public')
+      .eq('is_shutdown', false)
+      .or('is_blocked.eq.false,is_blocked.is.null');
+    if (audienceUserIds) sitesQuery = sitesQuery.in('owner_id', audienceUserIds);
+    return sitesQuery.order('id', { ascending: true }).range(from, to);
+  }, 5000);
 
-  if (sitesResult.error) throw sitesResult.error;
-  const sites = (sitesResult.data ?? []) as SiteRow[];
   if (sites.length === 0) return [];
 
-  const postsResult = await supabaseAdmin
-    .from('posts')
-    .select('site_id, published_at')
-    .in(
-      'site_id',
-      sites.map((site) => site.id),
-    )
-    .eq('published_status', 'published')
-    .eq('is_closed', false)
-    .eq('is_wording_blinded', false)
-    .not('published_at', 'is', null)
-    .order('published_at', { ascending: true })
-    .limit(10000);
+  const sitePosts = await fetchPagedRows<{ site_id: string; published_at: string | null }>(
+    (from, to) =>
+      supabaseAdmin
+        .from('posts')
+        .select('site_id, published_at')
+        .in(
+          'site_id',
+          sites.map((site) => site.id),
+        )
+        .eq('published_status', 'published')
+        .eq('is_closed', false)
+        .eq('is_wording_blinded', false)
+        .not('published_at', 'is', null)
+        .order('published_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to),
+    10000,
+  );
 
-  if (postsResult.error) throw postsResult.error;
   const firstPublishedAtBySiteId = new Map<string, string>();
-  (postsResult.data ?? []).forEach((post) => {
+  sitePosts.forEach((post) => {
     if (!firstPublishedAtBySiteId.has(post.site_id) && post.published_at) {
       firstPublishedAtBySiteId.set(post.site_id, post.published_at);
     }
@@ -370,17 +401,22 @@ export async function getRisingMomentCreators(limit = 20): Promise<MomentCreator
   if (creators.length === 0) return [];
   const supabaseAdmin = getSupabaseAdmin();
   const creatorIds = creators.map((creator) => creator.id);
-  const followsResult = await supabaseAdmin
-    .from('creator_follows')
-    .select('creator_id, created_at')
-    .in('creator_id', creatorIds)
-    .order('created_at', { ascending: false })
-    .limit(10000);
-
-  if (followsResult.error) throw followsResult.error;
-  const follows = followsResult.data ?? [];
+  const follows = await fetchPagedRows<{ creator_id: string; created_at: string }>(
+    (from, to) =>
+      supabaseAdmin
+        .from('creator_follows')
+        .select('creator_id, created_at')
+        .in('creator_id', creatorIds)
+        .gte('created_at', getDateBefore(PERIOD_DAYS[PERIOD_DAYS.length - 1]))
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to),
+    10000,
+  );
   const creatorById = new Map(creators.map((creator) => [creator.id, creator]));
 
+  // 기간 내 새 팔로우 수 순. 365일까지 넓혀도 limit개가 안 되면 팔로우가 있는 서재만 노출
+  let ranked: Array<{ creator: MomentCreator; count: number }> = [];
   for (const days of PERIOD_DAYS) {
     const start = getDateBefore(days);
     const countByCreatorId = new Map<string, number>();
@@ -388,42 +424,23 @@ export async function getRisingMomentCreators(limit = 20): Promise<MomentCreator
       if (follow.created_at >= start)
         countByCreatorId.set(follow.creator_id, (countByCreatorId.get(follow.creator_id) ?? 0) + 1);
     });
-    const ranked = [...countByCreatorId.entries()]
+    ranked = [...countByCreatorId.entries()]
       .flatMap(([creatorId, count]) => {
         const creator = creatorById.get(creatorId);
         return creator ? [{ creator, count }] : [];
       })
       .sort((left, right) => right.count - left.count || right.creator.createdAt.localeCompare(left.creator.createdAt));
-    if (ranked.length >= limit) {
-      return ranked.slice(0, limit).map(({ creator }) => ({
-        handleName: creator.handleName,
-        activityName: creator.activityName,
-        profileImage: creator.profileImage,
-        coverImage: creator.coverImage,
-        introduction: creator.introduction,
-        createdAt: creator.createdAt,
-      }));
-    }
+    if (ranked.length >= limit) break;
   }
 
-  const followedCreatorIds = new Set(follows.map((follow) => follow.creator_id));
-  return creators
-    .filter((creator) => followedCreatorIds.has(creator.id))
-    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-    .concat(
-      creators
-        .filter((creator) => !followedCreatorIds.has(creator.id))
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
-    )
-    .slice(0, limit)
-    .map((creator) => ({
-      handleName: creator.handleName,
-      activityName: creator.activityName,
-      profileImage: creator.profileImage,
-      coverImage: creator.coverImage,
-      introduction: creator.introduction,
-      createdAt: creator.createdAt,
-    }));
+  return ranked.slice(0, limit).map(({ creator }) => ({
+    handleName: creator.handleName,
+    activityName: creator.activityName,
+    profileImage: creator.profileImage,
+    coverImage: creator.coverImage,
+    introduction: creator.introduction,
+    createdAt: creator.createdAt,
+  }));
 }
 
 const getMomentPosts = cache(
@@ -436,22 +453,22 @@ const getMomentPosts = cache(
     if (audience === 'creator' && userIds.length === 0) return { posts: [], sourceRows: [] };
 
     const supabaseAdmin = getSupabaseAdmin();
-    let postsQuery = supabaseAdmin
-      .from('posts')
-      .select(
-        'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, published_at, series_id',
-      )
-      .eq('published_status', 'published')
-      .eq('is_closed', false)
-      .eq('is_wording_blinded', false)
-      .not('published_at', 'is', null)
-      .order('published_at', { ascending: false })
-      .limit(5000);
-    if (audience === 'creator') postsQuery = postsQuery.in('user_id', userIds);
-
-    const postsResult = await postsQuery;
-    if (postsResult.error) throw postsResult.error;
-    const postRows = (postsResult.data ?? []) as MomentPostRow[];
+    const postRows = await fetchPagedRows<MomentPostRow>((from, to) => {
+      let postsQuery = supabaseAdmin
+        .from('posts')
+        .select(
+          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, published_at, series_id',
+        )
+        .eq('published_status', 'published')
+        .eq('is_closed', false)
+        .eq('is_wording_blinded', false)
+        .not('published_at', 'is', null);
+      if (audience === 'creator') postsQuery = postsQuery.in('user_id', userIds);
+      return postsQuery
+        .order('published_at', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to) as unknown as PromiseLike<{ data: MomentPostRow[] | null; error: unknown }>;
+    }, 5000);
     if (postRows.length === 0) return { posts: [], sourceRows: [] };
 
     const boardIds = [...new Set(postRows.map((post) => post.board_id))];
@@ -598,10 +615,6 @@ const getMomentPosts = cache(
   },
 );
 
-function getPostKey(post: MomentPostCard) {
-  return `${post.site_key}:${post.board_key}:${post.slug}`;
-}
-
 export async function getRecentMomentPosts(
   limit = 50,
   audience: Exclude<MomentAudience, 'all'> = 'creator',
@@ -635,13 +648,16 @@ async function getPostScoreMap(
   for (let index = 0; index < postIds.length; index += 500) {
     const postIdChunk = postIds.slice(index, index + 500);
     if (table === 'post_likes') {
-      const result = await supabaseAdmin
-        .from('post_likes')
-        .select('post_id, created_at')
-        .in('post_id', postIdChunk)
-        .gte('created_at', start);
-      if (result.error) throw result.error;
-      (result.data ?? []).forEach((row) => {
+      const likes = await fetchPagedRows<{ post_id: string; created_at: string }>((from, to) =>
+        supabaseAdmin
+          .from('post_likes')
+          .select('post_id, created_at')
+          .in('post_id', postIdChunk)
+          .gte('created_at', start)
+          .order('id', { ascending: true })
+          .range(from, to),
+      );
+      likes.forEach((row) => {
         const rows = scoreMap.get(row.post_id) ?? [];
         rows.push({ createdAt: row.created_at, score: 1 });
         scoreMap.set(row.post_id, rows);
@@ -649,13 +665,17 @@ async function getPostScoreMap(
       continue;
     }
 
-    const result = await supabaseAdmin
-      .from('post_view_daily_stats')
-      .select('post_id, view_date, view_count')
-      .in('post_id', postIdChunk)
-      .gte('view_date', start.slice(0, 10));
-    if (result.error) throw result.error;
-    (result.data ?? []).forEach((row) => {
+    const views = await fetchPagedRows<{ post_id: string; view_date: string; view_count: number | null }>((from, to) =>
+      supabaseAdmin
+        .from('post_view_daily_stats')
+        .select('post_id, view_date, view_count')
+        .in('post_id', postIdChunk)
+        .gte('view_date', start.slice(0, 10))
+        .order('post_id', { ascending: true })
+        .order('view_date', { ascending: true })
+        .range(from, to),
+    );
+    views.forEach((row) => {
       const rows = scoreMap.get(row.post_id) ?? [];
       rows.push({ createdAt: `${row.view_date}T00:00:00.000Z`, score: Number(row.view_count ?? 0) });
       scoreMap.set(row.post_id, rows);
@@ -674,9 +694,11 @@ async function getRankedMomentPosts(
   const postById = new Map(posts.map((post) => [post.post_id, post]));
   const scoreMap = await getPostScoreMap([...postById.keys()], table);
 
+  // 기간 내 점수(좋아요/조회수) 순. 365일까지 넓혀도 limit개가 안 되면 점수 0인 글로 채우지 않고 있는 만큼만 노출
+  let ranked: Array<{ post: MomentPostCard; score: number }> = [];
   for (const days of PERIOD_DAYS) {
     const start = getDateBefore(days);
-    const ranked = [...postById.entries()]
+    ranked = [...postById.entries()]
       .map(([postId, post]) => ({
         post,
         score: (scoreMap.get(postId) ?? [])
@@ -685,21 +707,10 @@ async function getRankedMomentPosts(
       }))
       .filter((item) => item.score > 0)
       .sort((left, right) => right.score - left.score || right.post.published_at.localeCompare(left.post.published_at));
-    if (ranked.length >= limit) return ranked.slice(0, limit).map((item) => item.post);
+    if (ranked.length >= limit) break;
   }
 
-  const ranked = [...postById.entries()]
-    .map(([postId, post]) => ({
-      post,
-      score: (scoreMap.get(postId) ?? []).reduce((total, entry) => total + entry.score, 0),
-    }))
-    .filter((item) => item.score > 0)
-    .sort((left, right) => right.score - left.score || right.post.published_at.localeCompare(left.post.published_at))
-    .map((item) => item.post);
-  const fallback = posts
-    .filter((post) => !ranked.some((rankedPost) => getPostKey(rankedPost) === getPostKey(post)))
-    .sort((left, right) => right.published_at.localeCompare(left.published_at));
-  return [...ranked, ...fallback].slice(0, limit);
+  return ranked.slice(0, limit).map((item) => item.post);
 }
 
 export async function getRisingMomentSites(limit = 20): Promise<MomentSiteHitCard[]> {
@@ -739,38 +750,28 @@ export async function getRisingMomentSites(limit = 20): Promise<MomentSiteHitCar
     post_count: site.post_count,
   });
 
+  // 기간 내 좋아요 합계 순. 동점이면 최근에 좋아요를 받은 사이트 우선.
+  // 365일까지 넓혀도 limit개가 안 되면 좋아요가 있는 사이트만 노출
+  let ranked: Array<{ site: SiteRow; score: number; latestAt: string }> = [];
   for (const days of PERIOD_DAYS) {
     const start = getDateBefore(days);
-    const ranked = sites
-      .map((site) => ({
-        site,
-        score: (postsBySiteKey.get(site.site_key) ?? []).reduce(
-          (total, post) =>
-            total +
-            (scoreMap.get(post.post_id) ?? [])
-              .filter((entry) => entry.createdAt >= start)
-              .reduce((postTotal, entry) => postTotal + entry.score, 0),
-          0,
-        ),
-      }))
+    ranked = sites
+      .map((site) => {
+        const entries = (postsBySiteKey.get(site.site_key) ?? []).flatMap((post) =>
+          (scoreMap.get(post.post_id) ?? []).filter((entry) => entry.createdAt >= start),
+        );
+        return {
+          site,
+          score: entries.reduce((total, entry) => total + entry.score, 0),
+          latestAt: entries.reduce((latest, entry) => (entry.createdAt > latest ? entry.createdAt : latest), ''),
+        };
+      })
       .filter((item) => item.score > 0)
-      .sort((left, right) => right.score - left.score || left.site.site_label.localeCompare(right.site.site_label));
-    if (ranked.length >= limit) return ranked.slice(0, limit).map(({ site }) => toCard(site));
+      .sort((left, right) => right.score - left.score || right.latestAt.localeCompare(left.latestAt));
+    if (ranked.length >= limit) break;
   }
 
-  const totalScores = new Map<string, number>();
-  posts.forEach((post) => {
-    const score = (scoreMap.get(post.post_id) ?? []).reduce((total, entry) => total + entry.score, 0);
-    totalScores.set(post.site_key, (totalScores.get(post.site_key) ?? 0) + score);
-  });
-  return [...sites]
-    .sort(
-      (left, right) =>
-        (totalScores.get(right.site_key) ?? 0) - (totalScores.get(left.site_key) ?? 0) ||
-        left.site_label.localeCompare(right.site_label),
-    )
-    .slice(0, limit)
-    .map(toCard);
+  return ranked.slice(0, limit).map(({ site }) => toCard(site));
 }
 
 export async function getTrendingMomentPosts(limit = 50, audience: Exclude<MomentAudience, 'all'> = 'creator') {

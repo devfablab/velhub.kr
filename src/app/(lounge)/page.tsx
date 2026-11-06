@@ -214,18 +214,24 @@ export default async function Home() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <AuthSection />
-          <section>
-            <h2>새로 오픈했어요 👋</h2>
-            <Slick sitesCreatedData={sitesCreatedData} />
-          </section>
-          <section>
-            <h2>새로운 글 알리미! 🥰</h2>
-            <Slick postsData={postsPublishedData} />
-          </section>
-          <section>
-            <h2>여러분의 관심이 필요해요 🥹</h2>
-            <List orderType="newest" />
-          </section>
+          {sitesCreatedData?.sites?.length ? (
+            <section>
+              <h2>새로 오픈했어요 👋</h2>
+              <Slick sitesCreatedData={sitesCreatedData} />
+            </section>
+          ) : null}
+          {postsPublishedData?.posts?.length ? (
+            <>
+              <section>
+                <h2>새로운 글 알리미! 🥰</h2>
+                <Slick postsData={postsPublishedData} />
+              </section>
+              <section>
+                <h2>여러분의 관심이 필요해요 🥹</h2>
+                <List orderType="newest" initialData={postsPublishedData} />
+              </section>
+            </>
+          ) : null}
         </div>
         <Aside />
       </div>

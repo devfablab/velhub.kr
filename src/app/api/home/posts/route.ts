@@ -3,6 +3,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
+import { fetchPagedRows, getDateBefore, PERIOD_DAYS } from '@/lib/service/lounge/loungeMoments';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { normalizeText } from '@/lib/utils';
 
@@ -26,6 +27,139 @@ type PostRow = {
   youtube_id: string | null;
   youtube_url: string | null;
 };
+
+type BoardInfo = {
+  id: string;
+  board_type: string;
+  board_key: string;
+  site_id: string;
+  write_permission: string | null;
+};
+
+type RhizomeInfo = {
+  id: string;
+  owner_id: string | null;
+  site_key: string;
+  site_label: string;
+  site_type: string;
+  profile_picture: string | null;
+  promotion_image: string | null;
+  custom_domain: string | null;
+};
+
+const POST_SELECT =
+  'slug, subject, summary, content_html, content_markdown, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id';
+
+// .in() 조건이 URL에 들어가므로 id 목록을 나눠서 조회
+const ID_CHUNK_SIZE = 200;
+
+async function selectByIdChunks<T>(ids: string[], load: (chunk: string[]) => Promise<T[]>) {
+  const rows: T[] = [];
+
+  for (let index = 0; index < ids.length; index += ID_CHUNK_SIZE) {
+    rows.push(...(await load(ids.slice(index, index + ID_CHUNK_SIZE))));
+  }
+
+  return rows;
+}
+
+// 인기 정렬: 기간 내 좋아요 수 순. 기간은 PERIOD_DAYS로 넓혀가며 limit개가 차면 멈추고,
+// 365일까지 넓혀도 부족하면 좋아요 0개인 글로 채우지 않고 있는 만큼만 노출. 동점이면 최신 글 우선
+async function getPopularPosts(limit: number, siteType: string | null) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const boardMap = new Map<string, BoardInfo>();
+  const rhizomeMap = new Map<string, RhizomeInfo>();
+
+  const likes = await fetchPagedRows<{ post_id: string; created_at: string }>((from, to) =>
+    supabaseAdmin
+      .from('post_likes')
+      .select('post_id, created_at')
+      .gte('created_at', getDateBefore(PERIOD_DAYS[PERIOD_DAYS.length - 1]))
+      .order('id', { ascending: true })
+      .range(from, to),
+  );
+  const likedPostIds = [...new Set(likes.map((like) => like.post_id))];
+
+  if (likedPostIds.length === 0) {
+    return { postsData: [] as PostRow[], boardMap, rhizomeMap };
+  }
+
+  const candidatePosts = await selectByIdChunks(likedPostIds, async (chunk) => {
+    const result = await supabaseAdmin
+      .from('posts')
+      .select(`id, ${POST_SELECT}`)
+      .in('id', chunk)
+      .eq('is_closed', false)
+      .eq('is_wording_blinded', false)
+      .not('published_at', 'is', null);
+    if (result.error) throw result.error;
+    return (result.data ?? []) as unknown as Array<PostRow & { id: string }>;
+  });
+
+  const boards = await selectByIdChunks([...new Set(candidatePosts.map((post) => post.board_id))], async (chunk) => {
+    const result = await supabaseAdmin
+      .from('boards')
+      .select('id, board_type, board_key, site_id, write_permission')
+      .in('board_type', ['basic', 'blog', 'feed', 'gallery', 'youtube'])
+      .in('id', chunk);
+    if (result.error) throw result.error;
+    return (result.data ?? []) as BoardInfo[];
+  });
+  const candidateBoardMap = new Map(
+    boards
+      .filter((board) => !(board.board_type !== 'blog' && board.write_permission === 'manager'))
+      .map((board) => [board.id, board]),
+  );
+
+  const rhizomes = await selectByIdChunks(
+    [...new Set([...candidateBoardMap.values()].map((board) => board.site_id))],
+    async (chunk) => {
+      let rhizomesQuery = supabaseAdmin
+        .from('rhizomes')
+        .select('id, owner_id, site_key, site_label, site_type, profile_picture, promotion_image, custom_domain')
+        .eq('visibility_type', 'public')
+        .eq('is_shutdown', false)
+        .or('is_blocked.eq.false,is_blocked.is.null')
+        .in('id', chunk);
+      if (siteType) rhizomesQuery = rhizomesQuery.eq('site_type', siteType);
+      const result = await rhizomesQuery;
+      if (result.error) throw result.error;
+      return (result.data ?? []) as RhizomeInfo[];
+    },
+  );
+  const candidateRhizomeMap = new Map(rhizomes.map((rhizome) => [rhizome.id, rhizome]));
+
+  const eligiblePosts = candidatePosts.filter((post) => {
+    const board = candidateBoardMap.get(post.board_id);
+    return Boolean(board && candidateRhizomeMap.has(board.site_id));
+  });
+
+  let ranked: Array<{ post: PostRow & { id: string }; score: number }> = [];
+  for (const days of PERIOD_DAYS) {
+    const start = getDateBefore(days);
+    const countByPostId = new Map<string, number>();
+    likes.forEach((like) => {
+      if (like.created_at >= start) countByPostId.set(like.post_id, (countByPostId.get(like.post_id) ?? 0) + 1);
+    });
+    ranked = eligiblePosts
+      .map((post) => ({ post, score: countByPostId.get(post.id) ?? 0 }))
+      .filter((item) => item.score > 0)
+      .sort((left, right) => right.score - left.score || right.post.published_at.localeCompare(left.post.published_at));
+    if (ranked.length >= limit) break;
+  }
+
+  const postsData = ranked.slice(0, limit).map((item) => item.post);
+  postsData.forEach((post) => {
+    const board = candidateBoardMap.get(post.board_id);
+    const rhizome = board ? candidateRhizomeMap.get(board.site_id) : null;
+    if (board && rhizome) {
+      boardMap.set(board.id, board);
+      rhizomeMap.set(rhizome.id, rhizome);
+    }
+  });
+
+  return { postsData: postsData as PostRow[], boardMap, rhizomeMap };
+}
 
 function getRelevanceScore(value: string | null | undefined, keyword: string) {
   const normalizedValue = normalizeText(value).toLocaleLowerCase();
@@ -120,32 +254,17 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
 
     const candidateBatchSize = Math.max(limit * (isRelevanceSort ? 10 : 5), 100);
-    const postsData: PostRow[] = [];
-    const boardMap = new Map<
-      string,
-      { id: string; board_type: string; board_key: string; site_id: string; write_permission: string | null }
-    >();
-    const rhizomeMap = new Map<
-      string,
-      {
-        id: string;
-        owner_id: string | null;
-        site_key: string;
-        site_label: string;
-        site_type: string;
-        profile_picture: string | null;
-        promotion_image: string | null;
-        custom_domain: string | null;
-      }
-    >();
+    const isPopularSort = sortBy === 'like_count' && !isRelevanceSort;
+    const popular = isPopularSort ? await getPopularPosts(limit, siteType) : null;
+    const postsData: PostRow[] = popular?.postsData ?? [];
+    const boardMap = popular?.boardMap ?? new Map<string, BoardInfo>();
+    const rhizomeMap = popular?.rhizomeMap ?? new Map<string, RhizomeInfo>();
     let offset = 0;
 
-    while (postsData.length < (isRelevanceSort ? candidateBatchSize : limit)) {
+    while (!isPopularSort && postsData.length < (isRelevanceSort ? candidateBatchSize : limit)) {
       let postsQuery = supabaseAdmin
         .from('posts')
-        .select(
-          'slug, subject, summary, content_html, content_markdown, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id',
-        )
+        .select(POST_SELECT)
         .eq('is_closed', false)
         .eq('is_wording_blinded', false)
         .not('published_at', 'is', null);

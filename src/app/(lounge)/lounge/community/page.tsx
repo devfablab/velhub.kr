@@ -46,14 +46,18 @@ export default async function Page() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <AuthSection />
-          <section>
-            <h2>인기 포스팅 🥰</h2>
-            <Slick postsData={postsHitsData} isHub={true} />
-          </section>
-          <section>
-            <h2>많은 분들이 읽었어요 😎</h2>
-            <List orderType="hits" postsApiPath="/api/home/posts?limit=20&sortBy=like_count&siteType=community" />
-          </section>
+          {postsHitsData?.posts?.length ? (
+            <>
+              <section>
+                <h2>인기 포스팅 🥰</h2>
+                <Slick postsData={postsHitsData} isHub={true} />
+              </section>
+              <section>
+                <h2>많은 분들이 읽었어요 😎</h2>
+                <List orderType="hits" initialData={postsHitsData} />
+              </section>
+            </>
+          ) : null}
         </div>
         <Aside />
       </div>
