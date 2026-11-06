@@ -1,6 +1,7 @@
 .content
   display: flex
   flex-direction: column
+  min-width: 0
   gap: ds.rem(23)
 
   @include ds.mq(maxMedium)
@@ -1104,6 +1105,7 @@
             height: ds.rem(16)
 
   &.blog-list, &.blog-content
+    min-width: 0
     max-width: ds.rem(807)
     width: 100%
 
@@ -2689,10 +2691,17 @@
   font-size: ds.rem(14)
 
 .blog-ads
+  min-width: 0
+  width: 100%
+  max-width: 100%
+  overflow: hidden
   gap: ds.rem(12)
 
   .blog-ad-items
     display: flex
+    min-width: 0
+    width: 100%
+    max-width: 100%
     flex-direction: row
     gap: ds.rem(12)
     overflow-x: auto
