@@ -1,7 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;

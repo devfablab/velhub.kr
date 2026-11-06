@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { isAtLeast14, isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
@@ -29,7 +30,6 @@ import {
 } from '@/lib/payments/types';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const MEMBERSHIP_TYPE_VALUES = ['owner', 'creator', 'all_in_one', 'affetto'] as const;
 

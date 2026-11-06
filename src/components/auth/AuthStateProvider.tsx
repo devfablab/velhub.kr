@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Snackbar } from '@mui/material';
 import { usePathname } from 'next/navigation';
+import { Snackbar } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 
 type AuthStateContextValue = {

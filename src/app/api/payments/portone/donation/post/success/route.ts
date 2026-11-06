@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getKoreanAge } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
@@ -28,7 +29,6 @@ import {
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/service/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type Body = {

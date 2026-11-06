@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
+import { getMailFrom, getResendClient } from '@/lib/clients/resend';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
-import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { isPartnershipAttachment, PARTNERSHIP_ATTACHMENT_MAX_BYTES } from '@/lib/service/concierge/partnerships';
 import { getPartnershipFormInfo, getPartnershipProposals } from '@/lib/service/concierge/partnerships.server';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 function getText(value: FormDataEntryValue | null) {
   return typeof value === 'string' ? value.trim() : '';

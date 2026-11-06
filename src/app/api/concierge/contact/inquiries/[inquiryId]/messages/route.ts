@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getCurrentStigma } from '@/lib/session/utils';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ inquiryId: string }> }) {
   const current = await getCurrentStigma();

@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { assertReadyPaymentOrder, completePaymentOrder, getPaymentOrder } from '@/lib/payments/paymentOrder';
 import {
@@ -24,7 +25,6 @@ import {
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;

@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import {
   type CommunityManagePermissionMap,
@@ -6,7 +7,6 @@ import {
   isCommunityManageRole,
 } from '@/lib/service/community/communityManager/permissions';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';
 

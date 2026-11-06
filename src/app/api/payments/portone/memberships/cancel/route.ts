@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type CancelMembershipBody = {
   membershipId?: string;

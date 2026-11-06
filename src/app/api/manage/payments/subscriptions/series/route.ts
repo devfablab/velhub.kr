@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   getMaxAllowedSeriesSubscriptionPrice,
   SUBSCRIPTION_SERIES_MIN_PRICE,
@@ -12,7 +13,6 @@ import {
 } from '@/lib/payments/types';
 import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;

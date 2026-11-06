@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Stack, Typography } from '@mui/material';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
 import Opt, { type Eligibility, type MembershipStatusResponse } from './opt';
 import styles from '@/app/memberships.module.sass';

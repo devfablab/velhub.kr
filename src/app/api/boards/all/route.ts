@@ -1,7 +1,7 @@
 import { getPostList } from '@/lib/board/getPostList';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { canAccessManagerOnlyBoards, isManagerOnlyBoard } from '@/lib/service/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { findUserIdsByDisplayName } from '@/lib/users/findUsersByDisplayName';
 import { normalizeText } from '@/lib/utils';
 

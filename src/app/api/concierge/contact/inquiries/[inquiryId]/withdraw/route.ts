@@ -1,6 +1,6 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function POST(_: Request, { params }: { params: Promise<{ inquiryId: string }> }) {
   const current = await getCurrentStigma();

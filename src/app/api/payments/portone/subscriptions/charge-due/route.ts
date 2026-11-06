@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { createNextMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
@@ -25,7 +26,6 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { r2Storage } from '@/lib/clients/r2Storage';
 import { getVisibleBlogPostPromotion } from '@/lib/service/blog/blogAds/server';
 import {
   canManageCommunityBoardContents,
@@ -10,7 +11,6 @@ import {
 } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { canManageBlogContents } from '@/lib/site/contentAccess';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getWordingProfilerViolationFields } from '@/lib/wordingProfiler.server';
 

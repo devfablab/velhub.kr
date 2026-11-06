@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   createGitHubIssue,
   isLabsCategory,
@@ -8,7 +9,6 @@ import {
   uploadGitHubImage,
 } from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getStigmaDisplayName } from '@/lib/users/utils';
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];

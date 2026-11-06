@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
+import type { BlogPromotionStatus } from '@/components/service/blog/BlogPostPromotionFields';
 import Opt from './opt';
 import type { CategoryListResponse, SeriesListResponse, StatusResponse } from './opt';
-import type { BlogPromotionStatus } from '@/components/service/blog/BlogPostPromotionFields';
 import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = {

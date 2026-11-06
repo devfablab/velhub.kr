@@ -1,7 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
 import { normalizeText } from '@/lib/utils';
 

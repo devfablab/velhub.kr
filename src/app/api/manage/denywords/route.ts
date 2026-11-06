@@ -1,5 +1,5 @@
-import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = { siteName?: string | null; words?: unknown };

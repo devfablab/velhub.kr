@@ -1,5 +1,5 @@
-import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type PublishingPostRow = {
   id: string;

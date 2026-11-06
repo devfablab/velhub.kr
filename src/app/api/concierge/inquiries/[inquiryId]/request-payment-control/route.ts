@@ -1,5 +1,5 @@
-import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getCurrentStigma } from '@/lib/session/utils';
 
 export async function POST(_: Request, { params }: { params: Promise<{ inquiryId: string }> }) {
   const admin = await getCurrentStigma();

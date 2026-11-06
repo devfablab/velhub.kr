@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 const INTRODUCTION_MIN_LENGTH = 2;
 const INTRODUCTION_MAX_LENGTH = 72;

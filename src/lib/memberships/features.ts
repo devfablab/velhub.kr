@@ -1,8 +1,8 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getPastDueGraceDays } from '@/lib/payments/refunds';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { MEMBERSHIP_FEATURES, type MembershipFeatureKey } from './catalog';
 
 const featureKeys = new Set<MembershipFeatureKey>(MEMBERSHIP_FEATURES.map((feature) => feature.key));

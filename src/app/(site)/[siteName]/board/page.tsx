@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { DEFAULT_LIST_BOARD_PAGE_SIZE, LIST_BOARD_PAGE_SIZES, normalizePageSize } from '@/lib/board/pageSize';
-import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../getSiteApiData';
 import Container from '../menu';

@@ -2,8 +2,8 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import crypto from 'crypto';
-import { encrypt } from '@/lib/encryption/encrypt';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { encrypt } from '@/lib/encryption/encrypt';
 
 type NaverState = {
   stateToken: string;

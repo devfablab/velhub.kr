@@ -1,6 +1,7 @@
 import { getPostList } from '@/lib/board/getPostList';
-import { decrypt } from '@/lib/encryption/decrypt';
 import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { decrypt } from '@/lib/encryption/decrypt';
 import {
   canManageCommunityBoardContents,
   canManageCommunityBoardSettings,
@@ -8,7 +9,6 @@ import {
 } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { canManageBlogContents } from '@/lib/site/contentAccess';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { findUserIdsByDisplayName } from '@/lib/users/findUsersByDisplayName';
 import { normalizeText } from '@/lib/utils';
 

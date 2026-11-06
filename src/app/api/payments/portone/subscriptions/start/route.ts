@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
@@ -30,7 +31,6 @@ import {
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;

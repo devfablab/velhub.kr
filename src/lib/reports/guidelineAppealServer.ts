@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import {
   getAppellantMessageStatus,
@@ -7,7 +8,6 @@ import {
 } from '@/lib/reports/guidelineAppeals';
 import { guidelineReportCategories } from '@/lib/reports/guidelines';
 import { getReportCategoryTitle } from '@/lib/reports/manage';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type GuidelineReportRow = {

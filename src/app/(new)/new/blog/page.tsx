@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Opt from './opt';

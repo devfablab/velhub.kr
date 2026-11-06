@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { r2Storage } from '@/lib/clients/r2Storage';
-import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
 type AllowedFolder = 'thumbnail' | 'images' | 'editor';

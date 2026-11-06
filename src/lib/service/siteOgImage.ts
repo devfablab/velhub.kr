@@ -1,6 +1,6 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 export const SITE_OG_BUCKET = 'site-og';

@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSeriesPageMetadata } from '@/lib/seoSite';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';

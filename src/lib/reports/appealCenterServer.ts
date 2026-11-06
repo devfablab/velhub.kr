@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   type AppealCenterDetail,
   type AppealCenterItem,
@@ -7,7 +8,6 @@ import {
   type ReportAppealDatabaseRow,
 } from '@/lib/reports/appeals';
 import { legalTypeLabels, legalValueLabels, rightsReasonTypeLabels } from '@/lib/reports/concierge';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type ReportType = 'legal' | 'rights';

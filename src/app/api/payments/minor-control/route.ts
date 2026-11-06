@@ -1,5 +1,5 @@
-import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getCurrentStigma } from '@/lib/session/utils';
 
 export async function GET() {
   const current = await getCurrentStigma();

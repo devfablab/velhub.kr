@@ -1,4 +1,5 @@
 import 'server-only';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import {
   getKoreanNineAmBoundary,
@@ -8,7 +9,6 @@ import {
   type PartnershipProposalRow,
 } from '@/lib/service/concierge/partnerships';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 async function getAttachmentAvailability(db: ReturnType<typeof getSupabaseAdmin>) {
   const boundary = getKoreanNineAmBoundary();

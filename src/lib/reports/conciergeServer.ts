@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import {
   getReportAppealCategory,
@@ -26,7 +27,6 @@ import {
   type ReportStatus,
   reportStatusLabels,
 } from '@/lib/reports/manage';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 
 type RawReport = {

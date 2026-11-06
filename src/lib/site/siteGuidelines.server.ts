@@ -1,7 +1,7 @@
 import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 export const siteGuidelineTypes = ['common', 'blog-community', 'blog-post', 'board-common', 'board-specific'] as const;

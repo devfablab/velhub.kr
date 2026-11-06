@@ -1,8 +1,8 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
 import { sendMinorPurchaseCancellationAdjustmentEmail } from '@/lib/notifications/minorPurchaseCancellationEmail';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function POST(_: Request, { params }: { params: Promise<{ inquiryId: string }> }) {
   const admin = await getCurrentStigma();

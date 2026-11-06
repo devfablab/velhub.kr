@@ -1,5 +1,5 @@
-import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import verifySession from '@/lib/session/verifySession';
 
 export async function GET() {
   try {

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import { originTitle, Seo } from '@/lib/seo';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { originTitle, Seo } from '@/lib/seo';
 import Container from '../menu';
 import Faqs, { type FaqCategory } from './opt';
 import styles from '@/app/concierge.module.sass';

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.server';
-import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getCurrentStigma } from '@/lib/session/utils';
 
 const bucket = 'inquiry-attachments';
 const allowedMimeTypes = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { validateFavoriteFolderLabel } from '@/lib/service/hubFavoriteFolder.shared';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 export async function GET() {
   const currentStigma = await getCurrentStigma();

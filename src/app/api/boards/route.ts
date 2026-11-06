@@ -1,10 +1,10 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   canManageAllCommunityBoardContents,
   getCommunityManagerAccess,
 } from '@/lib/service/community/communityManager/utils';
 import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type BoardRow = {

@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
+import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
-import { r2Storage } from '@/lib/clients/r2Storage';
 import {
   isInquiryInformationRequestType,
   inquiryResolutionLabels,
@@ -9,7 +10,6 @@ import {
   isResolutionAllowedForInquiryType,
 } from '@/lib/service/concierge/conciergeInquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type RouteContext = { params: Promise<{ inquiryId: string }> };
 

@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCurrentPortOneProvider } from '@/lib/payments/portone';
 import {
   PAYMENT_METHOD,
@@ -8,7 +9,6 @@ import {
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;

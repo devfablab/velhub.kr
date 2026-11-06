@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   PAYMENT_METHOD,
   PAYMENT_STATUS,
@@ -7,7 +8,6 @@ import {
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type PaymentRow = {

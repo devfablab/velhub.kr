@@ -7,8 +7,8 @@ import {
   MEDIA_BOARD_PAGE_SIZES,
   normalizePageSize,
 } from '@/lib/board/pageSize';
-import { getBoardPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getBoardPageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
 import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
 import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';

@@ -2,11 +2,11 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
 import { r2Storage } from '@/lib/clients/r2Storage';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
 import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import Blog, { type BlogHomeData } from './blog';
 import Community from './community';
 

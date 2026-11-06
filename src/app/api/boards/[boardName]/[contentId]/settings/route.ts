@@ -1,12 +1,12 @@
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
 } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { canManageBlogContents } from '@/lib/site/contentAccess';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type Context = { params: Promise<{ boardName: string; contentId: string }> };

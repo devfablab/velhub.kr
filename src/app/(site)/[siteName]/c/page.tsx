@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { r2Storage } from '@/lib/clients/r2Storage';
-import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';

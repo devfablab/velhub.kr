@@ -1,8 +1,8 @@
 import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
 import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/service/blog/blogRecommendations.server';
 import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

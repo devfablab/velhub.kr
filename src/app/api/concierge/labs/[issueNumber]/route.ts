@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   getGitHubIssue,
   isLabsCategory,
@@ -8,7 +9,6 @@ import {
   updateGitHubIssue,
 } from '@/lib/service/concierge/githubLabs';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
 type Props = {
   params: Promise<{ issueNumber: string }>;
