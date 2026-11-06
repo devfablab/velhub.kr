@@ -142,6 +142,11 @@ export function canManageCommunityPages(actor: CommunityManagerActor) {
   return actor.permissions.page_manage;
 }
 
+// 디자인 설정(홈 설정 / 메뉴 설정 / 링크): 운영자(site_edit) + 커뮤니티 매니저
+export function canEditCommunityDesign(actor: CommunityManagerActor) {
+  return actor.permissions.site_edit || actor.communityRoles.includes('community-manager');
+}
+
 export function canManageAllCommunityBoards(actor: CommunityManagerActor) {
   return (
     actor.communityRoles.includes('owner') ||

@@ -145,6 +145,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
+  // 초기 로딩 실패(접근 권한 없음 등)면 설정 자체가 불가능하므로 설정 영역을 그리지 않음
+  const isInitialLoadFailed = Boolean(initialError);
   const [items, setItems] = useState<HomeOrderItem[]>(Array.isArray(initialData?.items) ? initialData.items : []);
   const [hasHomeOrders, setHasHomeOrders] = useState(Boolean(initialData?.hasHomeOrders));
   const [isInitializing, setIsInitializing] = useState(false);
@@ -334,7 +336,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClose={() => setIsErrorDialogOpen(false)}
             />
 
-            {!hasHomeOrders ? (
+            {isInitialLoadFailed ? null : !hasHomeOrders ? (
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">커뮤니티 홈 세팅이 필요합니다.</Typography>
                 <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>

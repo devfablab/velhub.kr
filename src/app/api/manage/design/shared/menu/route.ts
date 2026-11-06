@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
 import { getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -10,6 +11,16 @@ type ApplyRequestBody = {
   boardId?: string | null;
   boardLabel?: string | null;
 };
+
+// 커뮤니티 매니저는 rhizome role이 아니라 community_manage_role에 있으므로 별도 확인
+async function isCommunityDesignEditor(siteName: string) {
+  try {
+    const access = await getCommunityManagerAccess(siteName);
+    return canEditCommunityDesign(access.actor);
+  } catch {
+    return false;
+  }
+}
 
 async function checkAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -32,7 +43,9 @@ async function checkAccess(siteName: string) {
     siteId: rhizome.data.id,
   });
 
-  if (session.case !== 'admin' && session.case !== 'staff') {
+  const isStaff = session.case === 'admin' || session.case === 'staff';
+
+  if (!isStaff && !(rhizome.data.site_type === 'community' && (await isCommunityDesignEditor(siteName)))) {
     return {
       ok: false,
       status: 403,

@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import { normalizeText } from '@/lib/utils';
 
 type HomeOrderRow = {
@@ -35,7 +35,7 @@ async function checkAccess(siteName: string) {
   try {
     const access = await getCommunityManagerAccess(siteName);
 
-    if (!access.actor.permissions.site_edit) {
+    if (!canEditCommunityDesign(access.actor)) {
       return {
         ok: false,
         status: 403,

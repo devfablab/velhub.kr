@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import path from 'path';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import { normalizeText } from '@/lib/utils';
 
 type ServiceValue = 'toonation' | 'kakaotalk' | 'discord';
@@ -111,7 +111,7 @@ async function checkManageAccess(siteName: string) {
   try {
     const access = await getCommunityManagerAccess(siteName);
 
-    if (!access.actor.permissions.site_edit) {
+    if (!canEditCommunityDesign(access.actor)) {
       return { ok: false, status: 403, error: '접근 권한이 없습니다.' } as const;
     }
 
