@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
+import { isPersonalBlogType } from '@/lib/service/blog/notice/access';
 import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
 import { getSessionClaims } from '@/lib/session/server';
 import verifySession from '@/lib/session/verifySession';
@@ -135,6 +136,10 @@ export async function GET(request: Request) {
         : Promise.resolve(null);
     const hasShoppingPromise =
       siteType === 'blog' ? getVisibleBlogHomeAds(siteId).then((ads) => ads.length > 0) : Promise.resolve(false);
+    const noticeBoardPromise =
+      siteType === 'blog'
+        ? supabaseAdmin.from('notice_boards').select('board_label, is_enabled').eq('site_id', siteId).maybeSingle()
+        : Promise.resolve(null);
     const privateBoardPromise =
       siteType === 'community'
         ? (async () => {
@@ -171,6 +176,7 @@ export async function GET(request: Request) {
       hasOwnerDomainFeature,
       blogCommunityResult,
       hasShopping,
+      noticeBoardResult,
     ] = await Promise.all([
       chorogonPromise,
       boardsPromise,
@@ -182,6 +188,7 @@ export async function GET(request: Request) {
       hasOwnerDomainPromise,
       blogCommunityPromise,
       hasShoppingPromise,
+      noticeBoardPromise,
     ]);
 
     const [blogResult, blogCommunityConfigResult] = blogCommunityResult ?? [null, null];
@@ -259,6 +266,11 @@ export async function GET(request: Request) {
         blog_type: blogResult?.data?.blog_type ?? null,
         is_blog_community_enabled: blogCommunityConfigResult?.data?.is_enabled === true,
         has_shopping: hasShopping,
+        // 공지: 1인 블로그 + 활성화일 때만 메뉴 이름 전달
+        notice_label:
+          isPersonalBlogType(blogResult?.data?.blog_type) && noticeBoardResult?.data?.is_enabled === true
+            ? noticeBoardResult.data.board_label
+            : null,
       },
       menus: boardRows.map((board) => ({
         id: board.id,

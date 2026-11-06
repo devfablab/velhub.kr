@@ -113,6 +113,7 @@ export type InitialMenuResponse = {
   hasSeries?: boolean;
   hasShopping?: boolean;
   hasBlogCommunity?: boolean;
+  noticeBoard?: { id: string; board_label: string } | null;
   siteLabel?: string | null;
   error?: string;
 };
@@ -137,6 +138,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const hasSeries = initialData?.hasSeries === true;
   const hasShopping = initialData?.hasShopping === true;
   const hasBlogCommunity = initialData?.hasBlogCommunity === true;
+  // 공지 게시판 (활성화된 경우만 존재). 위치 고정, 이름 변경만 가능
+  const [noticeBoard, setNoticeBoard] = useState(initialData?.noticeBoard ?? null);
   const siteLabel = normalizeText(initialData?.siteLabel);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -254,6 +257,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           siteName,
           boardId: renameTarget.id,
           boardLabel: renameValue,
+          target: renameTarget.board_type === 'notice' ? 'notice' : 'board',
         }),
       });
 
@@ -263,17 +267,21 @@ export default function Opt({ initialData, initialError }: OptProps) {
         throw new Error(result.error ?? '게시판 이름 변경에 실패했습니다.');
       }
 
-      setMenus((previousMenus) =>
-        previousMenus.map((menu) =>
-          menu.id === renameTarget.id
-            ? {
-                ...menu,
-                board_label: result.board.board_label,
-                display_label: result.board.board_label,
-              }
-            : menu,
-        ),
-      );
+      if (renameTarget.board_type === 'notice') {
+        setNoticeBoard({ id: renameTarget.id, board_label: result.board.board_label });
+      } else {
+        setMenus((previousMenus) =>
+          previousMenus.map((menu) =>
+            menu.id === renameTarget.id
+              ? {
+                  ...menu,
+                  board_label: result.board.board_label,
+                  display_label: result.board.board_label,
+                }
+              : menu,
+          ),
+        );
+      }
 
       setSuccessMessage('이름이 변경되었습니다.');
       setRenameTarget(null);
@@ -341,6 +349,30 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       {menus.length > 1 && hasShopping ? (
                         <div className={`paper ${styles.paper}`}>
                           <Typography>쇼핑</Typography>
+                        </div>
+                      ) : null}
+
+                      {noticeBoard ? (
+                        <div className={`paper ${styles.paper}`}>
+                          <Stack direction="row" gap={2} alignItems="center">
+                            <Typography sx={{ flex: '1 1 auto', minWidth: 0 }}>{noticeBoard.board_label}</Typography>
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() =>
+                                handleOpenRenameDialog({
+                                  id: noticeBoard.id,
+                                  board_type: 'notice',
+                                  board_label: noticeBoard.board_label,
+                                  display_label: noticeBoard.board_label,
+                                  sort_order: 0,
+                                  is_renameable: true,
+                                })
+                              }
+                            >
+                              이름 변경
+                            </button>
+                          </Stack>
                         </div>
                       ) : null}
 

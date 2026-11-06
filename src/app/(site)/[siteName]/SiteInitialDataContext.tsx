@@ -53,6 +53,8 @@ type InitialData = {
   hasCategories: boolean;
   hasSeries: boolean;
   hasShopping: boolean;
+  // 공지 게시판 메뉴 이름 (1인 블로그 + 활성화일 때만 값 존재)
+  noticeLabel: string;
   hasBlogCommunity: boolean;
 };
 

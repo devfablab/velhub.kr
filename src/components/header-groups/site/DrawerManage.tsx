@@ -8,6 +8,7 @@ import FormatListNumberedRoundedIcon from '@mui/icons-material/FormatListNumbere
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import ListOutlinedIcon from '@mui/icons-material/ListOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
+import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import QueryStatsOutlinedIcon from '@mui/icons-material/QueryStatsOutlined';
 import RecommendOutlinedIcon from '@mui/icons-material/RecommendOutlined';
 import RememberMeOutlinedIcon from '@mui/icons-material/RememberMeOutlined';
@@ -118,6 +119,16 @@ export default function DrawerManage({ siteName, siteType, blogType, siteRole, g
           <Anchor href={`/${siteName}/manage/recommended-posts`}>
             <RecommendOutlinedIcon fontSize="small" />
             <span>추천 포스팅</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
+
+      {/* 공지: 1인 블로그 운영자 전용 (전체 관리자 제외) */}
+      {siteType === 'blog' && blogType !== 'team' && siteRole === 'owner' ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/notice`}>
+            <NotificationsActiveOutlinedIcon fontSize="small" />
+            <span>공지</span>
           </Anchor>
         </MenuItem>
       ) : null}

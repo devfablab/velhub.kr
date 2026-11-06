@@ -87,6 +87,10 @@ export default function NavManage({ siteName, siteType, blogType, siteRole, glob
     ...(showAllManageMenus && siteType === 'blog'
       ? [{ label: '추천 포스팅', href: `/${siteName}/manage/recommended-posts`, startsWith: true }]
       : []),
+    // 공지: 1인 블로그 운영자 전용 (전체 관리자 제외)
+    ...(siteType === 'blog' && blogType !== 'team' && siteRole === 'owner'
+      ? [{ label: '공지', href: `/${siteName}/manage/notice`, startsWith: true }]
+      : []),
     ...(isSiteStaff ? [{ label: '가이드라인', href: `/${siteName}/manage/guidelines`, startsWith: true }] : []),
     ...(showAllManageMenus
       ? [{ label: '단어차단 필터링', href: `/${siteName}/manage/denywords`, startsWith: true }]

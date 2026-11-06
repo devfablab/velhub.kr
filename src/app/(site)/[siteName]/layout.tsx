@@ -203,6 +203,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
         has_categories?: boolean;
         has_series?: boolean;
         has_shopping?: boolean;
+        notice_label?: string | null;
       };
     }>(`/api/site/public?siteName=${siteName}`, '메뉴를 불러오지 못했습니다.'),
     getSiteApiData<{ count?: number }>('/api/notifications/unread-count', '알림을 불러오지 못했습니다.'),
@@ -249,6 +250,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
             hasCategories: Boolean(siteMenu.data?.siteInfo?.has_categories),
             hasSeries: Boolean(siteMenu.data?.siteInfo?.has_series),
             hasShopping: header.data?.siteType === 'blog' && siteMenu.data?.siteInfo?.has_shopping === true,
+            noticeLabel: header.data?.siteType === 'blog' ? (siteMenu.data?.siteInfo?.notice_label ?? '') : '',
             hasBlogCommunity:
               blogCommunity.data?.feature?.isPersonalBlog === true &&
               blogCommunity.data?.feature?.isEnabled === true &&

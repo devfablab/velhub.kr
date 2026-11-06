@@ -83,6 +83,8 @@ export default function Opt({
     ...(showAllManageMenus && siteType === 'blog'
       ? [{ href: `/${siteName}/manage/recommended-posts`, label: '추천 포스팅' }]
       : []),
+    // 공지: 1인 블로그 운영자 전용 (전체 관리자 제외)
+    ...(isPersonalBlog && siteRole === 'owner' ? [{ href: `/${siteName}/manage/notice`, label: '공지' }] : []),
     ...(showAllManageMenus ? [{ href: `/${siteName}/manage/denywords`, label: '단어차단 필터링' }] : []),
     ...(isBlogOwner ? [{ href: `/${siteName}/manage/ads`, label: '광고' }] : []),
     ...(showAllManageMenus && siteType === 'community'

@@ -65,7 +65,8 @@ type ContainerProps = {
     | 'reports'
     | 'community'
     | 'denywords'
-    | 'guidelines';
+    | 'guidelines'
+    | 'notice';
   children: React.ReactNode;
 };
 
@@ -615,6 +616,10 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
 
     if (menu === 'guidelines') {
       return [{ href: `/${siteName}/manage/guidelines`, label: '가이드라인', startsWith: true }];
+    }
+
+    if (menu === 'notice') {
+      return [{ href: `/${siteName}/manage/notice`, label: '공지', startsWith: true }];
     }
 
     if (menu === 'design') {

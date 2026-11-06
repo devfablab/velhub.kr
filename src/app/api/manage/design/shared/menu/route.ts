@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
 import { getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import { isPersonalBlogType } from '@/lib/service/blog/notice/access';
 import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -10,6 +11,8 @@ type ApplyRequestBody = {
   orderedBoardIds?: string[] | null;
   boardId?: string | null;
   boardLabel?: string | null;
+  // 'notice'면 공지 게시판(notice_boards) 이름 변경
+  target?: 'board' | 'notice' | null;
 };
 
 // 커뮤니티 매니저는 rhizome role이 아니라 community_manage_role에 있으므로 별도 확인
@@ -79,7 +82,7 @@ export async function GET(request: Request) {
     }
 
     const isBlog = access.siteType === 'blog';
-    const [boards, categories, series, blogCommunity, hasShopping, privateBoard] = await Promise.all([
+    const [boards, categories, series, blogCommunity, hasShopping, privateBoard, noticeBoard] = await Promise.all([
       access.supabaseAdmin
         .from('boards')
         .select('id, board_type, board_label, sort_order')
@@ -101,9 +104,17 @@ export async function GET(request: Request) {
       access.siteType === 'community'
         ? access.supabaseAdmin.from('private_boards').select('board_label').eq('site_id', access.siteId).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
+      // 공지 게시판 (1인 블로그 + 활성화일 때만 메뉴에 노출, 이름 변경 가능)
+      isBlog
+        ? access.supabaseAdmin
+            .from('notice_boards')
+            .select('id, board_label, is_enabled')
+            .eq('site_id', access.siteId)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
-    if (boards.error || categories.error || series.error || privateBoard.error) {
+    if (boards.error || categories.error || series.error || privateBoard.error || noticeBoard.error) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -136,6 +147,10 @@ export async function GET(request: Request) {
       hasBlogCommunity: blogCommunity?.canUse === true,
       hasShopping,
       privateBoardLabel: normalizeText(privateBoard.data?.board_label),
+      noticeBoard:
+        blogCommunity?.isPersonalBlog === true && noticeBoard.data?.is_enabled === true
+          ? { id: noticeBoard.data.id, board_label: noticeBoard.data.board_label }
+          : null,
       siteLabel: access.siteLabel,
       menus: boardRows.map((board) => ({
         id: board.id,
@@ -243,6 +258,37 @@ export async function POST(request: Request) {
 
     if (!access.ok) {
       return Response.json({ error: access.error }, { status: access.status });
+    }
+
+    if (requestBody.target === 'notice') {
+      const blog = await access.supabaseAdmin
+        .from('blogs')
+        .select('blog_type')
+        .eq('site_id', access.siteId)
+        .maybeSingle();
+
+      if (blog.error || access.siteType !== 'blog' || !isPersonalBlogType(blog.data?.blog_type)) {
+        return Response.json({ error: '1인 블로그에서만 공지 게시판을 사용할 수 있습니다.' }, { status: 400 });
+      }
+
+      const noticeBoard = await access.supabaseAdmin
+        .from('notice_boards')
+        .update({ board_label: boardLabel })
+        .eq('id', boardId)
+        .eq('site_id', access.siteId)
+        .eq('is_enabled', true)
+        .select('id, board_label')
+        .maybeSingle();
+
+      if (noticeBoard.error) {
+        return Response.json({ error: '게시판 이름 변경에 실패했습니다.' }, { status: 500 });
+      }
+
+      if (!noticeBoard.data) {
+        return Response.json({ error: '공지 게시판을 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      return Response.json({ ok: true, board: noticeBoard.data });
     }
 
     const board = await access.supabaseAdmin

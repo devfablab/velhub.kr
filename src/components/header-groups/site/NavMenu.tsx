@@ -41,6 +41,7 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const hasSeries = initialData?.hasSeries === true;
   const hasShopping = isBlog && initialData?.hasShopping === true;
   const hasBlogCommunity = isBlog && initialData?.hasBlogCommunity === true;
+  const noticeLabel = isBlog ? (initialData?.noticeLabel ?? '') : '';
 
   const homeHref = `/${siteName}`;
   const isHomeCurrent = pathname === homeHref;
@@ -64,6 +65,8 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const isBlogCommunityCurrent = isCurrentPath(pathname, blogCommunityHref);
   const isSeriesHrefCurrent = pathname === seriesHref || pathname.startsWith(`${seriesHref}/`);
   const isShoppingHrefCurrent = isCurrentPath(pathname, shoppingHref);
+  const noticeHref = `/${siteName}/notice`;
+  const isNoticeCurrent = isCurrentPath(pathname, noticeHref);
 
   return (
     <div className={styles.navigationbar}>
@@ -159,6 +162,17 @@ export default function NavMenu({ siteName, isBlog }: Props) {
             >
               <Anchor href={shoppingHref}>
                 <span>쇼핑</span>
+                <i />
+              </Anchor>
+            </li>
+          ) : null}
+          {noticeLabel ? (
+            <li
+              className={isNoticeCurrent ? styles.current : undefined}
+              aria-current={isNoticeCurrent ? 'page' : false}
+            >
+              <Anchor href={noticeHref}>
+                <span>{noticeLabel}</span>
                 <i />
               </Anchor>
             </li>

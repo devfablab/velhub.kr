@@ -102,7 +102,7 @@ e.g.) e -> event/error, res -> response, req -> request... 등등. (언급된 �
 
 - `input type="file"` 사용시에는 `<VisuallyHiddenInput />`를 사용해야 함.
 - `<Typography>`에 사용할 수 있는 건 `variant`, `component` 둘 뿐이고 `component`는 `variant`가 h6일 때만 별도로 몇단계인지 사용할 수 있음. `variant`는 h6, subtitle2, body2만 사용 가능하고 아무 프롭스도 하지 않는 순수 `<Typography>` 형태로만 사용할 수 없음.
-- MUI 폼에서 label 프롭스 쓸 수 없음. TextField에서 label 대신 placeholder 사용하고 Select에서는 label 대신 기본값으로 사용.
+- MUI 폼에서 label 프롭스 쓸 수 없음. TextField에서 label 대신 placeholder 사용하고 Select에서는 label 대신 기본값으로 사용. (`<Label />` 태그를 쓰지 말라는 의미 아님 주의.)
 - MUI 컴포넌트는 size를 small 로 반드시 지정해야 함.
 - 링크는 무조건 `<Anchor>` 사용.
 - `<Avatar />는 src, alt가 반드시 존재해야 하며 이미지 값이 없는 경우 '/broken-image.jpg' 사용. alt에는 별명을 넣고, 별명이 없다면 활동명이 들어가게 처리.
