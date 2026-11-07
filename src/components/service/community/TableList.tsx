@@ -166,20 +166,24 @@ export default function TableList({ writeHref }: Props) {
       ) : null}
 
       <ol>
-        <li className={styles.link}>
-          <Anchor href={`/${siteName}/board`} className="link">
+        <li className={!boardName ? styles.current : undefined}>
+          <Anchor href={`/${siteName}/board`} aria-current={!boardName ? 'page' : undefined}>
             <ListAltOutlinedIcon sx={{ width: 16, height: 16 }} />
             <span>최신글 보기</span>
           </Anchor>
         </li>
-        {boards.map((board) => (
-          <li key={board.id} className={styles.item}>
-            <Anchor href={`/${siteName}/${board.board_key}`}>
-              {renderBoardTypeIcon(board.board_type)}
-              <span>{board.board_label}</span>
-            </Anchor>
-          </li>
-        ))}
+        {boards.map((board) => {
+          const isCurrent = board.board_key === boardName;
+
+          return (
+            <li key={board.id} className={isCurrent ? styles.current : undefined}>
+              <Anchor href={`/${siteName}/${board.board_key}`} aria-current={isCurrent ? 'page' : undefined}>
+                {renderBoardTypeIcon(board.board_type)}
+                <span>{board.board_label}</span>
+              </Anchor>
+            </li>
+          );
+        })}
       </ol>
 
       {isMobile ? (
