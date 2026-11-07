@@ -37,23 +37,23 @@ export const BLOG_AD_REPORT_REASON_LABELS: Record<BlogAdReportReason, { title: s
   },
   illegal_or_harmful_site: {
     title: '불법 또는 유해한 사이트로 연결됩니다.',
-    description: '불법 상품·도박·성인물 등 이용에 부적절한 사이트로 연결되는 경우',
+    description: '도박·불법 대출·성인물·위조품 판매 등 불법·유해 사이트로 연결되는 경우',
   },
   different_destination: {
-    title: '표시된 정보와 다른 사이트로 연결됩니다.',
-    description: '쇼핑몰명·상품명 또는 협찬사 정보와 관계없는 사이트로 연결되는 경우',
+    title: '표시된 정보와 다른 곳으로 연결됩니다.',
+    description: '표시된 쇼핑몰·상품·협찬사 정보와 다른 곳으로 연결되는 경우',
   },
   non_product_link: {
     title: '상품과 관련 없는 링크입니다.',
     description: '상품 구매·소개와 관계없이 특정 사이트 방문이나 앱 설치를 유도하는 링크인 경우',
   },
   problematic_product: {
-    title: '상품에 문제가 있습니다.',
-    description: '의약품을 온라인으로 판매하거나, 특정 효능을 보장하는 등 허위·과장 광고가 의심되는 경우',
+    title: '판매나 광고가 금지된 상품입니다.',
+    description: '의약품 판매, 질병 치료·효능 보장 등 허위·과장 광고나 판매 금지 물품이 의심되는 경우',
   },
   broken_link: {
     title: '링크가 동작하지 않습니다.',
-    description: '페이지를 열 수 없거나 존재하지 않는 주소로 연결되는 경우',
+    description: '페이지를 열 수 없거나 판매 종료·삭제된 페이지로 연결되는 경우',
   },
 };
 
