@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Avatar } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import styles from '@/app/new.module.sass';
@@ -15,6 +16,8 @@ export type CreatorTimelinePost = {
   boardType: 'basic' | 'blog' | 'feed' | 'gallery' | 'youtube';
   content: string;
   image: string | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
   youtubeId: string | null;
   creator: {
     activityName: string;
@@ -64,7 +67,14 @@ function FeedContent({ content }: { content: string }) {
 function PostContent({ post }: { post: CreatorTimelinePost }) {
   return (
     <div className={styles['creator-following-content']}>
-      {post.boardType === 'gallery' && post.image ? <img src={post.image} alt="" /> : null}
+      {post.boardType === 'gallery' && post.image ? (
+        <OptimizedImage
+          src={post.image}
+          width={post.imageWidth}
+          height={post.imageHeight}
+          sizes="(max-width: 575px) 100vw, 575px"
+        />
+      ) : null}
       {post.boardType === 'youtube' && post.youtubeId ? <YoutubeEmbed videoId={post.youtubeId} /> : null}
       {post.content ? post.boardType === 'feed' ? <FeedContent content={post.content} /> : <p>{post.content}</p> : null}
     </div>

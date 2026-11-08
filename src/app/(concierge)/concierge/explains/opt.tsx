@@ -42,6 +42,7 @@ import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -109,6 +110,8 @@ type ContentResponse = {
     content_simple: string | null;
     thumbnail_image: string | null;
     thumbnail_image_url: string;
+    thumbnail_width: number | null;
+    thumbnail_height: number | null;
     youtube_url: string | null;
     youtube_created_at: string | null;
     images: PostImage[];
@@ -251,8 +254,13 @@ function ContentViewer({ response }: { response: ContentResponse }) {
                 <li key={option.id}>
                   <Stack direction="row" gap={1} alignItems="center">
                     {option.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={option.image.url} alt="" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                      <OptimizedImage
+                        src={option.image.url}
+                        width={option.image.width}
+                        height={option.image.height}
+                        sizes="80px"
+                        style={{ width: 80, height: 80, objectFit: 'cover' }}
+                      />
                     ) : null}
                     <Typography>{option.label}</Typography>
                   </Stack>
@@ -382,10 +390,11 @@ function ContentEditor({
       {response.post.thumbnail_image_url && form.thumbnailImage ? (
         <Stack gap={1} alignItems="flex-start">
           <Typography variant="subtitle2">썸네일 이미지</Typography>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <OptimizedImage
             src={response.post.thumbnail_image_url}
-            alt=""
+            width={response.post.thumbnail_width}
+            height={response.post.thumbnail_height}
+            sizes="320px"
             style={{ maxWidth: 320, width: '100%', height: 'auto' }}
           />
           <button type="button" className="button small danger" onClick={() => update('thumbnailImage', '')}>
@@ -395,8 +404,13 @@ function ContentEditor({
       ) : null}
       {form.images.map((image) => (
         <Stack key={image.path} gap={1} alignItems="flex-start">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image.url} alt="" style={{ maxWidth: 320, width: '100%', height: 'auto' }} />
+          <OptimizedImage
+            src={image.url}
+            width={image.width}
+            height={image.height}
+            sizes="320px"
+            style={{ maxWidth: 320, width: '100%', height: 'auto' }}
+          />
           <button
             type="button"
             className="button small danger"
@@ -449,8 +463,13 @@ function ContentEditor({
                 />
                 {option.image ? (
                   <Stack gap={1} alignItems="flex-start">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={option.image.url} alt="" style={{ maxWidth: 240, width: '100%', height: 'auto' }} />
+                    <OptimizedImage
+                      src={option.image.url}
+                      width={option.image.width}
+                      height={option.image.height}
+                      sizes="240px"
+                      style={{ maxWidth: 240, width: '100%', height: 'auto' }}
+                    />
                     <button
                       type="button"
                       className="button small danger"

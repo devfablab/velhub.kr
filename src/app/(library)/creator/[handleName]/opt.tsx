@@ -21,9 +21,10 @@ import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import { Box, Stack, styled, TextField, Typography } from '@mui/material';
+import { Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
 import Profile from './profile';
 import CreatorTimelinePosts, { type CreatorTimelinePost } from './timelinePosts';
@@ -316,11 +317,12 @@ export function ProfileForm({
       <Stack gap={1}>
         <Typography variant="subtitle2">커버 이미지</Typography>
         {coverImage ? (
-          <Box
-            component="img"
+          <OptimizedImage
             src={coverImage}
-            alt=""
-            sx={{ width: '100%', aspectRatio: '1270 / 270', objectFit: 'cover', bgcolor: 'transparent' }}
+            width={1270}
+            height={270}
+            sizes="(max-width: 575px) 100vw, 575px"
+            style={{ width: '100%', height: 'auto', aspectRatio: '1270 / 270', objectFit: 'cover' }}
           />
         ) : null}
         <Stack direction="row" gap={1}>

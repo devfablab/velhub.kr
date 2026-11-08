@@ -15,6 +15,8 @@ type StoredPost = {
   content_simple: string | null;
   images: unknown;
   thumbnail_image: string | null;
+  thumbnail_width: number | string | null;
+  thumbnail_height: number | string | null;
   youtube_id: string | null;
   youtube_url: string | null;
   published_at: string | null;
@@ -42,13 +44,17 @@ export type HubPostDisplay = {
   contentHtml: string | null;
   contentSimple: string | null;
   thumbnailImage: string | null;
+  thumbnailWidth: number | null;
+  thumbnailHeight: number | null;
   image: string | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
   youtubeId: string | null;
   isClosed: boolean;
   isPublished: boolean;
 };
 
-type ImageValue = { path?: unknown };
+type ImageValue = { path?: unknown; width?: unknown; height?: unknown };
 
 function decryptValue(value: string | null) {
   const normalizedValue = normalizeText(value);
@@ -80,13 +86,22 @@ function getPostThumbnailImageUrl(path: string | null | undefined) {
   return getPublicImageUrl(normalizedPath.includes('/') ? 'post' : 'og-image', normalizedPath);
 }
 
-function getFirstPostImage(images: unknown) {
-  if (!Array.isArray(images)) return null;
+function toImageDimension(value: unknown) {
+  const dimension = typeof value === 'string' ? Number(value) : value;
+  return typeof dimension === 'number' && Number.isFinite(dimension) && dimension > 0 ? dimension : null;
+}
 
-  const image = images.find((value): value is ImageValue => Boolean(value) && typeof value === 'object');
+function getFirstPostImage(images: unknown) {
+  const image = Array.isArray(images)
+    ? images.find((value): value is ImageValue => Boolean(value) && typeof value === 'object')
+    : null;
   const path = image && typeof image.path === 'string' ? image.path : null;
 
-  return getPublicImageUrl('post', path);
+  return {
+    url: getPublicImageUrl('post', path),
+    width: toImageDimension(image?.width),
+    height: toImageDimension(image?.height),
+  };
 }
 
 function extractYoutubeId(value: string | null | undefined) {
@@ -114,7 +129,7 @@ export async function getHubPostDisplayMap({
   const postsResult = await supabaseAdmin
     .from('posts')
     .select(
-      'id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, youtube_id, youtube_url, published_at, post_count, user_id, site_id, board_id, published_status, is_closed',
+      'id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, published_at, post_count, user_id, site_id, board_id, published_status, is_closed',
     )
     .in('id', uniquePostIds)
     .or(`is_wording_blinded.eq.false,user_id.eq.${viewerStigmaId ?? ''}`);
@@ -174,6 +189,7 @@ export async function getHubPostDisplayMap({
     const stigma = post.user_id ? stigmaMap.get(post.user_id) : null;
     const nickname = post.user_id ? nicknameMap.get(`${post.site_id}:${post.user_id}`) : '';
     const boardType = board.board_type as BoardType;
+    const firstImage = getFirstPostImage(post.images);
 
     result.set(post.id, {
       id: post.id,
@@ -191,7 +207,11 @@ export async function getHubPostDisplayMap({
       contentHtml: post.content_html,
       contentSimple: post.content_simple,
       thumbnailImage: getPostThumbnailImageUrl(post.thumbnail_image),
-      image: getFirstPostImage(post.images),
+      thumbnailWidth: toImageDimension(post.thumbnail_width),
+      thumbnailHeight: toImageDimension(post.thumbnail_height),
+      image: firstImage.url,
+      imageWidth: firstImage.width,
+      imageHeight: firstImage.height,
       youtubeId: post.youtube_id || extractYoutubeId(post.youtube_url),
       isClosed: post.is_closed,
       isPublished: post.published_status === 'published',

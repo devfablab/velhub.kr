@@ -1,6 +1,7 @@
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -22,6 +23,8 @@ export type JoinSiteRow = {
   site_type: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
+  profileLogoWidth: number | null;
+  profileLogoHeight: number | null;
   role: string;
   operationalStatus: 'normal' | 'payment_failed' | 'shutdown' | 'blocked' | 'closed';
   operationalStatusLabel: string;
@@ -69,7 +72,12 @@ export default function JoinSites({ siteType, joinSites }: Props) {
             <div className={styles['join-site-info']}>
               <div className={styles['site-name']}>
                 {site.profileLogoUrl ? (
-                  <img src={site.profileLogoUrl} alt="" />
+                  <OptimizedImage
+                    src={site.profileLogoUrl}
+                    width={site.profileLogoWidth}
+                    height={site.profileLogoHeight}
+                    sizes={getHeightBasedSizes(24, site.profileLogoWidth, site.profileLogoHeight)}
+                  />
                 ) : (
                   <>
                     <AppIconAvatar src={site.profilePictureUrl || null} alt={site.site_label || ''} size={52} />

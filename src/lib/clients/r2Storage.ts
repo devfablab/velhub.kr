@@ -161,6 +161,33 @@ function createBucketStorage(bucket: string) {
         return { data: null, error: toStorageError(error) };
       }
     },
+    async getImageSize(value: string) {
+      const objectPath = getR2ObjectPath(value);
+
+      try {
+        const [{ GetObjectCommand }, { default: sharp }, client] = await Promise.all([
+          import('@aws-sdk/client-s3'),
+          import('sharp'),
+          getR2Client(isPublicBucket),
+        ]);
+        const result = await client.send(new GetObjectCommand({ Bucket: r2Bucket, Key: objectPath }));
+        const bytes = await result.Body?.transformToByteArray();
+
+        if (!bytes) {
+          return { data: null, error: { message: '이미지 파일을 찾을 수 없습니다.' } };
+        }
+
+        const metadata = await sharp(Buffer.from(bytes)).metadata();
+
+        if (!metadata.width || !metadata.height) {
+          return { data: null, error: { message: '이미지 크기를 확인하지 못했습니다.' } };
+        }
+
+        return { data: { width: metadata.width, height: metadata.height }, error: null };
+      } catch (error) {
+        return { data: null, error: toStorageError(error) };
+      }
+    },
     async getObjectMetadata(value: string) {
       const objectPath = getR2ObjectPath(value);
 

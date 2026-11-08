@@ -60,6 +60,8 @@ type GalleryPost = {
   summary: string | null;
   content_html: string;
   image: string;
+  image_width: number | null;
+  image_height: number | null;
   post_count: number | null;
 };
 
@@ -103,6 +105,8 @@ type FeedPost = {
 
   content_simple: string;
   image: string | null;
+  image_width: number | null;
+  image_height: number | null;
   post_count: number | null;
 };
 
@@ -120,6 +124,8 @@ type BasicOrBlogPost = {
   promotion_image: string | null;
   published_at: string;
   thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
   subject: string;
   content_html: string;
   post_count: number | null;

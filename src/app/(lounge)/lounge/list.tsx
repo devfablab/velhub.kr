@@ -8,6 +8,7 @@ import { Avatar, Box, Chip, Skeleton, useMediaQuery, useTheme } from '@mui/mater
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import OptimizedImage from '@/components/OptimizedImage';
 import type { ListProps, PostsResponse } from '../page';
 import styles from '@/app/page.module.sass';
 
@@ -345,25 +346,46 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                   </div>
                   {post.board_type === 'gallery' && (
                     <div className={styles.thumbnail}>
-                      <img src={post.image} alt="" />
+                      <OptimizedImage
+                        src={post.image}
+                        width={post.image_width}
+                        height={post.image_height}
+                        sizes="172px"
+                      />
                     </div>
                   )}
                   {post.board_type === 'youtube' && (
                     <div className={styles.thumbnail}>
-                      <img
-                        src={post.thumbnail_image ? post.thumbnail_image : getYoutubeThumbnailUrl(post.youtube_id)}
-                        alt=""
-                      />
+                      {post.thumbnail_image ? (
+                        <OptimizedImage
+                          src={post.thumbnail_image}
+                          width={post.thumbnail_width}
+                          height={post.thumbnail_height}
+                          sizes="172px"
+                        />
+                      ) : (
+                        <img src={getYoutubeThumbnailUrl(post.youtube_id)} alt="" />
+                      )}
                     </div>
                   )}
                   {post.board_type === 'feed' && post.image && (
                     <div className={styles.thumbnail}>
-                      <img src={post.image} alt="" />
+                      <OptimizedImage
+                        src={post.image}
+                        width={post.image_width}
+                        height={post.image_height}
+                        sizes="172px"
+                      />
                     </div>
                   )}
                   {(post.board_type === 'basic' || post.board_type === 'blog') && post.thumbnail_image && (
                     <div className={styles.thumbnail}>
-                      <img src={post.thumbnail_image} alt="" />
+                      <OptimizedImage
+                        src={post.thumbnail_image}
+                        width={post.thumbnail_width}
+                        height={post.thumbnail_height}
+                        sizes="172px"
+                      />
                     </div>
                   )}
                 </div>
@@ -404,25 +426,46 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                     </div>
                     {post.board_type === 'gallery' && (
                       <div className={styles.thumbnail}>
-                        <img src={post.image} alt="" />
+                        <OptimizedImage
+                          src={post.image}
+                          width={post.image_width}
+                          height={post.image_height}
+                          sizes="172px"
+                        />
                       </div>
                     )}
                     {post.board_type === 'youtube' && (
                       <div className={styles.thumbnail}>
-                        <img
-                          src={post.thumbnail_image ? post.thumbnail_image : getYoutubeThumbnailUrl(post.youtube_id)}
-                          alt=""
-                        />
+                        {post.thumbnail_image ? (
+                          <OptimizedImage
+                            src={post.thumbnail_image}
+                            width={post.thumbnail_width}
+                            height={post.thumbnail_height}
+                            sizes="172px"
+                          />
+                        ) : (
+                          <img src={getYoutubeThumbnailUrl(post.youtube_id)} alt="" />
+                        )}
                       </div>
                     )}
                     {post.board_type === 'feed' && post.image && (
                       <div className={styles.thumbnail}>
-                        <img src={post.image} alt="" />
+                        <OptimizedImage
+                          src={post.image}
+                          width={post.image_width}
+                          height={post.image_height}
+                          sizes="172px"
+                        />
                       </div>
                     )}
                     {(post.board_type === 'basic' || post.board_type === 'blog') && post.thumbnail_image && (
                       <div className={styles.thumbnail}>
-                        <img src={post.thumbnail_image} alt="" />
+                        <OptimizedImage
+                          src={post.thumbnail_image}
+                          width={post.thumbnail_width}
+                          height={post.thumbnail_height}
+                          sizes="172px"
+                        />
                       </div>
                     )}
                   </div>
@@ -454,21 +497,37 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
             <Anchor href={`${post.site_url}/${post.board_key}/${post.slug}`}>
               {post.board_type === 'gallery' && (
                 <div className={styles.thumbnail}>
-                  <img src={post.image} alt="" />
+                  <OptimizedImage
+                    src={post.image}
+                    width={post.image_width}
+                    height={post.image_height}
+                    sizes="(max-width: 767px) 100vw, 342px"
+                  />
                 </div>
               )}
               {post.board_type === 'youtube' && (
                 <div className={styles.thumbnail}>
-                  <img
-                    src={post.thumbnail_image ? post.thumbnail_image : getYoutubeThumbnailUrl(post.youtube_id)}
-                    alt=""
-                  />
+                  {post.thumbnail_image ? (
+                    <OptimizedImage
+                      src={post.thumbnail_image}
+                      width={post.thumbnail_width}
+                      height={post.thumbnail_height}
+                      sizes="(max-width: 767px) 100vw, 342px"
+                    />
+                  ) : (
+                    <img src={getYoutubeThumbnailUrl(post.youtube_id)} alt="" />
+                  )}
                 </div>
               )}
               {post.board_type === 'feed' && (
                 <div className={styles.thumbnail}>
                   {post.image ? (
-                    <img src={post.image} alt="" />
+                    <OptimizedImage
+                      src={post.image}
+                      width={post.image_width}
+                      height={post.image_height}
+                      sizes="(max-width: 767px) 100vw, 342px"
+                    />
                   ) : post.promotion_image ? (
                     <img src={post.promotion_image} alt="" />
                   ) : (
@@ -479,7 +538,12 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
               {(post.board_type === 'basic' || post.board_type === 'blog') && (
                 <div className={styles.thumbnail}>
                   {post.thumbnail_image ? (
-                    <img src={post.thumbnail_image} alt="" />
+                    <OptimizedImage
+                      src={post.thumbnail_image}
+                      width={post.thumbnail_width}
+                      height={post.thumbnail_height}
+                      sizes="(max-width: 767px) 100vw, 342px"
+                    />
                   ) : post.promotion_image ? (
                     <img src={post.promotion_image} alt="" />
                   ) : (

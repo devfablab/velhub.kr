@@ -1,4 +1,5 @@
 import { isValidActivityName } from '@/lib/auth/emailSignUp';
+import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { cancelPortOnePayment } from '@/lib/payments/portone';
@@ -526,10 +527,27 @@ export async function POST(request: Request, context: RouteContext) {
       }
     } else {
       const isCustomDomainChanged = requestBody.field === 'custom_domain' && previousValue !== nextValue;
+      let logoSize: { profile_logo_width: number | null; profile_logo_height: number | null } | null = null;
+
+      if (requestBody.field === 'profile_logo') {
+        const sizeResult =
+          typeof nextValue === 'string' ? await r2Storage.from('site-logo').getImageSize(nextValue) : null;
+
+        if (sizeResult && !sizeResult.data) {
+          return Response.json({ error: '사이트 로고 이미지 크기를 확인하지 못했습니다.' }, { status: 400 });
+        }
+
+        logoSize = {
+          profile_logo_width: sizeResult?.data?.width ?? null,
+          profile_logo_height: sizeResult?.data?.height ?? null,
+        };
+      }
+
       const updateRhizome = await access.supabaseAdmin
         .from('rhizomes')
         .update({
           [requestBody.field]: nextValue,
+          ...logoSize,
         })
         .eq('id', access.rhizome.id);
 

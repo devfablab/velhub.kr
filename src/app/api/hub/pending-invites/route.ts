@@ -23,6 +23,8 @@ type RhizomeRow = {
   site_type: string;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width: number | null;
+  profile_logo_height: number | null;
 };
 
 function isExpired(value: string | null) {
@@ -114,7 +116,9 @@ export async function GET() {
 
     const rhizomeResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, site_type, profile_picture, profile_logo')
+      .select(
+        'id, site_key, site_label, site_type, profile_picture, profile_logo, profile_logo_width, profile_logo_height',
+      )
       .in('id', uniqueSiteIds);
 
     if (rhizomeResult.error) {
@@ -131,6 +135,8 @@ export async function GET() {
           site_type: rhizome.site_type,
           profile_picture: rhizome.profile_picture,
           profile_logo: rhizome.profile_logo,
+          profile_logo_width: rhizome.profile_logo_width,
+          profile_logo_height: rhizome.profile_logo_height,
         },
       ]),
     );
@@ -177,6 +183,8 @@ export async function GET() {
         href: string;
         profilePictureUrl: string | null;
         profileLogoUrl: string | null;
+        profileLogoWidth: number | null;
+        profileLogoHeight: number | null;
       }
     >();
 
@@ -204,8 +212,10 @@ export async function GET() {
         siteName: rhizome.site_key,
         siteLabel: rhizome.site_label?.trim() || rhizome.site_key,
         siteType: rhizome.site_type,
-        profilePictureUrl: getStorageImageUrl('site-logo', rhizome.profile_picture),
+        profilePictureUrl: getStorageImageUrl('avatar', rhizome.profile_picture),
         profileLogoUrl: getStorageImageUrl('site-logo', rhizome.profile_logo),
+        profileLogoWidth: rhizome.profile_logo_width,
+        profileLogoHeight: rhizome.profile_logo_height,
         siteTypeLabel: getSiteTypeLabel(rhizome.site_type),
         token: invite.token,
         expiresAt: invite.expires_at,

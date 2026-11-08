@@ -3,6 +3,7 @@
 import { formatDateTimeFull } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
@@ -17,6 +18,8 @@ type PendingInviteRow = {
   href: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
+  profileLogoWidth: number | null;
+  profileLogoHeight: number | null;
 };
 
 export type PendingInviteResponse = {
@@ -54,7 +57,12 @@ export default function PendingInvite({
             <div className={styles['pending-header']}>
               <div className={styles['site-name']}>
                 {invite.profileLogoUrl ? (
-                  <img src={invite.profileLogoUrl} alt="" />
+                  <OptimizedImage
+                    src={invite.profileLogoUrl}
+                    width={invite.profileLogoWidth}
+                    height={invite.profileLogoHeight}
+                    sizes={getHeightBasedSizes(24, invite.profileLogoWidth, invite.profileLogoHeight)}
+                  />
                 ) : (
                   <>
                     <AppIconAvatar src={invite.profilePictureUrl || null} alt="" size={52} />

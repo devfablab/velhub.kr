@@ -3,6 +3,7 @@
 import { formatDateTimeFull } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
@@ -17,6 +18,8 @@ type PendingJoinRow = {
   href: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
+  profileLogoWidth: number | null;
+  profileLogoHeight: number | null;
 };
 
 export type PendingJoinResponse = {
@@ -54,7 +57,12 @@ export default function PendingJoin({
             <div className={styles['pending-header']}>
               <div className={styles['site-name']}>
                 {join.profileLogoUrl ? (
-                  <img src={join.profileLogoUrl} alt="" />
+                  <OptimizedImage
+                    src={join.profileLogoUrl}
+                    width={join.profileLogoWidth}
+                    height={join.profileLogoHeight}
+                    sizes={getHeightBasedSizes(24, join.profileLogoWidth, join.profileLogoHeight)}
+                  />
                 ) : (
                   <>
                     {join.profilePictureUrl ? (

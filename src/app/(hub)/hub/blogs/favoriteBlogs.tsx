@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
 import FolderModals, { type FolderActionError } from './folderModals';
 import styles from '@/app/hub.module.sass';
@@ -17,6 +18,8 @@ type FavoriteBlogRow = {
   isShutdown: boolean;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
+  profileLogoWidth: number | null;
+  profileLogoHeight: number | null;
   href: string;
   favoritedAt: string;
   folderId: string | null;
@@ -243,7 +246,12 @@ export default function FavoriteBlogs({
           <div className={styles.info}>
             <span className={styles['favorite-site-name']}>
               {blog.profileLogoUrl ? (
-                <img src={blog.profileLogoUrl} alt="" />
+                <OptimizedImage
+                  src={blog.profileLogoUrl}
+                  width={blog.profileLogoWidth}
+                  height={blog.profileLogoHeight}
+                  sizes={getHeightBasedSizes(24, blog.profileLogoWidth, blog.profileLogoHeight, 72)}
+                />
               ) : (
                 <>
                   <AppIconAvatar src={blog.profilePictureUrl || null} alt={blog.siteLabel} size={24} />

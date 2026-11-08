@@ -5,6 +5,7 @@ import type { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import OptimizedImage from '@/components/OptimizedImage';
 import styles from '@/app/hub.module.sass';
 
 type Props = {
@@ -37,11 +38,21 @@ function getDescription(post: HubPostDisplay, description?: string | null) {
 }
 
 function getThumbnail(post: HubPostDisplay) {
-  if (post.boardType === 'youtube')
-    return post.thumbnailImage || (post.youtubeId ? getYoutubeThumbnailUrl(post.youtubeId) : null);
-  if (post.boardType === 'gallery' || post.boardType === 'feed') return post.image;
+  if (post.boardType === 'youtube') {
+    if (post.thumbnailImage) {
+      return { url: post.thumbnailImage, width: post.thumbnailWidth, height: post.thumbnailHeight };
+    }
 
-  return post.thumbnailImage;
+    return post.youtubeId ? { url: getYoutubeThumbnailUrl(post.youtubeId), width: null, height: null } : null;
+  }
+
+  if (post.boardType === 'gallery' || post.boardType === 'feed') {
+    return post.image ? { url: post.image, width: post.imageWidth, height: post.imageHeight } : null;
+  }
+
+  return post.thumbnailImage
+    ? { url: post.thumbnailImage, width: post.thumbnailWidth, height: post.thumbnailHeight }
+    : null;
 }
 
 export default function HubPostListItem({ post, date, dateLabel, description, onClick, badges }: Props) {
@@ -73,7 +84,7 @@ export default function HubPostListItem({ post, date, dateLabel, description, on
       </div>
       {thumbnail ? (
         <div className={styles.thumbnail}>
-          <img src={thumbnail} alt="" />
+          <OptimizedImage src={thumbnail.url} width={thumbnail.width} height={thumbnail.height} sizes="96px" />
         </div>
       ) : null}
     </>

@@ -17,6 +17,8 @@ type SiteRow = {
   site_label: string | null;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width: number | null;
+  profile_logo_height: number | null;
   visibility_type: string;
   is_shutdown: boolean;
 };
@@ -79,7 +81,9 @@ export async function GET() {
     const [sitesResult, stigmaResult] = await Promise.all([
       supabaseAdmin
         .from('rhizomes')
-        .select('id, site_key, site_label, profile_picture, profile_logo, visibility_type, is_shutdown')
+        .select(
+          'id, site_key, site_label, profile_picture, profile_logo, profile_logo_width, profile_logo_height, visibility_type, is_shutdown',
+        )
         .in('id', siteIds)
         .eq('site_type', 'blog'),
       supabaseAdmin.from('stigmas').select('id').eq('id', session.stigmaId).maybeSingle(),
@@ -136,6 +140,8 @@ export async function GET() {
           isShutdown: site.is_shutdown,
           profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
           profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
+          profileLogoWidth: site.profile_logo_width,
+          profileLogoHeight: site.profile_logo_height,
           href: `/${site.site_key}`,
           favoritedAt: favorite.created_at,
           folderId: favorite.folder_id,

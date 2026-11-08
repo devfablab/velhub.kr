@@ -24,6 +24,8 @@ type RpcJoinSite = {
   site_type: string;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width: number | null;
+  profile_logo_height: number | null;
   role: string | null;
   latest_posts: RpcLatestPost[];
 };
@@ -60,6 +62,8 @@ type SiteRow = {
   site_type: string | null;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width: number | null;
+  profile_logo_height: number | null;
   is_shutdown: boolean | null;
   is_blocked: boolean | null;
   is_closed: boolean | null;
@@ -221,7 +225,7 @@ export async function GET() {
         ? await supabaseAdmin
             .from('rhizomes')
             .select(
-              'id, owner_id, site_key, site_label, site_type, profile_picture, profile_logo, is_shutdown, is_blocked, is_closed, custom_domain',
+              'id, owner_id, site_key, site_label, site_type, profile_picture, profile_logo, profile_logo_width, profile_logo_height, is_shutdown, is_blocked, is_closed, custom_domain',
             )
             .in('id', siteIds)
         : { data: [], error: null };
@@ -282,6 +286,8 @@ export async function GET() {
           site_type: normalizeText(site.site_type).toLowerCase(),
           profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
           profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
+          profileLogoWidth: site.profile_logo_width,
+          profileLogoHeight: site.profile_logo_height,
           role: normalizeText(site.role).toLowerCase(),
           operationalStatus,
           operationalStatusLabel: getOperationalStatusLabel(operationalStatus),
@@ -299,6 +305,8 @@ export async function GET() {
           site_type: string;
           profilePictureUrl: string | null;
           profileLogoUrl: string | null;
+          profileLogoWidth: number | null;
+          profileLogoHeight: number | null;
           role: string;
           operationalStatus: SiteOperationalStatus;
           operationalStatusLabel: string;
@@ -348,6 +356,8 @@ export async function GET() {
           site_type: normalizeText(site.site_type).toLowerCase(),
           profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
           profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
+          profileLogoWidth: site.profile_logo_width,
+          profileLogoHeight: site.profile_logo_height,
           role: normalizeText(membership.role).toLowerCase(),
           membershipStatus,
           statusAt:

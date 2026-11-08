@@ -13,6 +13,8 @@ export type CreatorFollowingPost = {
   boardType: 'basic' | 'blog' | 'feed' | 'gallery' | 'youtube';
   content: string;
   image: string | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
   youtubeId: string | null;
   creator: {
     activityName: string;
@@ -30,6 +32,17 @@ function getContentExcerpt(value: string) {
   if (characters.length <= 127) return content;
 
   return `${characters.slice(0, 126).join('')}…`;
+}
+
+function getFirstImageSize(value: unknown): { imageWidth: number | null; imageHeight: number | null } {
+  const image =
+    Array.isArray(value) && value[0] && typeof value[0] === 'object' ? (value[0] as Record<string, unknown>) : null;
+  const width = Number(image?.width);
+  const height = Number(image?.height);
+
+  return Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0
+    ? { imageWidth: width, imageHeight: height }
+    : { imageWidth: null, imageHeight: null };
 }
 
 function getFirstImageUrl(value: unknown) {
@@ -235,6 +248,7 @@ export async function getCreatorFollowingTimeline(stigmaId: string): Promise<Cre
             }),
           ),
           image: boardType === 'gallery' ? getFirstImageUrl(post.images) : null,
+          ...(boardType === 'gallery' ? getFirstImageSize(post.images) : { imageWidth: null, imageHeight: null }),
           youtubeId: boardType === 'youtube' ? post.youtube_id : null,
           creator: {
             activityName: decryptUserName(stigma?.user_name ?? '') ?? '작가',

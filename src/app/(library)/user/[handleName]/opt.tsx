@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
+import { Avatar, Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
 import Profile, { type ReaderProfile } from './profile';
 import CreatorTimelinePosts, { type CreatorTimelinePost } from '@/app/(library)/creator/[handleName]/timelinePosts';
@@ -207,11 +208,12 @@ function ProfileForm({
       <Stack gap={1}>
         <Typography variant="subtitle2">커버 이미지</Typography>
         {coverImage ? (
-          <Box
-            component="img"
+          <OptimizedImage
             src={coverImage}
-            alt=""
-            sx={{ width: '100%', aspectRatio: '1270 / 270', objectFit: 'cover', bgcolor: 'transparent' }}
+            width={1270}
+            height={270}
+            sizes="(max-width: 575px) 100vw, 575px"
+            style={{ width: '100%', height: 'auto', aspectRatio: '1270 / 270', objectFit: 'cover' }}
           />
         ) : null}
         <Stack direction="row" gap={1}>

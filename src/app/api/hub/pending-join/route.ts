@@ -20,6 +20,8 @@ type RhizomeRow = {
   site_type: string;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width: number | null;
+  profile_logo_height: number | null;
 };
 
 function getPublicUrl(bucket: string, path: string | null | undefined) {
@@ -100,7 +102,9 @@ export async function GET() {
 
     const rhizomeResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, site_type, profile_picture, profile_logo')
+      .select(
+        'id, site_key, site_label, site_type, profile_picture, profile_logo, profile_logo_width, profile_logo_height',
+      )
       .eq('site_type', 'community')
       .in('id', siteIds);
 
@@ -137,6 +141,8 @@ export async function GET() {
           href: `/${siteName}`,
           profilePictureUrl: getPublicUrl('avatar', rhizome.profile_picture),
           profileLogoUrl: getPublicUrl('site-logo', rhizome.profile_logo),
+          profileLogoWidth: rhizome.profile_logo_width,
+          profileLogoHeight: rhizome.profile_logo_height,
         };
       })
       .filter(
@@ -153,6 +159,8 @@ export async function GET() {
           href: string;
           profilePictureUrl: string | null;
           profileLogoUrl: string | null;
+          profileLogoWidth: number | null;
+          profileLogoHeight: number | null;
         } => Boolean(join),
       );
 

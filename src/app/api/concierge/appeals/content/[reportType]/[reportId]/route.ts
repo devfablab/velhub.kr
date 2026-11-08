@@ -45,6 +45,8 @@ type PostRow = {
   content_markdown: string | null;
   content_simple: string | null;
   thumbnail_image: string | null;
+  thumbnail_width: number | string | null;
+  thumbnail_height: number | string | null;
   youtube_url: string | null;
   youtube_created_at: string | null;
   images: unknown;
@@ -110,6 +112,11 @@ const reportTableByType = {
 
 function normalizeUnknownText(value: unknown) {
   return typeof value === 'string' ? normalizeText(value) : '';
+}
+
+function toImageDimension(value: unknown) {
+  const dimension = typeof value === 'string' ? Number(value) : value;
+  return typeof dimension === 'number' && Number.isFinite(dimension) && dimension > 0 ? dimension : null;
 }
 
 async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportId: string) {
@@ -237,6 +244,8 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
         content_markdown: null,
         content_simple: blogPost.content,
         thumbnail_image: null,
+        thumbnail_width: null,
+        thumbnail_height: null,
         youtube_url: null,
         youtube_created_at: null,
         images: [],
@@ -277,7 +286,7 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
   const postResult = await supabaseAdmin
     .from('posts')
     .select(
-      'id, site_id, board_id, slug, user_id, subject, summary, content_html, content_markdown, content_simple, thumbnail_image, youtube_url, youtube_created_at, images, poll, is_closed, closed_message, updated_at, exp_at',
+      'id, site_id, board_id, slug, user_id, subject, summary, content_html, content_markdown, content_simple, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_created_at, images, poll, is_closed, closed_message, updated_at, exp_at',
     )
     .eq('id', postId)
     .maybeSingle();
@@ -371,7 +380,7 @@ function normalizePoll(value: unknown): PollData | null {
       if (path) {
         image = {
           path,
-          url: normalizeUnknownText(rawImage.url) || getPublicPostImageUrl(path),
+          url: getPublicPostImageUrl(path) || normalizeUnknownText(rawImage.url),
           width: typeof rawImage.width === 'number' && Number.isFinite(rawImage.width) ? rawImage.width : null,
           height: typeof rawImage.height === 'number' && Number.isFinite(rawImage.height) ? rawImage.height : null,
         };
@@ -502,6 +511,8 @@ export async function GET(_request: Request, context: ContentRouteContext) {
       post: {
         ...result.post,
         thumbnail_image_url: getPublicPostImageUrl(result.post.thumbnail_image),
+        thumbnail_width: toImageDimension(result.post.thumbnail_width),
+        thumbnail_height: toImageDimension(result.post.thumbnail_height),
         poll: normalizePoll(result.post.poll),
         images: getImageRows(result.post.images).map((image) => ({
           ...image,

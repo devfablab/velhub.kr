@@ -212,6 +212,22 @@ function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   return publicUrl.data.publicUrl ?? null;
 }
 
+function toImageDimension(value: unknown) {
+  const dimension = typeof value === 'string' ? Number(value) : value;
+  return typeof dimension === 'number' && Number.isFinite(dimension) && dimension > 0 ? dimension : null;
+}
+
+function getFirstPostImage(images: unknown) {
+  const firstImage =
+    Array.isArray(images) && images[0] && typeof images[0] === 'object' ? (images[0] as Record<string, unknown>) : null;
+
+  return {
+    image: firstImage && typeof firstImage.path === 'string' ? getPublicImageUrl('post', firstImage.path) : null,
+    image_width: toImageDimension(firstImage?.width),
+    image_height: toImageDimension(firstImage?.height),
+  };
+}
+
 function getPostThumbnailImageUrl(path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
 
@@ -462,10 +478,7 @@ export async function GET(request: NextRequest) {
           subject: post.subject,
           summary: post.summary,
           content_html: post.content_html,
-          image:
-            Array.isArray(post.images) && post.images.length > 0
-              ? getPublicImageUrl('post', post.images[0].path)
-              : null,
+          ...getFirstPostImage(post.images),
         };
       }
 
@@ -475,8 +488,8 @@ export async function GET(request: NextRequest) {
           subject: post.subject,
           summary: post.summary,
           thumbnail_image: getPostThumbnailImageUrl(post.thumbnail_image),
-          thumbnail_width: post.thumbnail_width,
-          thumbnail_height: post.thumbnail_height,
+          thumbnail_width: toImageDimension(post.thumbnail_width),
+          thumbnail_height: toImageDimension(post.thumbnail_height),
           youtube_id: post.youtube_id || extractYoutubeId(post.youtube_url),
           youtube_created_at: post.youtube_created_at,
         };
@@ -486,10 +499,7 @@ export async function GET(request: NextRequest) {
         return {
           ...base,
           content_simple: post.content_simple,
-          image:
-            Array.isArray(post.images) && post.images.length > 0
-              ? getPublicImageUrl('post', post.images[0].path)
-              : null,
+          ...getFirstPostImage(post.images),
         };
       }
 
@@ -499,6 +509,8 @@ export async function GET(request: NextRequest) {
           subject: post.subject,
           content_html: post.content_html,
           thumbnail_image: getPostThumbnailImageUrl(post.thumbnail_image),
+          thumbnail_width: toImageDimension(post.thumbnail_width),
+          thumbnail_height: toImageDimension(post.thumbnail_height),
         };
       }
 

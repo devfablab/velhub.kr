@@ -25,6 +25,17 @@ function getContentExcerpt(value: string) {
   return `${characters.slice(0, 126).join('')}…`;
 }
 
+function getFirstImageSize(value: unknown): { imageWidth: number | null; imageHeight: number | null } {
+  const image =
+    Array.isArray(value) && value[0] && typeof value[0] === 'object' ? (value[0] as Record<string, unknown>) : null;
+  const width = Number(image?.width);
+  const height = Number(image?.height);
+
+  return Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0
+    ? { imageWidth: width, imageHeight: height }
+    : { imageWidth: null, imageHeight: null };
+}
+
 function getFirstImageUrl(value: unknown) {
   if (!Array.isArray(value)) return null;
 
@@ -199,6 +210,9 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
             }),
           ),
           image: board.board_type === 'gallery' ? getFirstImageUrl(post.images) : null,
+          ...(board.board_type === 'gallery'
+            ? getFirstImageSize(post.images)
+            : { imageWidth: null, imageHeight: null }),
           youtubeId: board.board_type === 'youtube' ? post.youtube_id : null,
           creator: {
             activityName: decryptUserName(stigmaResult.data?.user_name ?? '') ?? '작가',

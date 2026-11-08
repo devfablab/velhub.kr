@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import sharp from 'sharp';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
@@ -25,9 +26,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: '이미지는 1MB 미만이어야 합니다.' }, { status: 400 });
 
   const uploadedPath = `creator/${crypto.randomUUID()}.webp`;
+  const coverBuffer = await sharp(Buffer.from(await file.arrayBuffer()))
+    .resize(1270, 270, { fit: 'cover', position: 'centre' })
+    .webp({ quality: 90 })
+    .toBuffer()
+    .catch(() => null);
+
+  if (!coverBuffer) return NextResponse.json({ message: '이미지 파일이 올바르지 않습니다.' }, { status: 400 });
+
   const upload = await r2Storage
     .from('cover-image')
-    .upload(uploadedPath, file, { contentType: file.type, upsert: false });
+    .upload(uploadedPath, coverBuffer, { contentType: 'image/webp', upsert: false });
 
   if (upload.error) {
     return NextResponse.json({ message: '이미지를 업로드하지 못했습니다.' }, { status: 500 });

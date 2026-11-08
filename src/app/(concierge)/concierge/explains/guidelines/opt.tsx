@@ -22,6 +22,7 @@ import {
 import { formatDateTimeDetail, formatTimeAgo, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
@@ -181,8 +182,13 @@ function ContentViewer({ response }: { response: ContentResponse }) {
                 <li key={option.id}>
                   <Stack direction="row" gap={1} alignItems="center">
                     {option.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={option.image.url} alt="" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                      <OptimizedImage
+                        src={option.image.url}
+                        width={option.image.width}
+                        height={option.image.height}
+                        sizes="80px"
+                        style={{ width: 80, height: 80, objectFit: 'cover' }}
+                      />
                     ) : null}
                     <Typography variant="body2">{option.label}</Typography>
                   </Stack>

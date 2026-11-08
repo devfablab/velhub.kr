@@ -63,7 +63,7 @@ type MomentPostRow = {
   summary: string | null;
   content_html: string | null;
   content_simple: string | null;
-  images: Array<{ path?: string }> | null;
+  images: Array<{ path?: string; width?: unknown; height?: unknown }> | null;
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
@@ -121,6 +121,8 @@ export type MomentPostCard = {
   content_html?: string | null;
   content_simple?: string | null;
   image?: string | null;
+  image_width?: number | null;
+  image_height?: number | null;
   thumbnail_image?: string | null;
   thumbnail_width?: number | null;
   thumbnail_height?: number | null;
@@ -157,6 +159,26 @@ function toPublicUrl(bucket: string, path: string | null | undefined) {
   if (!normalizedPath) return null;
   if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) return normalizedPath;
   return r2Storage.from(bucket).getPublicUrl(normalizedPath).data.publicUrl ?? null;
+}
+
+function toImageDimension(value: unknown) {
+  const dimension = typeof value === 'string' ? Number(value) : value;
+  return typeof dimension === 'number' && Number.isFinite(dimension) && dimension > 0 ? dimension : null;
+}
+
+function toPostThumbnailUrl(path: string | null | undefined) {
+  const normalizedPath = normalizeText(path);
+  if (!normalizedPath) return null;
+  return toPublicUrl(normalizedPath.includes('/') ? 'post' : 'og-image', normalizedPath);
+}
+
+function getFirstPostImage(images: MomentPostRow['images']) {
+  const firstImage = Array.isArray(images) ? images[0] : null;
+  return {
+    image: toPublicUrl('post', firstImage?.path),
+    image_width: toImageDimension(firstImage?.width),
+    image_height: toImageDimension(firstImage?.height),
+  };
 }
 
 function pickWithDynamicPeriod<T>(
@@ -564,7 +586,7 @@ const getMomentPosts = cache(
             subject: post.subject,
             summary: post.summary,
             content_html: post.content_html,
-            image: Array.isArray(post.images) ? toPublicUrl('post', post.images[0]?.path) : null,
+            ...getFirstPostImage(post.images),
           },
         ];
       }
@@ -575,9 +597,9 @@ const getMomentPosts = cache(
             ...base,
             subject: post.subject,
             summary: post.summary,
-            thumbnail_image: toPublicUrl('post', post.thumbnail_image),
-            thumbnail_width: post.thumbnail_width,
-            thumbnail_height: post.thumbnail_height,
+            thumbnail_image: toPostThumbnailUrl(post.thumbnail_image),
+            thumbnail_width: toImageDimension(post.thumbnail_width),
+            thumbnail_height: toImageDimension(post.thumbnail_height),
             youtube_id: post.youtube_id,
           },
         ];
@@ -588,7 +610,7 @@ const getMomentPosts = cache(
           {
             ...base,
             content_simple: post.content_simple,
-            image: Array.isArray(post.images) ? toPublicUrl('post', post.images[0]?.path) : null,
+            ...getFirstPostImage(post.images),
           },
         ];
       }
@@ -598,7 +620,9 @@ const getMomentPosts = cache(
           ...base,
           subject: post.subject,
           content_html: post.content_html,
-          thumbnail_image: toPublicUrl('post', post.thumbnail_image),
+          thumbnail_image: toPostThumbnailUrl(post.thumbnail_image),
+          thumbnail_width: toImageDimension(post.thumbnail_width),
+          thumbnail_height: toImageDimension(post.thumbnail_height),
         },
       ];
     });
