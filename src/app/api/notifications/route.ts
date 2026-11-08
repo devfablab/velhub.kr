@@ -19,7 +19,7 @@ type NotificationRow = {
 };
 
 type StigmaRow = {
-  user_id: string;
+  id: string;
   user_name: string | null;
 };
 
@@ -199,7 +199,7 @@ export async function GET() {
       reportMessagesResult,
     ] = await Promise.all([
       notificationUserIds.length > 0
-        ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', notificationUserIds)
+        ? supabaseAdmin.from('stigmas').select('id, user_name').in('id', notificationUserIds)
         : Promise.resolve({ data: [], error: null }),
       siteIds.length > 0
         ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds)
@@ -247,10 +247,7 @@ export async function GET() {
     }
 
     const stigmaMap = new Map(
-      ((stigmasResult.data ?? []) as StigmaRow[]).map((stigma) => [
-        stigma.user_id,
-        decryptUserName(stigma.user_name || ''),
-      ]),
+      ((stigmasResult.data ?? []) as StigmaRow[]).map((stigma) => [stigma.id, decryptUserName(stigma.user_name || '')]),
     );
 
     const siteMap = new Map(((sitesResult.data ?? []) as SiteRow[]).map((site) => [site.id, site]));
@@ -544,9 +541,22 @@ function getNotificationText(notificationType: NotificationType, data: Notificat
   }
 
   if (notificationType === NOTIFICATION_TYPE.REPORT_RESULT) {
+    const hasSite = Boolean(normalizeText(data.siteLabel));
+    const hasBoard = Boolean(normalizeText(data.boardLabel));
+    const hasPost = Boolean(normalizeText(data.postSubject));
+    const reportTarget = hasPost
+      ? hasBoard
+        ? `${siteLabel}의 ${boardLabel} 게시판 「${postSubject}」 글에 대한 `
+        : `${siteLabel}의 「${postSubject}」에 대한 `
+      : hasBoard
+        ? `${siteLabel}의 ${boardLabel} 게시판에 대한 `
+        : hasSite
+          ? `${siteLabel} 사이트에 대한 `
+          : '접수하신 ';
+
     return {
       title: '신고 처리 결과',
-      message: `${siteLabel}의 ${boardLabel} 게시판 「${postSubject}」 글에 대한 신고 처리가 완료되었습니다.`,
+      message: `${reportTarget}신고 처리가 완료되었습니다.`,
     };
   }
 
@@ -569,14 +579,14 @@ function getNotificationText(notificationType: NotificationType, data: Notificat
   if (notificationType === NOTIFICATION_TYPE.VELHUB_SITE_BLOCKED) {
     return {
       title: '사이트 이용 제한',
-      message: `${siteLabel} 사이트가 벨허브 운영 정책에 따라 차단되었습니다.`,
+      message: `${siteLabel} 사이트가 데브허브 운영 정책에 따라 차단되었습니다.`,
     };
   }
 
   if (notificationType === NOTIFICATION_TYPE.VELHUB_SITE_UNBLOCKED) {
     return {
       title: '사이트 이용 제한 해제',
-      message: `${siteLabel} 사이트의 벨허브 운영 정책에 따른 차단이 해제되었습니다.`,
+      message: `${siteLabel} 사이트의 데브허브 운영 정책에 따른 차단이 해제되었습니다.`,
     };
   }
 

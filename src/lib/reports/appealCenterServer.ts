@@ -399,7 +399,9 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
         ? post!.is_closed === true && Boolean(normalizeText(post!.closed_message))
         : comment?.is_deleted === true && Boolean(normalizeText(comment.deleted_message));
 
-    if (!isDeletedForViolation) {
+    const appeal = appealByReport.get(`${report.reportType}:${report.id}`) ?? null;
+
+    if (!isDeletedForViolation && !appeal) {
       return [];
     }
 
@@ -415,7 +417,6 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
       return [];
     }
 
-    const appeal = appealByReport.get(`${report.reportType}:${report.id}`) ?? null;
     const deadline = getReportAppealDeadline(report.created_at);
     const targetUpdatedAt = isBlogTarget
       ? blogComment
