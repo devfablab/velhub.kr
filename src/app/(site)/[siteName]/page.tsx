@@ -96,18 +96,6 @@ function getBlogHomeImageUrl(bucket: 'category' | 'series', path: string | null)
   return r2Storage.from(bucket).getPublicUrl(path).data.publicUrl ?? null;
 }
 
-function getSiteAvatarUrl(path: string | null) {
-  if (!path) {
-    return null;
-  }
-
-  if (/^https?:\/\//i.test(path)) {
-    return path;
-  }
-
-  return r2Storage.from('avatar').getPublicUrl(path).data.publicUrl ?? null;
-}
-
 export async function generateMetadata(context: RouteContext) {
   const { siteName } = await context.params;
 
@@ -234,7 +222,6 @@ export default async function Page(context: RouteContext) {
         series={series}
         ads={ads}
         communityTitle={rhizome.site_label ?? ''}
-        communityAvatarUrl={getSiteAvatarUrl(rhizome.profile_picture)}
       />
     );
   }
