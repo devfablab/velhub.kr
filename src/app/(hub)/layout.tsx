@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import ChannelWorks from '@/components/ChannelWorks';
 import Footer from '@/components/footers/Footer';
 import HeaderHub from '@/components/headers/Hub';
-import { HubHeaderProvider, type HubHeaderData } from './hub/shared/HubHeaderContext';
+import { HubHeaderProvider, type HubHeaderData } from './hub/shared/headerContext';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',

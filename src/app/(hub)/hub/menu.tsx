@@ -42,7 +42,7 @@ import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
-import { useHubHeader } from './shared/HubHeaderContext';
+import { useHubHeader } from './shared/headerContext';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 

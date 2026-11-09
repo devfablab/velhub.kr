@@ -19,7 +19,7 @@ import Anchor from '../Anchor';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
 import { ServiceLogo } from '../Svgs';
-import { useHubHeader } from '@/app/(hub)/hub/shared/HubHeaderContext';
+import { useHubHeader } from '@/app/(hub)/hub/shared/headerContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 

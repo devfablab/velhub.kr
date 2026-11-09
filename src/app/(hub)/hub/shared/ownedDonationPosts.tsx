@@ -12,8 +12,8 @@ import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import HubPostListItem from './HubPostListItem';
-import ResponsivePopup from './ResponsivePopup';
+import ResponsivePopup from './popup';
+import HubPostListItem from './postListItem';
 import boardStyles from '@/app/board.module.sass';
 import styles from '@/app/hub.module.sass';
 

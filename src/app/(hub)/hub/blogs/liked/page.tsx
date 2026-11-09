@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
+import { getHubApiData } from '@/lib/service/hub/getData';
 import Container from '../../menu';
-import { getHubApiData } from '../../shared/getHubApiData';
 import LikedItems, { LikedItemsResponse } from '../../shared/likedItems';
 import Content from '../tab';
 

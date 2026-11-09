@@ -21,7 +21,7 @@ import FormErrorDialog from '@/components/FormErrorDialog';
 import type { MinorPaymentControlResponse } from '@/components/MinorPaymentControl';
 import PaymentTerms from '@/components/modals/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
-import ResponsivePopup from '../../shared/ResponsivePopup';
+import ResponsivePopup from '../../shared/popup';
 import styles from '@/app/hub.module.sass';
 
 export type Eligibility = {

@@ -2,7 +2,7 @@
 
 import type { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import ScreenState from '@/components/service/ScreenState';
-import HubPostListItem from './HubPostListItem';
+import HubPostListItem from './postListItem';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';

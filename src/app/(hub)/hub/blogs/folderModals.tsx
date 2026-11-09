@@ -5,7 +5,7 @@ import { validateFavoriteFolderLabel } from '@/lib/service/hubFavoriteFolder.sha
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
-import ResponsivePopup from '../shared/ResponsivePopup';
+import ResponsivePopup from '../shared/popup';
 
 type Folder = {
   id: string;

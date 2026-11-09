@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
+import { getHubApiData } from '@/lib/service/hub/getData';
 import Container from '../menu';
-import { getHubApiData } from '../shared/getHubApiData';
 import Opt, { SelectorResponse } from './opt';
 import styles from '@/app/hub.module.sass';
 

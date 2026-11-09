@@ -3,7 +3,7 @@
 import { ReactNode, useState } from 'react';
 import { formatDateTimeDetail } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import ResponsivePopup from './ResponsivePopup';
+import ResponsivePopup from './popup';
 import styles from '@/app/hub.module.sass';
 
 type BillingPopupDetailType = 'billing' | 'donation';

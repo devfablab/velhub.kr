@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
+import { getHubApiData } from '@/lib/service/hub/getData';
 import Container from '../../menu';
-import { getHubApiData } from '../../shared/getHubApiData';
 import Content from '../tab';
 import styles from '@/app/hub.module.sass';
 

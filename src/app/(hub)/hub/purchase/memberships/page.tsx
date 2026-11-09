@@ -4,8 +4,8 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from
 import { formatDate } from '@/lib/utils';
 import type { MinorPaymentControlResponse } from '@/components/MinorPaymentControl';
 import { ServiceNoDataIcon } from '@/components/Svgs';
+import { getHubApiData } from '@/lib/service/hub/getData';
 import Container from '../../menu';
-import { getHubApiData } from '../../shared/getHubApiData';
 import Content from '../tab';
 import MembershipPlan, { Eligibility, IdentityStatusResponse, MembershipResponse } from './opt';
 import styles from '@/app/hub.module.sass';
