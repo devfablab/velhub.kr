@@ -88,7 +88,7 @@ export default function MemberStatusSites({
   }
 
   return (
-    <section className={`paper ${styles.paper} ${styles.join} ${styles['member-status-sites']}`}>
+    <section className={`paper ${styles.paper} ${styles.join}`}>
       <h2>{rejoinOnly ? '재가입 가능' : '확인 필요'}</h2>
       <div className={`paper ${styles['join-sites']}`}>
         {filteredSites.map((site) => (

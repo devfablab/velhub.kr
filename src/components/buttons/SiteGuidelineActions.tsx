@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import ReportButton from '@/components/buttons/ReportButton';
-import SiteGuidelineDialog from '@/components/service/common/SiteGuidelineDialog';
+import SiteGuidelineDialog from '@/components/modals/SiteGuidelineDialog';
 import styles from '@/app/board.module.sass';
 
 type Props = {

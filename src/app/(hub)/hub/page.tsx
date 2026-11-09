@@ -56,8 +56,7 @@ function getAvatarUrl(value: string | null | undefined) {
     return normalizedValue;
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
-  const publicUrlResult = r2Storage.from('avatar').getPublicUrl(normalizedValue);
+  const publicUrlResult = r2Storage.from('avatars').getPublicUrl(normalizedValue);
 
   return publicUrlResult.data.publicUrl ?? '';
 }
