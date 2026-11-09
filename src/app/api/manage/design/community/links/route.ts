@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import path from 'path';
+import sharp from 'sharp';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
@@ -13,6 +14,8 @@ type CommunityLinkRow = {
   service: ServiceValue;
   account: string;
   image: string | null;
+  image_width: number | null;
+  image_height: number | null;
   community_id: string;
   sort_order: number | string;
 };
@@ -93,7 +96,7 @@ async function getLinks(communityId: string) {
   const supabaseAdmin = getSupabaseAdmin();
   const linksResult = await supabaseAdmin
     .from('community_links')
-    .select('id, created_at, service, account, image, community_id, sort_order')
+    .select('id, created_at, service, account, image, image_width, image_height, community_id, sort_order')
     .eq('community_id', communityId)
     .order('sort_order', { ascending: true });
 
@@ -207,7 +210,7 @@ export async function POST(request: Request) {
     const communityId = access.community.id;
     const currentLinksResult = await access.supabaseAdmin
       .from('community_links')
-      .select('image')
+      .select('image, image_width, image_height')
       .eq('community_id', communityId);
 
     if (currentLinksResult.error) {
@@ -217,10 +220,18 @@ export async function POST(request: Request) {
     const currentImages = new Set(
       (currentLinksResult.data ?? []).map((link) => normalizeText(link.image)).filter(Boolean),
     );
+    const currentImageSizes = new Map(
+      (currentLinksResult.data ?? []).map((link) => [
+        normalizeText(link.image),
+        { width: link.image_width as number | null, height: link.image_height as number | null },
+      ]),
+    );
     const nextRows: {
       service: ServiceValue;
       account: string;
       image: string | null;
+      image_width: number | null;
+      image_height: number | null;
       community_id: string;
       sort_order: number;
     }[] = [];
@@ -242,6 +253,9 @@ export async function POST(request: Request) {
 
       const fileValue = formData.get(`image-${localId}`);
       let image = normalizeText(link.image) || null;
+      let imageSize = image
+        ? (currentImageSizes.get(image) ?? { width: null, height: null })
+        : { width: null, height: null };
 
       if (fileValue instanceof File && fileValue.size > 0) {
         const validationError = validateImage(fileValue);
@@ -253,12 +267,20 @@ export async function POST(request: Request) {
 
         const extension = path.extname(fileValue.name).toLowerCase();
         const imagePath = `${communityId}/${crypto.randomUUID()}${extension}`;
-        const uploadResult = await r2Storage
-          .from(BUCKET_NAME)
-          .upload(imagePath, Buffer.from(await fileValue.arrayBuffer()), {
-            contentType: fileValue.type,
-            upsert: false,
-          });
+        const imageBuffer = Buffer.from(await fileValue.arrayBuffer());
+        const imageMetadata = await sharp(imageBuffer)
+          .metadata()
+          .catch(() => null);
+
+        if (!imageMetadata?.width || !imageMetadata.height) {
+          await removeImages(uploadedImages);
+          return Response.json({ error: '링크 이미지 파일이 올바르지 않습니다.' }, { status: 400 });
+        }
+
+        const uploadResult = await r2Storage.from(BUCKET_NAME).upload(imagePath, imageBuffer, {
+          contentType: fileValue.type,
+          upsert: false,
+        });
 
         if (uploadResult.error) {
           await removeImages(uploadedImages);
@@ -267,6 +289,7 @@ export async function POST(request: Request) {
 
         uploadedImages.push(imagePath);
         image = imagePath;
+        imageSize = { width: imageMetadata.width, height: imageMetadata.height };
       } else if (image && !currentImages.has(image)) {
         await removeImages(uploadedImages);
         return Response.json({ error: '링크 이미지 경로가 유효하지 않습니다.' }, { status: 400 });
@@ -276,6 +299,8 @@ export async function POST(request: Request) {
         service,
         account,
         image,
+        image_width: imageSize.width,
+        image_height: imageSize.height,
         community_id: communityId,
         sort_order: index + 1,
       });

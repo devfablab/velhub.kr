@@ -42,6 +42,7 @@ import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -270,6 +271,8 @@ type PostContent = {
       productName: string;
       shopName: string;
       thumbnailUrl: string;
+      thumbnailWidth: number | null;
+      thumbnailHeight: number | null;
       linkUrl: string;
       domain: string;
       targetType: 'ad' | 'postAd';
@@ -1281,7 +1284,12 @@ export default function Opt({
                       {content.images.map((image, index) => (
                         <div key={image.path} className={styles['content-thumbnail-image']}>
                           <button type="button" onClick={() => openGalleryViewer(index)}>
-                            <img src={image.url} alt="" />
+                            <OptimizedImage
+                              src={image.url}
+                              width={image.width}
+                              height={image.height}
+                              sizes={getCollageSizes(content.images?.length ?? 0)}
+                            />
                           </button>
                         </div>
                       ))}
@@ -1388,7 +1396,12 @@ export default function Opt({
                       {content.images.map((image, index) => (
                         <div key={image.path} className={styles['content-thumbnail-image']}>
                           <button type="button" onClick={() => openGalleryViewer(index)}>
-                            <img src={image.url} alt="" />
+                            <OptimizedImage
+                              src={image.url}
+                              width={image.width}
+                              height={image.height}
+                              sizes={getCollageSizes(content.images?.length ?? 0)}
+                            />
                           </button>
                         </div>
                       ))}
@@ -1547,7 +1560,14 @@ export default function Opt({
                                           <i style={{ width: `${percent}%` }} />
                                         </div>
                                         <div className={styles.label}>
-                                          {option.image ? <img src={option.image.url} alt="" /> : null}
+                                          {option.image ? (
+                                            <OptimizedImage
+                                              src={option.image.url}
+                                              width={option.image.width}
+                                              height={option.image.height}
+                                              sizes="127px"
+                                            />
+                                          ) : null}
                                           <span>{option.label}</span>
                                         </div>
                                         <span>{`(${count}명) ${percent}%`}</span>
@@ -1559,7 +1579,14 @@ export default function Opt({
                                         disabled={isSubmittingPoll}
                                       >
                                         <div className={styles.label}>
-                                          {option.image ? <img src={option.image.url} alt="" /> : null}
+                                          {option.image ? (
+                                            <OptimizedImage
+                                              src={option.image.url}
+                                              width={option.image.width}
+                                              height={option.image.height}
+                                              sizes="127px"
+                                            />
+                                          ) : null}
                                           <span>{option.label}</span>
                                         </div>
                                       </button>
@@ -1666,7 +1693,12 @@ export default function Opt({
                   {promotion.ads.map((ad) => (
                     <div key={ad.id} className={`paper ${styles['blog-ad-item']}`}>
                       <Anchor href={ad.linkUrl}>
-                        <img src={ad.thumbnailUrl} alt="" />
+                        <OptimizedImage
+                          src={ad.thumbnailUrl}
+                          width={ad.thumbnailWidth}
+                          height={ad.thumbnailHeight}
+                          sizes="52px"
+                        />
                         <span>
                           <strong>{ad.productName}</strong>
                           <em>{ad.domain}</em>

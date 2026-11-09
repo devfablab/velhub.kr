@@ -19,6 +19,8 @@ type SeriesRow = {
   series_label: string;
   summary: string | null;
   thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
   board_id: string;
   site_id: string;
   last_published_at: string | null;
@@ -85,6 +87,8 @@ export default async function Page(context: RouteContext) {
         series_label,
         summary,
         thumbnail_image,
+        thumbnail_width,
+        thumbnail_height,
         board_id,
         site_id,
         last_published_at,
@@ -112,6 +116,8 @@ export default async function Page(context: RouteContext) {
     board_label: item.boards?.board_label ?? '',
     summary: item.summary,
     imageUrl: getSeriesImageUrl(item.thumbnail_image),
+    imageWidth: item.thumbnail_width,
+    imageHeight: item.thumbnail_height,
     last_published_at: item.last_published_at,
     is_completed: item.is_completed,
   }));

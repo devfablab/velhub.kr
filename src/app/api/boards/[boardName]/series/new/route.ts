@@ -1,4 +1,5 @@
 import { canBeSeriesAuthor, isSoloBlog } from '@/lib/board/seriesAuthor';
+import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   canManageCommunityBoardSettings,
@@ -222,6 +223,7 @@ export async function POST(request: Request, context: RouteContext) {
       baseLabel: seriesLabel || seriesKey,
     });
 
+    const thumbnailSize = await getStoredImageSize('series', thumbnailImage);
     const insertSeries = await supabaseAdmin
       .from('board_series')
       .insert({
@@ -229,6 +231,8 @@ export async function POST(request: Request, context: RouteContext) {
         series_label: nextSeriesLabel,
         summary: summary || null,
         thumbnail_image: thumbnailImage || null,
+        thumbnail_width: thumbnailSize.width,
+        thumbnail_height: thumbnailSize.height,
         board_id: board.data.id,
         site_id: rhizome.data.id,
         last_published_at: null,
@@ -236,7 +240,7 @@ export async function POST(request: Request, context: RouteContext) {
         user_id: userId,
       })
       .select(
-        'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, user_id',
+        'id, created_at, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, board_id, site_id, last_published_at, is_completed, user_id',
       )
       .maybeSingle();
 

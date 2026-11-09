@@ -4,6 +4,9 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
+const THUMBNAIL_WIDTH = 1200;
+const THUMBNAIL_HEIGHT = 630;
+
 type AllowedFolder = 'thumbnail' | 'images' | 'editor';
 
 const POST_BUCKET = 'post';
@@ -71,7 +74,13 @@ export async function POST(request: Request) {
     const sharpImage = sharp(inputBuffer);
     const metadata = await sharpImage.metadata();
 
-    const outputBuffer = await sharpImage.webp({ quality: 90 }).toBuffer();
+    const outputBuffer = await (
+      folder === 'thumbnail'
+        ? sharpImage.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, { fit: 'cover', position: 'centre' })
+        : sharpImage
+    )
+      .webp({ quality: 90 })
+      .toBuffer();
     const outputMetadata = await sharp(outputBuffer).metadata();
 
     const storagePath = getExtensionlessFilePath(session.authUserId, folder);

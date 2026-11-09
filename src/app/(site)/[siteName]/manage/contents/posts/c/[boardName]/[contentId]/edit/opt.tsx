@@ -26,6 +26,7 @@ import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import Container from '../../../../../../menu';
@@ -1117,11 +1118,13 @@ export default function Opt({
                         {images.map((image, index) => (
                           <Stack key={image.path} gap={1}>
                             <Typography variant="body2">{`이미지 ${index + 1}`}</Typography>
-                            <Box
-                              component="img"
+                            <OptimizedImage
                               src={image.url}
+                              width={image.width}
+                              height={image.height}
+                              sizes="480px"
                               alt={`업로드 이미지 ${index + 1}`}
-                              sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                              style={{ width: '100%', maxWidth: 480, height: 'auto', display: 'block' }}
                             />
                             <Stack direction="row">
                               <button

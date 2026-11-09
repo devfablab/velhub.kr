@@ -1,3 +1,4 @@
+import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -223,6 +224,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
+    const thumbnailSize = await getStoredImageSize('category', thumbnailImage);
     const updateCategory = await supabaseAdmin
       .from('board_categories')
       .update({
@@ -230,9 +232,13 @@ export async function PATCH(request: Request, context: RouteContext) {
         category_label: categoryLabel,
         summary: summary || null,
         thumbnail_image: thumbnailImage || null,
+        thumbnail_width: thumbnailSize.width,
+        thumbnail_height: thumbnailSize.height,
       })
       .eq('id', currentCategory.data.id)
-      .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
+      .select(
+        'id, category_key, category_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, sort_order, board_id, site_id, created_at',
+      )
       .maybeSingle();
 
     if (updateCategory.error || !updateCategory.data) {

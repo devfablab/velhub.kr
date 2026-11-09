@@ -41,7 +41,13 @@ export function isValidBlogSubscription(subscription: BlogSubscriptionRow | null
  * 현재 유효한 블로그 구독자에게 표시할 멤버십팬 배지를 구한다.
  * 저장된 배지 URL이 아직 갱신되지 않은 구독 이력도 현재 설정으로 보완한다.
  */
-export async function getBlogSubscriptionBadgeUrls({
+export type BlogSubscriptionBadge = {
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
+export async function getBlogSubscriptionBadges({
   supabaseAdmin,
   siteId,
   subscriberIds,
@@ -51,7 +57,7 @@ export async function getBlogSubscriptionBadgeUrls({
   subscriberIds: string[];
 }) {
   const ids = [...new Set(subscriberIds.filter(Boolean))];
-  const badgeBySubscriberId = new Map<string, string>();
+  const badgeBySubscriberId = new Map<string, BlogSubscriptionBadge>();
 
   if (!ids.length) return badgeBySubscriberId;
 
@@ -68,7 +74,7 @@ export async function getBlogSubscriptionBadgeUrls({
       .order('created_at', { ascending: false }),
     supabaseAdmin
       .from('blog_subscription_badges')
-      .select('subscription_months, image_url')
+      .select('subscription_months, image_url, image_width, image_height')
       .eq('site_id', siteId)
       .order('subscription_months'),
   ]);
@@ -88,7 +94,14 @@ export async function getBlogSubscriptionBadgeUrls({
     const configuredUrl = badges.filter((badge) => badge.subscription_months <= monthCount).at(-1)?.image_url;
     const badgeUrl = savedUrl || configuredUrl || badges[0]?.image_url;
 
-    if (badgeUrl) badgeBySubscriberId.set(subscription.subscriber_user_id, badgeUrl);
+    if (!badgeUrl) continue;
+
+    const badgeSize = badges.find((badge) => badge.image_url === badgeUrl);
+    badgeBySubscriberId.set(subscription.subscriber_user_id, {
+      url: badgeUrl,
+      width: badgeSize?.image_width ?? null,
+      height: badgeSize?.image_height ?? null,
+    });
   }
 
   return badgeBySubscriberId;

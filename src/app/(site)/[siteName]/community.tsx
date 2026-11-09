@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import { PostListItem } from '@/lib/board/getPostList';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
@@ -61,31 +61,35 @@ function getYoutubeThumbnailUrl(videoId: string, quality: string) {
 
 function YoutubeThumbnailImage({ content }: { content: PostListItem }) {
   const [qualityIndex, setQualityIndex] = useState(0);
-  const thumbnailUrl = content.thumbnail_image_url
-    ? content.thumbnail_image_url
-    : content.youtube_id
-      ? getYoutubeThumbnailUrl(content.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[qualityIndex])
-      : '';
+  const youtubeThumbnailUrl = content.youtube_id
+    ? getYoutubeThumbnailUrl(content.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[qualityIndex])
+    : '';
 
-  if (!thumbnailUrl) {
+  if (content.thumbnail_image_url) {
+    return (
+      <OptimizedImage
+        src={content.thumbnail_image_url}
+        width={content.thumbnail_width ?? 1200}
+        height={content.thumbnail_height ?? 630}
+        sizes="(max-width: 575px) 100vw, 360px"
+      />
+    );
+  }
+
+  if (!youtubeThumbnailUrl) {
     return null;
   }
 
   return (
-    <Image
-      src={thumbnailUrl}
-      width={content.thumbnail_width ?? 1280}
-      height={content.thumbnail_height ?? 720}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={youtubeThumbnailUrl}
       alt=""
-      onError={() => {
-        if (content.thumbnail_image_url) {
-          return;
-        }
-
+      onError={() =>
         setQualityIndex((previousIndex) =>
           previousIndex < YOUTUBE_THUMBNAIL_QUALITIES.length - 1 ? previousIndex + 1 : previousIndex,
-        );
-      }}
+        )
+      }
     />
   );
 }
@@ -123,7 +127,14 @@ function renderGalleryBoard(siteName: string, homeBoard: HomeBoard) {
   return (
     <div className={styles['content-images']}>
       {homeBoard.contents.map((content) => {
-        const imageUrl = content.thumbnail_image_url || content.images?.[0]?.url || '';
+        const firstImage = content.images?.[0] ?? null;
+        const image = content.thumbnail_image_url
+          ? {
+              url: content.thumbnail_image_url,
+              width: content.thumbnail_width ?? 1200,
+              height: content.thumbnail_height ?? 630,
+            }
+          : { url: firstImage?.url ?? '', width: firstImage?.width, height: firstImage?.height };
 
         return (
           <Anchor
@@ -131,7 +142,14 @@ function renderGalleryBoard(siteName: string, homeBoard: HomeBoard) {
             href={`/${siteName}/${homeBoard.board.board_key}/${content.slug}`}
             className={styles['content-thumbnail-image']}
           >
-            {imageUrl ? <img src={imageUrl} alt="" /> : null}
+            {image.url ? (
+              <OptimizedImage
+                src={image.url}
+                width={image.width}
+                height={image.height}
+                sizes="(max-width: 767px) 100vw, 720px"
+              />
+            ) : null}
             <strong>{content.subject}</strong>
           </Anchor>
         );

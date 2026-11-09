@@ -7,6 +7,7 @@ import { getLinkPreview, type LinkPreviewData } from '@/lib/service/getLinkPrevi
 import type { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import { formatDateSimple, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
 import ScreenState from '@/components/service/ScreenState';
@@ -144,8 +145,12 @@ function ContentBody({
     <div className={boardStyles['content-images']}>
       {content.images.map((image) => (
         <div key={image.path} className={boardStyles['content-thumbnail-image']}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image.url} alt="" />
+          <OptimizedImage
+            src={image.url}
+            width={image.width}
+            height={image.height}
+            sizes={getCollageSizes(content.images?.length ?? 0)}
+          />
         </div>
       ))}
     </div>

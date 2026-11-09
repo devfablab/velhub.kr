@@ -49,6 +49,7 @@ import NumberField from '@/components/customUI/NumberField';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -2576,7 +2577,12 @@ export default function Opt({
                           >
                             <CloseRoundedIcon />
                           </button>
-                          <img src={image.url} alt="" />
+                          <OptimizedImage
+                            src={image.url}
+                            width={image.width}
+                            height={image.height}
+                            sizes="(max-width: 600px) 33vw, 200px"
+                          />
                         </div>
                       );
                     })}
@@ -2658,7 +2664,12 @@ export default function Opt({
                           >
                             <CloseRoundedIcon />
                           </button>
-                          <img src={image.url} alt="" />
+                          <OptimizedImage
+                            src={image.url}
+                            width={image.width}
+                            height={image.height}
+                            sizes="(max-width: 600px) 33vw, 200px"
+                          />
                         </div>
                       );
                     })}
@@ -2772,7 +2783,12 @@ export default function Opt({
                               <button type="button" onClick={() => removePollOptionImage(index)}>
                                 <CloseRoundedIcon />
                               </button>
-                              <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                              <OptimizedImage
+                                src={option.imagePreviewUrl || option.imageUrl}
+                                width={option.imageWidth}
+                                height={option.imageHeight}
+                                sizes="72px"
+                              />
                             </div>
                           ) : (
                             <div className={styles['poll-option-image-upload']}>
@@ -3013,7 +3029,12 @@ export default function Opt({
                               <button type="button" onClick={() => removePollOptionImage(index)}>
                                 <CloseRoundedIcon />
                               </button>
-                              <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                              <OptimizedImage
+                                src={option.imagePreviewUrl || option.imageUrl}
+                                width={option.imageWidth}
+                                height={option.imageHeight}
+                                sizes="72px"
+                              />
                             </div>
                           ) : (
                             <div className={styles['poll-option-image-upload']}>

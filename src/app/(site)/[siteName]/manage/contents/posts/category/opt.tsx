@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type JSX, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type JSX, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useParams } from 'next/navigation';
 import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -34,6 +34,7 @@ import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -47,6 +48,8 @@ type CategoryRow = {
   category_label: string;
   summary: string | null;
   thumbnail_image: string | null;
+  thumbnail_width?: number | null;
+  thumbnail_height?: number | null;
   sort_order: number;
   board_id: string;
   site_id: string;
@@ -104,6 +107,8 @@ type CategoryImageUploadResponse = {
   ok?: boolean;
   thumbnailImage?: string;
   url?: string;
+  width?: number | null;
+  height?: number | null;
   error?: string;
 };
 
@@ -221,17 +226,13 @@ function SortableCategoryRow({
 
       <TableCell>
         {category.thumbnail_image ? (
-          <Box
-            component="img"
+          <OptimizedImage
             src={getCategoryImageUrl(category.thumbnail_image)}
+            width={category.thumbnail_width}
+            height={category.thumbnail_height}
+            sizes="80px"
             alt={category.category_label}
-            sx={{
-              width: 80,
-              height: 80,
-              objectFit: 'cover',
-              display: 'block',
-              borderRadius: 1,
-            }}
+            style={{ width: 80, height: 80, objectFit: 'cover', display: 'block', borderRadius: 4 }}
           />
         ) : null}
       </TableCell>
@@ -286,6 +287,10 @@ export default function Opt({
   const [summary, setSummary] = useState('');
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
+  const [thumbnailImageSize, setThumbnailImageSize] = useState<{ width: number | null; height: number | null }>({
+    width: null,
+    height: null,
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrdering, setIsOrdering] = useState(false);
   const [isOrderChanged, setIsOrderChanged] = useState(false);
@@ -297,7 +302,11 @@ export default function Opt({
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [dialogSuccessMessage, setDialogSuccessMessage] = useState('');
-  const [baseUrl, setBaseUrl] = useState('');
+  const baseUrl = useSyncExternalStore(
+    () => () => undefined,
+    () => window.location.origin,
+    () => '',
+  );
 
   const sortedCategories = useMemo(() => {
     return [...categories].sort((a, b) => {
@@ -315,6 +324,7 @@ export default function Opt({
     setSummary('');
     setThumbnailImage('');
     setThumbnailImageUrl('');
+    setThumbnailImageSize({ width: null, height: null });
     setDialogErrorMessage('');
     setDialogSuccessMessage('');
     if (fileInputRef.current) {
@@ -363,6 +373,10 @@ export default function Opt({
       setSummary(result.category.summary || '');
       setThumbnailImage(nextThumbnailImage);
       setThumbnailImageUrl(getCategoryImageUrl(nextThumbnailImage));
+      setThumbnailImageSize({
+        width: result.category.thumbnail_width ?? null,
+        height: result.category.thumbnail_height ?? null,
+      });
       setDialogMode('edit');
 
       if (fileInputRef.current) {
@@ -451,6 +465,7 @@ export default function Opt({
 
       setThumbnailImage(result.thumbnailImage);
       setThumbnailImageUrl(result.url ?? '');
+      setThumbnailImageSize({ width: result.width ?? null, height: result.height ?? null });
       setDialogSuccessMessage('카테고리 이미지가 업로드되었습니다.');
 
       if (fileInputRef.current) {
@@ -497,6 +512,7 @@ export default function Opt({
 
       setThumbnailImage('');
       setThumbnailImageUrl('');
+      setThumbnailImageSize({ width: null, height: null });
       setDialogSuccessMessage('카테고리 이미지가 삭제되었습니다.');
 
       if (fileInputRef.current) {
@@ -847,10 +863,6 @@ export default function Opt({
     }
   }
 
-  useEffect(() => {
-    setBaseUrl(window.location.origin);
-  }, []);
-
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
@@ -1052,11 +1064,13 @@ export default function Opt({
                       </Stack>
 
                       {thumbnailImageUrl ? (
-                        <Box
-                          component="img"
+                        <OptimizedImage
                           src={thumbnailImageUrl}
+                          width={thumbnailImageSize.width}
+                          height={thumbnailImageSize.height}
+                          sizes="320px"
                           alt="카테고리 썸네일"
-                          sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                          style={{ maxWidth: 320, width: '100%', height: 'auto', display: 'block', borderRadius: 4 }}
                         />
                       ) : null}
                     </Stack>
@@ -1224,11 +1238,13 @@ export default function Opt({
                       </Stack>
 
                       {thumbnailImageUrl ? (
-                        <Box
-                          component="img"
+                        <OptimizedImage
                           src={thumbnailImageUrl}
+                          width={thumbnailImageSize.width}
+                          height={thumbnailImageSize.height}
+                          sizes="320px"
                           alt="카테고리 썸네일"
-                          sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                          style={{ maxWidth: 320, width: '100%', height: 'auto', display: 'block', borderRadius: 4 }}
                         />
                       ) : null}
                     </Stack>

@@ -22,6 +22,7 @@ import {
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import ContentWithInlineLinks from '@/components/service/blog/community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import ReportButton from '@/components/service/common/ReportButton';
@@ -37,11 +38,13 @@ type BlogCommunityPost = {
   authorName: string;
   authorAvatarUrl: string | null;
   authorBadgeUrl: string | null;
+  authorBadgeWidth?: number | null;
+  authorBadgeHeight?: number | null;
   isAuthor: boolean;
   isWordingBlinded: boolean;
   canDelete: boolean;
   commentCount: number;
-  images: string[];
+  images: { url: string; width: number | null; height: number | null }[];
 };
 
 export type BlogCommunityResponse = {
@@ -159,7 +162,13 @@ export default function Opt({
 
                             {post.authorBadgeUrl ? (
                               <em>
-                                <img src={post.authorBadgeUrl} alt="멤버십팬 배지" />
+                                <OptimizedImage
+                                  src={post.authorBadgeUrl}
+                                  width={post.authorBadgeWidth}
+                                  height={post.authorBadgeHeight}
+                                  sizes="16px"
+                                  alt="멤버십팬 배지"
+                                />
                               </em>
                             ) : null}
                           </div>
@@ -188,9 +197,22 @@ export default function Opt({
                       {post.images.length ? (
                         <div className={styles['content-images']}>
                           {post.images.map((image, imageIndex) => (
-                            <div key={image} className={styles['content-thumbnail-image']}>
-                              <button type="button" onClick={() => openImageViewer(post.images, imageIndex)}>
-                                <img src={image} alt="" />
+                            <div key={image.url} className={styles['content-thumbnail-image']}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openImageViewer(
+                                    post.images.map((postImage) => postImage.url),
+                                    imageIndex,
+                                  )
+                                }
+                              >
+                                <OptimizedImage
+                                  src={image.url}
+                                  width={image.width}
+                                  height={image.height}
+                                  sizes={getCollageSizes(post.images.length)}
+                                />
                               </button>
                             </div>
                           ))}

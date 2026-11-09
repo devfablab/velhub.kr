@@ -5,6 +5,7 @@ import { getSitePageMetadata } from '@/lib/seoSite';
 import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import BlogAdReportButton from '@/components/service/blog/BlogAdReportButton';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import Container from '../menu';
@@ -62,7 +63,13 @@ export default async function Page({ params }: RouteContext) {
               {ads.map((ad) => (
                 <div key={ad.id} className={`paper ${styles['shopping-item']}`}>
                   <Anchor href={ad.linkUrl}>
-                    <img src={ad.thumbnailUrl} alt={ad.productName} />
+                    <OptimizedImage
+                      src={ad.thumbnailUrl}
+                      width={ad.thumbnailWidth}
+                      height={ad.thumbnailHeight}
+                      sizes="(max-width: 991px) 50vw, (max-width: 1199px) 33vw, 270px"
+                      alt={ad.productName}
+                    />
                     <span className={styles['shopping-info']}>
                       <strong>{ad.productName}</strong>
                       <em>{ad.domain}</em>

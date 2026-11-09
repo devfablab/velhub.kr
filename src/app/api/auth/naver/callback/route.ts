@@ -313,6 +313,8 @@ async function saveNaverSocialUser(params: {
         user_name: encryptedUserName,
         email: encryptedEmail,
         avatar: params.avatar,
+        avatar_width: null,
+        avatar_height: null,
       })
       .eq('user_id', params.authUserId);
 

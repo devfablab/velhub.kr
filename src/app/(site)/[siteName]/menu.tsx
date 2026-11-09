@@ -45,6 +45,7 @@ import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
 import DrawerManage from '@/components/header-groups/site/DrawerManage';
 import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
 import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
+import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import NotificationButton from '@/components/service/common/NotificationButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import { useSiteHeader } from './SiteHeaderContext';
@@ -248,6 +249,8 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
   const { themeMode, setThemeMode } = useThemeMode();
   const initialHeader = useSiteHeader();
   const profileLogoUrl = initialHeader?.profileLogoUrl ?? null;
+  const profileLogoWidth = initialHeader?.profileLogoWidth ?? null;
+  const profileLogoHeight = initialHeader?.profileLogoHeight ?? null;
   const siteLabel = initialHeader?.siteLabel || initialHeader?.siteName || '';
   const profilePictureUrl = initialHeader?.profilePictureUrl ?? null;
   const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
@@ -410,7 +413,13 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                   {home ? (
                     <strong>
                       {profileLogoUrl ? (
-                        <img src={profileLogoUrl} alt={siteLabel} aria-hidden="true" />
+                        <OptimizedImage
+                          src={profileLogoUrl}
+                          width={profileLogoWidth}
+                          height={profileLogoHeight}
+                          sizes={getHeightBasedSizes(24, profileLogoWidth, profileLogoHeight)}
+                          style={{ width: 'auto', height: 'auto' }}
+                        />
                       ) : (
                         <>
                           {profilePictureUrl ? (

@@ -76,6 +76,8 @@ type PostRow = {
   summary: string | null;
   youtube_url: string | null;
   thumbnail_image: string | null;
+  thumbnail_width: number | string | null;
+  thumbnail_height: number | string | null;
   poll: JsonValue;
   images: JsonValue;
   is_closed: boolean;
@@ -376,6 +378,8 @@ export async function GET(request: Request) {
               'summary',
               'youtube_url',
               'thumbnail_image',
+              'thumbnail_width',
+              'thumbnail_height',
               'poll',
               'images',
               'is_closed',
@@ -468,6 +472,8 @@ export async function GET(request: Request) {
                 youtubeUrl: targetPost.youtube_url,
               }),
               thumbnailImage: getPublicPostImageUrl(targetPost.thumbnail_image),
+              thumbnailWidth: Number(targetPost.thumbnail_width) || null,
+              thumbnailHeight: Number(targetPost.thumbnail_height) || null,
               images: normalizeImages(targetPost.images),
               poll: targetPost.poll,
               isClosed: targetPost.is_closed === true,

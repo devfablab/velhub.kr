@@ -221,7 +221,7 @@ async function getBlogCommunityPosts(siteId: string) {
     postIds.length
       ? supabaseAdmin
           .from('blog_community_post_images')
-          .select('post_id, image_url, sort_order')
+          .select('post_id, image_url, image_width, image_height, sort_order')
           .in('post_id', postIds)
           .order('sort_order', { ascending: true })
       : Promise.resolve({ data: [], error: null }),
@@ -234,10 +234,10 @@ async function getBlogCommunityPosts(siteId: string) {
     throw new Error('블로그 커뮤니티 글을 불러오지 못했습니다.');
   }
 
-  const imageMap = new Map<string, string[]>();
+  const imageMap = new Map<string, { url: string; width: number | null; height: number | null }[]>();
   for (const image of imagesResult.data ?? []) {
     const images = imageMap.get(image.post_id) ?? [];
-    images.push(image.image_url);
+    images.push({ url: image.image_url, width: image.image_width, height: image.image_height });
     imageMap.set(image.post_id, images);
   }
 

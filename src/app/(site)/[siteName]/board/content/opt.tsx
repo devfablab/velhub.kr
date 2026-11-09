@@ -38,6 +38,7 @@ import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, maskEmail, 
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
 import type { CommentsResponse } from '@/components/comments/CommentList';
+import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
@@ -408,6 +409,7 @@ export default function Opt({
   const [deleteReason, setDeleteReason] = useState('');
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
+  const [currentTime] = useState(() => Date.now());
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -419,7 +421,7 @@ export default function Opt({
       return false;
     }
 
-    return date.getTime() <= Date.now();
+    return date.getTime() <= currentTime;
   }
 
   function openGalleryViewer(index: number) {
@@ -963,7 +965,7 @@ export default function Opt({
                   ) : null}
                   {content.published_status === 'unknown' &&
                   content.published_at &&
-                  new Date(content.published_at).getTime() > Date.now() ? (
+                  new Date(content.published_at).getTime() > currentTime ? (
                     <small>(예약글)</small>
                   ) : null}
                   {!isFeedBoard ? <strong>{content.subject}</strong> : null}
@@ -1033,7 +1035,12 @@ export default function Opt({
                       {content.images.map((image, index) => (
                         <div key={image.path} className={styles['content-thumbnail-image']}>
                           <button type="button" onClick={() => openGalleryViewer(index)}>
-                            <img src={image.url} alt="" />
+                            <OptimizedImage
+                              src={image.url}
+                              width={image.width}
+                              height={image.height}
+                              sizes={getCollageSizes(content.images?.length ?? 0)}
+                            />
                           </button>
                         </div>
                       ))}
@@ -1137,7 +1144,12 @@ export default function Opt({
                     <div className={styles['content-images']}>
                       {content.images.map((image) => (
                         <div key={image.path} className={styles['content-thumbnail-image']}>
-                          <img src={image.url} alt="" />
+                          <OptimizedImage
+                            src={image.url}
+                            width={image.width}
+                            height={image.height}
+                            sizes={getCollageSizes(content.images?.length ?? 0)}
+                          />
                         </div>
                       ))}
                     </div>
@@ -1147,7 +1159,12 @@ export default function Opt({
                       {content.images.map((image, index) => (
                         <div key={image.path} className={styles['content-thumbnail-image']}>
                           <button type="button" onClick={() => openGalleryViewer(index)}>
-                            <img src={image.url} alt="" />
+                            <OptimizedImage
+                              src={image.url}
+                              width={image.width}
+                              height={image.height}
+                              sizes={getCollageSizes(content.images?.length ?? 0)}
+                            />
                           </button>
                         </div>
                       ))}
@@ -1285,7 +1302,14 @@ export default function Opt({
                                           <i style={{ width: `${percent}%` }} />
                                         </div>
                                         <div className={styles.label}>
-                                          {option.image ? <img src={option.image.url} alt="" /> : null}
+                                          {option.image ? (
+                                            <OptimizedImage
+                                              src={option.image.url}
+                                              width={option.image.width}
+                                              height={option.image.height}
+                                              sizes="127px"
+                                            />
+                                          ) : null}
                                           <span>{option.label}</span>
                                         </div>
                                         <span>{`(${count}명) ${percent}%`}</span>
@@ -1297,7 +1321,14 @@ export default function Opt({
                                         disabled={isSubmittingPoll}
                                       >
                                         <div className={styles.label}>
-                                          {option.image ? <img src={option.image.url} alt="" /> : null}
+                                          {option.image ? (
+                                            <OptimizedImage
+                                              src={option.image.url}
+                                              width={option.image.width}
+                                              height={option.image.height}
+                                              sizes="127px"
+                                            />
+                                          ) : null}
                                           <span>{option.label}</span>
                                         </div>
                                       </button>

@@ -27,6 +27,7 @@ import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import DonationButton from '@/components/service/common/DonationButton';
 import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
@@ -38,6 +39,8 @@ type SiteInfo = {
   site_label: string | null;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width?: number | null;
+  profile_logo_height?: number | null;
   summary: string | null;
 };
 
@@ -542,8 +545,13 @@ export default function SiteProfile() {
       <div className={styles['site-profile-container']}>
         <div className={styles['site-profile-info']}>
           {profileLogoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profileLogoUrl} alt="" />
+            <OptimizedImage
+              src={profileLogoUrl}
+              width={siteInfo?.profile_logo_width}
+              height={siteInfo?.profile_logo_height}
+              sizes="270px"
+              style={{ height: 'auto' }}
+            />
           ) : (
             <div className={styles['site-profile-avatar']}>
               <AppIconAvatar src={profilePictureUrl || null} alt={siteInfo.site_label || ''} size={20} />

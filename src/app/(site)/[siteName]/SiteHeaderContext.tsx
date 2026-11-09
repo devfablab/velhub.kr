@@ -10,6 +10,8 @@ export type SiteHeaderData = {
   themeType: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
+  profileLogoWidth?: number | null;
+  profileLogoHeight?: number | null;
   blogFontSettings: {
     subjectFontFamily: string | null;
     subjectLetterSpacing: number | null;

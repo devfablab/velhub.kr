@@ -28,7 +28,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const supabaseAdmin = getSupabaseAdmin();
     const postResult = await supabaseAdmin
       .from('notice_posts')
-      .select('id, image_src')
+      .select('id, image_src, image_width, image_height')
       .eq('id', normalizeText(postId))
       .eq('board_id', notice.board.id)
       .maybeSingle();
@@ -81,12 +81,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const previousImageSrc = normalizeText(postResult.data.image_src);
     let nextImageSrc: string | null = previousImageSrc || null;
+    let nextImageWidth: number | null = postResult.data.image_width;
+    let nextImageHeight: number | null = postResult.data.image_height;
     let uploadedPath = '';
 
     if (imageFile) {
-      const webp = await sharp(Buffer.from(await imageFile.arrayBuffer()))
+      const { data: webp, info } = await sharp(Buffer.from(await imageFile.arrayBuffer()))
         .webp({ quality: 90 })
-        .toBuffer();
+        .toBuffer({ resolveWithObject: true });
       uploadedPath = getNoticeImagePath(notice.siteId, postResult.data.id);
       const upload = await r2Storage
         .from('notice')
@@ -97,14 +99,24 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
 
       nextImageSrc = r2Storage.from('notice').getPublicUrl(uploadedPath).data.publicUrl;
+      nextImageWidth = info.width ?? null;
+      nextImageHeight = info.height ?? null;
     } else if (isRemoveImage) {
       nextImageSrc = null;
+      nextImageWidth = null;
+      nextImageHeight = null;
     }
 
     const updatedAt = new Date().toISOString();
     const updateResult = await supabaseAdmin
       .from('notice_posts')
-      .update({ content, image_src: nextImageSrc, updated_at: updatedAt })
+      .update({
+        content,
+        image_src: nextImageSrc,
+        image_width: nextImageWidth,
+        image_height: nextImageHeight,
+        updated_at: updatedAt,
+      })
       .eq('id', postResult.data.id);
 
     if (updateResult.error) {
@@ -128,6 +140,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       ok: true,
       content,
       imageUrl: nextImageSrc,
+      imageWidth: nextImageWidth,
+      imageHeight: nextImageHeight,
       updatedAt,
     });
   } catch (unknownError) {

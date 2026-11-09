@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCategoryPageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
@@ -148,7 +149,12 @@ export default async function Page(context: RouteContext) {
                     <div className={styles.thumbnail}>
                       <span>{content.published_status === 'draft' ? <em>(임시글)</em> : null}</span>
                       {content.thumbnail_image_url ? (
-                        <img src={content.thumbnail_image_url} alt="" />
+                        <OptimizedImage
+                          src={content.thumbnail_image_url}
+                          width={content.thumbnail_width ?? 1200}
+                          height={content.thumbnail_height ?? 630}
+                          sizes="(max-width: 575px) 100vw, 270px"
+                        />
                       ) : (
                         <div className={styles.dummy}>
                           <MenuBookRoundedIcon />

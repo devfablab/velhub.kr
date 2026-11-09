@@ -2,7 +2,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
+import { type BlogSubscriptionBadge, getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/service/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
@@ -87,6 +87,8 @@ type CommentItem = {
   author_name: string;
   author_avatar_url: string;
   author_membership_badge_url: string | null;
+  author_membership_badge_width: number | null;
+  author_membership_badge_height: number | null;
   author_level: AuthorLevel | null;
   author_role: AuthorRole;
   author_manage_roles: AuthorManageRole[];
@@ -220,7 +222,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
       role: 'member' as AuthorRole,
       manageRoles: [] as AuthorManageRole[],
       manageIcon: null as AuthorManageIcon | null,
-      membershipBadgeUrl: null as string | null,
+      membershipBadge: null as BlogSubscriptionBadge | null,
     };
   }
 
@@ -368,8 +370,8 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   }
 
   const badgeByUser = isBlog
-    ? await getBlogSubscriptionBadgeUrls({ supabaseAdmin, siteId, subscriberIds: [stigmaId || normalizedUserId] })
-    : new Map<string, string>();
+    ? await getBlogSubscriptionBadges({ supabaseAdmin, siteId, subscriberIds: [stigmaId || normalizedUserId] })
+    : new Map<string, BlogSubscriptionBadge>();
 
   return {
     name,
@@ -378,7 +380,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     role,
     manageRoles,
     manageIcon,
-    membershipBadgeUrl: badgeByUser.get(stigmaId || normalizedUserId) ?? null,
+    membershipBadge: badgeByUser.get(stigmaId || normalizedUserId) ?? null,
   };
 }
 
@@ -715,7 +717,9 @@ async function buildCommentItem({
         : null,
     author_name: author.name,
     author_avatar_url: author.avatarUrl,
-    author_membership_badge_url: author.membershipBadgeUrl,
+    author_membership_badge_url: author.membershipBadge?.url ?? null,
+    author_membership_badge_width: author.membershipBadge?.width ?? null,
+    author_membership_badge_height: author.membershipBadge?.height ?? null,
     author_level: author.level,
     author_role: author.role,
     author_manage_roles: author.manageRoles,

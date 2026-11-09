@@ -20,6 +20,8 @@ type NoticePostRow = {
   author_id: string;
   content: string;
   image_src: string | null;
+  image_width: number | null;
+  image_height: number | null;
   is_private: boolean;
   created_at: string;
   updated_at: string | null;
@@ -87,7 +89,9 @@ export async function GET(request: Request, context: RouteContext) {
 
     let postsQuery = getSupabaseAdmin()
       .from('notice_posts')
-      .select('id, author_id, content, image_src, is_private, created_at, updated_at', { count: 'exact' })
+      .select('id, author_id, content, image_src, image_width, image_height, is_private, created_at, updated_at', {
+        count: 'exact',
+      })
       .eq('board_id', notice.board.id);
 
     // 비공개 글은 운영자에게만 보임
@@ -114,6 +118,8 @@ export async function GET(request: Request, context: RouteContext) {
         id: post.id,
         content: post.content,
         imageUrl: r2Storage.from('notice').getPublicUrl(post.image_src ?? '').data.publicUrl || null,
+        imageWidth: post.image_width,
+        imageHeight: post.image_height,
         isPrivate: post.is_private,
         createdAt: post.created_at,
         updatedAt: post.updated_at,
@@ -180,9 +186,9 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (imageFile) {
       try {
-        const webp = await sharp(Buffer.from(await imageFile.arrayBuffer()))
+        const { data: webp, info } = await sharp(Buffer.from(await imageFile.arrayBuffer()))
           .webp({ quality: 90 })
-          .toBuffer();
+          .toBuffer({ resolveWithObject: true });
         const path = getNoticeImagePath(notice.siteId, postResult.data.id);
         const upload = await r2Storage.from('notice').upload(path, webp, { contentType: 'image/webp', upsert: false });
 
@@ -193,7 +199,7 @@ export async function POST(request: Request, context: RouteContext) {
         const imageSrc = r2Storage.from('notice').getPublicUrl(path).data.publicUrl;
         const updateResult = await supabaseAdmin
           .from('notice_posts')
-          .update({ image_src: imageSrc })
+          .update({ image_src: imageSrc, image_width: info.width ?? null, image_height: info.height ?? null })
           .eq('id', postResult.data.id);
 
         if (updateResult.error) {

@@ -23,6 +23,7 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { formatDate, getOgImageUrl, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import Container from '../../../menu';
@@ -510,11 +511,13 @@ export default function Opt({
                       <Typography variant="subtitle2" sx={{ mb: 1 }}>
                         오픈그래프 이미지
                       </Typography>
-                      <Box
-                        component="img"
+                      <OptimizedImage
                         src={getOgImageUrl(post.thumbnail_image)}
+                        width={post.thumbnail_width}
+                        height={post.thumbnail_height}
+                        sizes="480px"
                         alt="오픈그래프 이미지"
-                        sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                        style={{ width: '100%', maxWidth: 480, height: 'auto', display: 'block' }}
                       />
                     </Box>
                   ) : null}

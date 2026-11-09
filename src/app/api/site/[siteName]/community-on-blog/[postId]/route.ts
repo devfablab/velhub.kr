@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
+import { getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
 import { completeBlogCommunityRandomDraw, normalizeBlogCommunityDraw } from '@/lib/service/blog/blogCommunity/draw';
 import { isNumericContentSlug } from '@/lib/utils';
@@ -65,7 +65,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const [imagesResult, authorResult, previousResult, nextResult, badgeByUser, drawsResult] = await Promise.all([
       supabaseAdmin
         .from('blog_community_post_images')
-        .select('image_url, sort_order')
+        .select('image_url, image_width, image_height, sort_order')
         .eq('post_id', postResult.data.id)
         .order('sort_order'),
       supabaseAdmin.from('stigmas').select('user_name, avatar').eq('id', postResult.data.user_id).maybeSingle(),
@@ -87,7 +87,7 @@ export async function GET(_request: Request, context: RouteContext) {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
-      getBlogSubscriptionBadgeUrls({
+      getBlogSubscriptionBadges({
         supabaseAdmin,
         siteId: feature.siteId,
         subscriberIds: [postResult.data.user_id],
@@ -134,12 +134,18 @@ export async function GET(_request: Request, context: RouteContext) {
         editedAt: postResult.data.edited_at,
         authorName: getDisplayName(authorResult.data?.user_name),
         authorAvatarUrl: authorResult.data?.avatar ?? null,
-        authorBadgeUrl: badgeByUser.get(postResult.data.user_id) ?? null,
+        authorBadgeUrl: badgeByUser.get(postResult.data.user_id)?.url ?? null,
+        authorBadgeWidth: badgeByUser.get(postResult.data.user_id)?.width ?? null,
+        authorBadgeHeight: badgeByUser.get(postResult.data.user_id)?.height ?? null,
         isAuthor: feature.stigmaId === postResult.data.user_id,
         isWordingBlinded: postResult.data.is_wording_blinded === true,
         isOwner: feature.isOwner,
         isOperator: feature.isOperator,
-        images: (imagesResult.data ?? []).map((image) => image.image_url),
+        images: (imagesResult.data ?? []).map((image) => ({
+          url: image.image_url,
+          width: image.image_width,
+          height: image.image_height,
+        })),
         draw: drawType
           ? {
               drawType,

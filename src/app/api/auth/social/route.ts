@@ -157,13 +157,15 @@ export async function POST(request: Request) {
           email: encrypt(email),
           payment_email: provider === 'naver' ? encrypt(paymentEmail) : null,
           avatar,
+          avatar_width: null,
+          avatar_height: null,
           is_agree_term: true,
           is_agree_child: true,
           is_agree_privacy: true,
         }
       : {
           email: encrypt(email),
-          ...(avatar ? { avatar } : {}),
+          ...(avatar ? { avatar, avatar_width: null, avatar_height: null } : {}),
         };
 
     if (stigmaResult.data) {

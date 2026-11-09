@@ -225,8 +225,8 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
       return;
     }
 
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      setErrorMessage('답변 이미지는 5MB 이하만 업로드할 수 있습니다.');
+    if (selectedFile.size > 1024 * 1024) {
+      setErrorMessage('답변 이미지는 1MB 이하만 업로드할 수 있습니다.');
       inputElement.value = '';
       return;
     }

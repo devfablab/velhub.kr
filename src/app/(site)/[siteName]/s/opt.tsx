@@ -5,6 +5,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { Chip, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -20,6 +21,8 @@ export type SeriesItem = {
   board_label: string;
   summary: string | null;
   imageUrl: string;
+  imageWidth: number | null;
+  imageHeight: number | null;
   last_published_at: string | null;
   is_completed: boolean;
 };
@@ -60,7 +63,12 @@ export default function Opt({ siteName, isCommunity, rows }: Props) {
                 <Anchor href={`/${siteName}/s/${item.series_key}`} key={item.id}>
                   <div className={styles.thumbnail}>
                     {item.imageUrl ? (
-                      <img src={item.imageUrl} alt="" />
+                      <OptimizedImage
+                        src={item.imageUrl}
+                        width={item.imageWidth}
+                        height={item.imageHeight}
+                        sizes="(max-width: 575px) 100vw, 270px"
+                      />
                     ) : (
                       <div className={styles.dummy}>
                         <MenuBookRoundedIcon />

@@ -1,4 +1,4 @@
-import { r2Storage } from '@/lib/clients/r2Storage';
+import { getStoredImageSize, r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { canManageCommunityPages, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
@@ -33,6 +33,11 @@ function getEditorImagePaths(...contents: Array<string | null | undefined>) {
   }
 
   return paths;
+}
+
+async function getPageOgImageSize(ogImage: string) {
+  const size = await getStoredImageSize('og-image', ogImage);
+  return { og_image_width: size.width, og_image_height: size.height };
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -117,6 +122,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         content_html: contentHtml,
         content_markdown: contentMarkdown || null,
         og_image: normalizeText(requestBody.ogImage) || null,
+        ...(await getPageOgImageSize(normalizeText(requestBody.ogImage))),
         attachment_slug: normalizeText(requestBody.attachmentSlug) || null,
         attachment_origin: normalizeText(requestBody.attachmentOrigin) || null,
         is_comment: requestBody.isComment === true,

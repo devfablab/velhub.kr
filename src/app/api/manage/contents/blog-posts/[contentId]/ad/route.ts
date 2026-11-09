@@ -1,13 +1,14 @@
 import {
-  BLOG_AD_REPORT_REASON_LABELS,
-  MAX_BLOG_AD_ITEMS,
-  type BlogPostAdType,
   assertBlogAdEditor,
+  BLOG_AD_REPORT_REASON_LABELS,
+  getBlogAdImageSize,
   getBlogAdReportCorrection,
   getRequiredBlogAdImageUrl,
   isImmediateBlogAdReport,
   isSubscriptionSeriesPost,
   isValidBlogAdUrl,
+  MAX_BLOG_AD_ITEMS,
+  type BlogPostAdType,
 } from '@/lib/service/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 
@@ -432,6 +433,7 @@ export async function PUT(request: Request, context: RouteContext) {
               product_name: item.productName,
               shop_name: shopName,
               thumbnail_image: item.thumbnailImage,
+              ...(await getBlogAdImageSize(item.thumbnailImage)),
               link_url: item.linkUrl,
               sort_order: sortOrder,
               updated_at: now,
@@ -445,6 +447,7 @@ export async function PUT(request: Request, context: RouteContext) {
             product_name: item.productName,
             shop_name: shopName,
             thumbnail_image: item.thumbnailImage,
+            ...(await getBlogAdImageSize(item.thumbnailImage)),
             link_url: item.linkUrl,
             sort_order: sortOrder,
           });
@@ -497,6 +500,7 @@ export async function PUT(request: Request, context: RouteContext) {
       shop_name: shopName,
       sponsor_name: null,
       thumbnail_image: item.thumbnailImage,
+      ...(await getBlogAdImageSize(item.thumbnailImage)),
       link_url: item.linkUrl,
       deleted_at: null,
       updated_at: now,

@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims } from '@/lib/session/server';
 
 const AVATAR_BUCKET = 'avatar';
-const MAX_AVATAR_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_AVATAR_FILE_SIZE = 1024 * 1024;
 const IMAGE_EXTENSIONS: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     if (file.size <= 0 || file.size > MAX_AVATAR_FILE_SIZE) {
-      return Response.json({ error: '아바타 이미지는 5MB 이하로 업로드해 주세요.' }, { status: 400 });
+      return Response.json({ error: '아바타 이미지는 1MB 이하로 업로드해 주세요.' }, { status: 400 });
     }
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());

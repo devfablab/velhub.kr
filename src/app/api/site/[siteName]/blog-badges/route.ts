@@ -43,6 +43,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sit
     const converted = await sharp(Buffer.from(await file.arrayBuffer()))
       .webp()
       .toBuffer();
+    const convertedMetadata = await sharp(converted).metadata();
     const upload = await r2Storage
       .from('blog-badges')
       .upload(path, converted, { contentType: 'image/webp', upsert: false });
@@ -54,6 +55,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ sit
         site_id: feature.siteId,
         subscription_months: months,
         image_url: imageUrl,
+        image_width: convertedMetadata.width ?? null,
+        image_height: convertedMetadata.height ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'site_id,subscription_months' },
@@ -92,7 +95,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ sit
           .eq('id', subscription.id);
       }),
     );
-    return Response.json({ ok: true, months, imageUrl });
+    return Response.json({
+      ok: true,
+      months,
+      imageUrl,
+      imageWidth: convertedMetadata.width ?? null,
+      imageHeight: convertedMetadata.height ?? null,
+    });
   } catch {
     return Response.json({ error: '멤버십팬 배지를 저장하지 못했습니다.' }, { status: 500 });
   }

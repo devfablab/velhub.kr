@@ -1,4 +1,5 @@
 import { canBeSeriesAuthor, isSoloBlog } from '@/lib/board/seriesAuthor';
+import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   canManageCommunityBoardSettings,
@@ -213,7 +214,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const currentSeries = await supabaseAdmin
       .from('board_series')
       .select(
-        'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, user_id',
+        'id, created_at, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, board_id, site_id, last_published_at, is_completed, user_id',
       )
       .eq('site_id', rhizome.data.id)
       .eq('board_id', board.data.id)
@@ -253,6 +254,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '완결된 연재는 다시 연재중으로 변경할 수 없습니다.' }, { status: 400 });
     }
 
+    const thumbnailSize = await getStoredImageSize('series', thumbnailImage);
     const updateSeries = await supabaseAdmin
       .from('board_series')
       .update({
@@ -260,12 +262,14 @@ export async function PATCH(request: Request, context: RouteContext) {
         series_label: nextSeriesLabel,
         summary: summary || null,
         thumbnail_image: thumbnailImage || null,
+        thumbnail_width: thumbnailSize.width,
+        thumbnail_height: thumbnailSize.height,
         user_id: userId,
         is_completed: currentSeries.data.is_completed === true ? true : isCompleted,
       })
       .eq('id', currentSeries.data.id)
       .select(
-        'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, user_id',
+        'id, created_at, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, board_id, site_id, last_published_at, is_completed, user_id',
       )
       .maybeSingle();
 

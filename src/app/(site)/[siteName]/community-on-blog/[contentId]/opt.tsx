@@ -25,6 +25,7 @@ import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import CommentList, { type CommentsResponse } from '@/components/comments/CommentList';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import ContentWithInlineLinks from '@/components/service/blog/community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import ReportButton from '@/components/service/common/ReportButton';
@@ -41,11 +42,13 @@ export type BlogCommunityPostResponse = {
     authorName: string;
     authorAvatarUrl: string | null;
     authorBadgeUrl: string | null;
+    authorBadgeWidth?: number | null;
+    authorBadgeHeight?: number | null;
     isAuthor: boolean;
     isWordingBlinded: boolean;
     isOwner: boolean;
     isOperator: boolean;
-    images: string[];
+    images: { url: string; width: number | null; height: number | null }[];
     draw: {
       drawType: 'first_come' | 'random';
       drawLimit: number | null;
@@ -155,9 +158,12 @@ export default function Opt({
                       <cite>{post.authorName}</cite>
                       {post.authorBadgeUrl ? (
                         <em>
-                          <img
+                          <OptimizedImage
                             className={styles['membership-fan-badge']}
                             src={post.authorBadgeUrl}
+                            width={post.authorBadgeWidth}
+                            height={post.authorBadgeHeight}
+                            sizes="16px"
                             alt="멤버십팬 배지"
                           />
                         </em>
@@ -187,9 +193,14 @@ export default function Opt({
                 {post.images.length ? (
                   <div className={styles['content-images']}>
                     {post.images.map((image, index) => (
-                      <div key={image} className={styles['content-thumbnail-image']}>
+                      <div key={image.url} className={styles['content-thumbnail-image']}>
                         <button type="button" onClick={() => openImageViewer(index)}>
-                          <img src={image} alt="" />
+                          <OptimizedImage
+                            src={image.url}
+                            width={image.width}
+                            height={image.height}
+                            sizes={getCollageSizes(post.images.length)}
+                          />
                         </button>
                       </div>
                     ))}
@@ -324,7 +335,7 @@ export default function Opt({
                   <CloseRoundedIcon />
                 </button>
                 <div className={styles['dialog-content']}>
-                  <img src={post.images[imageIndex]} alt="" />
+                  <img src={post.images[imageIndex]?.url} alt="" />
                 </div>
                 <div className={styles['dialog-actions']}>
                   <button
@@ -354,7 +365,7 @@ export default function Opt({
               >
                 <DialogTitle className={styles['dialog-title']}>{`${imageIndex + 1}번째 이미지`}</DialogTitle>
                 <DialogContent className={styles['dialog-content']}>
-                  <img src={post.images[imageIndex]} alt="" />
+                  <img src={post.images[imageIndex]?.url} alt="" />
                 </DialogContent>
                 <DialogActions className={styles['dialog-actions']}>
                   <button

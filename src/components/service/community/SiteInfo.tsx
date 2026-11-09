@@ -8,6 +8,7 @@ import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import OptimizedImage from '@/components/OptimizedImage';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
@@ -33,6 +34,8 @@ type CommunityLink = {
   account: string;
   image: string | null;
   image_url: string;
+  image_width?: number | null;
+  image_height?: number | null;
   sort_order: number;
 };
 
@@ -119,7 +122,17 @@ export default function SiteInfo() {
 
             return (
               <Anchor key={link.id} href={`${option.prefix}${account}`} aria-label={option.label} title={option.label}>
-                {link.image_url ? <img src={link.image_url} alt={option.label} /> : <span>{option.label}</span>}
+                {link.image_url ? (
+                  <OptimizedImage
+                    src={link.image_url}
+                    width={link.image_width}
+                    height={link.image_height}
+                    sizes="72px"
+                    alt={option.label}
+                  />
+                ) : (
+                  <span>{option.label}</span>
+                )}
               </Anchor>
             );
           })}

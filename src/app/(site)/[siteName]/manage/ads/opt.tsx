@@ -10,6 +10,7 @@ import { hasMultipleBlogAdLinkDomains } from '@/lib/service/blog/blogAds/validat
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import BlogAdImageDialog from '@/components/service/blog/BlogAdImageDialog';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
@@ -41,6 +42,8 @@ type AdItem = {
   productName: string;
   thumbnailImage: string;
   thumbnailUrl: string;
+  thumbnailWidth: number | null;
+  thumbnailHeight: number | null;
   linkUrl: string;
   report: AdReport | null;
 };
@@ -113,6 +116,8 @@ export default function Opt({
           shop_name: string | null;
           thumbnail_image: string;
           thumbnail_url: string;
+          thumbnail_width?: number | null;
+          thumbnail_height?: number | null;
           link_url: string;
           report: AdReport | null;
         }[];
@@ -125,6 +130,8 @@ export default function Opt({
           productName: item.product_name,
           thumbnailImage: item.thumbnail_image,
           thumbnailUrl: item.thumbnail_url,
+          thumbnailWidth: item.thumbnail_width ?? null,
+          thumbnailHeight: item.thumbnail_height ?? null,
           linkUrl: item.link_url,
           report: item.report,
         })),
@@ -253,11 +260,23 @@ export default function Opt({
                     value={item.thumbnailImage}
                     previewUrl={item.thumbnailUrl}
                     onUpload={uploadThumbnail}
-                    onChange={(image) => updateItem(index, { thumbnailImage: image.path, thumbnailUrl: image.url })}
+                    onChange={(image) =>
+                      updateItem(index, {
+                        thumbnailImage: image.path,
+                        thumbnailUrl: image.url,
+                        thumbnailWidth: null,
+                        thumbnailHeight: null,
+                      })
+                    }
                     onError={setError}
                   />
                   {item.thumbnailUrl ? (
-                    <img src={item.thumbnailUrl} alt="" />
+                    <OptimizedImage
+                      src={item.thumbnailUrl}
+                      width={item.thumbnailWidth}
+                      height={item.thumbnailHeight}
+                      sizes="123px"
+                    />
                   ) : (
                     <Typography variant="body2">이미지 없음</Typography>
                   )}
@@ -317,7 +336,15 @@ export default function Opt({
               onClick={() =>
                 setItems((current) => [
                   ...current,
-                  { productName: '', thumbnailImage: '', thumbnailUrl: '', linkUrl: '', report: null },
+                  {
+                    productName: '',
+                    thumbnailImage: '',
+                    thumbnailUrl: '',
+                    thumbnailWidth: null,
+                    thumbnailHeight: null,
+                    linkUrl: '',
+                    report: null,
+                  },
                 ])
               }
             >

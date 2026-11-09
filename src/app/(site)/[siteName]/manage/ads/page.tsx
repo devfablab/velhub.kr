@@ -21,7 +21,9 @@ export default async function Page({ params }: Props) {
     context.isEnabled
       ? context.supabaseAdmin
           .from('blog_ads')
-          .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
+          .select(
+            'id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order',
+          )
           .eq('site_id', context.siteId)
           .is('post_id', null)
           .is('deleted_at', null)
@@ -62,6 +64,8 @@ export default async function Page({ params }: Props) {
     productName: item.product_name,
     thumbnailImage: item.thumbnail_image,
     thumbnailUrl: getBlogAdPublicImageUrl(item.thumbnail_image) ?? '',
+    thumbnailWidth: item.thumbnail_width ?? null,
+    thumbnailHeight: item.thumbnail_height ?? null,
     linkUrl: item.link_url,
     report: reportByAdId.get(item.id) ?? null,
   }));

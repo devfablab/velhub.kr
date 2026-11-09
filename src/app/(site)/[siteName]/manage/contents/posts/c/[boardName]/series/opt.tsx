@@ -33,6 +33,7 @@ import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { formatDateTimeDetail, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
@@ -57,6 +58,8 @@ type SeriesRow = {
   series_label: string;
   summary: string | null;
   thumbnail_image: string | null;
+  thumbnail_width?: number | null;
+  thumbnail_height?: number | null;
   board_id: string;
   site_id: string;
   last_published_at: string | null;
@@ -106,6 +109,8 @@ type SeriesImageUploadResponse = {
   ok?: boolean;
   thumbnailImage?: string;
   url?: string;
+  width?: number | null;
+  height?: number | null;
   error?: string;
 };
 
@@ -210,6 +215,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [summary, setSummary] = useState('');
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
+  const [thumbnailImageSize, setThumbnailImageSize] = useState<{ width: number | null; height: number | null }>({
+    width: null,
+    height: null,
+  });
   const [selectedUser, setSelectedUser] = useState<SeriesUserSearchRow | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -252,6 +261,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setSummary('');
     setThumbnailImage('');
     setThumbnailImageUrl('');
+    setThumbnailImageSize({ width: null, height: null });
     setSelectedUser(null);
     setIsCompleted(false);
     setDialogErrorMessage('');
@@ -302,6 +312,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
       setSummary(result.series.summary || '');
       setThumbnailImage(nextThumbnailImage);
       setThumbnailImageUrl(getSeriesImageUrl(nextThumbnailImage));
+      setThumbnailImageSize({
+        width: result.series.thumbnail_width ?? null,
+        height: result.series.thumbnail_height ?? null,
+      });
       setSelectedUser(result.selectedUser ?? null);
       setIsCompleted(result.series.is_completed);
       setIsKeyChecked(true);
@@ -496,6 +510,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
       setThumbnailImage(result.thumbnailImage);
       setThumbnailImageUrl(result.url ?? '');
+      setThumbnailImageSize({ width: result.width ?? null, height: result.height ?? null });
 
       if (fileInputReference.current) {
         fileInputReference.current.value = '';
@@ -540,6 +555,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
       setThumbnailImage('');
       setThumbnailImageUrl('');
+      setThumbnailImageSize({ width: null, height: null });
+      setThumbnailImageSize({ width: null, height: null });
 
       if (fileInputReference.current) {
         fileInputReference.current.value = '';
@@ -1055,11 +1072,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       </Stack>
 
                       {thumbnailImageUrl ? (
-                        <Box
-                          component="img"
+                        <OptimizedImage
                           src={thumbnailImageUrl}
+                          width={thumbnailImageSize.width}
+                          height={thumbnailImageSize.height}
+                          sizes="320px"
                           alt="연재 썸네일"
-                          sx={{ maxWidth: 320, height: 'auto', display: 'block', borderRadius: 1 }}
+                          style={{ maxWidth: 320, width: '100%', height: 'auto', display: 'block', borderRadius: 4 }}
                         />
                       ) : null}
                     </Stack>
@@ -1306,16 +1325,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       </Stack>
 
                       {thumbnailImageUrl ? (
-                        <Box
-                          component="img"
+                        <OptimizedImage
                           src={thumbnailImageUrl}
+                          width={thumbnailImageSize.width}
+                          height={thumbnailImageSize.height}
+                          sizes="320px"
                           alt="연재 썸네일"
-                          sx={{
-                            maxWidth: 320,
-                            height: 'auto',
-                            display: 'block',
-                            borderRadius: 1,
-                          }}
+                          style={{ maxWidth: 320, width: '100%', height: 'auto', display: 'block', borderRadius: 4 }}
                         />
                       ) : null}
                     </Stack>

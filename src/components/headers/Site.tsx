@@ -15,17 +15,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import {
-  Avatar,
-  Box,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
@@ -37,6 +27,7 @@ import NavManage from '../header-groups/site/NavManage';
 import NavMenu from '../header-groups/site/NavMenu';
 import NavPayments from '../header-groups/site/NavPayments';
 import PrimaryMenu from '../header-groups/site/PrimaryMenu';
+import OptimizedImage, { getHeightBasedSizes } from '../OptimizedImage';
 import NotificationButton from '../service/common/NotificationButton';
 import { ServiceLogo } from '../Svgs';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
@@ -257,6 +248,8 @@ export default function HeaderSite() {
   const [siteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
   const [profilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
   const [profileLogoUrl] = useState<string | null>(initialHeader?.profileLogoUrl ?? null);
+  const profileLogoWidth = initialHeader?.profileLogoWidth ?? null;
+  const profileLogoHeight = initialHeader?.profileLogoHeight ?? null;
   const isLoggedIn = userProfile.isLoggedIn && isAuthenticated;
 
   const pathname = usePathname();
@@ -403,7 +396,12 @@ export default function HeaderSite() {
                       {siteLabel ? (
                         <>
                           {profileLogoUrl ? (
-                            <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
+                            <OptimizedImage
+                              src={profileLogoUrl}
+                              width={profileLogoWidth}
+                              height={profileLogoHeight}
+                              sizes={getHeightBasedSizes(24, profileLogoWidth, profileLogoHeight)}
+                            />
                           ) : (
                             <>
                               {profilePictureUrl ? (
@@ -479,7 +477,12 @@ export default function HeaderSite() {
                       {siteLabel ? (
                         <>
                           {profileLogoUrl ? (
-                            <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
+                            <OptimizedImage
+                              src={profileLogoUrl}
+                              width={profileLogoWidth}
+                              height={profileLogoHeight}
+                              sizes={getHeightBasedSizes(24, profileLogoWidth, profileLogoHeight)}
+                            />
                           ) : (
                             <>
                               {profilePictureUrl ? (

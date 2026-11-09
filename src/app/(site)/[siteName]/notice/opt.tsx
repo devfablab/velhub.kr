@@ -26,6 +26,7 @@ import {
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import ContentWithInlineLinks from '@/components/service/blog/community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import ScreenState from '@/components/service/ScreenState';
@@ -55,6 +56,8 @@ type NoticePost = {
   id: string;
   content: string;
   imageUrl: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
   isPrivate: boolean;
   createdAt: string;
   updatedAt: string | null;
@@ -226,6 +229,8 @@ export default function Opt({
         imageUploadError?: boolean;
         content?: string;
         imageUrl?: string | null;
+        imageWidth?: number | null;
+        imageHeight?: number | null;
         updatedAt?: string;
       } | null;
 
@@ -242,6 +247,8 @@ export default function Opt({
                   ...post,
                   content: result?.content ?? content,
                   imageUrl: result?.imageUrl ?? null,
+                  imageWidth: result?.imageWidth ?? null,
+                  imageHeight: result?.imageHeight ?? null,
                   updatedAt: result?.updatedAt ?? post.updatedAt,
                 }
               : post,
@@ -397,7 +404,12 @@ export default function Opt({
                       {post.imageUrl ? (
                         <div className={styles['content-images']}>
                           <div className={styles['content-thumbnail-image']}>
-                            <img src={post.imageUrl} alt="" />
+                            <OptimizedImage
+                              src={post.imageUrl}
+                              width={post.imageWidth}
+                              height={post.imageHeight}
+                              sizes={getCollageSizes(1)}
+                            />
                           </div>
                         </div>
                       ) : null}

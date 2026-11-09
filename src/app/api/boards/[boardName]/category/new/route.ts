@@ -1,3 +1,4 @@
+import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -223,6 +224,7 @@ export async function POST(request: Request, context: RouteContext) {
     const nextSortOrder =
       typeof lastCategory.data?.sort_order === 'number' ? Number(lastCategory.data.sort_order) + 1 : 1;
 
+    const thumbnailSize = await getStoredImageSize('category', thumbnailImage);
     const insertCategory = await supabaseAdmin
       .from('board_categories')
       .insert({
@@ -230,11 +232,15 @@ export async function POST(request: Request, context: RouteContext) {
         category_label: categoryLabel,
         summary: summary || null,
         thumbnail_image: thumbnailImage || null,
+        thumbnail_width: thumbnailSize.width,
+        thumbnail_height: thumbnailSize.height,
         sort_order: nextSortOrder,
         board_id: board.data.id,
         site_id: rhizome.data.id,
       })
-      .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
+      .select(
+        'id, category_key, category_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, sort_order, board_id, site_id, created_at',
+      )
       .maybeSingle();
 
     if (insertCategory.error || !insertCategory.data) {

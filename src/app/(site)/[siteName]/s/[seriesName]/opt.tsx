@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import LibraryBooksOutlinedIcon from '@mui/icons-material/LibraryBooksOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
@@ -8,6 +7,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { Chip, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import DonationButton, { type DonationStatusResponse } from '@/components/service/common/DonationButton';
 import SubscriptionButton, { type SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
@@ -77,8 +77,8 @@ function getGalleryThumbnail(content: SeriesContentItem) {
   if (content.thumbnail_image_url) {
     return {
       url: content.thumbnail_image_url,
-      width: content.thumbnail_width || firstImage?.width || 1200,
-      height: content.thumbnail_height || firstImage?.height || 675,
+      width: content.thumbnail_width ?? 1200,
+      height: content.thumbnail_height ?? 630,
     };
   }
 
@@ -114,7 +114,12 @@ function SeriesPostList({
                 </span>
                 <small>{`${content.images.length}개 이미지`}</small>
                 {thumbnail ? (
-                  <img src={thumbnail.url} width={thumbnail.width ?? 1200} height={thumbnail.height ?? 675} alt="" />
+                  <OptimizedImage
+                    src={thumbnail.url}
+                    width={thumbnail.width}
+                    height={thumbnail.height}
+                    sizes="(max-width: 575px) 100vw, 270px"
+                  />
                 ) : null}
               </div>
               <div className={styles.info}>
@@ -145,11 +150,11 @@ function SeriesPostList({
           <Anchor href={getContentHref(siteName, boardName, content.slug, seriesName)} key={content.id}>
             <div className={styles.thumbnail}>
               {content.thumbnail_image_url ? (
-                <Image
+                <OptimizedImage
                   src={content.thumbnail_image_url}
-                  alt=""
-                  width={content.thumbnail_width}
-                  height={content.thumbnail_height}
+                  width={content.thumbnail_width ?? 1200}
+                  height={content.thumbnail_height ?? 630}
+                  sizes="(max-width: 575px) 100vw, 270px"
                 />
               ) : (
                 <div className={styles.dummy}>

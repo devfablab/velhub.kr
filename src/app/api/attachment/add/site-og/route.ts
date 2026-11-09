@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     try {
       outputBuffer = await sharp(inputBuffer)
-        .resize(1280, 630, {
+        .resize(1200, 630, {
           fit: 'cover',
           position: 'centre',
         })

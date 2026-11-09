@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import Container from '../../../menu';
@@ -38,6 +39,8 @@ type LinkItem = {
   account: string;
   image: string | null;
   imageUrl: string;
+  imageWidth: number | null;
+  imageHeight: number | null;
   pendingFile: File | null;
   previewUrl: string;
 };
@@ -49,6 +52,8 @@ export type LinkResponse = {
     account: string;
     image: string | null;
     image_url: string;
+    image_width?: number | null;
+    image_height?: number | null;
     sort_order: number;
   }[];
   error?: string;
@@ -180,11 +185,13 @@ function SortableItem({
               }}
             >
               {displayedImageUrl ? (
-                <Box
-                  component="img"
+                <OptimizedImage
                   src={displayedImageUrl}
+                  width={item.previewUrl ? null : item.imageWidth}
+                  height={item.previewUrl ? null : item.imageHeight}
+                  sizes="160px"
                   alt={serviceMeta ? `${serviceMeta.label} 링크 이미지` : '링크 이미지'}
-                  sx={{ width: 160, height: 160, objectFit: 'cover', display: 'block' }}
+                  style={{ width: 160, height: 160, objectFit: 'cover', display: 'block' }}
                 />
               ) : (
                 <Stack sx={{ width: 160, height: 160 }} alignItems="center" justifyContent="center">
@@ -233,6 +240,8 @@ function toLinkItems(links: NonNullable<LinkResponse['links']>): LinkItem[] {
     account: link.account,
     image: link.image,
     imageUrl: link.image_url,
+    imageWidth: link.image_width ?? null,
+    imageHeight: link.image_height ?? null,
     pendingFile: null,
     previewUrl: '',
   }));
@@ -293,6 +302,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
         account: '',
         image: null,
         imageUrl: '',
+        imageWidth: null,
+        imageHeight: null,
         pendingFile: null,
         previewUrl: '',
       },
@@ -353,7 +364,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
         }
 
         revokePreviewUrl(item.previewUrl);
-        return { ...item, image: null, imageUrl: '', pendingFile: null, previewUrl: '' };
+        return {
+          ...item,
+          image: null,
+          imageUrl: '',
+          imageWidth: null,
+          imageHeight: null,
+          pendingFile: null,
+          previewUrl: '',
+        };
       }),
     );
   }
@@ -427,6 +446,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
           account: link.account,
           image: link.image,
           imageUrl: link.image_url,
+          imageWidth: link.image_width ?? null,
+          imageHeight: link.image_height ?? null,
           pendingFile: null,
           previewUrl: '',
         })),

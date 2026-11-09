@@ -1,4 +1,4 @@
-import { r2Storage } from '@/lib/clients/r2Storage';
+import { getStoredImageSize, r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
@@ -6,6 +6,11 @@ import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
 export const BLOG_AD_BUCKET = 'blog-ad-images';
+
+export async function getBlogAdImageSize(path: string | null | undefined) {
+  const size = await getStoredImageSize(BLOG_AD_BUCKET, path);
+  return { thumbnail_width: size.width, thumbnail_height: size.height };
+}
 export const MAX_BLOG_AD_ITEMS = 10;
 export const MAX_BLOG_AD_IMAGE_SIZE = 1024 * 1024;
 export const BLOG_AD_IMAGE_TYPES = new Set(['image/png', 'image/webp']);
@@ -288,6 +293,7 @@ export async function createBlogPostPromotion({
   }
   if (!shopName || shopName.length > 50) throw new Error('쇼핑몰명은 50자 이하로 입력해주세요.');
   if (isSubscription) {
+    const itemSizes = await Promise.all(items.map((item) => getBlogAdImageSize(item.thumbnailImage)));
     const result = await context.supabaseAdmin.from('blog_ads').insert(
       items.map((item, sortOrder) => ({
         site_id: context.siteId,
@@ -295,6 +301,7 @@ export async function createBlogPostPromotion({
         product_name: item.productName,
         shop_name: shopName,
         thumbnail_image: item.thumbnailImage,
+        ...itemSizes[sortOrder],
         link_url: item.linkUrl,
         sort_order: sortOrder,
       })),
@@ -311,6 +318,7 @@ export async function createBlogPostPromotion({
     shop_name: shopName,
     sponsor_name: null,
     thumbnail_image: item.thumbnailImage,
+    ...(await getBlogAdImageSize(item.thumbnailImage)),
     link_url: item.linkUrl,
   });
   if (result.error) throw new Error('상품 광고를 저장하지 못했습니다.');
@@ -322,6 +330,8 @@ type PromotionTarget = {
   sponsor_name?: string | null;
   shop_name?: string | null;
   thumbnail_image?: string | null;
+  thumbnail_width?: number | null;
+  thumbnail_height?: number | null;
   link_url: string;
 };
 
@@ -372,7 +382,7 @@ export async function getVisibleBlogHomeAds(siteId: string) {
 
   const adsResult = await supabaseAdmin
     .from('blog_ads')
-    .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
+    .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
     .eq('site_id', siteId)
     .is('post_id', null)
     .is('deleted_at', null)
@@ -389,6 +399,8 @@ export async function getVisibleBlogHomeAds(siteId: string) {
     productName: ad.product_name ?? '',
     shopName: ad.shop_name ?? '',
     thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
+    thumbnailWidth: ad.thumbnail_width ?? null,
+    thumbnailHeight: ad.thumbnail_height ?? null,
     linkUrl: ad.link_url,
     domain: getBlogAdDomain(ad.link_url),
   }));
@@ -415,13 +427,15 @@ export async function getVisibleBlogPostPromotion({
   const [postAds, multiAds] = await Promise.all([
     supabaseAdmin
       .from('blog_post_ads')
-      .select('id, ad_type, product_name, sponsor_name, shop_name, thumbnail_image, link_url')
+      .select(
+        'id, ad_type, product_name, sponsor_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url',
+      )
       .eq('post_id', postId)
       .is('deleted_at', null)
       .maybeSingle(),
     supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
+      .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
       .eq('post_id', postId)
       .is('deleted_at', null)
       .order('sort_order'),
@@ -453,6 +467,8 @@ export async function getVisibleBlogPostPromotion({
         productName: ad.product_name ?? '',
         shopName: ad.shop_name ?? '',
         thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
+        thumbnailWidth: ad.thumbnail_width ?? null,
+        thumbnailHeight: ad.thumbnail_height ?? null,
         linkUrl: ad.link_url,
         domain: getBlogAdDomain(ad.link_url),
         targetType: 'postAd' as const,
@@ -469,6 +485,8 @@ export async function getVisibleBlogPostPromotion({
         productName: ad.product_name ?? '',
         shopName: ad.shop_name ?? '',
         thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
+        thumbnailWidth: ad.thumbnail_width ?? null,
+        thumbnailHeight: ad.thumbnail_height ?? null,
         linkUrl: ad.link_url,
         domain: getBlogAdDomain(ad.link_url),
         targetType: 'ad' as const,
@@ -481,7 +499,7 @@ export async function getVisibleBlogPostPromotion({
 
   const commonAds = await supabaseAdmin
     .from('blog_ads')
-    .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
+    .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
     .eq('site_id', siteId)
     .is('post_id', null)
     .is('deleted_at', null)
@@ -496,6 +514,8 @@ export async function getVisibleBlogPostPromotion({
       productName: ad.product_name ?? '',
       shopName: ad.shop_name ?? '',
       thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
+      thumbnailWidth: ad.thumbnail_width ?? null,
+      thumbnailHeight: ad.thumbnail_height ?? null,
       linkUrl: ad.link_url,
       domain: getBlogAdDomain(ad.link_url),
       targetType: 'ad' as const,

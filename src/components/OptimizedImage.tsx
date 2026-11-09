@@ -41,6 +41,10 @@ export function getHeightBasedSizes(
   return `${maxWidth ? Math.min(displayWidth, maxWidth) : displayWidth}px`;
 }
 
+export function getCollageSizes(imageCount: number) {
+  return imageCount === 1 ? '(max-width: 807px) 100vw, 807px' : '(max-width: 575px) 100vw, 540px';
+}
+
 export default function OptimizedImage({ src, width, height, sizes, alt = '', className, style }: Props) {
   if (!src) return null;
 

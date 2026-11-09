@@ -1,7 +1,6 @@
 'use client';
 
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -14,6 +13,7 @@ import type { PostListItem } from '@/lib/board/getPostList';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import OptimizedImage from '@/components/OptimizedImage';
 import BlogAdReportButton from '@/components/service/blog/BlogAdReportButton';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import ReportButton from '@/components/service/common/ReportButton';
@@ -71,7 +71,7 @@ export type BlogHomeCommunityPost = {
   createdAt: string;
   authorName: string;
   authorAvatarUrl: string | null;
-  images: string[];
+  images: { url: string; width: number | null; height: number | null }[];
   commentCount: number;
 };
 
@@ -87,6 +87,8 @@ export type BlogHomeCategory = {
   label: string;
   summary: string | null;
   imageUrl: string | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
 };
 
 export type BlogHomeSeries = {
@@ -95,6 +97,8 @@ export type BlogHomeSeries = {
   label: string;
   summary: string | null;
   imageUrl: string | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
   publishedAt: string | null;
   isCompleted: boolean;
 };
@@ -104,6 +108,8 @@ export type BlogHomeAd = {
   productName: string;
   shopName: string;
   thumbnailUrl: string;
+  thumbnailWidth: number | null;
+  thumbnailHeight: number | null;
   linkUrl: string;
   domain: string;
 };
@@ -325,8 +331,13 @@ function BlogCommunityCarousel({
                 {post.images.length ? (
                   <div className={`${styles['content-images']} ${styles['blog-home-community-images']}`}>
                     {post.images.map((image) => (
-                      <div key={image} className={styles['content-thumbnail-image']}>
-                        <img src={image} alt="" />
+                      <div key={image.url} className={styles['content-thumbnail-image']}>
+                        <OptimizedImage
+                          src={image.url}
+                          width={image.width}
+                          height={image.height}
+                          sizes="(max-width: 599px) 93vw, 380px"
+                        />
                       </div>
                     ))}
                   </div>
@@ -410,11 +421,11 @@ function BlogRecentPosts({ boardName, siteName }: { boardName: string; siteName:
                 <div className={styles.thumbnail}>
                   <span>{post.published_status === 'draft' ? <em>(임시글)</em> : null}</span>
                   {post.thumbnail_image_url ? (
-                    <Image
+                    <OptimizedImage
                       src={post.thumbnail_image_url}
-                      alt=""
                       width={post.thumbnail_width ?? 1200}
                       height={post.thumbnail_height ?? 630}
+                      sizes="(max-width: 575px) 100vw, 270px"
                     />
                   ) : (
                     <div className={styles.dummy}>
@@ -495,7 +506,12 @@ export default function Blog(props: Props) {
                 {props.ads.map((ad) => (
                   <div key={ad.id} className={`paper ${styles['blog-ad-item']}`}>
                     <Anchor href={ad.linkUrl}>
-                      <img src={ad.thumbnailUrl} alt="" />
+                      <OptimizedImage
+                        src={ad.thumbnailUrl}
+                        width={ad.thumbnailWidth}
+                        height={ad.thumbnailHeight}
+                        sizes="52px"
+                      />
                       <span>
                         <strong>{ad.productName}</strong>
                         <em>{ad.domain}</em>
@@ -517,7 +533,12 @@ export default function Blog(props: Props) {
                     <Anchor href={`/${props.siteName}/c/${category.key}`} key={category.id}>
                       <div className={styles.thumbnail}>
                         {category.imageUrl ? (
-                          <img src={category.imageUrl} alt="" />
+                          <OptimizedImage
+                            src={category.imageUrl}
+                            width={category.imageWidth}
+                            height={category.imageHeight}
+                            sizes="(max-width: 575px) 100vw, 270px"
+                          />
                         ) : (
                           <div className={styles.dummy}>
                             <MenuBookRoundedIcon />
@@ -544,7 +565,12 @@ export default function Blog(props: Props) {
                     <Anchor href={`/${props.siteName}/s/${series.key}`} key={series.id}>
                       <div className={styles.thumbnail}>
                         {series.imageUrl ? (
-                          <img src={series.imageUrl} alt="" />
+                          <OptimizedImage
+                            src={series.imageUrl}
+                            width={series.imageWidth}
+                            height={series.imageHeight}
+                            sizes="(max-width: 575px) 100vw, 270px"
+                          />
                         ) : (
                           <div className={styles.dummy}>
                             <MenuBookRoundedIcon />

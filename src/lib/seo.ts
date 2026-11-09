@@ -50,7 +50,7 @@ export function Seo({
   const url = `${domain}${pagePath}`;
   const imgUrl = `${pageImg}`;
   const imgTwt = pageTwt || pageImg;
-  const imgWidth = pageImgWidth || 1280;
+  const imgWidth = pageImgWidth || 1200;
   const imgHeight = pageImgHeight || 630;
   const ogType: OgType = pageOgType || 'website';
 

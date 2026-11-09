@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -35,6 +35,7 @@ import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -67,6 +68,8 @@ type SiteInfoInfo = {
   site_label: string | null;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width?: number | null;
+  profile_logo_height?: number | null;
   summary: string | null;
   og_image: string | null;
   promotion_image: string | null;
@@ -195,7 +198,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingSiteOg, setIsUploadingSiteOg] = useState(false);
   const [isUploadingPromotion, setIsUploadingPromotion] = useState(false);
-  const [baseUrl, setBaseUrl] = useState('');
+  const baseUrl = useSyncExternalStore(
+    () => () => undefined,
+    () => window.location.origin,
+    () => '',
+  );
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
   const [checkedSiteKey, setCheckedSiteKey] = useState('');
@@ -1085,10 +1092,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
   }
 
-  useEffect(() => {
-    setBaseUrl(window.location.origin);
-  }, []);
-
   if (!siteInfo) {
     return (
       <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
@@ -1175,15 +1178,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
             <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
               {profileLogoUrl ? (
-                <Box
-                  component="img"
+                <OptimizedImage
                   src={profileLogoUrl}
+                  width={siteInfo.profile_logo_width}
+                  height={siteInfo.profile_logo_height}
+                  sizes={getHeightBasedSizes(80, siteInfo.profile_logo_width, siteInfo.profile_logo_height, 240)}
                   alt={`${siteInfo.site_label ?? siteInfo.site_key} 로고`}
-                  sx={{
-                    maxWidth: 240,
-                    maxHeight: 80,
-                    objectFit: 'contain',
-                  }}
+                  style={{ width: 'auto', height: 'auto', maxWidth: 240, maxHeight: 80, objectFit: 'contain' }}
                 />
               ) : (
                 <Typography variant="body2">등록된 사이트 로고가 없습니다.</Typography>
@@ -1611,7 +1612,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 sx={{
                   width: '100%',
                   maxWidth: '100%',
-                  aspectRatio: '1280 / 630',
+                  aspectRatio: '1200 / 630',
                   objectFit: 'cover',
                 }}
               />
@@ -1631,7 +1632,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             </p>
             <p className="alert info">
               <InfoOutlineRoundedIcon />
-              <span>1280 : 630 비율로 올리시는 것을 추천합니다.</span>
+              <span>1200 : 630 비율로 올리시는 것을 추천합니다.</span>
             </p>
 
             <VisuallyHiddenInput

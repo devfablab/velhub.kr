@@ -34,7 +34,11 @@ export async function POST(request: Request) {
     const fileBuffer = Buffer.from(arrayBuffer);
     const filePath = `${crypto.randomUUID()}.webp`;
 
-    const convertedBuffer = await sharp(fileBuffer).webp({ lossless: true }).toBuffer();
+    const convertedBuffer = await sharp(fileBuffer)
+      .resize(1200, 630, { fit: 'cover', position: 'centre' })
+      .webp({ lossless: true })
+      .toBuffer();
+    const convertedMetadata = await sharp(convertedBuffer).metadata();
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -53,6 +57,8 @@ export async function POST(request: Request) {
       ok: true,
       ogImage: filePath,
       url: publicUrlResult.data.publicUrl ?? '',
+      width: convertedMetadata.width ?? null,
+      height: convertedMetadata.height ?? null,
     });
   } catch {
     return Response.json({ error: '오픈그래프 이미지 업로드에 실패했습니다.' }, { status: 500 });

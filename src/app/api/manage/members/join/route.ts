@@ -1,3 +1,4 @@
+import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
@@ -17,6 +18,8 @@ type AnsweredQuestionRow = {
   answer_text: string | null;
   selected_option: string | null;
   answer_image: string | null;
+  answer_image_width?: number | null;
+  answer_image_height?: number | null;
 };
 
 type JoinQuestionRow = {
@@ -263,7 +266,13 @@ export async function POST(request: Request) {
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const nickname = normalizeText(requestBody.nickname);
-    const answeredQuestions = normalizeAnsweredQuestions(requestBody.answeredQuestions);
+    const answeredQuestions = await Promise.all(
+      normalizeAnsweredQuestions(requestBody.answeredQuestions).map(async (answer) => {
+        if (!answer.answer_image) return answer;
+        const size = await getStoredImageSize('community_answer', answer.answer_image);
+        return { ...answer, answer_image_width: size.width, answer_image_height: size.height };
+      }),
+    );
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });

@@ -16,7 +16,7 @@ export default async function Page({ params }: { params: Promise<{ siteName: str
         const { getSupabaseAdmin } = await import('@/lib/clients/supabase');
         const result = await getSupabaseAdmin()
           .from('blog_subscription_badges')
-          .select('subscription_months, image_url')
+          .select('subscription_months, image_url, image_width, image_height')
           .eq('site_id', feature.siteId)
           .order('subscription_months');
         if (result.error) throw new Error('멤버십팬 배지 설정을 불러오지 못했습니다.');

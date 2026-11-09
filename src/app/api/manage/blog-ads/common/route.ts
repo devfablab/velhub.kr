@@ -1,12 +1,13 @@
 import {
   BLOG_AD_REPORT_REASON_LABELS,
-  MAX_BLOG_AD_ITEMS,
   getBlogAdIdentityStatus,
+  getBlogAdImageSize,
   getBlogAdPublicImageUrl,
   getBlogAdReportCorrection,
   getBlogAdSiteContext,
   isImmediateBlogAdReport,
   isValidBlogAdUrl,
+  MAX_BLOG_AD_ITEMS,
 } from '@/lib/service/blog/blogAds/server';
 import { hasMultipleBlogAdLinkDomains } from '@/lib/service/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     const context = await getOwnerContext(siteName);
     const result = await context.supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, shop_name, thumbnail_image, link_url, sort_order')
+      .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
       .eq('site_id', context.siteId)
       .is('post_id', null)
       .is('deleted_at', null)
@@ -225,6 +226,7 @@ export async function PUT(request: Request) {
             product_name: item.productName,
             shop_name: shopName,
             thumbnail_image: item.thumbnailImage,
+            ...(await getBlogAdImageSize(item.thumbnailImage)),
             link_url: item.linkUrl,
             sort_order: sortOrder,
             updated_at: now,
@@ -238,6 +240,7 @@ export async function PUT(request: Request) {
           product_name: item.productName,
           shop_name: shopName,
           thumbnail_image: item.thumbnailImage,
+          ...(await getBlogAdImageSize(item.thumbnailImage)),
           link_url: item.linkUrl,
           sort_order: sortOrder,
         });

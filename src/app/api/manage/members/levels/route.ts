@@ -7,6 +7,8 @@ import { getCommunityManagerAccess } from '@/lib/service/community/communityMana
 import { refreshCommunitySiteMemberLevels } from '@/lib/service/community/refreshMemberLevel';
 import { normalizeText } from '@/lib/utils';
 
+const MAX_ICON_FILE_SIZE = 1024 * 1024;
+
 type LevelRequirementType = 'manual' | 'automatic';
 
 type LevelRow = {
@@ -466,6 +468,10 @@ export async function PUT(request: Request) {
 
     if (!isSvg && !isPng && !isJpg) {
       return Response.json({ error: 'png, jpg, svg 파일만 업로드할 수 있습니다.' }, { status: 400 });
+    }
+
+    if (file.size > MAX_ICON_FILE_SIZE) {
+      return Response.json({ error: '등급 아이콘은 1MB 이하로 업로드해 주세요.' }, { status: 400 });
     }
 
     const fileArrayBuffer = await file.arrayBuffer();

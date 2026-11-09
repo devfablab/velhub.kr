@@ -37,7 +37,7 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
-const MAX_AVATAR_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_AVATAR_FILE_SIZE = 1024 * 1024;
 const ALLOWED_AVATAR_FILE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 function isExternalAvatarValue(value: string) {
@@ -196,7 +196,7 @@ export default function UserInfo({
     }
 
     if (selectedFile.size <= 0 || selectedFile.size > MAX_AVATAR_FILE_SIZE) {
-      const message = '아바타 이미지는 5MB 이하로 업로드해 주세요.';
+      const message = '아바타 이미지는 1MB 이하로 업로드해 주세요.';
       setAvatarError(message);
       openErrorDialog('아바타 수정', [message]);
       inputElement.value = '';

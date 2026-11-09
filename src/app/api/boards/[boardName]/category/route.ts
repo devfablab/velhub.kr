@@ -52,7 +52,9 @@ export async function GET(request: Request, context: RouteContext) {
 
     const categories = await supabaseAdmin
       .from('board_categories')
-      .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
+      .select(
+        'id, category_key, category_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, sort_order, board_id, site_id, created_at',
+      )
       .eq('site_id', rhizome.data.id)
       .eq('board_id', board.data.id)
       .order('sort_order', { ascending: true })

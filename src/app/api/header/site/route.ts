@@ -17,6 +17,8 @@ type SiteRow = {
   theme_type: string;
   profile_picture: string | null;
   profile_logo: string | null;
+  profile_logo_width: number | null;
+  profile_logo_height: number | null;
 };
 
 type SiteVisitCountRow = {
@@ -360,7 +362,9 @@ export async function GET(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, site_type, theme_type, profile_picture, profile_logo')
+      .select(
+        'id, site_key, site_label, site_type, theme_type, profile_picture, profile_logo, profile_logo_width, profile_logo_height',
+      )
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -424,6 +428,8 @@ export async function GET(request: Request) {
         siteLabel: site.site_label,
         profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
         profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
+        profileLogoWidth: site.profile_logo_width,
+        profileLogoHeight: site.profile_logo_height,
       });
     }
 
@@ -595,6 +601,8 @@ export async function GET(request: Request) {
       siteLabel: site.site_label,
       profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
       profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
+      profileLogoWidth: site.profile_logo_width,
+      profileLogoHeight: site.profile_logo_height,
       ...libraryStatus,
     });
   } catch (unknownError) {

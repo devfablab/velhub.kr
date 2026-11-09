@@ -18,6 +18,7 @@ import {
 import type { ReportTargetType } from '@/lib/reports/guidelines';
 import { formatDateTimeDetail } from '@/lib/utils';
 import CommentForm from '@/components/comments/CommentForm';
+import OptimizedImage from '@/components/OptimizedImage';
 import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
 import ReportButton from '../service/common/ReportButton';
 import CommunityMemberMenu from '../service/community/CommunityMemberMenu';
@@ -76,6 +77,8 @@ export type CommentData = {
   author_name: string;
   author_avatar_url: string;
   author_membership_badge_url?: string | null;
+  author_membership_badge_width?: number | null;
+  author_membership_badge_height?: number | null;
   author_level: AuthorLevel | null;
   author_role: AuthorRole;
   author_manage_roles: AuthorManageRole[];
@@ -346,9 +349,12 @@ export default function CommentItem({
             )}
           </cite>
           {comment.author_membership_badge_url ? (
-            <img
+            <OptimizedImage
               className={styles['membership-fan-badge']}
               src={comment.author_membership_badge_url}
+              width={comment.author_membership_badge_width}
+              height={comment.author_membership_badge_height}
+              sizes="16px"
               alt="멤버십팬 배지"
             />
           ) : null}

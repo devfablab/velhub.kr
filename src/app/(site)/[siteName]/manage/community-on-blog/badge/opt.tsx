@@ -6,12 +6,22 @@ import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import { Avatar, Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import styles from '@/app/manage.module.sass';
 
 const PERIODS = [0, 1, 3, 6, 12, 24, 36, 48, 60];
 const label = (months: number) => (months >= 60 ? '5년 이상' : `${months}개월`);
 
-export default function Opt({ badges }: { badges: Array<{ subscription_months: number; image_url: string }> }) {
+export default function Opt({
+  badges,
+}: {
+  badges: Array<{
+    subscription_months: number;
+    image_url: string;
+    image_width?: number | null;
+    image_height?: number | null;
+  }>;
+}) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
@@ -115,9 +125,12 @@ export default function Opt({ badges }: { badges: Array<{ subscription_months: n
                         <cite>본문 미리보기</cite>
                         {files[value] || badge ? (
                           <em>
-                            <img
+                            <OptimizedImage
                               className={styles['membership-fan-badge']}
                               src={files[value] ? URL.createObjectURL(files[value]) : badge?.image_url}
+                              width={files[value] ? null : badge?.image_width}
+                              height={files[value] ? null : badge?.image_height}
+                              sizes="16px"
                               alt="멤버십팬 배지"
                             />
                           </em>
@@ -140,9 +153,12 @@ export default function Opt({ badges }: { badges: Array<{ subscription_months: n
                         <span>댓글 미리보기</span>
                       </cite>
                       {files[value] || badge ? (
-                        <img
+                        <OptimizedImage
                           className={styles['membership-fan-badge']}
                           src={files[value] ? URL.createObjectURL(files[value]) : badge?.image_url}
+                          width={files[value] ? null : badge?.image_width}
+                          height={files[value] ? null : badge?.image_height}
+                          sizes="16px"
                           alt="멤버십팬 배지"
                         />
                       ) : null}

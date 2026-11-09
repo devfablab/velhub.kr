@@ -38,7 +38,7 @@ async function checkAccess(siteName: string) {
   const rhizome = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, owner_id, site_key, site_label, profile_picture, profile_logo, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown, custom_domain',
+      'id, created_at, owner_id, site_key, site_label, profile_picture, profile_logo, profile_logo_width, profile_logo_height, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown, custom_domain',
     )
     .eq('site_key', siteName)
     .maybeSingle();

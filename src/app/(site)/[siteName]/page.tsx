@@ -44,6 +44,8 @@ type CategoryRow = {
   category_label: string;
   summary: string | null;
   thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
   sort_order: number;
 };
 
@@ -53,6 +55,8 @@ type SeriesRow = {
   series_label: string;
   summary: string | null;
   thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
   last_published_at: string | null;
   created_at: string;
   is_completed: boolean;
@@ -175,13 +179,17 @@ export default async function Page(context: RouteContext) {
         .limit(1),
       supabaseAdmin
         .from('board_categories')
-        .select('id, category_key, category_label, summary, thumbnail_image, sort_order')
+        .select(
+          'id, category_key, category_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, sort_order',
+        )
         .eq('site_id', rhizome.id)
         .order('sort_order', { ascending: true })
         .overrideTypes<CategoryRow[], { merge: false }>(),
       supabaseAdmin
         .from('board_series')
-        .select('id, series_key, series_label, summary, thumbnail_image, last_published_at, created_at, is_completed')
+        .select(
+          'id, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, last_published_at, created_at, is_completed',
+        )
         .eq('site_id', rhizome.id)
         .order('last_published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
@@ -199,6 +207,8 @@ export default async function Page(context: RouteContext) {
       label: category.category_label,
       summary: category.summary,
       imageUrl: getBlogHomeImageUrl('category', category.thumbnail_image),
+      imageWidth: category.thumbnail_width,
+      imageHeight: category.thumbnail_height,
     }));
     const series = (seriesResult.data ?? []).map((seriesItem) => ({
       id: seriesItem.id,
@@ -206,6 +216,8 @@ export default async function Page(context: RouteContext) {
       label: seriesItem.series_label,
       summary: seriesItem.summary,
       imageUrl: getBlogHomeImageUrl('series', seriesItem.thumbnail_image),
+      imageWidth: seriesItem.thumbnail_width,
+      imageHeight: seriesItem.thumbnail_height,
       publishedAt: seriesItem.last_published_at,
       isCompleted: seriesItem.is_completed,
     }));

@@ -1,5 +1,5 @@
 import { isValidActivityName } from '@/lib/auth/emailSignUp';
-import { r2Storage } from '@/lib/clients/r2Storage';
+import { getStoredImageSize, r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
@@ -86,12 +86,29 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
+    const currentStigmaResult = await supabaseAdmin
+      .from('stigmas')
+      .select('avatar')
+      .eq('user_id', sessionClaims.userId)
+      .maybeSingle();
+
+    if (currentStigmaResult.error) {
+      return Response.json({ error: '기본정보 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    const isAvatarChanged = (currentStigmaResult.data?.avatar ?? '') !== avatar;
+    const avatarSize =
+      avatar && !isExternalAvatarUrl(avatar)
+        ? await getStoredImageSize(AVATAR_BUCKET, avatar)
+        : { width: null, height: null };
+
     const stigmaUpdateResult = await supabaseAdmin
       .from('stigmas')
       .update({
         user_name: encrypt(userName),
         bio: bio ? encrypt(bio) : null,
         avatar: avatar || null,
+        ...(isAvatarChanged ? { avatar_width: avatarSize.width, avatar_height: avatarSize.height } : {}),
       })
       .eq('user_id', sessionClaims.userId);
 

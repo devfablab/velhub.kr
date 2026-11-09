@@ -78,6 +78,8 @@ function getFieldErrorResponse(field: keyof typeof EMPTY_SITE_CREATE_FIELD_ERROR
   return Response.json({ error, fieldErrors: { ...EMPTY_SITE_CREATE_FIELD_ERRORS, [field]: error } }, { status: 400 });
 }
 
+const MAX_PROFILE_PICTURE_FILE_SIZE = 1024 * 1024;
+
 function isAllowedProfilePictureFile(file: File) {
   const extension = path.extname(file.name).toLowerCase();
 
@@ -100,6 +102,10 @@ async function uploadProfilePicture({
 }) {
   if (!isAllowedProfilePictureFile(file)) {
     throw new Error('PNG, JPG, WEBP, SVG 파일만 업로드할 수 있습니다.');
+  }
+
+  if (file.size > MAX_PROFILE_PICTURE_FILE_SIZE) {
+    throw new Error('프로필 이미지는 1MB 이하로 업로드해 주세요.');
   }
 
   const inputBuffer = Buffer.from(await file.arrayBuffer());

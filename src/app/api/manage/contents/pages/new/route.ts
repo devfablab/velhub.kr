@@ -1,3 +1,4 @@
+import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { canManageCommunityPages, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
@@ -116,6 +117,14 @@ export async function POST(request: Request) {
 
     if (page.error || !Array.isArray(page.data) || !page.data[0]) {
       return Response.json({ error: page.error?.message || '페이지 추가에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (ogImage) {
+      const ogImageSize = await getStoredImageSize('og-image', ogImage);
+      await supabaseAdmin
+        .from('pages')
+        .update({ og_image_width: ogImageSize.width, og_image_height: ogImageSize.height })
+        .eq('id', page.data[0].page_id);
     }
 
     return Response.json({

@@ -7,6 +7,7 @@ import { Box, Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/mate
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import OptimizedImage from '@/components/OptimizedImage';
 import ManagePostActions from '@/components/service/community/ManagePostActions';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import Container from '../../../../../menu';
@@ -243,11 +244,13 @@ export default function Opt({
                   <Typography variant="subtitle2">
                     {board.board_type === 'basic' ? '썸네일 이미지' : '오픈 그래프 이미지'}
                   </Typography>
-                  <Box
-                    component="img"
+                  <OptimizedImage
                     src={content.thumbnail_image_url}
+                    width={content.thumbnail_width}
+                    height={content.thumbnail_height}
+                    sizes="520px"
                     alt="썸네일 이미지"
-                    sx={{ width: '100%', maxWidth: 520, display: 'block' }}
+                    style={{ width: '100%', maxWidth: 520, height: 'auto', display: 'block' }}
                   />
                 </Stack>
               ) : null}
@@ -257,12 +260,14 @@ export default function Opt({
                   <Typography variant="subtitle2">이미지</Typography>
                   <Stack gap={1.5}>
                     {content.images.map((image, index) => (
-                      <Box
+                      <OptimizedImage
                         key={`${image.path}-${index}`}
-                        component="img"
                         src={image.url}
+                        width={image.width}
+                        height={image.height}
+                        sizes="520px"
                         alt={`이미지 ${index + 1}`}
-                        sx={{ width: '100%', maxWidth: 520, display: 'block' }}
+                        style={{ width: '100%', maxWidth: 520, height: 'auto', display: 'block' }}
                       />
                     ))}
                   </Stack>

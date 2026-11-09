@@ -53,7 +53,7 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
     postIds.length
       ? supabaseAdmin
           .from('blog_community_post_images')
-          .select('post_id, image_url, sort_order')
+          .select('post_id, image_url, image_width, image_height, sort_order')
           .in('post_id', postIds)
           .order('sort_order')
       : Promise.resolve({ data: [], error: null }),
@@ -77,7 +77,7 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
       : Promise.resolve({ data: [], error: null }),
     supabaseAdmin
       .from('blog_subscription_badges')
-      .select('subscription_months,image_url')
+      .select('subscription_months,image_url,image_width,image_height')
       .eq('site_id', siteId)
       .order('subscription_months'),
   ]);
@@ -90,10 +90,10 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
     badgesResult.error
   )
     throw new Error('커뮤니티 글을 불러오지 못했습니다.');
-  const imageMap = new Map<string, string[]>();
+  const imageMap = new Map<string, { url: string; width: number | null; height: number | null }[]>();
   for (const image of imagesResult.data ?? []) {
     const images = imageMap.get(image.post_id) ?? [];
-    images.push(image.image_url);
+    images.push({ url: image.image_url, width: image.image_width, height: image.image_height });
     imageMap.set(image.post_id, images);
   }
   const authorMap = new Map(
@@ -107,18 +107,23 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
     if (comment.is_deleted) continue;
     commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) ?? 0) + 1);
   }
-  const badgeMap = new Map<string, string>();
+  const badgeMap = new Map<string, { url: string; width: number | null; height: number | null }>();
   for (const subscription of subscriptionsResult.data ?? []) {
     if (badgeMap.has(subscription.subscriber_user_id)) continue;
-    if (isValidBlogSubscription(subscription))
-      badgeMap.set(
-        subscription.subscriber_user_id,
-        subscription.badge_image_url ??
-          (badgesResult.data ?? []).filter((badge) => badge.subscription_months <= subscription.badge_months).at(-1)
-            ?.image_url ??
-          (badgesResult.data ?? [])[0]?.image_url ??
-          '',
-      );
+    if (!isValidBlogSubscription(subscription)) continue;
+
+    const badgeUrl =
+      subscription.badge_image_url ??
+      (badgesResult.data ?? []).filter((badge) => badge.subscription_months <= subscription.badge_months).at(-1)
+        ?.image_url ??
+      (badgesResult.data ?? [])[0]?.image_url ??
+      '';
+    const badgeSize = (badgesResult.data ?? []).find((badge) => badge.image_url === badgeUrl);
+    badgeMap.set(subscription.subscriber_user_id, {
+      url: badgeUrl,
+      width: badgeSize?.image_width ?? null,
+      height: badgeSize?.image_height ?? null,
+    });
   }
 
   return {
@@ -129,7 +134,9 @@ async function getPosts(siteId: string, page: number, stigmaId: string | null, i
       editedAt: post.edited_at,
       authorName: authorMap.get(post.user_id)?.name ?? '알 수 없음',
       authorAvatarUrl: authorMap.get(post.user_id)?.avatarUrl ?? null,
-      authorBadgeUrl: badgeMap.get(post.user_id) ?? null,
+      authorBadgeUrl: badgeMap.get(post.user_id)?.url || null,
+      authorBadgeWidth: badgeMap.get(post.user_id)?.width ?? null,
+      authorBadgeHeight: badgeMap.get(post.user_id)?.height ?? null,
       isAuthor: stigmaId === post.user_id,
       canDelete: isOwner || stigmaId === post.user_id,
       isWordingBlinded: post.is_wording_blinded === true,
@@ -319,19 +326,31 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    const uploadedImages: { post_id: string; image_url: string; sort_order: number }[] = [];
+    const uploadedImages: {
+      post_id: string;
+      image_url: string;
+      image_width: number | null;
+      image_height: number | null;
+      sort_order: number;
+    }[] = [];
     let imageUploadError = false;
     for (const [index, file] of files.entries()) {
       try {
         const buffer = Buffer.from(await file.arrayBuffer());
-        const webp = await sharp(buffer).webp({ quality: 90 }).toBuffer();
+        const { data: webp, info } = await sharp(buffer).webp({ quality: 90 }).toBuffer({ resolveWithObject: true });
         const path = getStoragePath(feature.siteId, postResult.data.id, index);
         const upload = await r2Storage
           .from('blog-community')
           .upload(path, webp, { contentType: 'image/webp', upsert: false });
         if (upload.error) throw upload.error;
         const url = r2Storage.from('blog-community').getPublicUrl(path).data.publicUrl;
-        uploadedImages.push({ post_id: postResult.data.id, image_url: url, sort_order: index });
+        uploadedImages.push({
+          post_id: postResult.data.id,
+          image_url: url,
+          image_width: info.width ?? null,
+          image_height: info.height ?? null,
+          sort_order: index,
+        });
       } catch {
         imageUploadError = true;
       }

@@ -1,7 +1,7 @@
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getBlogSubscriptionBadgeUrls } from '@/lib/payments/blogDonation';
+import { getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
 import { registerBlogCommunityFirstComeDraw } from '@/lib/service/blog/blogCommunity/draw';
 import { isNumericContentSlug } from '@/lib/utils';
@@ -77,7 +77,7 @@ export async function GET(_request: Request, context: RouteContext) {
       ? await supabaseAdmin.from('stigmas').select('id, user_name, avatar').in('id', userIds)
       : { data: [], error: null };
     if (authorsResult.error) throw new Error('댓글을 불러오지 못했습니다.');
-    const badgeByUser = await getBlogSubscriptionBadgeUrls({
+    const badgeByUser = await getBlogSubscriptionBadges({
       supabaseAdmin,
       siteId: feature.siteId,
       subscriberIds: userIds,
@@ -122,7 +122,9 @@ export async function GET(_request: Request, context: RouteContext) {
         is_pinned: false,
         author_name: authors.get(comment.user_id)?.name ?? '알 수 없음',
         author_avatar_url: authors.get(comment.user_id)?.avatarUrl ?? '',
-        author_membership_badge_url: badgeByUser.get(comment.user_id) ?? null,
+        author_membership_badge_url: badgeByUser.get(comment.user_id)?.url ?? null,
+        author_membership_badge_width: badgeByUser.get(comment.user_id)?.width ?? null,
+        author_membership_badge_height: badgeByUser.get(comment.user_id)?.height ?? null,
         author_level: null,
         author_role: 'member' as const,
         author_manage_roles: [],

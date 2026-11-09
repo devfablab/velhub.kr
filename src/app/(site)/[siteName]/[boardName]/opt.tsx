@@ -1,7 +1,6 @@
 'use client';
 
 import { type JSX, type ReactNode, useState, useTransition } from 'react';
-import Image from 'next/image';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -21,6 +20,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import SiteProfile from '@/components/service/blog/SiteProfile';
@@ -206,16 +206,16 @@ function getGalleryThumbnail(content: PostItem) {
   if (content.thumbnail_image_url) {
     return {
       url: content.thumbnail_image_url,
-      width: content.thumbnail_width ?? firstImage?.width ?? 1200,
-      height: content.thumbnail_height ?? firstImage?.height ?? 675,
+      width: content.thumbnail_width ?? 1200,
+      height: content.thumbnail_height ?? 630,
     };
   }
 
   if (firstImage?.url) {
     return {
       url: firstImage.url,
-      width: firstImage.width ?? 1200,
-      height: firstImage.height ?? 675,
+      width: firstImage.width,
+      height: firstImage.height,
     };
   }
 
@@ -246,31 +246,35 @@ function truncateText(value: string | null, maxLength: number) {
 
 function YoutubeThumbnailImage({ content }: { content: PostItem }) {
   const [qualityIndex, setQualityIndex] = useState(0);
-  const thumbnailUrl = content.thumbnail_image_url
-    ? content.thumbnail_image_url
-    : content.youtube_id
-      ? getYoutubeThumbnailUrl(content.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[qualityIndex])
-      : '';
+  const youtubeThumbnailUrl = content.youtube_id
+    ? getYoutubeThumbnailUrl(content.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[qualityIndex])
+    : '';
 
-  if (!thumbnailUrl) {
+  if (content.thumbnail_image_url) {
+    return (
+      <OptimizedImage
+        src={content.thumbnail_image_url}
+        width={content.thumbnail_width ?? 1200}
+        height={content.thumbnail_height ?? 630}
+        sizes="(max-width: 575px) 100vw, 270px"
+      />
+    );
+  }
+
+  if (!youtubeThumbnailUrl) {
     return null;
   }
 
   return (
-    <Image
-      src={thumbnailUrl}
-      width={content.thumbnail_width ?? 1280}
-      height={content.thumbnail_height ?? 720}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={youtubeThumbnailUrl}
       alt=""
-      onError={() => {
-        if (content.thumbnail_image_url) {
-          return;
-        }
-
+      onError={() =>
         setQualityIndex((previousIndex) =>
           previousIndex < YOUTUBE_THUMBNAIL_QUALITIES.length - 1 ? previousIndex + 1 : previousIndex,
-        );
-      }}
+        )
+      }
     />
   );
 }
@@ -831,7 +835,12 @@ export default function Opt({
                         </span>
                         <small>{`${imageCount}개 이미지`}</small>
                         {thumbnail ? (
-                          <img src={thumbnail.url} width={thumbnail.width} height={thumbnail.height} alt="" />
+                          <OptimizedImage
+                            src={thumbnail.url}
+                            width={thumbnail.width}
+                            height={thumbnail.height}
+                            sizes="(max-width: 575px) 100vw, 270px"
+                          />
                         ) : null}
                       </div>
                       <div className={styles.info}>
@@ -929,11 +938,11 @@ export default function Opt({
                     <div className={styles.thumbnail}>
                       <span>{content.published_status === 'draft' ? <em>(임시글)</em> : null}</span>
                       {content.thumbnail_image_url ? (
-                        <Image
+                        <OptimizedImage
                           src={content.thumbnail_image_url}
-                          alt=""
-                          width={content.thumbnail_width}
-                          height={content.thumbnail_height}
+                          width={content.thumbnail_width ?? 1200}
+                          height={content.thumbnail_height ?? 630}
+                          sizes="(max-width: 575px) 100vw, 270px"
                         />
                       ) : (
                         <div className={styles.dummy}>

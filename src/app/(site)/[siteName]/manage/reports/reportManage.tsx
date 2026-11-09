@@ -43,6 +43,7 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import { formatTimeAgo } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -99,6 +100,8 @@ type ReportItem = {
     authorName: string;
     content: string;
     thumbnailImage: string | null;
+    thumbnailWidth: number | null;
+    thumbnailHeight: number | null;
     images: PostImage[] | null;
     poll: PollData | null;
     isClosed: boolean;
@@ -309,19 +312,16 @@ function renderPoll(poll: PollData | null) {
           {poll.options.map((option) => (
             <Stack key={option.id} gap={0.5} direction="row" alignItems="center" justifyContent="space-between">
               {option.image ? (
-                <Box
-                  component="img"
-                  src={option.image.url}
-                  alt="투표 선택지 이미지"
-                  sx={{
-                    width: 170,
-                    height: 170,
-                    objectFit: 'cover',
-                    borderRadius: 1,
-                    mb: 0.5,
-                    aspectRatio: 1 / 1,
-                  }}
-                />
+                <Box sx={{ width: 170, height: 170, mb: 0.5, borderRadius: 1, overflow: 'hidden' }}>
+                  <OptimizedImage
+                    src={option.image.url}
+                    width={option.image.width}
+                    height={option.image.height}
+                    sizes="170px"
+                    alt="투표 선택지 이미지"
+                    style={{ width: 170, height: 170, objectFit: 'cover', display: 'block' }}
+                  />
+                </Box>
               ) : null}
 
               <Typography variant="body2">{option.label || '-'}</Typography>
@@ -388,17 +388,16 @@ function renderPostDetail(post: NonNullable<ReportItem['post']>, boardType: stri
           <Box>
             <Typography variant="subtitle2">유튜브 썸네일</Typography>
 
-            <Box
-              component="img"
-              src={post.thumbnailImage}
-              alt="유튜브 썸네일"
-              sx={{
-                width: '100%',
-                maxWidth: 480,
-                display: 'block',
-                borderRadius: 1,
-              }}
-            />
+            <Box sx={{ maxWidth: 480, borderRadius: 1, overflow: 'hidden' }}>
+              <OptimizedImage
+                src={post.thumbnailImage}
+                width={post.thumbnailWidth}
+                height={post.thumbnailHeight}
+                sizes="480px"
+                alt="유튜브 썸네일"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
+            </Box>
           </Box>
         ) : null}
 

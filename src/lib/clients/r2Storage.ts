@@ -224,6 +224,13 @@ export const r2Storage = {
   },
 };
 
+export async function getStoredImageSize(bucket: string, path: string | null | undefined) {
+  if (!path) return { width: null, height: null };
+
+  const sizeResult = await createBucketStorage(bucket).getImageSize(path);
+  return { width: sizeResult.data?.width ?? null, height: sizeResult.data?.height ?? null };
+}
+
 export async function createR2UploadSignature(
   bucket: string,
   request: UploadRequest,

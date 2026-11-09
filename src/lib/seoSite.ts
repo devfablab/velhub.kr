@@ -178,7 +178,7 @@ export function Seo({
   const url = `${baseUrl}${normalizedPagePath}`;
   const imageUrl = normalizeText(pageImg) || getDefaultImageUrl();
   const twitterImageUrl = normalizeText(pageTwt) || imageUrl;
-  const imageWidth = pageImgWidth || 1280;
+  const imageWidth = pageImgWidth || 1200;
   const imageHeight = pageImgHeight || 630;
   const ogType: OgType = pageOgType || 'website';
 

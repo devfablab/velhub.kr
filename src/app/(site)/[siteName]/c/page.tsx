@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import OptimizedImage from '@/components/OptimizedImage';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
@@ -22,6 +23,8 @@ type CategoryRow = {
   category_label: string;
   summary: string | null;
   thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
   sort_order: number;
   board_id: string;
   site_id: string;
@@ -89,6 +92,8 @@ export default async function Page(context: RouteContext) {
         category_label,
         summary,
         thumbnail_image,
+        thumbnail_width,
+        thumbnail_height,
         sort_order,
         board_id,
         site_id,
@@ -122,7 +127,12 @@ export default async function Page(context: RouteContext) {
                     <Anchor href={`/${normalizedSiteName}/c/${category.category_key}`} key={category.id}>
                       <div className={styles.thumbnail}>
                         {imageUrl ? (
-                          <img src={imageUrl} alt="" />
+                          <OptimizedImage
+                            src={imageUrl}
+                            width={category.thumbnail_width}
+                            height={category.thumbnail_height}
+                            sizes="(max-width: 575px) 100vw, 270px"
+                          />
                         ) : (
                           <div className={styles.dummy}>
                             <MenuBookRoundedIcon />
