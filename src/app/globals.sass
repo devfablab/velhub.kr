@@ -444,6 +444,12 @@ a, button, select, input
             html[data-theme="yellow-dark"] &
               color: ds.$hex-bright
 
+          a:visited
+            color: color-mix(in srgb, #{ds.$hex-primary} 70%, #{ds.$hex-white})
+
+            html[data-theme="yellow-dark"] &
+              color: color-mix(in srgb, #{ds.$hex-bright} 70%, #{ds.$hex-black})
+
   ol.list
     display: flex
     flex-direction: column
@@ -478,6 +484,14 @@ a, button, select, input
 
         html[data-theme="yellow-dark"] &
           background-color: rgba(ds.$rgb-accent, .1)
+
+      &:visited
+        .board-subject
+          span
+            color: color-mix(in srgb, #{ds.$hex-primary} 70%, #{ds.$hex-white})
+
+            html[data-theme="yellow-dark"] &
+              color: color-mix(in srgb, #{ds.$hex-bright} 70%, #{ds.$hex-black})
 
       .subject
         display: flex
