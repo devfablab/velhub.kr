@@ -1,6 +1,6 @@
 'use client';
 
-import InviteAcceptance, { type InviteAcceptanceResponse } from '@/components/service/common/InviteAcceptance';
+import InviteAcceptance, { type InviteAcceptanceResponse } from '@/components/InviteAcceptance';
 
 export type InviteResponse = InviteAcceptanceResponse;
 

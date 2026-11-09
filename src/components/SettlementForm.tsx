@@ -19,11 +19,11 @@ import {
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
+import DevIdentityBypassModal from '@/components/modals/DevIdentityBypassModal';
+import IdentityAgreement from '@/components/modals/IdentityAgreement';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
-import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
-import IdentityAgreement from '@/components/service/common/IdentityAgreement';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 
 type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';
 

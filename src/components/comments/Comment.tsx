@@ -6,7 +6,7 @@ import { DiscussionEmbed } from 'disqus-react';
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import CommentList from '@/components/comments/CommentList';
 import type { CommentsResponse } from '@/components/comments/CommentList';
-import SiteGuidelineActions from '../service/common/SiteGuidelineActions';
+import SiteGuidelineActions from '../buttons/SiteGuidelineActions';
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 type GiscusInputPosition = 'top' | 'bottom';

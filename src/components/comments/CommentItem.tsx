@@ -20,7 +20,7 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import CommentForm from '@/components/comments/CommentForm';
 import OptimizedImage from '@/components/OptimizedImage';
 import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
-import ReportButton from '../service/common/ReportButton';
+import ReportButton from '../buttons/ReportButton';
 import CommunityMemberMenu from '../service/community/CommunityMemberMenu';
 import styles from '@/app/comments.module.sass';
 

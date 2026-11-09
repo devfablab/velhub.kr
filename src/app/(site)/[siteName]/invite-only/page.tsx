@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import InviteButton from '@/components/service/common/InviteButton';
+import InviteButton from '@/components/buttons/InviteButton';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';

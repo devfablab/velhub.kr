@@ -55,7 +55,7 @@ export type BlogSubscriptionResponse = {
   error?: string;
 };
 
-import SettlementForm, { type SettlementResponse } from '@/components/service/common/SettlementForm';
+import SettlementForm, { type SettlementResponse } from '@/components/SettlementForm';
 import { ServiceErrorIcon } from '@/components/Svgs';
 
 type BlogSubscriptionSaveResponse = {

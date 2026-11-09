@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { getCurrentStigma } from '@/lib/session/utils';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import Container from '../../menu';
 import Opt, { SettlementResponse } from './opt';

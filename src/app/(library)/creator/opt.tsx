@@ -7,8 +7,8 @@ import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/opt
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
-import SettlementForm from '@/components/service/common/SettlementForm';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
+import SettlementForm from '@/components/SettlementForm';
 import ScreenState from '@/components/service/ScreenState';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';

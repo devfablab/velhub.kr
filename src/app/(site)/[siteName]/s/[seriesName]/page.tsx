@@ -6,8 +6,8 @@ import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } 
 import { getSeriesPageMetadata } from '@/lib/seoSite';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
-import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
-import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
+import type { DonationStatusResponse } from '@/components/buttons/DonationButton';
+import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Container from '../../menu';
 import Opt, { type SeriesContentItem } from './opt';

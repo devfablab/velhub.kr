@@ -19,7 +19,7 @@ import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import PrimaryMenu from '../header-groups/concierge/PrimaryMenu';
 import SecondaryMenu from '../header-groups/concierge/SecondaryMenu';
-import NotificationButton from '../service/common/NotificationButton';
+import NotificationButton from '../buttons/NotificationButton';
 import { ServiceLogo } from '../Svgs';
 import { useConciergeHeader } from '@/app/(concierge)/ConciergeHeaderContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';

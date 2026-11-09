@@ -13,7 +13,7 @@ import FormErrorDialog from '@/components/FormErrorDialog';
 import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import BlogAdImageDialog from '@/components/service/blog/BlogAdImageDialog';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/manage.module.sass';
 

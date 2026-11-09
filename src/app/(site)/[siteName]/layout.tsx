@@ -5,7 +5,7 @@ import { detectAdult } from '@/lib/service/detectAdult.server';
 import { normalizeText } from '@/lib/utils';
 import FooterSite from '@/components/footers/Site';
 import HeaderSite from '@/components/headers/Site';
-import SiteGoogleAnalytics from '@/components/service/common/SiteGoogleAnalytics';
+import SiteGoogleAnalytics from '@/components/SiteGoogleAnalytics';
 import { getSiteApiData } from '../getSiteApiData';
 import { SiteHeaderProvider, type SiteHeaderData } from './SiteHeaderContext';
 import { SiteInitialDataProvider } from './SiteInitialDataContext';

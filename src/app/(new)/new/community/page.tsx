@@ -7,7 +7,7 @@ import { hasMembershipFeature } from '@/lib/memberships/features';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
 import Anchor from '@/components/Anchor';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';

@@ -8,7 +8,7 @@ import type { Theme } from '@mui/material/styles';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import BlogAdImageDialog from '@/components/service/blog/BlogAdImageDialog';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 
 export type BlogPromotionReport = {
   status: 'pending' | 'issue';

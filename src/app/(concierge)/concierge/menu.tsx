@@ -44,7 +44,7 @@ import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import SecondaryMenu from '@/components/header-groups/concierge/SecondaryMenu';
-import NotificationButton from '@/components/service/common/NotificationButton';
+import NotificationButton from '@/components/buttons/NotificationButton';
 import { ServiceLogo } from '@/components/Svgs';
 import { useConciergeHeader } from '../ConciergeHeaderContext';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';

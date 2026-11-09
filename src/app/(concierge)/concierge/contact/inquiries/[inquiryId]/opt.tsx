@@ -21,7 +21,7 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
-import IdentityAgreement from '@/components/service/common/IdentityAgreement';
+import IdentityAgreement from '@/components/modals/IdentityAgreement';
 import ConciergeFileUploader, {
   type ConciergeUploadedFile,
 } from '@/components/service/concierge/ConciergeFileUploader';

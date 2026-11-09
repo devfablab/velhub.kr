@@ -90,7 +90,7 @@ e.g.) e -> event/error, res -> response, req -> request... 등등. (언급된 �
 4. components 하위
 
 - 폴더: kebab-case
-- 파일: camelCase
+- 파일: PascalCase
 
 4. lib 하위
 

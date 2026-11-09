@@ -3,7 +3,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Footer from '@/components/footers/Footer';
 import HeaderHub from '@/components/headers/Hub';
-import ChannelWorks from '@/components/service/common/ChannelWorks';
+import ChannelWorks from '@/components/ChannelWorks';
 import { HubHeaderProvider, type HubHeaderData } from './hub/shared/HubHeaderContext';
 
 export const metadata: Metadata = {

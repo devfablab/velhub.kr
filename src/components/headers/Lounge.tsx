@@ -20,7 +20,7 @@ import { useAuthState } from '@/components/auth/AuthStateProvider';
 import PrimaryMenu from '../header-groups/lounge/PrimaryMenu';
 import LoungeSearch from '../header-groups/lounge/Search';
 import SecondaryMenu from '../header-groups/lounge/SecondaryMenu';
-import NotificationButton from '../service/common/NotificationButton';
+import NotificationButton from '../buttons/NotificationButton';
 import { ServiceLogo } from '../Svgs';
 import { useLoungeHeader } from '@/app/(lounge)/lounge/shared/LoungeHeaderContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';

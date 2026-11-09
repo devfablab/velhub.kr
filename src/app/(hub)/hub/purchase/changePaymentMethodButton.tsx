@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import DuplicateBillingMethodDialog from '@/components/service/common/DuplicateBillingMethodDialog';
+import DuplicateBillingMethodDialog from '@/components/modals/DuplicateBillingMethodDialog';
 import styles from '@/app/hub.module.sass';
 
 type PortOneBillingKeyResponse = {

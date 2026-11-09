@@ -28,7 +28,7 @@ import NavMenu from '../header-groups/site/NavMenu';
 import NavPayments from '../header-groups/site/NavPayments';
 import PrimaryMenu from '../header-groups/site/PrimaryMenu';
 import OptimizedImage, { getHeightBasedSizes } from '../OptimizedImage';
-import NotificationButton from '../service/common/NotificationButton';
+import NotificationButton from '../buttons/NotificationButton';
 import { ServiceLogo } from '../Svgs';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';

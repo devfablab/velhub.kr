@@ -10,8 +10,8 @@ import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import CommentForm from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import DonationButton from '@/components/service/common/DonationButton';
-import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
+import DonationButton from '@/components/buttons/DonationButton';
+import SiteGuidelineActions from '@/components/buttons/SiteGuidelineActions';
 import Anchor from '../Anchor';
 import styles from '@/app/comments.module.sass';
 

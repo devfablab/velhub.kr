@@ -2,8 +2,8 @@
 
 import { Box, Chip, Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import BillingMethodButton from '@/components/service/common/BillingMethodButton';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import BillingMethodButton from '@/components/buttons/BillingMethodButton';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import { ServiceWarningIcon } from '@/components/Svgs';
 import { BillingMethod } from './page';
 

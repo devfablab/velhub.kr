@@ -16,7 +16,7 @@ import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
-import FabNew from '@/components/service/common/FabNew';
+import FabNew from '@/components/buttons/FabNew';
 import CommunityMemberMenu from '@/components/service/community/CommunityMemberMenu';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';

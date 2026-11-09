@@ -16,7 +16,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import BlogAdReportButton from '@/components/service/blog/BlogAdReportButton';
 import SiteProfile from '@/components/service/blog/SiteProfile';
-import ReportButton from '@/components/service/common/ReportButton';
+import ReportButton from '@/components/buttons/ReportButton';
 import ScreenState from '@/components/service/ScreenState';
 import Container from './menu';
 import styles from '@/app/board.module.sass';

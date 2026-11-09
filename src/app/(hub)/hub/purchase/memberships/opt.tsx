@@ -16,10 +16,10 @@ import {
 } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import BillingMethodButton from '@/components/service/common/BillingMethodButton';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
-import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
-import PaymentTerms from '@/components/service/common/PaymentTerms';
+import BillingMethodButton from '@/components/buttons/BillingMethodButton';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
+import type { MinorPaymentControlResponse } from '@/components/MinorPaymentControl';
+import PaymentTerms from '@/components/modals/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
 import ResponsivePopup from '../../shared/ResponsivePopup';
 import styles from '@/app/hub.module.sass';

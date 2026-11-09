@@ -6,7 +6,7 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import SettlementForm, { type SettlementResponse } from '@/components/service/common/SettlementForm';
+import SettlementForm, { type SettlementResponse } from '@/components/SettlementForm';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 

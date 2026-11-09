@@ -26,7 +26,7 @@ import BlogPostPromotionFields, {
   emptyBlogPromotion,
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
-import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/service/common/PostAttachmentUploader';
+import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/PostAttachmentUploader';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 

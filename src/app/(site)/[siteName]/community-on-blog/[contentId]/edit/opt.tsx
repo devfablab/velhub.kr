@@ -8,7 +8,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import DrawEventFields, { type BlogCommunityDrawState } from '@/components/service/blog/community/DrawEventFields';
-import SiteGuidelineActions from '@/components/service/common/SiteGuidelineActions';
+import SiteGuidelineActions from '@/components/buttons/SiteGuidelineActions';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/board.module.sass';

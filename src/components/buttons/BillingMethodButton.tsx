@@ -4,8 +4,8 @@ import { useState } from 'react';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import DuplicateBillingMethodDialog from './DuplicateBillingMethodDialog';
-import PaymentEmailDialog from './PaymentEmailDialog';
+import DuplicateBillingMethodDialog from '../modals/DuplicateBillingMethodDialog';
+import PaymentEmailDialog from '../modals/PaymentEmailDialog';
 
 type PortOneBillingKeyResponse = {
   billingKey?: string;

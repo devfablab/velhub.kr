@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import Footer from '@/components/footers/Footer';
 import HeaderConcierge from '@/components/headers/Concierge';
-import ChannelWorks from '@/components/service/common/ChannelWorks';
+import ChannelWorks from '@/components/ChannelWorks';
 import { ConciergeHeaderProvider, type ConciergeHeaderData } from './ConciergeHeaderContext';
 
 export const metadata: Metadata = {

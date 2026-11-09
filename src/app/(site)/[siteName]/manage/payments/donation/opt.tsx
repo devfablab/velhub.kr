@@ -61,7 +61,7 @@ export type DonationManageResponse = {
   error?: string;
 };
 
-import SettlementForm, { type SettlementResponse } from '@/components/service/common/SettlementForm';
+import SettlementForm, { type SettlementResponse } from '@/components/SettlementForm';
 
 function formatPrice(price: number | null | undefined) {
   if (typeof price !== 'number') {

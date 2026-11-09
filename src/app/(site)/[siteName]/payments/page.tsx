@@ -1,4 +1,4 @@
-import type { SettlementResponse } from '@/components/service/common/SettlementForm';
+import type { SettlementResponse } from '@/components/SettlementForm';
 import { getSiteApiData } from '../../getSiteApiData';
 import Container from '../menu';
 import { getRevenueSummary } from './getInitialData';

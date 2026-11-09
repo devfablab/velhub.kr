@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import type { SettlementResponse } from '@/components/service/common/SettlementForm';
+import type { SettlementResponse } from '@/components/SettlementForm';
 import Container from '../menu';
 import { getHubApiData } from '../shared/getHubApiData';
 import RevenueHub, { RevenueSitesResponse } from './opt';

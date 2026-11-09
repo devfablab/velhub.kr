@@ -10,7 +10,7 @@ import { getSessionClaims, hasCurrentAuthSessionCookie } from '@/lib/session/ser
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import TotpGuard from '@/components/auth/TotpGuard';
 import WithdrawalGuard from '@/components/auth/WithdrawalGuard';
-import { ChannelWorksMemberProvider } from '@/components/service/common/ChannelWorksContext';
+import { ChannelWorksMemberProvider } from '@/components/ChannelWorksContext';
 import ThemeProviderClient from './themeProvider';
 import './globals.sass';
 import 'slick-carousel/slick/slick-theme.css';

@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { formatDate } from '@/lib/utils';
-import type { MinorPaymentControlResponse } from '@/components/service/common/MinorPaymentControl';
+import type { MinorPaymentControlResponse } from '@/components/MinorPaymentControl';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import { getHubApiData } from '../../shared/getHubApiData';

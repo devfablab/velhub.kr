@@ -5,7 +5,7 @@ import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
 import type { CommentsResponse } from '@/components/comments/CommentList';
-import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
+import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import type { BoardRecentResponse } from '@/components/service/community/BoardRecentTableList';
 import { getSiteApiData } from '../../../getSiteApiData';

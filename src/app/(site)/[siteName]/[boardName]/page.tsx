@@ -10,8 +10,8 @@ import {
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getBoardPageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
-import type { DonationStatusResponse } from '@/components/service/common/DonationButton';
-import type { SubscriptionStatusResponse } from '@/components/service/common/SubscriptionButton';
+import type { DonationStatusResponse } from '@/components/buttons/DonationButton';
+import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import { getSiteApiData } from '../../getSiteApiData';
 import Opt, { type BoardListResponse } from './opt';

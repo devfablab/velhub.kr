@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
-import ReportButton from '@/components/service/common/ReportButton';
+import ReportButton from '@/components/buttons/ReportButton';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/header.module.sass';

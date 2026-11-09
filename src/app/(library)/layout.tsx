@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import ChannelWorks from '@/components/service/common/ChannelWorks';
+import ChannelWorks from '@/components/ChannelWorks';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',

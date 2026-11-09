@@ -20,11 +20,11 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
-import DonationButton from '../common/DonationButton';
-import type { DonationStatusResponse } from '../common/DonationButton';
-import ReportButton from '../common/ReportButton';
-import SubscriptionButton from '../common/SubscriptionButton';
-import type { SubscriptionStatusResponse } from '../common/SubscriptionButton';
+import DonationButton from '../../buttons/DonationButton';
+import type { DonationStatusResponse } from '../../buttons/DonationButton';
+import ReportButton from '../../buttons/ReportButton';
+import SubscriptionButton from '../../buttons/SubscriptionButton';
+import type { SubscriptionStatusResponse } from '../../buttons/SubscriptionButton';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 

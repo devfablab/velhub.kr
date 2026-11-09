@@ -28,10 +28,10 @@ import { normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import OptimizedImage from '@/components/OptimizedImage';
-import DonationButton from '@/components/service/common/DonationButton';
-import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';
-import PaymentTerms from '@/components/service/common/PaymentTerms';
-import IdentityVerificationButton from '../common/IdentityVerificationButton';
+import DonationButton from '@/components/buttons/DonationButton';
+import PaymentEmailDialog from '@/components/modals/PaymentEmailDialog';
+import PaymentTerms from '@/components/modals/PaymentTerms';
+import IdentityVerificationButton from '../../buttons/IdentityVerificationButton';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
