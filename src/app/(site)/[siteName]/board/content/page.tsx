@@ -4,8 +4,8 @@ import { getPostPageMetadata } from '@/lib/seoSite';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
 import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
-import type { CommentsResponse } from '@/components/comments/CommentList';
 import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
+import type { CommentsResponse } from '@/components/comments/CommentList';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Opt, { type ContentResponse, type PollResponse } from './opt';
 

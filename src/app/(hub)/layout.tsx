@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import ChannelWorks from '@/components/ChannelWorks';
 import Footer from '@/components/footers/Footer';
 import HeaderHub from '@/components/headers/Hub';
-import ChannelWorks from '@/components/ChannelWorks';
 import { HubHeaderProvider, type HubHeaderData } from './hub/shared/HubHeaderContext';
 
 export const metadata: Metadata = {

@@ -14,9 +14,9 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FabNew from '@/components/buttons/FabNew';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
-import FabNew from '@/components/buttons/FabNew';
 import CommunityMemberMenu from '@/components/service/community/CommunityMemberMenu';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -463,7 +463,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                             </i>
                           ) : null}
                           <small className="board-name board-chip" aria-label="게시판명">
-                            {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
+                            {content.board_label} {!content.is_pin ? `#${content.idx}` : null}
                           </small>
                           {content.prefix_label ? (
                             <small className="prefix-name board-chip" aria-label="말머리">
@@ -532,7 +532,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                             </i>
                           ) : null}
                           <small className="board-name board-chip" aria-label="게시판명">
-                            {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
+                            {content.board_label} {!content.is_pin ? `#${content.idx}` : null}
                           </small>
                           {content.prefix_label ? (
                             <small className="prefix-name board-chip" aria-label="말머리">

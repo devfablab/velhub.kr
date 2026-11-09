@@ -6,10 +6,10 @@ import { Stack, Typography } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
-import SettlementForm from '@/components/SettlementForm';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
+import SettlementForm from '@/components/SettlementForm';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 

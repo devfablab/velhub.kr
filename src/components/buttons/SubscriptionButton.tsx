@@ -21,10 +21,10 @@ import * as PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
-import IdentityVerificationButton from './IdentityVerificationButton';
 import MinorPaymentControl, { type MinorPaymentControlResult } from '../MinorPaymentControl';
 import PaymentEmailDialog from '../modals/PaymentEmailDialog';
 import PaymentTerms from '../modals/PaymentTerms';
+import IdentityVerificationButton from './IdentityVerificationButton';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/board.module.sass';
 

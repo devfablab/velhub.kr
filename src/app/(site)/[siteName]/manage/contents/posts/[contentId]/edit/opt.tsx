@@ -20,13 +20,13 @@ import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/PostAttachmentUploader';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import BlogPostPromotionFields, {
   emptyBlogPromotion,
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
-import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/PostAttachmentUploader';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 

@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import PortOne from '@portone/browser-sdk/v2';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import PopupMessage from '@/components/PopupMessage';
 import DevIdentityBypassModal from '@/components/modals/DevIdentityBypassModal';
 import IdentityAgreement from '@/components/modals/IdentityAgreement';
+import PopupMessage from '@/components/PopupMessage';
 
 type IdentityVerificationRequest = {
   storeId: string;

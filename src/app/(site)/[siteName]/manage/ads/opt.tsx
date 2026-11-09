@@ -8,12 +8,12 @@ import { FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui
 import type { Theme } from '@mui/material/styles';
 import { hasMultipleBlogAdLinkDomains } from '@/lib/service/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
+import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import BlogAdImageDialog from '@/components/service/blog/BlogAdImageDialog';
-import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/manage.module.sass';
 

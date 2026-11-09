@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
+import ChannelWorks from '@/components/ChannelWorks';
 import Footer from '@/components/footers/Footer';
 import HeaderLounge from '@/components/headers/Lounge';
-import ChannelWorks from '@/components/ChannelWorks';
 import { LoungeHeaderProvider, type LoungeHeaderData } from './lounge/shared/LoungeHeaderContext';
 
 export const metadata: Metadata = {

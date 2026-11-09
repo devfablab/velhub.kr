@@ -23,12 +23,12 @@ import {
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import ReportButton from '@/components/buttons/ReportButton';
 import CommentList, { type CommentsResponse } from '@/components/comments/CommentList';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import ContentWithInlineLinks from '@/components/service/blog/community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
-import ReportButton from '@/components/buttons/ReportButton';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
