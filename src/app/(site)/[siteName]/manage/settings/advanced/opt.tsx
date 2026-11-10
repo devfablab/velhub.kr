@@ -51,7 +51,6 @@ type EditResponse = {
   error?: string;
 };
 
-type VisibilityMember = 'public' | 'private';
 type AdvancedField = 'searchKeywords' | 'googleAnalytics' | 'googleSearch';
 type FieldErrors = Record<AdvancedField, string>;
 
@@ -80,9 +79,6 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
 
   const [siteInfo] = useState<SiteInfoInfo | null>(initialInfo?.siteInfo ?? null);
 
-  const [visibilityMember, setVisibilityMember] = useState<VisibilityMember>(
-    initialSites?.sites?.visibility_member === 'private' ? 'private' : 'public',
-  );
   const [searchKeywords, setSearchKeywords] = useState(initialSites?.sites?.search_keywords ?? '');
   const [googleAnalytics, setGoogleAnalytics] = useState(initialSites?.sites?.google_analytics ?? '');
   const [googleSearch, setGoogleSearch] = useState(initialSites?.sites?.google_search ?? '');
@@ -116,7 +112,6 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
       throw new Error('sites 정보를 불러오지 못했습니다.');
     }
 
-    setVisibilityMember(result.sites.visibility_member === 'private' ? 'private' : 'public');
     setSearchKeywords(result.sites.search_keywords ?? '');
     setGoogleAnalytics(result.sites.google_analytics ?? '');
     setGoogleSearch(result.sites.google_search ?? '');
@@ -172,7 +167,6 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
         },
         credentials: 'include',
         body: JSON.stringify({
-          visibilityMember,
           searchKeywords,
           googleAnalytics,
           googleSearch,

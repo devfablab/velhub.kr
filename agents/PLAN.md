@@ -6,34 +6,34 @@
 ## 4. 현재 상태
 
 - 지금 작업 중인 단계: 완료 (화면 확인 대기)
-- 테스트 상태: tsc·lint·prettier 통과 / 화면 미확인
+- 테스트 상태: tsc·lint·prettier 통과 (opt.tsx window.location 경고는 기존 코드) / 20건 유지 DB 테스트 통과(롤백) / 화면 미확인
 - 미커밋 변경 요약: 12번 표 참고
 
-### 작업: 라운지 홈에 가입한 커뮤니티·블로그 목록
+### 작업: 사이트 정보 수정내역 20건 기록
 
-- 위치: `src/app/(lounge)/page.tsx`의 AuthSection 바로 아래
-- 항목: 세로형 (사이트 아바타 + 운영자/매니저 Chip + 사이트명), 목록은 가로 스크롤 (스크롤바 모양은 blog-ad-items와 같음)
-- Chip: 운영자 → "운영자", 매니저(종류 상관없이) → "매니저", 그 외 → 없음
-- 순서: 운영자 → 매니저 → 그 외, 같은 그룹 안에서는 최근 가입한 순
-- 목록 끝에 "마이허브 이동하기" 링크
-- 가입한 사이트가 없거나 비로그인이면 목록과 링크 모두 안 나옴
-- 제외: 가입 승인 전, 활동 정지·강제 탈퇴·가입 불가·탈퇴, 폐쇄된 사이트
+- 기존: `sites.log` 한 칸에 마지막 수정만 기록, 고급 설정은 여러 항목을 ", "로 합쳐 한 줄
+- 변경: 새 테이블 `site_change_logs`에 수정 항목 1개당 1줄, 사이트별 최근 20건만 남김(DB 트리거)
+- 기존 `sites.log` 6건은 새 테이블로 옮김. 기록이 없는 사이트는 "사이트 개설"(사이트 생성일) 표시
+- `sites.updated_at`, `sites.updated_by`는 다른 화면에서 쓰므로 계속 갱신. `sites.log`는 더 이상 쓰지 않음(컬럼은 남겨둠)
 
 ## 5. 완료한 것
 
-- [x] 가입 사이트 API (`src/app/api/home/joined-sites/route.ts`)
-- [x] 목록 컴포넌트 (`src/app/(lounge)/lounge/joinedSites.tsx`)
-- [x] 홈 연결·스타일
+- [x] DB 마이그레이션 적용 (`supabase/migrations/20261111130000_site_change_logs.sql`)
+- [x] 일반 설정 저장 시 1줄 기록
+- [x] 고급 설정 저장 시 바뀐 항목마다 1줄 기록 (구글 애널리틱스·서치 콘솔도 따로)
+- [x] 일반 설정 화면에 최근 20건 표시
 
 ## 12. 변경한 파일
 
 (커밋 로그가 없으므로 이 목록이 변경 이력 역할)
 | 파일 | 변경 내용 | 상태 (완료 / 작업 중 / 임시) |
 |---|---|---|
-| src/app/api/home/joined-sites/route.ts | 새 파일. 가입한 사이트 목록 (정렬 포함) | 완료 |
-| src/app/(lounge)/lounge/joinedSites.tsx | 새 파일. 가로 목록 + 마이허브 링크 | 완료 |
-| src/app/(lounge)/page.tsx | 가입 사이트 불러와서 AuthSection 아래 표시 | 완료 |
-| src/app/page.module.sass | joined-sites, joined-site, joined-site-more 스타일 | 완료 |
+| supabase/migrations/20261111130000_site_change_logs.sql | 새 테이블, 20건 유지 트리거, 기존 기록 이전 | 완료 (적용됨) |
+| src/app/api/info/general/site/[siteName]/route.ts | 수정내역 20건 + 수정자 이름 응답 (`logs`) | 완료 |
+| src/app/api/info/general/site/[siteName]/edit/route.ts | 수정내역 테이블에 1줄 추가 | 완료 |
+| src/app/api/info/advanced/site/[siteName]/edit/route.ts | 바뀐 항목마다 1줄 추가 | 완료 |
+| src/app/(site)/[siteName]/manage/settings/general/opt.tsx | 수정내역 표 여러 줄 표시 | 완료 |
+| src/app/(site)/[siteName]/manage/settings/advanced/opt.tsx, advanced edit/route.ts | 멤버 목록 공개여부(안 쓰는 값) 저장·기록 제거, null 유지 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

@@ -11,25 +11,46 @@ type RouteContext = {
   }>;
 };
 
-async function getUpdatedByName(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, siteId: string, stigmaId: string) {
-  const nickname = await supabaseAdmin
-    .from('rhizome_stigmas')
-    .select('nickname')
-    .eq('site_id', siteId)
-    .eq('user_id', stigmaId)
-    .maybeSingle();
+type ChangeLogRow = {
+  id: string;
+  log: string;
+  created_by: string | null;
+  created_at: string;
+};
 
-  if (nickname.data?.nickname) {
-    return nickname.data.nickname;
+async function getUpdatedByNames(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  siteId: string,
+  stigmaIds: string[],
+) {
+  const names = new Map<string, string>();
+
+  if (stigmaIds.length === 0) {
+    return names;
   }
 
-  const stigmaUser = await supabaseAdmin.from('stigmas').select('user_name').eq('id', stigmaId).maybeSingle();
+  const [memberships, stigmaUsers] = await Promise.all([
+    supabaseAdmin.from('rhizome_stigmas').select('user_id, nickname').eq('site_id', siteId).in('user_id', stigmaIds),
+    supabaseAdmin.from('stigmas').select('id, user_name').in('id', stigmaIds),
+  ]);
 
-  if (stigmaUser.data?.user_name) {
-    return decrypt(stigmaUser.data.user_name);
+  for (const stigmaUser of stigmaUsers.data ?? []) {
+    if (!stigmaUser.user_name) continue;
+
+    try {
+      names.set(stigmaUser.id, decrypt(stigmaUser.user_name));
+    } catch {
+      names.set(stigmaUser.id, '');
+    }
   }
 
-  return '';
+  for (const membership of memberships.data ?? []) {
+    if (membership.nickname) {
+      names.set(membership.user_id, membership.nickname);
+    }
+  }
+
+  return names;
 }
 
 async function checkAccess(siteName: string) {
@@ -137,25 +158,37 @@ export async function GET(_request: Request, context: RouteContext) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const [sites, blogs, features] = await Promise.all([
+    const [changeLogs, blogs, features] = await Promise.all([
       access.supabaseAdmin
-        .from('sites')
-        .select('updated_at, updated_by, log')
+        .from('site_change_logs')
+        .select('id, log, created_by, created_at')
         .eq('site_id', access.rhizome.id)
-        .maybeSingle(),
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(20),
       access.rhizome.site_type === 'blog'
         ? access.supabaseAdmin.from('blogs').select('blog_type').eq('site_id', access.rhizome.id).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
       import('@/lib/memberships/features').then((m) => m.getMembershipFeatures(access.rhizome.owner_id as string)),
     ]);
 
-    if (sites.error || !sites.data) {
-      return Response.json({ error: 'sites 정보를 불러오지 못했습니다.' }, { status: 500 });
+    if (changeLogs.error) {
+      return Response.json({ error: '수정내역을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const updatedByName = sites.data.updated_by
-      ? await getUpdatedByName(access.supabaseAdmin, access.rhizome.id, sites.data.updated_by)
-      : '';
+    const changeLogRows = (changeLogs.data ?? []) as ChangeLogRow[];
+    const updatedByNames = await getUpdatedByNames(access.supabaseAdmin, access.rhizome.id, [
+      ...new Set(changeLogRows.map((row) => row.created_by).filter((id): id is string => Boolean(id))),
+    ]);
+    const logs =
+      changeLogRows.length > 0
+        ? changeLogRows.map((row) => ({
+            id: row.id,
+            log: row.log,
+            created_at: row.created_at,
+            created_by_name: row.created_by ? (updatedByNames.get(row.created_by) ?? '') : '',
+          }))
+        : [{ id: 'site-created', log: '사이트 개설', created_at: access.rhizome.created_at, created_by_name: '' }];
 
     const rawProfilePicture = normalizeText(access.rhizome.profile_picture);
     let profilePictureUrl = '';
@@ -197,12 +230,7 @@ export async function GET(_request: Request, context: RouteContext) {
       promotionImageUrl,
       blogType: blogs.data?.blog_type ?? null,
       hasOwnerDomainFeature: features.has('owner_domain'),
-      sites: {
-        updated_at: sites.data.updated_at,
-        updated_by: sites.data.updated_by,
-        updated_by_name: updatedByName,
-        log: sites.data.log ?? '사이트 개설',
-      },
+      logs,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

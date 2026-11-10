@@ -10,7 +10,6 @@ type RouteContext = {
 };
 
 type RequestBody = {
-  visibilityMember?: string | null;
   searchKeywords?: string | null;
   googleAnalytics?: string | null;
   googleSearch?: string | null;
@@ -34,22 +33,6 @@ function hasInvalidSearchKeywordCharacters(rawValue: string) {
 
 function normalizeGoogleAnalyticsMeasurementId(rawValue: string) {
   return rawValue.trim().toUpperCase();
-}
-
-function getGoogleLogMessage(isGoogleAnalyticsChanged: boolean, isGoogleSearchChanged: boolean) {
-  if (isGoogleAnalyticsChanged && isGoogleSearchChanged) {
-    return '구글 애널리틱스 & 구글 서치 콘솔 적용';
-  }
-
-  if (isGoogleAnalyticsChanged) {
-    return '구글 애널리틱스 적용';
-  }
-
-  if (isGoogleSearchChanged) {
-    return '구글 서치 콘솔 적용';
-  }
-
-  return null;
 }
 
 async function checkAccess(siteName: string) {
@@ -173,15 +156,10 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '요청 내용을 확인할 수 없습니다.' }, { status: 400 });
     }
 
-    const visibilityMember = normalizeText(requestBody.visibilityMember);
     const rawSearchKeywords = normalizeText(requestBody.searchKeywords);
     const normalizedSearchKeywords = normalizeSearchKeywords(rawSearchKeywords);
     const googleAnalytics = normalizeGoogleAnalyticsMeasurementId(normalizeText(requestBody.googleAnalytics));
     const googleSearch = normalizeText(requestBody.googleSearch);
-
-    if (visibilityMember !== 'public' && visibilityMember !== 'private') {
-      return Response.json({ error: '멤버 목록 공개여부 값이 올바르지 않습니다.' }, { status: 400 });
-    }
 
     if (hasInvalidSearchKeywordCharacters(rawSearchKeywords)) {
       return Response.json({ error: '검색엔진 등록 키워드는 글자, 숫자, 쉼표만 입력해 주세요.' }, { status: 400 });
@@ -202,7 +180,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const currentSites = await access.supabaseAdmin
       .from('sites')
-      .select('site_id, visibility_member, search_keywords, google_analytics, google_search')
+      .select('site_id, search_keywords, google_analytics, google_search')
       .eq('site_id', access.siteId)
       .maybeSingle();
 
@@ -214,37 +192,49 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: 'sites 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const previousVisibilityMember = normalizeText(currentSites.data.visibility_member);
     const previousSearchKeywords = normalizeText(currentSites.data.search_keywords);
     const previousGoogleAnalytics = normalizeText(currentSites.data.google_analytics);
     const previousGoogleSearch = normalizeText(currentSites.data.google_search);
 
-    const isVisibilityChanged = previousVisibilityMember !== visibilityMember;
     const isSearchKeywordsChanged = previousSearchKeywords !== normalizedSearchKeywords;
     const isGoogleAnalyticsChanged = previousGoogleAnalytics !== googleAnalytics;
     const isGoogleSearchChanged = previousGoogleSearch !== googleSearch;
 
     const logMessages = [
-      isVisibilityChanged ? '멤버 목록 공개여부 변경' : null,
       isSearchKeywordsChanged ? '검색용 키워드 변경' : null,
-      getGoogleLogMessage(isGoogleAnalyticsChanged, isGoogleSearchChanged),
+      isGoogleAnalyticsChanged ? '구글 애널리틱스 적용' : null,
+      isGoogleSearchChanged ? '구글 서치 콘솔 적용' : null,
     ].filter((message): message is string => Boolean(message));
 
+    const nowIsoString = new Date().toISOString();
     const updateResult = await access.supabaseAdmin
       .from('sites')
       .update({
-        visibility_member: visibilityMember,
         search_keywords: normalizedSearchKeywords || null,
         google_analytics: googleAnalytics || null,
         google_search: googleSearch || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowIsoString,
         updated_by: access.updatedByStigmaId,
-        log: logMessages.length > 0 ? logMessages.join(', ') : null,
       })
       .eq('site_id', access.siteId);
 
     if (updateResult.error) {
       return Response.json({ error: 'sites 정보 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (logMessages.length > 0) {
+      const insertLogs = await access.supabaseAdmin.from('site_change_logs').insert(
+        logMessages.map((log) => ({
+          site_id: access.siteId,
+          log,
+          created_by: access.updatedByStigmaId,
+          created_at: nowIsoString,
+        })),
+      );
+
+      if (insertLogs.error) {
+        return Response.json({ error: '수정 이력 저장에 실패했습니다.' }, { status: 500 });
+      }
     }
 
     const refreshedSites = await access.supabaseAdmin

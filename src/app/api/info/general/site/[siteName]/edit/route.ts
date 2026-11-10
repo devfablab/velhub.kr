@@ -565,16 +565,23 @@ export async function POST(request: Request, context: RouteContext) {
     const nowIsoString = new Date().toISOString();
     const logMessage = formatLogMessage(requestBody.field, previousValue, nextValue);
 
-    const updateSites = await access.supabaseAdmin
-      .from('sites')
-      .update({
-        updated_at: nowIsoString,
-        updated_by: access.updatedByStigmaId,
+    const [updateSites, insertLog] = await Promise.all([
+      access.supabaseAdmin
+        .from('sites')
+        .update({
+          updated_at: nowIsoString,
+          updated_by: access.updatedByStigmaId,
+        })
+        .eq('site_id', access.rhizome.id),
+      access.supabaseAdmin.from('site_change_logs').insert({
+        site_id: access.rhizome.id,
         log: logMessage,
-      })
-      .eq('site_id', access.rhizome.id);
+        created_by: access.updatedByStigmaId,
+        created_at: nowIsoString,
+      }),
+    ]);
 
-    if (updateSites.error) {
+    if (updateSites.error || insertLog.error) {
       return Response.json({ error: '수정 이력 저장에 실패했습니다.' }, { status: 500 });
     }
 

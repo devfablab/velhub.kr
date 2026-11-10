@@ -80,16 +80,16 @@ type SiteInfoInfo = {
   custom_domain: string | null;
 };
 
-type SitesInfo = {
-  updated_at: string | null;
-  updated_by: string | null;
-  updated_by_name: string;
+type ChangeLogInfo = {
+  id: string;
   log: string;
+  created_at: string | null;
+  created_by_name: string;
 };
 
 export type GeneralSiteResponse = {
   siteInfo: SiteInfoInfo;
-  sites: SitesInfo;
+  logs: ChangeLogInfo[];
   blogType?: string | null;
   hasOwnerDomainFeature?: boolean;
   profilePictureUrl?: string | null;
@@ -177,7 +177,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const siteName = normalizeText(params.siteName);
 
   const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(initialData?.siteInfo ?? null);
-  const [sites, setSites] = useState<SitesInfo | null>(initialData?.sites ?? null);
+  const [logs, setLogs] = useState<ChangeLogInfo[] | null>(initialData?.logs ?? null);
   const [blogType, setBlogType] = useState<string | null>(initialData?.blogType ?? null);
   const [hasOwnerDomainFeature, setHasOwnerDomainFeature] = useState(Boolean(initialData?.hasOwnerDomainFeature));
   const [editingField, setEditingField] = useState<EditableField | null>(null);
@@ -528,7 +528,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     }
 
     setSiteInfo(result.siteInfo);
-    setSites(result.sites);
+    setLogs(result.logs);
     setBlogType(result.blogType ?? null);
     setHasOwnerDomainFeature(Boolean(result.hasOwnerDomainFeature));
     applyColorSet(result.siteInfo.theme_type);
@@ -1110,7 +1110,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     );
   }
 
-  if (!sites) {
+  if (!logs) {
     return (
       <Container
         pageTitle={siteInfo.site_type === 'blog' ? '블로그 정보' : '커뮤니티 정보'}
@@ -1853,11 +1853,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                <TableRow>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.log}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(sites.updated_at)} 변경</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.updated_by_name}</TableCell>
-                </TableRow>
+                {logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{log.log}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(log.created_at)} 변경</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{log.created_by_name}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
