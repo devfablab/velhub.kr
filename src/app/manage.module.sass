@@ -562,3 +562,74 @@
     .author
       font-size: ds.rem(12)
       opacity: .7
+
+.spell-results
+  > div[class="paper"]
+    border-radius: ds.rem(12)
+    gap: ds.rem(12)
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    box-shadow: none
+    padding: ds.rem(12)
+
+    html[data-theme="yellow-dark"] &
+      border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+.spell-item
+  display: flex
+  flex-direction: column
+  gap: ds.rem(12)
+  padding: ds.rem(7) 0
+
+  .divider
+    width: 100%
+    height: 1px
+    background-color: rgba(ds.$rgb-tertiary, .2)
+
+    html[data-theme="yellow-dark"] &
+      border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+  .spell-context
+    gap: ds.rem(3)
+
+    p
+      font-size: ds.rem(14)
+      line-height: 1.5
+
+    mark
+      position: relative
+      background-color: transparent
+
+      &::after
+        content: ''
+        position: absolute
+        bottom: 0
+        left: 0
+        width: 100%
+        height: ds.rem(3)
+        background-color: ds.$hex-warning
+
+  .spell-revision
+    display: flex
+    gap: ds.rem(12)
+    align-items: center
+    color: ds.$hex-secondary
+
+    div
+      @include ds.col
+      gap: ds.rem(3)
+
+      strong
+        @include ds.fw(neo, 700)
+        font-size: ds.rem(12)
+
+      p
+        font-size: ds.rem(14)
+        line-height: 1.5
+
+    &.spell-after
+      div
+        background-color: rgba(ds.$rgb-accent, .1)
+
+    &.spell-before
+      div
+        background-color: rgba(ds.$rgb-warning, .1)

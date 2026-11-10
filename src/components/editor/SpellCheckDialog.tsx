@@ -2,10 +2,10 @@
 
 import { type ReactNode, type Ref, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import EastRoundedIcon from '@mui/icons-material/EastRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
-  CircularProgress,
   Collapse,
   Dialog,
   DialogActions,
@@ -25,6 +25,8 @@ import {
   type SpellCheckSectionKind,
   splitSpellCheckBlocks,
 } from '@/lib/spellCheck/markdownBlocks';
+import { LoadingIndicator } from '../LoadingIndicator';
+import styles from '@/app/manage.module.sass';
 
 export type SpellCheckSection = { key: string; label: string; kind: SpellCheckSectionKind; value: string };
 export type SpellCheckDialogHandle = { requestSave: (sections: SpellCheckSection[]) => boolean };
@@ -51,7 +53,7 @@ type Props = {
 };
 
 const CONTEXT_LENGTH = 15;
-const MIN_FIRST_CHECK_LENGTH = 170;
+const MIN_CHECK_LENGTH = 170;
 
 function serializeSections(sections: SpellCheckSection[]) {
   return JSON.stringify(sections.map((section) => [section.key, section.value]));
@@ -199,17 +201,16 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
 
       const built = buildSession(sections);
 
-      const isFirstCheck = cacheReference.current.size === 0;
-      const checkableLength = built.uncheckedBlocks.reduce(
-        (total, block) =>
-          total +
-          built.session.sections[block.sectionIndex].blocks[block.blockIndex].maskedText
-            .split(SPELL_CHECK_PLACEHOLDER)
-            .join('').length,
+      const checkableLength = built.session.sections.reduce(
+        (sectionTotal, section) =>
+          sectionTotal +
+          section.blocks
+            .filter((block) => block.isCheckable)
+            .reduce((total, block) => total + block.maskedText.split(SPELL_CHECK_PLACEHOLDER).join('').length, 0),
         0,
       );
 
-      if (built.uncheckedBlocks.length === 0 || (isFirstCheck && checkableLength < MIN_FIRST_CHECK_LENGTH)) {
+      if (built.uncheckedBlocks.length === 0 || checkableLength < MIN_CHECK_LENGTH) {
         snapshotReference.current = serialized;
         return true;
       }
@@ -376,25 +377,47 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
     const context = getItemContext(session, item);
 
     return (
-      <>
-        <Typography variant="body2">
-          {item.status === 'applied' ? (
-            <>
-              <del>{item.origin}</del> → <strong>{item.revised}</strong>
-            </>
-          ) : (
-            <>
-              <strong>{item.origin}</strong> → {item.revised}
-            </>
-          )}
-        </Typography>
-        <Typography variant="body2">
-          {context.before}
-          <mark>{pickItemText(item)}</mark>
-          {context.after}
-        </Typography>
-        {item.reason ? <Typography variant="body2">{item.reason}</Typography> : null}
-      </>
+      <div className={styles['spell-item']}>
+        <div className={`paper ${styles['spell-context']}`}>
+          <p>{context.before}</p>
+          <p>
+            <mark>{pickItemText(item)}</mark>
+          </p>
+          <p>{context.after}</p>
+        </div>
+        <div className={styles.divider} />
+        {item.status === 'applied' ? (
+          <div className={`${styles['spell-after']} ${styles['spell-revision']}`}>
+            <div className="paper">
+              <strong>수정 전</strong>
+              <p>{item.origin}</p>
+            </div>
+            <EastRoundedIcon />
+            <div className="paper">
+              <strong>수정 후</strong>
+              <p>{item.revised}</p>
+            </div>
+          </div>
+        ) : (
+          <div className={`${styles['spell-before']} ${styles['spell-revision']}`}>
+            <div className="paper">
+              <strong>적용 전</strong>
+              <p>{item.origin}</p>
+            </div>
+            <EastRoundedIcon />
+            <div className="paper">
+              <strong>적용 후</strong>
+              <p>{item.revised}</p>
+            </div>
+          </div>
+        )}
+        {item.reason ? (
+          <p className="alert info">
+            <InfoOutlineRoundedIcon />
+            <span>{item.reason}</span>
+          </p>
+        ) : null}
+      </div>
     );
   }
 
@@ -402,7 +425,7 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
     if (!session) return null;
 
     return (
-      <Stack gap={2}>
+      <Stack gap={2} sx={{ m: 1, mt: 0, mb: 0 }}>
         {visibleItems.length === 0 ? (
           <p className="alert info">
             <InfoOutlineRoundedIcon />
@@ -412,12 +435,12 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
 
         {session.sections.map((section, sectionIndex) =>
           sectionsWithItems.has(sectionIndex) ? (
-            <Stack key={section.key} gap={1.5}>
-              {sectionsWithItems.size > 1 ? <Typography variant="subtitle2">{section.label}</Typography> : null}
+            <Stack key={section.key} gap={1.5} className={styles['spell-results']}>
+              {sectionsWithItems.size > 1 ? <Typography variant="subtitle2">{section.label} 수정</Typography> : null}
               {visibleItems
                 .filter((item) => item.sectionIndex === sectionIndex)
                 .map((item) => (
-                  <Stack key={item.id} gap={0.75} className="paper">
+                  <div key={item.id} className="paper">
                     {renderItemText(item)}
                     <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
                       {item.status === 'applied' ? (
@@ -460,7 +483,7 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
                         </>
                       )}
                     </Stack>
-                  </Stack>
+                  </div>
                 ))}
             </Stack>
           ) : null,
@@ -569,7 +592,7 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
   if (step === 'checking') {
     content = (
       <Stack direction="row" gap={1.5} alignItems="center">
-        <CircularProgress size={20} />
+        <LoadingIndicator size={20} />
         <Typography variant="body2">맞춤법을 검사하고 있어요.</Typography>
       </Stack>
     );
