@@ -5,6 +5,7 @@ import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRound
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import { Chip } from '@mui/material';
 import Slider from 'react-slick';
 import { formatDate, formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -97,6 +98,13 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
                   background: `${site.promotion_image ? `url(${site.promotion_image})` : 'url(/dummy.webp)'} no-repeat center / cover`,
                 }}
               >
+                <div>
+                  <Chip
+                    label={site.site_type === 'blog' ? '블로그' : '커뮤니티'}
+                    size="small"
+                    className="chip warning"
+                  />
+                </div>
                 <strong>{site.site_label}</strong>
                 <p>{site.summary}</p>
                 {site.site_type === 'blog' ? (

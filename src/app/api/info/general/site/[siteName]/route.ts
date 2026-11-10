@@ -80,7 +80,7 @@ async function checkAccess(siteName: string) {
         return {
           ok: false,
           status: 403,
-          error: '접근 권한이 없습니다1.',
+          error: '접근 권한이 없습니다.',
         } as const;
       }
 
@@ -95,14 +95,14 @@ async function checkAccess(siteName: string) {
         return {
           ok: false,
           status: 403,
-          error: unknownError.message || '접근 권한이 없습니다2.',
+          error: unknownError.message || '접근 권한이 없습니다.',
         } as const;
       }
 
       return {
         ok: false,
         status: 403,
-        error: '접근 권한이 없습니다3.',
+        error: '접근 권한이 없습니다.',
       } as const;
     }
   }
@@ -131,7 +131,7 @@ async function checkAccess(siteName: string) {
     return {
       ok: false,
       status: 403,
-      error: '접근 권한이 없습니다5.',
+      error: '접근 권한이 없습니다.',
     } as const;
   }
 

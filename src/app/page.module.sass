@@ -72,6 +72,97 @@
       display: grid
       grid-template-columns: repeat(3, 1fr)
 
+  .category-sites
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+    min-width: 0
+
+  .category-tabs
+    display: flex
+    flex-direction: column
+    min-width: 0
+
+    ul
+      display: flex
+      flex-direction: row
+      min-width: 0
+      margin: 0
+      padding: 0
+      list-style: none
+      overflow-x: auto
+      scroll-snap-type: x proximity
+
+      &::-webkit-scrollbar
+        height: 4px
+
+      &::-webkit-scrollbar-thumb
+        background: rgba(ds.$rgb-accent, .4)
+        border-radius: 4px
+
+      li
+        flex: 0 0 auto
+        scroll-snap-align: start
+
+    button
+      font-family: inherit
+      white-space: nowrap
+      cursor: pointer
+      background: none
+      border: 0
+
+  .category-groups
+    gap: ds.rem(4)
+    padding-bottom: ds.rem(8)!important
+    border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+    button
+      @include ds.fw(neo, 700)
+      font-size: ds.rem(16)
+      height: ds.rem(40)
+      padding: 0 ds.rem(14)
+      border-radius: ds.rem(12)
+      color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+      &.current
+        color: ds.$hex-accent
+        background-color: rgba(ds.$rgb-accent, .12)
+
+  .category-items
+    gap: ds.rem(20)
+    padding: 0 ds.rem(4)!important
+
+    button
+      @include ds.fw(neo, 500)
+      position: relative
+      font-size: ds.rem(15)
+      height: ds.rem(44)
+      padding: 0
+      color: rgba(ds.$rgb-tertiary, .9)
+
+      html[data-theme="yellow-dark"] &
+        color: rgba(ds.$rgb-light, .7)
+
+      &::after
+        content: ''
+        position: absolute
+        left: 0
+        right: 0
+        bottom: 0
+        height: 3px
+        border-radius: 3px
+        background-color: transparent
+
+      &.current
+        @include ds.fw(neo, 700)
+        color: ds.$hex-accent
+
+        &::after
+          background-color: ds.$hex-accent
+
   .joined-sites
     display: flex
     flex-direction: row
@@ -300,19 +391,22 @@
               padding-right: ds.rem(70)
               color: ds.$hex-bright
 
-            p, span
+            p, > span
               color: ds.$hex-light
 
             p
               font-size: ds.rem(14)
 
-            span
+            > span
               font-size: ds.rem(12)
               opacity: 0.7
 
-            em, strong, p, span
+            em, strong, p, span, > div
               position: relative
               z-index: 1
+
+            > div
+              padding-bottom: ds.rem(7)
 
             &::before
               content: ''

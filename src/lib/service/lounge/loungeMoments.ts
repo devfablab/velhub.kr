@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
+import { getSiteCategoryGroups } from '@/lib/service/siteCategories';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { normalizeText } from '@/lib/utils';
 
@@ -43,6 +44,7 @@ type SiteRow = {
   member_count: number | null;
   post_count: number | null;
   profile_logo: string | null;
+  category_id?: number | null;
 };
 
 type BoardRow = {
@@ -312,7 +314,7 @@ async function getMomentSitesForAudience(audience: Exclude<MomentAudience, 'all'
       supabaseAdmin
         .from('rhizomes')
         .select(
-          'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
+          'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count, category_id',
         )
         .in('owner_id', ownerUserIds)
         .in('site_type', ['blog', 'community'])
@@ -737,26 +739,120 @@ async function getRankedMomentPosts(
   return ranked.slice(0, limit).map((item) => item.post);
 }
 
-export async function getRisingMomentSites(limit = 20): Promise<MomentSiteHitCard[]> {
-  const [sites, momentPosts] = await Promise.all([getMomentSitesForAudience('owner'), getMomentPosts('owner')]);
-  if (!sites.length) return [];
+type RisingEntry = { createdAt: string; score: number };
 
-  const posts = momentPosts.posts;
-  const scoreMap = await getPostScoreMap(
-    posts.map((post) => post.post_id),
-    'post_likes',
-  );
-  const postsBySiteKey = new Map<string, MomentPostCard[]>();
-  posts.forEach((post) => {
-    const sitePosts = postsBySiteKey.get(post.site_key) ?? [];
-    sitePosts.push(post);
-    postsBySiteKey.set(post.site_key, sitePosts);
-  });
+async function getSiteRisingEntries(sites: SiteRow[]): Promise<Map<string, RisingEntry[]>> {
+  const entriesMap = new Map<string, RisingEntry[]>();
+  const pushEntry = (siteId: string, entry: RisingEntry) => {
+    const entries = entriesMap.get(siteId) ?? [];
+    entries.push(entry);
+    entriesMap.set(siteId, entries);
+  };
+  const supabaseAdmin = getSupabaseAdmin();
+  const start = getDateBefore(365);
+  const blogSites = sites.filter((site) => site.site_type === 'blog');
+  const communitySites = sites.filter((site) => site.site_type === 'community');
+
+  if (blogSites.length) {
+    const blogSiteIds = blogSites.map((site) => site.id);
+    const posts: Array<{ id: string; site_id: string }> = [];
+    for (let index = 0; index < blogSiteIds.length; index += 500) {
+      posts.push(
+        ...(await fetchPagedRows<{ id: string; site_id: string }>((from, to) =>
+          supabaseAdmin
+            .from('posts')
+            .select('id, site_id')
+            .in('site_id', blogSiteIds.slice(index, index + 500))
+            .eq('published_status', 'published')
+            .eq('is_closed', false)
+            .eq('is_wording_blinded', false)
+            .order('id', { ascending: true })
+            .range(from, to),
+        )),
+      );
+    }
+    const scoreMap = await getPostScoreMap(
+      posts.map((post) => post.id),
+      'post_likes',
+    );
+    posts.forEach((post) => (scoreMap.get(post.id) ?? []).forEach((entry) => pushEntry(post.site_id, entry)));
+
+    for (let index = 0; index < blogSiteIds.length; index += 500) {
+      const favorites = await fetchPagedRows<{ site_id: string; created_at: string }>((from, to) =>
+        supabaseAdmin
+          .from('blog_favorites')
+          .select('site_id, created_at')
+          .in('site_id', blogSiteIds.slice(index, index + 500))
+          .gte('created_at', start)
+          .order('id', { ascending: true })
+          .range(from, to),
+      );
+      favorites.forEach((row) => pushEntry(row.site_id, { createdAt: row.created_at, score: 1 }));
+    }
+  }
+
+  const communitySiteIds = communitySites.map((site) => site.id);
+  for (let index = 0; index < communitySiteIds.length; index += 500) {
+    const joins = await fetchPagedRows<{ site_id: string; approval_at: string }>((from, to) =>
+      supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('site_id, approval_at')
+        .in('site_id', communitySiteIds.slice(index, index + 500))
+        .eq('is_approval', true)
+        .neq('role', 'owner')
+        .gte('approval_at', start)
+        .order('id', { ascending: true })
+        .range(from, to),
+    );
+    joins.forEach((row) => pushEntry(row.site_id, { createdAt: row.approval_at, score: 1 }));
+  }
+
+  return entriesMap;
+}
+
+// 블로그는 좋아요+즐겨찾기, 커뮤니티는 새 가입자 수. 기간 안 점수 순으로 각각 정렬 후 번갈아 섞는다.
+// 365일까지 넓혀도 limit개가 안 되면 점수가 있는 사이트만 노출
+function rankRisingSites(sites: SiteRow[], entriesMap: Map<string, RisingEntry[]>, limit: number): SiteRow[] {
+  const rankByType = (siteType: SiteRow['site_type'], start: string) =>
+    sites
+      .filter((site) => site.site_type === siteType)
+      .map((site) => {
+        const entries = (entriesMap.get(site.id) ?? []).filter((entry) => entry.createdAt >= start);
+        return {
+          site,
+          score: entries.reduce((total, entry) => total + entry.score, 0),
+          latestAt: entries.reduce((latest, entry) => (entry.createdAt > latest ? entry.createdAt : latest), ''),
+        };
+      })
+      .filter((item) => item.score > 0)
+      .sort((left, right) => right.score - left.score || right.latestAt.localeCompare(left.latestAt))
+      .map((item) => item.site);
+
+  let blogs: SiteRow[] = [];
+  let communities: SiteRow[] = [];
+  for (const days of PERIOD_DAYS) {
+    const start = getDateBefore(days);
+    blogs = rankByType('blog', start);
+    communities = rankByType('community', start);
+    if (blogs.length + communities.length >= limit) break;
+  }
+
+  const ranked: SiteRow[] = [];
+  for (let index = 0; ranked.length < limit && (index < blogs.length || index < communities.length); index += 1) {
+    if (index < blogs.length) ranked.push(blogs[index]);
+    if (ranked.length < limit && index < communities.length) ranked.push(communities[index]);
+  }
+
+  return ranked;
+}
+
+async function toSiteHitCards(sites: SiteRow[]): Promise<MomentSiteHitCard[]> {
   const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(
     sites.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)),
     'owner_domain',
   );
-  const toCard = (site: SiteRow): MomentSiteHitCard => ({
+
+  return sites.map((site) => ({
     site_key: site.site_key,
     site_url: getPublicSiteUrl({
       siteKey: site.site_key,
@@ -772,30 +868,75 @@ export async function getRisingMomentSites(limit = 20): Promise<MomentSiteHitCar
     promotion_image: toPublicUrl('promotion-image', site.promotion_image),
     member_count: site.member_count,
     post_count: site.post_count,
+  }));
+}
+
+export async function getRisingMomentSites(limit = 20): Promise<MomentSiteHitCard[]> {
+  const sites = await getMomentSitesForAudience('owner');
+  if (!sites.length) return [];
+
+  return toSiteHitCards(rankRisingSites(sites, await getSiteRisingEntries(sites), limit));
+}
+
+export type CategoryRisingSiteGroup = {
+  id: number;
+  label: string;
+  categories: Array<{ id: number; label: string; sites: MomentSiteHitCard[] }>;
+};
+
+export async function getCategoryRisingSites(limit = 20): Promise<CategoryRisingSiteGroup[]> {
+  const supabaseAdmin = getSupabaseAdmin();
+  const sites = await fetchPagedRows<SiteRow>(
+    (from, to) =>
+      supabaseAdmin
+        .from('rhizomes')
+        .select(
+          'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count, category_id',
+        )
+        .not('category_id', 'is', null)
+        .in('site_type', ['blog', 'community'])
+        .eq('visibility_type', 'public')
+        .eq('is_shutdown', false)
+        .or('is_blocked.eq.false,is_blocked.is.null')
+        .order('id', { ascending: true })
+        .range(from, to),
+    5000,
+  );
+  if (!sites.length) return [];
+
+  const [entriesMap, categoryGroups] = await Promise.all([getSiteRisingEntries(sites), getSiteCategoryGroups()]);
+  const sitesByCategory = new Map<number, SiteRow[]>();
+  sites.forEach((site) => {
+    const categoryId = site.category_id as number;
+    const categorySites = sitesByCategory.get(categoryId) ?? [];
+    categorySites.push(site);
+    sitesByCategory.set(categoryId, categorySites);
   });
 
-  // 기간 내 좋아요 합계 순. 동점이면 최근에 좋아요를 받은 사이트 우선.
-  // 365일까지 넓혀도 limit개가 안 되면 좋아요가 있는 사이트만 노출
-  let ranked: Array<{ site: SiteRow; score: number; latestAt: string }> = [];
-  for (const days of PERIOD_DAYS) {
-    const start = getDateBefore(days);
-    ranked = sites
-      .map((site) => {
-        const entries = (postsBySiteKey.get(site.site_key) ?? []).flatMap((post) =>
-          (scoreMap.get(post.post_id) ?? []).filter((entry) => entry.createdAt >= start),
-        );
-        return {
-          site,
-          score: entries.reduce((total, entry) => total + entry.score, 0),
-          latestAt: entries.reduce((latest, entry) => (entry.createdAt > latest ? entry.createdAt : latest), ''),
-        };
-      })
-      .filter((item) => item.score > 0)
-      .sort((left, right) => right.score - left.score || right.latestAt.localeCompare(left.latestAt));
-    if (ranked.length >= limit) break;
-  }
+  const rankedByCategory = new Map<number, SiteRow[]>();
+  sitesByCategory.forEach((categorySites, categoryId) => {
+    const ranked = rankRisingSites(categorySites, entriesMap, limit);
+    if (ranked.length) rankedByCategory.set(categoryId, ranked);
+  });
 
-  return ranked.slice(0, limit).map(({ site }) => toCard(site));
+  const cards = await toSiteHitCards([...rankedByCategory.values()].flat());
+  const cardBySiteKey = new Map(cards.map((card) => [card.site_key, card]));
+
+  return categoryGroups
+    .map((group) => ({
+      id: group.id,
+      label: group.label,
+      categories: group.categories
+        .filter((category) => rankedByCategory.has(category.id))
+        .map((category) => ({
+          id: category.id,
+          label: category.label,
+          sites: (rankedByCategory.get(category.id) ?? [])
+            .map((site) => cardBySiteKey.get(site.site_key))
+            .filter((card): card is MomentSiteHitCard => Boolean(card)),
+        })),
+    }))
+    .filter((group) => group.categories.length > 0);
 }
 
 export async function getTrendingMomentPosts(limit = 50, audience: Exclude<MomentAudience, 'all'> = 'creator') {

@@ -2,7 +2,8 @@
 
 import { type JSX, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { MenuItem, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import type { SiteCategoryGroup } from '@/lib/service/siteCategories';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PopupMessage from '@/components/PopupMessage';
@@ -40,8 +41,21 @@ type SitesRow = {
 
 export type AdvancedSitesResponse = {
   sites?: SitesRow;
+  categoryId?: number | null;
+  categoryGroups?: SiteCategoryGroup[];
+  canEditCategory?: boolean;
   error?: string;
 };
+
+function findCategoryGroupId(groups: SiteCategoryGroup[], categoryId: number | null | undefined) {
+  if (!categoryId) {
+    return '';
+  }
+
+  const group = groups.find((item) => item.categories.some((category) => category.id === categoryId));
+
+  return group ? String(group.id) : '';
+}
 
 export type AdvancedInfoResponse = { siteInfo?: SiteInfoInfo; error?: string };
 
@@ -51,13 +65,14 @@ type EditResponse = {
   error?: string;
 };
 
-type AdvancedField = 'searchKeywords' | 'googleAnalytics' | 'googleSearch';
+type AdvancedField = 'searchKeywords' | 'googleAnalytics' | 'googleSearch' | 'category';
 type FieldErrors = Record<AdvancedField, string>;
 
 const EMPTY_FIELD_ERRORS: FieldErrors = {
   searchKeywords: '',
   googleAnalytics: '',
   googleSearch: '',
+  category: '',
 };
 const GOOGLE_ANALYTICS_MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/;
 
@@ -82,6 +97,11 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
   const [searchKeywords, setSearchKeywords] = useState(initialSites?.sites?.search_keywords ?? '');
   const [googleAnalytics, setGoogleAnalytics] = useState(initialSites?.sites?.google_analytics ?? '');
   const [googleSearch, setGoogleSearch] = useState(initialSites?.sites?.google_search ?? '');
+  const categoryGroups = initialSites?.categoryGroups ?? [];
+  const canEditCategory = initialSites?.canEditCategory === true;
+  const [categoryGroupId, setCategoryGroupId] = useState(findCategoryGroupId(categoryGroups, initialSites?.categoryId));
+  const [categoryId, setCategoryId] = useState(initialSites?.categoryId ? String(initialSites.categoryId) : '');
+  const selectedCategoryGroup = categoryGroups.find((group) => String(group.id) === categoryGroupId);
 
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>(EMPTY_FIELD_ERRORS);
@@ -115,6 +135,19 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
     setSearchKeywords(result.sites.search_keywords ?? '');
     setGoogleAnalytics(result.sites.google_analytics ?? '');
     setGoogleSearch(result.sites.google_search ?? '');
+    setCategoryGroupId(findCategoryGroupId(result.categoryGroups ?? categoryGroups, result.categoryId));
+    setCategoryId(result.categoryId ? String(result.categoryId) : '');
+  }
+
+  function handleCategoryGroupChange(event: InputChangeEvent) {
+    setCategoryGroupId(event.target.value);
+    setCategoryId('');
+    setFieldErrors((previousErrors) => ({ ...previousErrors, category: '' }));
+  }
+
+  function handleCategoryChange(event: InputChangeEvent) {
+    setCategoryId(event.target.value);
+    setFieldErrors((previousErrors) => ({ ...previousErrors, category: '' }));
   }
 
   function handleSearchKeywordsChange(event: InputChangeEvent) {
@@ -148,6 +181,7 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
           ? 'Google Analytics 측정 ID는 G-로 시작하는 값으로 입력해 주세요.'
           : '',
       googleSearch: '',
+      category: categoryGroupId && !categoryId ? '소분류를 선택해 주세요.' : '',
     };
     const validationMessages = Object.values(nextFieldErrors).filter(Boolean);
     if (validationMessages.length > 0) {
@@ -170,6 +204,7 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
           searchKeywords,
           googleAnalytics,
           googleSearch,
+          categoryId: categoryId ? Number(categoryId) : null,
         }),
       });
 
@@ -181,7 +216,9 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
           ? { googleAnalytics: message }
           : message.includes('키워드')
             ? { searchKeywords: message }
-            : {};
+            : message.includes('카테고리')
+              ? { category: message }
+              : {};
         showError(message, matchingFieldErrors, response.status >= 500 ? null : '고급 설정');
         return;
       }
@@ -244,6 +281,54 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack component="form" gap={3} onSubmit={handleSubmit}>
+            <div className={`paper ${styles.paper}`}>
+              <Typography variant="subtitle2">카테고리</Typography>
+              <Stack direction="row" gap={1}>
+                <TextField
+                  select
+                  value={categoryGroupId}
+                  onChange={handleCategoryGroupChange}
+                  fullWidth
+                  size="small"
+                  disabled={!canEditCategory}
+                  slotProps={{ select: { displayEmpty: true } }}
+                >
+                  <MenuItem value="" disabled>
+                    선택하세요
+                  </MenuItem>
+                  {categoryGroups.map((group) => (
+                    <MenuItem key={group.id} value={String(group.id)}>
+                      {group.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  value={categoryId}
+                  onChange={handleCategoryChange}
+                  fullWidth
+                  size="small"
+                  disabled={!canEditCategory || !selectedCategoryGroup}
+                  error={Boolean(fieldErrors.category)}
+                  slotProps={{ select: { displayEmpty: true } }}
+                >
+                  <MenuItem value="" disabled>
+                    선택하세요
+                  </MenuItem>
+                  {(selectedCategoryGroup?.categories ?? []).map((category) => (
+                    <MenuItem key={category.id} value={String(category.id)}>
+                      {category.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
+              {fieldErrors.category || !canEditCategory ? (
+                <Typography variant="caption" color={fieldErrors.category ? 'error' : 'textSecondary'}>
+                  {fieldErrors.category || '카테고리는 운영자만 변경할 수 있습니다.'}
+                </Typography>
+              ) : null}
+            </div>
+
             <div className={`paper ${styles.paper}`}>
               <Typography variant="subtitle2">검색엔진 등록 키워드</Typography>
               <TextField

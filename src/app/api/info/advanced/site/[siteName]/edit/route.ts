@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { formatSiteCategory, getSiteCategoryGroups, isSiteOwner } from '@/lib/service/siteCategories';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -13,6 +14,7 @@ type RequestBody = {
   searchKeywords?: string | null;
   googleAnalytics?: string | null;
   googleSearch?: string | null;
+  categoryId?: number | null;
 };
 
 const GOOGLE_ANALYTICS_MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/;
@@ -192,6 +194,49 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: 'sites 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const currentRhizome = await access.supabaseAdmin
+      .from('rhizomes')
+      .select('category_id')
+      .eq('id', access.siteId)
+      .maybeSingle();
+
+    if (currentRhizome.error || !currentRhizome.data) {
+      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const previousCategoryId = (currentRhizome.data.category_id as number | null) ?? null;
+    const nextCategoryId = Number(requestBody.categoryId) || null;
+    const isCategoryChanged = nextCategoryId !== previousCategoryId;
+    let categoryLogMessage: string | null = null;
+
+    if (isCategoryChanged) {
+      if (!nextCategoryId) {
+        return Response.json({ error: '카테고리는 대분류와 소분류를 모두 선택해 주세요.' }, { status: 400 });
+      }
+
+      if (!(await isSiteOwner(access.siteId, access.updatedByStigmaId))) {
+        return Response.json({ error: '카테고리는 운영자만 변경할 수 있습니다.' }, { status: 403 });
+      }
+
+      const categoryGroups = await getSiteCategoryGroups();
+      const nextCategoryLabel = formatSiteCategory(categoryGroups, nextCategoryId);
+
+      if (!nextCategoryLabel) {
+        return Response.json({ error: '카테고리 값이 올바르지 않습니다.' }, { status: 400 });
+      }
+
+      const updateCategory = await access.supabaseAdmin
+        .from('rhizomes')
+        .update({ category_id: nextCategoryId })
+        .eq('id', access.siteId);
+
+      if (updateCategory.error) {
+        return Response.json({ error: '카테고리 저장에 실패했습니다.' }, { status: 500 });
+      }
+
+      categoryLogMessage = `카테고리 ${formatSiteCategory(categoryGroups, previousCategoryId)} → ${nextCategoryLabel}`;
+    }
+
     const previousSearchKeywords = normalizeText(currentSites.data.search_keywords);
     const previousGoogleAnalytics = normalizeText(currentSites.data.google_analytics);
     const previousGoogleSearch = normalizeText(currentSites.data.google_search);
@@ -204,6 +249,7 @@ export async function POST(request: Request, context: RouteContext) {
       isSearchKeywordsChanged ? '검색용 키워드 변경' : null,
       isGoogleAnalyticsChanged ? '구글 애널리틱스 적용' : null,
       isGoogleSearchChanged ? '구글 서치 콘솔 적용' : null,
+      categoryLogMessage,
     ].filter((message): message is string => Boolean(message));
 
     const nowIsoString = new Date().toISOString();

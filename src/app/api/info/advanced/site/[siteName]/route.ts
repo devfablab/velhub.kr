@@ -1,4 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSiteCategoryGroups, isSiteOwner } from '@/lib/service/siteCategories';
+import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -18,7 +20,11 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', normalizedSiteName).maybeSingle();
+    const rhizome = await supabaseAdmin
+      .from('rhizomes')
+      .select('id, category_id')
+      .eq('site_key', normalizedSiteName)
+      .maybeSingle();
 
     if (rhizome.error) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 500 });
@@ -28,7 +34,11 @@ export async function GET(_request: Request, context: RouteContext) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const sites = await supabaseAdmin.from('sites').select('*').eq('site_id', rhizome.data.id).maybeSingle();
+    const [sites, categoryGroups, session] = await Promise.all([
+      supabaseAdmin.from('sites').select('*').eq('site_id', rhizome.data.id).maybeSingle(),
+      getSiteCategoryGroups(),
+      verifySession({ siteId: rhizome.data.id }),
+    ]);
 
     if (sites.error) {
       return Response.json({ error: 'sites 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -40,6 +50,9 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return Response.json({
       sites: sites.data,
+      categoryId: rhizome.data.category_id ?? null,
+      categoryGroups,
+      canEditCategory: await isSiteOwner(rhizome.data.id, session.stigmaId),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

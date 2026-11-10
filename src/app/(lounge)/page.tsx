@@ -1,8 +1,10 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { mainTitle, Seo } from '@/lib/seo';
+import type { CategoryRisingSiteGroup } from '@/lib/service/lounge/loungeMoments';
 import Aside from './lounge/aside';
 import AuthSection from './lounge/auth';
+import CategorySites from './lounge/categorySites';
 import JoinedSites from './lounge/joinedSites';
 import List from './lounge/list';
 import Slick from './lounge/slick';
@@ -198,12 +200,20 @@ export default async function Home() {
   let sitesCreatedData = null;
   let postsPublishedData = null;
   let joinedSites: JoinedSite[] = [];
+  let categoryGroups: CategoryRisingSiteGroup[] = [];
   try {
-    const [sitesCreatedResponse, postsPublishedResponse, joinedSitesResponse] = await Promise.all([
-      fetch(`${baseUrl}/api/home/new-sites`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/home/posts?limit=20`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/home/joined-sites`, { headers: { cookie: cookieStore.toString() }, cache: 'no-store' }),
-    ]);
+    const [sitesCreatedResponse, postsPublishedResponse, joinedSitesResponse, categorySitesResponse] =
+      await Promise.all([
+        fetch(`${baseUrl}/api/home/new-sites`, { cache: 'no-store' }),
+        fetch(`${baseUrl}/api/home/posts?limit=20`, { cache: 'no-store' }),
+        fetch(`${baseUrl}/api/home/joined-sites`, { headers: { cookie: cookieStore.toString() }, cache: 'no-store' }),
+        fetch(`${baseUrl}/api/home/category-sites`, { cache: 'no-store' }),
+      ]);
+
+    if (categorySitesResponse.ok) {
+      const categorySitesData = (await categorySitesResponse.json()) as { groups?: CategoryRisingSiteGroup[] };
+      categoryGroups = Array.isArray(categorySitesData.groups) ? categorySitesData.groups : [];
+    }
 
     if (joinedSitesResponse.ok) {
       const joinedSitesData = (await joinedSitesResponse.json()) as { sites?: JoinedSite[] };
@@ -231,6 +241,7 @@ export default async function Home() {
         <div className={`content ${styles.content}`}>
           <AuthSection />
           <JoinedSites sites={joinedSites} />
+          {categoryGroups.length ? <CategorySites groups={categoryGroups} /> : null}
           {sitesCreatedData?.sites?.length ? (
             <section>
               <h2>새로 오픈했어요 👋</h2>
