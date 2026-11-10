@@ -475,7 +475,10 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                   </h3>
                   <div className={styles['author-profile']}>
                     <div className={styles.avatar}>
-                      <Avatar src={data.post?.author_avatar_url || '/broken-image.jpg'} alt="" />
+                      <Avatar
+                        src={data.post?.author_avatar_url || '/broken-image.jpg'}
+                        alt={data.post?.author_name || '알 수 없음'}
+                      />
                     </div>
                     <div className={styles.info}>
                       <div className={styles.name}>
@@ -596,7 +599,10 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                     </div>
                     <div className={styles['author-profile']}>
                       <div className={styles.avatar}>
-                        <Avatar src={reply.author_avatar_url || '/broken-image.jpg'} alt="" />
+                        <Avatar
+                          src={reply.author_avatar_url || '/broken-image.jpg'}
+                          alt={reply.author_name || '알 수 없음'}
+                        />
                       </div>
                       <div className={styles.info}>
                         <div className={styles.name}>

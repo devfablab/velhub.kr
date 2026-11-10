@@ -40,6 +40,7 @@ type PollChoice = {
 export type CommentsResponse = {
   comments?: CommentData[];
   mySelfAvatarUrl?: string;
+  mySelfName?: string;
   myPollChoice?: PollChoice | null;
   isStaff: string;
   isCommunity?: boolean;
@@ -207,6 +208,7 @@ export default function CommentList({
 }: Props) {
   const [comments, setComments] = useState<CommentData[]>(initialData?.comments ?? []);
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState(initialData?.mySelfAvatarUrl ?? '');
+  const [mySelfName, setMySelfName] = useState(initialData?.mySelfName ?? '');
   const [myPollChoice, setMyPollChoice] = useState<PollChoice | null>(initialData?.myPollChoice ?? null);
   const [canWrite, setCanWrite] = useState(initialData?.actions?.canWrite === true);
   const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(
@@ -255,6 +257,7 @@ export default function CommentList({
       setComments(Array.isArray(result.comments) ? result.comments : []);
       setNewestCommentId('');
       setMySelfAvatarUrl(result.mySelfAvatarUrl ?? '');
+      setMySelfName(result.mySelfName ?? '');
       setMyPollChoice(result.myPollChoice ?? null);
       setCanWrite(result.actions?.canWrite === true);
       setCanWriteReason(result.actions?.canWriteReason ?? null);
@@ -589,6 +592,7 @@ export default function CommentList({
       {isCommentEnabled && canWrite ? (
         <CommentForm
           avatarUrl={mySelfAvatarUrl}
+          avatarAlt={mySelfName}
           pollChoiceLabel={myPollChoice?.label}
           isSubmitting={isSubmitting}
           externalErrorMessage={errorMessage}
@@ -618,11 +622,7 @@ export default function CommentList({
 
       {isCommentEnabled && !canWrite && canWriteReason === 'guest' ? (
         <div className={styles.textarea}>
-          <Avatar
-            src="/broken-image.jpg"
-            alt=""
-            sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }}
-          />
+          <Avatar src={undefined} alt="" sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }} />
           <Anchor href={`/auth/sign-in`}>로그인 하시면 댓글을 다실 수 있어요</Anchor>
           <div className={styles.options}>
             <div className={styles.submit}>등록</div>
@@ -633,8 +633,8 @@ export default function CommentList({
       {isCommentEnabled && !canWrite && canWriteReason === 'policy' ? (
         <div className={styles.textarea}>
           <Avatar
-            src="/broken-image.jpg"
-            alt=""
+            src={mySelfAvatarUrl || '/broken-image.jpg'}
+            alt={mySelfName || '알 수 없음'}
             sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }}
           />
           <p>댓글 작성 요건에 충족하지 않습니다. 매니저에게 문의하세요.</p>
@@ -676,6 +676,7 @@ export default function CommentList({
               isCommentDislikeEnabled={isCommentLikeEnabled}
               comment={comment}
               avatarUrl={mySelfAvatarUrl}
+              avatarAlt={mySelfName}
               myPollChoiceLabel={myPollChoice?.label ?? ''}
               activeReplyTargetId={activeReplyTargetId}
               isSubmitting={isSubmitting}

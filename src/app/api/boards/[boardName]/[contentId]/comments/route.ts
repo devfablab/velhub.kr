@@ -852,6 +852,17 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
+    const mySelfName = session.stigmaId
+      ? (
+          await getUserDisplayInfo(
+            target.data.siteId,
+            target.data.boardId,
+            session.stigmaId,
+            target.data.siteType === 'blog',
+          )
+        ).name
+      : '';
+
     const commentsResult = await supabaseAdmin
       .from('post_comments')
       .select(
@@ -1032,6 +1043,7 @@ export async function GET(request: Request, context: RouteContext) {
         comment.is_deleted && !canManageComment ? { ...comment, replies: [] } : comment,
       ),
       mySelfAvatarUrl,
+      mySelfName,
       myPollChoice,
       isStaff,
       isCommunity: target.data.siteType === 'community',

@@ -1180,7 +1180,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         onChange={(event) => handleToggleUser(user, event.currentTarget.checked)}
                         size="small"
                       />
-                      <Avatar src={user.avatar ?? '/default-avatar.png'} alt={getDisplayNickname(user)} />
+                      <Avatar src={user.avatar || '/broken-image.jpg'} alt={getDisplayNickname(user)} />
                       <Stack gap={1}>
                         <div className={`${styles.summary} ${styles['with-chip']}`}>
                           <span>{getDisplayNickname(user)}</span>

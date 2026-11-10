@@ -32,6 +32,7 @@ type Props = {
   defaultValue?: string;
   replyTargetName?: string;
   avatarUrl: string;
+  avatarAlt: string;
   pollChoiceLabel?: string;
   isSubmitting?: boolean;
   externalErrorMessage?: string;
@@ -51,6 +52,7 @@ export default function CommentForm({
   defaultValue = '',
   replyTargetName,
   avatarUrl,
+  avatarAlt,
   isSubmitting = false,
   externalErrorMessage = '',
   getYoutubeCurrentTime,
@@ -200,7 +202,7 @@ export default function CommentForm({
         <div className={styles.textarea}>
           <Avatar
             src={avatarUrl || '/broken-image.jpg'}
-            alt=""
+            alt={avatarAlt}
             sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }}
           />
 

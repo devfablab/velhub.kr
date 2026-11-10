@@ -59,7 +59,7 @@ export default function HubPostListItem({ post, date, dateLabel, description, on
   const thumbnail = getThumbnail(post);
   const content = getDescription(post, description);
   const authorName = post.authorName.trim();
-  const authorImage = authorName ? post.authorImage || '/broken-image.jpg' : undefined;
+  const authorImage = post.authorImage || '/broken-image.jpg';
 
   const item = (
     <>
@@ -71,7 +71,7 @@ export default function HubPostListItem({ post, date, dateLabel, description, on
         </div>
         <div className={styles.tail}>
           <div className={styles['tail-author']}>
-            <Avatar src={authorImage} alt={authorName} sx={{ width: 24, height: 24 }} />
+            <Avatar src={authorImage} alt={authorName || '알 수 없음'} sx={{ width: 24, height: 24 }} />
             <strong>{authorName}</strong>
             <ScheduleRoundedIcon />
             <time aria-label={dateLabel}>{formatTimeAgo(date)}</time>

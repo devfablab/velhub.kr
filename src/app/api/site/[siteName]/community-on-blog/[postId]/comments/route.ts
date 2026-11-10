@@ -166,7 +166,7 @@ export async function GET(_request: Request, context: RouteContext) {
         ),
       }));
     const viewerResult = feature.stigmaId
-      ? await supabaseAdmin.from('stigmas').select('avatar').eq('id', feature.stigmaId).maybeSingle()
+      ? await supabaseAdmin.from('stigmas').select('avatar, user_name').eq('id', feature.stigmaId).maybeSingle()
       : { data: null, error: null };
     if (viewerResult.error) throw new Error('댓글을 불러오지 못했습니다.');
     const canUploadImage = await canUploadBlogCommunityCommentImage({
@@ -177,6 +177,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return Response.json({
       comments,
       mySelfAvatarUrl: getAvatarUrl(viewerResult.data?.avatar),
+      mySelfName: viewerResult.data ? displayName(viewerResult.data.user_name) : '',
       myPollChoice: null,
       isStaff: false,
       isCommunity: false,

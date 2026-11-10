@@ -117,6 +117,7 @@ type Props = {
   activeReplyTargetId: string;
   isSubmitting: boolean;
   avatarUrl: string;
+  avatarAlt: string;
   myPollChoiceLabel: string;
   canUploadImage?: boolean;
   getYoutubeCurrentTime?: () => number | null;
@@ -177,6 +178,7 @@ export default function CommentItem({
   activeReplyTargetId,
   isSubmitting,
   avatarUrl,
+  avatarAlt,
   myPollChoiceLabel,
   canUploadImage = false,
   getYoutubeCurrentTime,
@@ -417,6 +419,7 @@ export default function CommentItem({
             onSubmit={handleEdit}
             onCancel={() => setIsEditing(false)}
             avatarUrl={avatarUrl}
+            avatarAlt={avatarAlt}
             pollChoiceLabel={comment.poll_choice?.label}
             getYoutubeCurrentTime={getYoutubeCurrentTime}
           />
@@ -544,6 +547,7 @@ export default function CommentItem({
             onSubmit={handleReplySubmit}
             onCancel={onCancelReply}
             avatarUrl={avatarUrl}
+            avatarAlt={avatarAlt}
             pollChoiceLabel={myPollChoiceLabel}
             getYoutubeCurrentTime={getYoutubeCurrentTime}
           />
@@ -579,6 +583,7 @@ export default function CommentItem({
                 pinnedCommentId={pinnedCommentId}
                 onPin={onPin}
                 avatarUrl={avatarUrl}
+                avatarAlt={avatarAlt}
                 myPollChoiceLabel={myPollChoiceLabel}
                 canUploadImage={canUploadImage}
                 getYoutubeCurrentTime={getYoutubeCurrentTime}
