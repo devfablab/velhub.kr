@@ -1,11 +1,13 @@
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { mainTitle, Seo } from '@/lib/seo';
 import Aside from './lounge/aside';
 import AuthSection from './lounge/auth';
+import JoinedSites from './lounge/joinedSites';
 import List from './lounge/list';
 import Slick from './lounge/slick';
 import Container from './menu';
+import type { JoinedSite } from '@/app/api/home/joined-sites/route';
 import styles from '../page.module.sass';
 
 type SiteItem = {
@@ -192,13 +194,21 @@ export default async function Home() {
   const host = headerList.get('host');
   const protocol = headerList.get('x-forwarded-proto') || 'http';
   const baseUrl = `${protocol}://${host}`;
+  const cookieStore = await cookies();
   let sitesCreatedData = null;
   let postsPublishedData = null;
+  let joinedSites: JoinedSite[] = [];
   try {
-    const [sitesCreatedResponse, postsPublishedResponse] = await Promise.all([
+    const [sitesCreatedResponse, postsPublishedResponse, joinedSitesResponse] = await Promise.all([
       fetch(`${baseUrl}/api/home/new-sites`, { cache: 'no-store' }),
       fetch(`${baseUrl}/api/home/posts?limit=20`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/api/home/joined-sites`, { headers: { cookie: cookieStore.toString() }, cache: 'no-store' }),
     ]);
+
+    if (joinedSitesResponse.ok) {
+      const joinedSitesData = (await joinedSitesResponse.json()) as { sites?: JoinedSite[] };
+      joinedSites = Array.isArray(joinedSitesData.sites) ? joinedSitesData.sites : [];
+    }
 
     if (!sitesCreatedResponse.ok) {
       console.error('Sites API Error:', sitesCreatedResponse.status, await sitesCreatedResponse.text());
@@ -220,6 +230,7 @@ export default async function Home() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <AuthSection />
+          <JoinedSites sites={joinedSites} />
           {sitesCreatedData?.sites?.length ? (
             <section>
               <h2>새로 오픈했어요 👋</h2>

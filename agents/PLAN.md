@@ -5,39 +5,35 @@
 
 ## 4. 현재 상태
 
-- 지금 작업 중인 단계: 완료
-- 테스트 상태: tsc·prettier 통과, lint 오류는 기존 코드(private opt.tsx set-state-in-effect)뿐 / 화면 미확인
+- 지금 작업 중인 단계: 완료 (화면 확인 대기)
+- 테스트 상태: tsc·lint·prettier 통과 / 화면 미확인
 - 미커밋 변경 요약: 12번 표 참고
 
-### 작업: `<Avatar>` src·alt 컨벤션 맞추기
+### 작업: 라운지 홈에 가입한 커뮤니티·블로그 목록
 
-규칙 (CONVENTIONS.md): src·alt 필수, 이미지 없으면 `/broken-image.jpg`, alt는 별명 → 없으면 활동명
-
-전수 조사: `<Avatar>` 62곳 중 16곳 위반
-
-1. 비로그인 프로필 7곳 (`src={undefined} alt=""`): 클로이 확인 결과 비로그인은 src null/undefined가 맞음 → 변경 안 함. 댓글 비로그인 안내도 같은 형태로 맞춤
-2. 허브 글 목록 `postListItem.tsx`: 작성자 이름 없을 때 src 없음 → 항상 기본 이미지
-3. 멤버 관리 `members/entirety/opt.tsx`: 없는 파일 `/default-avatar.png` → `/broken-image.jpg`
-4. 비공개 글 `private/[postId]/opt.tsx` 2곳: alt 빈 값 → 작성자 이름
-5. 블로그 커뮤니티 배지 미리보기 2곳: alt 빈 값 → "본문 미리보기", "댓글 미리보기" (화면 표시 이름과 동일)
-6. 댓글 입력 `CommentForm`, `CommentList` 작성 요건 안내: alt 빈 값 → 본인 이름(댓글 API 두 곳에 `mySelfName` 추가)
+- 위치: `src/app/(lounge)/page.tsx`의 AuthSection 바로 아래
+- 항목: 세로형 (사이트 아바타 + 운영자/매니저 Chip + 사이트명), 목록은 가로 스크롤 (스크롤바 모양은 blog-ad-items와 같음)
+- Chip: 운영자 → "운영자", 매니저(종류 상관없이) → "매니저", 그 외 → 없음
+- 순서: 운영자 → 매니저 → 그 외, 같은 그룹 안에서는 최근 가입한 순
+- 목록 끝에 "마이허브 이동하기" 링크
+- 가입한 사이트가 없거나 비로그인이면 목록과 링크 모두 안 나옴
+- 제외: 가입 승인 전, 활동 정지·강제 탈퇴·가입 불가·탈퇴, 폐쇄된 사이트
 
 ## 5. 완료한 것
 
-- [x] 전수 조사
-- [x] 2~6
+- [x] 가입 사이트 API (`src/app/api/home/joined-sites/route.ts`)
+- [x] 목록 컴포넌트 (`src/app/(lounge)/lounge/joinedSites.tsx`)
+- [x] 홈 연결·스타일
 
 ## 12. 변경한 파일
 
 (커밋 로그가 없으므로 이 목록이 변경 이력 역할)
 | 파일 | 변경 내용 | 상태 (완료 / 작업 중 / 임시) |
 |---|---|---|
-| src/app/(hub)/hub/shared/postListItem.tsx | 기본 이미지·alt | 완료 |
-| src/app/(site)/[siteName]/manage/members/entirety/opt.tsx | 기본 이미지 경로 | 완료 |
-| src/app/(site)/[siteName]/private/[postId]/opt.tsx | alt 작성자 이름 | 완료 |
-| src/app/(site)/[siteName]/manage/community-on-blog/badge/opt.tsx | alt 미리보기 이름 | 완료 |
-| api/boards/.../comments/route.ts, api/site/.../community-on-blog/.../comments/route.ts | 응답에 mySelfName | 완료 |
-| src/components/comments/CommentForm.tsx, CommentItem.tsx, CommentList.tsx | 입력칸 Avatar alt 본인 이름, 비로그인 안내 src undefined | 완료 |
+| src/app/api/home/joined-sites/route.ts | 새 파일. 가입한 사이트 목록 (정렬 포함) | 완료 |
+| src/app/(lounge)/lounge/joinedSites.tsx | 새 파일. 가로 목록 + 마이허브 링크 | 완료 |
+| src/app/(lounge)/page.tsx | 가입 사이트 불러와서 AuthSection 아래 표시 | 완료 |
+| src/app/page.module.sass | joined-sites, joined-site, joined-site-more 스타일 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

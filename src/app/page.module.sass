@@ -72,6 +72,75 @@
       display: grid
       grid-template-columns: repeat(3, 1fr)
 
+  .joined-sites
+    display: flex
+    flex-direction: row
+    gap: ds.rem(7)
+    min-width: 0
+    width: 100%
+    overflow-x: auto
+    scroll-snap-type: x mandatory
+    margin-top: ds.rem(12)
+
+    &::-webkit-scrollbar
+      height: 7px
+
+    &::-webkit-scrollbar-thumb
+      background: ds.$hex-accent
+
+  .joined-site
+    display: flex
+    flex: 0 0 ds.rem(120)
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    gap: ds.rem(7)
+    min-width: 0
+    scroll-snap-align: start
+    text-align: center
+
+    strong
+      @include ds.fw(neo, 700)
+      width: 100%
+      font-size: ds.rem(14)
+      overflow: hidden
+      text-overflow: ellipsis
+      white-space: nowrap
+      color: ds.$hex-primary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-bright
+
+  .joined-site-more
+    padding-left: ds.rem(12)
+    display: flex
+    align-items: center
+    justify-content: center
+
+    a
+      display: flex
+      align-items: center
+      gap: ds.rem(5)
+      height: ds.rem(37)
+      border: 1px solid rgba(ds.$rgb-tertiary, .2)
+      border-radius: ds.rem(7)
+      padding: 0 ds.rem(12)
+      color: ds.$hex-action
+      @include ds.fw(neo, 600)
+      font-size: ds.rem(14)
+      white-space: nowrap
+      transition: all .4s cubic-bezier(.4,0,.2,1)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .1)
+
+      svg
+        width: ds.rem(16)
+        height: ds.rem(16)
+
   .slider
     margin-top: ds.rem(-32)
     padding-top: ds.rem(38)
