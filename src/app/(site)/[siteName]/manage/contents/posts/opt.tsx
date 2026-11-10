@@ -43,6 +43,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
+import SpellCheckSettingsDialog from './spellCheckSettingsDialog';
 import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -887,6 +888,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Anchor>
               </>
             ) : null}
+            <SpellCheckSettingsDialog siteName={siteName} />
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">

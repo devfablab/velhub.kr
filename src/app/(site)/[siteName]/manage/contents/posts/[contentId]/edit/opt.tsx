@@ -18,6 +18,10 @@ import type { SelectChangeEvent } from '@mui/material/Select';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
+import SpellCheckDialog, {
+  type SpellCheckDialogHandle,
+  type SpellCheckSection,
+} from '@/components/editor/SpellCheckDialog';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/PostAttachmentUploader';
@@ -337,6 +341,11 @@ export default function Opt({
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
+  const formReference = useRef<HTMLFormElement | null>(null);
+  const spellCheckReference = useRef<SpellCheckDialogHandle | null>(null);
+  const isSpellCheckConfirmedReference = useRef(false);
+  const [contentReplacement, setContentReplacement] = useState<{ value: string; version: number } | null>(null);
+  const [paidPreviewReplacement, setPaidPreviewReplacement] = useState<{ value: string; version: number } | null>(null);
 
   const [subject, setSubject] = useState(initialContent?.content?.subject ?? '');
   const [summary, setSummary] = useState(initialContent?.content?.summary ?? '');
@@ -658,6 +667,35 @@ export default function Opt({
     );
   }
 
+  function getSpellCheckSections(): SpellCheckSection[] {
+    return [
+      { key: 'subject', label: '제목', kind: 'plain', value: subject },
+      { key: 'summary', label: '부제목', kind: 'plain', value: summary },
+      ...(canRegisterPaidPreview
+        ? [{ key: 'paidPreview', label: '미리보기', kind: 'markdown' as const, value: paidPreviewMarkdown }]
+        : []),
+      { key: 'content', label: canRegisterPaidPreview ? '본문' : '내용', kind: 'markdown', value: contentMarkdown },
+    ];
+  }
+
+  function handleApplySpellCheckSection(key: string, value: string) {
+    if (key === 'subject') setSubject(value);
+    if (key === 'summary') setSummary(value);
+    if (key === 'paidPreview') {
+      setPaidPreviewMarkdown(value);
+      setPaidPreviewReplacement((current) => ({ value, version: (current?.version ?? 0) + 1 }));
+    }
+    if (key === 'content') {
+      setContentMarkdown(value);
+      setContentReplacement((current) => ({ value, version: (current?.version ?? 0) + 1 }));
+    }
+  }
+
+  function handleConfirmSpellCheckSave() {
+    isSpellCheckConfirmedReference.current = true;
+    formReference.current?.requestSubmit();
+  }
+
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
@@ -694,6 +732,17 @@ export default function Opt({
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
       setFormErrorDialog({ title: '글 수정', messages: Object.values(nextErrors) });
+      return;
+    }
+
+    const isSpellCheckConfirmed = isSpellCheckConfirmedReference.current;
+    isSpellCheckConfirmedReference.current = false;
+
+    if (
+      !isSpellCheckConfirmed &&
+      spellCheckReference.current &&
+      !spellCheckReference.current.requestSave(getSpellCheckSections())
+    ) {
       return;
     }
     setErrorMessage('');
@@ -801,7 +850,7 @@ export default function Opt({
           ) : null}
 
           <div className={`paper ${styles.paper}`}>
-            <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
+            <Stack component="form" ref={formReference} gap={2.5} onSubmit={handleSubmit}>
               <Stack gap={1}>
                 <Typography variant="subtitle2">제목 *</Typography>
                 <TextField
@@ -939,6 +988,7 @@ export default function Opt({
                     onHtmlChange={setPaidPreviewHtml}
                     onMarkdownChange={setPaidPreviewMarkdown}
                     onUploadImage={handleUploadEditorImage}
+                    replacementMarkdown={paidPreviewReplacement}
                   />
                 </>
               ) : null}
@@ -960,6 +1010,7 @@ export default function Opt({
                   onHtmlChange={setContentHtml}
                   onMarkdownChange={setContentMarkdown}
                   onUploadImage={handleUploadEditorImage}
+                  replacementMarkdown={contentReplacement}
                 />
                 {fieldErrors.content ? (
                   <p className="alert error">
@@ -987,6 +1038,13 @@ export default function Opt({
               <FormControlLabel
                 control={<IOSSwitch sx={{ m: 1 }} checked={isRecommended} onChange={handleIsRecommendedChange} />}
                 label="추천 게시물 등록"
+              />
+
+              <SpellCheckDialog
+                ref={spellCheckReference}
+                siteName={siteName}
+                onApplySection={handleApplySpellCheckSection}
+                onConfirmSave={handleConfirmSpellCheckSave}
               />
 
               <Stack direction="row" gap={1.5} justifyContent="space-between">

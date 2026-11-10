@@ -2,15 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Drawer,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js';
 import '@toast-ui/editor/dist/i18n/ko-kr';
 import { Editor } from '@toast-ui/react-editor';
@@ -37,6 +29,7 @@ type Props = {
   onMarkdownChange: (value: string) => void;
   onUploadImage?: (file: Blob | File) => Promise<string>;
   onReady?: () => void;
+  replacementMarkdown?: { value: string; version: number } | null;
 };
 
 export default function ToastEditorClient({
@@ -50,6 +43,7 @@ export default function ToastEditorClient({
   onMarkdownChange,
   onUploadImage,
   onReady,
+  replacementMarkdown = null,
 }: Props) {
   const editorReference = useRef<Editor | null>(null);
   const [imageErrorMessage, setImageErrorMessage] = useState('');
@@ -103,6 +97,23 @@ export default function ToastEditorClient({
   useEffect(() => {
     onReady?.();
   }, [onReady]);
+
+  const replacementVersion = replacementMarkdown?.version ?? null;
+  const replacementValue = replacementMarkdown?.value ?? null;
+
+  useEffect(() => {
+    if (replacementVersion === null || replacementValue === null) {
+      return;
+    }
+
+    const instance = editorReference.current?.getInstance();
+
+    if (!instance || instance.getMarkdown() === replacementValue) {
+      return;
+    }
+
+    instance.setMarkdown(replacementValue, false);
+  }, [replacementVersion, replacementValue]);
 
   return (
     <>

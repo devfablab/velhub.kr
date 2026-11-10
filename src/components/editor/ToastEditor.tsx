@@ -17,6 +17,7 @@ type Props = {
   onMarkdownChange: (value: string) => void;
   onUploadImage?: (file: Blob | File) => Promise<string>;
   onReady?: () => void;
+  replacementMarkdown?: { value: string; version: number } | null;
 };
 
 export default function ToastEditor({
@@ -30,6 +31,7 @@ export default function ToastEditor({
   onMarkdownChange,
   onUploadImage,
   onReady,
+  replacementMarkdown = null,
 }: Props) {
   const normalizedMarkdownStatus = markdownStatus ?? '';
   const effectiveInitialEditType =
@@ -57,6 +59,7 @@ export default function ToastEditor({
       markdownStatus={normalizedMarkdownStatus}
       onUploadImage={onUploadImage}
       onReady={onReady}
+      replacementMarkdown={replacementMarkdown}
     />
   );
 }
