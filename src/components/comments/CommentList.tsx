@@ -9,7 +9,7 @@ import type { ReportTargetType } from '@/lib/reports/guidelines';
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import DonationButton from '@/components/buttons/DonationButton';
 import SiteGuidelineActions from '@/components/buttons/SiteGuidelineActions';
-import CommentForm from '@/components/comments/CommentForm';
+import CommentForm, { type CommentImageChange } from '@/components/comments/CommentForm';
 import CommentItem, { type CommentData } from '@/components/comments/CommentItem';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import Anchor from '../Anchor';
@@ -48,6 +48,7 @@ export type CommentsResponse = {
     canWrite?: boolean;
     canManageComment?: boolean;
     canWriteReason?: 'guest' | 'policy' | 'hidden' | null;
+    canUploadImage?: boolean;
   };
   error?: string;
 };
@@ -79,6 +80,25 @@ type CommentWithReplies = CommentData & {
 };
 
 type CommentSort = 'popular' | 'latest';
+
+const EMPTY_IMAGE_CHANGE: CommentImageChange = { file: null, shouldRemove: false };
+
+function createCommentRequestBody(fields: Record<string, string | null>, image: CommentImageChange) {
+  if (!image.file && !image.shouldRemove) {
+    return { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) };
+  }
+
+  const formData = new FormData();
+
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== null) formData.append(key, value);
+  });
+
+  if (image.file) formData.append('image', image.file);
+  if (image.shouldRemove) formData.append('removeImage', 'true');
+
+  return { headers: undefined, body: formData };
+}
 
 function getCommentCount(nextComments: CommentData[]): number {
   return nextComments.reduce<number>((totalCount, comment) => {
@@ -192,6 +212,7 @@ export default function CommentList({
   const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(
     initialData?.actions?.canWriteReason ?? null,
   );
+  const [canUploadImage, setCanUploadImage] = useState(initialData?.actions?.canUploadImage === true);
   const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? '');
   const [isCommunity, setIsCommunity] = useState(initialData?.isCommunity === true);
   const [boardLabel, setBoardLabel] = useState(initialData?.boardLabel ?? '');
@@ -237,6 +258,7 @@ export default function CommentList({
       setMyPollChoice(result.myPollChoice ?? null);
       setCanWrite(result.actions?.canWrite === true);
       setCanWriteReason(result.actions?.canWriteReason ?? null);
+      setCanUploadImage(result.actions?.canUploadImage === true);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '댓글 목록을 불러오지 못했습니다.');
@@ -254,29 +276,31 @@ export default function CommentList({
     });
   }, [initialData, loadComments]);
 
-  async function createComment(content: string, parentId: string | null): Promise<string | void> {
+  async function createComment(
+    content: string,
+    parentId: string | null,
+    image: CommentImageChange = EMPTY_IMAGE_CHANGE,
+  ): Promise<string | void> {
     try {
       setIsSubmitting(true);
       setErrorMessage('');
 
       const response = await fetch(getApiUrl(), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         credentials: 'include',
-        body: JSON.stringify({
-          siteName,
-          content,
-          parentId,
-          replyToId: parentId,
-        }),
+        ...createCommentRequestBody({ siteName, content, parentId, replyToId: parentId }, image),
       });
 
       const result = (await response.json()) as CommentActionResponse;
 
       if (!response.ok) {
         throw new Error(result.error ?? '댓글 작성에 실패했습니다.');
+      }
+
+      if (result.ok && !result.comment) {
+        await loadComments();
+        setActiveReplyTargetId('');
+        return;
       }
 
       if (!result.comment) {
@@ -305,21 +329,19 @@ export default function CommentList({
     }
   }
 
-  async function editComment(commentId: string, content: string): Promise<string | void> {
+  async function editComment(
+    commentId: string,
+    content: string,
+    image: CommentImageChange = EMPTY_IMAGE_CHANGE,
+  ): Promise<string | void> {
     try {
       setIsSubmitting(true);
       setErrorMessage('');
 
       const response = await fetch(getApiUrl(`/${commentId}`), {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         credentials: 'include',
-        body: JSON.stringify({
-          siteName,
-          content,
-        }),
+        ...createCommentRequestBody({ siteName, content }, image),
       });
 
       const result = (await response.json()) as CommentActionResponse;
@@ -589,7 +611,8 @@ export default function CommentList({
                 )
               : undefined
           }
-          onSubmit={(content) => createComment(content, null)}
+          canUploadImage={canUploadImage}
+          onSubmit={(content, image) => createComment(content, null, image)}
         />
       ) : null}
 
@@ -660,7 +683,8 @@ export default function CommentList({
               onYoutubeTimestampClick={onYoutubeTimestampClick}
               onReplyClick={(targetComment) => setActiveReplyTargetId(targetComment.id)}
               onCancelReply={() => setActiveReplyTargetId('')}
-              onCreateReply={(parentId, content) => createComment(content, parentId)}
+              canUploadImage={canUploadImage}
+              onCreateReply={(parentId, content, image) => createComment(content, parentId, image)}
               onEdit={editComment}
               onDelete={deleteComment}
               onBlind={blindComment}

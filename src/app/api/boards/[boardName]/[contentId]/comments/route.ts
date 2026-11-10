@@ -3,7 +3,15 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { type BlogSubscriptionBadge, getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
-import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
+import { canAccessSubscriptionSeriesComments, canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
+import {
+  getCommentImageUrl,
+  POST_COMMENT_IMAGE_BUCKET,
+  readCommentRequest,
+  removeCommentImage,
+  type UploadedCommentImage,
+  uploadCommentImage,
+} from '@/lib/service/commentImage.server';
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/service/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
@@ -66,6 +74,9 @@ type CommentRow = {
   is_pinned: boolean;
   donation_payment_id: string | null;
   donation_amount: number | string | null;
+  image_path?: string | null;
+  image_width?: number | null;
+  image_height?: number | null;
 };
 
 type CommentItem = {
@@ -84,6 +95,9 @@ type CommentItem = {
   blinded_message: string | null;
   is_pinned: boolean;
   donation_amount: number | null;
+  image_url: string;
+  image_width: number | null;
+  image_height: number | null;
   author_name: string;
   author_avatar_url: string;
   author_membership_badge_url: string | null;
@@ -106,12 +120,6 @@ type CommentItem = {
   dislike_count: number;
   is_disliked: boolean;
   replies: CommentItem[];
-};
-
-type RequestBody = {
-  siteName?: string | null;
-  content?: string | null;
-  parentId?: string | null;
 };
 
 type LevelRow = {
@@ -686,14 +694,14 @@ async function buildCommentItem({
 
   let content = comment.content;
   let blindedMessage = comment.blinded_message;
+  const isContentHidden =
+    (isWordingBlinded && !isMe) || (isDeleted && !canManageComment) || (isBlinded && !canManageComment);
 
   if (isWordingBlinded && !isMe) {
     content = null;
     blindedMessage = '워딩 프로파일러에 의해 비공개 처리된 댓글입니다.';
-  } else if (isDeleted && !canManageComment) {
-    content = '삭제된 댓글입니다.';
-  } else if (isBlinded && !canManageComment) {
-    content = '숨겨진 댓글입니다.';
+  } else if (isContentHidden) {
+    content = null;
   }
 
   return {
@@ -715,6 +723,9 @@ async function buildCommentItem({
       !isDeleted && !isBlinded && comment.donation_payment_id && Number(comment.donation_amount) > 0
         ? Number(comment.donation_amount)
         : null,
+    image_url: isContentHidden ? '' : getCommentImageUrl(POST_COMMENT_IMAGE_BUCKET, comment.image_path),
+    image_width: isContentHidden ? null : (comment.image_width ?? null),
+    image_height: isContentHidden ? null : (comment.image_height ?? null),
     author_name: author.name,
     author_avatar_url: author.avatarUrl,
     author_membership_badge_url: author.membershipBadge?.url ?? null,
@@ -844,7 +855,7 @@ export async function GET(request: Request, context: RouteContext) {
     const commentsResult = await supabaseAdmin
       .from('post_comments')
       .select(
-        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, is_wording_blinded, blinded_at, blinded_by, blinded_message, is_locked, is_pinned, donation_payment_id, donation_amount',
+        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, is_wording_blinded, blinded_at, blinded_by, blinded_message, is_locked, is_pinned, donation_payment_id, donation_amount, image_path, image_width, image_height',
       )
       .eq('site_id', target.data.siteId)
       .eq('board_id', target.data.boardId)
@@ -1006,9 +1017,20 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const isStaff = session.case === 'staff' || session.case === 'admin';
+    const canUploadImage =
+      canWrite &&
+      (await canUploadPostCommentImage({
+        supabaseAdmin,
+        siteId: target.data.siteId,
+        boardId: target.data.boardId,
+        postId: target.data.postId,
+        stigmaId: session.stigmaId ?? null,
+      }));
 
     return Response.json({
-      comments: groupComments(commentItems),
+      comments: groupComments(commentItems).map((comment) =>
+        comment.is_deleted && !canManageComment ? { ...comment, replies: [] } : comment,
+      ),
       mySelfAvatarUrl,
       myPollChoice,
       isStaff,
@@ -1018,6 +1040,7 @@ export async function GET(request: Request, context: RouteContext) {
         canWrite,
         canWriteReason,
         canManageComment,
+        canUploadImage,
       },
     });
   } catch (unknownError) {
@@ -1043,10 +1066,10 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const requestBody = (await request.json()) as RequestBody;
-    const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const content = normalizeText(requestBody.content);
-    const parentId = normalizeText(requestBody.parentId);
+    const { fields, imageFile } = await readCommentRequest(request);
+    const siteName = normalizeText(fields.siteName as string | null | undefined).toLowerCase();
+    const content = normalizeText(fields.content as string | null | undefined);
+    const parentId = normalizeText(fields.parentId as string | null | undefined);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -1128,6 +1151,29 @@ export async function POST(request: Request, context: RouteContext) {
       replyToId = parentResult.data.id;
     }
 
+    let uploadedImage: UploadedCommentImage | null = null;
+
+    if (imageFile) {
+      const canUploadImage = await canUploadPostCommentImage({
+        supabaseAdmin,
+        siteId: target.data.siteId,
+        boardId: target.data.boardId,
+        postId: target.data.postId,
+        stigmaId: session.stigmaId,
+      });
+
+      if (!canUploadImage) {
+        return Response.json({ error: '이 글의 댓글에는 이미지를 올릴 수 없습니다.' }, { status: 403 });
+      }
+
+      uploadedImage = await uploadCommentImage({
+        bucket: POST_COMMENT_IMAGE_BUCKET,
+        siteId: target.data.siteId,
+        stigmaId: session.stigmaId,
+        file: imageFile,
+      });
+    }
+
     const insertResult = await supabaseAdmin
       .from('post_comments')
       .insert({
@@ -1146,13 +1192,17 @@ export async function POST(request: Request, context: RouteContext) {
         blinded_at: null,
         blinded_by: null,
         blinded_message: null,
+        image_path: uploadedImage?.path ?? null,
+        image_width: uploadedImage?.width ?? null,
+        image_height: uploadedImage?.height ?? null,
       })
       .select(
-        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, is_wording_blinded, blinded_at, blinded_by, blinded_message',
+        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, is_wording_blinded, blinded_at, blinded_by, blinded_message, image_path, image_width, image_height',
       )
       .maybeSingle();
 
     if (insertResult.error || !insertResult.data) {
+      await removeCommentImage(POST_COMMENT_IMAGE_BUCKET, uploadedImage?.path);
       return Response.json({ error: '댓글 작성에 실패했습니다.' }, { status: 500 });
     }
 

@@ -2,8 +2,17 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
+import { canUploadBlogCommunityCommentImage } from '@/lib/payments/postCommentAccess';
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
 import { registerBlogCommunityFirstComeDraw } from '@/lib/service/blog/blogCommunity/draw';
+import {
+  BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET,
+  getCommentImageUrl,
+  readCommentRequest,
+  removeCommentImage,
+  type UploadedCommentImage,
+  uploadCommentImage,
+} from '@/lib/service/commentImage.server';
 import { isNumericContentSlug } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
@@ -19,8 +28,9 @@ function displayName(value: string | null | undefined) {
 }
 
 function getErrorStatus(message: string) {
-  if (/구독자만|사용하지 않고|개인 블로그/.test(message)) return 403;
+  if (/구독자만|사용하지 않고|개인 블로그|이미지를 올릴 수 없습니다/.test(message)) return 403;
   if (/로그인 후/.test(message)) return 401;
+  if (/1MB 미만|이미지만 올릴 수 있습니다/.test(message)) return 400;
   return 500;
 }
 
@@ -66,7 +76,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const commentsResult = await supabaseAdmin
       .from('blog_community_comments')
       .select(
-        'id, user_id, parent_id, reply_to_id, content, created_at, is_deleted, deleted_at, is_blinded, is_wording_blinded',
+        'id, user_id, parent_id, reply_to_id, content, created_at, is_deleted, deleted_at, is_blinded, is_wording_blinded, image_path, image_width, image_height',
       )
       .eq('site_id', feature.siteId)
       .eq('post_id', postData.id)
@@ -97,6 +107,7 @@ export async function GET(_request: Request, context: RouteContext) {
       const isBlinded = comment.is_blinded === true;
       const isWordingBlinded = comment.is_wording_blinded === true;
       const isMe = feature.stigmaId === comment.user_id;
+      const isContentHidden = (isWordingBlinded && !isMe) || (isDeleted && !feature.isOperator) || isBlinded;
 
       return {
         id: comment.id,
@@ -104,14 +115,7 @@ export async function GET(_request: Request, context: RouteContext) {
         parent_id: comment.parent_id,
         reply_to_id: comment.reply_to_id,
         reply_to_author_name: replyToAuthor?.name ?? '',
-        content:
-          isWordingBlinded && !isMe
-            ? null
-            : isDeleted
-              ? '삭제된 댓글입니다.'
-              : isBlinded
-                ? '숨김 처리된 댓글입니다.'
-                : comment.content,
+        content: isContentHidden ? null : comment.content,
         is_deleted: isDeleted,
         deleted_at: comment.deleted_at,
         is_locked: false,
@@ -120,6 +124,9 @@ export async function GET(_request: Request, context: RouteContext) {
         blinded_at: null,
         blinded_message: isWordingBlinded && !isMe ? '워딩 프로파일러에 의해 비공개 처리된 댓글입니다.' : null,
         is_pinned: false,
+        image_url: isContentHidden ? '' : getCommentImageUrl(BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET, comment.image_path),
+        image_width: isContentHidden ? null : (comment.image_width ?? null),
+        image_height: isContentHidden ? null : (comment.image_height ?? null),
         author_name: authors.get(comment.user_id)?.name ?? '알 수 없음',
         author_avatar_url: authors.get(comment.user_id)?.avatarUrl ?? '',
         author_membership_badge_url: badgeByUser.get(comment.user_id)?.url ?? null,
@@ -154,7 +161,7 @@ export async function GET(_request: Request, context: RouteContext) {
       .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
       .map((comment) => ({
         ...comment,
-        replies: (repliesByParentId.get(comment.id) ?? []).sort(
+        replies: (comment.is_deleted && !feature.isOperator ? [] : (repliesByParentId.get(comment.id) ?? [])).sort(
           (left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime(),
         ),
       }));
@@ -162,6 +169,11 @@ export async function GET(_request: Request, context: RouteContext) {
       ? await supabaseAdmin.from('stigmas').select('avatar').eq('id', feature.stigmaId).maybeSingle()
       : { data: null, error: null };
     if (viewerResult.error) throw new Error('댓글을 불러오지 못했습니다.');
+    const canUploadImage = await canUploadBlogCommunityCommentImage({
+      supabaseAdmin,
+      siteId: feature.siteId,
+      stigmaId: feature.stigmaId,
+    });
     return Response.json({
       comments,
       mySelfAvatarUrl: getAvatarUrl(viewerResult.data?.avatar),
@@ -173,6 +185,7 @@ export async function GET(_request: Request, context: RouteContext) {
         canWrite: Boolean(feature.stigmaId),
         canWriteReason: feature.stigmaId ? null : 'guest',
         canManageComment: feature.isOwner,
+        canUploadImage,
       },
     });
   } catch (error) {
@@ -192,11 +205,7 @@ export async function POST(request: Request, context: RouteContext) {
     assertBlogCommunityUse(feature);
     if (!feature.stigmaId) return Response.json({ error: '로그인 후 댓글을 작성할 수 있습니다.' }, { status: 401 });
     const post = await assertPost(feature.siteId, postId);
-    const body = (await request.json().catch(() => null)) as {
-      content?: unknown;
-      parentId?: unknown;
-      replyToId?: unknown;
-    } | null;
+    const { fields: body, imageFile } = await readCommentRequest(request);
     const content = normalizeText(typeof body?.content === 'string' ? body.content : '');
     const parentId = normalizeText(typeof body?.parentId === 'string' ? body.parentId : '') || null;
     const replyToId = normalizeText(typeof body?.replyToId === 'string' ? body.replyToId : '') || null;
@@ -219,6 +228,21 @@ export async function POST(request: Request, context: RouteContext) {
       )
         return Response.json({ error: '답글을 작성할 수 없는 댓글입니다.' }, { status: 400 });
     }
+    let uploadedImage: UploadedCommentImage | null = null;
+    if (imageFile) {
+      const canUploadImage = await canUploadBlogCommunityCommentImage({
+        supabaseAdmin: getSupabaseAdmin(),
+        siteId: feature.siteId,
+        stigmaId: feature.stigmaId,
+      });
+      if (!canUploadImage) throw new Error('이 댓글에는 이미지를 올릴 수 없습니다.');
+      uploadedImage = await uploadCommentImage({
+        bucket: BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET,
+        siteId: feature.siteId,
+        stigmaId: feature.stigmaId,
+        file: imageFile,
+      });
+    }
     const result = await getSupabaseAdmin()
       .from('blog_community_comments')
       .insert({
@@ -229,10 +253,16 @@ export async function POST(request: Request, context: RouteContext) {
         is_wording_blinded: await hasWordingProfilerViolation(feature.siteId, { content }),
         parent_id: parentId,
         reply_to_id: replyToId,
+        image_path: uploadedImage?.path ?? null,
+        image_width: uploadedImage?.width ?? null,
+        image_height: uploadedImage?.height ?? null,
       })
       .select('id')
       .single();
-    if (result.error) throw new Error('댓글을 등록하지 못했습니다.');
+    if (result.error) {
+      await removeCommentImage(BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET, uploadedImage?.path);
+      throw new Error('댓글을 등록하지 못했습니다.');
+    }
     await registerBlogCommunityFirstComeDraw({
       siteId: feature.siteId,
       postId: post.id,

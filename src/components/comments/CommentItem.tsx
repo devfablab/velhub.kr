@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Avatar,
   Chip,
@@ -17,7 +18,7 @@ import {
 } from '@mui/material';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
 import { formatDateTimeDetail } from '@/lib/utils';
-import CommentForm from '@/components/comments/CommentForm';
+import CommentForm, { type CommentImageChange } from '@/components/comments/CommentForm';
 import OptimizedImage from '@/components/OptimizedImage';
 import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
 import ReportButton from '../buttons/ReportButton';
@@ -71,6 +72,9 @@ export type CommentData = {
   is_wording_blinded?: boolean;
   is_pinned: boolean;
   donation_amount: number | null;
+  image_url?: string;
+  image_width?: number | null;
+  image_height?: number | null;
   is_locked: boolean;
   blinded_at: string | null;
   blinded_message: string | null;
@@ -114,12 +118,13 @@ type Props = {
   isSubmitting: boolean;
   avatarUrl: string;
   myPollChoiceLabel: string;
+  canUploadImage?: boolean;
   getYoutubeCurrentTime?: () => number | null;
   onYoutubeTimestampClick?: (seconds: number) => void;
   onReplyClick: (comment: CommentData) => void;
   onCancelReply: () => void;
-  onCreateReply: (parentId: string, content: string) => Promise<string | void>;
-  onEdit: (commentId: string, content: string) => Promise<string | void>;
+  onCreateReply: (parentId: string, content: string, image: CommentImageChange) => Promise<string | void>;
+  onEdit: (commentId: string, content: string, image: CommentImageChange) => Promise<string | void>;
   onDelete: (commentId: string) => Promise<void>;
   onBlind: (commentId: string) => Promise<void>;
   onUnblind: (commentId: string) => Promise<void>;
@@ -173,6 +178,7 @@ export default function CommentItem({
   isSubmitting,
   avatarUrl,
   myPollChoiceLabel,
+  canUploadImage = false,
   getYoutubeCurrentTime,
   onYoutubeTimestampClick,
   onReplyClick,
@@ -193,6 +199,14 @@ export default function CommentItem({
   const isReactingRef = useRef(false);
 
   const roleLabel = getAuthorRoleLabel(comment.author_role);
+  const hiddenNotice =
+    comment.content === null && !comment.is_wording_blinded
+      ? comment.is_deleted
+        ? '삭제된 댓글입니다.'
+        : comment.is_blinded
+          ? '숨겨진 댓글입니다.'
+          : ''
+      : '';
   const isReplyFormOpen = activeReplyTargetId === comment.id;
 
   const theme = useTheme();
@@ -283,8 +297,8 @@ export default function CommentItem({
     };
   })();
 
-  async function handleEdit(content: string) {
-    const submitError = await onEdit(comment.id, content);
+  async function handleEdit(content: string, image: CommentImageChange) {
+    const submitError = await onEdit(comment.id, content, image);
 
     if (!submitError) {
       setIsEditing(false);
@@ -293,8 +307,8 @@ export default function CommentItem({
     return submitError;
   }
 
-  async function handleReplySubmit(content: string) {
-    return onCreateReply(comment.id, content);
+  async function handleReplySubmit(content: string, image: CommentImageChange) {
+    return onCreateReply(comment.id, content, image);
   }
 
   async function handleLike() {
@@ -398,6 +412,8 @@ export default function CommentItem({
             defaultValue={comment.content ?? ''}
             submitLabel="수정"
             isSubmitting={isSubmitting}
+            canUploadImage={canUploadImage}
+            defaultImageUrl={comment.image_url ?? ''}
             onSubmit={handleEdit}
             onCancel={() => setIsEditing(false)}
             avatarUrl={avatarUrl}
@@ -417,6 +433,14 @@ export default function CommentItem({
                 </p>
               </div>
             ) : null}
+            {hiddenNotice ? (
+              <div className="paper" style={{ marginBottom: '7px' }}>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>{hiddenNotice}</span>
+                </p>
+              </div>
+            ) : null}
             {comment.donation_amount ? (
               <Chip
                 label={`후원 ${comment.donation_amount.toLocaleString()}원`}
@@ -433,6 +457,16 @@ export default function CommentItem({
               ) : null
             ) : comment.content ? (
               <p>{comment.content}</p>
+            ) : null}
+            {comment.image_url ? (
+              <OptimizedImage
+                className={styles['comment-image']}
+                src={comment.image_url}
+                width={comment.image_width}
+                height={comment.image_height}
+                sizes="(max-width: 807px) 50vw, 404px"
+                alt="댓글 이미지"
+              />
             ) : null}
             {comment.poll_choice ? <blockquote>선택한 항목: {comment.poll_choice.label}</blockquote> : null}
           </div>
@@ -506,6 +540,7 @@ export default function CommentItem({
             replyTargetName={comment.author_name}
             submitLabel="답글 등록"
             isSubmitting={isSubmitting}
+            canUploadImage={canUploadImage}
             onSubmit={handleReplySubmit}
             onCancel={onCancelReply}
             avatarUrl={avatarUrl}
@@ -545,6 +580,7 @@ export default function CommentItem({
                 onPin={onPin}
                 avatarUrl={avatarUrl}
                 myPollChoiceLabel={myPollChoiceLabel}
+                canUploadImage={canUploadImage}
                 getYoutubeCurrentTime={getYoutubeCurrentTime}
                 onYoutubeTimestampClick={onYoutubeTimestampClick}
               />

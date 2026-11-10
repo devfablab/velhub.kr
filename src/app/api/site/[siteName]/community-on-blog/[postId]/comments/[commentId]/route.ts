@@ -1,5 +1,13 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { canUploadBlogCommunityCommentImage } from '@/lib/payments/postCommentAccess';
 import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import {
+  BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET,
+  readCommentRequest,
+  removeCommentImage,
+  type UploadedCommentImage,
+  uploadCommentImage,
+} from '@/lib/service/commentImage.server';
 import { isNumericContentSlug } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler.server';
@@ -39,7 +47,8 @@ async function getCommentTarget(siteName: string, contentId: string, commentId: 
 
 function getErrorStatus(message: string) {
   if (/로그인 후/.test(message)) return 401;
-  if (/구독자만|사용하지 않고|개인 블로그|권한/.test(message)) return 403;
+  if (/구독자만|사용하지 않고|개인 블로그|권한|이미지를 올릴 수 없습니다/.test(message)) return 403;
+  if (/1MB 미만|이미지만 올릴 수 있습니다/.test(message)) return 400;
   if (/찾을 수 없습니다/.test(message)) return 404;
   return 500;
 }
@@ -50,7 +59,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { feature, supabaseAdmin, comment } = await getCommentTarget(siteName, contentId, commentId);
     if (comment.user_id !== feature.stigmaId)
       return Response.json({ error: '댓글 수정 권한이 없습니다.' }, { status: 403 });
-    const body = (await request.json().catch(() => null)) as { content?: unknown } | null;
+    const { fields: body, imageFile, shouldRemoveImage } = await readCommentRequest(request);
     const content = normalizeText(typeof body?.content === 'string' ? body.content : '');
     if (!content) return Response.json({ error: '댓글을 입력해주세요.' }, { status: 400 });
     if (await hasWordingProfilerViolation(feature.siteId, { content })) {
@@ -59,11 +68,34 @@ export async function PATCH(request: Request, context: RouteContext) {
         { status: 400 },
       );
     }
+    let uploadedImage: UploadedCommentImage | null = null;
+    if (imageFile) {
+      const canUploadImage = await canUploadBlogCommunityCommentImage({
+        supabaseAdmin,
+        siteId: feature.siteId,
+        stigmaId: feature.stigmaId,
+      });
+      if (!canUploadImage) throw new Error('이 댓글에는 이미지를 올릴 수 없습니다.');
+      uploadedImage = await uploadCommentImage({
+        bucket: BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET,
+        siteId: feature.siteId,
+        stigmaId: feature.stigmaId as string,
+        file: imageFile,
+      });
+    }
+    const imageUpdate = uploadedImage
+      ? { image_path: uploadedImage.path, image_width: uploadedImage.width, image_height: uploadedImage.height }
+      : shouldRemoveImage
+        ? { image_path: null, image_width: null, image_height: null }
+        : {};
     const result = await supabaseAdmin
       .from('blog_community_comments')
-      .update({ content, is_wording_blinded: false })
+      .update({ content, is_wording_blinded: false, ...imageUpdate })
       .eq('id', comment.id);
-    if (result.error) throw new Error('댓글을 수정하지 못했습니다.');
+    if (result.error) {
+      await removeCommentImage(BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET, uploadedImage?.path);
+      throw new Error('댓글을 수정하지 못했습니다.');
+    }
     return Response.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : '댓글을 수정하지 못했습니다.';

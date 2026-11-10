@@ -117,6 +117,27 @@
       top: ds.rem(12)
       left: ds.rem(52)
 
+  .comment-image-preview
+    position: relative
+    width: 50%
+    margin-top: ds.rem(7)
+
+    img
+      display: block
+      width: 100%
+      height: auto
+      border-radius: ds.rem(12)
+
+    button
+      position: absolute
+      top: ds.rem(7)
+      right: ds.rem(7)
+      padding: ds.rem(3) ds.rem(7)
+      border-radius: ds.rem(12)
+      font-size: ds.rem(12)
+      background-color: rgba(ds.$rgb-primary, .7)
+      color: ds.$hex-bright
+
   .comment-items
     display: flex
     flex-direction: column
@@ -215,6 +236,13 @@
 
           p
             white-space: break-spaces
+
+          .comment-image
+            display: block
+            width: 50%
+            height: auto
+            margin-top: ds.rem(7)
+            border-radius: ds.rem(12)
 
           strong
             margin-right: ds.rem(7)

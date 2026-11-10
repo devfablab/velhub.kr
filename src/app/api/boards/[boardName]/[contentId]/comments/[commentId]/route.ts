@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
+import {
+  getCommentImageUrl,
+  POST_COMMENT_IMAGE_BUCKET,
+  readCommentRequest,
+  removeCommentImage,
+  type UploadedCommentImage,
+  uploadCommentImage,
+} from '@/lib/service/commentImage.server';
 import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -1061,12 +1070,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
     const normalizedContentId = normalizeText(contentId);
     const normalizedCommentId = normalizeText(commentId);
-    const requestBody = (await request.json()) as {
-      siteName?: string | null;
-      content?: string | null;
-    };
-    const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const content = normalizeText(requestBody.content);
+    const { fields, imageFile, shouldRemoveImage } = await readCommentRequest(request);
+    const siteName = normalizeText(fields.siteName as string | null | undefined).toLowerCase();
+    const content = normalizeText(fields.content as string | null | undefined);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -1155,24 +1161,61 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    let uploadedImage: UploadedCommentImage | null = null;
+
+    if (imageFile) {
+      const canUploadImage = await canUploadPostCommentImage({
+        supabaseAdmin,
+        siteId: siteResult.data.id,
+        boardId: boardResult.data.id,
+        postId: postResult.data.id,
+        stigmaId: session.stigmaId,
+      });
+
+      if (!canUploadImage) {
+        return Response.json({ error: '이 글의 댓글에는 이미지를 올릴 수 없습니다.' }, { status: 403 });
+      }
+
+      uploadedImage = await uploadCommentImage({
+        bucket: POST_COMMENT_IMAGE_BUCKET,
+        siteId: siteResult.data.id,
+        stigmaId: session.stigmaId,
+        file: imageFile,
+      });
+    }
+
+    const imageUpdate = uploadedImage
+      ? { image_path: uploadedImage.path, image_width: uploadedImage.width, image_height: uploadedImage.height }
+      : shouldRemoveImage
+        ? { image_path: null, image_width: null, image_height: null }
+        : {};
+
     const updateResult = await supabaseAdmin
       .from('post_comments')
       .update({
         content,
         is_wording_blinded: false,
+        ...imageUpdate,
       })
       .eq('id', normalizedCommentId)
       .eq('user_id', session.stigmaId)
-      .select('id, content')
+      .select('id, content, image_path, image_width, image_height')
       .maybeSingle();
 
     if (updateResult.error || !updateResult.data) {
+      await removeCommentImage(POST_COMMENT_IMAGE_BUCKET, uploadedImage?.path);
       return Response.json({ error: '댓글 수정에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
-      comment: updateResult.data,
+      comment: {
+        id: updateResult.data.id,
+        content: updateResult.data.content,
+        image_url: getCommentImageUrl(POST_COMMENT_IMAGE_BUCKET, updateResult.data.image_path),
+        image_width: updateResult.data.image_width ?? null,
+        image_height: updateResult.data.image_height ?? null,
+      },
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
