@@ -208,7 +208,8 @@ export class ChatRoom extends DurableObject<ChatEnv> {
     }
 
     if (this.getMeta('opened') !== '1') {
-      return jsonResponse({ error: 'room not opened' }, 404);
+      this.setMeta('opened', '1');
+      await this.ensureAlarm();
     }
 
     if (url.pathname.endsWith('/ws')) {
