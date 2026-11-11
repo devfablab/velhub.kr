@@ -20,6 +20,7 @@ type GetPostListOptions = {
   sort?: PostListSort;
   includePin?: boolean;
   categoryId?: string | null;
+  hashtagId?: string | null;
   authorIds?: string[] | null;
   excludedBoardIds?: string[] | null;
 };
@@ -248,6 +249,7 @@ export async function getPostList({
   sort = 'latest',
   includePin = true,
   categoryId = null,
+  hashtagId = null,
   authorIds = null,
   excludedBoardIds = null,
 }: GetPostListOptions): Promise<GetPostListResult> {
@@ -302,6 +304,10 @@ export async function getPostList({
       pinnedQuery = pinnedQuery.contains('categories', [categoryId]);
     }
 
+    if (hashtagId) {
+      pinnedQuery = pinnedQuery.contains('hashtag_ids', [hashtagId]);
+    }
+
     if (hasAuthorFilter) {
       pinnedQuery = pinnedQuery.in('user_id', normalizedAuthorIds);
     }
@@ -333,6 +339,10 @@ export async function getPostList({
 
   if (categoryId) {
     postsQuery = postsQuery.contains('categories', [categoryId]);
+  }
+
+  if (hashtagId) {
+    postsQuery = postsQuery.contains('hashtag_ids', [hashtagId]);
   }
 
   if (hasAuthorFilter) {

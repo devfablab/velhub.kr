@@ -1,6 +1,7 @@
 import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
+import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
 import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/service/blog/blogRecommendations.server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -20,6 +21,7 @@ type RequestBody = {
   isRecommended?: boolean | null;
   promotion?: BlogPostPromotionInput | null;
   attachments?: unknown;
+  blogHashtags?: unknown;
 };
 
 function normalizePublishedAt(value: unknown) {
@@ -119,6 +121,12 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    const parsedHashtags = parsePostHashtagLabels(requestBody.blogHashtags);
+
+    if (parsedHashtags.error) {
+      return Response.json({ error: parsedHashtags.error }, { status: 400 });
+    }
+
     const attachments = await resolvePostAttachments({
       attachments: normalizePostAttachmentInputs(requestBody.attachments),
       siteId: rhizome.data.id,
@@ -195,6 +203,23 @@ export async function POST(request: Request) {
       if (attachmentResult.error) {
         await supabaseAdmin.from('posts').delete().eq('id', createdPost.post_id);
         return Response.json({ error: '첨부 파일을 저장하지 못했습니다.' }, { status: 500 });
+      }
+    }
+
+    if (parsedHashtags.labels.length > 0) {
+      try {
+        const hashtagIds = await resolvePostHashtagIds(rhizome.data.id, parsedHashtags.labels, session.stigmaId);
+        const hashtagResult = await supabaseAdmin
+          .from('posts')
+          .update({ hashtag_ids: hashtagIds })
+          .eq('id', createdPost.post_id);
+
+        if (hashtagResult.error) {
+          throw new Error('해시태그를 저장하지 못했습니다.');
+        }
+      } catch (hashtagError) {
+        await supabaseAdmin.from('posts').delete().eq('id', createdPost.post_id);
+        throw hashtagError;
       }
     }
 

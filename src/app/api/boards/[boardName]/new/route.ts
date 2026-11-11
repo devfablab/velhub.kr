@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
+import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
 import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/service/blog/blogRecommendations.server';
 import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
@@ -67,6 +68,7 @@ type RequestBody = {
   poll?: unknown;
   categories?: string[] | null;
   hashtags?: string[] | null;
+  blogHashtags?: unknown;
   seriesKey?: string | null;
   prefixId?: string | null;
   isComment?: boolean | null;
@@ -1008,6 +1010,18 @@ export async function POST(request: Request, context: RouteContext) {
       sessionCase: session.case,
     });
 
+    let hashtagIds: string[] = [];
+
+    if (rhizomeData.site_type === 'blog') {
+      const parsedHashtags = parsePostHashtagLabels(requestBody.blogHashtags);
+
+      if (parsedHashtags.error) {
+        return Response.json({ error: parsedHashtags.error }, { status: 400 });
+      }
+
+      hashtagIds = await resolvePostHashtagIds(rhizomeData.id, parsedHashtags.labels, session.stigmaId);
+    }
+
     const insertPost = await supabaseAdmin
       .from('posts')
       .insert({
@@ -1027,6 +1041,7 @@ export async function POST(request: Request, context: RouteContext) {
         images: finalImages,
         poll: finalPoll,
         hashtags,
+        hashtag_ids: hashtagIds,
         idx: nextIdx,
         user_id: session.stigmaId,
         site_id: rhizomeData.id,

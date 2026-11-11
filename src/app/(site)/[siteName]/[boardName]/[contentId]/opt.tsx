@@ -21,6 +21,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -226,6 +227,7 @@ type PostContent = {
   images: PostImage[] | null;
   poll: PollData | null;
   hashtags: unknown;
+  blog_hashtags?: { id: string; label: string }[];
   idx: number;
   series_idx: number | null;
   created_at: string;
@@ -1501,6 +1503,15 @@ export default function Opt({
                     <div className={styles['content-tags']}>
                       {hashtags.map((hashtag) => (
                         <span key={hashtag}>{`#${hashtag}`}</span>
+                      ))}
+                    </div>
+                  ) : null}
+                  {isBlogBoard && content.blog_hashtags?.length ? (
+                    <div className={styles['content-blog-hashtags']}>
+                      {content.blog_hashtags.map((hashtag) => (
+                        <Anchor key={hashtag.id} href={`/${siteName}/t/${encodeURIComponent(hashtag.label)}`}>
+                          <Chip label={`#${hashtag.label}`} size="small" className="chip default outlined" clickable />
+                        </Anchor>
                       ))}
                     </div>
                   ) : null}

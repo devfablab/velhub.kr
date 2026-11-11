@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getVisibleBlogPostPromotion } from '@/lib/service/blog/blogAds/server';
+import { getHashtagsByIds } from '@/lib/service/blog/blogHashtags';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
@@ -1215,7 +1216,7 @@ export async function GET(request: Request, context: RouteContext) {
     const post = await supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, preview_html, preview_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, is_recommended, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, preview_html, preview_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, hashtag_ids, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, is_recommended, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', boardData.id)
@@ -1613,10 +1614,14 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '첨부 파일을 불러오지 못했습니다.' }, { status: 500 });
     }
 
+    const blogHashtags =
+      rhizomeData.site_type === 'blog' ? await getHashtagsByIds(post.data.hashtag_ids as string[] | null) : [];
+
     return NextResponse.json({
       board: boardData,
       content: {
         ...publicPostData,
+        blog_hashtags: blogHashtags,
         summary: shouldShowPaidPreview ? paidContentPreviewText : post.data.summary,
         content_html: shouldShowPaidPreview
           ? registeredPaidPreview

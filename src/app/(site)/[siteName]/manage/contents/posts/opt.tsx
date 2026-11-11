@@ -43,6 +43,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
+import HashtagSettingsDialog from './hashtagSettingsDialog';
 import SpellCheckSettingsDialog from './spellCheckSettingsDialog';
 import styles from '@/app/manage.module.sass';
 
@@ -888,6 +889,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Anchor>
               </>
             ) : null}
+            <HashtagSettingsDialog siteName={siteName} />
             <SpellCheckSettingsDialog siteName={siteName} />
           </Stack>
 

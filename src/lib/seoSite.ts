@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getHashtagsByIds } from '@/lib/service/blog/blogHashtags';
 import { normalizeText } from '@/lib/utils';
 
 type OgType =
@@ -303,7 +304,7 @@ export async function getPostPageMetadata({
 
   let postQuery = supabaseAdmin
     .from('posts')
-    .select('subject, summary, thumbnail_image')
+    .select('subject, summary, thumbnail_image, hashtag_ids')
     .eq('site_id', site.id)
     .eq('board_id', boardResult.data.id);
 
@@ -325,8 +326,8 @@ export async function getPostPageMetadata({
   const subject = normalizeText(postResult.data.subject);
   const description = normalizeText(postResult.data.summary) || subject;
   const postImageUrl = getPostImageUrl(postResult.data.thumbnail_image);
-
-  return Seo({
+  const hashtags = await getHashtagsByIds(postResult.data.hashtag_ids as string[] | null);
+  const metadata = Seo({
     siteName: site.siteKey,
     siteLabel: site.siteLabel,
     siteDescription: site.description,
@@ -336,6 +337,10 @@ export async function getPostPageMetadata({
     pageOgType: 'article',
     pagePath,
   });
+
+  return hashtags.length > 0
+    ? { ...metadata, keywords: hashtags.map((hashtag) => hashtag.label).join(', ') }
+    : metadata;
 }
 
 export async function getCategoryPageMetadata({

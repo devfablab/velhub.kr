@@ -39,6 +39,7 @@ import BlogPostPromotionFields, {
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
 import Container from '../../../menu';
+import HashtagInput from '../hashtagInput';
 import styles from '@/app/manage.module.sass';
 
 type PublishTimeMode = 'now' | 'scheduled';
@@ -253,6 +254,7 @@ export default function Opt({
   const [categories] = useState<CategoryRow[]>(initialCategories?.categories ?? []);
   const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [blogHashtags, setBlogHashtags] = useState<string[]>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
   const availableSeries = seriesList.filter((series) => !series.is_completed);
   const isSubscriptionSeries = Boolean(
@@ -678,6 +680,7 @@ export default function Opt({
           thumbnailWidth,
           thumbnailHeight,
           categories: selectedCategories,
+          blogHashtags,
           seriesKey: selectedSeriesKey || null,
           promotion: { ...promotion, items: isSubscriptionSeries ? promotion.items : [promotion.item] },
           publishedAt: publishTimeMode === 'scheduled' ? publishedAt : null,
@@ -935,6 +938,7 @@ export default function Opt({
                   </p>
                 ) : null}
               </Stack>
+              <HashtagInput siteName={siteName} value={blogHashtags} onChange={setBlogHashtags} />
 
               <PostAttachmentUploader
                 boardName={boardName ?? 'b'}

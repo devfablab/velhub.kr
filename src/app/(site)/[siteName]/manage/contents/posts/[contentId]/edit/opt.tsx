@@ -32,6 +32,7 @@ import BlogPostPromotionFields, {
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
 import Container from '../../../../menu';
+import HashtagInput from '../../hashtagInput';
 import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -87,6 +88,7 @@ export type ContentResponse = {
     thumbnail_width: number | null;
     thumbnail_height: number | null;
     is_comment: boolean;
+    blog_hashtags?: { id: string; label: string }[];
     is_recommended: boolean;
     markdown_status: string | null;
     attachments?: Array<{
@@ -389,6 +391,9 @@ export default function Opt({
     initialContent?.categories?.map((category) => category.category_key) ?? [],
   );
   const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
+  const [blogHashtags, setBlogHashtags] = useState<string[]>(
+    (initialContent?.content?.blog_hashtags ?? []).map((hashtag) => hashtag.label),
+  );
   const isSubscriptionSeries = Boolean(
     seriesList.find((series) => series.series_key === selectedSeriesKey)?.is_subscription,
   );
@@ -773,6 +778,7 @@ export default function Opt({
           thumbnailWidth,
           thumbnailHeight,
           categories: selectedCategories,
+          blogHashtags,
           seriesKey: selectedSeriesKey || null,
           isComment: commentProvider === 'none' ? false : isComment,
           isRecommended,
@@ -1018,6 +1024,7 @@ export default function Opt({
                   </p>
                 ) : null}
               </Stack>
+              <HashtagInput siteName={siteName} value={blogHashtags} onChange={setBlogHashtags} />
 
               <PostAttachmentUploader
                 boardName={boardName ?? 'b'}

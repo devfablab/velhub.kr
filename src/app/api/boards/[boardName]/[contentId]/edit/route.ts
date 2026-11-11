@@ -5,6 +5,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
 import {
   addRecommendedBlogPost,
   getBlogRecommendationContext,
@@ -76,6 +77,7 @@ type RequestBody = {
   poll?: unknown;
   categories?: string[] | null;
   hashtags?: string[] | null;
+  blogHashtags?: unknown;
   seriesKey?: string | null;
   prefixId?: string | null;
   isComment?: boolean | null;
@@ -1222,6 +1224,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       images: ImageRow[] | null;
       poll: PollRow | null;
       hashtags: string[];
+      hashtag_ids?: string[];
       categories: string[];
       series_id: string | null;
       series_idx: number | null;
@@ -1264,6 +1267,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       draw_ends_at: resolvedDrawEndsAt,
       is_wording_blinded: false,
     };
+
+    if (rhizomeData.site_type === 'blog' && requestBody.blogHashtags !== undefined) {
+      const parsedHashtags = parsePostHashtagLabels(requestBody.blogHashtags);
+
+      if (parsedHashtags.error) {
+        return Response.json({ error: parsedHashtags.error }, { status: 400 });
+      }
+
+      updatePayload.hashtag_ids = await resolvePostHashtagIds(rhizomeData.id, parsedHashtags.labels, session.stigmaId);
+    }
 
     if (action === 'unknown') {
       updatePayload.published_at = requestedPublishedAt;
