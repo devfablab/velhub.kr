@@ -18,6 +18,8 @@
 /.agents/
 /scratch
 /scratch/
+.dev.vars
+.wrangler
 
 # testing
 /coverage

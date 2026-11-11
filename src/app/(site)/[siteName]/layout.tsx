@@ -7,6 +7,7 @@ import FooterSite from '@/components/footers/Site';
 import HeaderSite from '@/components/headers/Site';
 import SiteGoogleAnalytics from '@/components/SiteGoogleAnalytics';
 import { getSiteApiData } from '../getSiteApiData';
+import CommunityChat from './communityChat';
 import { SiteHeaderProvider, type SiteHeaderData } from './SiteHeaderContext';
 import { SiteInitialDataProvider } from './SiteInitialDataContext';
 
@@ -260,6 +261,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
           <HeaderSite />
           {children}
           <FooterSite />
+          {header.data?.siteType === 'community' ? <CommunityChat siteName={siteName} /> : null}
         </SiteInitialDataProvider>
       </SiteHeaderProvider>
       {settings.googleAnalytics ? (

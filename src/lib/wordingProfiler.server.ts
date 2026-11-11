@@ -142,20 +142,23 @@ function containsBlockedWord(value: string, word: string) {
 
 export type WordingProfilerInput = Record<string, string | null | undefined>;
 
-export async function getWordingProfilerWords(siteId: string) {
+export async function getWordingProfilerWords(siteId: string, options: { includeProfanity?: boolean } = {}) {
   const supabaseAdmin = getSupabaseAdmin();
-  const [platformWords, siteWords] = await Promise.all([
+  const [platformWords, siteWords, profanityWords] = await Promise.all([
     supabaseAdmin.from('denylist_words').select('word'),
     supabaseAdmin.from('site_denywords').select('word').eq('site_id', siteId),
+    options.includeProfanity
+      ? supabaseAdmin.from('profanity_words').select('word')
+      : Promise.resolve({ data: [] as WordRow[], error: null }),
   ]);
 
-  if (platformWords.error || siteWords.error) {
+  if (platformWords.error || siteWords.error || profanityWords.error) {
     throw new Error('워딩 프로파일러 단어를 불러오지 못했습니다.');
   }
 
   return Array.from(
     new Set(
-      [...(platformWords.data ?? []), ...(siteWords.data ?? [])]
+      [...(platformWords.data ?? []), ...(siteWords.data ?? []), ...(profanityWords.data ?? [])]
         .map((row) => normalizeWord((row as WordRow).word ?? ''))
         .filter(Boolean),
     ),
@@ -175,6 +178,12 @@ export async function getWordingProfilerViolationFields(siteId: string, input: W
       return Boolean(content) && words.some((word) => containsBlockedWord(content, word));
     })
     .map(([field]) => field);
+}
+
+export async function hasChatWordingViolation(siteId: string, content: string) {
+  const words = await getWordingProfilerWords(siteId, { includeProfanity: true });
+
+  return Boolean(content) && words.some((word) => containsBlockedWord(content, word));
 }
 
 export async function hasWordingProfilerViolation(siteId: string, input: WordingProfilerInput) {

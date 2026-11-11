@@ -31,5 +31,5 @@
     "**/*.mts",
     "src/app/(site)/[siteName]/payments/RevenueList"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "workers"]
 }
