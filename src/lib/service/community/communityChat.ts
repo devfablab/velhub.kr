@@ -5,7 +5,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
-export const COMMUNITY_CHAT_MIN_MEMBERS = 2;
+export const COMMUNITY_CHAT_MIN_MEMBERS = 10;
 export const COMMUNITY_CHAT_MAX_LENGTH = 1000;
 export const COMMUNITY_CHAT_PAGE_SIZE = 50;
 export const COMMUNITY_CHAT_RETENTION_DAYS = 30;
