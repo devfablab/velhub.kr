@@ -1,4 +1,5 @@
 import { normalizeText } from '@/lib/utils';
+import CoPostEditor, { type CoPostEditorData } from './coPostEditor';
 import Opt from './opt';
 import type {
   StatusResponse,
@@ -12,6 +13,17 @@ type Props = { params: Promise<{ siteName: string; contentId: string }> };
 export default async function Page({ params }: Props) {
   const { siteName, contentId } = await params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
+  const coPostData = await getSiteApiData<{ coPost?: CoPostEditorData | null }>(
+    `/api/co-posts/by-post?siteName=${normalizedSiteName}&slug=${encodeURIComponent(contentId)}`,
+    '공동 집필 정보를 불러오지 못했습니다.',
+  );
+
+  if (coPostData.data?.coPost) {
+    return (
+      <CoPostEditor key={coPostData.data.coPost.id} siteName={normalizedSiteName} coPost={coPostData.data.coPost} />
+    );
+  }
+
   const statusData = await getSiteApiData<StatusResponse>(
     `/api/manage/contents/blog-posts/status?siteName=${normalizedSiteName}`,
     '블로그 상태를 확인하지 못했습니다.',

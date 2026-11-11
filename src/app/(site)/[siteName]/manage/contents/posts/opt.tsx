@@ -43,6 +43,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
+import CoPostInvitations from './coPostInvitations';
 import HashtagSettingsDialog from './hashtagSettingsDialog';
 import SpellCheckSettingsDialog from './spellCheckSettingsDialog';
 import styles from '@/app/manage.module.sass';
@@ -88,6 +89,7 @@ export type PostRow = {
   closed_message: string | null;
   closed_by_name: string;
   is_recommended: boolean;
+  is_co_post?: boolean;
 };
 
 type SitePublicResponse = {
@@ -900,6 +902,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
         </Stack>
 
+        {siteType === 'blog' ? <CoPostInvitations /> : null}
+
         {posts.length >= 1 ? (
           <Stack
             direction={isMobile ? 'column' : 'row'}
@@ -1061,7 +1065,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               복구
                             </button>
                           )
-                        ) : (
+                        ) : post.is_co_post ? null : (
                           <button
                             type="button"
                             className="button small warning"

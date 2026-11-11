@@ -6,6 +6,7 @@ import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentA
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getVisibleBlogPostPromotion } from '@/lib/service/blog/blogAds/server';
 import { getHashtagsByIds } from '@/lib/service/blog/blogHashtags';
+import { findSharedCoPostForSite, getActiveCoPostByPostId, getCoPostParticipants } from '@/lib/service/blog/coPosts';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
@@ -1213,23 +1214,44 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const post = await supabaseAdmin
+    const postColumns =
+      'id, slug, subject, summary, content_html, content_markdown, content_simple, preview_html, preview_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, hashtag_ids, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, is_recommended, draw_type, draw_limit, draw_ends_at, is_closed, is_locked';
+    let post = await supabaseAdmin
       .from('posts')
-      .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, preview_html, preview_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, hashtag_ids, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, is_recommended, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
-      )
+      .select(postColumns)
       .eq('site_id', rhizomeData.id)
       .eq('board_id', boardData.id)
       .eq('slug', normalizedContentId)
       .maybeSingle();
+    const sharedCoPost =
+      !post.data && rhizomeData.site_type === 'blog'
+        ? await findSharedCoPostForSite(rhizomeData.id, normalizedContentId)
+        : null;
+
+    if (sharedCoPost) {
+      post = await supabaseAdmin.from('posts').select(postColumns).eq('id', sharedCoPost.postId).maybeSingle();
+    }
 
     if (post.error || !post.data) {
       return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const postData = post.data;
+    const postData = sharedCoPost
+      ? {
+          ...post.data,
+          categories: sharedCoPost.partnerCategoryIds,
+          series_id: sharedCoPost.partnerSeriesId,
+          series_idx: null,
+          hashtag_ids: [],
+        }
+      : post.data;
+    const activeCoPost = rhizomeData.site_type === 'blog' ? await getActiveCoPostByPostId(postData.id) : null;
 
-    const isAuthor = Boolean(session.stigmaId) && postData.user_id === session.stigmaId;
+    const isAuthor =
+      Boolean(session.stigmaId) &&
+      (postData.user_id === session.stigmaId ||
+        activeCoPost?.inviter_id === session.stigmaId ||
+        activeCoPost?.partner_id === session.stigmaId);
 
     if (postData.is_wording_blinded === true && !isAuthor) {
       return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
@@ -1616,12 +1638,21 @@ export async function GET(request: Request, context: RouteContext) {
 
     const blogHashtags =
       rhizomeData.site_type === 'blog' ? await getHashtagsByIds(post.data.hashtag_ids as string[] | null) : [];
+    const coAuthorMap = activeCoPost ? await getCoPostParticipants(activeCoPost) : null;
+    const coAuthors =
+      activeCoPost && coAuthorMap
+        ? [activeCoPost.inviter_id, activeCoPost.partner_id].map((stigmaId) => ({
+            name: coAuthorMap.get(stigmaId)?.name ?? '',
+            avatar_url: coAuthorMap.get(stigmaId)?.avatarUrl ?? null,
+          }))
+        : [];
 
     return NextResponse.json({
       board: boardData,
       content: {
         ...publicPostData,
         blog_hashtags: blogHashtags,
+        co_authors: coAuthors,
         summary: shouldShowPaidPreview ? paidContentPreviewText : post.data.summary,
         content_html: shouldShowPaidPreview
           ? registeredPaidPreview

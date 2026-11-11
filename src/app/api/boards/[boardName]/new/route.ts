@@ -7,6 +7,7 @@ import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/l
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
 import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
 import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/service/blog/blogRecommendations.server';
+import { type CoPostPartnerCandidate, createCoPostInvite, validateCoPostInvite } from '@/lib/service/blog/coPosts';
 import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
@@ -69,6 +70,7 @@ type RequestBody = {
   categories?: string[] | null;
   hashtags?: string[] | null;
   blogHashtags?: unknown;
+  coPostPartnerSiteId?: unknown;
   seriesKey?: string | null;
   prefixId?: string | null;
   isComment?: boolean | null;
@@ -569,7 +571,15 @@ export async function POST(request: Request, context: RouteContext) {
 
     const requestedPublishedAt = normalizePublishedAt(requestBody.publishedAt);
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const action = requestBody.action === 'draft' ? 'draft' : requestBody.action === 'unknown' ? 'unknown' : 'publish';
+    const coPostPartnerSiteId =
+      typeof requestBody.coPostPartnerSiteId === 'string' ? normalizeText(requestBody.coPostPartnerSiteId) : '';
+    const action = coPostPartnerSiteId
+      ? 'draft'
+      : requestBody.action === 'draft'
+        ? 'draft'
+        : requestBody.action === 'unknown'
+          ? 'unknown'
+          : 'publish';
     const subject = normalizeText(requestBody.subject);
     const summary = normalizeText(requestBody.summary);
     const contentHtml = normalizeText(requestBody.contentHtml);
@@ -642,6 +652,22 @@ export async function POST(request: Request, context: RouteContext) {
       (session.case !== 'admin' && session.case !== 'staff' && session.case !== 'member')
     ) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    let coPostPartner: CoPostPartnerCandidate | null = null;
+
+    if (coPostPartnerSiteId) {
+      if (rhizomeData.site_type !== 'blog') {
+        return Response.json({ error: '공동 집필은 블로그에서만 할 수 있습니다.' }, { status: 400 });
+      }
+
+      const coPostInvite = await validateCoPostInvite(rhizomeData.id, session.stigmaId, coPostPartnerSiteId);
+
+      if (coPostInvite.error || !coPostInvite.partner) {
+        return Response.json({ error: coPostInvite.error }, { status: 400 });
+      }
+
+      coPostPartner = coPostInvite.partner;
     }
 
     const poll = normalizePoll(requestBody.poll, session.stigmaId);
@@ -1012,7 +1038,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     let hashtagIds: string[] = [];
 
-    if (rhizomeData.site_type === 'blog') {
+    if (rhizomeData.site_type === 'blog' && !coPostPartner) {
       const parsedHashtags = parsePostHashtagLabels(requestBody.blogHashtags);
 
       if (parsedHashtags.error) {
@@ -1101,7 +1127,21 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
-    if (rhizomeData.site_type === 'blog' && requestBody.isRecommended === true) {
+    if (coPostPartner && session.stigmaId) {
+      try {
+        await createCoPostInvite({
+          postId: String(insertPost.data.id),
+          inviterSiteId: rhizomeData.id,
+          inviterId: session.stigmaId,
+          partner: coPostPartner,
+        });
+      } catch (coPostError) {
+        await supabaseAdmin.from('posts').delete().eq('id', insertPost.data.id);
+        throw coPostError;
+      }
+    }
+
+    if (rhizomeData.site_type === 'blog' && requestBody.isRecommended === true && !coPostPartner) {
       try {
         const recommendationContext = await getBlogRecommendationContext(siteName);
         await addRecommendedBlogPost(recommendationContext, String(insertPost.data.id));

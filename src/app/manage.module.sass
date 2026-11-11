@@ -633,3 +633,20 @@
     &.spell-before
       div
         background-color: rgba(ds.$rgb-warning, .1)
+
+.co-post-diff
+  padding: ds.rem(12)
+  border: 1px solid rgba(ds.$rgb-tertiary, .2)
+  border-radius: ds.rem(8)
+  font-size: ds.rem(14)
+  line-height: 1.7
+  white-space: pre-wrap
+  overflow-wrap: anywhere
+
+  ins
+    background-color: rgba(ds.$rgb-accent, .3)
+    text-decoration: none
+
+  del
+    background-color: rgba(ds.$rgb-warning, .15)
+    color: ds.$hex-warning

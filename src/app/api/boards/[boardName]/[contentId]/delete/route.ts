@@ -1,5 +1,6 @@
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { CO_POST_DIRECT_CHANGE_ERROR, isPostInCoPost } from '@/lib/service/blog/coPosts';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
@@ -171,6 +172,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (post.error || !post.data) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (await isPostInCoPost(String(post.data.id))) {
+      return Response.json({ error: CO_POST_DIRECT_CHANGE_ERROR }, { status: 403 });
     }
 
     const isAuthor = post.data.user_id === currentStigma.stigmaId;

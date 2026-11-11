@@ -42,6 +42,17 @@ export const NOTIFICATION_TYPE = {
 
   FAVORITE_BLOG_NEW_POST: 'favorite_blog_new_post',
   MEMBERSHIP_PAYMENT_FAILED: 'membership_payment_failed',
+
+  CO_POST_INVITED: 'co_post_invited',
+  CO_POST_ACCEPTED: 'co_post_accepted',
+  CO_POST_DECLINED: 'co_post_declined',
+  CO_POST_CANCELED: 'co_post_canceled',
+  CO_POST_PUBLISH_REQUESTED: 'co_post_publish_requested',
+  CO_POST_RESCHEDULE_REQUESTED: 'co_post_reschedule_requested',
+  CO_POST_REVISION_REQUESTED: 'co_post_revision_requested',
+  CO_POST_UNPUBLISH_REQUESTED: 'co_post_unpublish_requested',
+  CO_POST_REQUEST_ACCEPTED: 'co_post_request_accepted',
+  CO_POST_REQUEST_DECLINED: 'co_post_request_declined',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE];

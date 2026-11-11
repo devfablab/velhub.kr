@@ -4,6 +4,43 @@ import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } 
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
+async function getPostForSite(supabaseAdmin: SupabaseAdminClient, postId: string, siteId: string, boardId: string) {
+  const postResult = await supabaseAdmin
+    .from('posts')
+    .select('series_id, user_id')
+    .eq('id', postId)
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .maybeSingle();
+
+  if (postResult.error || postResult.data) {
+    return postResult;
+  }
+
+  const coPostResult = await supabaseAdmin
+    .from('co_posts')
+    .select('partner_series_id')
+    .eq('post_id', postId)
+    .eq('partner_site_id', siteId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (coPostResult.error || !coPostResult.data) {
+    return { data: null, error: coPostResult.error };
+  }
+
+  const sharedPostResult = await supabaseAdmin.from('posts').select('user_id').eq('id', postId).maybeSingle();
+
+  if (sharedPostResult.error || !sharedPostResult.data) {
+    return { data: null, error: sharedPostResult.error };
+  }
+
+  return {
+    data: { series_id: coPostResult.data.partner_series_id as string | null, user_id: sharedPostResult.data.user_id },
+    error: null,
+  };
+}
+
 /**
  * 구독 연재글은 블로그 또는 해당 연재의 현재 구독자, 영구소장자만 댓글을 볼 수 있다.
  * 작성자와 관리자는 내용 관리·모더레이션을 위해 예외로 접근한다.
@@ -23,13 +60,7 @@ export async function canAccessSubscriptionSeriesComments({
   stigmaId: string | null;
   isPrivileged?: boolean;
 }) {
-  const postResult = await supabaseAdmin
-    .from('posts')
-    .select('series_id, user_id')
-    .eq('id', postId)
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .maybeSingle();
+  const postResult = await getPostForSite(supabaseAdmin, postId, siteId, boardId);
 
   if (postResult.error || !postResult.data) {
     throw new Error('글 정보를 확인하지 못했습니다.');
@@ -121,13 +152,7 @@ async function getImageSubscriptionSeriesId({
   boardId: string;
   postId: string;
 }) {
-  const postResult = await supabaseAdmin
-    .from('posts')
-    .select('series_id')
-    .eq('id', postId)
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .maybeSingle();
+  const postResult = await getPostForSite(supabaseAdmin, postId, siteId, boardId);
 
   if (postResult.error || !postResult.data) {
     throw new Error('글 정보를 확인하지 못했습니다.');

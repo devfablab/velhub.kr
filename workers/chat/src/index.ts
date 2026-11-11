@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 
 type ChatEnv = {
   CHAT_ROOM: DurableObjectNamespace<ChatRoom>;
+  CO_POST_ROOM: DurableObjectNamespace<CoPostRoom>;
   COMMUNITY_CHAT_SECRET: string;
   VELHUB_ORIGIN: string;
   STORAGE_LIMIT_BYTES: string;
@@ -383,9 +384,86 @@ export class ChatRoom extends DurableObject<ChatEnv> {
   }
 }
 
+export class CoPostRoom extends DurableObject<ChatEnv> {
+  constructor(ctx: DurableObjectState, env: ChatEnv) {
+    super(ctx, env);
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+  }
+
+  async fetch(request: Request) {
+    const url = new URL(request.url);
+
+    if (url.pathname.endsWith('/ws')) {
+      const pair = new WebSocketPair();
+      this.ctx.acceptWebSocket(pair[1]);
+
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+
+    if (url.pathname.endsWith('/broadcast') && request.method === 'POST') {
+      const data = await request.text();
+
+      for (const socket of this.ctx.getWebSockets()) {
+        try {
+          socket.send(data);
+        } catch {
+          socket.close(1011, 'send failed');
+        }
+      }
+
+      return jsonResponse({ ok: true });
+    }
+
+    return jsonResponse({ error: 'not found' }, 404);
+  }
+
+  async webSocketMessage() {}
+
+  async webSocketClose(socket: WebSocket, code: number) {
+    try {
+      socket.close(code === 1005 || code === 1006 ? 1000 : code, 'closed');
+    } catch {
+      return;
+    }
+  }
+}
+
+async function authorize(request: Request, env: ChatEnv, roomId: string, isSocket: boolean) {
+  if (isSocket) {
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      return jsonResponse({ error: 'websocket required' }, 426);
+    }
+
+    const token = new URL(request.url).searchParams.get('token') ?? '';
+
+    if (!(await verifyToken(token, env.COMMUNITY_CHAT_SECRET, roomId))) {
+      return jsonResponse({ error: 'unauthorized' }, 401);
+    }
+
+    return null;
+  }
+
+  if (!isInternalRequest(request, env.COMMUNITY_CHAT_SECRET)) {
+    return jsonResponse({ error: 'unauthorized' }, 401);
+  }
+
+  return null;
+}
+
 export default {
   async fetch(request: Request, env: ChatEnv) {
     const url = new URL(request.url);
+    const coPostMatch = url.pathname.match(/^\/co-posts\/([0-9a-fA-F-]{36})(\/(ws|broadcast))$/);
+
+    if (coPostMatch) {
+      const coPostId = coPostMatch[1].toLowerCase();
+      const rejected = await authorize(request, env, coPostId, coPostMatch[3] === 'ws');
+
+      if (rejected) return rejected;
+
+      return env.CO_POST_ROOM.get(env.CO_POST_ROOM.idFromName(coPostId)).fetch(request);
+    }
+
     const roomMatch = url.pathname.match(/^\/rooms\/([0-9a-fA-F-]{36})(\/.*)$/);
 
     if (!roomMatch) {

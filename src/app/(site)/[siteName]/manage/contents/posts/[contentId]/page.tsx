@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { getCoPostBySiteAndSlug } from '@/lib/service/blog/coPosts';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 import type { StatusResponse, ContentResponse, CategoryListResponse, SeriesListResponse } from './opt';
@@ -6,6 +8,11 @@ type Props = { params: Promise<{ siteName: string; contentId: string }> };
 export default async function Page({ params }: Props) {
   const { siteName, contentId } = await params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
+
+  if (await getCoPostBySiteAndSlug(normalizedSiteName, contentId)) {
+    redirect(`/${normalizedSiteName}/manage/contents/posts/${contentId}/edit`);
+  }
+
   const statusData = await getSiteApiData<StatusResponse>(
     `/api/manage/contents/blog-posts/status?siteName=${normalizedSiteName}`,
     '블로그 상태를 확인하지 못했습니다.',

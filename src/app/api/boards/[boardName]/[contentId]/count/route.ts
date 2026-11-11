@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -84,9 +85,21 @@ export async function PATCH(request: Request, context: RouteContext) {
       .eq('site_id', rhizome.data.id)
       .eq('board_id', board.data.id);
 
-    const post = isNumericSlug(normalizedContentId)
+    let post = isNumericSlug(normalizedContentId)
       ? await postQuery.eq('slug', normalizedContentId).maybeSingle()
       : await postQuery.eq('id', normalizedContentId).maybeSingle();
+
+    if (!post.error && !post.data && isNumericSlug(normalizedContentId)) {
+      const sharedCoPost = await findSharedCoPostForSite(rhizome.data.id, normalizedContentId);
+
+      if (sharedCoPost) {
+        post = await supabaseAdmin
+          .from('posts')
+          .select('id, slug, idx, user_id, is_closed, published_status, post_count')
+          .eq('id', sharedCoPost.postId)
+          .maybeSingle();
+      }
+    }
 
     if (post.error || !post.data) {
       return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });

@@ -3,6 +3,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
+import { findSharedCoPostByPostId } from '@/lib/service/blog/coPosts';
 import {
   getCommentImageUrl,
   POST_COMMENT_IMAGE_BUCKET,
@@ -1113,20 +1114,27 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const postResult = await supabaseAdmin
+    const ownPostResult = await supabaseAdmin
       .from('posts')
-      .select('id')
+      .select('id, site_id, board_id')
       .eq('site_id', siteResult.data.id)
       .eq('board_id', boardResult.data.id)
       .eq('id', normalizedContentId)
       .maybeSingle();
+    const postResult =
+      !ownPostResult.error && !ownPostResult.data
+        ? { error: null, data: await findSharedCoPostByPostId(siteResult.data.id, normalizedContentId) }
+        : ownPostResult;
 
     if (postResult.error || !postResult.data) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const targetSiteId = postResult.data.site_id as string;
+    const targetBoardId = postResult.data.board_id as string;
+
     const session = await verifySession({
-      siteId: siteResult.data.id,
+      siteId: targetSiteId,
     });
 
     if (!session.authUserId || !session.stigmaId) {
@@ -1137,8 +1145,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       .from('post_comments')
       .select('id, user_id, is_deleted')
       .eq('id', normalizedCommentId)
-      .eq('site_id', siteResult.data.id)
-      .eq('board_id', boardResult.data.id)
+      .eq('site_id', targetSiteId)
+      .eq('board_id', targetBoardId)
       .eq('post_id', postResult.data.id)
       .maybeSingle();
 
@@ -1154,7 +1162,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '삭제 처리된 댓글은 수정할 수 없습니다.' }, { status: 400 });
     }
 
-    if (await hasWordingProfilerViolation(siteResult.data.id, { content })) {
+    if (await hasWordingProfilerViolation(targetSiteId, { content })) {
       return Response.json(
         { code: 'WORDING_PROFILER_VIOLATION', error: WORDING_PROFILER_COMMENT_EDIT_ERROR, fields: ['content'] },
         { status: 400 },
@@ -1166,8 +1174,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (imageFile) {
       const canUploadImage = await canUploadPostCommentImage({
         supabaseAdmin,
-        siteId: siteResult.data.id,
-        boardId: boardResult.data.id,
+        siteId: targetSiteId,
+        boardId: targetBoardId,
         postId: postResult.data.id,
         stigmaId: session.stigmaId,
       });
@@ -1178,7 +1186,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       uploadedImage = await uploadCommentImage({
         bucket: POST_COMMENT_IMAGE_BUCKET,
-        siteId: siteResult.data.id,
+        siteId: targetSiteId,
         stigmaId: session.stigmaId,
         file: imageFile,
       });
@@ -1270,20 +1278,27 @@ export async function DELETE(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const postResult = await supabaseAdmin
+    const ownPostResult = await supabaseAdmin
       .from('posts')
-      .select('id')
+      .select('id, site_id, board_id')
       .eq('site_id', siteResult.data.id)
       .eq('board_id', boardResult.data.id)
       .eq('id', normalizedContentId)
       .maybeSingle();
+    const postResult =
+      !ownPostResult.error && !ownPostResult.data
+        ? { error: null, data: await findSharedCoPostByPostId(siteResult.data.id, normalizedContentId) }
+        : ownPostResult;
 
     if (postResult.error || !postResult.data) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const targetSiteId = postResult.data.site_id as string;
+    const targetBoardId = postResult.data.board_id as string;
+
     const session = await verifySession({
-      siteId: siteResult.data.id,
+      siteId: targetSiteId,
     });
 
     if (!session.authUserId || !session.stigmaId) {
@@ -1294,8 +1309,8 @@ export async function DELETE(request: Request, context: RouteContext) {
       .from('post_comments')
       .select('id, user_id, is_deleted, is_locked')
       .eq('id', normalizedCommentId)
-      .eq('site_id', siteResult.data.id)
-      .eq('board_id', boardResult.data.id)
+      .eq('site_id', targetSiteId)
+      .eq('board_id', targetBoardId)
       .eq('post_id', postResult.data.id)
       .maybeSingle();
 
@@ -1312,7 +1327,7 @@ export async function DELETE(request: Request, context: RouteContext) {
         const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
         canManageComment =
           access.actor.permissions.all_board_comment_delete ||
-          (access.actor.managedBoardIds.includes(boardResult.data.id) &&
+          (access.actor.managedBoardIds.includes(targetBoardId) &&
             access.actor.permissions.managed_board_comment_delete);
       } catch {
         canManageComment = false;

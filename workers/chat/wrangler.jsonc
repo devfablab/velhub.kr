@@ -3,9 +3,15 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "durable_objects": {
-    "bindings": [{ "name": "CHAT_ROOM", "class_name": "ChatRoom" }],
+    "bindings": [
+      { "name": "CHAT_ROOM", "class_name": "ChatRoom" },
+      { "name": "CO_POST_ROOM", "class_name": "CoPostRoom" },
+    ],
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChatRoom"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ChatRoom"] },
+    { "tag": "v2", "new_sqlite_classes": ["CoPostRoom"] },
+  ],
   "vars": {
     "VELHUB_ORIGIN": "https://velhub.xyz",
     "STORAGE_LIMIT_BYTES": "1073741824",

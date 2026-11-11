@@ -57,3 +57,13 @@ Next.js 15 + TypeScript 쇼핑몰 프론트엔드. API 서버는 별도 저장�
 - 클로이가 잘 된다라고 하거나 끝났다고 하거나 종료했다고 하는 등 종료를 선언하면 다음 작업을 위해 기존 `PLAN.md`는 지우고 `PLAN.default.md`를 duplicated 하고 duplicated한 파일을 `PLAN.md`파일로 이름 변경합니다.
 - Supabase는 CLI가 설치되어 있습니다. 웬만하면 디비 작업은 Supabase CLI를 사용하세요.
 - 브라우저는 ego lite만 사용합니다. 브라우저 테스트가 필요한 상황에서는 클로이가 ego-browser 사용하라고 지시를 내릴겁니다. 그 외에는 브라우징 스킬 사용하지 마세요. AI Agent 스스로 꼭 필요하다 싶으면 사전에 이러이러한 사유로 필요하니 사용 허가해달라고 물어보세요. 물어보지 않고 허용할거냐 바로 물어보면 리젝합니다.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

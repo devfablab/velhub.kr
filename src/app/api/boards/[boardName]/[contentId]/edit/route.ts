@@ -11,6 +11,7 @@ import {
   getBlogRecommendationContext,
   removeRecommendedBlogPost,
 } from '@/lib/service/blog/blogRecommendations.server';
+import { CO_POST_DIRECT_CHANGE_ERROR, isPostInCoPost } from '@/lib/service/blog/coPosts';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
@@ -713,6 +714,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
     const currentPostId = currentPost.data.id;
+
+    if (await isPostInCoPost(currentPostId)) {
+      return Response.json({ error: CO_POST_DIRECT_CHANGE_ERROR }, { status: 403 });
+    }
 
     const isStaff = session.case === 'staff' || session.case === 'admin';
     const isAuthor = currentPost.data.user_id === session.stigmaId;

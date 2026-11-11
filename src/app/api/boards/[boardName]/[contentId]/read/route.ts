@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -46,7 +47,7 @@ async function getTargetPost({
     return null;
   }
 
-  const postResult = await supabaseAdmin
+  let postResult = await supabaseAdmin
     .from('posts')
     .select('id, site_id, board_id, published_status, is_closed')
     .eq('site_id', rhizomeResult.data.id)
@@ -54,13 +55,25 @@ async function getTargetPost({
     .eq('slug', contentId)
     .maybeSingle();
 
+  if (!postResult.error && !postResult.data) {
+    const sharedCoPost = await findSharedCoPostForSite(rhizomeResult.data.id, contentId);
+
+    if (sharedCoPost) {
+      postResult = await supabaseAdmin
+        .from('posts')
+        .select('id, site_id, board_id, published_status, is_closed')
+        .eq('id', sharedCoPost.postId)
+        .maybeSingle();
+    }
+  }
+
   if (postResult.error || !postResult.data) {
     return null;
   }
 
   return {
-    siteId: rhizomeResult.data.id as string,
-    boardId: boardResult.data.id as string,
+    siteId: postResult.data.site_id as string,
+    boardId: postResult.data.board_id as string,
     postId: postResult.data.id as string,
     publishedStatus: postResult.data.published_status as string,
     isClosed: postResult.data.is_closed === true,

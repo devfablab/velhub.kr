@@ -3,6 +3,7 @@ import { verifyConciergeTemporaryFile } from '@/lib/attachments/conciergeFiles.s
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
+import { findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
 import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';
@@ -303,13 +304,21 @@ async function getBoardId(siteId: string, boardName: string) {
 async function getPostId(siteId: string, boardId: string, contentId: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
-  const result = await supabaseAdmin
+  let result = await supabaseAdmin
     .from('posts')
     .select('id')
     .eq('site_id', siteId)
     .eq('board_id', boardId)
     .eq('slug', contentId)
     .maybeSingle();
+
+  if (!result.error && !result.data) {
+    const sharedCoPost = await findSharedCoPostForSite(siteId, contentId);
+
+    if (sharedCoPost) {
+      result = await supabaseAdmin.from('posts').select('id').eq('id', sharedCoPost.postId).maybeSingle();
+    }
+  }
 
   if (result.error) {
     console.error('[reports/legals/new] getPostId error', result.error);

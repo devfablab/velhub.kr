@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -52,7 +53,7 @@ async function getTargetPost({
     return null;
   }
 
-  const postResult = await supabaseAdmin
+  let postResult = await supabaseAdmin
     .from('posts')
     .select('id, site_id, board_id, user_id, published_status, is_closed')
     .eq('site_id', rhizomeResult.data.id)
@@ -60,13 +61,25 @@ async function getTargetPost({
     .eq('slug', contentId)
     .maybeSingle();
 
+  if (!postResult.error && !postResult.data) {
+    const sharedCoPost = await findSharedCoPostForSite(rhizomeResult.data.id, contentId);
+
+    if (sharedCoPost) {
+      postResult = await supabaseAdmin
+        .from('posts')
+        .select('id, site_id, board_id, user_id, published_status, is_closed')
+        .eq('id', sharedCoPost.postId)
+        .maybeSingle();
+    }
+  }
+
   if (postResult.error || !postResult.data) {
     return null;
   }
 
   return {
-    siteId: rhizomeResult.data.id as string,
-    boardId: boardResult.data.id as string,
+    siteId: postResult.data.site_id as string,
+    boardId: postResult.data.board_id as string,
     postId: postResult.data.id as string,
     postAuthorId: postResult.data.user_id as string,
     publishedStatus: postResult.data.published_status as string,

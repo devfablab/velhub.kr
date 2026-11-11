@@ -89,6 +89,28 @@ function getNotificationHref({
     return null;
   }
 
+  if (
+    notificationType === NOTIFICATION_TYPE.CO_POST_INVITED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_ACCEPTED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_DECLINED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_CANCELED
+  ) {
+    return `/${site.site_key}/manage/contents/posts`;
+  }
+
+  if (
+    notificationType === NOTIFICATION_TYPE.CO_POST_PUBLISH_REQUESTED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_RESCHEDULE_REQUESTED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_REVISION_REQUESTED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_UNPUBLISH_REQUESTED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_REQUEST_ACCEPTED ||
+    notificationType === NOTIFICATION_TYPE.CO_POST_REQUEST_DECLINED
+  ) {
+    return post
+      ? `/${site.site_key}/manage/contents/posts/${post.slug}/edit`
+      : `/${site.site_key}/manage/contents/posts`;
+  }
+
   if (board && post) {
     return `/${site.site_key}/${board.board_key}/${post.slug}`;
   }
@@ -392,6 +414,76 @@ function getNotificationText(notificationType: NotificationType, data: Notificat
     reportMessageCount >= 3
       ? `현재까지 ${reportMessageCount}회 경고를 받았습니다. 경고가 3회 이상 누적되어 컨시어지팀의 사이트 차단 조치 대상이 되었습니다.`
       : `현재까지 ${reportMessageCount}회 경고를 받았습니다. 사이트 차단 조치까지 ${3 - reportMessageCount}회 남았습니다.`;
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_PUBLISH_REQUESTED) {
+    return {
+      title: '공동 집필 공개 협의',
+      message: `${sendUserName} 님이 '${postSubject}' 공개 일시를 제안했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_RESCHEDULE_REQUESTED) {
+    return {
+      title: '공동 집필 공개 일시 변경',
+      message: `${sendUserName} 님이 '${postSubject}' 공개 일시 변경을 요청했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_REVISION_REQUESTED) {
+    return {
+      title: '공동 집필 수정 반영 요청',
+      message: `${sendUserName} 님이 '${postSubject}' 수정본을 공개 글에 반영하자고 요청했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_UNPUBLISH_REQUESTED) {
+    return {
+      title: '공동 집필 글 삭제 요청',
+      message: `${sendUserName} 님이 '${postSubject}' 삭제를 원합니다. 동의하시겠어요?`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_REQUEST_ACCEPTED) {
+    return {
+      title: '공동 집필 요청 수락',
+      message: `${sendUserName} 님이 '${postSubject}' 요청에 동의했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_REQUEST_DECLINED) {
+    return {
+      title: '공동 집필 요청 거절',
+      message: `${sendUserName} 님이 '${postSubject}' 요청을 거절했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_INVITED) {
+    return {
+      title: '공동 집필 초대',
+      message: `${sendUserName} 님이 '${postSubject}' 공동 집필을 요청했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_ACCEPTED) {
+    return {
+      title: '공동 집필 수락',
+      message: `${sendUserName} 님이 '${postSubject}' 공동 집필을 수락했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_DECLINED) {
+    return {
+      title: '공동 집필 거절',
+      message: `${sendUserName} 님이 '${postSubject}' 공동 집필을 거절했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CO_POST_CANCELED) {
+    return {
+      title: '공동 집필 초대 취소',
+      message: `${sendUserName} 님이 '${postSubject}' 공동 집필 초대를 취소했습니다.`,
+    };
+  }
 
   if (notificationType === NOTIFICATION_TYPE.BLOG_TEAM_INVITATION_SENT) {
     return {

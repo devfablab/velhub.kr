@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isGuidelineReportCategory, isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
+import { findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
 import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';
@@ -99,13 +100,21 @@ async function getPost(
   boardId: string,
   postSlug: string,
 ): Promise<PostResult> {
-  const result = await supabase
+  let result = await supabase
     .from('posts')
     .select('id, site_id, board_id')
     .eq('site_id', siteId)
     .eq('board_id', boardId)
     .eq('slug', postSlug)
     .maybeSingle();
+
+  if (!result.error && !result.data) {
+    const sharedCoPost = await findSharedCoPostForSite(siteId, postSlug);
+
+    if (sharedCoPost) {
+      result = await supabase.from('posts').select('id, site_id, board_id').eq('id', sharedCoPost.postId).maybeSingle();
+    }
+  }
 
   if (result.error) {
     console.error('[report/new] getPost error', result.error);

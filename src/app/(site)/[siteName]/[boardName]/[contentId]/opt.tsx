@@ -21,6 +21,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  AvatarGroup,
   Chip,
   CircularProgress,
   Dialog,
@@ -228,6 +229,7 @@ type PostContent = {
   poll: PollData | null;
   hashtags: unknown;
   blog_hashtags?: { id: string; label: string }[];
+  co_authors?: { name: string; avatar_url: string | null }[];
   idx: number;
   series_idx: number | null;
   created_at: string;
@@ -792,7 +794,7 @@ export default function Opt({
   }
 
   const canEdit = canEditContent && !content.is_closed;
-  const canDelete = canDeleteContent && !content.is_closed && !content.is_locked;
+  const canDelete = canDeleteContent && !content.is_closed && !content.is_locked && !content.co_authors?.length;
   const requiresDeleteReason = canManageContent && !isAuthor;
   const isBasicBoard = board.board_type === 'basic';
   const isBlogBoard = board.board_type === 'blog';
@@ -1207,7 +1209,19 @@ export default function Opt({
 
                   <div className={styles['author-profile']}>
                     <div className={styles.avatar}>
-                      <Avatar src={content.author_avatar_url || '/broken-image.jpg'} alt={content.author_name} />
+                      {content.co_authors?.length ? (
+                        <AvatarGroup max={2}>
+                          {content.co_authors.map((coAuthor) => (
+                            <Avatar
+                              key={coAuthor.name}
+                              src={coAuthor.avatar_url || '/broken-image.jpg'}
+                              alt={coAuthor.name}
+                            />
+                          ))}
+                        </AvatarGroup>
+                      ) : (
+                        <Avatar src={content.author_avatar_url || '/broken-image.jpg'} alt={content.author_name} />
+                      )}
                     </div>
                     <div className={styles.info}>
                       <div className={styles.name}>
@@ -1219,6 +1233,8 @@ export default function Opt({
                               boardName={board?.board_key}
                               boardLabel={board?.board_label}
                             />
+                          ) : content.co_authors?.length ? (
+                            content.co_authors.map((coAuthor) => coAuthor.name).join(' · ')
                           ) : (
                             content.author_name
                           )}

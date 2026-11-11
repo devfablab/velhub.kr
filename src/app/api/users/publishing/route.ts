@@ -81,11 +81,37 @@ export async function GET(request: Request) {
     const blogPosts = posts.filter((post) => blogSiteIds.has(post.site_id));
     let notificationCount = 0;
 
+    const coPostResult =
+      blogPosts.length > 0
+        ? await supabaseAdmin
+            .from('co_posts')
+            .select('post_id, partner_site_id')
+            .eq('status', 'active')
+            .in(
+              'post_id',
+              blogPosts.map((post) => post.id),
+            )
+        : { data: [] as { post_id: string; partner_site_id: string }[], error: null };
+    const partnerSiteIdByPostId = new Map(
+      (coPostResult.data ?? []).map((row) => [row.post_id as string, row.partner_site_id as string]),
+    );
+    const partnerBoardResult =
+      partnerSiteIdByPostId.size > 0
+        ? await supabaseAdmin
+            .from('boards')
+            .select('id, site_id')
+            .eq('board_type', 'blog')
+            .in('site_id', [...new Set(partnerSiteIdByPostId.values())])
+        : { data: [] as { id: string; site_id: string }[], error: null };
+    const blogBoardIdBySiteId = new Map(
+      (partnerBoardResult.data ?? []).map((row) => [row.site_id as string, row.id as string]),
+    );
+
     if (blogPosts.length > 0) {
       const favoritesResult = await supabaseAdmin
         .from('blog_favorites')
         .select('user_id, site_id')
-        .in('site_id', [...blogSiteIds]);
+        .in('site_id', [...blogSiteIds, ...partnerSiteIdByPostId.values()]);
 
       if (favoritesResult.error) {
         return Response.json({ error: '블로그 즐겨찾기 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -101,12 +127,9 @@ export async function GET(request: Request) {
 
       const notificationRows = blogPosts.flatMap((post) => {
         const recipientUserIds = favoriteUserIdsBySiteId.get(post.site_id);
-
-        if (!recipientUserIds) {
-          return [];
-        }
-
-        return [...recipientUserIds].map((userId) => ({
+        const partnerSiteId = partnerSiteIdByPostId.get(post.id);
+        const partnerRecipientUserIds = partnerSiteId ? favoriteUserIdsBySiteId.get(partnerSiteId) : undefined;
+        const ownRows = [...(recipientUserIds ?? [])].map((userId) => ({
           user_id: userId,
           send_user_id: post.user_id,
           send_site_id: post.site_id,
@@ -116,6 +139,20 @@ export async function GET(request: Request) {
           notification_type: NOTIFICATION_TYPE.FAVORITE_BLOG_NEW_POST,
           is_read: false,
         }));
+        const partnerRows = [...(partnerRecipientUserIds ?? [])]
+          .filter((userId) => !recipientUserIds?.has(userId))
+          .map((userId) => ({
+            user_id: userId,
+            send_user_id: post.user_id,
+            send_site_id: partnerSiteId,
+            send_board_id: partnerSiteId ? (blogBoardIdBySiteId.get(partnerSiteId) ?? null) : null,
+            send_series_id: null,
+            send_post_id: post.id,
+            notification_type: NOTIFICATION_TYPE.FAVORITE_BLOG_NEW_POST,
+            is_read: false,
+          }));
+
+        return [...ownRows, ...partnerRows];
       });
 
       if (notificationRows.length > 0) {

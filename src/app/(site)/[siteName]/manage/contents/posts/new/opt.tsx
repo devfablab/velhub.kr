@@ -2,6 +2,7 @@
 
 import { type JSX, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
   FormControl,
@@ -39,6 +40,7 @@ import BlogPostPromotionFields, {
   type BlogPromotionValue,
 } from '@/components/service/blog/BlogPostPromotionFields';
 import Container from '../../../menu';
+import CoPostPartnerPicker, { type CoPostPartner } from '../coPostPartnerPicker';
 import HashtagInput from '../hashtagInput';
 import styles from '@/app/manage.module.sass';
 
@@ -274,6 +276,25 @@ export default function Opt({
   const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
   const [isComment, setIsComment] = useState(initialStatus?.commentProvider !== 'none');
   const [isRecommended, setIsRecommended] = useState(false);
+  const [canCoPost, setCanCoPost] = useState(false);
+  const [isCoPost, setIsCoPost] = useState(false);
+  const [coPostPartner, setCoPostPartner] = useState<CoPostPartner | null>(null);
+
+  useEffect(() => {
+    if (!hasBoard) return;
+
+    let isActive = true;
+
+    fetch(`/api/co-posts/partners?siteName=${encodeURIComponent(siteName)}`, { credentials: 'include' })
+      .then((response) => {
+        if (isActive) setCanCoPost(response.ok);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isActive = false;
+    };
+  }, [hasBoard, siteName]);
   const [publishTimeMode, setPublishTimeMode] = useState<PublishTimeMode>('now');
   const [scheduledPublishedAt, setScheduledPublishedAt] = useState<Date | null>(null);
   const ti = normalizeText(searchParams.get('t'));
@@ -619,9 +640,17 @@ export default function Opt({
       return;
     }
 
-    const publishedAt = publishTimeMode === 'scheduled' ? getScheduledPublishedAtIsoString() : '';
+    if (isCoPost && !coPostPartner) {
+      const message = '공동 집필 상대를 선택해주세요.';
+      setErrorMessage(message);
+      setFormErrorDialog({ title: '글쓰기', messages: [message] });
+      return;
+    }
 
-    if (publishTimeMode === 'scheduled' && !publishedAt) {
+    const isScheduled = !isCoPost && publishTimeMode === 'scheduled';
+    const publishedAt = isScheduled ? getScheduledPublishedAtIsoString() : '';
+
+    if (isScheduled && !publishedAt) {
       const message = '예약 날짜와 시간을 선택해주세요.';
       setFieldErrors({ scheduled: message });
       setFormErrorDialog({ title: '글쓰기', messages: [message] });
@@ -631,7 +660,7 @@ export default function Opt({
     const nextErrors: { subject?: string; content?: string; scheduled?: string } = {};
     if (!subject.trim()) nextErrors.subject = '제목을 입력해주세요.';
     if (!hasEditorContent(contentHtml)) nextErrors.content = '내용을 입력해주세요.';
-    if (publishTimeMode === 'scheduled' && new Date(publishedAt).getTime() <= Date.now()) {
+    if (isScheduled && new Date(publishedAt).getTime() <= Date.now()) {
       nextErrors.scheduled = '예약 출간 시간은 현재 시각 이후로 설정해주세요.';
     }
     if (Object.keys(nextErrors).length > 0) {
@@ -669,7 +698,7 @@ export default function Opt({
         credentials: 'include',
         body: JSON.stringify({
           siteName,
-          action: publishTimeMode === 'scheduled' ? 'unknown' : 'publish',
+          action: isCoPost ? 'draft' : isScheduled ? 'unknown' : 'publish',
           subject,
           summary,
           contentHtml: uploadedEditorContent.contentHtml,
@@ -680,12 +709,13 @@ export default function Opt({
           thumbnailWidth,
           thumbnailHeight,
           categories: selectedCategories,
-          blogHashtags,
+          blogHashtags: isCoPost ? [] : blogHashtags,
+          coPostPartnerSiteId: isCoPost ? coPostPartner?.siteId : null,
           seriesKey: selectedSeriesKey || null,
           promotion: { ...promotion, items: isSubscriptionSeries ? promotion.items : [promotion.item] },
-          publishedAt: publishTimeMode === 'scheduled' ? publishedAt : null,
+          publishedAt: isScheduled ? publishedAt : null,
           isComment: commentProvider === 'none' ? false : isComment,
-          isRecommended: publishTimeMode === 'now' ? isRecommended : false,
+          isRecommended: !isCoPost && publishTimeMode === 'now' ? isRecommended : false,
           attachments,
         }),
       });
@@ -713,7 +743,8 @@ export default function Opt({
         throw new Error('블로그 글 개설에 실패했습니다.');
       }
 
-      if (ti === 'i' || publishTimeMode === 'scheduled')
+      if (isCoPost) router.replace(`/${siteName}/manage/contents/posts`);
+      else if (ti === 'i' || publishTimeMode === 'scheduled')
         router.replace(`/${siteName}/manage/contents/posts/${createResult.slug}`);
       else router.replace(`/${siteName}/b/${createResult.slug}`);
     } catch (unknownError) {
@@ -938,7 +969,40 @@ export default function Opt({
                   </p>
                 ) : null}
               </Stack>
-              <HashtagInput siteName={siteName} value={blogHashtags} onChange={setBlogHashtags} />
+              {canCoPost ? (
+                <Stack gap={1}>
+                  <FormControlLabel
+                    control={
+                      <IOSSwitch
+                        sx={{ m: 1 }}
+                        checked={isCoPost}
+                        disabled={isSubmitting}
+                        onChange={(event) => setIsCoPost(event.target.checked)}
+                      />
+                    }
+                    label="공동 집필"
+                  />
+                  {isCoPost ? (
+                    <>
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>
+                          상대가 초대를 수락하면 함께 작성할 수 있습니다. 공개는 두 사람이 합의한 일시에 됩니다. 공동
+                          집필 글에는 해시태그를 쓸 수 없습니다.
+                        </span>
+                      </p>
+                      <CoPostPartnerPicker
+                        siteName={siteName}
+                        value={coPostPartner}
+                        disabled={isSubmitting}
+                        onChange={setCoPostPartner}
+                      />
+                    </>
+                  ) : null}
+                </Stack>
+              ) : null}
+
+              {isCoPost ? null : <HashtagInput siteName={siteName} value={blogHashtags} onChange={setBlogHashtags} />}
 
               <PostAttachmentUploader
                 boardName={boardName ?? 'b'}
@@ -949,15 +1013,17 @@ export default function Opt({
                 value={attachments}
               />
 
-              <Stack gap={1}>
-                <Typography variant="subtitle2">블로그 글 출간시간 선택 *</Typography>
-                <RadioGroup value={publishTimeMode} onChange={handlePublishTimeModeChange}>
-                  <FormControlLabel value="now" control={<Radio />} label="현재 시각으로 등록하기" />
-                  <FormControlLabel value="scheduled" control={<Radio />} label="지정한 날짜와 시간으로 예약" />
-                </RadioGroup>
-              </Stack>
+              {isCoPost ? null : (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">블로그 글 출간시간 선택 *</Typography>
+                  <RadioGroup value={publishTimeMode} onChange={handlePublishTimeModeChange}>
+                    <FormControlLabel value="now" control={<Radio />} label="현재 시각으로 등록하기" />
+                    <FormControlLabel value="scheduled" control={<Radio />} label="지정한 날짜와 시간으로 예약" />
+                  </RadioGroup>
+                </Stack>
+              )}
 
-              {publishTimeMode === 'scheduled' ? (
+              {!isCoPost && publishTimeMode === 'scheduled' ? (
                 <Stack gap={1}>
                   <Typography variant="subtitle2">날짜 및 시간 예약</Typography>
                   <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
@@ -988,16 +1054,18 @@ export default function Opt({
                 />
               ) : null}
 
-              <FormControlLabel
-                control={
-                  <IOSSwitch
-                    sx={{ m: 1 }}
-                    checked={isRecommended}
-                    onChange={(event) => setIsRecommended(event.target.checked)}
-                  />
-                }
-                label="추천 게시물 등록"
-              />
+              {isCoPost ? null : (
+                <FormControlLabel
+                  control={
+                    <IOSSwitch
+                      sx={{ m: 1 }}
+                      checked={isRecommended}
+                      onChange={(event) => setIsRecommended(event.target.checked)}
+                    />
+                  }
+                  label="추천 게시물 등록"
+                />
+              )}
 
               <SpellCheckDialog
                 ref={spellCheckReference}

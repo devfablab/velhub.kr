@@ -199,3 +199,21 @@
 
 .error
   padding: 0 ds.rem(12) ds.rem(8)
+
+.bubble.deleted,
+html[data-theme="yellow-dark"] .bubble.deleted
+  background-color: transparent
+  border: 1px dashed rgba(ds.$rgb-tertiary, .5)
+  color: rgba(ds.$rgb-tertiary, 1)
+  font-style: italic
+
+.window.inline
+  position: static
+  width: 100%
+  height: ds.rem(460)
+  box-shadow: none
+
+  @include ds.mq(maxMedium)
+    height: ds.rem(420)
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    border-radius: ds.rem(16)

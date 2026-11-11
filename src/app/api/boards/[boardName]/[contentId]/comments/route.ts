@@ -4,6 +4,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { type BlogSubscriptionBadge, getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments, canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
+import { findSharedCoPostByPostId, findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
 import {
   getCommentImageUrl,
   POST_COMMENT_IMAGE_BUCKET,
@@ -517,15 +518,27 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
     };
   }
 
+  const postColumns =
+    'id, site_id, board_id, user_id, is_closed, published_status, is_comment, poll, draw_type, draw_limit, draw_ends_at';
   const postQuery = supabaseAdmin
     .from('posts')
-    .select('id, user_id, is_closed, published_status, is_comment, poll, draw_type, draw_limit, draw_ends_at')
+    .select(postColumns)
     .eq('site_id', rhizome.data.id)
     .eq('board_id', board.data.id);
 
-  const post = isNumericSlug(contentId)
+  let post = isNumericSlug(contentId)
     ? await postQuery.eq('slug', contentId).maybeSingle()
     : await postQuery.eq('id', contentId).maybeSingle();
+
+  if (!post.error && !post.data && rhizome.data.site_type === 'blog') {
+    const sharedPostId = isNumericSlug(contentId)
+      ? (await findSharedCoPostForSite(rhizome.data.id, contentId))?.postId
+      : (await findSharedCoPostByPostId(rhizome.data.id, contentId))?.id;
+
+    if (sharedPostId) {
+      post = await supabaseAdmin.from('posts').select(postColumns).eq('id', sharedPostId).maybeSingle();
+    }
+  }
 
   if (post.error || !post.data) {
     return {
@@ -537,8 +550,8 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
   return {
     error: null,
     data: {
-      siteId: rhizome.data.id as string,
-      boardId: board.data.id as string,
+      siteId: post.data.site_id as string,
+      boardId: post.data.board_id as string,
       boardLabel: board.data.board_label as string,
       postId: post.data.id as string,
       postAuthorId: post.data.user_id as string,

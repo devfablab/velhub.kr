@@ -68,6 +68,20 @@ async function getWithdrawalPostIds(supabaseAdmin: SupabaseAdminClient, stigmaId
         protectedPostIds.add(payment.target_id);
       }
     }
+
+    const coPostsResult = await supabaseAdmin
+      .from('co_posts')
+      .select('post_id')
+      .eq('status', 'active')
+      .in('post_id', postIdBatch);
+
+    if (coPostsResult.error) {
+      throw new Error('공동 집필 글을 확인하지 못했습니다.');
+    }
+
+    for (const coPost of coPostsResult.data ?? []) {
+      protectedPostIds.add(coPost.post_id as string);
+    }
   }
 
   return postIds.filter((postId) => !protectedPostIds.has(postId));

@@ -25,6 +25,34 @@ type GetPostListOptions = {
   excludedBoardIds?: string[] | null;
 };
 
+type SharedCoPost = {
+  post_id: string;
+  partner_category_ids: string[] | null;
+  partner_series_id: string | null;
+};
+
+async function getSharedCoPosts(siteId: string, categoryId: string | null) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const [coPostResult, boardResult] = await Promise.all([
+    supabaseAdmin
+      .from('co_posts')
+      .select('post_id, partner_category_ids, partner_series_id')
+      .eq('partner_site_id', siteId)
+      .eq('status', 'active'),
+    supabaseAdmin.from('boards').select('id').eq('site_id', siteId).eq('board_type', 'blog').maybeSingle(),
+  ]);
+
+  if (coPostResult.error || boardResult.error) {
+    throw new Error('글 목록을 불러오지 못했습니다.');
+  }
+
+  const coPosts = ((coPostResult.data ?? []) as SharedCoPost[]).filter(
+    (coPost) => !categoryId || (coPost.partner_category_ids ?? []).includes(categoryId),
+  );
+
+  return { coPosts, boardId: (boardResult.data?.id as string | undefined) ?? null };
+}
+
 type PostImage = {
   path: string;
   url: string;
@@ -106,6 +134,7 @@ export type PostListItem = {
   post_count: number;
   is_pin: boolean;
   is_recommended: boolean;
+  is_co_post: boolean;
   board_key: string;
   board_label: string;
   thumbnail_image_url: string | null;
@@ -325,20 +354,36 @@ export async function getPostList({
     pinnedPosts = (pinnedResult.data ?? []) as RawPostRow[];
   }
 
-  let postsQuery = supabaseAdmin.from('posts').select(POST_SELECT, { count: 'exact' }).eq('site_id', siteId);
+  const shared =
+    siteType === 'blog' && !hasAuthorFilter && !hashtagId
+      ? await getSharedCoPosts(siteId, categoryId)
+      : { coPosts: [] as SharedCoPost[], boardId: null };
+  const sharedById = new Map(shared.coPosts.map((coPost) => [coPost.post_id, coPost]));
+  const sharedIdList = shared.coPosts.map((coPost) => coPost.post_id).join(',');
+  const hasSharedPosts = shared.coPosts.length > 0;
+
+  let postsQuery = supabaseAdmin.from('posts').select(POST_SELECT, { count: 'exact' });
+
+  postsQuery = hasSharedPosts
+    ? postsQuery.or(`site_id.eq.${siteId},id.in.(${sharedIdList})`)
+    : postsQuery.eq('site_id', siteId);
 
   postsQuery = stigmaId
     ? postsQuery.or(`is_wording_blinded.eq.false,user_id.eq.${stigmaId}`)
     : postsQuery.eq('is_wording_blinded', false);
 
   if (boardId) {
-    postsQuery = postsQuery.eq('board_id', boardId);
+    postsQuery = hasSharedPosts
+      ? postsQuery.or(`board_id.eq.${boardId},id.in.(${sharedIdList})`)
+      : postsQuery.eq('board_id', boardId);
   } else if (normalizedExcludedBoardIds.length > 0) {
     postsQuery = postsQuery.not('board_id', 'in', `(${normalizedExcludedBoardIds.join(',')})`);
   }
 
   if (categoryId) {
-    postsQuery = postsQuery.contains('categories', [categoryId]);
+    postsQuery = hasSharedPosts
+      ? postsQuery.or(`categories.cs.{${categoryId}},id.in.(${sharedIdList})`)
+      : postsQuery.contains('categories', [categoryId]);
   }
 
   if (hashtagId) {
@@ -373,6 +418,10 @@ export async function getPostList({
       publishedVisibility.push(`and(published_status.eq.draft,user_id.eq.${stigmaId})`);
     }
 
+    if (hasSharedPosts && isStaff) {
+      publishedVisibility.push(`and(published_status.eq.draft,id.in.(${sharedIdList}))`);
+    }
+
     if (canViewFutureScheduledPosts) {
       publishedVisibility.push(`and(published_status.eq.unknown,published_at.gt.${nowIsoString})`);
     }
@@ -392,6 +441,8 @@ export async function getPostList({
     postsQuery = postsQuery
       .order('published_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
+  } else if (hasSharedPosts) {
+    postsQuery = postsQuery.order('created_at', { ascending: false });
   } else {
     postsQuery = postsQuery.order('idx', { ascending: false });
   }
@@ -404,7 +455,19 @@ export async function getPostList({
     throw new Error('글 목록을 불러오지 못했습니다.');
   }
 
-  const mergedPosts = [...pinnedPosts, ...((postsResult.data ?? []) as RawPostRow[])];
+  const mergedPosts = [...pinnedPosts, ...((postsResult.data ?? []) as RawPostRow[])].map((post) => {
+    const sharedCoPost = sharedById.get(post.id);
+
+    if (!sharedCoPost || !shared.boardId) return post;
+
+    return {
+      ...post,
+      board_id: shared.boardId,
+      site_id: siteId,
+      series_id: sharedCoPost.partner_series_id,
+      series_idx: null,
+    };
+  });
 
   const postIds = Array.from(new Set(mergedPosts.map((post) => post.id).filter(Boolean)));
   const boardIds = Array.from(new Set(mergedPosts.map((post) => post.board_id).filter(Boolean)));
@@ -419,6 +482,16 @@ export async function getPostList({
   const seriesIds = Array.from(
     new Set(mergedPosts.map((post) => post.series_id).filter((value): value is string => Boolean(value))),
   );
+
+  const coPostResult =
+    siteType === 'blog' && postIds.length > 0
+      ? await supabaseAdmin
+          .from('co_posts')
+          .select('post_id')
+          .in('status', ['invited', 'active'])
+          .in('post_id', postIds)
+      : { data: [] as { post_id: string }[], error: null };
+  const coPostIds = new Set((coPostResult.data ?? []).map((row) => row.post_id as string));
 
   const [boardsResult, rhizomeStigmasResult, stigmaResult, prefixResult, seriesResult, commentResult] =
     await Promise.all([
@@ -543,6 +616,7 @@ export async function getPostList({
       post_count: typeof post.post_count === 'number' ? Number(post.post_count) : 0,
       is_pin: post.is_pin === true,
       is_recommended: post.is_recommended === true,
+      is_co_post: coPostIds.has(post.id),
       board_key: boardInfo?.board_key ?? '',
       board_label: boardInfo?.board_label ?? '',
       thumbnail_image_url: getPostImageUrl(post.thumbnail_image),
