@@ -8,6 +8,7 @@ import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session/server';
 import { EMPTY_SITE_CREATE_FIELD_ERRORS, validateSiteCreateFields } from '@/lib/site/createValidation.shared';
+import { isSiteCaptchaPassed } from '@/lib/site/siteCaptcha.server';
 
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
@@ -141,6 +142,11 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
+
+    if (!isSiteCaptchaPassed(sessionClaims.userId, getFormText(formData, 'captchaPassToken'))) {
+      return Response.json({ error: '보안 문자 확인을 완료해 주세요.' }, { status: 400 });
+    }
+
     const profilePictureFile = formData.get('profilePicture');
 
     const normalizedSiteKey = normalizeSiteKey(getFormText(formData, 'siteKey').trim());

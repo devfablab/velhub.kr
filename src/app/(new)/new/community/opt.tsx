@@ -37,6 +37,7 @@ import {
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import PopupMessage from '@/components/PopupMessage';
+import SiteCaptcha from '@/app/(new)/new/siteCaptcha';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -136,6 +137,8 @@ export default function Opt() {
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
   const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaPassToken, setCaptchaPassToken] = useState('');
+  const [isCaptchaBlocked, setIsCaptchaBlocked] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -495,10 +498,20 @@ export default function Opt() {
       return;
     }
 
+    if (isCaptchaBlocked) {
+      return;
+    }
+
+    if (!captchaPassToken) {
+      openErrorDialog('보안 문자를 입력하고 확인을 눌러 주세요.', { title: '입력 내용 확인' });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const formData = new FormData();
+      formData.append('captchaPassToken', captchaPassToken);
       formData.append('siteKey', normalizedSiteKey);
       formData.append('siteLabel', trimmedSiteLabel);
       formData.append('summary', trimmedSummary);
@@ -817,6 +830,9 @@ export default function Opt() {
               </Typography>
             </div>
           </Stack>
+
+          <SiteCaptcha onPassTokenChange={setCaptchaPassToken} onBlockedChange={setIsCaptchaBlocked} />
+
           {errorMessage ? (
             <p className="alert error">
               <ErrorOutlineRoundedIcon />
@@ -829,7 +845,11 @@ export default function Opt() {
         <button type="button" className="button medium close" onClick={openCancelDialog}>
           개설 취소
         </button>
-        <button type="submit" className="button medium submit" disabled={isSubmitting || isCheckingSiteKey}>
+        <button
+          type="submit"
+          className="button medium submit"
+          disabled={isSubmitting || isCheckingSiteKey || isCaptchaBlocked}
+        >
           커뮤니티 개설
         </button>
       </div>

@@ -25,6 +25,7 @@ const r2ImageHostnames = [
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ['@uiw/react-md-editor', '@uiw/react-markdown-preview'],
+  serverExternalPackages: ['svg-captcha'],
   images: {
     remotePatterns: [
       {
