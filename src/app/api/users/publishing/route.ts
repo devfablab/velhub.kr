@@ -47,6 +47,7 @@ export async function GET(request: Request) {
       .from('posts')
       .select('id, user_id, site_id, board_id, series_id')
       .eq('published_status', 'unknown')
+      .eq('is_closed', false)
       .not('published_at', 'is', null)
       .lte('published_at', now);
 
@@ -54,7 +55,34 @@ export async function GET(request: Request) {
       return Response.json({ error: '예약 출간 글을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const posts = (postsResult.data ?? []) as PublishingPostRow[];
+    const duePosts = (postsResult.data ?? []) as PublishingPostRow[];
+
+    if (duePosts.length === 0) {
+      return Response.json({
+        ok: true,
+        publishedCount: 0,
+        notificationCount: 0,
+      });
+    }
+
+    const updateResult = await supabaseAdmin
+      .from('posts')
+      .update({
+        published_status: 'published',
+      })
+      .in(
+        'id',
+        duePosts.map((post) => post.id),
+      )
+      .eq('published_status', 'unknown')
+      .select('id');
+
+    if (updateResult.error) {
+      return Response.json({ error: '예약 출간 처리에 실패했습니다.' }, { status: 500 });
+    }
+
+    const publishedPostIds = new Set((updateResult.data ?? []).map((row) => row.id as string));
+    const posts = duePosts.filter((post) => publishedPostIds.has(post.id));
 
     if (posts.length === 0) {
       return Response.json({
@@ -166,22 +194,9 @@ export async function GET(request: Request) {
       }
     }
 
-    const postIds = posts.map((post) => post.id);
-
-    const updateResult = await supabaseAdmin
-      .from('posts')
-      .update({
-        published_status: 'published',
-      })
-      .in('id', postIds);
-
-    if (updateResult.error) {
-      return Response.json({ error: '예약 출간 처리에 실패했습니다.' }, { status: 500 });
-    }
-
     return Response.json({
       ok: true,
-      publishedCount: postIds.length,
+      publishedCount: posts.length,
       notificationCount,
     });
   } catch (unknownError) {

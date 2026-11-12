@@ -3,6 +3,7 @@ import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
 import { sendMinorPurchaseCancellationAdjustmentEmail } from '@/lib/notifications/minorPurchaseCancellationEmail';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
+import { decryptNullable } from '@/lib/users/utils';
 
 export async function POST(_: Request, { params }: { params: Promise<{ inquiryId: string }> }) {
   const admin = await getCurrentStigma();
@@ -89,9 +90,10 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
       .or(`id.eq.${adjustment.receiver_user_id},user_id.eq.${adjustment.receiver_user_id}`)
       .limit(1)
       .maybeSingle();
-    if (receiver?.email)
+    const receiverEmail = decryptNullable(receiver?.email);
+    if (receiverEmail)
       await sendMinorPurchaseCancellationAdjustmentEmail({
-        email: receiver.email,
+        email: receiverEmail,
         adjustmentAmount: Number(adjustment.amount),
       }).catch(() => null);
   }
@@ -100,9 +102,10 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
     .select('email')
     .eq('id', inquiry.requester_stigma_id)
     .maybeSingle();
-  if (requester?.email)
+  const requesterEmail = decryptNullable(requester?.email);
+  if (requesterEmail)
     await sendInquiryResultEmail({
-      email: requester.email,
+      email: requesterEmail,
       result: '청약취소 승인 및 결제 취소 완료',
       reason: summary,
     }).catch(() => null);

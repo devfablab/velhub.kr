@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
+import { decryptNullable } from '@/lib/users/utils';
 
 export async function POST(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -50,9 +51,10 @@ export async function POST(request: NextRequest) {
       .select('email')
       .eq('id', inquiry.requester_stigma_id)
       .maybeSingle();
-    if (requester?.email)
+    const requesterEmail = decryptNullable(requester?.email);
+    if (requesterEmail)
       await sendInquiryResultEmail({
-        email: requester.email,
+        email: requesterEmail,
         result: '추가 정보 미제출',
         reason: summary,
       }).catch(() => null);

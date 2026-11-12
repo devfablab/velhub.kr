@@ -10,7 +10,7 @@ function isValidCronRequest(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret) {
-    throw new Error('자동결제 실행 키가 설정되지 않았습니다.');
+    throw new Error('자동 처리 실행 키가 설정되지 않았습니다.');
   }
 
   return authorization === `Bearer ${cronSecret}`;

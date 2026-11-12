@@ -34,7 +34,7 @@ export async function GET(request: Request) {
         handled_at: nowIsoString,
         updated_at: nowIsoString,
       })
-      .in('target_type', ['post', 'comment'])
+      .in('target_type', ['post', 'comment', 'blog_community_post', 'blog_community_comment'])
       .in('status', ['received', 'reviewing'])
       .lte('created_at', cutoff)
       .select('id');

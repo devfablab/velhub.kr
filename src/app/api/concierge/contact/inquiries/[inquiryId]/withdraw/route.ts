@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
 import { getCurrentStigma } from '@/lib/session/utils';
+import { decryptNullable } from '@/lib/users/utils';
 
 export async function POST(_: Request, { params }: { params: Promise<{ inquiryId: string }> }) {
   const current = await getCurrentStigma();
@@ -47,7 +48,8 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
     reason: summary,
   });
   const { data: requester } = await db.from('stigmas').select('email').eq('id', current.stigmaId).maybeSingle();
-  if (requester?.email)
-    await sendInquiryResultEmail({ email: requester.email, result: '문의 철회', reason: summary }).catch(() => null);
+  const requesterEmail = decryptNullable(requester?.email);
+  if (requesterEmail)
+    await sendInquiryResultEmail({ email: requesterEmail, result: '문의 철회', reason: summary }).catch(() => null);
   return Response.json({ ok: true });
 }

@@ -10,6 +10,7 @@ import {
   isResolutionAllowedForInquiryType,
 } from '@/lib/service/concierge/conciergeInquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
+import { decryptNullable } from '@/lib/users/utils';
 
 type RouteContext = { params: Promise<{ inquiryId: string }> };
 
@@ -300,9 +301,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       .select('email')
       .eq('id', existingInquiry.requester_stigma_id)
       .maybeSingle();
-    if (requester?.email && isInquiryResolutionCode(resolutionCode))
+    const requesterEmail = decryptNullable(requester?.email);
+    if (requesterEmail && isInquiryResolutionCode(resolutionCode))
       await sendInquiryResultEmail({
-        email: requester.email,
+        email: requesterEmail,
         result: inquiryResolutionLabels[resolutionCode],
         reason: resolutionSummary,
       }).catch(() => null);
