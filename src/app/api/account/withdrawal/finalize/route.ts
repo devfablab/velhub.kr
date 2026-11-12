@@ -3,6 +3,7 @@ import {
   ACCOUNT_WITHDRAWAL_GRACE_MS,
   ACCOUNT_WITHDRAWAL_STATUS,
   completeAccountWithdrawal,
+  deleteExpiredWithdrawnAccountRecords,
 } from '@/lib/users/accountWithdrawal.server';
 
 type PendingStigmaRow = {
@@ -62,6 +63,8 @@ export async function GET(request: Request) {
         failedUserIds.push(stigma.user_id);
       }
     }
+
+    await deleteExpiredWithdrawnAccountRecords(supabaseAdmin, nowIso);
 
     return Response.json({
       ok: failedUserIds.length === 0,

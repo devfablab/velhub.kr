@@ -42,10 +42,11 @@ export default function WithdrawalGuard({
   initialRequestedAt: string | null;
 }) {
   const router = useRouter();
-  const { isAuthServiceUnavailable } = useAuthState();
+  const { isAuthServiceUnavailable, isAuthenticated, authVersion } = useAuthState();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [status, setStatus] = useState<string | null>(initialStatus);
+  const [requestedAt, setRequestedAt] = useState<string | null>(initialRequestedAt);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -58,6 +59,28 @@ export default function WithdrawalGuard({
       void supabase.auth.signOut({ scope: 'global' }).then(() => router.replace('/'));
     }
   }, [initialStatus, isAuthServiceUnavailable, router]);
+
+  useEffect(() => {
+    if (authVersion === 0 || !isAuthenticated || isAuthServiceUnavailable) {
+      return;
+    }
+
+    let isActive = true;
+
+    fetch('/api/account/withdrawal', { credentials: 'include', cache: 'no-store' })
+      .then((response) => (response.ok ? (response.json() as Promise<WithdrawalStatusResponse>) : null))
+      .then((result) => {
+        if (!isActive || !result) return;
+
+        setStatus(result.status ?? null);
+        setRequestedAt(result.requestedAt ?? null);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isActive = false;
+    };
+  }, [authVersion, isAuthenticated, isAuthServiceUnavailable]);
 
   async function handleCancelWithdrawal() {
     if (isAuthServiceUnavailable || isCanceling || isLoggingOut) {
@@ -116,7 +139,7 @@ export default function WithdrawalGuard({
   }
 
   const isOpen = status === 'pending';
-  const withdrawalCompletionDate = getWithdrawalCompletionDate(initialRequestedAt);
+  const withdrawalCompletionDate = getWithdrawalCompletionDate(requestedAt);
   const withdrawalMessage = withdrawalCompletionDate
     ? `${withdrawalCompletionDate}에 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해 주세요.`
     : '탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해 주세요.';

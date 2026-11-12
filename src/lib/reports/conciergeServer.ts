@@ -128,7 +128,7 @@ type BlogCommunityCommentRow = {
 };
 
 type StigmaRow = {
-  user_id: string;
+  id: string;
   user_name: string | null;
 };
 
@@ -630,7 +630,7 @@ export async function loadConciergeReports({
 
   const [stigmasResult, chorogonsResult] = await Promise.all([
     userIds.length
-      ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', userIds)
+      ? supabaseAdmin.from('stigmas').select('id, user_name').in('id', userIds)
       : Promise.resolve({ data: [], error: null }),
     userIds.length
       ? supabaseAdmin.from('chorogons').select('user_id, name').in('user_id', userIds)
@@ -643,7 +643,7 @@ export async function loadConciergeReports({
   }
 
   const stigmaNameMap = new Map(
-    ((stigmasResult.data ?? []) as StigmaRow[]).map((stigma) => [stigma.user_id, decryptValue(stigma.user_name)]),
+    ((stigmasResult.data ?? []) as StigmaRow[]).map((stigma) => [stigma.id, decryptValue(stigma.user_name)]),
   );
   const identityNameMap = new Map(
     ((chorogonsResult.data ?? []) as ChorogonRow[]).map((chorogon) => [chorogon.user_id, decryptValue(chorogon.name)]),

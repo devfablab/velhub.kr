@@ -79,17 +79,7 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '사이트 운영자를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const ownerStigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('user_id')
-      .eq('id', ownerResult.data.user_id)
-      .maybeSingle();
-
-    if (ownerStigmaResult.error || !ownerStigmaResult.data?.user_id) {
-      return Response.json({ error: '사이트 운영자 계정을 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const recipientUserId = ownerStigmaResult.data.user_id as string;
+    const recipientUserId = ownerResult.data.user_id as string;
     const insertResult = await supabaseAdmin
       .from('report_messages')
       .insert({

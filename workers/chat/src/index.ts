@@ -208,6 +208,22 @@ export class ChatRoom extends DurableObject<ChatEnv> {
       return jsonResponse({ ok: true });
     }
 
+    const authorMatch = url.pathname.match(/\/authors\/([0-9a-fA-F-]{36})\/messages$/);
+
+    if (authorMatch && request.method === 'DELETE') {
+      const rows = this.sql
+        .exec<{ id: string; size: number }>('SELECT id, size FROM messages WHERE stigma_id = ?', authorMatch[1])
+        .toArray();
+
+      for (const row of rows) {
+        this.sql.exec('DELETE FROM messages WHERE id = ?', row.id);
+        this.addUsedBytes(-row.size);
+        this.broadcast({ type: 'delete', id: row.id });
+      }
+
+      return jsonResponse({ ok: true, deletedCount: rows.length });
+    }
+
     if (this.getMeta('opened') !== '1') {
       this.setMeta('opened', '1');
       await this.ensureAlarm();
