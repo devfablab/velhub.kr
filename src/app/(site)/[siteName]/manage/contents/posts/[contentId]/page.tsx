@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-import { getCoPostBySiteAndSlug } from '@/lib/service/blog/coPosts';
+import { getCoPostBySiteAndSlug, getCoPostPublishState, getLatestCoPostRevision } from '@/lib/service/blog/coPosts';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 import type { StatusResponse, ContentResponse, CategoryListResponse, SeriesListResponse } from './opt';
@@ -9,9 +8,7 @@ export default async function Page({ params }: Props) {
   const { siteName, contentId } = await params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
-  if (await getCoPostBySiteAndSlug(normalizedSiteName, contentId)) {
-    redirect(`/${normalizedSiteName}/manage/contents/posts/${contentId}/edit`);
-  }
+  const coPost = await getCoPostBySiteAndSlug(normalizedSiteName, contentId);
 
   const statusData = await getSiteApiData<StatusResponse>(
     `/api/manage/contents/blog-posts/status?siteName=${normalizedSiteName}`,
@@ -37,8 +34,22 @@ export default async function Page({ params }: Props) {
       ),
     ]);
   }
+  const content = contentData?.data?.content;
+
+  if (coPost && content && (await getCoPostPublishState(coPost.post_id)).state === 'draft') {
+    const payload = (await getLatestCoPostRevision(coPost.id))?.payload;
+
+    if (payload) {
+      content.subject = payload.subject ?? content.subject;
+      content.summary = payload.summary ?? null;
+      content.content_html = payload.content_html ?? content.content_html;
+      content.content_markdown = payload.content_markdown ?? null;
+    }
+  }
+
   return (
     <Opt
+      isCoPost={Boolean(coPost)}
       initialStatus={statusData.data}
       initialContent={contentData?.data}
       initialCategory={categoryData?.data}

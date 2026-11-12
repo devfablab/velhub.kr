@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
@@ -62,25 +62,9 @@ function getPostState(coPost: CoPostItem) {
   return '작성 중';
 }
 
-export default function CoPostInvitations() {
+export default function CoPostInvitations({ initialData }: { initialData: CoPostListResponse | null }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const [initialData, setInitialData] = useState<CoPostListResponse | null>(null);
-
-  useEffect(() => {
-    let isActive = true;
-
-    fetch(`/api/co-posts?siteName=${encodeURIComponent(siteName)}`, { credentials: 'include' })
-      .then((response) => (response.ok ? (response.json() as Promise<CoPostListResponse>) : null))
-      .then((result) => {
-        if (isActive) setInitialData(result);
-      })
-      .catch(() => undefined);
-
-    return () => {
-      isActive = false;
-    };
-  }, [siteName]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [acceptState, setAcceptState] = useState<AcceptState | null>(null);

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
+import type { CoPostListResponse } from './coPostInvitations';
 import Opt, { type BoardContentsResponse, type BoardsResponse, type InitialPostsData } from './opt';
 import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
@@ -50,6 +51,10 @@ export default async function Page(context: SearchContext) {
       '블로그 상태를 확인하지 못했습니다.',
     );
     initialError ||= status.error;
+    const coPostList = await getSiteApiData<CoPostListResponse>(
+      `/api/co-posts?siteName=${normalizedSiteName}`,
+      '공동 집필 초대 목록을 불러오지 못했습니다.',
+    );
     if (status.data?.hasBoard && status.data.boardName && !(filter && !isStaff)) {
       const board = await getSiteApiData<BoardContentsResponse>(
         `/api/boards/${status.data.boardName}?siteName=${normalizedSiteName}&page=${page}${size}${filter}`,
@@ -66,6 +71,7 @@ export default async function Page(context: SearchContext) {
         posts: board.data?.contents ?? [],
         totalPage: board.data?.totalPage ?? 1,
         filter: board.data?.filter === 'deleted' ? 'deleted' : 'all',
+        coPostList: coPostList.data,
       };
     } else {
       initialData = {
@@ -78,6 +84,7 @@ export default async function Page(context: SearchContext) {
         posts: [],
         totalPage: 1,
         filter: 'all',
+        coPostList: coPostList.data,
       };
     }
   } else {
@@ -96,6 +103,7 @@ export default async function Page(context: SearchContext) {
       posts: [],
       totalPage: 1,
       filter: 'all',
+      coPostList: null,
     };
   }
 

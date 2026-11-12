@@ -97,7 +97,7 @@ const DEFAULT_BLOG_FONT_SETTINGS = {
   descriptionFontFamily: 'pre',
   descriptionLetterSpacing: -0.005,
   descriptionLineHeight: 1.5,
-  descriptionFontSize: 16,
+  descriptionFontSize: 14,
   descriptionMargin: 16,
 };
 

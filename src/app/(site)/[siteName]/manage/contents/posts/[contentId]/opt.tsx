@@ -116,12 +116,14 @@ type ActionResponse = {
 };
 
 export default function Opt({
+  isCoPost = false,
   initialStatus,
   initialContent,
   initialCategory,
   initialSeries,
   initialError,
 }: {
+  isCoPost?: boolean;
   initialStatus?: StatusResponse | null;
   initialContent?: ContentResponse | null;
   initialCategory?: CategoryListResponse | null;
@@ -445,20 +447,20 @@ export default function Opt({
             <>
               <Stack direction="row" justifyContent="space-between" sx={{ p: 1 }}>
                 <Stack direction="row" gap={1}>
-                  {isAuthor || isStaff ? (
+                  {!isCoPost && (isAuthor || isStaff) ? (
                     <button type="button" className="button small cancel" onClick={handleOpenCategoryDialog}>
                       카테고리 설정
                     </button>
                   ) : null}
 
-                  {isAuthor || isStaff ? (
+                  {!isCoPost && (isAuthor || isStaff) ? (
                     <button type="button" className="button small cancel" onClick={handleOpenSeriesDialog}>
                       연재 설정
                     </button>
                   ) : null}
                 </Stack>
 
-                {post.is_closed ? (
+                {isCoPost ? null : post.is_closed ? (
                   <button type="button" className="button small action" onClick={handleOpenRestoreDialog}>
                     복구
                   </button>

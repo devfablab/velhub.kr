@@ -104,7 +104,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const initialDescriptionFontFamily = blog?.description_font_family ?? 'pre';
   const initialDescriptionLetterSpacing = blog?.description_letter_spacing ?? -0.005;
   const initialDescriptionLineHeight = blog?.description_line_height ?? 1.5;
-  const initialDescriptionFontSize = blog?.description_font_size ?? 16;
+  const initialDescriptionFontSize = blog?.description_font_size ?? 14;
   const initialDescriptionMargin = blog?.description_margin ?? 16;
   const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>(
     SUBJECT_FONT_OPTIONS.some((option) => option.value === initialSubjectFontFamily) ? initialSubjectFontFamily : 'neo',

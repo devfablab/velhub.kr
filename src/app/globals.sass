@@ -868,6 +868,18 @@ main
     &:last-of-type
       margin-bottom: 0
 
+.ProseMirror
+  @include ds.fw(pre, 400)
+  line-height: 1.37
+  font-size: ds.rem(14)
+
+  html[data-site-type='blog'] &
+    font-family: var(--blog-description-font-family)
+    line-height: var(--blog-description-line-height)
+    font-size: var(--blog-description-font-size)
+    font-weight: 400
+    font-variation-settings: "wght" 400
+
 .service-editor
   .toastui-editor-main-container
     color: ds.$hex-secondary

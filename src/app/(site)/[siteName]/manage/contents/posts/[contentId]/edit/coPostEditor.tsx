@@ -12,7 +12,6 @@ import {
 } from '@/lib/editor/convertImageToWebpFile.client';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../menu';
 import CoPostChanges from './coPostChanges';
@@ -36,7 +35,7 @@ export type CoPostEditorData = {
   lock: { isLockedByOther: boolean; holderName: string };
 };
 
-type LockState = 'checking' | 'held' | 'locked' | 'ended';
+type LockState = 'held' | 'locked' | 'ended';
 
 const HEARTBEAT_INTERVAL = 60 * 1000;
 const IDLE_CHECK_INTERVAL = 30 * 1000;
@@ -49,7 +48,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
   const router = useRouter();
   const theme = useTheme();
   const listHref = `/${siteName}/manage/contents/posts`;
-  const [lockState, setLockState] = useState<LockState>('checking');
+  const [lockState, setLockState] = useState<LockState>(coPost.lock.isLockedByOther ? 'locked' : 'held');
   const [holderName, setHolderName] = useState(coPost.lock.holderName);
   const [endedMessage, setEndedMessage] = useState('');
   const [subject, setSubject] = useState(coPost.working.subject);
@@ -100,6 +99,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
 
   useEffect(() => {
     let isActive = true;
+    lastActivityRef.current = Date.now();
 
     callLock('acquire')
       .then((result) => {
@@ -315,18 +315,6 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
         }}
       />
     ) : null;
-
-  if (lockState === 'checking') {
-    return (
-      <Container pageTitle="공동 집필" pageBack={pageBack} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <LoadingIndicator size={18} />
-          </div>
-        </div>
-      </Container>
-    );
-  }
 
   if (lockState === 'locked' || lockState === 'ended') {
     return (

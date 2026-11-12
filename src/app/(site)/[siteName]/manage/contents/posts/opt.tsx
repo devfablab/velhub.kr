@@ -43,7 +43,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
-import CoPostInvitations from './coPostInvitations';
+import CoPostInvitations, { type CoPostListResponse } from './coPostInvitations';
 import HashtagSettingsDialog from './hashtagSettingsDialog';
 import SpellCheckSettingsDialog from './spellCheckSettingsDialog';
 import styles from '@/app/manage.module.sass';
@@ -147,6 +147,7 @@ export type InitialPostsData = {
   posts: PostRow[];
   totalPage: number;
   filter: 'all' | 'deleted';
+  coPostList: CoPostListResponse | null;
 };
 
 type DeleteMode = 'single' | 'bulk' | null;
@@ -902,7 +903,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Stack>
         </Stack>
 
-        {siteType === 'blog' ? <CoPostInvitations /> : null}
+        {siteType === 'blog' ? <CoPostInvitations initialData={initialData?.coPostList ?? null} /> : null}
 
         {posts.length >= 1 ? (
           <Stack
