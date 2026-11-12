@@ -683,3 +683,31 @@ export async function findSharedCoPostByPostId(siteId: string, postId: string) {
 
   return (postResult.data as { id: string; site_id: string; board_id: string } | null) ?? null;
 }
+
+export async function getCoAuthorNamesByPostIds(postIds: string[]) {
+  const result = new Map<string, string>();
+  const uniquePostIds = Array.from(new Set(postIds.filter(Boolean)));
+
+  if (uniquePostIds.length === 0) return result;
+
+  const coPostResult = await getSupabaseAdmin()
+    .from('co_posts')
+    .select(CO_POST_COLUMNS)
+    .eq('status', 'active')
+    .in('post_id', uniquePostIds);
+
+  if (coPostResult.error) return result;
+
+  await Promise.all(
+    ((coPostResult.data ?? []) as CoPostRow[]).map(async (coPost) => {
+      const participants = await getCoPostParticipants(coPost);
+      const names = [coPost.inviter_id, coPost.partner_id]
+        .map((stigmaId) => participants.get(stigmaId)?.name)
+        .filter(Boolean);
+
+      if (names.length > 0) result.set(coPost.post_id, names.join(' · '));
+    }),
+  );
+
+  return result;
+}

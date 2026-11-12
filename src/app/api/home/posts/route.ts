@@ -3,11 +3,13 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
+import { getCoAuthorNamesByPostIds } from '@/lib/service/blog/coPosts';
 import { fetchPagedRows, getDateBefore, PERIOD_DAYS } from '@/lib/service/lounge/loungeMoments';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { normalizeText } from '@/lib/utils';
 
 type PostRow = {
+  id: string;
   board_id: string;
   content_html: string | null;
   content_markdown: string | null;
@@ -93,7 +95,7 @@ async function getPopularPosts(limit: number, siteType: string | null) {
       .eq('is_wording_blinded', false)
       .not('published_at', 'is', null);
     if (result.error) throw result.error;
-    return (result.data ?? []) as unknown as Array<PostRow & { id: string }>;
+    return (result.data ?? []) as unknown as PostRow[];
   });
 
   const boards = await selectByIdChunks([...new Set(candidatePosts.map((post) => post.board_id))], async (chunk) => {
@@ -280,7 +282,7 @@ export async function GET(request: NextRequest) {
     while (!isPopularSort && postsData.length < (isRelevanceSort ? candidateBatchSize : limit)) {
       let postsQuery = supabaseAdmin
         .from('posts')
-        .select(POST_SELECT)
+        .select(`id, ${POST_SELECT}`)
         .eq('is_closed', false)
         .eq('is_wording_blinded', false)
         .not('published_at', 'is', null);
@@ -424,6 +426,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const coAuthorNames = await getCoAuthorNamesByPostIds(visiblePosts.map((post) => post.id));
     const posts = visiblePosts.map((post) => {
       const board = boardMap.get(post.board_id);
       const boardType = board?.board_type;
@@ -466,7 +469,7 @@ export async function GET(request: NextRequest) {
         slug: post.slug,
         board_key: boardKey,
         board_type: boardType,
-        author_name: authorName,
+        author_name: coAuthorNames.get(post.id) ?? authorName,
         author_avatar: avatar,
         published_at: post.published_at,
         post_count: post.post_count,

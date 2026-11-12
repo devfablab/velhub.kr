@@ -14,10 +14,42 @@ export async function GET(_: Request) {
   const supabaseAdmin = getSupabaseAdmin();
   const userId = currentStigma.stigmaId;
 
-  const postsResult = await supabaseAdmin
+  const partnerCoPostsResult = await supabaseAdmin
+    .from('co_posts')
+    .select('post_id, partner_site_id, partner_series_id')
+    .eq('partner_id', userId)
+    .eq('status', 'active');
+
+  if (partnerCoPostsResult.error) {
+    return NextResponse.json({ message: '내가 쓴 글을 불러오지 못했습니다.' }, { status: 500 });
+  }
+
+  const partnerCoPosts = new Map(
+    (partnerCoPostsResult.data ?? []).map((row) => [
+      row.post_id as string,
+      { siteId: row.partner_site_id as string, seriesId: row.partner_series_id as string | null },
+    ]),
+  );
+  const partnerBoardsResult = partnerCoPosts.size
+    ? await supabaseAdmin
+        .from('boards')
+        .select('id, site_id')
+        .eq('board_type', 'blog')
+        .in('site_id', [...new Set([...partnerCoPosts.values()].map((item) => item.siteId))])
+    : { data: [] as { id: string; site_id: string }[], error: null };
+  const partnerBoardBySite = new Map(
+    (partnerBoardsResult.data ?? []).map((row) => [row.site_id as string, row.id as string]),
+  );
+
+  let postsQuery = supabaseAdmin
     .from('posts')
-    .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
-    .eq('user_id', userId)
+    .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' });
+
+  postsQuery = partnerCoPosts.size
+    ? postsQuery.or(`user_id.eq.${userId},id.in.(${[...partnerCoPosts.keys()].join(',')})`)
+    : postsQuery.eq('user_id', userId);
+
+  const postsResult = await postsQuery
     .eq('published_status', 'published')
     .eq('is_closed', false)
     .order('published_at', { ascending: false })
@@ -25,7 +57,14 @@ export async function GET(_: Request) {
 
   if (postsResult.error) return NextResponse.json({ message: '내가 쓴 글을 불러오지 못했습니다.' }, { status: 500 });
 
-  const posts = postsResult.data ?? [];
+  const posts = (postsResult.data ?? []).map((post) => {
+    const partnerCoPost = partnerCoPosts.get(post.id);
+    const partnerBoardId = partnerCoPost ? partnerBoardBySite.get(partnerCoPost.siteId) : undefined;
+
+    if (!partnerCoPost || !partnerBoardId) return post;
+
+    return { ...post, site_id: partnerCoPost.siteId, board_id: partnerBoardId, series_id: partnerCoPost.seriesId };
+  });
   const [sitesResult, boardsResult, seriesResult] = await Promise.all([
     posts.length
       ? supabaseAdmin

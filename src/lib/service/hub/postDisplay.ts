@@ -1,6 +1,7 @@
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getCoAuthorNamesByPostIds } from '@/lib/service/blog/coPosts';
 import { normalizeText } from '@/lib/utils';
 
 type SiteType = 'blog' | 'community';
@@ -180,6 +181,8 @@ export async function getHubPostDisplayMap({
     (membersResult.data ?? []).map((member) => [`${member.site_id}:${member.user_id}`, normalizeText(member.nickname)]),
   );
 
+  const coAuthorNames = await getCoAuthorNamesByPostIds(posts.map((post) => post.id));
+
   posts.forEach((post) => {
     const board = boardMap.get(post.board_id);
     const site = siteMap.get(post.site_id);
@@ -198,7 +201,7 @@ export async function getHubPostDisplayMap({
       siteName: normalizeText(site.site_label) || site.site_key,
       siteImage: getPublicImageUrl('avatar', site.profile_picture),
       boardType,
-      authorName: nickname || decryptValue(stigma?.user_name ?? null),
+      authorName: coAuthorNames.get(post.id) ?? (nickname || decryptValue(stigma?.user_name ?? null)),
       authorImage: getPublicImageUrl('avatar', stigma?.avatar ?? null),
       publishedAt: post.published_at,
       postCount: post.post_count,
