@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import FaceRetouchingNaturalRoundedIcon from '@mui/icons-material/FaceRetouchingNaturalRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import {
   Avatar,
@@ -445,11 +445,11 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
       <button
         ref={launcherRef}
         type="button"
-        className={styles.launcher}
+        className={`${styles.launcher} ${isWindowOpen ? '' : styles.default}`}
         onClick={handleLauncherClick}
         aria-label={isWindowOpen ? '단체 채팅 닫기' : '단체 채팅 열기'}
       >
-        {isWindowOpen ? <CloseRoundedIcon /> : <ChatRoundedIcon />}
+        {isWindowOpen ? <CloseRoundedIcon /> : <FaceRetouchingNaturalRoundedIcon />}
       </button>
 
       {isWindowOpen ? (

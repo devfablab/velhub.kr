@@ -1,7 +1,19 @@
+@keyframes launcher
+  0%
+    opacity: 0
+    transform: translateY(150px)
+
+  20%
+    opacity: 0.7
+
+  100%
+    opacity: 1
+    transform: translateY(0px)
+
 .launcher
   position: fixed
   right: ds.rem(24)
-  bottom: ds.rem(24)
+  bottom: calc( env(safe-area-inset-bottom) + ds.rem(24) )
   z-index: 1200
   display: flex
   align-items: center
@@ -10,23 +22,37 @@
   height: ds.rem(56)
   border: 0
   border-radius: 50%
-  background-color: ds.$hex-accent
-  box-shadow: 0 ds.rem(4) ds.rem(16) rgba(0, 0, 0, .35)
-  color: ds.$hex-primary
+  box-shadow: rgba(255, 255, 255, 0.2) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.1) 0px 4px 6px, rgba(0, 0, 0, 0.15) 0px 8px 30px
+  background: linear-gradient(rgb(238, 180, 0) 0%, rgb(238, 220, 0) 100%)
+  transition: all .4s cubic-bezier(.4,0,.2,1)
   cursor: pointer
 
   svg
-    width: ds.rem(28)
-    height: ds.rem(28)
+    width: ds.rem(36)
+    height: ds.rem(36)
+
+  &:not(.default)
+    background: ds.$hex-secondary
+    color: rgba(255, 255, 255, 0.6)
+
+    svg
+      width: ds.rem(24)
+      height: ds.rem(24)
 
   @include ds.mq(maxMedium)
-    right: ds.rem(16)
-    bottom: ds.rem(16)
+    width: ds.rem(44)
+    height: ds.rem(44)
+    right: ds.rem(14)
+    bottom: calc( env(safe-area-inset-bottom) + ds.rem(18) )
+
+    svg
+      width: ds.rem(30)
+      height: ds.rem(30)
 
 .window
   position: fixed
   right: ds.rem(24)
-  bottom: ds.rem(96)
+  bottom: calc( env(safe-area-inset-bottom) + ds.rem(90) )
   z-index: 1200
   display: flex
   flex-direction: column
@@ -37,6 +63,7 @@
   background-color: ds.$hex-white
   box-shadow: 0 ds.rem(8) ds.rem(32) rgba(ds.$rgb-primary, .15)
   overflow: hidden
+  animation: 600ms cubic-bezier(0.2, 1, 0.4, 1) 0s 1 normal both launcher
 
   html[data-theme="yellow-dark"] &
     border: 1px solid rgba(ds.$rgb-tertiary, .5)
@@ -54,14 +81,19 @@
   display: flex
   align-items: center
   justify-content: space-between
-  padding: ds.rem(14) ds.rem(12) ds.rem(14) ds.rem(18)
+  padding: ds.rem(7) ds.rem(12) ds.rem(7) ds.rem(18)
   border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
+  background-color: ds.$hex-bright
+
+  html[data-theme="yellow-dark"] &
+    border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
+    background-color: ds.$hex-primary
 
   h2
     margin: 0
+    @include ds.fw(neo, 700)
     font-size: ds.rem(16)
     color: ds.$hex-primary
-    @include ds.fw(pre, 600)
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-bright
@@ -196,6 +228,11 @@
   gap: ds.rem(8)
   padding: ds.rem(12)
   border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
+  background-color: ds.$hex-bright
+
+  html[data-theme="yellow-dark"] &
+    border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
+    background-color: ds.$hex-primary
 
 .error
   padding: 0 ds.rem(12) ds.rem(8)
