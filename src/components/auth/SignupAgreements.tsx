@@ -85,12 +85,12 @@ function PrivacyContent() {
           <TableRow>
             <TableCell>회원 식별, 가입 및 로그인, 계정 관리, 서비스 제공</TableCell>
             <TableCell>이메일 주소, 비밀번호, 활동명</TableCell>
-            <TableCell>데브허브 탈퇴 확정 시까지</TableCell>
+            <TableCell>데브허브 탈퇴 확정 시까지. 단, 관련 법령에 따라 탈퇴 확정 후 5년</TableCell>
           </TableRow>
           <TableRow>
             <TableCell>소셜 로그인 계정 식별 및 로그인 연동</TableCell>
             <TableCell>소셜 로그인 제공자, 제공자 계정 식별자, 이메일 주소(제공받은 경우)</TableCell>
-            <TableCell>데브허브 탈퇴 확정 시까지</TableCell>
+            <TableCell>데브허브 탈퇴 확정 시까지. 단, 관련 법령에 따라 탈퇴 확정 후 5년</TableCell>
           </TableRow>
         </TableBody>
       </Table>

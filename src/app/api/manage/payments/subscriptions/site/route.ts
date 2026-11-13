@@ -477,6 +477,21 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '블로그 구독 설정을 저장하지 못했습니다.' }, { status: 500 });
     }
 
+    const subscriptionPriceUpdateResult = await supabaseAdmin
+      .from('subscriptions')
+      .update({ price: body.price, updated_at: new Date().toISOString() })
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
+      .eq('target_id', site.id)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+      .neq('price', body.price);
+
+    if (subscriptionPriceUpdateResult.error) {
+      console.error(subscriptionPriceUpdateResult.error);
+
+      return Response.json({ error: '기존 블로그 구독자의 다음 결제 금액을 바꾸지 못했습니다.' }, { status: 500 });
+    }
+
     return Response.json({
       ok: true,
       settingId: settingResult.data.id,

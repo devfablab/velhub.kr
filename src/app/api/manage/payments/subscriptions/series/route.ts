@@ -657,6 +657,21 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '연재 구독 설정을 저장하지 못했습니다.' }, { status: 500 });
     }
 
+    const subscriptionPriceUpdateResult = await supabaseAdmin
+      .from('subscriptions')
+      .update({ price: body.price, updated_at: new Date().toISOString() })
+      .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+      .eq('target_id', series.id)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+      .neq('price', body.price);
+
+    if (subscriptionPriceUpdateResult.error) {
+      console.error(subscriptionPriceUpdateResult.error);
+
+      return Response.json({ error: '기존 연재 구독자의 다음 결제 금액을 바꾸지 못했습니다.' }, { status: 500 });
+    }
+
     const seriesSubscriptionUpdateResult = await supabaseAdmin
       .from('board_series')
       .update({

@@ -70,7 +70,7 @@ function AgreementContent({ type }: { type: AgreementType }) {
             <TableRow>
               <TableCell>본인확인, 수익 활동 자격 확인, 정산 대상자 확인</TableCell>
               <TableCell>이름, 생년월일, 성별</TableCell>
-              <TableCell>회원 탈퇴 확정 시까지</TableCell>
+              <TableCell>회원 탈퇴 확정 시까지. 단, 관련 법령에 따라 탈퇴 확정 후 5년</TableCell>
             </TableRow>
           </TableBody>
         </Table>
