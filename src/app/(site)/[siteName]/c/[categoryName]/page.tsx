@@ -1,10 +1,14 @@
 import { notFound } from 'next/navigation';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getPostList } from '@/lib/board/getPostList';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCategoryPageMetadata } from '@/lib/seoSite';
+import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import FabNew from '@/components/buttons/FabNew';
 import OptimizedImage from '@/components/OptimizedImage';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import { ServiceNoDataIcon } from '@/components/Svgs';
@@ -37,6 +41,17 @@ type CategoryRow = {
       }[]
     | null;
 };
+
+const PAGE_SIZE = 9;
+const PAGER_SIZE = 10;
+
+function getPageNumbers(currentPage: number, totalPage: number) {
+  const currentGroup = Math.floor((currentPage - 1) / PAGER_SIZE);
+  const startPage = currentGroup * PAGER_SIZE + 1;
+  const endPage = Math.min(startPage + PAGER_SIZE - 1, totalPage);
+
+  return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+}
 
 function getPageNumber(value: string | undefined) {
   const pageNumber = Number(value);
@@ -120,7 +135,7 @@ export default async function Page(context: RouteContext) {
     siteType: rhizome.data.site_type,
     boardId: categoryData.board_id,
     page: currentPage,
-    size: 10,
+    size: PAGE_SIZE,
     filter: 'all',
     sessionCase: 'guest',
     stigmaId: null,
@@ -128,6 +143,10 @@ export default async function Page(context: RouteContext) {
     includePin: false,
     categoryId: categoryData.id,
   });
+  const session = await verifySession({ siteId: rhizome.data.id });
+  const canWritePost = session.case === 'member' || session.case === 'staff';
+  const pageNumbers = getPageNumbers(currentPage, postList.totalPage);
+  const getPageHref = (pageNumber: number) => `/${normalizedSiteName}/c/${normalizedCategoryName}?page=${pageNumber}`;
 
   return (
     <Container pageBack={`/${siteName}/c`} pageTitle={categoryData.category_label}>
@@ -175,27 +194,40 @@ export default async function Page(context: RouteContext) {
                 <p>등록된 글이 없습니다.</p>
               </div>
             )}
-
-            {postList.totalPage > 1 ? (
-              <nav>
-                {currentPage > 1 ? (
-                  <Anchor href={`/${normalizedSiteName}/c/${normalizedCategoryName}?page=${currentPage - 1}`}>
-                    이전
-                  </Anchor>
-                ) : null}
-
-                <span>
-                  {currentPage} / {postList.totalPage}
-                </span>
-
-                {currentPage < postList.totalPage ? (
-                  <Anchor href={`/${normalizedSiteName}/c/${normalizedCategoryName}?page=${currentPage + 1}`}>
-                    다음
-                  </Anchor>
-                ) : null}
-              </nav>
-            ) : null}
           </div>
+
+          {postList.totalPage > 1 ? (
+            <nav className={styles.pagination} aria-label="페이지네이션">
+              {pageNumbers[0] > 1 ? (
+                <Anchor href={getPageHref(pageNumbers[0] - 1)} className={styles.pager} aria-label="이전 페이지 묶음">
+                  <ArrowBackIosRoundedIcon />
+                </Anchor>
+              ) : null}
+
+              {pageNumbers.map((pageNumber) => (
+                <Anchor
+                  key={pageNumber}
+                  href={getPageHref(pageNumber)}
+                  className={pageNumber === currentPage ? styles.current : undefined}
+                  aria-current={pageNumber === currentPage ? 'page' : undefined}
+                >
+                  {pageNumber}
+                </Anchor>
+              ))}
+
+              {pageNumbers[pageNumbers.length - 1] < postList.totalPage ? (
+                <Anchor
+                  href={getPageHref(pageNumbers[pageNumbers.length - 1] + 1)}
+                  className={styles.pager}
+                  aria-label="다음 페이지 묶음"
+                >
+                  <ArrowForwardIosRoundedIcon />
+                </Anchor>
+              ) : null}
+            </nav>
+          ) : null}
+
+          {canWritePost ? <FabNew isCommunity={false} withDesktopButton /> : null}
         </div>
       </div>
     </Container>

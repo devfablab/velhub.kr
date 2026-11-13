@@ -1,4 +1,5 @@
 import { type NextRequest } from 'next/server';
+import { AUTO_OG_IMAGE_HEIGHT, AUTO_OG_IMAGE_WIDTH, getAutoOgImageUrl } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -24,6 +25,7 @@ type PostRow = {
   thumbnail_height: number | null;
   thumbnail_image: string | null;
   thumbnail_width: number | null;
+  auto_og_image: string | null;
   user_id: string | null;
   youtube_created_at: string | null;
   youtube_id: string | null;
@@ -50,7 +52,7 @@ type RhizomeInfo = {
 };
 
 const POST_SELECT =
-  'slug, subject, summary, content_html, content_markdown, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id';
+  'slug, subject, summary, content_html, content_markdown, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id';
 
 // .in() 조건이 URL에 들어가므로 id 목록을 나눠서 조회
 const ID_CHUNK_SIZE = 200;
@@ -238,6 +240,28 @@ function getPostThumbnailImageUrl(path: string | null | undefined) {
   }
 
   return getPublicImageUrl(normalizedPath.includes('/') ? 'post' : 'og-image', normalizedPath);
+}
+
+function getListThumbnail(
+  post: Pick<PostRow, 'thumbnail_image' | 'thumbnail_width' | 'thumbnail_height' | 'auto_og_image'>,
+) {
+  const thumbnailImage = getPostThumbnailImageUrl(post.thumbnail_image);
+
+  if (thumbnailImage) {
+    return {
+      thumbnail_image: thumbnailImage,
+      thumbnail_width: toImageDimension(post.thumbnail_width),
+      thumbnail_height: toImageDimension(post.thumbnail_height),
+    };
+  }
+
+  const autoOgImage = getAutoOgImageUrl(post.auto_og_image);
+
+  return {
+    thumbnail_image: autoOgImage || null,
+    thumbnail_width: autoOgImage ? AUTO_OG_IMAGE_WIDTH : null,
+    thumbnail_height: autoOgImage ? AUTO_OG_IMAGE_HEIGHT : null,
+  };
 }
 
 function extractYoutubeId(value: string | null | undefined) {
@@ -511,9 +535,7 @@ export async function GET(request: NextRequest) {
           ...base,
           subject: post.subject,
           content_html: post.content_html,
-          thumbnail_image: getPostThumbnailImageUrl(post.thumbnail_image),
-          thumbnail_width: toImageDimension(post.thumbnail_width),
-          thumbnail_height: toImageDimension(post.thumbnail_height),
+          ...getListThumbnail(post),
         };
       }
 

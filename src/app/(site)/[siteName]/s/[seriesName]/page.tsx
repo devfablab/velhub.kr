@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getPostThumbnailUrl } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -50,6 +51,7 @@ type PostRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   images: unknown;
   created_at: string;
   published_at: string | null;
@@ -87,7 +89,8 @@ type MembershipRow = {
   nickname: string | null;
 };
 
-const PAGE_SIZE = 10;
+const COMMUNITY_PAGE_SIZE = 10;
+const BLOG_PAGE_SIZE = 9;
 
 function getPageNumber(value: string | undefined) {
   const pageNumber = Number(value);
@@ -293,6 +296,7 @@ export default async function Page(context: RouteContext) {
         thumbnail_image,
         thumbnail_width,
         thumbnail_height,
+        auto_og_image,
         images,
         created_at,
         published_at,
@@ -345,8 +349,9 @@ export default async function Page(context: RouteContext) {
     (permanentPurchaseResult.data ?? []).map((payment) => normalizeText(payment.target_id)).filter(Boolean),
   );
   const visiblePosts = allPosts.filter((post) => post.is_closed === false || permanentlyOwnedPostIds.has(post.id));
-  const from = (currentPage - 1) * PAGE_SIZE;
-  const pagePosts = visiblePosts.slice(from, from + PAGE_SIZE);
+  const pageSize = isCommunity ? COMMUNITY_PAGE_SIZE : BLOG_PAGE_SIZE;
+  const from = (currentPage - 1) * pageSize;
+  const pagePosts = visiblePosts.slice(from, from + pageSize);
   const pagePostIds = pagePosts.map((post) => post.id);
   const [authorMap, commentsResult] = await Promise.all([
     getAuthorNameMap(
@@ -389,13 +394,14 @@ export default async function Page(context: RouteContext) {
     is_closed: post.is_closed,
     author_name: authorMap.get(post.user_id) ?? '',
     comment_count: commentCountMap.get(post.id) ?? 0,
-    thumbnail_image_url: getPublicPostImageUrl(post.thumbnail_image) || null,
+    thumbnail_image_url: getPostThumbnailUrl(getPublicPostImageUrl(post.thumbnail_image), post.auto_og_image) || null,
     thumbnail_width: post.thumbnail_width ?? 1200,
     thumbnail_height: post.thumbnail_height ?? 675,
     images: normalizePostImages(post.images),
   }));
   const totalCount = visiblePosts.length;
-  const totalPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPage = Math.max(1, Math.ceil(totalCount / pageSize));
+  const canWritePost = !isCommunity && (session.case === 'member' || session.case === 'staff');
 
   return (
     <Container pageBack={`/${siteName}/s`} pageTitle={seriesData.series_label}>
@@ -417,6 +423,7 @@ export default async function Page(context: RouteContext) {
           contents={contents}
           currentPage={currentPage}
           totalPage={totalPage}
+          canWritePost={canWritePost}
         />
       ) : null}
     </Container>

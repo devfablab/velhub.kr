@@ -1,3 +1,4 @@
+import { getPostThumbnailUrl } from '@/lib/board/postThumbnail';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -91,6 +92,7 @@ type RawPostRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   images: unknown;
   youtube_id: string | null;
 };
@@ -151,7 +153,7 @@ export type GetPostListResult = {
 };
 
 const POST_SELECT =
-  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, series_idx, board_id, site_id, user_id, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, is_recommended, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id, is_locked';
+  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, series_idx, board_id, site_id, user_id, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, is_recommended, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, images, youtube_id, is_locked';
 
 function stripHtml(value: string | null) {
   const normalizedValue = normalizeText(value);
@@ -619,7 +621,7 @@ export async function getPostList({
       is_co_post: coPostIds.has(post.id),
       board_key: boardInfo?.board_key ?? '',
       board_label: boardInfo?.board_label ?? '',
-      thumbnail_image_url: getPostImageUrl(post.thumbnail_image),
+      thumbnail_image_url: getPostThumbnailUrl(getPostImageUrl(post.thumbnail_image), post.auto_og_image) || null,
       thumbnail_width: post.thumbnail_width,
       thumbnail_height: post.thumbnail_height,
       images: normalizePostImages(post.images),

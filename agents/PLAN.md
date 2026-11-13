@@ -39,6 +39,15 @@
 | `src/app/(hub)/hub/purchase/memberships/opt.tsx` | 변경 확인창에 이번 결제·환불 금액과 다음 결제일·금액 표시, 멤버십 안내 고지문 사용 | 완료 |
 | `src/components/modals/PaymentTerms.tsx` | 멤버십 안내 항목 추가 | 완료 |
 | `src/app/api/payments/portone/donation/cancel`, `purchase/cancel` | 회원 셀프 환불 통로라 삭제 (클로이 승인) | 완료 |
+| 퀸시 포스팅 3개 (slug 3220865272, 3220865263, 3220865270) | 제목 변경, 지금 기능 기준으로 포스팅 수정 | 완료 |
+| 퀸시 새 포스팅 18개 | 블로그 글쓰기 화면에서 등록 (1인/팀 블로그 비교 ~ 기능 연구소, 맞춤법 검사기) | 완료 |
+| `src/app/(site)/[siteName]/c/[categoryName]/page.tsx` | 카테고리 글 목록 9개씩, /b와 같은 페이지 번호, 글쓰기 버튼 | 완료 |
+| `src/app/(site)/[siteName]/s/[seriesName]/page.tsx`, `opt.tsx` | 연재 글 목록 블로그는 9개씩(커뮤니티 10개 유지), /b와 같은 페이지 번호, 블로그 글쓰기 버튼 | 완료 |
+| `src/components/buttons/FabNew.tsx` | `withDesktopButton` 옵션 추가 (데스크톱에서 글쓰기 버튼), use client | 완료 |
+| `src/app/board.module.sass` | 페이지 번호에 링크(a)도 버튼과 같은 모양 | 완료 |
+| `src/lib/board/postThumbnail.ts` (새 파일) | 썸네일이 없으면 자동 생성 오픈그래프 이미지를 쓰는 함수 | 완료 |
+| `getPostList.ts`, `api/boards/[boardName]`, `s/[seriesName]/page.tsx`, `api/site/[siteName]/blog-home`, `api/home/posts`, `api/home/moments/recent-creators`, `loungeMoments.ts`, `hub/postDisplay.ts` | 글 목록 썸네일에 자동 생성 이미지 대체 (블로그 목록, 카테고리, 연재, 해시태그, 블로그 홈, 라운지, 모먼트, 마이허브) | 완료 |
+| `(site)/[siteName]/page.tsx`, `c/page.tsx`, `s/page.tsx` | 카테고리, 연재 대표 이미지에 자동 생성 이미지 대체 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

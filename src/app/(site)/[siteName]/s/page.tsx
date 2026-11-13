@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getImageWithAutoOg } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
@@ -21,6 +22,7 @@ type SeriesRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   board_id: string;
   site_id: string;
   last_published_at: string | null;
@@ -89,6 +91,7 @@ export default async function Page(context: RouteContext) {
         thumbnail_image,
         thumbnail_width,
         thumbnail_height,
+        auto_og_image,
         board_id,
         site_id,
         last_published_at,
@@ -109,18 +112,27 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  const rows: SeriesItem[] = ((series.data ?? []) as SeriesRow[]).map((item) => ({
-    id: item.id,
-    series_key: item.series_key,
-    series_label: item.series_label,
-    board_label: item.boards?.board_label ?? '',
-    summary: item.summary,
-    imageUrl: getSeriesImageUrl(item.thumbnail_image),
-    imageWidth: item.thumbnail_width,
-    imageHeight: item.thumbnail_height,
-    last_published_at: item.last_published_at,
-    is_completed: item.is_completed,
-  }));
+  const rows: SeriesItem[] = ((series.data ?? []) as SeriesRow[]).map((item) => {
+    const image = getImageWithAutoOg(
+      getSeriesImageUrl(item.thumbnail_image),
+      item.thumbnail_width,
+      item.thumbnail_height,
+      item.auto_og_image,
+    );
+
+    return {
+      id: item.id,
+      series_key: item.series_key,
+      series_label: item.series_label,
+      board_label: item.boards?.board_label ?? '',
+      summary: item.summary,
+      imageUrl: image.url,
+      imageWidth: image.width,
+      imageHeight: image.height,
+      last_published_at: item.last_published_at,
+      is_completed: item.is_completed,
+    };
+  });
 
   return (
     <Container pageBack={`/${siteName}`} pageTitle="연재물">

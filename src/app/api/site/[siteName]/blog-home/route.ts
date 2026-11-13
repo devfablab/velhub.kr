@@ -1,3 +1,4 @@
+import { getPostThumbnailUrl } from '@/lib/board/postThumbnail';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
@@ -17,6 +18,7 @@ type BlogPostRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   published_at: string | null;
   post_count: number | null;
   user_id: string;
@@ -80,7 +82,7 @@ function toBlogPost(
     subject: post.subject,
     summary: post.summary,
     contentHtml: post.content_html,
-    thumbnailImageUrl: getPostImageUrl(post.thumbnail_image),
+    thumbnailImageUrl: getPostThumbnailUrl(getPostImageUrl(post.thumbnail_image), post.auto_og_image) || null,
     thumbnailWidth: post.thumbnail_width,
     thumbnailHeight: post.thumbnail_height,
     publishedAt: post.published_at,
@@ -130,7 +132,7 @@ export async function GET(request: Request, context: RouteContext) {
     const siteId = siteResult.data.id;
     const boardId = boardResult.data.id;
     const postColumns =
-      'id, slug, subject, summary, content_html, thumbnail_image, thumbnail_width, thumbnail_height, published_at, post_count, user_id';
+      'id, slug, subject, summary, content_html, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, published_at, post_count, user_id';
     const createVisibleBlogPostsQuery = () =>
       supabaseAdmin
         .from('posts')

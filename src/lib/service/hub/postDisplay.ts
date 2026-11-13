@@ -1,3 +1,4 @@
+import { AUTO_OG_IMAGE_HEIGHT, AUTO_OG_IMAGE_WIDTH, getAutoOgImageUrl } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -18,6 +19,7 @@ type StoredPost = {
   thumbnail_image: string | null;
   thumbnail_width: number | string | null;
   thumbnail_height: number | string | null;
+  auto_og_image: string | null;
   youtube_id: string | null;
   youtube_url: string | null;
   published_at: string | null;
@@ -79,6 +81,28 @@ function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   return r2Storage.from(bucket).getPublicUrl(normalizedPath).data.publicUrl || null;
 }
 
+function getListThumbnail(
+  post: Pick<StoredPost, 'thumbnail_image' | 'thumbnail_width' | 'thumbnail_height' | 'auto_og_image'>,
+) {
+  const thumbnailImage = getPostThumbnailImageUrl(post.thumbnail_image);
+
+  if (thumbnailImage) {
+    return {
+      thumbnailImage,
+      thumbnailWidth: toImageDimension(post.thumbnail_width),
+      thumbnailHeight: toImageDimension(post.thumbnail_height),
+    };
+  }
+
+  const autoOgImage = getAutoOgImageUrl(post.auto_og_image);
+
+  return {
+    thumbnailImage: autoOgImage || null,
+    thumbnailWidth: autoOgImage ? AUTO_OG_IMAGE_WIDTH : null,
+    thumbnailHeight: autoOgImage ? AUTO_OG_IMAGE_HEIGHT : null,
+  };
+}
+
 function getPostThumbnailImageUrl(path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
 
@@ -130,7 +154,7 @@ export async function getHubPostDisplayMap({
   const postsResult = await supabaseAdmin
     .from('posts')
     .select(
-      'id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, published_at, post_count, user_id, site_id, board_id, published_status, is_closed',
+      'id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, post_count, user_id, site_id, board_id, published_status, is_closed',
     )
     .in('id', uniquePostIds)
     .or(`is_wording_blinded.eq.false,user_id.eq.${viewerStigmaId ?? ''}`);
@@ -209,9 +233,7 @@ export async function getHubPostDisplayMap({
       summary: post.summary,
       contentHtml: post.content_html,
       contentSimple: post.content_simple,
-      thumbnailImage: getPostThumbnailImageUrl(post.thumbnail_image),
-      thumbnailWidth: toImageDimension(post.thumbnail_width),
-      thumbnailHeight: toImageDimension(post.thumbnail_height),
+      ...getListThumbnail(post),
       image: firstImage.url,
       imageWidth: firstImage.width,
       imageHeight: firstImage.height,

@@ -1,5 +1,7 @@
 'use client';
 
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import LibraryBooksOutlinedIcon from '@mui/icons-material/LibraryBooksOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
@@ -8,6 +10,7 @@ import { Chip, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import DonationButton, { type DonationStatusResponse } from '@/components/buttons/DonationButton';
+import FabNew from '@/components/buttons/FabNew';
 import SubscriptionButton, { type SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import OptimizedImage from '@/components/OptimizedImage';
 import SiteProfile from '@/components/service/blog/SiteProfile';
@@ -65,7 +68,18 @@ type Props = Omit<SeriesPostListProps, 'isMobile'> & {
   initialDonationStatus: DonationStatusResponse | null;
   currentPage: number;
   totalPage: number;
+  canWritePost: boolean;
 };
+
+const PAGER_SIZE = 10;
+
+function getPageNumbers(currentPage: number, totalPage: number) {
+  const currentGroup = Math.floor((currentPage - 1) / PAGER_SIZE);
+  const startPage = currentGroup * PAGER_SIZE + 1;
+  const endPage = Math.min(startPage + PAGER_SIZE - 1, totalPage);
+
+  return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+}
 
 function getContentHref(siteName: string, boardName: string, slug: string, seriesName: string) {
   return `/${siteName}/${boardName}/${slug}?${new URLSearchParams({ seriesName }).toString()}`;
@@ -288,12 +302,15 @@ export default function Opt({
   contents,
   currentPage,
   totalPage,
+  canWritePost,
 }: Props) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
   const isMobile = !isNotMobile;
   const isTablet = !isNotTablet;
+  const pageNumbers = getPageNumbers(currentPage, totalPage);
+  const getPageHref = (pageNumber: number) => `/${siteName}/s/${seriesName}?page=${pageNumber}`;
 
   return (
     <div className="container">
@@ -368,23 +385,40 @@ export default function Opt({
               <p>등록된 글이 없습니다.</p>
             </div>
           )}
-
-          {totalPage > 1 ? (
-            <nav>
-              {currentPage > 1 ? (
-                <Anchor href={`/${siteName}/s/${seriesName}?page=${currentPage - 1}`}>이전</Anchor>
-              ) : null}
-
-              <span>
-                {currentPage} / {totalPage}
-              </span>
-
-              {currentPage < totalPage ? (
-                <Anchor href={`/${siteName}/s/${seriesName}?page=${currentPage + 1}`}>다음</Anchor>
-              ) : null}
-            </nav>
-          ) : null}
         </div>
+
+        {totalPage > 1 ? (
+          <nav className={styles.pagination} aria-label="페이지네이션">
+            {pageNumbers[0] > 1 ? (
+              <Anchor href={getPageHref(pageNumbers[0] - 1)} className={styles.pager} aria-label="이전 페이지 묶음">
+                <ArrowBackIosRoundedIcon />
+              </Anchor>
+            ) : null}
+
+            {pageNumbers.map((pageNumber) => (
+              <Anchor
+                key={pageNumber}
+                href={getPageHref(pageNumber)}
+                className={pageNumber === currentPage ? styles.current : undefined}
+                aria-current={pageNumber === currentPage ? 'page' : undefined}
+              >
+                {pageNumber}
+              </Anchor>
+            ))}
+
+            {pageNumbers[pageNumbers.length - 1] < totalPage ? (
+              <Anchor
+                href={getPageHref(pageNumbers[pageNumbers.length - 1] + 1)}
+                className={styles.pager}
+                aria-label="다음 페이지 묶음"
+              >
+                <ArrowForwardIosRoundedIcon />
+              </Anchor>
+            ) : null}
+          </nav>
+        ) : null}
+
+        {canWritePost ? <FabNew isCommunity={false} withDesktopButton /> : null}
       </div>
 
       {isCommunity && !isTablet ? (

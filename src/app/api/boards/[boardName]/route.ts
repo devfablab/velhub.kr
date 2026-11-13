@@ -1,4 +1,5 @@
 import { getPostList } from '@/lib/board/getPostList';
+import { getPostThumbnailUrl } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -65,6 +66,7 @@ type PostRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   images: unknown;
   youtube_id: string | null;
 };
@@ -285,7 +287,7 @@ async function getSeriesFilteredPostList({
   let postsQuery = supabaseAdmin
     .from('posts')
     .select(
-      'id, idx, series_idx, slug, subject, summary, content_simple, created_at, user_id, post_count, is_pin, board_id, prefix_id, series_id, poll, published_at, published_status, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id',
+      'id, idx, series_idx, slug, subject, summary, content_simple, created_at, user_id, post_count, is_pin, board_id, prefix_id, series_id, poll, published_at, published_status, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, images, youtube_id',
       { count: 'exact' },
     )
     .eq('site_id', siteId)
@@ -402,7 +404,7 @@ async function getSeriesFilteredPostList({
       search_title_matched: searchTitleMatched,
       search_content_matched: searchContentMatched,
       search_content: searchContentMatched ? contentSimple : '',
-      thumbnail_image_url: getPublicPostImageUrl(post.thumbnail_image) || null,
+      thumbnail_image_url: getPostThumbnailUrl(getPublicPostImageUrl(post.thumbnail_image), post.auto_og_image) || null,
       thumbnail_width: post.thumbnail_width ?? 1200,
       thumbnail_height: post.thumbnail_height ?? 675,
       images: normalizeImages(post.images),

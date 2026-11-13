@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
+import { getImageWithAutoOg } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
@@ -46,6 +47,7 @@ type CategoryRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   sort_order: number;
 };
 
@@ -57,6 +59,7 @@ type SeriesRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   last_published_at: string | null;
   created_at: string;
   is_completed: boolean;
@@ -180,7 +183,7 @@ export default async function Page(context: RouteContext) {
       supabaseAdmin
         .from('board_categories')
         .select(
-          'id, category_key, category_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, sort_order',
+          'id, category_key, category_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, sort_order',
         )
         .eq('site_id', rhizome.id)
         .order('sort_order', { ascending: true })
@@ -188,7 +191,7 @@ export default async function Page(context: RouteContext) {
       supabaseAdmin
         .from('board_series')
         .select(
-          'id, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, last_published_at, created_at, is_completed',
+          'id, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, last_published_at, created_at, is_completed',
         )
         .eq('site_id', rhizome.id)
         .order('last_published_at', { ascending: false, nullsFirst: false })
@@ -201,26 +204,44 @@ export default async function Page(context: RouteContext) {
       notFound();
     }
 
-    const categories = (categoriesResult.data ?? []).map((category) => ({
-      id: category.id,
-      key: category.category_key,
-      label: category.category_label,
-      summary: category.summary,
-      imageUrl: getBlogHomeImageUrl('category', category.thumbnail_image),
-      imageWidth: category.thumbnail_width,
-      imageHeight: category.thumbnail_height,
-    }));
-    const series = (seriesResult.data ?? []).map((seriesItem) => ({
-      id: seriesItem.id,
-      key: seriesItem.series_key,
-      label: seriesItem.series_label,
-      summary: seriesItem.summary,
-      imageUrl: getBlogHomeImageUrl('series', seriesItem.thumbnail_image),
-      imageWidth: seriesItem.thumbnail_width,
-      imageHeight: seriesItem.thumbnail_height,
-      publishedAt: seriesItem.last_published_at,
-      isCompleted: seriesItem.is_completed,
-    }));
+    const categories = (categoriesResult.data ?? []).map((category) => {
+      const image = getImageWithAutoOg(
+        getBlogHomeImageUrl('category', category.thumbnail_image),
+        category.thumbnail_width,
+        category.thumbnail_height,
+        category.auto_og_image,
+      );
+
+      return {
+        id: category.id,
+        key: category.category_key,
+        label: category.category_label,
+        summary: category.summary,
+        imageUrl: image.url,
+        imageWidth: image.width,
+        imageHeight: image.height,
+      };
+    });
+    const series = (seriesResult.data ?? []).map((seriesItem) => {
+      const image = getImageWithAutoOg(
+        getBlogHomeImageUrl('series', seriesItem.thumbnail_image),
+        seriesItem.thumbnail_width,
+        seriesItem.thumbnail_height,
+        seriesItem.auto_og_image,
+      );
+
+      return {
+        id: seriesItem.id,
+        key: seriesItem.series_key,
+        label: seriesItem.series_label,
+        summary: seriesItem.summary,
+        imageUrl: image.url,
+        imageWidth: image.width,
+        imageHeight: image.height,
+        publishedAt: seriesItem.last_published_at,
+        isCompleted: seriesItem.is_completed,
+      };
+    });
 
     return (
       <Blog

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { getImageWithAutoOg } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
@@ -25,6 +26,7 @@ type CategoryRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   sort_order: number;
   board_id: string;
   site_id: string;
@@ -94,6 +96,7 @@ export default async function Page(context: RouteContext) {
         thumbnail_image,
         thumbnail_width,
         thumbnail_height,
+        auto_og_image,
         sort_order,
         board_id,
         site_id,
@@ -121,16 +124,21 @@ export default async function Page(context: RouteContext) {
             {rows.length > 0 ? (
               <div className={`${styles['category-items']} ${styles['blog-items']}`}>
                 {rows.map((category) => {
-                  const imageUrl = getCategoryImageUrl(category.thumbnail_image);
+                  const image = getImageWithAutoOg(
+                    getCategoryImageUrl(category.thumbnail_image),
+                    category.thumbnail_width,
+                    category.thumbnail_height,
+                    category.auto_og_image,
+                  );
 
                   return (
                     <Anchor href={`/${normalizedSiteName}/c/${category.category_key}`} key={category.id}>
                       <div className={styles.thumbnail}>
-                        {imageUrl ? (
+                        {image.url ? (
                           <OptimizedImage
-                            src={imageUrl}
-                            width={category.thumbnail_width}
-                            height={category.thumbnail_height}
+                            src={image.url}
+                            width={image.width}
+                            height={image.height}
                             sizes="(max-width: 575px) 100vw, 270px"
                           />
                         ) : (

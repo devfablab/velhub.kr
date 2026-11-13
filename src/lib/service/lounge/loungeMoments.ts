@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { AUTO_OG_IMAGE_HEIGHT, AUTO_OG_IMAGE_WIDTH, getAutoOgImageUrl } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -69,6 +70,7 @@ type MomentPostRow = {
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
+  auto_og_image: string | null;
   youtube_id: string | null;
   youtube_url: string | null;
   published_at: string;
@@ -166,6 +168,28 @@ function toPublicUrl(bucket: string, path: string | null | undefined) {
 function toImageDimension(value: unknown) {
   const dimension = typeof value === 'string' ? Number(value) : value;
   return typeof dimension === 'number' && Number.isFinite(dimension) && dimension > 0 ? dimension : null;
+}
+
+function getListThumbnail(
+  post: Pick<MomentPostRow, 'thumbnail_image' | 'thumbnail_width' | 'thumbnail_height' | 'auto_og_image'>,
+) {
+  const thumbnailImage = toPostThumbnailUrl(post.thumbnail_image);
+
+  if (thumbnailImage) {
+    return {
+      thumbnail_image: thumbnailImage,
+      thumbnail_width: toImageDimension(post.thumbnail_width),
+      thumbnail_height: toImageDimension(post.thumbnail_height),
+    };
+  }
+
+  const autoOgImage = getAutoOgImageUrl(post.auto_og_image);
+
+  return {
+    thumbnail_image: autoOgImage || null,
+    thumbnail_width: autoOgImage ? AUTO_OG_IMAGE_WIDTH : null,
+    thumbnail_height: autoOgImage ? AUTO_OG_IMAGE_HEIGHT : null,
+  };
 }
 
 function toPostThumbnailUrl(path: string | null | undefined) {
@@ -481,7 +505,7 @@ const getMomentPosts = cache(
       let postsQuery = supabaseAdmin
         .from('posts')
         .select(
-          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, published_at, series_id',
+          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, series_id',
         )
         .eq('published_status', 'published')
         .eq('is_closed', false)
@@ -622,9 +646,7 @@ const getMomentPosts = cache(
           ...base,
           subject: post.subject,
           content_html: post.content_html,
-          thumbnail_image: toPostThumbnailUrl(post.thumbnail_image),
-          thumbnail_width: toImageDimension(post.thumbnail_width),
-          thumbnail_height: toImageDimension(post.thumbnail_height),
+          ...getListThumbnail(post),
         },
       ];
     });

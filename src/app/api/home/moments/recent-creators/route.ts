@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getPostThumbnailUrl } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
@@ -15,6 +16,7 @@ type PostRow = {
   user_id: string;
   post_count: number | null;
   thumbnail_image: string | null;
+  auto_og_image: string | null;
   youtube_id: string | null;
   site_id: string | null;
   board_id: string | null;
@@ -91,7 +93,7 @@ export async function GET(request: Request) {
       .from('posts')
       .select(
         `
-        id, site_id, board_id, subject, summary, content_html, images, published_at, slug, user_id, post_count, thumbnail_image, youtube_id
+        id, site_id, board_id, subject, summary, content_html, images, published_at, slug, user_id, post_count, thumbnail_image, auto_og_image, youtube_id
       `,
       )
       .in('user_id', userIds)
@@ -203,7 +205,11 @@ export async function GET(request: Request) {
         content_html: post.content_html,
         image:
           Array.isArray(post.images) && post.images.length > 0 ? getPublicImageUrl('post', post.images[0].path) : null,
-        thumbnail_image: getPublicImageUrl('og-image', post.thumbnail_image),
+        thumbnail_image:
+          getPostThumbnailUrl(
+            getPublicImageUrl(post.thumbnail_image?.includes('/') ? 'post' : 'og-image', post.thumbnail_image),
+            post.auto_og_image,
+          ) || null,
         youtube_id: post.youtube_id,
         post_count: post.post_count,
       };
