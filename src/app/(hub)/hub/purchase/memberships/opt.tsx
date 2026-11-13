@@ -62,6 +62,16 @@ type BillingMethod = {
   isDefault: boolean;
 };
 
+type MembershipChangePreview = {
+  chargeAmount: number;
+  refundAmount: number;
+  items: { name: string; chargeAmount: number; nextBillingAmount: number; nextBillingAt: string }[];
+};
+
+function formatBillingDate(value: string) {
+  return new Date(value).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
+}
+
 type ErrorDialogState = {
   title: string | null;
   messages: string[];
@@ -204,6 +214,7 @@ export default function MembershipPlan({
   const [cancelTarget, setCancelTarget] = useState<CurrentMembership | null>(null);
   const [refundTarget, setRefundTarget] = useState<CurrentMembership | null>(null);
   const [isPaymentPopupOpen, setIsPaymentPopupOpen] = useState(false);
+  const [changePreview, setChangePreview] = useState<MembershipChangePreview | null>(null);
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
   const [errorDialog, setErrorDialog] = useState<ErrorDialogState | null>(
     initialError ? { title: null, messages: [initialError] } : null,
@@ -266,19 +277,61 @@ export default function MembershipPlan({
     );
   }
 
+  function getIsModification() {
+    const existingTypes = new Set(memberships.map((m) => m.type));
+    return selectedItems.some(
+      (item) =>
+        existingTypes.has(item.type) ||
+        (item.type === 'all_in_one' && (existingTypes.has('owner') || existingTypes.has('creator'))) ||
+        ((item.type === 'owner' || item.type === 'creator') && existingTypes.has('all_in_one')),
+    );
+  }
+
+  async function openPaymentPopup() {
+    if (!selectedItems.length || !selectedBillingMethodId || isSubmitting) return;
+
+    setChangePreview(null);
+    if (isMinorUser || !getIsModification()) {
+      setIsPaymentPopupOpen(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorDialog(null);
+    try {
+      const response = await fetch('/api/payments/portone/memberships/modify', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          billingMethodId: selectedBillingMethodId,
+          purchases: selectedItems.map((item) => ({ type: item.type, featureKeys: item.featureKeys })),
+          preview: true,
+        }),
+      });
+      const result = (await response.json()) as MembershipChangePreview & { error?: string; errors?: string[] };
+
+      if (!response.ok) {
+        setErrorDialog(getResponseError(response, result, '멤버십 변경 확인', '변경 금액을 확인하지 못했습니다.'));
+        return;
+      }
+
+      setChangePreview(result);
+      setIsPaymentPopupOpen(true);
+    } catch {
+      setErrorDialog({ title: null, messages: ['인터넷 연결을 확인한 뒤 다시 시도해 주세요.'] });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function handlePayment(guardianIdentityVerificationId?: string) {
     if (!selectedItems.length || !selectedBillingMethodId || isSubmitting) return;
 
     setIsSubmitting(true);
     setErrorDialog(null);
 
-    const existingTypes = new Set(memberships.map((m) => m.type));
-    const isModification = selectedItems.some(
-      (item) =>
-        existingTypes.has(item.type) ||
-        (item.type === 'all_in_one' && (existingTypes.has('owner') || existingTypes.has('creator'))) ||
-        ((item.type === 'owner' || item.type === 'creator') && existingTypes.has('all_in_one')),
-    );
+    const isModification = getIsModification();
 
     const apiPath = isMinorUser
       ? '/api/payments/portone/memberships/start'
@@ -490,7 +543,7 @@ export default function MembershipPlan({
                 <button
                   type="button"
                   className="button medium submit"
-                  onClick={() => setIsPaymentPopupOpen(true)}
+                  onClick={() => void openPaymentPopup()}
                   disabled={!selectedBillingMethodId || isSubmitting}
                 >
                   {isMinorUser
@@ -704,13 +757,31 @@ export default function MembershipPlan({
         ]}
       >
         <Stack direction="row" alignItems="center" gap={1} mb={2}>
-          <Typography variant="body2">
-            {isMinorUser
-              ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
-              : `멤버십을 월 ${formatMembershipPrice(selectedPrice)}에 구독하시겠어요?`}
-          </Typography>
+          {changePreview ? (
+            <Stack gap={0.5}>
+              <Typography variant="body2">
+                {changePreview.chargeAmount > 0
+                  ? `이번에 ${formatMembershipPrice(changePreview.chargeAmount)}이 결제됩니다.`
+                  : '이번에 결제되는 금액은 없습니다.'}
+                {changePreview.refundAmount > 0
+                  ? ` 기존 멤버십에서 ${formatMembershipPrice(changePreview.refundAmount)}이 환불됩니다.`
+                  : ''}
+              </Typography>
+              {changePreview.items.map((item) => (
+                <Typography key={item.name} variant="body2" color="text.secondary">
+                  {`다음 결제일(${formatBillingDate(item.nextBillingAt)})부터 ${item.name}은 월 ${formatMembershipPrice(item.nextBillingAmount)}이 결제됩니다.`}
+                </Typography>
+              ))}
+            </Stack>
+          ) : (
+            <Typography variant="body2">
+              {isMinorUser
+                ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                : `멤버십을 월 ${formatMembershipPrice(selectedPrice)}에 구독하시겠어요?`}
+            </Typography>
+          )}
         </Stack>
-        <PaymentTerms type="subscription" disabled={isSubmitting} />
+        <PaymentTerms type="membership" disabled={isSubmitting} />
       </ResponsivePopup>
     </>
   );

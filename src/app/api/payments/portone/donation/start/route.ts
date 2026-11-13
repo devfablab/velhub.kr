@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { isAtLeast14 } from '@/lib/identity/age';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
@@ -297,6 +299,14 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '결제용 이메일 주소와 휴대폰 번호를 확인하지 못했습니다.' }, { status: 400 });
     }
 
+    const chorogonsResult = await getSupabaseAdmin()
+      .from('chorogons')
+      .select('birth_date, birth_date_dummy')
+      .eq('user_id', session.stigmaId)
+      .maybeSingle();
+    if (!isAtLeast14(getChorogonBirthDate(chorogonsResult.data))) {
+      return Response.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
+    }
     const body = (await request.json()) as DonationStartBody;
     const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
     if (minorControl.error)

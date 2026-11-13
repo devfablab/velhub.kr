@@ -146,7 +146,7 @@ export async function hasValidSeriesSubscription({
 }) {
   const subscriptionResult = await supabaseAdmin
     .from('subscriptions')
-    .select('status, current_period_end, expired_at')
+    .select('status, current_period_end, expired_at, past_due_started_at')
     .eq('subscriber_user_id', subscriberId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
@@ -160,13 +160,5 @@ export async function hasValidSeriesSubscription({
 
   const subscription = ((subscriptionResult.data ?? [])[0] as SeriesSubscriptionRow | undefined) ?? null;
 
-  if (!subscription || subscription.expired_at || !subscription.current_period_end) {
-    return false;
-  }
-
-  if (subscription.status !== SUBSCRIPTION_STATUS.TRIALING && subscription.status !== SUBSCRIPTION_STATUS.ACTIVE) {
-    return false;
-  }
-
-  return new Date(subscription.current_period_end).getTime() > Date.now();
+  return isValidBlogSubscription(subscription);
 }

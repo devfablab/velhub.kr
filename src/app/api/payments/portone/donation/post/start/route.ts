@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getKoreanAge } from '@/lib/identity/age';
+import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
@@ -89,8 +89,8 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    if ((getKoreanAge(getChorogonBirthDate(identityResult.data)) ?? 0) < 12) {
-      return Response.json({ error: '후원은 만 12세 이상부터 할 수 있습니다.' }, { status: 403 });
+    if (!isAtLeast14(getChorogonBirthDate(identityResult.data))) {
+      return Response.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
     }
 
     const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);

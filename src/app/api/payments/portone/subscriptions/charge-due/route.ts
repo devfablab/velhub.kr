@@ -16,6 +16,7 @@ import {
   type PortOnePayment,
   requestPortOneBillingPayment,
 } from '@/lib/payments/portone';
+import { getPastDueGraceDays } from '@/lib/payments/refunds';
 import { createOwnerPaymentSplits } from '@/lib/payments/splits';
 import {
   PAYMENT_METHOD,
@@ -29,6 +30,8 @@ import {
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 type SubscriptionRow = {
   id: string;
   subscriber_user_id: string;
@@ -41,6 +44,9 @@ type SubscriptionRow = {
   customer_key: string;
   next_billing_at: string;
   billing_anchor_day: number;
+  status: string;
+  past_due_started_at: string | null;
+  updated_at: string | null;
 };
 
 type SeriesRow = {
@@ -238,6 +244,7 @@ async function markPastDue({
   rawData: unknown;
 }) {
   const nowIso = new Date().toISOString();
+  const isFirstFailure = subscription.status !== SUBSCRIPTION_STATUS.PAST_DUE;
 
   const paymentInsertResult = await supabaseAdmin.from('payments').insert({
     provider: getCurrentPortOneProvider(),
@@ -272,7 +279,7 @@ async function markPastDue({
     .from('subscriptions')
     .update({
       status: SUBSCRIPTION_STATUS.PAST_DUE,
-      past_due_started_at: nowIso,
+      ...(isFirstFailure ? { past_due_started_at: nowIso } : {}),
       updated_at: nowIso,
     })
     .eq('id', subscription.id);
@@ -281,7 +288,7 @@ async function markPastDue({
     console.error(subscriptionUpdateResult.error);
   }
 
-  if (subscription.subscription_type === SUBSCRIPTION_TYPE.MEMBERSHIP) {
+  if (isFirstFailure && subscription.subscription_type === SUBSCRIPTION_TYPE.MEMBERSHIP) {
     const notificationResult = await supabaseAdmin.from('notifications').insert({
       user_id: subscription.subscriber_user_id,
       send_user_id: null,
@@ -369,6 +376,9 @@ async function chargeDue(request: Request): Promise<Response> {
         'customer_key',
         'next_billing_at',
         'billing_anchor_day',
+        'status',
+        'past_due_started_at',
+        'updated_at',
       ].join(', '),
     )
     .in('subscription_type', [
@@ -377,7 +387,7 @@ async function chargeDue(request: Request): Promise<Response> {
       SUBSCRIPTION_TYPE.MEMBERSHIP,
     ])
     .in('target_type', [PAYMENT_TARGET_TYPE.SITE, PAYMENT_TARGET_TYPE.SERIES, PAYMENT_TARGET_TYPE.MEMBERSHIP])
-    .in('status', [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.TRIALING])
+    .in('status', [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.PAST_DUE])
     .is('canceled_at', null)
     .is('expired_at', null)
     .not('billing_key', 'is', null)
@@ -394,7 +404,38 @@ async function chargeDue(request: Request): Promise<Response> {
   const subscriptions = (subscriptionsResult.data ?? []) as unknown as SubscriptionRow[];
   const results: ChargeDueResult[] = [];
 
+  const nowTime = Date.now();
+  const graceMs = getPastDueGraceDays() * DAY_MS;
+
   for (const subscription of subscriptions) {
+    if (subscription.status === SUBSCRIPTION_STATUS.PAST_DUE) {
+      const pastDueStartedTime = subscription.past_due_started_at
+        ? new Date(subscription.past_due_started_at).getTime()
+        : Number.NaN;
+
+      if (Number.isNaN(pastDueStartedTime) || nowTime - pastDueStartedTime >= graceMs) {
+        results.push({
+          subscriptionId: subscription.id,
+          status: 'skipped',
+          message: '결제 유예 기간이 지났습니다.',
+        });
+        continue;
+      }
+
+      const lastAttemptTime = subscription.updated_at
+        ? new Date(subscription.updated_at).getTime()
+        : pastDueStartedTime;
+
+      if (nowTime - lastAttemptTime < DAY_MS) {
+        results.push({
+          subscriptionId: subscription.id,
+          status: 'skipped',
+          message: '마지막 결제 시도 후 24시간이 지나지 않았습니다.',
+        });
+        continue;
+      }
+    }
+
     const paymentType = getPaymentType(subscription);
 
     if (!paymentType) {

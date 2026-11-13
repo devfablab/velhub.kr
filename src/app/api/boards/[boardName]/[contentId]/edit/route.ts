@@ -4,6 +4,7 @@ import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
 import {
@@ -122,11 +123,16 @@ async function createCommunitySubscriptionPostNotifications({
   if (seriesId) {
     const seriesSubscriptionsResult = await supabaseAdmin
       .from('subscriptions')
-      .select('subscriber_user_id')
+      .select('subscriber_user_id, status, current_period_end, expired_at, past_due_started_at')
       .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
       .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
       .eq('target_id', seriesId)
-      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+      .in('status', [
+        SUBSCRIPTION_STATUS.TRIALING,
+        SUBSCRIPTION_STATUS.ACTIVE,
+        SUBSCRIPTION_STATUS.PAST_DUE,
+        SUBSCRIPTION_STATUS.CANCELED,
+      ])
       .is('expired_at', null);
 
     if (seriesSubscriptionsResult.error) {
@@ -136,6 +142,7 @@ async function createCommunitySubscriptionPostNotifications({
     const recipientUserIds = [
       ...new Set(
         (seriesSubscriptionsResult.data ?? [])
+          .filter(isValidBlogSubscription)
           .map((subscription) => normalizeText(subscription.subscriber_user_id))
           .filter((userId) => userId && userId !== authorUserId),
       ),

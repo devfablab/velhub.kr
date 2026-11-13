@@ -53,6 +53,104 @@ type MembershipPurchase = {
   featureKeys: MembershipFeatureKey[];
 };
 
+type MembershipFamily = 'creator' | 'affetto';
+
+type ExistingMembershipSubscription = {
+  id: string;
+  status: string;
+  price: number | null;
+  last_payment_id: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  billing_anchor_day: number | null;
+};
+
+type ExistingMembershipPayment = {
+  id: string;
+  payment_key: string | null;
+  amount: number;
+  refunded_amount: number | null;
+  status: string;
+  approved_at: string | null;
+  created_at: string;
+};
+
+type MembershipChange = {
+  membership: { id: string; membership_type: string };
+  subscription: ExistingMembershipSubscription | null;
+  payment: ExistingMembershipPayment | null;
+};
+
+type ChangePlan = {
+  periodStart: string;
+  periodEnd: string;
+  billingAnchorDay: number;
+  totalDays: number;
+  remainingDays: number;
+  credit: number;
+  refundablePayments: { id: string; paymentKey: string; amount: number }[];
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function getMembershipFamily(type: string): MembershipFamily {
+  return type === 'affetto' ? 'affetto' : 'creator';
+}
+
+function getRemainingDays(periodStart: Date, periodEnd: Date, now: Date) {
+  const totalDays = Math.max(1, Math.round((periodEnd.getTime() - periodStart.getTime()) / DAY_MS));
+  const usedDays = Math.min(totalDays, Math.max(0, Math.ceil((now.getTime() - periodStart.getTime()) / DAY_MS)));
+  return { totalDays, remainingDays: totalDays - usedDays };
+}
+
+function getChangePlan(changes: MembershipChange[], now: Date): ChangePlan | null {
+  if (!changes.length) return null;
+
+  let credit = 0;
+  const refundablePayments: ChangePlan['refundablePayments'] = [];
+  let basePeriod: { start: Date; end: Date; anchorDay: number } | null = null;
+
+  for (const { subscription, payment } of changes) {
+    if (!subscription?.current_period_start || !subscription.current_period_end || !subscription.price) return null;
+    if (
+      subscription.status !== SUBSCRIPTION_STATUS.ACTIVE &&
+      subscription.status !== SUBSCRIPTION_STATUS.TRIALING &&
+      subscription.status !== SUBSCRIPTION_STATUS.CANCELED
+    ) {
+      return null;
+    }
+    if (payment && (payment.status !== PAYMENT_STATUS.PAID || Number(payment.refunded_amount ?? 0) !== 0)) return null;
+
+    const start = new Date(subscription.current_period_start);
+    const end = new Date(subscription.current_period_end);
+    if (end.getTime() <= now.getTime()) return null;
+
+    const { totalDays, remainingDays } = getRemainingDays(start, end, now);
+    credit += Math.floor((Number(subscription.price) * remainingDays) / totalDays);
+    if (payment?.payment_key && Number(payment.amount) > 0) {
+      refundablePayments.push({ id: payment.id, paymentKey: payment.payment_key, amount: Number(payment.amount) });
+    }
+
+    if (!basePeriod || end.getTime() < basePeriod.end.getTime()) {
+      basePeriod = { start, end, anchorDay: subscription.billing_anchor_day ?? getBillingAnchorDay(start) };
+    }
+  }
+
+  if (!basePeriod) return null;
+
+  const { totalDays, remainingDays } = getRemainingDays(basePeriod.start, basePeriod.end, now);
+
+  return {
+    periodStart: basePeriod.start.toISOString(),
+    periodEnd: basePeriod.end.toISOString(),
+    billingAnchorDay: basePeriod.anchorDay,
+    totalDays,
+    remainingDays,
+    credit,
+    refundablePayments,
+  };
+}
+
 function isMembershipType(value: unknown): value is MembershipType {
   return typeof value === 'string' && MEMBERSHIP_TYPE_VALUES.includes(value as MembershipType);
 }
@@ -119,7 +217,11 @@ export async function POST(request: Request) {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
-  const body = (await request.json().catch(() => null)) as { purchases?: unknown; billingMethodId?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as {
+    purchases?: unknown;
+    billingMethodId?: unknown;
+    preview?: unknown;
+  } | null;
   const purchases = Array.isArray(body?.purchases) ? body.purchases : [];
   const billingMethodId = typeof body?.billingMethodId === 'string' ? body.billingMethodId : '';
   const normalizedPurchases: MembershipPurchase[] = purchases.flatMap((purchase) => {
@@ -235,34 +337,158 @@ export async function POST(request: Request) {
   const createdMembershipIds: string[] = [];
   const completedPaymentKeys: string[] = [];
 
-  try {
-    for (const membership of membershipsToCancel) {
-      const subscriptionResult = await supabaseAdmin
-        .from('subscriptions')
-        .select('id,last_payment_id')
-        .eq('subscriber_user_id', currentStigma.stigmaId)
-        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
-        .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
-        .eq('target_id', membership.id)
-        .in('status', [
-          SUBSCRIPTION_STATUS.TRIALING,
-          SUBSCRIPTION_STATUS.ACTIVE,
-          SUBSCRIPTION_STATUS.PAST_DUE,
-          SUBSCRIPTION_STATUS.CANCELED,
-        ])
-        .order('created_at', { ascending: false })
-        .limit(1)
+  const membershipChanges: MembershipChange[] = [];
+  for (const membership of membershipsToCancel) {
+    const subscriptionResult = await supabaseAdmin
+      .from('subscriptions')
+      .select('id,status,price,last_payment_id,current_period_start,current_period_end,billing_anchor_day')
+      .eq('subscriber_user_id', currentStigma.stigmaId)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
+      .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
+      .eq('target_id', membership.id)
+      .in('status', [
+        SUBSCRIPTION_STATUS.TRIALING,
+        SUBSCRIPTION_STATUS.ACTIVE,
+        SUBSCRIPTION_STATUS.PAST_DUE,
+        SUBSCRIPTION_STATUS.CANCELED,
+      ])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (subscriptionResult.error) {
+      return NextResponse.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const subscription = (subscriptionResult.data as ExistingMembershipSubscription | null) ?? null;
+    let payment: ExistingMembershipPayment | null = null;
+    if (subscription?.last_payment_id) {
+      const paymentResult = await supabaseAdmin
+        .from('payments')
+        .select('id,payment_key,amount,refunded_amount,status,approved_at,created_at')
+        .eq('id', subscription.last_payment_id)
         .maybeSingle();
+      if (paymentResult.error) {
+        return NextResponse.json({ error: '멤버십 결제 정보를 확인하지 못했습니다.' }, { status: 500 });
+      }
+      payment = (paymentResult.data as ExistingMembershipPayment | null) ?? null;
+    }
 
-      const subscription = subscriptionResult.data;
-      if (subscription?.last_payment_id) {
-        const paymentResult = await supabaseAdmin
+    membershipChanges.push({ membership, subscription, payment });
+  }
+
+  const changePlans = new Map<MembershipFamily, ChangePlan>();
+  for (const family of ['creator', 'affetto'] as const) {
+    if (!normalizedPurchases.some((purchase) => getMembershipFamily(purchase.type) === family)) continue;
+    const plan = getChangePlan(
+      membershipChanges.filter((change) => getMembershipFamily(change.membership.membership_type) === family),
+      now,
+    );
+    if (plan) changePlans.set(family, plan);
+  }
+
+  const remainingCredits = new Map<MembershipFamily, number>(
+    [...changePlans].map(([family, plan]) => [family, plan.credit]),
+  );
+  const pricedPurchases = normalizedPurchases.map((purchase) => {
+    const amount = getMembershipPrice(purchase.featureKeys as MembershipFeatureKey[], purchase.type);
+    const family = getMembershipFamily(purchase.type);
+    const changePlan = changePlans.get(family) ?? null;
+    let chargeAmount = amount;
+    if (changePlan) {
+      const proratedAmount = Math.ceil((amount * changePlan.remainingDays) / changePlan.totalDays);
+      const credit = Math.min(proratedAmount, remainingCredits.get(family) ?? 0);
+      remainingCredits.set(family, (remainingCredits.get(family) ?? 0) - credit);
+      chargeAmount = proratedAmount - credit;
+    }
+    const orderName = `${purchase.type === 'all_in_one' ? '올인원' : purchase.type === 'creator' ? '크리에이터' : purchase.type === 'owner' ? '오너' : '아페토'} 멤버십`;
+    return { purchase, amount, chargeAmount, orderName, changePlan };
+  });
+
+  const changeRefunds = new Map<MembershipFamily, number>(
+    [...changePlans].map(([family, plan]) => {
+      const refundableTotal = plan.refundablePayments.reduce((total, payment) => total + payment.amount, 0);
+      return [family, Math.min(remainingCredits.get(family) ?? 0, refundableTotal)];
+    }),
+  );
+
+  if (body?.preview === true) {
+    const fallbackRefundAmount = membershipChanges
+      .filter((change) => !changePlans.has(getMembershipFamily(change.membership.membership_type)))
+      .reduce((total, { payment }) => {
+        if (!payment || payment.status !== PAYMENT_STATUS.PAID || Number(payment.refunded_amount ?? 0) !== 0) {
+          return total;
+        }
+        return (
+          total +
+          calculateMembershipRefundAmount({
+            amount: Number(payment.amount),
+            paidAt: payment.approved_at ?? payment.created_at,
+            now,
+          }).refundAmount
+        );
+      }, 0);
+
+    return NextResponse.json({
+      chargeAmount: pricedPurchases.reduce((total, item) => total + item.chargeAmount, 0),
+      refundAmount: [...changeRefunds.values()].reduce((total, amount) => total + amount, 0) + fallbackRefundAmount,
+      items: pricedPurchases.map((item) => ({
+        name: item.orderName,
+        chargeAmount: item.chargeAmount,
+        nextBillingAmount: item.amount,
+        nextBillingAt: item.changePlan ? item.changePlan.periodEnd : billingPeriod.nextBillingAt,
+      })),
+    });
+  }
+
+  try {
+    const preparedPurchases = [];
+    for (const { purchase, amount, chargeAmount, orderName, changePlan } of pricedPurchases) {
+      const orderNo = createOrderNo('MEMBERSHIP');
+      const billingPayment =
+        chargeAmount > 0
+          ? await requestMembershipBilling({
+              billingKey: billingMethod.billing_key,
+              customerKey,
+              amount: chargeAmount,
+              orderNo,
+              orderName,
+              customerName: customer.name,
+              customerEmail: customer.email,
+              customerPhoneNumber: customer.phoneNumber,
+            })
+          : null;
+      if (billingPayment) completedPaymentKeys.push(billingPayment.paymentKey);
+      preparedPurchases.push({ purchase, amount, chargeAmount, orderNo, billingPayment, upgradePlan: changePlan });
+    }
+
+    for (const [family, plan] of changePlans) {
+      let refundLeft = changeRefunds.get(family) ?? 0;
+      for (const refundablePayment of plan.refundablePayments) {
+        if (refundLeft <= 0) break;
+        const refundAmount = Math.min(refundLeft, refundablePayment.amount);
+        const cancelResult = await cancelPortOnePayment({
+          paymentId: refundablePayment.paymentKey,
+          cancelReason: '멤버십 변경에 따른 차액 환불',
+          cancelAmount: refundAmount >= refundablePayment.amount ? undefined : refundAmount,
+        });
+        const paymentUpdateResult = await supabaseAdmin
           .from('payments')
-          .select('id,payment_key,amount,refunded_amount,status,approved_at,created_at')
-          .eq('id', subscription.last_payment_id)
-          .maybeSingle();
+          .update({
+            status:
+              refundAmount >= refundablePayment.amount ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PARTIALLY_REFUNDED,
+            refunded_amount: refundAmount,
+            refunded_at: new Date().toISOString(),
+            raw_data: cancelResult,
+          })
+          .eq('id', refundablePayment.id);
+        if (paymentUpdateResult.error) throw new Error('멤버십 차액 환불 정보를 저장하지 못했습니다.');
+        refundLeft -= refundAmount;
+      }
+    }
 
-        const payment = paymentResult.data;
+    for (const { membership, subscription, payment } of membershipChanges) {
+      const isUpgrade = changePlans.has(getMembershipFamily(membership.membership_type));
+      if (!isUpgrade && subscription?.last_payment_id) {
         if (
           payment &&
           payment.status === PAYMENT_STATUS.PAID &&
@@ -314,21 +540,7 @@ export async function POST(request: Request) {
       await supabaseAdmin.from('membership_items').delete().eq('membership_id', membership.id);
       await supabaseAdmin.from('memberships').delete().eq('id', membership.id);
     }
-    for (const purchase of normalizedPurchases) {
-      const amount = getMembershipPrice(purchase.featureKeys as MembershipFeatureKey[], purchase.type);
-      const orderNo = createOrderNo('MEMBERSHIP');
-      const orderName = `${purchase.type === 'all_in_one' ? '올인원' : purchase.type === 'creator' ? '크리에이터' : purchase.type === 'owner' ? '오너' : '아페토'} 멤버십`;
-      const billingPayment = await requestMembershipBilling({
-        billingKey: billingMethod.billing_key,
-        customerKey,
-        amount,
-        orderNo,
-        orderName,
-        customerName: customer.name,
-        customerEmail: customer.email,
-        customerPhoneNumber: customer.phoneNumber,
-      });
-      completedPaymentKeys.push(billingPayment.paymentKey);
+    for (const { purchase, amount, chargeAmount, orderNo, billingPayment, upgradePlan } of preparedPurchases) {
       const membershipResult = await supabaseAdmin
         .from('memberships')
         .insert({ user_id: currentStigma.stigmaId, membership_type: purchase.type })
@@ -345,37 +557,41 @@ export async function POST(request: Request) {
       );
       if (membershipItemResult.error) throw new Error('선택한 기능을 저장하지 못했습니다.');
 
-      const paymentResult = await supabaseAdmin
-        .from('payments')
-        .insert({
-          provider: getCurrentPortOneProvider(),
-          payment_key: billingPayment.paymentKey,
-          transaction_no: getPortOnePaymentTransactionNo(billingPayment.payment),
-          order_no: orderNo,
-          buyer_user_id: currentStigma.stigmaId,
-          amount,
-          refunded_amount: 0,
-          refunded_at: null,
-          currency: 'KRW',
-          status: PAYMENT_STATUS.PAID,
-          payment_method: PAYMENT_METHOD.CARD,
-          payment_type: PAYMENT_TYPE.MEMBERSHIP,
-          target_type: PAYMENT_TARGET_TYPE.MEMBERSHIP,
-          target_id: membershipResult.data.id,
-          subscription_id: null,
-          refund_policy: REFUND_POLICY.MEMBERSHIP,
-          raw_data: billingPayment.payment,
-          approved_at: getPortOnePaidAt(billingPayment.payment),
-          tx_no: null,
-          post_payment: null,
-          failure_code: null,
-          failure_message: null,
-          failure_stage: null,
-          refundable_until: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        })
-        .select('id')
-        .single();
-      if (paymentResult.error) throw new Error('결제 정보를 저장하지 못했습니다.');
+      let paymentId: string | null = null;
+      if (billingPayment) {
+        const paymentResult = await supabaseAdmin
+          .from('payments')
+          .insert({
+            provider: getCurrentPortOneProvider(),
+            payment_key: billingPayment.paymentKey,
+            transaction_no: getPortOnePaymentTransactionNo(billingPayment.payment),
+            order_no: orderNo,
+            buyer_user_id: currentStigma.stigmaId,
+            amount: chargeAmount,
+            refunded_amount: 0,
+            refunded_at: null,
+            currency: 'KRW',
+            status: PAYMENT_STATUS.PAID,
+            payment_method: PAYMENT_METHOD.CARD,
+            payment_type: PAYMENT_TYPE.MEMBERSHIP,
+            target_type: PAYMENT_TARGET_TYPE.MEMBERSHIP,
+            target_id: membershipResult.data.id,
+            subscription_id: null,
+            refund_policy: REFUND_POLICY.MEMBERSHIP,
+            raw_data: billingPayment.payment,
+            approved_at: getPortOnePaidAt(billingPayment.payment),
+            tx_no: null,
+            post_payment: null,
+            failure_code: null,
+            failure_message: null,
+            failure_stage: null,
+            refundable_until: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          })
+          .select('id')
+          .single();
+        if (paymentResult.error) throw new Error('결제 정보를 저장하지 못했습니다.');
+        paymentId = paymentResult.data.id;
+      }
 
       const subscriptionResult = await supabaseAdmin
         .from('subscriptions')
@@ -389,13 +605,13 @@ export async function POST(request: Request) {
           status: SUBSCRIPTION_STATUS.ACTIVE,
           billing_key: encrypt(billingMethod.billing_key),
           customer_key: customerKey,
-          last_payment_id: paymentResult.data.id,
+          last_payment_id: paymentId,
           trial_started_at: null,
           trial_ends_at: null,
-          current_period_start: billingPeriod.currentPeriodStart,
-          current_period_end: billingPeriod.currentPeriodEnd,
-          next_billing_at: billingPeriod.nextBillingAt,
-          billing_anchor_day: billingAnchorDay,
+          current_period_start: upgradePlan ? upgradePlan.periodStart : billingPeriod.currentPeriodStart,
+          current_period_end: upgradePlan ? upgradePlan.periodEnd : billingPeriod.currentPeriodEnd,
+          next_billing_at: upgradePlan ? upgradePlan.periodEnd : billingPeriod.nextBillingAt,
+          billing_anchor_day: upgradePlan ? upgradePlan.billingAnchorDay : billingAnchorDay,
           canceled_at: null,
           expired_at: null,
         })
@@ -403,11 +619,13 @@ export async function POST(request: Request) {
         .single();
       if (subscriptionResult.error) throw new Error('월결제 정보를 저장하지 못했습니다.');
 
-      const paymentUpdateResult = await supabaseAdmin
-        .from('payments')
-        .update({ subscription_id: subscriptionResult.data.id })
-        .eq('id', paymentResult.data.id);
-      if (paymentUpdateResult.error) throw new Error('결제 구독 정보를 갱신하지 못했습니다.');
+      if (paymentId) {
+        const paymentUpdateResult = await supabaseAdmin
+          .from('payments')
+          .update({ subscription_id: subscriptionResult.data.id })
+          .eq('id', paymentId);
+        if (paymentUpdateResult.error) throw new Error('결제 구독 정보를 갱신하지 못했습니다.');
+      }
     }
   } catch {
     await Promise.all(

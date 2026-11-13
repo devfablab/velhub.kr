@@ -3,6 +3,7 @@ import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
 import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
@@ -515,18 +516,23 @@ async function createCommunitySubscriptionPostNotifications({
   if (seriesId) {
     const seriesSubscriptionsResult = await supabaseAdmin
       .from('subscriptions')
-      .select('subscriber_user_id')
+      .select('subscriber_user_id, status, current_period_end, expired_at, past_due_started_at')
       .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
       .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
       .eq('target_id', seriesId)
-      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+      .in('status', [
+        SUBSCRIPTION_STATUS.TRIALING,
+        SUBSCRIPTION_STATUS.ACTIVE,
+        SUBSCRIPTION_STATUS.PAST_DUE,
+        SUBSCRIPTION_STATUS.CANCELED,
+      ])
       .is('expired_at', null);
 
     if (seriesSubscriptionsResult.error) {
       throw new Error(`연재 구독자 조회 실패: ${seriesSubscriptionsResult.error.message}`);
     }
 
-    for (const subscription of seriesSubscriptionsResult.data ?? []) {
+    for (const subscription of (seriesSubscriptionsResult.data ?? []).filter(isValidBlogSubscription)) {
       const userId = normalizeText(subscription.subscriber_user_id);
 
       if (!userId || userId === authorUserId) {

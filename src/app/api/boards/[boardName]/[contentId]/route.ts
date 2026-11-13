@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getVisibleBlogPostPromotion } from '@/lib/service/blog/blogAds/server';
@@ -533,23 +534,11 @@ async function getPaidContentAccess({
     };
   }
 
-  const seriesSubscriptionResult = await supabaseAdmin
-    .from('subscriptions')
-    .select('id')
-    .eq('subscriber_user_id', stigmaId)
-    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-    .eq('target_id', seriesId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
-    .in('status', ['trialing', 'active', 'past_due'])
-    .is('expired_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (seriesSubscriptionResult.error) {
-    throw new Error('연재 구독 상태를 확인하지 못했습니다.');
-  }
-
-  const hasSeriesSubscription = (seriesSubscriptionResult.data ?? []).length > 0;
+  const hasSeriesSubscription = await hasValidSeriesSubscription({
+    supabaseAdmin,
+    subscriberId: stigmaId,
+    seriesId,
+  });
 
   if (hasSeriesSubscription) {
     return {
