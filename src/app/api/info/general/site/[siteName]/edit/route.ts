@@ -6,6 +6,7 @@ import { cancelPortOnePayment } from '@/lib/payments/portone';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
+import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { getCustomDomainError, normalizeCustomDomain } from '@/lib/site/customDomain';
 import { normalizeText } from '@/lib/utils';
 
@@ -38,6 +39,14 @@ type RequestBody = {
 type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
 
 const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
+
+const AUTO_OG_IMAGE_FIELDS = new Set<UpdateField>([
+  'site_label',
+  'summary',
+  'profile_picture',
+  'profile_logo',
+  'og_image',
+]);
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -583,6 +592,10 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (updateSites.error || insertLog.error) {
       return Response.json({ error: '수정 이력 저장에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (AUTO_OG_IMAGE_FIELDS.has(requestBody.field)) {
+      scheduleAutoOgImage({ type: 'site', siteId: access.rhizome.id });
     }
 
     return Response.json({

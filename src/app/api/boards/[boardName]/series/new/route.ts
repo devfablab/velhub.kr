@@ -6,6 +6,7 @@ import {
   getCommunityManagerAccess,
 } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
+import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -247,6 +248,8 @@ export async function POST(request: Request, context: RouteContext) {
     if (insertSeries.error || !insertSeries.data) {
       return Response.json({ error: '연재 추가에 실패했습니다.' }, { status: 500 });
     }
+
+    scheduleAutoOgImage({ type: 'series', seriesId: insertSeries.data.id });
 
     return Response.json({
       ok: true,

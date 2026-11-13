@@ -1,6 +1,7 @@
 import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import verifySession from '@/lib/session/verifySession';
+import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -246,6 +247,8 @@ export async function POST(request: Request, context: RouteContext) {
     if (insertCategory.error || !insertCategory.data) {
       return Response.json({ error: '카테고리 등록에 실패했습니다.' }, { status: 500 });
     }
+
+    scheduleAutoOgImage({ type: 'category', categoryId: insertCategory.data.id });
 
     return Response.json({
       ok: true,

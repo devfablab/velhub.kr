@@ -25,7 +25,12 @@ const r2ImageHostnames = [
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ['@uiw/react-md-editor', '@uiw/react-markdown-preview'],
-  serverExternalPackages: ['svg-captcha'],
+  serverExternalPackages: ['svg-captcha', 'subset-font', 'harfbuzzjs'],
+  outputFileTracingIncludes: {
+    '/api/site/**': ['./src/app/fonts/*.woff2'],
+    '/api/info/general/site/**': ['./src/app/fonts/*.woff2'],
+    '/api/boards/**': ['./src/app/fonts/*.woff2'],
+  },
   images: {
     remotePatterns: [
       {

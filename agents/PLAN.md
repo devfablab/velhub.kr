@@ -1,21 +1,26 @@
 # PLAN.md
 
-> 마지막 갱신: 2026-11-12 / 작성: Claude
+> 마지막 갱신: 2026-11-13 / 작성: Claude
 > 기준 브랜치: main / 이 작업은 아직 미커밋 상태
 
 ## 4. 현재 상태
 
-- 작업: 크론 9개 점검에서 나온 버그 수정
+- 작업: 오픈그래프 이미지 자동 생성 (피그마 시안: 포스팅 776-112, 사이트 일반 778-151, 카테고리/연재 783-17)
+- 규칙
+  - 직접 올린 이미지(글 썸네일, 카테고리·연재 이미지, 사이트 오픈그래프)가 있으면 그것, 없을 때 자동 생성 이미지
+  - 그 항목을 직접 저장(생성·수정)할 때만 만듦. 사이트·작성자 정보 변경으로 기존 이미지 일괄 교체 안 함
+  - 블로그: 메인, 카테고리, 연재, 글 / 커뮤니티: 메인, 연재
+  - 폰트: 기존 가변 폰트에서 들어갈 글자만 뽑아 굵기 고정 (`subset-font`)
 - 단계
-  1. `charge-due`: 멤버십·블로그 구독 갱신 결제 추가 (expire-past-due에도 블로그 구독 추가) (payment_type `membership`, 운영자 몫 분배 없음, 실패 알림 기존 코드 사용)
-  2. `charge-due`: 결제 성공 후 저장 실패/운영자 정보 없음에도 다음 결제일을 넘겨 중복 결제 방지, 루프 중단 제거
-  3. `publishing`: 숨김(is_closed) 글 제외, 상태 변경 먼저 하고 바뀐 글에만 알림
-  4. 문의 결과 메일: 암호화된 이메일 복호화 (retention + 비크론 4곳)
-  5. `reports/rights/expire`: 블로그 커뮤니티 글·댓글 포함
-  6. `users/unkick`: 에러 문구
+  1. DB: posts, board_categories, board_series, rhizomes에 `auto_og_image` 컬럼 추가
+  2. 생성 모듈: 시안 3종 렌더링 + R2(og-image) 업로드 + 이전 파일 삭제
+  3. 저장 API 연결: 사이트 개설·사이트 정보 수정, 카테고리 생성·수정, 연재 생성·수정, 글 작성·수정
+  4. 메타데이터(`src/lib/seoSite.ts`)에 자동 생성 이미지 반영
+  5. 기본 이미지 정리: `og.webp`, `og-etc.webp` 1200×630, 클로이가 만든 `og-blog.png`, `og-community.png` → 1200×630 webp
+  6. 로컬 테스트: 시안과 비교
   7. typecheck, lint, prettier
-- 지금 작업 중인 단계: 완료
-- 테스트 상태: typecheck, lint, prettier 통과. publishing·rights/expire 로컬 실행 정상 (publishing 실행으로 qa-blog-revenue 예약 글 2개 공개됨). charge-due·expire-past-due는 실제 결제가 일어나서 실행 안 함
+- 지금 작업 중인 단계: 완료 (클로이 확인 대기)
+- 테스트 상태: typecheck, lint, prettier 통과. 로컬에서 qa-blog-revenue 메인·카테고리·연재·글 이미지 생성, R2 업로드, 페이지 og:image 반영 확인. 긴 제목·설명 말줄임, 배지, 로고·사이트 아바타·작성자 아바타 경우 확인. 실제 저장 화면(로그인 필요)을 통한 생성은 미확인
 - 미커밋 변경 요약: 아래 12번 참고
 
 ## 5. 완료한 것
@@ -33,12 +38,18 @@
 (커밋 로그가 없으므로 이 목록이 변경 이력 역할)
 | 파일 | 변경 내용 | 상태 (완료 / 작업 중 / 임시) |
 |---|---|---|
-| `src/app/api/payments/portone/subscriptions/charge-due/route.ts` | 멤버십·블로그 구독 갱신 결제, 결제 후 저장 실패해도 다음 결제일 갱신, 루프 중단 제거 | 완료 |
-| `src/app/api/payments/portone/subscriptions/expire-past-due/route.ts` | 블로그 구독 포함 | 완료 |
-| `src/app/api/users/publishing/route.ts` | 숨김 글 제외, 상태 변경 후 바뀐 글만 알림 | 완료 |
-| `src/app/api/concierge/inquiries/retention/route.ts` 외 문의 4곳 | 메일 보낼 때 이메일 복호화 | 완료 |
-| `src/app/api/reports/rights/expire/route.ts` | 블로그 커뮤니티 글·댓글 포함 | 완료 |
-| `src/app/api/users/unkick/route.ts` | 에러 문구 | 완료 |
+| `package.json`, `pnpm-lock.yaml` | `subset-font`, `@types/subset-font` 추가 | 완료 |
+| `supabase/migrations/20261113100000_auto_og_image.sql` | `auto_og_image` 컬럼 4개 (적용함) | 완료 |
+| `src/lib/site/autoOgImage.server.ts` | 시안 3종 생성·업로드 (새 파일) | 완료 |
+| `src/app/api/site/blog/new`, `community/new` | 사이트 개설 후 생성 | 완료 |
+| `src/app/api/info/general/site/[siteName]/edit/route.ts` | 사이트명·설명·로고·아바타·오픈그래프 변경 시 생성 | 완료 |
+| `src/app/api/boards/[boardName]/category/new`, `[categoryName]/edit` | 카테고리 저장 시 생성 | 완료 |
+| `src/app/api/boards/[boardName]/series/new`, `[seriesName]/edit` | 연재 저장 시 생성 | 완료 |
+| `src/app/api/boards/[boardName]/new`, `[contentId]/edit` | 블로그 글 저장 시 생성 (임시저장 제외) | 완료 |
+| `next.config.ts` | `subset-font`, `harfbuzzjs` 외부 패키지 지정, 폰트 파일을 배포 번들에 포함 | 완료 |
+| `public/og.webp`, `public/og-etc.webp` | 1280→1200×630 | 완료 |
+| `public/og-blog.webp`, `public/og-community.webp` | 클로이 png로 1200×630 webp 생성 (새 파일) | 완료 |
+| `src/lib/seoSite.ts` | 자동 생성 이미지 사용, 카테고리·연재 이미지 실제 크기 전달 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

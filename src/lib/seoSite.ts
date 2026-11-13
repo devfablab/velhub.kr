@@ -72,6 +72,7 @@ type SiteSeoInfo = {
   siteLabel: string;
   description: string;
   imageUrl: string;
+  autoImageUrl: string;
 };
 
 const DOMAIN = 'https://velhub.xyz';
@@ -105,6 +106,10 @@ function getPostImageUrl(path: string | null | undefined) {
   return getPublicImageUrl(normalizedPath.includes('/') ? 'post' : 'og-image', normalizedPath);
 }
 
+function getAutoOgImageUrl(path: string | null | undefined) {
+  return getPublicImageUrl('og-image', path);
+}
+
 function isNumericSlug(value: string) {
   return /^\d+$/.test(value);
 }
@@ -119,7 +124,7 @@ async function getSiteSeoInfo(siteName: string): Promise<SiteSeoInfo | null> {
   const supabaseAdmin = getSupabaseAdmin();
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, summary, og_image')
+    .select('id, site_key, site_label, summary, og_image, auto_og_image')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -136,6 +141,7 @@ async function getSiteSeoInfo(siteName: string): Promise<SiteSeoInfo | null> {
     siteLabel,
     description,
     imageUrl: getPublicImageUrl('site-og', siteResult.data.og_image),
+    autoImageUrl: getAutoOgImageUrl(siteResult.data.auto_og_image),
   };
 }
 
@@ -236,7 +242,7 @@ export async function getSitePageMetadata({
     isMain,
     pageTitle,
     pageDescription: site.description,
-    pageImg: site.imageUrl || getDefaultImageUrl(),
+    pageImg: site.imageUrl || (isMain ? site.autoImageUrl : '') || getDefaultImageUrl(),
     pagePath,
   });
 }
@@ -304,7 +310,7 @@ export async function getPostPageMetadata({
 
   let postQuery = supabaseAdmin
     .from('posts')
-    .select('subject, summary, thumbnail_image, hashtag_ids')
+    .select('subject, summary, thumbnail_image, hashtag_ids, auto_og_image')
     .eq('site_id', site.id)
     .eq('board_id', boardResult.data.id);
 
@@ -333,7 +339,7 @@ export async function getPostPageMetadata({
     siteDescription: site.description,
     pageTitle: subject,
     pageDescription: description,
-    pageImg: postImageUrl || site.imageUrl || getDefaultImageUrl(),
+    pageImg: postImageUrl || getAutoOgImageUrl(postResult.data.auto_og_image) || site.imageUrl || getDefaultImageUrl(),
     pageOgType: 'article',
     pagePath,
   });
@@ -358,7 +364,7 @@ export async function getCategoryPageMetadata({
   const supabaseAdmin = getSupabaseAdmin();
   const categoryResult = await supabaseAdmin
     .from('board_categories')
-    .select('category_label, summary, thumbnail_image')
+    .select('category_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image')
     .eq('site_id', site.id)
     .eq('category_key', normalizedCategoryName)
     .maybeSingle();
@@ -381,7 +387,10 @@ export async function getCategoryPageMetadata({
     siteDescription: site.description,
     pageTitle: categoryLabel,
     pageDescription: description,
-    pageImg: categoryImageUrl || site.imageUrl || getDefaultImageUrl(),
+    pageImg:
+      categoryImageUrl || getAutoOgImageUrl(categoryResult.data.auto_og_image) || site.imageUrl || getDefaultImageUrl(),
+    pageImgWidth: categoryImageUrl ? (categoryResult.data.thumbnail_width ?? undefined) : undefined,
+    pageImgHeight: categoryImageUrl ? (categoryResult.data.thumbnail_height ?? undefined) : undefined,
     pagePath,
   });
 }
@@ -401,7 +410,7 @@ export async function getSeriesPageMetadata({
   const supabaseAdmin = getSupabaseAdmin();
   const seriesResult = await supabaseAdmin
     .from('board_series')
-    .select('series_label, summary, thumbnail_image')
+    .select('series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image')
     .eq('site_id', site.id)
     .eq('series_key', normalizedSeriesName)
     .maybeSingle();
@@ -424,7 +433,10 @@ export async function getSeriesPageMetadata({
     siteDescription: site.description,
     pageTitle: seriesLabel,
     pageDescription: description,
-    pageImg: seriesImageUrl || site.imageUrl || getDefaultImageUrl(),
+    pageImg:
+      seriesImageUrl || getAutoOgImageUrl(seriesResult.data.auto_og_image) || site.imageUrl || getDefaultImageUrl(),
+    pageImgWidth: seriesImageUrl ? (seriesResult.data.thumbnail_width ?? undefined) : undefined,
+    pageImgHeight: seriesImageUrl ? (seriesResult.data.thumbnail_height ?? undefined) : undefined,
     pagePath,
   });
 }

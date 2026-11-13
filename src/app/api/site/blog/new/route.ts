@@ -6,6 +6,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session/server';
+import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { EMPTY_SITE_CREATE_FIELD_ERRORS, validateSiteCreateFields } from '@/lib/site/createValidation.shared';
 import { isSiteCaptchaPassed } from '@/lib/site/siteCaptcha.server';
 import { normalizeText } from '@/lib/utils';
@@ -316,6 +317,8 @@ export async function POST(request: Request) {
       console.error('create_blog_site rpc 실패:', rpcResult.error);
       return Response.json({ error: rpcResult.error?.message || '블로그 개설에 실패했습니다.' }, { status: 500 });
     }
+
+    scheduleAutoOgImage({ type: 'site', siteId: String(rpcResult.data) });
 
     return Response.json({
       ok: true,

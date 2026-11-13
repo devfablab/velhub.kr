@@ -11,6 +11,7 @@ import { type CoPostPartnerCandidate, createCoPostInvite, validateCoPostInvite }
 import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
+import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
 
@@ -1234,6 +1235,10 @@ export async function POST(request: Request, context: RouteContext) {
           last_published_at: nowIsoString,
         })
         .eq('id', seriesId);
+    }
+
+    if (rhizomeData.site_type === 'blog' && action !== 'draft') {
+      scheduleAutoOgImage({ type: 'post', postId: insertPost.data.id });
     }
 
     return Response.json({

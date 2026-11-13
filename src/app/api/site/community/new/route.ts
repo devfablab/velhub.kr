@@ -7,6 +7,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session/server';
+import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { EMPTY_SITE_CREATE_FIELD_ERRORS, validateSiteCreateFields } from '@/lib/site/createValidation.shared';
 import { isSiteCaptchaPassed } from '@/lib/site/siteCaptcha.server';
 
@@ -308,6 +309,8 @@ export async function POST(request: Request) {
       console.error('create_community_site rpc 실패:', rpcResult.error);
       return Response.json({ error: rpcResult.error?.message || '커뮤니티 개설에 실패했습니다.' }, { status: 500 });
     }
+
+    scheduleAutoOgImage({ type: 'site', siteId: String(rpcResult.data) });
 
     return Response.json({
       ok: true,

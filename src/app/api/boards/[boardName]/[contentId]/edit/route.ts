@@ -17,6 +17,7 @@ import {
   getCommunityManagerAccess,
 } from '@/lib/service/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
+import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { canManageBlogContents } from '@/lib/site/contentAccess';
 import { normalizeText } from '@/lib/utils';
 import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler.server';
@@ -1514,6 +1515,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (action === 'unknown' && requestedPublishedAt && new Date(requestedPublishedAt).getTime() <= Date.now()) {
       return Response.json({ error: '예약 출간 시간은 현재 시각 이후로 설정해주세요.' }, { status: 400 });
+    }
+
+    if (rhizomeData.site_type === 'blog' && updatePost.data.published_status !== 'draft') {
+      scheduleAutoOgImage({ type: 'post', postId: updatePost.data.id });
     }
 
     return Response.json({
