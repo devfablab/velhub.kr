@@ -28,6 +28,8 @@
     .hero-background
       object-fit: cover
       opacity: .2
+      -webkit-user-drag: none
+      user-select: none
 
     .inner
       position: relative
@@ -558,7 +560,7 @@
 
   .comparison
     td svg
-      transform: scale(0)
+    transform: scale(0)
 
     &[data-revealed="true"] td svg
       animation: check-in .45s cubic-bezier(.3, 1.6, .5, 1) both
