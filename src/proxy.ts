@@ -154,6 +154,7 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'settings' ||
     firstSegment === 'new' ||
     firstSegment === 'concierge' ||
+    firstSegment === 'about' ||
     firstSegment === 'hub' ||
     firstSegment === 'lounge' ||
     firstSegment === 'user' ||

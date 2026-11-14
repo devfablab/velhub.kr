@@ -1,0 +1,637 @@
+.about
+  disflay: flex
+  flex-direction: column
+  background-color: ds.$hex-white
+  color: #181818
+
+  html[data-theme="yellow-dark"] &
+    background-color: ds.$hex-primary
+    color: ds.$hex-bright
+
+  .inner
+    width: 100%
+    max-width: ds.rem(1160)
+    margin: 0 auto
+    padding: 0 ds.rem(20)
+
+  .hero
+    position: relative
+    overflow: hidden
+    padding: ds.rem(140) 0
+    background-color: #181818
+    color: ds.$hex-white
+    text-align: center
+
+    @include ds.mq(maxSmall)
+      padding: ds.rem(96) 0
+
+    .hero-background
+      object-fit: cover
+      opacity: .2
+
+    .inner
+      position: relative
+      display: flex
+      flex-direction: column
+      align-items: center
+
+    .eyebrow
+      margin-bottom: ds.rem(20)
+      color: ds.$hex-accent
+      font-size: ds.rem(16)
+      @include ds.fw(pre, 700)
+
+    h1
+      margin-bottom: ds.rem(24)
+      font-size: ds.rem(60)
+      line-height: 1.3
+      color: ds.$hex-white
+      @include ds.fw(neo, 800)
+
+      @include ds.mq(maxSmall)
+        font-size: ds.rem(36)
+
+    p
+      max-width: ds.rem(720)
+      margin: 0 0 ds.rem(40)
+      color: #BDBDBD
+      font-size: ds.rem(20)
+      line-height: 1.65
+
+      @include ds.mq(maxSmall)
+        font-size: ds.rem(16)
+
+    .buttons
+      margin-bottom: ds.rem(64)
+
+      @include ds.mq(maxSmall)
+        margin-bottom: ds.rem(48)
+
+  .hero-illustration
+    width: 100%
+    max-width: ds.rem(1120)
+    overflow: hidden
+    border-radius: ds.rem(20)
+
+    img
+      display: block
+      width: 100%
+      height: auto
+
+    @include ds.mq(maxSmall)
+      height: ds.rem(240)
+      border-radius: ds.rem(14)
+      background-color: #FFF6D6
+
+      img
+        height: 100%
+        object-fit: contain
+
+  .buttons
+    display: flex
+    flex-wrap: wrap
+    justify-content: center
+    gap: ds.rem(12)
+
+    @include ds.mq(maxSmall)
+      flex-direction: column
+      width: 100%
+
+  .button-primary, .button-outline
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    padding: ds.rem(16) ds.rem(28)
+    border-radius: ds.rem(12)
+    font-size: ds.rem(16)
+    text-decoration: none
+    transition: opacity .2s
+    @include ds.fw(pre, 700)
+
+    &:hover, &:focus-visible
+      opacity: .85
+
+  .button-primary
+    background-color: ds.$hex-accent
+    color: #181818
+
+  .button-outline
+    border: 1px solid #737373
+    color: ds.$hex-white
+
+  .navigation
+    position: sticky
+    top: 0
+    z-index: 10
+    border-bottom: 1px solid #E6E6E6
+    background-color: rgba(255, 255, 255, .92)
+    backdrop-filter: blur(12px)
+
+    html[data-theme="yellow-dark"] &
+      border-bottom-color: rgba(ds.$rgb-tertiary, .5)
+      background-color: rgba(24, 24, 24, .92)
+
+    ul
+      display: flex
+      justify-content: center
+      gap: ds.rem(8)
+      max-width: ds.rem(1160)
+      margin: 0 auto
+      padding: ds.rem(14) ds.rem(20)
+      list-style: none
+      overflow-x: auto
+      scrollbar-width: none
+
+      &::-webkit-scrollbar
+        display: none
+
+      @include ds.mq(maxMedium)
+        justify-content: flex-start
+
+    li
+      flex-shrink: 0
+
+    a
+      display: block
+      padding: ds.rem(8) ds.rem(16)
+      border-radius: ds.rem(999)
+      background-color: #F8F8F8
+      color: #616161
+      font-size: ds.rem(14)
+      text-decoration: none
+      white-space: nowrap
+      transition: background-color .2s, color .2s
+      @include ds.fw(pre, 600)
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-secondary
+        color: ds.$hex-light
+
+      &.active
+        background-color: #181818
+        color: ds.$hex-white
+
+        html[data-theme="yellow-dark"] &
+          background-color: ds.$hex-accent
+          color: #181818
+
+  .section
+    padding: ds.rem(120) 0
+    scroll-margin-top: ds.rem(64)
+
+    @include ds.mq(maxSmall)
+      padding: ds.rem(72) 0
+
+  .section-bright
+    background-color: #F8F8F8
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+
+  .section-header
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+    max-width: ds.rem(720)
+    margin: 0 auto ds.rem(56)
+    text-align: center
+
+    @include ds.mq(maxSmall)
+      margin-bottom: ds.rem(40)
+
+    span
+      color: #B88A00
+      font-size: ds.rem(14)
+      @include ds.fw(pre, 700)
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-accent
+
+    h2
+      font-size: ds.rem(36)
+      line-height: 1.35
+      @include ds.fw(neo, 800)
+
+      @include ds.mq(maxSmall)
+        font-size: ds.rem(26)
+
+    p
+      margin: 0
+      color: #616161
+      font-size: ds.rem(18)
+      line-height: 1.6
+
+      html[data-theme="yellow-dark"] &
+        color: rgba(ds.$rgb-light, .8)
+
+      @include ds.mq(maxSmall)
+        font-size: ds.rem(16)
+
+  .cards
+    display: grid
+    gap: ds.rem(24)
+    margin: 0
+    padding: 0
+    list-style: none
+
+    @include ds.mq(maxSmall)
+      grid-template-columns: 1fr !important
+      gap: ds.rem(16)
+
+  .cards-two
+    grid-template-columns: repeat(2, 1fr)
+
+  .cards-three
+    grid-template-columns: repeat(3, 1fr)
+
+    @include ds.mq(maxMedium)
+      grid-template-columns: repeat(2, 1fr)
+
+  .cards-four
+    grid-template-columns: repeat(4, 1fr)
+
+    @include ds.mq(maxLarge)
+      grid-template-columns: repeat(2, 1fr)
+
+  .card
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    gap: ds.rem(12)
+    padding: ds.rem(28)
+    border: 1px solid #E6E6E6
+    border-radius: ds.rem(16)
+    background-color: ds.$hex-white
+
+    html[data-theme="yellow-dark"] &
+      border-color: rgba(ds.$rgb-tertiary, .5)
+      background-color: ds.$hex-secondary
+
+    strong
+      font-size: ds.rem(18)
+      line-height: 1.4
+      @include ds.fw(pre, 700)
+
+    p
+      flex-grow: 1
+      margin: 0
+      color: #616161
+      font-size: ds.rem(15)
+      line-height: 1.65
+
+      html[data-theme="yellow-dark"] &
+        color: rgba(ds.$rgb-light, .8)
+
+  .tile
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    width: ds.rem(44)
+    height: ds.rem(44)
+    border-radius: ds.rem(12)
+    background-color: #FFF6D6
+    color: #B88A00
+
+    html[data-theme="yellow-dark"] &
+      background-color: rgba(ds.$rgb-accent, .15)
+      color: ds.$hex-accent
+
+    svg
+      font-size: ds.rem(24)
+
+  .card-large
+    padding: ds.rem(32)
+    border-radius: ds.rem(20)
+
+    .tile
+      width: ds.rem(56)
+      height: ds.rem(56)
+      border-radius: ds.rem(16)
+
+      svg
+        font-size: ds.rem(28)
+
+    strong
+      font-size: ds.rem(22)
+      line-height: 1.35
+      @include ds.fw(neo, 800)
+
+    p
+      font-size: ds.rem(16)
+
+  .illustration
+    width: 100%
+    height: ds.rem(200)
+    margin-bottom: ds.rem(8)
+    overflow: hidden
+    border-radius: ds.rem(12)
+    background-color: #FFF6D6
+
+    html[data-theme="yellow-dark"] &
+      background-color: rgba(ds.$rgb-accent, .15)
+
+    @include ds.mq(maxSmall)
+      height: ds.rem(240)
+
+    img
+      display: block
+      width: 100%
+      height: 100%
+      object-fit: contain
+
+  .badge
+    padding: ds.rem(4) ds.rem(10)
+    border-radius: ds.rem(999)
+    background-color: #FFF6D6
+    color: #8C6600
+    font-size: ds.rem(12)
+    font-style: normal
+    @include ds.fw(pre, 700)
+
+    html[data-theme="yellow-dark"] &
+      background-color: rgba(ds.$rgb-accent, .15)
+      color: ds.$hex-accent
+
+  .more
+    color: ds.$hex-action
+    font-size: ds.rem(14)
+    text-decoration: none
+    @include ds.fw(pre, 500)
+
+    &:hover, &:focus-visible
+      text-decoration: underline
+
+  .footnote
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: ds.rem(12)
+    margin-top: ds.rem(32)
+    text-align: center
+
+    p
+      margin: 0
+      color: #616161
+      font-size: ds.rem(15)
+      line-height: 1.65
+
+      html[data-theme="yellow-dark"] &
+        color: rgba(ds.$rgb-light, .8)
+
+  .segment
+    display: flex
+    width: fit-content
+    margin: 0 auto ds.rem(40)
+    padding: ds.rem(4)
+    border-radius: ds.rem(12)
+    background-color: #F8F8F8
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+
+    button
+      padding: ds.rem(8) ds.rem(24)
+      border: 0
+      border-radius: ds.rem(10) !important
+      color: #616161
+      font-size: ds.rem(15)
+      @include ds.fw(pre, 700)
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+      &[aria-pressed="true"]
+        background-color: #181818
+        color: ds.$hex-white
+
+        &:hover
+          background-color: #181818
+
+        html[data-theme="yellow-dark"] &
+          background-color: ds.$hex-accent
+          color: #181818
+
+  .comparison
+    overflow-x: auto
+    border: 1px solid #E6E6E6
+    border-radius: ds.rem(16)
+
+    html[data-theme="yellow-dark"] &
+      border-color: rgba(ds.$rgb-tertiary, .5)
+
+    table
+      width: 100%
+      min-width: ds.rem(480)
+      border-collapse: collapse
+
+    th, td
+      height: ds.rem(60)
+      padding: 0 ds.rem(24)
+      border-top: 1px solid #E6E6E6
+      font-size: ds.rem(15)
+      text-align: center
+
+      html[data-theme="yellow-dark"] &
+        border-top-color: rgba(ds.$rgb-tertiary, .5)
+
+      @include ds.mq(maxSmall)
+        padding: 0 ds.rem(14)
+        font-size: ds.rem(14)
+
+    th[scope="row"], thead th:first-child
+      text-align: left
+
+    th[scope="row"]
+      @include ds.fw(pre, 600)
+
+    thead th
+      border-top: 0
+      background-color: #F8F8F8
+      @include ds.fw(pre, 700)
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-black
+
+    td
+      color: #616161
+
+      html[data-theme="yellow-dark"] &
+        color: rgba(ds.$rgb-light, .8)
+
+      svg
+        vertical-align: middle
+        color: #B88A00
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-accent
+
+  .closing
+    padding: ds.rem(120) 0
+    background-color: #181818
+    color: ds.$hex-white
+    text-align: center
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+
+    @include ds.mq(maxSmall)
+      padding: ds.rem(72) 0
+
+    h2
+      margin-bottom: ds.rem(20)
+      font-size: ds.rem(44)
+      line-height: 1.3
+      color: ds.$hex-white
+      @include ds.fw(neo, 800)
+
+      @include ds.mq(maxSmall)
+        font-size: ds.rem(30)
+
+    p
+      max-width: ds.rem(720)
+      margin: 0 auto ds.rem(40)
+      color: #BDBDBD
+      font-size: ds.rem(18)
+      line-height: 1.65
+
+      @include ds.mq(maxSmall)
+        font-size: ds.rem(16)
+
+  [data-reveal]
+    opacity: 0
+    transform: translateY(ds.rem(28))
+    transition: opacity .7s ease, transform .8s cubic-bezier(.2, .7, .2, 1)
+    transition-delay: calc(var(--reveal-order, 0) * 90ms)
+
+    &[data-revealed="true"]
+      opacity: 1
+      transform: none
+
+  .card
+    transition: opacity .7s ease, transform .8s cubic-bezier(.2, .7, .2, 1), translate .3s ease, box-shadow .3s ease, border-color .3s ease
+    transition-delay: calc(var(--reveal-order, 0) * 90ms), calc(var(--reveal-order, 0) * 90ms), 0s, 0s, 0s
+
+    &:hover
+      translate: 0 ds.rem(-6)
+      border-color: rgba(238, 180, 0, .5)
+      box-shadow: 0 ds.rem(16) ds.rem(32) rgba(24, 24, 24, .08)
+
+      html[data-theme="yellow-dark"] &
+        box-shadow: 0 ds.rem(16) ds.rem(32) rgba(0, 0, 0, .4)
+
+      .tile
+        transform: scale(1.08) rotate(-4deg)
+
+      .illustration img
+        transform: scale(1.05)
+
+      .more span
+        translate: ds.rem(4) 0
+
+  .tile
+    transition: transform .3s cubic-bezier(.2, .7, .2, 1)
+
+  .illustration img
+    transition: transform .5s cubic-bezier(.2, .7, .2, 1)
+
+  .more span
+    display: inline-block
+    transition: translate .25s ease
+
+  .more:hover span, .more:focus-visible span
+    translate: ds.rem(4) 0
+
+  .cards-swap > li
+    animation: swap-in .45s cubic-bezier(.2, .7, .2, 1) both
+    animation-delay: calc(var(--reveal-order, 0) * 60ms)
+
+  .hero
+    .hero-background
+      animation: hero-zoom 24s ease-in-out infinite alternate
+
+    .inner > *
+      animation: hero-in .9s cubic-bezier(.2, .7, .2, 1) both
+
+      @for $order from 1 through 5
+        &:nth-child(#{$order})
+          animation-delay: #{($order - 1) * .15}s
+
+  .comparison
+    td svg
+      transform: scale(0)
+
+    &[data-revealed="true"] td svg
+      animation: check-in .45s cubic-bezier(.3, 1.6, .5, 1) both
+      animation-delay: calc(.35s + var(--reveal-order, 0) * 90ms)
+
+  .closing .button-primary
+    position: relative
+    overflow: hidden
+
+    &::after
+      content: ""
+      position: absolute
+      top: 0
+      left: -60%
+      width: 40%
+      height: 100%
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent)
+      transform: skewX(-20deg)
+      animation: shimmer 3.6s ease-in-out infinite
+
+    & + .button-primary::after
+      animation-delay: .5s
+
+  @media (prefers-reduced-motion: reduce)
+    *, *::before, *::after
+      animation: none !important
+      transition: none !important
+
+    [data-reveal]
+      opacity: 1
+      transform: none
+
+    .comparison td svg
+      transform: none
+
+    .closing .button-primary::after
+      display: none
+
+@keyframes hero-in
+  from
+    opacity: 0
+    transform: translateY(ds.rem(24))
+
+  to
+    opacity: 1
+    transform: none
+
+@keyframes hero-zoom
+  from
+    transform: scale(1)
+
+  to
+    transform: scale(1.1)
+
+@keyframes swap-in
+  from
+    opacity: 0
+    transform: translateY(ds.rem(16))
+
+  to
+    opacity: 1
+    transform: none
+
+@keyframes check-in
+  from
+    transform: scale(0)
+
+  to
+    transform: scale(1)
+
+@keyframes shimmer
+  0%
+    left: -60%
+
+  45%, 100%
+    left: 130%
