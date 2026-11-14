@@ -304,9 +304,11 @@ export async function getPostList({
     };
   }
 
-  let pinnedPosts: RawPostRow[] = [];
+  const loadPinnedPosts = async (): Promise<RawPostRow[]> => {
+    if (!shouldUsePinnedPosts) {
+      return [];
+    }
 
-  if (shouldUsePinnedPosts) {
     let pinnedQuery = supabaseAdmin
       .from('posts')
       .select(POST_SELECT)
@@ -353,13 +355,15 @@ export async function getPostList({
       throw new Error('글 목록을 불러오지 못했습니다.');
     }
 
-    pinnedPosts = (pinnedResult.data ?? []) as RawPostRow[];
-  }
+    return (pinnedResult.data ?? []) as RawPostRow[];
+  };
 
-  const shared =
+  const [pinnedPosts, shared] = await Promise.all([
+    loadPinnedPosts(),
     siteType === 'blog' && !hasAuthorFilter && !hashtagId
-      ? await getSharedCoPosts(siteId, categoryId)
-      : { coPosts: [] as SharedCoPost[], boardId: null };
+      ? getSharedCoPosts(siteId, categoryId)
+      : Promise.resolve({ coPosts: [] as SharedCoPost[], boardId: null }),
+  ]);
   const sharedById = new Map(shared.coPosts.map((coPost) => [coPost.post_id, coPost]));
   const sharedIdList = shared.coPosts.map((coPost) => coPost.post_id).join(',');
   const hasSharedPosts = shared.coPosts.length > 0;
@@ -485,18 +489,11 @@ export async function getPostList({
     new Set(mergedPosts.map((post) => post.series_id).filter((value): value is string => Boolean(value))),
   );
 
-  const coPostResult =
-    siteType === 'blog' && postIds.length > 0
-      ? await supabaseAdmin
-          .from('co_posts')
-          .select('post_id')
-          .in('status', ['invited', 'active'])
-          .in('post_id', postIds)
-      : { data: [] as { post_id: string }[], error: null };
-  const coPostIds = new Set((coPostResult.data ?? []).map((row) => row.post_id as string));
-
-  const [boardsResult, rhizomeStigmasResult, stigmaResult, prefixResult, seriesResult, commentResult] =
+  const [coPostResult, boardsResult, rhizomeStigmasResult, stigmaResult, prefixResult, seriesResult, commentResult] =
     await Promise.all([
+      siteType === 'blog' && postIds.length > 0
+        ? supabaseAdmin.from('co_posts').select('post_id').in('status', ['invited', 'active']).in('post_id', postIds)
+        : Promise.resolve({ data: [] as { post_id: string }[], error: null }),
       boardIds.length > 0
         ? supabaseAdmin.from('boards').select('id, board_key, board_label').eq('site_id', siteId).in('id', boardIds)
         : Promise.resolve({ data: [], error: null }),
@@ -527,6 +524,8 @@ export async function getPostList({
   ) {
     throw new Error('글 목록을 불러오지 못했습니다.');
   }
+
+  const coPostIds = new Set((coPostResult.data ?? []).map((row) => row.post_id as string));
 
   const boardMap = new Map(
     (boardsResult.data ?? []).map((row) => [

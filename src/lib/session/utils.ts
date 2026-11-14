@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims } from '@/lib/session/server';
 import { normalizeText } from '../utils';
@@ -68,7 +69,7 @@ export function getSitePathKind(pathname: string, siteName: string): SitePathKin
   return 'other';
 }
 
-export async function getCurrentStigma() {
+export const getCurrentStigma = cache(async () => {
   const sessionClaims = await getSessionClaims();
 
   if (!sessionClaims) {
@@ -92,7 +93,7 @@ export async function getCurrentStigma() {
     stigmaId: stigmaResult.data.id as string,
     role: stigmaResult.data.role as string | null,
   };
-}
+});
 
 export async function getSiteByName(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();

@@ -86,12 +86,19 @@ export async function generateMetadata({ params }: RouteContext): Promise<Metada
 
 export default async function SiteLayout({ children, params }: RouteContext) {
   const { siteName } = await params;
-  const [settings, header, isAdult] = await Promise.all([
-    getSiteAdvancedSettings(siteName),
-    getSiteApiData<SiteHeaderData>(`/api/header/site?siteName=${siteName}`, '사이트 정보를 불러오지 못했습니다.'),
-    detectAdult(siteName),
-  ]);
+  const headerPromise = getSiteApiData<SiteHeaderData>(
+    `/api/header/site?siteName=${siteName}`,
+    '사이트 정보를 불러오지 못했습니다.',
+  );
+  const whenSiteType = <T,>(siteType: 'blog' | 'community', load: () => Promise<{ data: T | null }>) =>
+    headerPromise.then(
+      (result): Promise<{ data: T | null }> =>
+        result.data?.siteType === siteType ? load() : Promise.resolve({ data: null }),
+    );
   const [
+    settings,
+    header,
+    isAdult,
     boards,
     writeBoards,
     postCounts,
@@ -109,6 +116,9 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     ownerTransfer,
     blogCommunity,
   ] = await Promise.all([
+    getSiteAdvancedSettings(siteName),
+    headerPromise,
+    detectAdult(siteName),
     getSiteApiData<{
       boards?: Array<{
         id: string;
@@ -127,66 +137,67 @@ export default async function SiteLayout({ children, params }: RouteContext) {
         is_active: boolean;
       }>;
     }>(`/api/boards/write?siteName=${siteName}`, '글쓰기 게시판을 불러오지 못했습니다.'),
-    getSiteApiData<{
-      contents?: Array<{
-        id: string;
-        slug: string;
-        subject: string;
-        board_key: string;
-        post_count: number;
-        comment_count: number;
-      }>;
-    }>(
-      `/api/boards/all?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
-      '인기글을 불러오지 못했습니다.',
+    whenSiteType('community', () =>
+      getSiteApiData<{
+        contents?: Array<{
+          id: string;
+          slug: string;
+          subject: string;
+          board_key: string;
+          post_count: number;
+          comment_count: number;
+        }>;
+      }>(
+        `/api/boards/all?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
+        '인기글을 불러오지 못했습니다.',
+      ),
     ),
-    getSiteApiData<{
-      contents?: Array<{
-        id: string;
-        slug: string;
-        subject: string;
-        board_key: string;
-        post_count: number;
-        comment_count: number;
-      }>;
-    }>(`/api/boards/all?siteName=${siteName}&page=1&size=10&includePin=false`, '최신글을 불러오지 못했습니다.'),
-    header.data?.siteType === 'community'
-      ? getSiteApiData<{ siteInfo?: unknown }>(
-          `/api/site/community?siteName=${siteName}`,
-          '커뮤니티 정보를 불러오지 못했습니다.',
-        )
-      : Promise.resolve({ data: null }),
-    header.data?.siteType === 'community'
-      ? getSiteApiData<{ links?: unknown[] }>(
-          `/api/manage/design/community/links?siteName=${siteName}`,
-          '커뮤니티 링크를 불러오지 못했습니다.',
-        )
-      : Promise.resolve({ data: null }),
-    header.data?.siteType === 'community'
-      ? getSiteApiData<unknown>(`/api/users/${siteName}/me`, '사용자 정보를 불러오지 못했습니다.')
-      : Promise.resolve({ data: null }),
-    header.data?.siteType === 'blog'
-      ? getSiteApiData<unknown>(`/api/info/general/site/${siteName}`, '사이트 정보를 불러오지 못했습니다.')
-      : Promise.resolve({ data: null }),
+    whenSiteType('community', () =>
+      getSiteApiData<{
+        contents?: Array<{
+          id: string;
+          slug: string;
+          subject: string;
+          board_key: string;
+          post_count: number;
+          comment_count: number;
+        }>;
+      }>(`/api/boards/all?siteName=${siteName}&page=1&size=10&includePin=false`, '최신글을 불러오지 못했습니다.'),
+    ),
+    whenSiteType('community', () =>
+      getSiteApiData<{ siteInfo?: unknown }>(
+        `/api/site/community?siteName=${siteName}`,
+        '커뮤니티 정보를 불러오지 못했습니다.',
+      ),
+    ),
+    whenSiteType('community', () =>
+      getSiteApiData<{ links?: unknown[] }>(
+        `/api/manage/design/community/links?siteName=${siteName}`,
+        '커뮤니티 링크를 불러오지 못했습니다.',
+      ),
+    ),
+    whenSiteType('community', () =>
+      getSiteApiData<unknown>(`/api/users/${siteName}/me`, '사용자 정보를 불러오지 못했습니다.'),
+    ),
+    whenSiteType('blog', () =>
+      getSiteApiData<unknown>(`/api/info/general/site/${siteName}`, '사이트 정보를 불러오지 못했습니다.'),
+    ),
     getSiteApiData<unknown>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
-    header.data?.siteType === 'blog'
-      ? getSiteApiData<unknown>(
-          `/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`,
-          '구독 정보를 불러오지 못했습니다.',
-        )
-      : Promise.resolve({ data: null }),
-    header.data?.siteType === 'blog'
-      ? getSiteApiData<unknown>(
-          `/api/payments/portone/donation/status?siteName=${siteName}&targetType=site`,
-          '후원 정보를 불러오지 못했습니다.',
-        )
-      : Promise.resolve({ data: null }),
-    header.data?.siteType === 'blog'
-      ? getSiteApiData<unknown>(
-          `/api/manage/design/blog/links?siteName=${siteName}`,
-          '링크 정보를 불러오지 못했습니다.',
-        )
-      : Promise.resolve({ data: null }),
+    whenSiteType('blog', () =>
+      getSiteApiData<unknown>(
+        `/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`,
+        '구독 정보를 불러오지 못했습니다.',
+      ),
+    ),
+    whenSiteType('blog', () =>
+      getSiteApiData<unknown>(
+        `/api/payments/portone/donation/status?siteName=${siteName}&targetType=site`,
+        '후원 정보를 불러오지 못했습니다.',
+      ),
+    ),
+    whenSiteType('blog', () =>
+      getSiteApiData<unknown>(`/api/manage/design/blog/links?siteName=${siteName}`, '링크 정보를 불러오지 못했습니다.'),
+    ),
     getSiteApiData<{
       menus?: Array<{
         id: string;
@@ -212,12 +223,12 @@ export default async function SiteLayout({ children, params }: RouteContext) {
       `/api/site/owner-transfer?siteName=${siteName}`,
       '운영자 교체 요청을 불러오지 못했습니다.',
     ),
-    header.data?.siteType === 'blog'
-      ? getSiteApiData<{ feature?: { isPersonalBlog?: boolean; isEnabled?: boolean; canUse?: boolean } }>(
-          `/api/site/${siteName}/community-on-blog?summary=1`,
-          '블로그 커뮤니티 정보를 불러오지 못했습니다.',
-        )
-      : Promise.resolve({ data: null }),
+    whenSiteType('blog', () =>
+      getSiteApiData<{ feature?: { isPersonalBlog?: boolean; isEnabled?: boolean; canUse?: boolean } }>(
+        `/api/site/${siteName}/community-on-blog?summary=1`,
+        '블로그 커뮤니티 정보를 불러오지 못했습니다.',
+      ),
+    ),
   ]);
 
   return (

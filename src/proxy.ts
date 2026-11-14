@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAuthHealth, isSupabaseAuthOutage } from '@/lib/auth/health.server';
 import { updateSession } from '@/lib/session/server';
+import { getNeedsSocialSignUp, getSiteMemberState, getStigmaByUserId } from '@/lib/session/siteMember.server';
+import { getSiteRoutingInfo } from '@/lib/site/siteState.server';
 import { normalizeText } from '@/lib/utils';
 
 type CommunityManageRole =
@@ -447,34 +449,79 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
   };
 }
 
-async function fetchRhizomeState(
-  request: NextRequest,
-  { siteName, customDomain }: { siteName?: string; customDomain?: string },
-) {
-  const targetUrl = new URL('/api/site/public', request.url);
+const siteStateCache = new WeakMap<NextRequest, Map<string, Promise<RhizomeState>>>();
+const memberStateCache = new WeakMap<NextRequest, Map<string, Promise<RouteState>>>();
 
-  if (siteName) targetUrl.searchParams.set('siteName', siteName);
-  if (customDomain) targetUrl.searchParams.set('customDomain', customDomain);
+type RouteState = {
+  response: { ok: boolean; status: number };
+  result: SessionRouteResult | null;
+};
 
-  const routeResponse = await fetch(targetUrl, {
-    method: 'GET',
-    headers: {
-      cookie: request.headers.get('cookie') ?? '',
-    },
-  });
+type RhizomeState = {
+  response: { ok: boolean; status: number };
+  result: RhizomeStateResult | null;
+};
 
-  let result: RhizomeStateResult | null = null;
+function getRequestCache<T>(cache: WeakMap<NextRequest, Map<string, Promise<T>>>, request: NextRequest) {
+  const existing = cache.get(request);
 
-  try {
-    result = (await routeResponse.json()) as RhizomeStateResult;
-  } catch {
-    result = null;
+  if (existing) {
+    return existing;
   }
 
-  return {
-    response: routeResponse,
-    result,
-  };
+  const created = new Map<string, Promise<T>>();
+  cache.set(request, created);
+
+  return created;
+}
+
+function fetchRhizomeState(
+  request: NextRequest,
+  { siteName, customDomain }: { siteName?: string; customDomain?: string },
+): Promise<RhizomeState> {
+  const cache = getRequestCache(siteStateCache, request);
+  const cacheKey = customDomain ? `domain:${customDomain}` : `site:${siteName ?? ''}`;
+  const cached = cache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const statePromise = getSiteRoutingInfo({ siteName, customDomain })
+    .then((siteInfo) => ({
+      response: { ok: Boolean(siteInfo), status: siteInfo ? 200 : 404 },
+      result: siteInfo ? { siteInfo } : null,
+    }))
+    .catch(() => ({ response: { ok: false, status: 500 }, result: null }));
+
+  cache.set(cacheKey, statePromise);
+
+  return statePromise;
+}
+
+function fetchMemberState(
+  request: NextRequest,
+  userId: string | null | undefined,
+  siteName: string,
+): Promise<RouteState> {
+  const cache = getRequestCache(memberStateCache, request);
+  const cached = cache.get(siteName);
+
+  if (cached) {
+    return cached;
+  }
+
+  const statePromise = getStigmaByUserId(userId)
+    .then((stigma) => getSiteMemberState(siteName, stigma))
+    .then((state) => ({
+      response: { ok: state.status >= 200 && state.status < 300, status: state.status },
+      result: state.body as SessionRouteResult,
+    }))
+    .catch(() => ({ response: { ok: false, status: 500 }, result: null }));
+
+  cache.set(siteName, statePromise);
+
+  return statePromise;
 }
 
 function rewriteCustomDomainRequest(
@@ -662,9 +709,9 @@ export async function proxy(request: NextRequest) {
     pathname !== '/auth/callback' &&
     pathname !== '/auth/social-sign-up'
   ) {
-    const socialSignUp = await fetchSessionRoute(request, '/api/session/social-sign-up', {});
+    const needsSocialSignUp = await getNeedsSocialSignUp(sessionClaims?.userId ?? '').catch(() => false);
 
-    if (socialSignUp.response.ok && socialSignUp.result?.needsSocialSignUp === true) {
+    if (needsSocialSignUp) {
       return redirectWithPath(request, '/auth/social-sign-up');
     }
   }
@@ -785,9 +832,7 @@ export async function proxy(request: NextRequest) {
     }
 
     const member = isLoggedIn
-      ? await fetchSessionRoute(request, '/api/session/member', {
-          siteName,
-        })
+      ? await fetchMemberState(request, sessionClaims?.userId, siteName)
       : { response: { status: 401, ok: false }, result: null };
 
     const isRejoin = member.result?.isRejoin === true;
@@ -808,9 +853,7 @@ export async function proxy(request: NextRequest) {
             return redirectWithPath(request, `/${siteName}/invite-only`);
           }
 
-          const member = await fetchSessionRoute(request, '/api/session/member', {
-            siteName,
-          });
+          const member = await fetchMemberState(request, sessionClaims?.userId, siteName);
 
           if (member.response.ok && member.result?.ok) {
             return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
@@ -868,9 +911,7 @@ export async function proxy(request: NextRequest) {
       const isMemberStatus = isMemberStatusPath(pathname, siteName);
 
       if (isLoggedIn) {
-        const member = await fetchSessionRoute(request, '/api/session/member', {
-          siteName,
-        });
+        const member = await fetchMemberState(request, sessionClaims?.userId, siteName);
 
         const memberRedirectTo = member.result?.redirectTo ?? null;
 
@@ -909,7 +950,7 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/');
     }
 
-    const member = await fetchSessionRoute(request, '/api/session/member', { siteName });
+    const member = await fetchMemberState(request, sessionClaims?.userId, siteName);
 
     if (member.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
@@ -974,9 +1015,7 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/auth/sign-in');
     }
 
-    const member = await fetchSessionRoute(request, '/api/session/member', {
-      siteName,
-    });
+    const member = await fetchMemberState(request, sessionClaims?.userId, siteName);
 
     if (member.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');

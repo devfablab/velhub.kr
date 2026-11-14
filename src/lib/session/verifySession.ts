@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims } from '@/lib/session/server';
 import { normalizeText } from '@/lib/utils';
@@ -16,7 +17,10 @@ type VerifySessionResult = {
 };
 
 export default async function verifySession({ siteId }: VerifySessionParams): Promise<VerifySessionResult> {
-  const normalizedSiteId = normalizeText(siteId);
+  return verifySessionBySiteId(normalizeText(siteId));
+}
+
+const verifySessionBySiteId = cache(async (normalizedSiteId: string): Promise<VerifySessionResult> => {
   const sessionClaims = await getSessionClaims();
   const authUserId = sessionClaims?.userId ?? null;
 
@@ -116,4 +120,4 @@ export default async function verifySession({ siteId }: VerifySessionParams): Pr
     stigmaId,
     rhizomeStigmaId,
   };
-}
+});

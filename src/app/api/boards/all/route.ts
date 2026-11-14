@@ -68,11 +68,19 @@ export async function GET(request: Request) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const authorIds = authorName ? await findUserIdsByDisplayName(rhizome.data.id, authorName) : null;
-
-    const session = await verifySession({
-      siteId: rhizome.data.id,
-    });
+    const [authorIds, session, boardsResult] = await Promise.all([
+      authorName ? findUserIdsByDisplayName(rhizome.data.id, authorName) : Promise.resolve(null),
+      verifySession({
+        siteId: rhizome.data.id,
+      }),
+      rhizome.data.site_type === 'community'
+        ? supabaseAdmin
+            .from('boards')
+            .select('id, write_permission')
+            .eq('site_id', rhizome.data.id)
+            .eq('write_permission', 'manager')
+        : Promise.resolve(null),
+    ]);
 
     const isAuth = session.case === 'admin' || session.case === 'staff' || session.case === 'member';
 
@@ -87,13 +95,7 @@ export async function GET(request: Request) {
 
     let excludedBoardIds: string[] = [];
 
-    if (rhizome.data.site_type === 'community') {
-      const boardsResult = await supabaseAdmin
-        .from('boards')
-        .select('id, write_permission')
-        .eq('site_id', rhizome.data.id)
-        .eq('write_permission', 'manager');
-
+    if (boardsResult) {
       if (boardsResult.error) {
         return Response.json({ error: '게시판 목록을 불러오지 못했습니다.' }, { status: 500 });
       }

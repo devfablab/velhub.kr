@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
@@ -298,7 +299,7 @@ export async function updateSession(request: NextRequest) {
   };
 }
 
-export async function getSessionClaims() {
+export const getSessionClaims = cache(async () => {
   const cookieStore = await cookies();
   const cookieItems = cookieStore.getAll();
 
@@ -353,7 +354,7 @@ export async function getSessionClaims() {
   }
 
   return buildSessionClaimsFromAuthClaims(claims, cookieFingerprint);
-}
+});
 
 export async function hasCurrentAuthSessionCookie() {
   const cookieStore = await cookies();
