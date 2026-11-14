@@ -99,7 +99,7 @@
       flex-direction: column
       width: 100%
 
-  .button-primary, .button-outline
+  .button-primary, .button-outline, .button-download
     display: inline-flex
     align-items: center
     justify-content: center
@@ -120,6 +120,13 @@
   .button-outline
     border: 1px solid #737373
     color: ds.$hex-white
+
+  .button-download
+    border: 1px solid ds.$hex-accent
+    background-color: transparent
+    color: ds.$hex-white
+    line-height: inherit
+    cursor: pointer
 
   .navigation
     position: sticky
@@ -598,6 +605,20 @@
 
     .closing .button-primary::after
       display: none
+
+.download-menu
+  a
+    display: flex
+    align-items: center
+    gap: ds.rem(8)
+    width: 100%
+    color: inherit
+    font-size: ds.rem(15)
+    text-decoration: none
+    @include ds.fw(pre, 500)
+
+    svg
+      color: ds.$hex-accent
 
 @keyframes hero-in
   from

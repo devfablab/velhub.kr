@@ -35,6 +35,7 @@ import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
 import { originTitle, Seo } from '@/lib/seo';
 import Anchor from '@/components/Anchor';
+import DownloadMenu from './downloadMenu';
 import Opt from './opt';
 import WritingTabs from './writingTabs';
 import styles from '@/app/about.module.sass';
@@ -538,6 +539,7 @@ export default function Page() {
             <Anchor href="/new/community" className={styles['button-primary']}>
               커뮤니티 만들기
             </Anchor>
+            <DownloadMenu />
             <Anchor href="/" className={styles['button-outline']}>
               라운지 둘러보기
             </Anchor>

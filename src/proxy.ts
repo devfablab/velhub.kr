@@ -160,6 +160,8 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'user' ||
     firstSegment === 'dummy.webp' ||
     firstSegment === 'together.webp' ||
+    firstSegment === 'velhub_branding.pdf' ||
+    firstSegment === 'velhub_partnership.pdf' ||
     firstSegment === 'favicon' ||
     firstSegment === 'memberships' ||
     firstSegment === 'creator'
@@ -633,7 +635,9 @@ export async function proxy(request: NextRequest) {
     pathname === '/favicon.ico' ||
     pathname.startsWith('/favicon/') ||
     pathname === '/dummy.webp' ||
-    pathname === '/together.webp'
+    pathname === '/together.webp' ||
+    pathname === '/velhub_branding.pdf' ||
+    pathname === '/velhub_partnership.pdf'
   ) {
     return NextResponse.next();
   }
@@ -661,7 +665,9 @@ export async function proxy(request: NextRequest) {
     !pathname.startsWith('/favicon') &&
     !pathname.startsWith('/broken-image.jpg') &&
     !pathname.startsWith('/dummy.webp') &&
-    !pathname.startsWith('/together.webp');
+    !pathname.startsWith('/together.webp') &&
+    !pathname.startsWith('/velhub_branding.pdf') &&
+    !pathname.startsWith('/velhub_partnership.pdf');
 
   if (canResolveCustomDomain) {
     const customDomainState = await fetchRhizomeState(request, { customDomain: hostname });
@@ -706,6 +712,8 @@ export async function proxy(request: NextRequest) {
     !pathname.startsWith('/broken-image.jpg') &&
     !pathname.startsWith('/dummy.webp') &&
     !pathname.startsWith('/together.webp') &&
+    !pathname.startsWith('/velhub_branding.pdf') &&
+    !pathname.startsWith('/velhub_partnership.pdf') &&
     !pathname.startsWith('/favicon') &&
     pathname !== '/auth/callback' &&
     pathname !== '/auth/social-sign-up'

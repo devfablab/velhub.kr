@@ -53,13 +53,13 @@ export default function Opt({
               ))}
             </TableBody>
           </Table>
-          <Stack direction="row" justifyContent="flex-end" gap={2}>
-            <Anchor href="/concierge/partnerships/new" className="button medium action">
-              제휴 제안하기
-            </Anchor>
-          </Stack>
         </Stack>
       ) : null}
+      <Stack direction="row" justifyContent="flex-end" gap={2}>
+        <Anchor href="/concierge/partnerships/new" className="button medium action">
+          제휴 제안하기
+        </Anchor>
+      </Stack>
     </Stack>
   );
 }
