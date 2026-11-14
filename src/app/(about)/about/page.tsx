@@ -291,7 +291,7 @@ export async function generateMetadata(): Promise<Metadata> {
     pageTitle: '처음 오셨나요?',
     pageDescription:
       '혼자 쓰는 1인 블로그부터 함께 쓰는 팀 블로그, 관심사를 나누는 커뮤니티까지. 나에게 맞는 공간을 만들어 보세요.',
-    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pageImg: `https://velhub.xyz/og-about.webp?ts=${timestamp}`,
     pagePath: '/about',
   });
 }
