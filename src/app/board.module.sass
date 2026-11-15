@@ -447,15 +447,18 @@
         &:hover, &:focus-visible
           text-decoration: underline
 
-      .edit-link
-        background-color: transparent
-        height: ds.rem(27)
-        border: 1px solid rgba(ds.$rgb-tertiary, .2)
-        border-radius: ds.rem(7)
-        padding: 0 ds.rem(7)
-        @include ds.fw(pre, 600)
-        font-size: ds.rem(14)
-        color: rgba(ds.$rgb-tertiary, 1)
+    .edit-link
+      display: inline-flex
+      align-items: center
+      gap: ds.rem(3)
+      background-color: transparent
+      height: ds.rem(27)
+      border: 1px solid rgba(ds.$rgb-tertiary, .2)
+      border-radius: ds.rem(7)
+      padding: 0 ds.rem(7)
+      @include ds.fw(pre, 600)
+      font-size: ds.rem(14)
+      color: rgba(ds.$rgb-tertiary, 1)
 
     h3
       display: flex

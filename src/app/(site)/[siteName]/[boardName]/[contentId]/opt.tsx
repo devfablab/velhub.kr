@@ -1689,6 +1689,82 @@ export default function Opt({
                 ) : null}
               </div>
             ) : null}
+            {isPage ? null : (
+              <div className="paper">
+                <header className={styles['content-header']}>
+                  <div className={styles['author-profile']}>
+                    <div className={styles.avatar}>
+                      {content.co_authors?.length ? (
+                        <AvatarGroup max={2}>
+                          {content.co_authors.map((coAuthor) => (
+                            <Avatar
+                              key={coAuthor.name}
+                              src={coAuthor.avatar_url || '/broken-image.jpg'}
+                              alt={coAuthor.name}
+                            />
+                          ))}
+                        </AvatarGroup>
+                      ) : (
+                        <Avatar src={content.author_avatar_url || '/broken-image.jpg'} alt={content.author_name} />
+                      )}
+                    </div>
+                    <div className={styles.info}>
+                      <div className={styles.name}>
+                        <cite>
+                          {isCommunity ? (
+                            <CommunityMemberMenu
+                              siteName={siteName}
+                              name={content.author_name}
+                              boardName={board?.board_key}
+                              boardLabel={board?.board_label}
+                            />
+                          ) : content.co_authors?.length ? (
+                            content.co_authors.map((coAuthor) => coAuthor.name).join(' · ')
+                          ) : (
+                            content.author_name
+                          )}
+                        </cite>
+                        {isCommunity ? (
+                          <>
+                            {authorRoleLabel ? (
+                              <em>
+                                <span>{authorRoleLabel}</span>
+                                {content.author_manage_icon?.iconUrl ? (
+                                  <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
+                                ) : null}
+                              </em>
+                            ) : content.author_level ? (
+                              <em>
+                                <span>{content.author_level.name}</span>
+                                {content.author_level.iconUrl ? (
+                                  <img src={content.author_level.iconUrl} alt={content.author_level.name} />
+                                ) : null}
+                              </em>
+                            ) : null}
+                          </>
+                        ) : null}
+                      </div>
+                      <div className={styles.datetime}>
+                        <span aria-label="게시일">
+                          {formatDateTimeDetail(content.published_at || content.created_at)}
+                        </span>
+                        {content.edited_at ? <span>{`(수정됨)`}</span> : null}
+                        <span aria-label="조회수">
+                          <VisibilityOutlinedIcon /> {content.post_count}
+                        </span>
+                      </div>
+                    </div>
+                    {canEdit ? (
+                      <Anchor href={editHref} className={styles['edit-link']}>
+                        <span>글 수정</span>
+                        <EditNoteRoundedIcon />
+                      </Anchor>
+                    ) : null}
+                  </div>
+                </header>
+              </div>
+            )}
+
             <div className={styles.options}>
               <div className={styles.buttons}>
                 <div className={styles['button-basics']}>
