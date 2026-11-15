@@ -85,6 +85,11 @@ function YoutubeThumbnailImage({ content }: { content: PostListItem }) {
     <img
       src={youtubeThumbnailUrl}
       alt=""
+      onLoad={(event) => {
+        if (event.currentTarget.naturalWidth <= 120 && qualityIndex < YOUTUBE_THUMBNAIL_QUALITIES.length - 1) {
+          setQualityIndex(qualityIndex + 1);
+        }
+      }}
       onError={() =>
         setQualityIndex((previousIndex) =>
           previousIndex < YOUTUBE_THUMBNAIL_QUALITIES.length - 1 ? previousIndex + 1 : previousIndex,
