@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined';
 import {
   DialogActions,
@@ -15,11 +16,13 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Skeleton,
+  TextField,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
-import { formatDate, formatDateTimeDetail } from '@/lib/utils';
+import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import asideStyles from '@/app/aside.module.sass';
 import boardStyles from '@/app/board.module.sass';
 
@@ -32,6 +35,7 @@ type MemberInfo = {
   visitCount: number;
   postCount: number;
   commentCount: number;
+  blockTargetId: string | null;
 };
 
 type Props = {
@@ -53,6 +57,10 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [member, setMember] = useState<MemberInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
+  const [blockReason, setBlockReason] = useState('');
+  const [blockErrorMessage, setBlockErrorMessage] = useState('');
+  const [isBlockSubmitting, setIsBlockSubmitting] = useState(false);
   const hasBoard = Boolean(boardName && boardLabel);
 
   function preventParentNavigation(event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) {
@@ -60,9 +68,28 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
     event.stopPropagation();
   }
 
+  async function loadMember() {
+    const response = await fetch(`/api/users/${siteName}?memberName=${encodeURIComponent(name)}`, {
+      credentials: 'include',
+      cache: 'no-store',
+    });
+    const result = (await response.json()) as { member?: MemberInfo; error?: string };
+
+    if (!response.ok || !result.member) {
+      throw new Error(result.error ?? '멤버 정보를 불러오지 못했습니다.');
+    }
+
+    setMember(result.member);
+    return result.member;
+  }
+
   function openMenu(event: MouseEvent<HTMLSpanElement>) {
     preventParentNavigation(event);
     setAnchorElement(event.currentTarget);
+
+    if (!member) {
+      void loadMember().catch(() => null);
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLSpanElement>) {
@@ -72,28 +99,80 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
 
     preventParentNavigation(event);
     setAnchorElement(event.currentTarget);
+
+    if (!member) {
+      void loadMember().catch(() => null);
+    }
   }
 
   async function openMemberInfo() {
     setAnchorElement(null);
     setIsDialogOpen(true);
     setErrorMessage('');
-    setMember(null);
+
+    if (member) {
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/users/${siteName}?memberName=${encodeURIComponent(name)}`, {
-        credentials: 'include',
-        cache: 'no-store',
-      });
-      const result = (await response.json()) as { member?: MemberInfo; error?: string };
-
-      if (!response.ok || !result.member) {
-        throw new Error(result.error ?? '멤버 정보를 불러오지 못했습니다.');
-      }
-
-      setMember(result.member);
+      await loadMember();
     } catch (unknownError) {
       setErrorMessage(unknownError instanceof Error ? unknownError.message : '멤버 정보를 불러오지 못했습니다.');
+    }
+  }
+
+  function openBlockDialog() {
+    setAnchorElement(null);
+    setBlockReason('');
+    setBlockErrorMessage('');
+    setIsBlockDialogOpen(true);
+  }
+
+  function closeBlockDialog() {
+    if (isBlockSubmitting) {
+      return;
+    }
+
+    setIsBlockDialogOpen(false);
+  }
+
+  async function submitBlock() {
+    const reason = normalizeText(blockReason);
+
+    if (!member?.blockTargetId) {
+      return;
+    }
+
+    if (!reason) {
+      setBlockErrorMessage('활동정지 사유를 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsBlockSubmitting(true);
+      setBlockErrorMessage('');
+
+      const response = await fetch(`/api/users/${siteName}/${member.blockTargetId}/block`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ reason, blockTerm: null }),
+      });
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '활동정지 처리에 실패했습니다.');
+      }
+
+      setMember(null);
+      setIsBlockDialogOpen(false);
+      router.refresh();
+    } catch (unknownError) {
+      setBlockErrorMessage(unknownError instanceof Error ? unknownError.message : '활동정지 처리에 실패했습니다.');
+    } finally {
+      setIsBlockSubmitting(false);
     }
   }
 
@@ -110,7 +189,20 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
   const detailContent = errorMessage ? (
     <p>{errorMessage}</p>
   ) : !member ? (
-    <p>멤버 정보를 불러오는 중입니다.</p>
+    <dl className={boardStyles['member-info-detail']} aria-label="멤버 정보를 불러오는 중입니다.">
+      <div>
+        <Skeleton variant="rounded" component="dt" />
+        <Skeleton variant="rounded" component="dd" />
+      </div>
+      <div>
+        <Skeleton variant="rounded" component="dt" />
+        <Skeleton variant="rounded" component="dd" />
+      </div>
+      <div>
+        <Skeleton variant="rounded" component="dt" />
+        <Skeleton variant="rounded" component="dd" />
+      </div>
+    </dl>
   ) : (
     <dl className={boardStyles['member-info-detail']}>
       <div>
@@ -152,6 +244,25 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
     </dl>
   );
 
+  const blockContent = (
+    <>
+      <p>해당 멤버를 활동정지 하시겠어요?</p>
+      <TextField
+        value={blockReason}
+        onChange={(event) => setBlockReason(event.target.value)}
+        placeholder="활동정지 사유"
+        aria-label="활동정지 사유"
+        size="small"
+        fullWidth
+        multiline
+        minRows={2}
+        disabled={isBlockSubmitting}
+        error={Boolean(blockErrorMessage)}
+        helperText={blockErrorMessage || null}
+      />
+    </>
+  );
+
   return (
     <>
       <span
@@ -182,6 +293,14 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
               <ArticleOutlinedIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>{`${boardLabel}에서 쓴 글 보기`}</ListItemText>
+          </MenuItem>
+        ) : null}
+        {member?.blockTargetId ? (
+          <MenuItem dense onClick={openBlockDialog}>
+            <ListItemIcon>
+              <PersonOffOutlinedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>활동정지</ListItemText>
           </MenuItem>
         ) : null}
       </Menu>
@@ -221,6 +340,50 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
           <DialogActions>
             <button type="button" className="button medium submit" onClick={() => setIsDialogOpen(false)}>
               닫기
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isBlockDialogOpen} onClose={closeBlockDialog} className="VhiDrawer-bottom">
+          <h2>{`${name} 님에 대해 활동정지`}</h2>
+          <button type="button" className="close-button" onClick={closeBlockDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <div className="VhiDrawer-bottom-content">{blockContent}</div>
+          <div className="drawer-dialog-actions">
+            <button
+              type="button"
+              className="button medium close"
+              disabled={isBlockSubmitting}
+              onClick={closeBlockDialog}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              disabled={isBlockSubmitting}
+              onClick={() => void submitBlock()}
+            >
+              승인
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog open={isBlockDialogOpen} onClose={closeBlockDialog} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>{`${name} 님에 대해 활동정지`}</DialogTitle>
+          <button type="button" className="close-button" onClick={closeBlockDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>{blockContent}</DialogContent>
+          <DialogActions>
+            <button type="button" className="cancel-button" disabled={isBlockSubmitting} onClick={closeBlockDialog}>
+              취소
+            </button>
+            <button type="button" disabled={isBlockSubmitting} onClick={() => void submitBlock()}>
+              승인
             </button>
           </DialogActions>
         </Dialog>

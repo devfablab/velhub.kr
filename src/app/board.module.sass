@@ -2679,13 +2679,22 @@
     display: grid
     grid-template-columns: ds.rem(112) minmax(0, 1fr)
     gap: ds.rem(12)
+    font-size: ds.rem(14)
 
   dt
     color: ds.$hex-secondary
 
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
   dd
     margin: 0
     overflow-wrap: anywhere
+    @include ds.fw(pre, 500)
+    color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright
 
 .sponsorship-message
   @include ds.fw(pre, 500)

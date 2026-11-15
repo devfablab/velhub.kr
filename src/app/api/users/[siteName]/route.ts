@@ -1,9 +1,12 @@
+import verifySession from '@/lib/session/verifySession';
 import {
   buildMemberResponse,
   getLevelsByIds,
   getPublicActiveMemberships,
   getPublicMembersAccess,
   getStigmasByIds,
+  isCommunityStaffMembership,
+  isMemberManagingStaff,
 } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';
 
@@ -142,7 +145,16 @@ export async function GET(request: Request, context: RouteContext) {
         return Response.json({ error: '멤버 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const authUserResult = await access.supabaseAdmin.auth.admin.getUserById(authIdentityResult.data.user_id);
+      const [authUserResult, session] = await Promise.all([
+        access.supabaseAdmin.auth.admin.getUserById(authIdentityResult.data.user_id),
+        verifySession({ siteId: access.site.id }),
+      ]);
+
+      const canBlock =
+        Boolean(session.stigmaId) &&
+        session.stigmaId !== membership.user_id &&
+        (await isMemberManagingStaff(access.site.id, session.stigmaId as string)) &&
+        !(await isCommunityStaffMembership(access.site.id, membership));
 
       return Response.json({
         member: {
@@ -154,6 +166,7 @@ export async function GET(request: Request, context: RouteContext) {
           visitCount: Number(membership.checkin_count ?? 0),
           postCount: Number(membership.post_count ?? 0),
           commentCount: Number(membership.comment_count ?? 0),
+          blockTargetId: canBlock ? membership.user_id : null,
         },
       });
     }

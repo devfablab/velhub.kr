@@ -166,6 +166,46 @@ export async function getPublicMembersAccess(siteName: string) {
   } as const;
 }
 
+export async function isMemberManagingStaff(siteId: string, stigmaId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const membershipResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('id, role')
+    .eq('site_id', siteId)
+    .eq('user_id', stigmaId)
+    .maybeSingle();
+
+  const membershipRole = normalizeText(membershipResult.data?.role);
+
+  if (membershipResult.error || !membershipResult.data) {
+    return false;
+  }
+
+  if (membershipRole === 'owner') {
+    return true;
+  }
+
+  if (membershipRole !== 'manager') {
+    return false;
+  }
+
+  const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', siteId).maybeSingle();
+
+  if (communityResult.error || !communityResult.data) {
+    return false;
+  }
+
+  const manageRoleResult = await supabaseAdmin
+    .from('community_manage_role')
+    .select('id', { count: 'exact', head: true })
+    .eq('community_id', communityResult.data.id)
+    .eq('manager_id', membershipResult.data.id)
+    .in('role', ['owner', 'community-manager']);
+
+  return !manageRoleResult.error && Boolean(manageRoleResult.count);
+}
+
 export async function getStaffMembersAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -205,16 +245,7 @@ export async function getStaffMembersAccess(siteName: string) {
     } as const;
   }
 
-  const membershipResult = await supabaseAdmin
-    .from('rhizome_stigmas')
-    .select('role')
-    .eq('site_id', site.id)
-    .eq('user_id', session.stigmaId)
-    .maybeSingle();
-
-  const membershipRole = normalizeText(membershipResult.data?.role);
-
-  if (membershipResult.error || !['owner', 'manager'].includes(membershipRole)) {
+  if (!(await isMemberManagingStaff(site.id, session.stigmaId))) {
     return {
       ok: false,
       status: 403,
