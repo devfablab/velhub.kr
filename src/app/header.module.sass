@@ -1193,3 +1193,18 @@ main.manage
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-light
+
+.search-history
+  display: flex
+  align-items: center
+  gap: ds.rem(8)
+  @include ds.fw(pre, 500)
+
+  svg
+    flex-shrink: 0
+    color: ds.$hex-tertiary
+
+  span
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
