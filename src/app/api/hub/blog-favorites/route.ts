@@ -1,5 +1,6 @@
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { syncFavoriteFolderAccess } from '@/lib/service/hubFavoriteFolder.server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -56,6 +57,8 @@ export async function GET() {
     if (!session.authUserId || !session.stigmaId) {
       return Response.json({ blogs: [] });
     }
+
+    await syncFavoriteFolderAccess(session.stigmaId).catch(() => null);
 
     const supabaseAdmin = getSupabaseAdmin();
 

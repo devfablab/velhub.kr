@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { syncFavoriteFolderAccess } from '@/lib/service/hubFavoriteFolder.server';
 import { getCurrentStigma } from '@/lib/session/utils';
 
 export async function PUT(request: NextRequest) {
@@ -19,6 +20,18 @@ export async function PUT(request: NextRequest) {
 
   if (!Array.isArray(updates) || updates.length === 0) {
     return NextResponse.json({ error: 'Updates array is required' }, { status: 400 });
+  }
+
+  if (updates.some((update) => update.folder_id !== null)) {
+    const canUseFolders = await syncFavoriteFolderAccess(currentStigma.stigmaId).catch(() => null);
+
+    if (canUseFolders === null) {
+      return NextResponse.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (!canUseFolders) {
+      return NextResponse.json({ error: '폴더 이동은 아페토 멤버십 전용 기능입니다.' }, { status: 403 });
+    }
   }
 
   const supabaseAdmin = getSupabaseAdmin();

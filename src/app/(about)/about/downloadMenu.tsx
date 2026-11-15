@@ -10,6 +10,7 @@ const brochures = [
   { href: '/velhub_branding.pdf', fileName: '데브허브 광고 제휴 소개서.pdf', label: '광고 제휴 소개서' },
   { href: '/velhub_partnership.pdf', fileName: '데브허브 기술 제휴 소개서.pdf', label: '기술 제휴 소개서' },
   { href: '/velhub_streamer.pdf', fileName: '데브허브 스트리머.pdf', label: '스트리머' },
+  { href: '/velhub_membership.pdf', fileName: '데브허브 멤버십.pdf', label: '멤버십' },
 ];
 
 export default function DownloadMenu() {

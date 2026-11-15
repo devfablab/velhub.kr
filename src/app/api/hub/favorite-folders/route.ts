@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { syncFavoriteFolderAccess } from '@/lib/service/hubFavoriteFolder.server';
 import { validateFavoriteFolderLabel } from '@/lib/service/hubFavoriteFolder.shared';
 import { getCurrentStigma } from '@/lib/session/utils';
 
@@ -10,9 +11,13 @@ export async function GET() {
     return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
+  const canAddFolder = await syncFavoriteFolderAccess(currentStigma.stigmaId).catch(() => null);
 
-  const { data: folders, error: foldersError } = await supabaseAdmin
+  if (canAddFolder === null) {
+    return NextResponse.json({ error: '즐겨찾기 폴더를 불러오지 못했습니다.' }, { status: 500 });
+  }
+
+  const { data: folders, error: foldersError } = await getSupabaseAdmin()
     .from('favorite_folders')
     .select('id, label, is_default, created_at')
     .eq('user_id', currentStigma.stigmaId)
@@ -22,7 +27,10 @@ export async function GET() {
     return NextResponse.json({ error: '즐겨찾기 폴더를 불러오지 못했습니다.' }, { status: 500 });
   }
 
-  return NextResponse.json({ folders: folders || [] });
+  return NextResponse.json({
+    folders: canAddFolder ? folders || [] : (folders || []).filter((folder) => folder.is_default),
+    canAddFolder,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -30,6 +38,16 @@ export async function POST(request: NextRequest) {
 
   if (!currentStigma) {
     return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+  }
+
+  const canAddFolder = await syncFavoriteFolderAccess(currentStigma.stigmaId).catch(() => null);
+
+  if (canAddFolder === null) {
+    return NextResponse.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
+  if (!canAddFolder) {
+    return NextResponse.json({ error: '폴더 추가는 아페토 멤버십 전용 기능입니다.' }, { status: 403 });
   }
 
   let label = '';

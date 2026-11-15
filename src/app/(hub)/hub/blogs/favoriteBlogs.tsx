@@ -42,11 +42,12 @@ export default function FavoriteBlogs({
   initialError,
 }: {
   initialBlogs: FavoriteBlogsResponse | null;
-  initialFolders: { folders?: Folder[] } | null;
+  initialFolders: { folders?: Folder[]; canAddFolder?: boolean } | null;
   initialError: string;
 }) {
   const [blogs, setBlogs] = useState<FavoriteBlogRow[]>(initialBlogs?.blogs ?? []);
   const [folders, setFolders] = useState<Folder[]>(initialFolders?.folders ?? []);
+  const [canAddFolder, setCanAddFolder] = useState(initialFolders?.canAddFolder === true);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [actionError, setActionError] = useState<FolderActionError | null>(null);
 
@@ -74,6 +75,7 @@ export default function FavoriteBlogs({
 
       setBlogs(Array.isArray(blogsResult.blogs) ? blogsResult.blogs : []);
       setFolders(foldersResult.folders || []);
+      setCanAddFolder(foldersResult.canAddFolder === true);
     } catch (unknownError) {
       setErrorMessage(unknownError instanceof Error ? unknownError.message : '오류가 발생했습니다.');
     }
@@ -289,9 +291,11 @@ export default function FavoriteBlogs({
     <section className={`paper ${styles.paper} ${styles.join}`}>
       <div className={styles['section-headline']}>
         <h2>즐겨찾는 블로그</h2>
-        <button type="button" className="button small action" onClick={() => setIsAddFolderOpen(true)}>
-          폴더 추가
-        </button>
+        {canAddFolder ? (
+          <button type="button" className="button small action" onClick={() => setIsAddFolderOpen(true)}>
+            폴더 추가
+          </button>
+        ) : null}
       </div>
 
       <FolderModals
