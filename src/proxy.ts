@@ -162,6 +162,7 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'together.webp' ||
     firstSegment === 'velhub_branding.pdf' ||
     firstSegment === 'velhub_partnership.pdf' ||
+    firstSegment === 'velhub_streamer.pdf' ||
     firstSegment === 'favicon' ||
     firstSegment === 'memberships' ||
     firstSegment === 'creator'
@@ -637,7 +638,8 @@ export async function proxy(request: NextRequest) {
     pathname === '/dummy.webp' ||
     pathname === '/together.webp' ||
     pathname === '/velhub_branding.pdf' ||
-    pathname === '/velhub_partnership.pdf'
+    pathname === '/velhub_partnership.pdf' ||
+    pathname === '/velhub_streamer.pdf'
   ) {
     return NextResponse.next();
   }
@@ -667,7 +669,8 @@ export async function proxy(request: NextRequest) {
     !pathname.startsWith('/dummy.webp') &&
     !pathname.startsWith('/together.webp') &&
     !pathname.startsWith('/velhub_branding.pdf') &&
-    !pathname.startsWith('/velhub_partnership.pdf');
+    !pathname.startsWith('/velhub_partnership.pdf') &&
+    !pathname.startsWith('/velhub_streamer.pdf');
 
   if (canResolveCustomDomain) {
     const customDomainState = await fetchRhizomeState(request, { customDomain: hostname });
@@ -714,6 +717,7 @@ export async function proxy(request: NextRequest) {
     !pathname.startsWith('/together.webp') &&
     !pathname.startsWith('/velhub_branding.pdf') &&
     !pathname.startsWith('/velhub_partnership.pdf') &&
+    !pathname.startsWith('/velhub_streamer.pdf') &&
     !pathname.startsWith('/favicon') &&
     pathname !== '/auth/callback' &&
     pathname !== '/auth/social-sign-up'
