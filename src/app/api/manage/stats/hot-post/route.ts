@@ -29,6 +29,8 @@ type BoardRow = {
   board_label: string | null;
 };
 
+type SiteType = 'blog' | 'community';
+
 type SeriesRow = {
   id: string;
   series_label: string | null;
@@ -42,7 +44,7 @@ type DateRange = {
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const HOT_POST_LIMIT = 100;
+const HOT_POST_PAGE_SIZE = 100;
 
 function isRangeType(value: string): value is RangeType {
   return (
@@ -187,17 +189,23 @@ function getCustomRange(startDate: string, endDate: string) {
   } satisfies DateRange;
 }
 
-async function getReadRows(siteId: string, start: Date, endExclusive: Date, from = 0): Promise<ReadRow[]> {
+async function getReadRows(
+  siteId: string,
+  boardId: string | null,
+  start: Date,
+  endExclusive: Date,
+  from = 0,
+): Promise<ReadRow[]> {
   const supabaseAdmin = getSupabaseAdmin();
   const to = from + 999;
 
-  const readResult = await supabaseAdmin
+  const readQuery = supabaseAdmin
     .from('post_reads')
     .select('post_id')
     .eq('site_id', siteId)
     .gte('read_at', start.toISOString())
-    .lt('read_at', endExclusive.toISOString())
-    .range(from, to);
+    .lt('read_at', endExclusive.toISOString());
+  const readResult = await (boardId ? readQuery.eq('board_id', boardId) : readQuery).range(from, to);
 
   if (readResult.error) {
     throw new Error('인기글 순위를 불러오지 못했습니다.');
@@ -209,7 +217,7 @@ async function getReadRows(siteId: string, start: Date, endExclusive: Date, from
     return rows;
   }
 
-  const nextRows = await getReadRows(siteId, start, endExclusive, to + 1);
+  const nextRows = await getReadRows(siteId, boardId, start, endExclusive, to + 1);
 
   return [...rows, ...nextRows];
 }
@@ -242,11 +250,11 @@ async function getStatsAccess(siteName: string) {
     } as const;
   }
 
-  if (rhizome.site_type !== 'blog') {
+  if (rhizome.site_type !== 'blog' && rhizome.site_type !== 'community') {
     return {
       ok: false,
       status: 400,
-      error: '블로그 통계만 확인할 수 있습니다.',
+      error: '블로그와 커뮤니티 통계만 확인할 수 있습니다.',
     } as const;
   }
 
@@ -254,6 +262,7 @@ async function getStatsAccess(siteName: string) {
     ok: true,
     supabaseAdmin,
     rhizome,
+    siteType: rhizome.site_type as SiteType,
   } as const;
 }
 
@@ -264,6 +273,9 @@ export async function GET(request: Request) {
     const requestedRange = normalizeText(requestUrl.searchParams.get('range')) || 'today';
     const startDate = normalizeText(requestUrl.searchParams.get('startDate'));
     const endDate = normalizeText(requestUrl.searchParams.get('endDate'));
+    const boardKey = normalizeText(requestUrl.searchParams.get('board')).toLowerCase();
+    const requestedPage = Number(requestUrl.searchParams.get('page'));
+    const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -285,7 +297,51 @@ export async function GET(request: Request) {
       return Response.json({ error: '기간 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const readRows = await getReadRows(access.rhizome.id, dateRange.start, dateRange.endExclusive);
+    const boardOptions: BoardRow[] = [];
+
+    if (access.siteType === 'community') {
+      const boardOptionsResult = await access.supabaseAdmin
+        .from('boards')
+        .select('id, board_key, board_label')
+        .eq('site_id', access.rhizome.id)
+        .neq('board_type', 'page')
+        .order('sort_order', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true });
+
+      if (boardOptionsResult.error) {
+        return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      boardOptions.push(...((boardOptionsResult.data ?? []) as BoardRow[]));
+    }
+
+    const selectedBoard =
+      access.siteType === 'community' && boardKey
+        ? (boardOptions.find((board) => board.board_key === boardKey) ?? null)
+        : null;
+
+    if (access.siteType === 'community' && boardKey && !selectedBoard) {
+      return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const site = {
+      siteName: access.rhizome.site_key,
+      siteLabel: access.rhizome.site_label,
+      siteType: access.siteType,
+    };
+    const boardInfo = {
+      boards: boardOptions.map((board) => ({ key: board.board_key, label: board.board_label || board.board_key })),
+      selectedBoard: selectedBoard
+        ? { key: selectedBoard.board_key, label: selectedBoard.board_label || selectedBoard.board_key }
+        : null,
+    };
+
+    const readRows = await getReadRows(
+      access.rhizome.id,
+      selectedBoard?.id ?? null,
+      dateRange.start,
+      dateRange.endExclusive,
+    );
     const postCountMap = readRows.reduce<Record<string, number>>((accumulator, row) => {
       if (!row.post_id) {
         return accumulator;
@@ -297,19 +353,19 @@ export async function GET(request: Request) {
       };
     }, {});
 
-    const hotPostEntries = Object.entries(postCountMap)
-      .sort((current, next) => next[1] - current[1])
-      .slice(0, HOT_POST_LIMIT);
+    const rankedEntries = Object.entries(postCountMap).sort((current, next) => next[1] - current[1]);
+    const total = rankedEntries.length;
+    const lastPage = Math.max(Math.ceil(total / HOT_POST_PAGE_SIZE), 1);
+    const currentPage = Math.min(page, lastPage);
+    const pageStart = (currentPage - 1) * HOT_POST_PAGE_SIZE;
+    const hotPostEntries = rankedEntries.slice(pageStart, pageStart + HOT_POST_PAGE_SIZE);
 
     const postIds = hotPostEntries.map(([postId]) => postId);
 
     if (postIds.length === 0) {
       return Response.json({
-        site: {
-          siteName: access.rhizome.site_key,
-          siteLabel: access.rhizome.site_label,
-          siteType: 'blog',
-        },
+        site,
+        ...boardInfo,
         range: {
           type: requestedRange,
           startDate: formatKstDate(dateRange.start),
@@ -317,6 +373,9 @@ export async function GET(request: Request) {
           endLabel: dateRange.endLabel,
         },
         posts: [],
+        page: currentPage,
+        pageSize: HOT_POST_PAGE_SIZE,
+        total,
       });
     }
 
@@ -395,7 +454,7 @@ export async function GET(request: Request) {
 
         return {
           id: post.id,
-          rank: index + 1,
+          rank: pageStart + index + 1,
           slug: String(post.slug),
           subject: post.subject ?? '',
           readCount,
@@ -407,11 +466,8 @@ export async function GET(request: Request) {
       .filter((post): post is NonNullable<typeof post> => Boolean(post));
 
     return Response.json({
-      site: {
-        siteName: access.rhizome.site_key,
-        siteLabel: access.rhizome.site_label,
-        siteType: 'blog',
-      },
+      site,
+      ...boardInfo,
       range: {
         type: requestedRange,
         startDate: formatKstDate(dateRange.start),
@@ -419,6 +475,9 @@ export async function GET(request: Request) {
         endLabel: dateRange.endLabel,
       },
       posts: hotPosts,
+      page: currentPage,
+      pageSize: HOT_POST_PAGE_SIZE,
+      total,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

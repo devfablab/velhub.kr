@@ -685,6 +685,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
               { href: `/${siteName}/manage/stats/repeat-visit`, label: '재방문율' },
             ]
           : [
+              { href: `/${siteName}/manage/stats/hot-post`, label: '인기글 순위' },
               { href: `/${siteName}/manage/stats/join`, label: '가입자수' },
               { href: `/${siteName}/manage/stats/inactive-user`, label: '비활동 유저' },
             ]),

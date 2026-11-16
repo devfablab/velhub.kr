@@ -233,16 +233,16 @@ export async function GET(request: Request) {
           month: number;
         };
       },
+      popularPosts: [] as {
+        id: string;
+        slug: string;
+        subject: string;
+        postCount: number;
+        publishedAt: string | null;
+        boardKey: string | null;
+        boardLabel: string | null;
+      }[],
       blog: null as null | {
-        popularPosts: {
-          id: string;
-          slug: string;
-          subject: string;
-          postCount: number;
-          publishedAt: string | null;
-          boardKey: string | null;
-          boardLabel: string | null;
-        }[];
         revisit: {
           totalVisitors: number;
           revisitVisitors: number;
@@ -360,64 +360,60 @@ export async function GET(request: Request) {
       };
     }
 
+    const popularPostsResult = await access.supabaseAdmin
+      .from('posts')
+      .select('id, slug, subject, post_count, published_at, board_id')
+      .eq('site_id', access.rhizome.id)
+      .eq('published_status', 'published')
+      .or('is_closed.is.null,is_closed.eq.false')
+      .order('post_count', { ascending: false, nullsFirst: false })
+      .limit(POPULAR_POST_LIMIT);
+
+    if (popularPostsResult.error) {
+      return Response.json({ error: '인기글 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const popularPosts = (popularPostsResult.data ?? []) as PopularPostRow[];
+    const boardIds = [
+      ...new Set(popularPosts.map((post) => post.board_id).filter((boardId): boardId is string => Boolean(boardId))),
+    ];
+
+    const boardsResult =
+      boardIds.length > 0
+        ? await access.supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
+        : null;
+
+    if (boardsResult?.error) {
+      return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const boards = ((boardsResult?.data ?? []) as BoardRow[]).reduce<Record<string, BoardRow>>((accumulator, board) => {
+      return {
+        ...accumulator,
+        [board.id]: board,
+      };
+    }, {});
+
+    responseBody.popularPosts = popularPosts.map((post) => {
+      const board = post.board_id ? boards[post.board_id] : null;
+
+      return {
+        id: post.id,
+        slug: String(post.slug),
+        subject: post.subject ?? '',
+        postCount: getNumber(post.post_count),
+        publishedAt: post.published_at,
+        boardKey: board?.board_key ?? null,
+        boardLabel: board?.board_label ?? null,
+      };
+    });
+
     if (access.siteType === 'blog') {
-      const [popularPostsResult, visitRows] = await Promise.all([
-        access.supabaseAdmin
-          .from('posts')
-          .select('id, slug, subject, post_count, published_at, board_id')
-          .eq('site_id', access.rhizome.id)
-          .eq('published_status', 'published')
-          .or('is_closed.is.null,is_closed.eq.false')
-          .order('post_count', { ascending: false, nullsFirst: false })
-          .limit(POPULAR_POST_LIMIT),
-        getVisitRows(siteStats.id),
-      ]);
-
-      if (popularPostsResult.error) {
-        return Response.json({ error: '인기글 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      const popularPosts = (popularPostsResult.data ?? []) as PopularPostRow[];
-      const boardIds = [
-        ...new Set(popularPosts.map((post) => post.board_id).filter((boardId): boardId is string => Boolean(boardId))),
-      ];
-
-      const boardsResult =
-        boardIds.length > 0
-          ? await access.supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
-          : null;
-
-      if (boardsResult?.error) {
-        return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      const boards = ((boardsResult?.data ?? []) as BoardRow[]).reduce<Record<string, BoardRow>>(
-        (accumulator, board) => {
-          return {
-            ...accumulator,
-            [board.id]: board,
-          };
-        },
-        {},
-      );
-
+      const visitRows = await getVisitRows(siteStats.id);
       const revisitVisitors = visitRows.filter((visit) => isRevisit(visit.created_at, visit.last_visited_at)).length;
       const totalVisitors = visitRows.length;
 
       responseBody.blog = {
-        popularPosts: popularPosts.map((post) => {
-          const board = post.board_id ? boards[post.board_id] : null;
-
-          return {
-            id: post.id,
-            slug: String(post.slug),
-            subject: post.subject ?? '',
-            postCount: getNumber(post.post_count),
-            publishedAt: post.published_at,
-            boardKey: board?.board_key ?? null,
-            boardLabel: board?.board_label ?? null,
-          };
-        }),
         revisit: {
           totalVisitors,
           revisitVisitors,

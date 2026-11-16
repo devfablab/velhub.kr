@@ -50,8 +50,8 @@ export type DashboardResponse = {
       month: number;
     };
   } | null;
+  popularPosts: PopularPost[];
   blog?: {
-    popularPosts: PopularPost[];
     revisit: {
       totalVisitors: number;
       revisitVisitors: number;
@@ -194,45 +194,51 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </p>
                 </dd>
               </dl>
-
-              <div className={`paper ${styles['paper-table']}`}>
-                <Typography variant="subtitle2">인기글 순위</Typography>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>순위</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>글</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>조회수</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {dashboard.blog.popularPosts.length > 0 ? (
-                        dashboard.blog.popularPosts.map((post, index) => {
-                          const href = getPostHref(siteName, post);
-                          return (
-                            <TableRow key={post.id}>
-                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{index + 1}</TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {href ? <Anchor href={href}>{post.subject}</Anchor> : post.subject}
-                              </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-                                {formatNumber(post.postCount)} 회
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={3}>인기글 정보가 없습니다.</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </div>
             </>
           ) : null}
+
+          <div className={`paper ${styles['paper-table']}`}>
+            <Typography variant="subtitle2">인기글 순위</Typography>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>순위</TableCell>
+                    {siteType === 'community' ? <TableCell sx={{ whiteSpace: 'nowrap' }}>게시판</TableCell> : null}
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>글</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>조회수</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {dashboard.popularPosts.length > 0 ? (
+                    dashboard.popularPosts.map((post, index) => {
+                      const href = getPostHref(siteName, post);
+                      return (
+                        <TableRow key={post.id}>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{index + 1}</TableCell>
+                          {siteType === 'community' ? (
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                              {post.boardLabel || post.boardKey || '-'}
+                            </TableCell>
+                          ) : null}
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            {href ? <Anchor href={href}>{post.subject}</Anchor> : post.subject}
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                            {formatNumber(post.postCount)} 회
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={siteType === 'community' ? 4 : 3}>인기글 정보가 없습니다.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </div>
         </div>
       </div>
     </Container>

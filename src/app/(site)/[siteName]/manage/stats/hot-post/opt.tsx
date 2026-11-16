@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   FormHelperText,
+  Pagination,
   type SelectChangeEvent,
+  Skeleton,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -42,12 +45,19 @@ type HotPost = {
   seriesLabel: string | null;
 };
 
+type BoardOption = {
+  key: string;
+  label: string;
+};
+
 export type HotPostResponse = {
   site?: {
     siteName: string;
     siteLabel: string | null;
-    siteType: 'blog';
+    siteType: 'blog' | 'community';
   };
+  boards?: BoardOption[];
+  selectedBoard?: BoardOption | null;
   range?: {
     type: RangeType;
     startDate: string;
@@ -55,6 +65,9 @@ export type HotPostResponse = {
     endLabel: string | null;
   };
   posts?: HotPost[];
+  page?: number;
+  pageSize?: number;
+  total?: number;
   error?: string;
 };
 
@@ -62,6 +75,8 @@ type AppliedRequest = {
   range: RangeType;
   startDate?: string;
   endDate?: string;
+  board?: string;
+  page?: number;
 };
 
 type DateSelectGroupProps = {
@@ -137,6 +152,8 @@ function createYearOptions() {
   return createNumberOptions(currentYear - 5, currentYear);
 }
 
+const ALL_BOARDS = 'all';
+
 function getPostHref(siteName: string, post: HotPost) {
   if (!post.boardKey) {
     return null;
@@ -211,6 +228,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [startDate, setStartDate] = useState<DateValue>(() => getKstDateValue(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getKstDateValue());
   const [hotPostStats, setHotPostStats] = useState<HotPostResponse | null>(initialData);
+  const [appliedRequest, setAppliedRequest] = useState<AppliedRequest>({ range: 'today' });
 
   function showError(message: string, title: string | null, errors?: { startDate?: string; endDate?: string }) {
     setErrorMessage(message);
@@ -249,6 +267,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
         query.set('endDate', request.endDate);
       }
 
+      if (request.board) {
+        query.set('board', request.board);
+      }
+
+      if (request.page && request.page > 1) {
+        query.set('page', String(request.page));
+      }
+
       const response = await fetch(`/api/manage/stats/hot-post?${query.toString()}`, {
         method: 'GET',
         credentials: 'include',
@@ -262,6 +288,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       }
 
       setHotPostStats(result);
+      setAppliedRequest(request);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         showError(unknownError.message || '인기글 순위를 불러오지 못했습니다.', null);
@@ -276,7 +303,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   function handleSelectPreset(range: Exclude<RangeType, 'custom'>) {
     setSelectedRange(range);
-    void loadHotPosts({ range });
+    void loadHotPosts({ range, board: appliedRequest.board });
   }
 
   function handleOpenCustomRange() {
@@ -307,7 +334,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
       range: 'custom',
       startDate: formattedStartDate,
       endDate: formattedEndDate,
+      board: appliedRequest.board,
     });
+  }
+
+  function handleSelectBoard(event: SelectChangeEvent) {
+    const board = event.target.value === ALL_BOARDS ? undefined : event.target.value;
+    void loadHotPosts({ ...appliedRequest, board, page: undefined });
   }
 
   if (isInitialLoading) {
@@ -344,6 +377,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
     );
   }
 
+  const isCommunity = hotPostStats.site?.siteType === 'community';
+  const selectedBoard = hotPostStats.selectedBoard ?? null;
+  const showsBoardColumn = isCommunity && !selectedBoard;
+  const columnCount = isCommunity ? (showsBoardColumn ? 4 : 3) : 4;
+  const pageCount = Math.max(Math.ceil((hotPostStats.total ?? 0) / (hotPostStats.pageSize ?? 100)), 1);
+
   return (
     <Container pageTitle="인기글 순위" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
       <div className={`container ${styles.container}`}>
@@ -355,27 +394,29 @@ export default function Opt({ initialData, initialError }: OptProps) {
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <div className={`paper ${styles.paper}`}>
-            <Typography variant="subtitle2">기간 선택</Typography>
-            <div className={styles.buttons}>
-              {RANGE_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`button small ${selectedRange === option.value ? 'action' : 'cancel'}`}
-                  onClick={() => handleSelectPreset(option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <Stack direction="column" gap={0.5}>
+              <Typography variant="subtitle2">기간 선택</Typography>
+              <div className={styles.buttons}>
+                {RANGE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`button small ${selectedRange === option.value ? 'action' : 'cancel'}`}
+                    onClick={() => handleSelectPreset(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
 
-              <button
-                type="button"
-                className={`button small ${selectedRange === 'custom' ? 'action' : 'cancel'}`}
-                onClick={handleOpenCustomRange}
-              >
-                기간 설정
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className={`button small ${selectedRange === 'custom' ? 'action' : 'cancel'}`}
+                  onClick={handleOpenCustomRange}
+                >
+                  기간 설정
+                </button>
+              </div>
+            </Stack>
 
             {selectedRange === 'custom' ? (
               <>
@@ -406,70 +447,130 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </button>
               </>
             ) : null}
+            {isCommunity ? (
+              <Stack direction="column" gap={0.5}>
+                <Typography variant="subtitle2">게시판 선택</Typography>
+                <Select
+                  size="small"
+                  value={selectedBoard?.key ?? ALL_BOARDS}
+                  onChange={handleSelectBoard}
+                  disabled={isListLoading}
+                  aria-label="게시판 선택"
+                >
+                  <MenuItem value={ALL_BOARDS}>게시판 전체</MenuItem>
+                  {(hotPostStats.boards ?? []).map((board) => (
+                    <MenuItem key={board.key} value={board.key}>
+                      {board.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Stack>
+            ) : null}
           </div>
 
-          {isListLoading ? (
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className={`paper ${styles.paper}`}>
-                <Typography variant="subtitle2">조회 기간</Typography>
-                <Typography variant="body2">
-                  {hotPostStats.range?.startDate} ~ {hotPostStats.range?.endLabel ?? hotPostStats.range?.endDate}
-                </Typography>
-              </div>
-
-              <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
-                인기글 순위
+          <div className={`paper ${styles.paper}`}>
+            <Stack direction="column" gap={0.5}>
+              <Typography variant="subtitle2">조회 기간</Typography>
+              <Typography variant="body2">
+                {hotPostStats.range?.startDate} ~ {hotPostStats.range?.endLabel ?? hotPostStats.range?.endDate}
               </Typography>
+            </Stack>
+            {isCommunity ? (
+              <Stack direction="column" gap={0.5}>
+                <Typography variant="subtitle2">선택 게시판</Typography>
+                <Typography variant="body2">{selectedBoard?.label ?? '게시판 전체'}</Typography>
+              </Stack>
+            ) : null}
+          </div>
 
-              <div className={`paper ${styles['paper-table']}`}>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>순위</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>연재</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>글</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>조회수</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {hotPostStats.posts.length > 0 ? (
-                        hotPostStats.posts.map((post) => {
-                          const href = getPostHref(siteName, post);
-                          return (
-                            <TableRow key={post.id}>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.rank}</TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.seriesLabel || ''}</TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {href ? (
-                                  <Anchor href={href}>{post.subject || '(제목 없음)'}</Anchor>
-                                ) : (
-                                  post.subject || '(제목 없음)'
-                                )}
-                              </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-                                {formatNumber(post.readCount)} 회
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5}>인기글 정보가 없습니다.</TableCell>
-                        </TableRow>
+          <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
+            인기글 순위
+          </Typography>
+
+          <div className={`paper ${styles['paper-table']}`}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>순위</TableCell>
+                    {isCommunity ? null : <TableCell sx={{ whiteSpace: 'nowrap' }}>연재</TableCell>}
+                    {showsBoardColumn ? <TableCell sx={{ whiteSpace: 'nowrap' }}>게시판</TableCell> : null}
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>글</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>조회수</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {isListLoading ? (
+                    <TableRow>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        <Skeleton variant="text" sx={{ fontSize: '0.875rem' }} />
+                      </TableCell>
+                      {isCommunity ? null : (
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          <Skeleton variant="text" sx={{ fontSize: '0.875rem' }} />
+                        </TableCell>
                       )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </div>
-            </>
-          )}
+                      {showsBoardColumn ? (
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          <Skeleton variant="text" sx={{ fontSize: '0.875rem' }} />
+                        </TableCell>
+                      ) : null}
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        <Skeleton variant="text" sx={{ fontSize: '0.875rem' }} />
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                        <Skeleton variant="text" sx={{ fontSize: '0.875rem' }} />
+                      </TableCell>
+                    </TableRow>
+                  ) : hotPostStats.posts.length > 0 ? (
+                    hotPostStats.posts.map((post) => {
+                      const href = getPostHref(siteName, post);
+                      return (
+                        <TableRow key={post.id}>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.rank}</TableCell>
+                          {isCommunity ? null : (
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.seriesLabel || ''}</TableCell>
+                          )}
+                          {showsBoardColumn ? (
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                              {post.boardLabel || post.boardKey || ''}
+                            </TableCell>
+                          ) : null}
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            {href ? (
+                              <Anchor href={href}>{post.subject || '(제목 없음)'}</Anchor>
+                            ) : (
+                              post.subject || '(제목 없음)'
+                            )}
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                            {formatNumber(post.readCount)} 회
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={columnCount}>인기글 정보가 없습니다.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {pageCount > 1 ? (
+              <Stack alignItems="center">
+                <Pagination
+                  page={hotPostStats.page ?? 1}
+                  count={pageCount}
+                  className="pagination"
+                  siblingCount={1}
+                  boundaryCount={1}
+                  disabled={isListLoading}
+                  onChange={(_event, value) => void loadHotPosts({ ...appliedRequest, page: value })}
+                />
+              </Stack>
+            ) : null}
+          </div>
         </div>
       </div>
       <FormErrorDialog
