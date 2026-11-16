@@ -2788,6 +2788,14 @@
   display: grid
   gap: ds.rem(12)
 
+  h2
+    @include ds.fw(neo, 700)
+    font-size: ds.rem(18)
+    color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright
+
   .shopping-items
     display: grid
     grid-template-columns: repeat(4, minmax(0, 1fr))
@@ -2804,7 +2812,7 @@
     position: relative
     min-width: 0
     overflow: hidden
-    border-radius: ds.rem(16)
+    border-radius: ds.rem(12)
     padding: 0
 
     > a
@@ -2826,25 +2834,19 @@
     .shopping-info
       display: grid
       gap: ds.rem(4)
-      padding: ds.rem(14)
+      padding: ds.rem(14) ds.rem(50) ds.rem(14) ds.rem(14)
 
-      strong, em
+      strong
         overflow: hidden
         text-overflow: ellipsis
         white-space: nowrap
-
-      strong
+        font-size: ds.rem(14)
         @include ds.fw(pre, 700)
-
-      em
-        color: ds.$hex-tertiary
-        font-size: ds.rem(12)
-        font-style: normal
 
     > button
       position: absolute
-      bottom: ds.rem(12)
-      right: ds.rem(12)
+      bottom: ds.rem(5)
+      right: ds.rem(8)
 
 .guideline-area
   flex-direction: row

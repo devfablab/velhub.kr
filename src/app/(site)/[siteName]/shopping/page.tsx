@@ -58,7 +58,11 @@ export default async function Page({ params }: RouteContext) {
         <div className={`content ${styles.content} ${styles['blog-list']}`}>
           <SiteProfile />
           <div className={`paper ${styles.shopping}`}>
-            {ads[0]?.shopName ? <Typography variant="subtitle2">{ads[0].shopName} 제공</Typography> : null}
+            {ads[0]?.shopName ? (
+              <h2>
+                {ads[0].shopName} ({ads[0].domain}) 제공
+              </h2>
+            ) : null}
             <div className={styles['shopping-items']}>
               {ads.map((ad) => (
                 <div key={ad.id} className={`paper ${styles['shopping-item']}`}>
@@ -72,7 +76,6 @@ export default async function Page({ params }: RouteContext) {
                     />
                     <span className={styles['shopping-info']}>
                       <strong>{ad.productName}</strong>
-                      <em>{ad.domain}</em>
                     </span>
                   </Anchor>
                   <BlogAdReportButton siteName={siteName} adId={ad.id} targetType="ad" />
