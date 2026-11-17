@@ -95,13 +95,13 @@ export default function HubPostListItem({ post, date, dateLabel, description, on
       {onClick ? (
         <button
           type="button"
-          className={`${styles['description-item']} ${styles['description-item-mini']}`}
+          className={`${styles['description-item']} ${styles['description-item-mini']} paper`}
           onClick={onClick}
         >
           {item}
         </button>
       ) : (
-        <Anchor href={post.href} className={`${styles['description-item']} ${styles['description-item-mini']}`}>
+        <Anchor href={post.href} className={`${styles['description-item']} ${styles['description-item-mini']} paper`}>
           {item}
         </Anchor>
       )}

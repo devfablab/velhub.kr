@@ -1,5 +1,6 @@
 'use client';
 
+import { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
@@ -10,11 +11,8 @@ type SiteType = 'blog' | 'community';
 
 type PostRow = {
   id: string;
-  title: string;
-  authorName: string;
-  siteName: string;
   date: string;
-  href: string;
+  post: HubPostDisplay;
 };
 
 export type SavedResponse = {
@@ -42,11 +40,11 @@ export default function SavedItems({ initialData, initialError }: Props) {
           <ol>
             {posts.map((post) => (
               <li key={post.id}>
-                <Anchor href={post.href}>
-                  <strong aria-label="글 제목">{post.title}</strong>
-                  <cite aria-label="작성자">{post.authorName}</cite>
+                <Anchor href={post.post.href} className="paper">
+                  <strong aria-label="글 제목">{post.post.subject}</strong>
+                  <cite aria-label="작성자">{post.post.authorName}</cite>
                   <div className={styles.tail}>
-                    <em aria-label="사이트명">{post.siteName}</em>
+                    <em aria-label="사이트명">{post.post.siteName}</em>
                     <time aria-label="저장한 날짜">{formatDateSimple(post.date)}</time>
                   </div>
                 </Anchor>

@@ -90,9 +90,9 @@ export default function MemberStatusSites({
   return (
     <section className={`paper ${styles.paper} ${styles.join}`}>
       <h2>{rejoinOnly ? '재가입 가능' : '확인 필요'}</h2>
-      <div className={`paper ${styles['join-sites']}`}>
+      <div className={styles['join-sites']}>
         {filteredSites.map((site) => (
-          <div key={`${site.id}-${site.membershipStatus}`} className={styles['join-site']}>
+          <div key={`${site.id}-${site.membershipStatus}`} className={`paper ${styles['join-site']}`}>
             <div className={styles['join-site-info']}>
               <div className={styles['site-name']}>
                 {site.profileLogoUrl ? (

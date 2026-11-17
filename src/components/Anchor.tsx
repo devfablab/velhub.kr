@@ -7,31 +7,31 @@ interface Props extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
 const domainRegex = /http[s]*:\/\/[www.]*domain\.com[/]?/;
 
 export default function Anchor({ href, className, children, ...rest }: Props) {
-  const sameDomain = domainRegex.test(href);
-  let h = href;
+  const isSameDomain = domainRegex.test(href);
+  let resolvedHref = href;
 
-  if (sameDomain) {
-    h = h.replace(domainRegex, '/');
+  if (isSameDomain) {
+    resolvedHref = resolvedHref.replace(domainRegex, '/');
   }
 
-  if (h.startsWith('/')) {
+  if (resolvedHref.startsWith('/')) {
     return (
-      <Link href={h} className={className} {...rest}>
+      <Link href={resolvedHref} className={className} {...rest}>
         {children}
       </Link>
     );
   }
 
-  if (!h.startsWith('http')) {
+  if (!resolvedHref.startsWith('http')) {
     return (
-      <a href={h} className={className} {...rest}>
+      <a href={resolvedHref} className={className} {...rest}>
         {children}
       </a>
     );
   }
 
   return (
-    <a href={h} className={className} target="_blank" rel="noopener noreferrer nofollow" {...rest}>
+    <a href={resolvedHref} className={className} target="_blank" rel="noopener noreferrer nofollow" {...rest}>
       {children}
     </a>
   );

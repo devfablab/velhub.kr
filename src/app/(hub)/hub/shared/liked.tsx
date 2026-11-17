@@ -54,7 +54,7 @@ export default function Liked({ initialData, initialError }: Props) {
           {postLikes.length > 0 ? (
             <div>
               <h3>포스팅</h3>
-              <ol className={`${styles.list} ${styles['list-newest']} paper`}>
+              <ol className={`${styles.list} ${styles['list-newest']}`}>
                 {postLikes.map((post) => (
                   <HubPostListItem key={post.id} post={post.post} date={post.likedAt} dateLabel="좋아요 누른 일시" />
                 ))}
@@ -65,7 +65,7 @@ export default function Liked({ initialData, initialError }: Props) {
           {commentLikes.length > 0 ? (
             <div>
               <h3>댓글</h3>
-              <ol className={`${styles.list} ${styles['list-newest']} paper`}>
+              <ol className={`${styles.list} ${styles['list-newest']}`}>
                 {commentLikes.map((comment) => (
                   <HubPostListItem
                     key={comment.id}

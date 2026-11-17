@@ -2,7 +2,7 @@
   display: flex
   flex-direction: column
   gap: ds.rem(23)
-  max-width: ds.rem(572)
+  max-width: ds.rem(1313)
   width: 100%
 
   .paper
@@ -457,56 +457,56 @@
         font-size: ds.rem(14)
         color: ds.$hex-secondary
 
-.hub-content
-  > ol
+.contents
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: ds.rem(32)
+
+  .tabs
     display: flex
     flex-direction: row
-    gap: 0
+    gap: ds.rem(12)
+    width: 100%
+    max-width: ds.rem(572)
+    border-radius: ds.rem(28)
+    padding: ds.rem(7)
+    background-color: ds.$hex-white
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
 
     li
+      @include ds.col
       display: inline-flex
       align-items: center
-      padding-right: ds.rem(12)
-
-      &::before
-        display: inline-block
-        content: ''
-        width: 1px
-        height: ds.rem(17)
-        background-color: rgba(ds.$rgb-tertiary, .3)
-
-        html[data-theme="yellow-dark"] &
-          background-color: rgba(ds.$rgb-tertiary, .5)
-
-      &:first-of-type
-        &::before
-          display: none
-
-        a
-          padding-left: 0
-
-      &:last-of-type
-        padding-right: 0
 
       a
         display: inline-flex
-        padding-left: ds.rem(12)
-        color: ds.$hex-secondary
-        opacity: .7
+        justify-content: center
+        align-items: center
+        border-radius: ds.rem(42)
+        color: ds.$hex-primary
+        width: 100%
+        height: ds.rem(42)
+        transition: all .4s cubic-bezier(.4,0,.2,1)
+        outline: ds.rem(2) solid transparent
 
         html[data-theme="yellow-dark"] &
-          color: ds.$hex-light
-          opacity: .7
+          color: ds.$hex-bright
 
         &:hover, &:focus-visible
-          color: ds.$hex-accent!important
-          opacity: 1!important
+          outline: ds.rem(2) solid rgba(ds.$rgb-accent, .7)
 
       &.current
         a
-          color: ds.$hex-accent!important
-          opacity: 1!important
+          color: ds.$hex-bright
+          background-color: ds.$hex-accent!important
 
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-primary
+
+.hub-content
   h3
     & ~ ol
       display: flex
@@ -529,28 +529,15 @@
     margin-bottom: ds.rem(16)
 
   .list
-    display: flex
-    flex-direction: column
+    display: grid
     gap: ds.rem(17)
+    grid-template-columns: repeat(2, 1fr)
 
-    &.list-newest
-      grid-template-columns: none
-      gap: 0
+    @include ds.mq(maxSmall)
+      grid-template-columns: repeat(1, 1fr)
 
   .item
     min-width: 0
-    border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
-    padding: ds.rem(17) 0
-
-    html[data-theme="yellow-dark"] &
-      border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
-
-    &:first-of-type
-      padding-top: 0
-      border-top: 0!important
-
-    &:last-of-type
-      padding-bottom: 0
 
     > .description-item
       display: flex
@@ -558,8 +545,6 @@
       gap: ds.rem(12)
       min-width: 0
       width: 100%
-      padding: 0
-      border: 0
       background-color: transparent
       color: ds.$hex-primary
       text-align: left
@@ -732,26 +717,20 @@
 
   .join
     .join-sites
-      display: flex
-      flex-direction: column
-      gap: 0
+      display: grid
+      grid-template-columns: repeat(2, 1fr)
+      gap: ds.rem(12)
+
+      @include ds.mq(maxExtraSmall)
+        grid-template-columns: repeat(1, 1fr)
 
     .join-site
       display: flex
       flex-direction: column
       gap: ds.rem(12)
-      padding: ds.rem(17) 0
-      border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
 
       html[data-theme="yellow-dark"] &
         border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
-
-      &:first-of-type
-        padding-top: 0
-        border-top: 0!important
-
-      &:last-of-type
-        padding-bottom: 0
 
       .join-site-info
         display: flex
@@ -925,12 +904,18 @@
           padding-bottom: 0
 
     ol
-      padding-top: ds.rem(7)
+      display: grid
+      gap: ds.rem(12)
+      grid-template-columns: repeat(2, 1fr)
+
+      @include ds.mq(maxSmall)
+        grid-template-columns: repeat(1, 1fr)
 
       a
         display: flex
         flex-direction: column
         color: ds.$hex-primary
+        gap: 0
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-bright
@@ -962,6 +947,10 @@
 
           em
             font-style: normal
+
+    h2
+      display: flex
+      align-items: flex-end
 
     .buttons
       display: flex
@@ -1017,33 +1006,22 @@
 
   .history
     .items
-      display: flex
-      flex-direction: column
-      padding: ds.rem(17) 0
-      border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
-
-      html[data-theme="yellow-dark"] &
-        border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
-
-      &:first-of-type
-        padding-top: 0
-        border-top: 0!important
-
-      &:last-of-type
-        padding-bottom: 0
-
       ol
-        padding-top: ds.rem(7)
+        display: grid
+        gap: ds.rem(17)
+        grid-template-columns: repeat(2, 1fr)
+
+        @include ds.mq(maxSmall)
+          grid-template-columns: repeat(1, 1fr)
 
         a, button
           display: flex
           flex-direction: column
           width: 100%
-          border: 0
-          padding: 0
           background-color: transparent
           text-align: left
           color: ds.$hex-primary
+          gap: 0
 
           html[data-theme="yellow-dark"] &
             color: ds.$hex-bright
