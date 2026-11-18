@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getDefaultFavoriteFolderId, getTopSortOrderInFolder } from '@/lib/service/hubFavoriteFolder.server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -145,9 +146,17 @@ export async function PATCH(_request: Request, context: RouteContext) {
         return Response.json({ error: '즐겨찾기를 취소하지 못했습니다.' }, { status: 500 });
       }
     } else {
+      if (!session.stigmaId) {
+        return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+      }
+
+      const defaultFolderId = await getDefaultFavoriteFolderId(session.stigmaId);
+      const topSortOrder = await getTopSortOrderInFolder(session.stigmaId, defaultFolderId);
       const insertResult = await supabaseAdmin.from('blog_favorites').insert({
         user_id: session.stigmaId,
         site_id: targetBlog.siteId,
+        folder_id: defaultFolderId,
+        sort_order: topSortOrder,
       });
 
       if (insertResult.error) {

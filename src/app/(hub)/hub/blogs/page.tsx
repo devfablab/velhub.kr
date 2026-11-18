@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
+import type { FavoriteBlogsResponse } from '@/lib/service/hubFavoriteFolder.shared';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
@@ -8,7 +9,7 @@ import Liked, { LikedResponse } from '../shared/liked';
 import MemberStatusSites, { MemberStatusSiteRow } from '../shared/memberStatusSites';
 import OwnedDonationPosts, { PostsResponse as OwnedDonationPostsResponse } from '../shared/ownedDonationPosts';
 import PostHistory, { PostsResponse } from '../shared/postHistory';
-import FavoriteBlogs, { FavoriteBlogsResponse, Folder } from './favoriteBlogs';
+import FavoriteBlogList from './favoriteBlogList';
 import Content from './tab';
 import styles from '@/app/hub.module.sass';
 
@@ -99,9 +100,8 @@ export default async function SectionJoinSites() {
       return { data: null, error: error instanceof Error ? error.message : fallback };
     }
   };
-  const [favorites, folders, liked, saved, read, owned] = await Promise.all([
+  const [favorites, liked, saved, read, owned] = await Promise.all([
     load<FavoriteBlogsResponse>('/api/hub/blog-favorites', '즐겨찾는 블로그를 불러오지 못했습니다.'),
-    load<{ folders?: Folder[]; canAddFolder?: boolean }>('/api/hub/favorite-folders', '폴더를 불러오지 못했습니다.'),
     load<LikedResponse>('/api/hub/liked?siteType=blog', '좋아요 목록을 불러오지 못했습니다.'),
     load<PostsResponse>('/api/hub/saved-posts?siteType=blog', '저장한 글을 불러오지 못했습니다.'),
     load<PostsResponse>('/api/hub/read-posts?siteType=blog', '읽은 글을 불러오지 못했습니다.'),
@@ -126,11 +126,7 @@ export default async function SectionJoinSites() {
               </div>
             </section>
           )}
-          <FavoriteBlogs
-            initialBlogs={favorites.data}
-            initialFolders={folders.data}
-            initialError={favorites.error || folders.error}
-          />
+          <FavoriteBlogList initialData={favorites.data} initialError={favorites.error} />
           <Liked siteType="blog" initialData={liked.data} initialError={liked.error} />
           <PostHistory siteType="blog" type="saved" initialData={saved.data} initialError={saved.error} />
           <PostHistory siteType="blog" type="read" initialData={read.data} initialError={read.error} />

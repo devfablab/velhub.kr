@@ -1,6 +1,10 @@
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { syncFavoriteFolderAccess } from '@/lib/service/hubFavoriteFolder.server';
+import {
+  canUseFavoriteFolders,
+  ensureDefaultFavoriteFolder,
+  toFavoriteFolder,
+} from '@/lib/service/hubFavoriteFolder.server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -55,10 +59,16 @@ export async function GET() {
     const session = await verifySession({ siteId: null });
 
     if (!session.authUserId || !session.stigmaId) {
-      return Response.json({ blogs: [] });
+      return Response.json({ blogs: [], folders: [], canUseFolders: false });
     }
 
-    await syncFavoriteFolderAccess(session.stigmaId).catch(() => null);
+    const [canUseFolders, folderRows] = await Promise.all([
+      canUseFavoriteFolders(session.stigmaId),
+      ensureDefaultFavoriteFolder(session.stigmaId),
+    ]);
+    const folders = folderRows.map(toFavoriteFolder);
+    const defaultFolderId = folders.find((folder) => folder.isDefault)?.id ?? folders[0]?.id ?? '';
+    const folderIds = new Set(folders.map((folder) => folder.id));
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -78,7 +88,7 @@ export async function GET() {
     const siteIds = favoriteRows.map((favorite) => favorite.site_id);
 
     if (siteIds.length === 0) {
-      return Response.json({ blogs: [] });
+      return Response.json({ blogs: [], folders, canUseFolders: canUseFolders === true });
     }
 
     const [sitesResult, stigmaResult] = await Promise.all([
@@ -147,13 +157,13 @@ export async function GET() {
           profileLogoHeight: site.profile_logo_height,
           href: `/${site.site_key}`,
           favoritedAt: favorite.created_at,
-          folderId: favorite.folder_id,
+          folderId: favorite.folder_id && folderIds.has(favorite.folder_id) ? favorite.folder_id : defaultFolderId,
           sortOrder: favorite.sort_order,
         };
       })
       .filter(Boolean);
 
-    return Response.json({ blogs });
+    return Response.json({ blogs, folders, canUseFolders: canUseFolders === true });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
       return Response.json(
@@ -163,5 +173,38 @@ export async function GET() {
     }
 
     return Response.json({ error: '즐겨찾는 블로그 목록을 불러오지 못했습니다.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await verifySession({ siteId: null });
+
+    if (!session.authUserId || !session.stigmaId) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const favoriteIds = new URL(request.url).searchParams
+      .getAll('id')
+      .map((favoriteId) => normalizeText(favoriteId))
+      .filter(Boolean);
+
+    if (favoriteIds.length === 0) {
+      return Response.json({ error: '뺄 즐겨찾기를 선택해 주세요.' }, { status: 400 });
+    }
+
+    const deleteResult = await getSupabaseAdmin()
+      .from('blog_favorites')
+      .delete()
+      .eq('user_id', session.stigmaId)
+      .in('id', favoriteIds);
+
+    if (deleteResult.error) {
+      return Response.json({ error: '즐겨찾기에서 빼지 못했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({ ok: true });
+  } catch {
+    return Response.json({ error: '즐겨찾기에서 빼지 못했습니다.' }, { status: 500 });
   }
 }

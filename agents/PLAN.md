@@ -1,11 +1,11 @@
 # PLAN.md
 
-> 마지막 갱신: 2026-11-17 / 작성: Claude
+> 마지막 갱신: 2026-11-19 / 작성: Claude
 > 기준 브랜치: (브랜치명) / 이 작업은 아직 미커밋 상태
 
 ## 4. 현재 상태
 
-- 지금 작업 중인 단계: 마이허브 좋아요, 저장, 읽은 글 화면 오류 수정 완료
+- 지금 작업 중인 단계: 즐겨찾기 폴더 관리(결제/미결제) 완료
 - 테스트 상태: 타입 체크, 린트, 프리티어 통과
 - 미커밋 변경 요약: `git status --short` 결과 기준으로 파일별 한 줄 설명
 
@@ -16,6 +16,8 @@
 - [x] 커뮤니티 인기글 순위 메뉴 추가, 게시판 선택과 선택 게시판 표시 (수정한 파일: `src/app/api/manage/stats/hot-post/route.ts`, `src/app/(site)/[siteName]/manage/stats/hot-post/opt.tsx`, `src/app/(site)/[siteName]/manage/menu.tsx`, `src/lib/site/manageMenu.ts`)
 
 - [x] 마이허브 좋아요, 저장, 읽은 글 화면이 받은 자료 모양과 맞지 않아 열리지 않던 문제 수정 (수정한 파일: `src/app/(hub)/hub/shared/likedItems.tsx`, `savedItems.tsx`, `readsItems.tsx`, `src/components/Anchor.tsx`)
+- [x] 블로그 허브 홈의 즐겨찾는 블로그는 목록만, 편집은 읽은글 다음 메뉴로 분리 (수정한 파일: `src/app/(hub)/hub/blogs/page.tsx`, `tab.tsx`, `favoriteBlogs.tsx`, 추가: `favoriteBlogList.tsx`, `favorites/page.tsx`)
+- [x] 즐겨찾기 폴더 관리: 기본 폴더(is_default, 맨 위 폴더), 폴더 순서, 끌어서 이동, 빼기와 폴더 삭제 5초 취소, 미결제는 폴더 구분 없이 전체 표시 (DB: `supabase/migrations/20261119100000_favorite_folder_default.sql` 적용 완료)
 
 ## 12. 변경한 파일
 
@@ -32,6 +34,23 @@
 | `src/app/(hub)/hub/shared/savedItems.tsx` | 저장한 글 목록을 API 응답 모양에 맞춤 | 완료 |
 | `src/app/(hub)/hub/shared/readsItems.tsx` | 읽은 글 목록을 API 응답 모양에 맞춤 | 완료 |
 | `src/components/Anchor.tsx` | 줄인 변수 이름을 풀어 씀 | 완료 |
+| `src/app/(hub)/hub/blogs/page.tsx` | 즐겨찾는 블로그를 보기 전용 목록으로 표시 | 완료 |
+| `src/app/(hub)/hub/blogs/tab.tsx` | 읽은글 다음에 즐겨찾는 블로그 편집 메뉴 추가 | 완료 |
+| `src/app/(hub)/hub/blogs/favoriteBlogs.tsx` | 편집 화면용, 비어 있을 때 안내 표시 | 완료 |
+| `src/app/(hub)/hub/blogs/favoriteBlogList.tsx` | 새 파일, 홈용 보기 전용 목록 | 완료 |
+| `src/app/(hub)/hub/blogs/favorites/page.tsx` | 새 파일, 즐겨찾는 블로그 편집 페이지 | 완료 |
+| `src/app/(hub)/hub/blogs/favoriteBlogCard.tsx` | 새 파일, 즐겨찾는 블로그 카드 공통 | 완료 |
+| `src/app/(hub)/hub/blogs/favoriteBlogs.tsx` | 편집 화면 재작성: 폴더별 끌어서 이동, 빼기, 5초 취소 | 완료 |
+| `src/app/(hub)/hub/blogs/favoriteBlogList.tsx` | 결제 여부에 따라 폴더별 또는 전체 목록, 열 때마다 새로 불러옴 | 완료 |
+| `src/app/(hub)/hub/blogs/folderModals.tsx` | 폴더 추가(기본 폴더 지정), 이름 변경, 삭제(옮길 폴더 선택), 순서 팝업 | 완료 |
+| `src/app/hub.module.sass` | 끌기 손잡이, 폴더 순서 목록 스타일 | 완료 |
+| `src/app/api/hub/blog-favorites/route.ts` | 목록에 폴더와 결제 여부 포함, 즐겨찾기 빼기 추가 | 완료 |
+| `src/app/api/hub/blog-favorites/move/route.ts` | 결제한 사람만, 폴더 확인 후 이동과 순서 저장 | 완료 |
+| `src/app/api/hub/favorite-folders/route.ts` | 폴더 추가(기본 폴더 지정), 폴더 순서 저장 | 완료 |
+| `src/app/api/hub/favorite-folders/[folderId]/route.ts` | 이름 변경, 옮길 폴더 지정 후 삭제, 마지막 폴더 삭제 막음 | 완료 |
+| `src/app/api/site/blog/[siteName]/favorites/route.ts` | 즐겨찾기 추가 때 기본 폴더 없으면 만들고 맨 위에 넣음 | 완료 |
+| `src/lib/service/hubFavoriteFolder.server.ts` | 기본 폴더 보장, 폴더 순서 저장, 기본 폴더로 옮기던 동작 제거 | 완료 |
+| `src/lib/service/hubFavoriteFolder.shared.ts` | 즐겨찾기 타입, 정렬 함수, 저장 대기 함수 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

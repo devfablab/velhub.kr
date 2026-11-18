@@ -1,281 +1,469 @@
 'use client';
 
-import { useState } from 'react';
-import Anchor from '@/components/Anchor';
-import AppIconAvatar from '@/components/customUI/AppIconAvatar';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  closestCorners,
+  DndContext,
+  type DragEndEvent,
+  type DragOverEvent,
+  KeyboardSensor,
+  PointerSensor,
+  type UniqueIdentifier,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import { Snackbar } from '@mui/material';
+import {
+  type FavoriteBlog,
+  type FavoriteBlogsResponse,
+  type FavoriteFolder,
+  getFolderBlogs,
+  sortFavoriteBlogs,
+  sortFavoriteFolders,
+  trackFavoriteRequest,
+} from '@/lib/service/hubFavoriteFolder.shared';
 import FormErrorDialog from '@/components/FormErrorDialog';
-import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
-import FolderModals, { type FolderActionError } from './folderModals';
+import { ServiceNoDataIcon } from '@/components/Svgs';
+import FavoriteBlogCard from './favoriteBlogCard';
+import {
+  AddFolderPopup,
+  DeleteFolderPopup,
+  type FolderActionError,
+  FolderOrderPopup,
+  RenameFolderPopup,
+} from './folderModals';
 import styles from '@/app/hub.module.sass';
 
-type FavoriteBlogRow = {
-  id: string;
-  siteName: string;
-  siteLabel: string;
-  visibilityType: string;
-  visibilityLabel: string;
-  isShutdown: boolean;
-  profilePictureUrl: string | null;
-  profileLogoUrl: string | null;
-  profileLogoWidth: number | null;
-  profileLogoHeight: number | null;
-  href: string;
-  favoritedAt: string;
-  folderId: string | null;
-  sortOrder: number;
-};
+const UNDO_DURATION = 5000;
+const FOLDER_DROP_PREFIX = 'folder:';
 
-export type FavoriteBlogsResponse = {
-  blogs?: FavoriteBlogRow[];
-  error?: string;
-};
+type PendingAction =
+  | { kind: 'removeBlog'; favoriteId: string; previousBlogs: FavoriteBlog[] }
+  | {
+      kind: 'deleteFolder';
+      folderId: string;
+      targetFolderId: string;
+      previousBlogs: FavoriteBlog[];
+      previousFolders: FavoriteFolder[];
+    };
 
-export type Folder = {
-  id: string;
-  label: string;
-};
-
-export default function FavoriteBlogs({
-  initialBlogs,
-  initialFolders,
-  initialError,
-}: {
-  initialBlogs: FavoriteBlogsResponse | null;
-  initialFolders: { folders?: Folder[]; canAddFolder?: boolean } | null;
+type Props = {
+  initialData: FavoriteBlogsResponse | null;
   initialError: string;
-}) {
-  const [blogs, setBlogs] = useState<FavoriteBlogRow[]>(initialBlogs?.blogs ?? []);
-  const [folders, setFolders] = useState<Folder[]>(initialFolders?.folders ?? []);
-  const [canAddFolder, setCanAddFolder] = useState(initialFolders?.canAddFolder === true);
+};
+
+const NETWORK_ERROR: FolderActionError = { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+
+async function fetchFavoriteBlogs() {
+  const response = await fetch('/api/hub/blog-favorites', { credentials: 'include', cache: 'no-store' });
+  const result = (await response.json()) as FavoriteBlogsResponse;
+
+  if (!response.ok) throw new Error(result.error ?? '즐겨찾는 블로그를 불러오지 못했습니다.');
+
+  return result;
+}
+
+function getLoadErrorMessage(unknownError: unknown) {
+  return unknownError instanceof Error ? unknownError.message : '즐겨찾는 블로그를 불러오지 못했습니다.';
+}
+
+async function getActionError(response: Response): Promise<FolderActionError | null> {
+  if (response.ok) return null;
+
+  const payload = (await response.json().catch(() => null)) as {
+    error?: string;
+    fieldErrors?: { label?: string };
+  } | null;
+
+  if (response.status >= 500 || !payload?.error) {
+    return { message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', isUnknown: true };
+  }
+
+  return { message: payload.error, fieldError: payload.fieldErrors?.label };
+}
+
+function applyFolderOrder(blogs: FavoriteBlog[], folderId: string, orderedIds: UniqueIdentifier[]) {
+  const positions = new Map(orderedIds.map((favoriteId, index) => [favoriteId, index]));
+
+  return blogs.map((blog) => {
+    const position = positions.get(blog.id);
+
+    return position === undefined ? blog : { ...blog, folderId, sortOrder: position };
+  });
+}
+
+function withDefaultFolder(folders: FavoriteFolder[]) {
+  return sortFavoriteFolders(folders).map((folder, index) => ({ ...folder, sortOrder: index, isDefault: index === 0 }));
+}
+
+function SortableBlog({ blog, onRemove }: { blog: FavoriteBlog; onRemove: (blog: FavoriteBlog) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: blog.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={isDragging ? styles.dragging : undefined}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+    >
+      <FavoriteBlogCard
+        blog={blog}
+        handle={
+          <button type="button" className={styles['drag-handle']} aria-label="순서 변경" {...attributes} {...listeners}>
+            <DragIndicatorIcon />
+          </button>
+        }
+        action={
+          <button
+            type="button"
+            className={`button small danger ${styles['setting-folder-button']}`}
+            onClick={() => onRemove(blog)}
+          >
+            빼기
+          </button>
+        }
+      />
+    </div>
+  );
+}
+
+function FolderDropArea({ folderId, children }: { folderId: string; children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id: `${FOLDER_DROP_PREFIX}${folderId}` });
+
+  return (
+    <div ref={setNodeRef} className={`${styles.list} ${styles['list-newest']} ${styles['favorite-drop-area']}`}>
+      {children}
+    </div>
+  );
+}
+
+export default function FavoriteBlogs({ initialData, initialError }: Props) {
+  const [blogs, setBlogs] = useState<FavoriteBlog[]>(initialData?.blogs ?? []);
+  const [folders, setFolders] = useState<FavoriteFolder[]>(sortFavoriteFolders(initialData?.folders ?? []));
+  const [canUseFolders, setCanUseFolders] = useState(initialData?.canUseFolders === true);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [actionError, setActionError] = useState<FolderActionError | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
-  const [editFolder, setEditFolder] = useState<Folder | null>(null);
-  const [isMoveSitesOpen, setIsMoveSitesOpen] = useState(false);
+  const [isFolderOrderOpen, setIsFolderOrderOpen] = useState(false);
+  const [renameFolder, setRenameFolder] = useState<FavoriteFolder | null>(null);
+  const [deleteFolder, setDeleteFolder] = useState<FavoriteFolder | null>(null);
+  const [popupKey, setPopupKey] = useState(0);
 
-  const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(new Set());
+  const pendingActionRef = useRef<PendingAction | null>(null);
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragStartFolderIdRef = useRef<string | null>(null);
 
-  const [draggedItem, setDraggedItem] = useState<FavoriteBlogRow | null>(null);
-  const [dragOverItem, setDragOverItem] = useState<FavoriteBlogRow | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
-  const loadData = async () => {
+  const applyData = useCallback((result: FavoriteBlogsResponse) => {
+    setBlogs(result.blogs ?? []);
+    setFolders(sortFavoriteFolders(result.folders ?? []));
+    setCanUseFolders(result.canUseFolders === true);
+    setErrorMessage('');
+  }, []);
+
+  const loadData = useCallback(async () => {
     try {
-      setErrorMessage('');
-      const [blogsRes, foldersRes] = await Promise.all([
-        fetch('/api/hub/blog-favorites', { credentials: 'include' }),
-        fetch('/api/hub/favorite-folders', { credentials: 'include' }),
-      ]);
-
-      const blogsResult = (await blogsRes.json()) as FavoriteBlogsResponse;
-      const foldersResult = await foldersRes.json();
-
-      if (!blogsRes.ok) throw new Error(blogsResult.error ?? '즐겨찾는 블로그를 불러오지 못했습니다.');
-
-      setBlogs(Array.isArray(blogsResult.blogs) ? blogsResult.blogs : []);
-      setFolders(foldersResult.folders || []);
-      setCanAddFolder(foldersResult.canAddFolder === true);
+      applyData(await fetchFavoriteBlogs());
     } catch (unknownError) {
-      setErrorMessage(unknownError instanceof Error ? unknownError.message : '오류가 발생했습니다.');
+      setErrorMessage(getLoadErrorMessage(unknownError));
     }
+  }, [applyData]);
+
+  const commitAction = useCallback(
+    async (action: PendingAction, keepalive = false) => {
+      const request = trackFavoriteRequest(
+        action.kind === 'removeBlog'
+          ? fetch(`/api/hub/blog-favorites?id=${encodeURIComponent(action.favoriteId)}`, {
+              method: 'DELETE',
+              keepalive,
+            })
+          : fetch(
+              `/api/hub/favorite-folders/${encodeURIComponent(action.folderId)}?targetFolderId=${encodeURIComponent(action.targetFolderId)}`,
+              { method: 'DELETE', keepalive },
+            ),
+      );
+
+      if (keepalive) {
+        void request.catch(() => null);
+        return;
+      }
+
+      try {
+        const nextActionError = await getActionError(await request);
+
+        if (nextActionError) {
+          setActionError(nextActionError);
+          await loadData();
+        }
+      } catch {
+        setActionError(NETWORK_ERROR);
+        await loadData();
+      }
+    },
+    [loadData],
+  );
+
+  const takePendingAction = useCallback(() => {
+    if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
+
+    const action = pendingActionRef.current;
+
+    pendingTimerRef.current = null;
+    pendingActionRef.current = null;
+    setPendingAction(null);
+
+    return action;
+  }, []);
+
+  const flushPendingAction = useCallback(() => {
+    const action = takePendingAction();
+
+    if (action) void commitAction(action);
+  }, [commitAction, takePendingAction]);
+
+  const startPendingAction = (action: PendingAction) => {
+    flushPendingAction();
+
+    pendingActionRef.current = action;
+    setPendingAction(action);
+    pendingTimerRef.current = setTimeout(() => {
+      const currentAction = takePendingAction();
+
+      if (currentAction) void commitAction(currentAction);
+    }, UNDO_DURATION);
   };
 
-  const getFolderActionError = async (response: Response): Promise<FolderActionError | null> => {
-    if (response.ok) return null;
+  const undoPendingAction = () => {
+    const action = takePendingAction();
 
-    const payload = (await response.json().catch(() => null)) as {
-      error?: string;
-      fieldErrors?: { label?: string };
-    } | null;
-    if (response.status >= 500 || !payload?.error) {
-      return { message: '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', isUnknown: true };
-    }
-    return { message: payload.error, fieldError: payload.fieldErrors?.label };
+    if (!action) return;
+
+    setBlogs(action.previousBlogs);
+
+    if (action.kind === 'deleteFolder') setFolders(action.previousFolders);
   };
 
-  const handleAddFolder = async (label: string) => {
+  useEffect(() => {
+    const handlePageHide = () => {
+      const action = takePendingAction();
+
+      if (action) void commitAction(action, true);
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void loadData();
+    };
+
+    fetchFavoriteBlogs()
+      .then(applyData)
+      .catch((unknownError: unknown) => setErrorMessage(getLoadErrorMessage(unknownError)));
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
+      handlePageHide();
+    };
+  }, [applyData, commitAction, loadData, takePendingAction]);
+
+  const handleRemoveBlog = (blog: FavoriteBlog) => {
+    const previousBlogs = blogs;
+
+    startPendingAction({ kind: 'removeBlog', favoriteId: blog.id, previousBlogs });
+    setBlogs(previousBlogs.filter((previousBlog) => previousBlog.id !== blog.id));
+  };
+
+  const handleDeleteFolder = (folderId: string, targetFolderId: string) => {
+    const previousBlogs = blogs;
+    const previousFolders = folders;
+    const targetBlogs = getFolderBlogs(previousBlogs, targetFolderId);
+    const bottomSortOrder = targetBlogs.reduce((maximum, blog) => Math.max(maximum, blog.sortOrder + 1), 0);
+    const movedIds = getFolderBlogs(previousBlogs, folderId).map((blog) => blog.id);
+    const movedPositions = new Map(movedIds.map((favoriteId, index) => [favoriteId, bottomSortOrder + index]));
+
+    startPendingAction({ kind: 'deleteFolder', folderId, targetFolderId, previousBlogs, previousFolders });
+    setBlogs(
+      previousBlogs.map((blog) => {
+        const position = movedPositions.get(blog.id);
+
+        return position === undefined ? blog : { ...blog, folderId: targetFolderId, sortOrder: position };
+      }),
+    );
+    setFolders(withDefaultFolder(previousFolders.filter((folder) => folder.id !== folderId)));
+  };
+
+  const handleAddFolder = async (label: string, isDefault: boolean) => {
+    flushPendingAction();
+
     try {
       const response = await fetch('/api/hub/favorite-folders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label }),
+        body: JSON.stringify({ label, isDefault }),
       });
-      const actionError = await getFolderActionError(response);
-      if (actionError) return actionError;
-      await loadData();
+      const nextActionError = await getActionError(response.clone());
+
+      if (nextActionError) return nextActionError;
+
+      const result = (await response.json()) as { folders?: FavoriteFolder[] };
+
+      setFolders(sortFavoriteFolders(result.folders ?? []));
       return null;
     } catch {
-      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+      return NETWORK_ERROR;
     }
   };
 
-  const handleEditFolder = async (id: string, label: string) => {
+  const handleRenameFolder = async (folderId: string, label: string) => {
+    flushPendingAction();
+
     try {
-      const response = await fetch(`/api/hub/favorite-folders/${id}`, {
+      const response = await fetch(`/api/hub/favorite-folders/${encodeURIComponent(folderId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ label }),
       });
-      const actionError = await getFolderActionError(response);
-      if (actionError) return actionError;
-      await loadData();
+      const nextActionError = await getActionError(response);
+
+      if (nextActionError) return nextActionError;
+
+      setFolders((previousFolders) =>
+        previousFolders.map((folder) => (folder.id === folderId ? { ...folder, label } : folder)),
+      );
       return null;
     } catch {
-      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+      return NETWORK_ERROR;
     }
   };
 
-  const handleDeleteFolder = async (id: string) => {
+  const handleFolderOrder = async (folderIds: string[]) => {
+    flushPendingAction();
+
     try {
-      const response = await fetch(`/api/hub/favorite-folders/${id}`, { method: 'DELETE' });
-      const actionError = await getFolderActionError(response);
-      if (actionError) return actionError;
-      await loadData();
+      const response = await fetch('/api/hub/favorite-folders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderIds }),
+      });
+      const nextActionError = await getActionError(response.clone());
+
+      if (nextActionError) return nextActionError;
+
+      const result = (await response.json()) as { folders?: FavoriteFolder[] };
+
+      setFolders(sortFavoriteFolders(result.folders ?? []));
       return null;
     } catch {
-      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
+      return NETWORK_ERROR;
     }
   };
 
-  const handleMoveSites = async (targetFolderId: string | null) => {
-    if (selectedSiteIds.size === 0) return null;
-    const updates = Array.from(selectedSiteIds).map((id) => {
-      const blog = blogs.find((b) => b.id === id);
-      return { id, folder_id: targetFolderId, sort_order: blog?.sortOrder || 0 };
+  const findFolderId = (id: UniqueIdentifier) => {
+    const value = String(id);
+
+    if (value.startsWith(FOLDER_DROP_PREFIX)) return value.slice(FOLDER_DROP_PREFIX.length);
+
+    return blogs.find((blog) => blog.id === value)?.folderId ?? null;
+  };
+
+  const handleDragStart = ({ active }: { active: { id: UniqueIdentifier } }) => {
+    flushPendingAction();
+    dragStartFolderIdRef.current = findFolderId(active.id);
+  };
+
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
+    if (!over) return;
+
+    const activeFolderId = findFolderId(active.id);
+    const overFolderId = findFolderId(over.id);
+
+    if (!activeFolderId || !overFolderId || activeFolderId === overFolderId) return;
+
+    setBlogs((previousBlogs) => {
+      const overIds = getFolderBlogs(previousBlogs, overFolderId).map((blog) => blog.id);
+      const overIndex = overIds.indexOf(String(over.id));
+      const insertIndex = overIndex === -1 ? overIds.length : overIndex;
+      const nextOverIds = [...overIds.slice(0, insertIndex), String(active.id), ...overIds.slice(insertIndex)];
+      const nextActiveIds = getFolderBlogs(previousBlogs, activeFolderId)
+        .map((blog) => blog.id)
+        .filter((favoriteId) => favoriteId !== active.id);
+
+      return applyFolderOrder(
+        applyFolderOrder(previousBlogs, activeFolderId, nextActiveIds),
+        overFolderId,
+        nextOverIds,
+      );
     });
+  };
 
-    try {
-      const response = await fetch('/api/hub/blog-favorites/move', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updates }),
-      });
-      const actionError = await getFolderActionError(response);
-      if (actionError) return actionError;
-      setSelectedSiteIds(new Set());
+  const handleDragEnd = async ({ active, over }: DragEndEvent) => {
+    const startFolderId = dragStartFolderIdRef.current;
+
+    dragStartFolderIdRef.current = null;
+
+    if (!over || !startFolderId) {
       await loadData();
-      return null;
-    } catch {
-      return { message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true };
-    }
-  };
-
-  const handleDragStart = (event: React.DragEvent, item: FavoriteBlogRow) => {
-    setDraggedItem(item);
-    event.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (event: React.DragEvent, item: FavoriteBlogRow) => {
-    event.preventDefault();
-    if (draggedItem && draggedItem.folderId === item.folderId && draggedItem.id !== item.id) {
-      setDragOverItem(item);
-    }
-  };
-
-  const handleDrop = async (event: React.DragEvent, item: FavoriteBlogRow) => {
-    event.preventDefault();
-    if (!draggedItem || draggedItem.folderId !== item.folderId || draggedItem.id === item.id) {
-      setDraggedItem(null);
-      setDragOverItem(null);
       return;
     }
 
-    const folderBlogs = blogs.filter((b) => b.folderId === item.folderId).sort((a, b) => a.sortOrder - b.sortOrder);
-    const draggedIndex = folderBlogs.findIndex((b) => b.id === draggedItem.id);
-    const dropIndex = folderBlogs.findIndex((b) => b.id === item.id);
+    const currentFolderId = findFolderId(active.id);
 
-    folderBlogs.splice(draggedIndex, 1);
-    folderBlogs.splice(dropIndex, 0, draggedItem);
+    if (!currentFolderId) return;
 
-    const updates = folderBlogs.map((b, index) => ({
-      id: b.id,
-      folder_id: b.folderId,
-      sort_order: index,
-    }));
+    const currentIds = getFolderBlogs(blogs, currentFolderId).map((blog) => blog.id);
+    const activeIndex = currentIds.indexOf(String(active.id));
+    const overIndex = currentIds.indexOf(String(over.id));
+    const orderedIds =
+      overIndex === -1 || activeIndex === overIndex ? currentIds : arrayMove(currentIds, activeIndex, overIndex);
+    const nextBlogs = applyFolderOrder(blogs, currentFolderId, orderedIds);
+    const changedFolderIds = new Set([startFolderId, currentFolderId]);
+    const updates = nextBlogs
+      .filter((blog) => changedFolderIds.has(blog.folderId))
+      .map((blog) => ({ id: blog.id, folder_id: blog.folderId, sort_order: blog.sortOrder }));
 
-    setBlogs((prev) => {
-      const newBlogs = [...prev];
-      updates.forEach((u) => {
-        const idx = newBlogs.findIndex((nb) => nb.id === u.id);
-        if (idx !== -1) newBlogs[idx].sortOrder = u.sort_order;
-      });
-      return newBlogs;
-    });
+    setBlogs(nextBlogs);
 
-    setDraggedItem(null);
-    setDragOverItem(null);
+    if (startFolderId === currentFolderId && orderedIds === currentIds) return;
 
     try {
-      const response = await fetch('/api/hub/blog-favorites/move', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updates }),
-      });
-      const nextActionError = await getFolderActionError(response);
+      const response = await trackFavoriteRequest(
+        fetch('/api/hub/blog-favorites/move', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates }),
+        }),
+      );
+      const nextActionError = await getActionError(response);
 
       if (nextActionError) {
         setActionError(nextActionError);
         await loadData();
       }
     } catch {
-      setActionError({ message: '인터넷 연결을 확인한 뒤 다시 시도해 주세요.', isUnknown: true });
+      setActionError(NETWORK_ERROR);
       await loadData();
     }
   };
-
-  const renderSite = (blog: FavoriteBlogRow) => (
-    <div
-      key={blog.id}
-      className={`paper ${styles.item} ${styles['favorite-site']} ${dragOverItem?.id === blog.id ? 'drag-over' : ''}`}
-      draggable
-      onDragStart={(e) => handleDragStart(e, blog)}
-      onDragOver={(e) => handleDragOver(e, blog)}
-      onDrop={(e) => handleDrop(e, blog)}
-    >
-      <input
-        type="checkbox"
-        checked={selectedSiteIds.has(blog.id)}
-        onChange={(event) => {
-          const newSet = new Set(selectedSiteIds);
-          if (event.target.checked) newSet.add(blog.id);
-          else newSet.delete(blog.id);
-          setSelectedSiteIds(newSet);
-        }}
-      />
-      <div className={styles['description-item']}>
-        <div className={styles.description}>
-          <div className={styles.info}>
-            <span className={styles['favorite-site-name']}>
-              {blog.profileLogoUrl ? (
-                <OptimizedImage
-                  src={blog.profileLogoUrl}
-                  width={blog.profileLogoWidth}
-                  height={blog.profileLogoHeight}
-                  sizes={getHeightBasedSizes(24, blog.profileLogoWidth, blog.profileLogoHeight, 72)}
-                />
-              ) : (
-                <>
-                  <AppIconAvatar src={blog.profilePictureUrl || null} alt={blog.siteLabel} size={24} />
-                </>
-              )}
-              <strong>{blog.siteLabel}</strong>
-            </span>
-            <p>
-              {blog.visibilityLabel} {blog.isShutdown ? '(운영중지)' : null}
-            </p>
-          </div>
-          <div className={styles.tail}>
-            <div className={styles['tail-container']}>
-              <Anchor href={blog.href} className="button small action">
-                블로그 이동
-              </Anchor>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   if (errorMessage)
     return (
@@ -283,110 +471,177 @@ export default function FavoriteBlogs({
         <ScreenState kind="error">{errorMessage}</ScreenState>
       </section>
     );
-  if (blogs.length === 0) return null;
 
-  const defaultFolderBlogs = blogs.filter((b) => !b.folderId).sort((a, b) => a.sortOrder - b.sortOrder);
+  const undoSnackbar = (
+    <Snackbar
+      open={Boolean(pendingAction)}
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      message={pendingAction?.kind === 'deleteFolder' ? '폴더를 삭제했습니다.' : '즐겨찾기에서 뺐습니다.'}
+      action={
+        <button type="button" className="button small submit" onClick={undoPendingAction}>
+          취소하기
+        </button>
+      }
+    />
+  );
+
+  const errorDialog = (
+    <FormErrorDialog
+      open={Boolean(actionError)}
+      title={actionError?.isUnknown ? null : '즐겨찾기 편집'}
+      messages={actionError ? [actionError.message] : []}
+      onClose={() => setActionError(null)}
+    />
+  );
+
+  if (!canUseFolders) {
+    const sortedBlogs = sortFavoriteBlogs(blogs, folders);
+
+    return (
+      <section className={`paper ${styles.paper} ${styles.join}`}>
+        <div className={styles['section-headline']}>
+          <h2>즐겨찾기</h2>
+        </div>
+        {sortedBlogs.length > 0 ? (
+          <div className={`${styles.list} ${styles['list-newest']}`}>
+            {sortedBlogs.map((blog) => (
+              <FavoriteBlogCard
+                key={blog.id}
+                blog={blog}
+                action={
+                  <button
+                    type="button"
+                    className={`button small danger ${styles['setting-folder-button']}`}
+                    onClick={() => handleRemoveBlog(blog)}
+                  >
+                    빼기
+                  </button>
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="paper page-info">
+            <ServiceNoDataIcon />
+            <p>즐겨찾는 블로그가 없습니다.</p>
+          </div>
+        )}
+        {undoSnackbar}
+        {errorDialog}
+      </section>
+    );
+  }
 
   return (
     <section className={`paper ${styles.paper} ${styles.join}`}>
       <div className={styles['section-headline']}>
-        <h2>즐겨찾는 블로그</h2>
-        {canAddFolder ? (
-          <button type="button" className="button small action" onClick={() => setIsAddFolderOpen(true)}>
-            폴더 추가
-          </button>
-        ) : null}
-      </div>
-
-      <FolderModals
-        isAddFolderOpen={isAddFolderOpen}
-        setIsAddFolderOpen={setIsAddFolderOpen}
-        onAddFolder={handleAddFolder}
-        editFolder={editFolder}
-        setEditFolder={setEditFolder}
-        onEditFolder={handleEditFolder}
-        onDeleteFolder={handleDeleteFolder}
-        isMoveSitesOpen={isMoveSitesOpen}
-        setIsMoveSitesOpen={setIsMoveSitesOpen}
-        folders={folders}
-        onMoveSites={handleMoveSites}
-      />
-
-      <div className={styles['hub-list-groups']}>
-        <div>
-          <h3>기본 폴더</h3>
-          {defaultFolderBlogs.length > 0 ? (
-            <div className={`${styles.list} ${styles['list-newest']}`}>{defaultFolderBlogs.map(renderSite)}</div>
-          ) : (
-            <ScreenState>항목이 없습니다.</ScreenState>
-          )}
-        </div>
-
-        {folders.map((folder) => {
-          const folderBlogs = blogs.filter((b) => b.folderId === folder.id).sort((a, b) => a.sortOrder - b.sortOrder);
-          return (
-            <div key={folder.id}>
-              <div className={styles['section-headline']}>
-                <h3>{folder.label}</h3>
-                <button type="button" className="button small" onClick={() => setEditFolder(folder)}>
-                  폴더 수정
-                </button>
-              </div>
-              {folderBlogs.length > 0 ? (
-                <div className={`${styles.list} ${styles['list-newest']}`}>{folderBlogs.map(renderSite)}</div>
-              ) : (
-                <ScreenState>항목이 없습니다.</ScreenState>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {selectedSiteIds.size > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: '#333',
-            color: '#fff',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            zIndex: 50,
-          }}
-        >
-          <span>{selectedSiteIds.size}개 사이트 선택됨</span>
+        <h2>즐겨찾기</h2>
+        <div className={styles['section-actions']}>
+          {folders.length > 1 ? (
+            <button
+              type="button"
+              className={`button medium action ${styles['setting-folder-button']}`}
+              onClick={() => {
+                setPopupKey((previousKey) => previousKey + 1);
+                setIsFolderOrderOpen(true);
+              }}
+            >
+              <EditNoteRoundedIcon /> 폴더 순서
+            </button>
+          ) : null}
           <button
             type="button"
-            className="button action"
-            onClick={() => setIsMoveSitesOpen(true)}
-            style={{ background: '#007aff', color: '#fff', border: 'none' }}
+            className={`button medium submit ${styles['setting-folder-button']}`}
+            onClick={() => {
+              setPopupKey((previousKey) => previousKey + 1);
+              setIsAddFolderOpen(true);
+            }}
           >
-            이동
+            <AddRoundedIcon /> 폴더 추가
           </button>
         </div>
-      )}
+      </div>
 
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .drag-over {
-          border-top: 2px solid #007aff;
-        }
-      `,
-        }}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={(event) => void handleDragEnd(event)}
+        onDragCancel={() => void loadData()}
+      >
+        <div className={styles['hub-list-groups']}>
+          {folders.map((folder) => {
+            const folderBlogs = getFolderBlogs(blogs, folder.id);
+            return (
+              <div key={folder.id}>
+                <div className={styles['folder-headline']}>
+                  <h3>{folder.label}</h3>
+                  <div className={styles['section-actions']}>
+                    <button
+                      type="button"
+                      className={`button small normal ${styles['setting-folder-button']}`}
+                      onClick={() => setRenameFolder(folder)}
+                    >
+                      <EditNoteRoundedIcon />
+                      폴더명 변경
+                    </button>
+                    {folders.length > 1 ? (
+                      <button
+                        type="button"
+                        className={`button small danger ${styles['setting-folder-button']}`}
+                        onClick={() => setDeleteFolder(folder)}
+                      >
+                        <DeleteSweepRoundedIcon />
+                        폴더 삭제
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <SortableContext items={folderBlogs.map((blog) => blog.id)} strategy={verticalListSortingStrategy}>
+                  <FolderDropArea folderId={folder.id}>
+                    {folderBlogs.length > 0 ? (
+                      folderBlogs.map((blog) => <SortableBlog key={blog.id} blog={blog} onRemove={handleRemoveBlog} />)
+                    ) : (
+                      <ScreenState>항목이 없습니다.</ScreenState>
+                    )}
+                  </FolderDropArea>
+                </SortableContext>
+              </div>
+            );
+          })}
+        </div>
+      </DndContext>
+
+      <AddFolderPopup
+        key={`add-${popupKey}`}
+        open={isAddFolderOpen}
+        onClose={() => setIsAddFolderOpen(false)}
+        onSubmit={handleAddFolder}
       />
-      <FormErrorDialog
-        open={Boolean(actionError)}
-        title={actionError?.isUnknown ? null : '즐겨찾기 이동'}
-        messages={actionError ? [actionError.message] : []}
-        onClose={() => setActionError(null)}
+      <RenameFolderPopup
+        key={`rename-${renameFolder?.id ?? ''}`}
+        folder={renameFolder}
+        onClose={() => setRenameFolder(null)}
+        onSubmit={handleRenameFolder}
       />
+      <DeleteFolderPopup
+        key={`delete-${deleteFolder?.id ?? ''}`}
+        folder={deleteFolder}
+        folders={folders}
+        hasBlogs={deleteFolder ? getFolderBlogs(blogs, deleteFolder.id).length > 0 : false}
+        onClose={() => setDeleteFolder(null)}
+        onSubmit={handleDeleteFolder}
+      />
+      <FolderOrderPopup
+        key={`order-${popupKey}`}
+        open={isFolderOrderOpen}
+        folders={folders}
+        onClose={() => setIsFolderOrderOpen(false)}
+        onSubmit={handleFolderOrder}
+      />
+      {undoSnackbar}
+      {errorDialog}
     </section>
   );
 }
