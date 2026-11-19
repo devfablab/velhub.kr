@@ -64,9 +64,7 @@ const nextConfig: NextConfig = {
     silenceDeprecations: ['legacy-js-api'],
     includePaths: [path.join(__dirname, 'app')],
     outputStyle: process.env.NODE_ENV === 'production' ? 'compressed' : 'expanded',
-    prependData: `
-      @use 'designSystem.sass' as ds
-    `,
+    prependData: `@use 'designSystem.sass' as ds\n`,
   },
 };
 

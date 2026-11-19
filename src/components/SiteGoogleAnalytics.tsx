@@ -8,6 +8,8 @@ type SiteGoogleAnalyticsProps = {
   measurementId: string;
 };
 
+type GoogleTag = (command: string, ...argumentsList: unknown[]) => void;
+
 export default function SiteGoogleAnalytics({ measurementId }: SiteGoogleAnalyticsProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -15,13 +17,15 @@ export default function SiteGoogleAnalytics({ measurementId }: SiteGoogleAnalyti
   const queryString = searchParams.toString();
 
   useEffect(() => {
-    if (!isReady || typeof window.gtag !== 'function') {
+    const googleTag = (window as Window & { gtag?: GoogleTag }).gtag;
+
+    if (!isReady || typeof googleTag !== 'function') {
       return;
     }
 
     const pagePath = queryString ? `${pathname}?${queryString}` : pathname;
 
-    window.gtag('config', measurementId, {
+    googleTag('config', measurementId, {
       page_path: pagePath,
     });
   }, [isReady, measurementId, pathname, queryString]);

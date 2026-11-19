@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import sharp, { type Metadata } from 'sharp';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { r2Storage } from '@/lib/clients/r2Storage';
 
@@ -63,7 +63,7 @@ export async function uploadCommentImage({
   }
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());
-  let metadata: sharp.Metadata;
+  let metadata: Metadata;
 
   try {
     metadata = await sharp(fileBuffer).metadata();
