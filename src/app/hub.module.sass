@@ -70,9 +70,12 @@
         margin: ds.rem(22) 0
 
       .report-list
-        display: flex
-        flex-direction: column
+        display: grid
         gap: ds.rem(10)
+        grid-template-columns: repeat(1, 1fr)
+
+        @include ds.mq(minMedium)
+          grid-template-columns: repeat(2, 1fr)
 
         li
           gap: ds.rem(7)
