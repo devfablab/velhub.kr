@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import PopupMessage from '@/components/PopupMessage';
@@ -33,17 +34,22 @@ function SelectorGroup({
   return (
     <section className={`paper ${styles.paper}`}>
       <h2>{title}</h2>
-      <Typography variant="subtitle2">{description}</Typography>
       {options.length ? (
-        <FormControl>
-          <RadioGroup value={value} onChange={(event) => onChange(event.target.value)}>
-            {options.map((option) => (
-              <FormControlLabel key={option.id} value={option.id} control={<Radio />} label={option.label} />
-            ))}
-          </RadioGroup>
-        </FormControl>
+        <>
+          <Typography variant="subtitle2">{description}</Typography>
+          <FormControl>
+            <RadioGroup value={value} onChange={(event) => onChange(event.target.value)}>
+              {options.map((option) => (
+                <FormControlLabel key={option.id} value={option.id} control={<Radio />} label={option.label} />
+              ))}
+            </RadioGroup>
+          </FormControl>
+        </>
       ) : (
-        <ScreenState kind="warning">선택할 수 있는 대상이 없습니다.</ScreenState>
+        <p className="alert warning">
+          <WarningAmberRoundedIcon />
+          <span>선택할 수 있는 대상이 없습니다.</span>
+        </p>
       )}
     </section>
   );
@@ -110,12 +116,16 @@ export default function Opt({
     return (
       <section className={`paper ${styles.paper}`}>
         <h2>라운지 노출</h2>
-        <ScreenState kind="error">
+        <ScreenState
+          kind="error"
+          action={
+            <button type="button" className="button medium action" onClick={loadData}>
+              다시 시도
+            </button>
+          }
+        >
           {fetchError || '데이터를 불러오지 못했습니다.'} 일시적인 문제일 수 있으니 잠시 후 다시 시도해 주세요.
         </ScreenState>
-        <button type="button" className="button small warning" onClick={loadData}>
-          다시 시도
-        </button>
       </section>
     );
   }
@@ -123,14 +133,16 @@ export default function Opt({
   if (!data.features.ownerLounge && !data.features.creatorLounge) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <ScreenState kind="warning">
+        <ScreenState
+          kind="warning"
+          action={
+            <Anchor href="/memberships/creator" className="button medium action">
+              자세히 알아보기
+            </Anchor>
+          }
+        >
           라운지에 사이트나 연재글을 노출하려면 먼저 오너 멤버십 또는 크리에이터 멤버십 가입이 필요합니다.
         </ScreenState>
-        <Stack direction="row">
-          <Anchor href="/memberships/creator" className="button small action">
-            자세히 알아보기
-          </Anchor>
-        </Stack>
       </section>
     );
   }
@@ -145,49 +157,52 @@ export default function Opt({
     creatorOtherPostId !== (data.selections.creator_other_post ?? '');
 
   return (
-    <>
-      <Stack
-        component="form"
-        gap={4}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void handleSubmit();
-        }}
-      >
+    <Stack
+      component="form"
+      gap={4}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void handleSubmit();
+      }}
+    >
+      <section className={`paper ${styles.paper}`}>
         {data.features.ownerLounge ? (
-          <SelectorGroup
-            title="오너 라운지 노출"
-            description="운영 중인 본인 사이트 중 라운지에 노출할 사이트 1개를 선택하세요."
-            value={ownerSiteId}
-            options={siteOptions}
-            onChange={setOwnerSiteId}
-          />
+          <>
+            <h2>오너 라운지 노출</h2>
+            <SelectorGroup
+              title="노출할 내 사이트 선택"
+              description="운영 중인 본인 사이트 중 라운지에 노출할 사이트 1개를 선택하세요."
+              value={ownerSiteId}
+              options={siteOptions}
+              onChange={setOwnerSiteId}
+            />
+          </>
         ) : null}
         {data.features.creatorLounge ? (
-          <section className={`paper ${styles.paper}`}>
+          <>
             <h2>크리에이터 라운지 노출</h2>
             <SelectorGroup
-              title="본인 사이트"
-              description="운영 중인 본인 사이트 중 라운지에 노출할 사이트 1개를 선택하세요."
+              title="노출할 내 사이트 선택"
+              description="운영 중인 내 사이트 중 라운지에 노출할 사이트 1개를 선택하세요."
               value={creatorSiteId}
               options={siteOptions}
               onChange={setCreatorSiteId}
             />
             <SelectorGroup
-              title="본인 사이트 연재글"
-              description="본인 사이트에 작성한 연재글 1개를 선택하세요."
+              title="노출할 내 사이트의 연재글 선택"
+              description="내 사이트에서 작성한 연재글 1개를 선택하세요."
               value={creatorOwnPostId}
               options={postOptions(data.ownPosts)}
               onChange={setCreatorOwnPostId}
             />
             <SelectorGroup
-              title="다른 사이트 연재글"
+              title="다른 사이트의 연재글 선택"
               description="다른 사이트에 작성한 연재글 1개를 선택하세요."
               value={creatorOtherPostId}
               options={postOptions(data.otherPosts)}
               onChange={setCreatorOtherPostId}
             />
-          </section>
+          </>
         ) : null}
         {data.features.ownerLounge || data.features.creatorLounge ? (
           <Stack direction="row" justifyContent="flex-end">
@@ -198,13 +213,13 @@ export default function Opt({
         ) : (
           <ScreenState kind="warning">라운지 노출 기능을 이용 중인 멤버십이 없습니다.</ScreenState>
         )}
-      </Stack>
+      </section>
       <PopupMessage
         open={Boolean(snackbarMessage)}
         message={snackbarMessage}
         onClose={() => setSnackbarMessage('')}
         kind={snackbarKind}
       />
-    </>
+    </Stack>
   );
 }
