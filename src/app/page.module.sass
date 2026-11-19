@@ -722,6 +722,7 @@
           .tail-author, .tail-site
             display: flex
             align-items: center
+            margin-top: ds.rem(12)
             width: 100%
             min-width: 0
             height: ds.rem(24)
@@ -739,7 +740,8 @@
               white-space: nowrap
 
           .tail-author
-            margin-top: ds.rem(12)
+            ~ .tail-site
+              margin-top: 0
 
             > svg
               margin: 0 ds.rem(3) 0 ds.rem(12)
