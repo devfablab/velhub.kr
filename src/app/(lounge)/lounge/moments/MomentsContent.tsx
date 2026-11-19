@@ -1,16 +1,24 @@
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import {
   getMostReadMomentPosts,
   getNewMomentCreators,
   getNewMomentSites,
+  getOnePickPosts,
+  getOnePickSites,
   getRecentMomentPosts,
   getRisingMomentCreators,
   getRisingMomentSites,
   getTrendingMomentPosts,
   type MomentAudience,
+  ONE_PICK_POST_TITLE,
+  ONE_PICK_SITE_TITLE,
+  type OnePickListType,
 } from '@/lib/service/lounge/loungeMoments';
+import Anchor from '@/components/Anchor';
 import type { PostsResponse } from '../../page';
 import List from '../list';
 import Slick from '../slick';
+import styles from '@/app/page.module.sass';
 
 type MomentsContentProps = {
   audience: Exclude<MomentAudience, 'all'>;
@@ -32,19 +40,55 @@ function MomentList({ orderType, initialData }: { orderType: 'hits' | 'newest'; 
   return initialData?.posts.length ? <List orderType={orderType} initialData={initialData} /> : null;
 }
 
+function OnePickTitle({ title, type }: { title: string; type: OnePickListType }) {
+  return (
+    <div className={styles.headline}>
+      <h2>{title}</h2>
+      <Anchor href={`/lounge/moments/all?type=${type}`} className={styles['section-more']}>
+        <span>전체 보기</span>
+        <span>
+          <ArrowForwardRoundedIcon />
+        </span>
+      </Anchor>
+    </div>
+  );
+}
+
 async function CreatorMoments() {
-  const [newSitesData, newCreatorsData, risingCreatorsData, recentPostsData, trendingPostsData, popularPostsData] =
-    await Promise.all([
-      getMomentData(async () => ({ sites: await getNewMomentSites() })),
-      getMomentData(async () => ({ creators: await getNewMomentCreators() })),
-      getMomentData(async () => ({ creators: await getRisingMomentCreators() })),
-      getMomentData(async () => toPostsData(await getRecentMomentPosts())),
-      getMomentData(async () => toPostsData(await getTrendingMomentPosts())),
-      getMomentData(async () => toPostsData(await getMostReadMomentPosts())),
-    ]);
+  const [
+    onePickSitesData,
+    onePickPostsData,
+    newSitesData,
+    newCreatorsData,
+    risingCreatorsData,
+    recentPostsData,
+    trendingPostsData,
+    popularPostsData,
+  ] = await Promise.all([
+    getMomentData(() => getOnePickSites('creator')),
+    getMomentData(async () => toPostsData((await getOnePickPosts()).posts)),
+    getMomentData(async () => ({ sites: await getNewMomentSites() })),
+    getMomentData(async () => ({ creators: await getNewMomentCreators() })),
+    getMomentData(async () => ({ creators: await getRisingMomentCreators() })),
+    getMomentData(async () => toPostsData(await getRecentMomentPosts())),
+    getMomentData(async () => toPostsData(await getTrendingMomentPosts())),
+    getMomentData(async () => toPostsData(await getMostReadMomentPosts())),
+  ]);
 
   return (
     <>
+      {onePickSitesData?.sites.length ? (
+        <section>
+          <OnePickTitle title={ONE_PICK_SITE_TITLE} type="creator-sites" />
+          <Slick sitesHitsData={onePickSitesData} />
+        </section>
+      ) : null}
+      {onePickPostsData?.posts.length ? (
+        <section>
+          <OnePickTitle title={ONE_PICK_POST_TITLE} type="creator-posts" />
+          <Slick postsData={onePickPostsData} />
+        </section>
+      ) : null}
       {newSitesData?.sites.length ? (
         <section>
           <h2>새로 문 연 공간 👋</h2>
@@ -86,16 +130,24 @@ async function CreatorMoments() {
 }
 
 async function OwnerMoments() {
-  const [newSitesData, risingSitesData, recentPostsData, trendingPostsData, popularPostsData] = await Promise.all([
-    getMomentData(async () => ({ sites: await getNewMomentSites(20, 'owner') })),
-    getMomentData(async () => ({ sites: await getRisingMomentSites() })),
-    getMomentData(async () => toPostsData(await getRecentMomentPosts(50, 'owner'))),
-    getMomentData(async () => toPostsData(await getTrendingMomentPosts(50, 'owner'))),
-    getMomentData(async () => toPostsData(await getMostReadMomentPosts(50, 'owner'))),
-  ]);
+  const [onePickSitesData, newSitesData, risingSitesData, recentPostsData, trendingPostsData, popularPostsData] =
+    await Promise.all([
+      getMomentData(() => getOnePickSites('owner')),
+      getMomentData(async () => ({ sites: await getNewMomentSites(20, 'owner') })),
+      getMomentData(async () => ({ sites: await getRisingMomentSites() })),
+      getMomentData(async () => toPostsData(await getRecentMomentPosts(50, 'owner'))),
+      getMomentData(async () => toPostsData(await getTrendingMomentPosts(50, 'owner'))),
+      getMomentData(async () => toPostsData(await getMostReadMomentPosts(50, 'owner'))),
+    ]);
 
   return (
     <>
+      {onePickSitesData?.sites.length ? (
+        <section>
+          <OnePickTitle title={ONE_PICK_SITE_TITLE} type="owner-sites" />
+          <Slick sitesHitsData={onePickSitesData} />
+        </section>
+      ) : null}
       {newSitesData?.sites.length ? (
         <section>
           <h2>새로 문 연 사이트 👋</h2>

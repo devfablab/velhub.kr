@@ -10,7 +10,7 @@ const menus = [
   { href: '/lounge/moments/owners', label: '오너 모먼트' },
 ];
 
-export default function MomentSubMenu() {
+export default function MomentSubMenu({ allHref }: { allHref?: string }) {
   const pathname = usePathname();
   return (
     <div className={styles.tabs}>
@@ -27,6 +27,11 @@ export default function MomentSubMenu() {
             </li>
           );
         })}
+        {allHref ? (
+          <li aria-current="page" className={styles.current}>
+            <Anchor href={allHref}>전체보기</Anchor>
+          </li>
+        ) : null}
       </ul>
     </div>
   );

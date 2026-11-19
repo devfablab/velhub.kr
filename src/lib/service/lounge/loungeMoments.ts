@@ -207,6 +207,76 @@ function getFirstPostImage(images: MomentPostRow['images']) {
   };
 }
 
+function toMomentPostCard({
+  post,
+  board,
+  site,
+  siteUrl,
+  authorName,
+  authorAvatar,
+}: {
+  post: MomentPostRow;
+  board: BoardRow;
+  site: SiteRow;
+  siteUrl: string;
+  authorName: string;
+  authorAvatar: string | null;
+}): MomentPostCard {
+  const base: MomentPostCard = {
+    post_id: post.id,
+    author_id: post.user_id,
+    site_key: site.site_key,
+    site_url: siteUrl,
+    site_label: site.site_label,
+    site_type: site.site_type,
+    profile_picture: toPublicUrl('avatar', site.profile_picture),
+    promotion_image: toPublicUrl('promotion-image', site.promotion_image),
+    slug: String(post.slug),
+    board_key: board.board_key,
+    board_type: board.board_type,
+    author_name: authorName,
+    author_avatar: authorAvatar,
+    published_at: post.published_at,
+  };
+
+  if (board.board_type === 'gallery') {
+    return {
+      ...base,
+      subject: post.subject,
+      summary: post.summary,
+      content_html: post.content_html,
+      ...getFirstPostImage(post.images),
+    };
+  }
+
+  if (board.board_type === 'youtube') {
+    return {
+      ...base,
+      subject: post.subject,
+      summary: post.summary,
+      thumbnail_image: toPostThumbnailUrl(post.thumbnail_image),
+      thumbnail_width: toImageDimension(post.thumbnail_width),
+      thumbnail_height: toImageDimension(post.thumbnail_height),
+      youtube_id: post.youtube_id,
+    };
+  }
+
+  if (board.board_type === 'feed') {
+    return {
+      ...base,
+      content_simple: post.content_simple,
+      ...getFirstPostImage(post.images),
+    };
+  }
+
+  return {
+    ...base,
+    subject: post.subject,
+    content_html: post.content_html,
+    ...getListThumbnail(post),
+  };
+}
+
 function pickWithDynamicPeriod<T>(
   rows: T[],
   limit: number,
@@ -584,70 +654,19 @@ const getMomentPosts = cache(
         }
       }
 
-      const base: MomentPostCard = {
-        post_id: post.id,
-        author_id: post.user_id,
-        site_key: site.site_key,
-        site_url: getPublicSiteUrl({
-          siteKey: site.site_key,
-          customDomain: site.custom_domain,
-          hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
-        }),
-        site_label: site.site_label,
-        site_type: site.site_type,
-        profile_picture: toPublicUrl('avatar', site.profile_picture),
-        promotion_image: toPublicUrl('promotion-image', site.promotion_image),
-        slug: String(post.slug),
-        board_key: board.board_key,
-        board_type: board.board_type,
-        author_name: authorName,
-        author_avatar: creator?.profileImage ?? toPublicUrl('avatar', stigma?.avatar),
-        published_at: post.published_at,
-      };
-
-      if (board.board_type === 'gallery') {
-        return [
-          {
-            ...base,
-            subject: post.subject,
-            summary: post.summary,
-            content_html: post.content_html,
-            ...getFirstPostImage(post.images),
-          },
-        ];
-      }
-
-      if (board.board_type === 'youtube') {
-        return [
-          {
-            ...base,
-            subject: post.subject,
-            summary: post.summary,
-            thumbnail_image: toPostThumbnailUrl(post.thumbnail_image),
-            thumbnail_width: toImageDimension(post.thumbnail_width),
-            thumbnail_height: toImageDimension(post.thumbnail_height),
-            youtube_id: post.youtube_id,
-          },
-        ];
-      }
-
-      if (board.board_type === 'feed') {
-        return [
-          {
-            ...base,
-            content_simple: post.content_simple,
-            ...getFirstPostImage(post.images),
-          },
-        ];
-      }
-
       return [
-        {
-          ...base,
-          subject: post.subject,
-          content_html: post.content_html,
-          ...getListThumbnail(post),
-        },
+        toMomentPostCard({
+          post,
+          board,
+          site,
+          siteUrl: getPublicSiteUrl({
+            siteKey: site.site_key,
+            customDomain: site.custom_domain,
+            hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
+          }),
+          authorName,
+          authorAvatar: creator?.profileImage ?? toPublicUrl('avatar', stigma?.avatar),
+        }),
       ];
     });
 
@@ -968,3 +987,279 @@ export async function getTrendingMomentPosts(limit = 50, audience: Exclude<Momen
 export async function getMostReadMomentPosts(limit = 50, audience: Exclude<MomentAudience, 'all'> = 'creator') {
   return getRankedMomentPosts(limit, 'post_view_daily_stats', audience);
 }
+
+export type OnePickAudience = 'creator' | 'owner';
+
+export type OnePickSiteCard = MomentSiteHitCard & { latest_published_at: string | null };
+
+export const ONE_PICK_SLICK_LIMIT = 20;
+
+export const ONE_PICK_PAGE_SIZE = 20;
+
+const ONE_PICK_ID_CHUNK = 200;
+
+type OnePickSelectionRow = { user_id: string; target_id: string };
+
+type OnePickPostRow = MomentPostRow & { like_count: number | null };
+
+function toChunks<T>(items: T[], size = ONE_PICK_ID_CHUNK) {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size));
+  return chunks;
+}
+
+async function getOnePickSelections(selectorTypes: string[]) {
+  const supabaseAdmin = getSupabaseAdmin();
+  return fetchPagedRows<OnePickSelectionRow>((from, to) =>
+    supabaseAdmin
+      .from('membership_selectors')
+      .select('user_id, target_id')
+      .in('selector_type', selectorTypes)
+      .order('user_id', { ascending: true })
+      .order('target_id', { ascending: true })
+      .range(from, to),
+  );
+}
+
+async function getOnePickUserIds(audience: OnePickAudience, userIds: string[]) {
+  const uniqueUserIds = [...new Set(userIds)];
+  if (!uniqueUserIds.length) return new Set<string>();
+
+  if (audience === 'creator') {
+    const creatorUserIds = new Set((await getMomentCreators()).map((creator) => creator.userId));
+    return new Set(uniqueUserIds.filter((userId) => creatorUserIds.has(userId)));
+  }
+
+  return getUsersWithMembershipFeature(uniqueUserIds, 'owner_lounge');
+}
+
+async function getPublicSitesByIds(siteIds: string[]) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const results = await Promise.all(
+    toChunks([...new Set(siteIds)]).map((chunk) =>
+      supabaseAdmin
+        .from('rhizomes')
+        .select(
+          'id, owner_id, site_key, site_label, summary, site_type, profile_picture, profile_logo, promotion_image, custom_domain, member_count, post_count',
+        )
+        .in('id', chunk)
+        .in('site_type', ['blog', 'community'])
+        .eq('visibility_type', 'public')
+        .eq('is_shutdown', false)
+        .or('is_blocked.eq.false,is_blocked.is.null'),
+    ),
+  );
+
+  return results.flatMap((result) => {
+    if (result.error) throw result.error;
+    return (result.data ?? []) as SiteRow[];
+  });
+}
+
+async function getLatestPublishedAtBySiteId(siteIds: string[]) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const latestPublishedAtBySiteId = new Map<string, string>();
+
+  for (const chunk of toChunks(siteIds)) {
+    const posts = await fetchPagedRows<{ site_id: string; published_at: string | null }>(
+      (from, to) =>
+        supabaseAdmin
+          .from('posts')
+          .select('site_id, published_at')
+          .in('site_id', chunk)
+          .eq('published_status', 'published')
+          .eq('is_closed', false)
+          .eq('is_wording_blinded', false)
+          .not('published_at', 'is', null)
+          .order('published_at', { ascending: false })
+          .order('id', { ascending: true })
+          .range(from, to),
+      20000,
+    );
+
+    posts.forEach((post) => {
+      if (post.published_at && !latestPublishedAtBySiteId.has(post.site_id)) {
+        latestPublishedAtBySiteId.set(post.site_id, post.published_at);
+      }
+    });
+  }
+
+  return latestPublishedAtBySiteId;
+}
+
+const getOnePickSiteRows = cache(async (audience: OnePickAudience) => {
+  const selections = await getOnePickSelections([audience === 'creator' ? 'creator_site' : 'owner_site']);
+  const allowedUserIds = await getOnePickUserIds(
+    audience,
+    selections.map((selection) => selection.user_id),
+  );
+  const ownerIdBySiteId = new Map(
+    selections
+      .filter((selection) => allowedUserIds.has(selection.user_id))
+      .map((selection) => [selection.target_id, selection.user_id]),
+  );
+  if (!ownerIdBySiteId.size) return [];
+
+  const sites = (await getPublicSitesByIds([...ownerIdBySiteId.keys()])).filter(
+    (site) => site.owner_id === ownerIdBySiteId.get(site.id),
+  );
+  if (!sites.length) return [];
+
+  const latestPublishedAtBySiteId = await getLatestPublishedAtBySiteId(sites.map((site) => site.id));
+
+  return sites
+    .map((site) => ({ site, latestPublishedAt: latestPublishedAtBySiteId.get(site.id) ?? null }))
+    .sort((left, right) => {
+      if (left.latestPublishedAt && right.latestPublishedAt) {
+        return right.latestPublishedAt.localeCompare(left.latestPublishedAt);
+      }
+      if (left.latestPublishedAt) return -1;
+      if (right.latestPublishedAt) return 1;
+      return left.site.site_label.localeCompare(right.site.site_label);
+    });
+});
+
+export async function getOnePickSites(
+  audience: OnePickAudience,
+  { page = 1, pageSize = ONE_PICK_SLICK_LIMIT }: { page?: number; pageSize?: number } = {},
+): Promise<{ sites: OnePickSiteCard[]; total: number }> {
+  const rows = await getOnePickSiteRows(audience);
+  const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
+  const cards = await toSiteHitCards(pageRows.map((row) => row.site));
+
+  return {
+    sites: cards.map((card, index) => ({
+      ...card,
+      created_at: pageRows[index].latestPublishedAt ?? '',
+      latest_published_at: pageRows[index].latestPublishedAt,
+    })),
+    total: rows.length,
+  };
+}
+
+const getOnePickPostCards = cache(async (): Promise<MomentPostCard[]> => {
+  const selections = await getOnePickSelections(['creator_own_post', 'creator_other_post']);
+  const allowedUserIds = await getOnePickUserIds(
+    'creator',
+    selections.map((selection) => selection.user_id),
+  );
+  const userIdByPostId = new Map(
+    selections
+      .filter((selection) => allowedUserIds.has(selection.user_id))
+      .map((selection) => [selection.target_id, selection.user_id]),
+  );
+  if (!userIdByPostId.size) return [];
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const postResults = await Promise.all(
+    toChunks([...userIdByPostId.keys()]).map((chunk) =>
+      supabaseAdmin
+        .from('posts')
+        .select(
+          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, series_id, like_count',
+        )
+        .in('id', chunk)
+        .eq('published_status', 'published')
+        .eq('is_closed', false)
+        .eq('is_wording_blinded', false)
+        .not('published_at', 'is', null)
+        .not('series_id', 'is', null),
+    ),
+  );
+  const postRows = postResults
+    .flatMap((result) => {
+      if (result.error) throw result.error;
+      return (result.data ?? []) as OnePickPostRow[];
+    })
+    .filter((post) => post.user_id === userIdByPostId.get(post.id));
+  if (!postRows.length) return [];
+
+  const boardResults = await Promise.all(
+    toChunks([...new Set(postRows.map((post) => post.board_id))]).map((chunk) =>
+      supabaseAdmin
+        .from('boards')
+        .select('id, site_id, board_key, board_type, write_permission')
+        .in('id', chunk)
+        .in('board_type', ['basic', 'blog', 'feed', 'gallery', 'youtube']),
+    ),
+  );
+  const boardById = new Map(
+    boardResults
+      .flatMap((result) => {
+        if (result.error) throw result.error;
+        return (result.data ?? []) as BoardRow[];
+      })
+      .map((board) => [board.id, board]),
+  );
+  const siteById = new Map(
+    (await getPublicSitesByIds([...boardById.values()].map((board) => board.site_id))).map((site) => [site.id, site]),
+  );
+  const authorIds = [...new Set(postRows.map((post) => post.user_id))];
+  const [ownerIdsWithDomainFeature, creators, stigmaResults] = await Promise.all([
+    getUsersWithMembershipFeature(
+      [...siteById.values()].map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)),
+      'owner_domain',
+    ),
+    getMomentCreators(),
+    Promise.all(
+      toChunks(authorIds).map((chunk) => supabaseAdmin.from('stigmas').select('id, user_name, avatar').in('id', chunk)),
+    ),
+  ]);
+  const creatorByUserId = new Map(creators.map((creator) => [creator.userId, creator]));
+  const stigmaById = new Map(
+    stigmaResults
+      .flatMap((result) => {
+        if (result.error) throw result.error;
+        return (result.data ?? []) as Array<{ id: string; user_name: string | null; avatar: string | null }>;
+      })
+      .map((stigma) => [stigma.id, stigma]),
+  );
+
+  return postRows
+    .flatMap((post) => {
+      const board = boardById.get(post.board_id);
+      const site = board ? siteById.get(board.site_id) : null;
+      if (!board || !site) return [];
+      const creator = creatorByUserId.get(post.user_id);
+      const stigma = stigmaById.get(post.user_id);
+
+      return [
+        {
+          likeCount: post.like_count ?? 0,
+          card: toMomentPostCard({
+            post,
+            board,
+            site,
+            siteUrl: getPublicSiteUrl({
+              siteKey: site.site_key,
+              customDomain: site.custom_domain,
+              hasOwnerDomainFeature: ownerIdsWithDomainFeature.has(site.owner_id ?? ''),
+            }),
+            authorName: creator?.activityName ?? '작성자',
+            authorAvatar: creator?.profileImage ?? toPublicUrl('avatar', stigma?.avatar),
+          }),
+        },
+      ];
+    })
+    .sort(
+      (left, right) =>
+        right.likeCount - left.likeCount || right.card.published_at.localeCompare(left.card.published_at),
+    )
+    .map(({ card }) => card);
+});
+
+export async function getOnePickPosts({
+  page = 1,
+  pageSize = ONE_PICK_SLICK_LIMIT,
+}: { page?: number; pageSize?: number } = {}): Promise<{ posts: MomentPostCard[]; total: number }> {
+  const cards = await getOnePickPostCards();
+  return { posts: cards.slice((page - 1) * pageSize, page * pageSize), total: cards.length };
+}
+
+export const ONE_PICK_LIST_TYPES = ['creator-sites', 'creator-posts', 'owner-sites'] as const;
+
+export type OnePickListType = (typeof ONE_PICK_LIST_TYPES)[number];
+
+export const ONE_PICK_SITE_TITLE = '내가 원하는 노출 ONE픽 사이트';
+
+export const ONE_PICK_POST_TITLE = '내가 원하는 노출 ONE픽 포스팅';

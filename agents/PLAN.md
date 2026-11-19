@@ -5,7 +5,12 @@
 
 ## 4. 현재 상태
 
-- 지금 작업 중인 단계: 즐겨찾기 폴더 관리(결제/미결제) 완료
+- 지금 작업 중인 단계: 모먼트 ONE픽 (마이허브 라운지 노출 선택값을 모먼트에 반영)
+  1. [x] 데이터 함수: ONE픽 사이트(최신 글 순), ONE픽 포스팅(좋아요 순), 페이지 나눔 (`src/lib/service/lounge/loungeMoments.ts`)
+  2. [x] 크리에이터 모먼트: ONE픽 사이트, ONE픽 포스팅 slick을 '새로 문 연 공간' 위에 / 오너 모먼트: ONE픽 사이트 slick을 '새로 문 연 사이트' 위에, 제목 옆 '전체 보기' 링크
+  3. [x] 모먼트 메뉴: 전체보기 페이지에서만 '오너 모먼트' 옆에 '전체보기' 표시
+  4. [x] 전체보기 페이지 `/lounge/moments/all?type=&page=`: 목록형, 하단 페이지 번호
+  5. [x] 스타일, 타입 체크, 린트, 프리티어
 - 테스트 상태: 타입 체크, 린트, 프리티어 통과
 - 미커밋 변경 요약: `git status --short` 결과 기준으로 파일별 한 줄 설명
 
@@ -17,6 +22,7 @@
 
 - [x] 마이허브 좋아요, 저장, 읽은 글 화면이 받은 자료 모양과 맞지 않아 열리지 않던 문제 수정 (수정한 파일: `src/app/(hub)/hub/shared/likedItems.tsx`, `savedItems.tsx`, `readsItems.tsx`, `src/components/Anchor.tsx`)
 - [x] 블로그 허브 홈의 즐겨찾는 블로그는 목록만, 편집은 읽은글 다음 메뉴로 분리 (수정한 파일: `src/app/(hub)/hub/blogs/page.tsx`, `tab.tsx`, `favoriteBlogs.tsx`, 추가: `favoriteBlogList.tsx`, `favorites/page.tsx`)
+- [x] 모먼트 ONE픽: 크리에이터 모먼트에 ONE픽 사이트(최신 글 순)와 ONE픽 포스팅(좋아요 순), 오너 모먼트에 ONE픽 사이트, 전체보기 페이지와 페이지 번호 (수정한 파일: `src/lib/service/lounge/loungeMoments.ts`, `src/app/(lounge)/lounge/moments/MomentsContent.tsx`, `MomentSubMenu.tsx`, `src/app/page.module.sass`, 추가: `src/app/(lounge)/lounge/moments/all/page.tsx`, `all/opt.tsx`)
 - [x] 즐겨찾기 폴더 관리: 기본 폴더(is_default, 맨 위 폴더), 폴더 순서, 끌어서 이동, 빼기와 폴더 삭제 5초 취소, 미결제는 폴더 구분 없이 전체 표시 (DB: `supabase/migrations/20261119100000_favorite_folder_default.sql` 적용 완료)
 
 ## 12. 변경한 파일
@@ -51,6 +57,15 @@
 | `src/app/api/site/blog/[siteName]/favorites/route.ts` | 즐겨찾기 추가 때 기본 폴더 없으면 만들고 맨 위에 넣음 | 완료 |
 | `src/lib/service/hubFavoriteFolder.server.ts` | 기본 폴더 보장, 폴더 순서 저장, 기본 폴더로 옮기던 동작 제거 | 완료 |
 | `src/lib/service/hubFavoriteFolder.shared.ts` | 즐겨찾기 타입, 정렬 함수, 저장 대기 함수 | 완료 |
+| `src/app/(hub)/hub/blogs/folderModals.tsx` | 폴더 이름 입력칸과 기본 폴더 체크박스를 MUI로 | 완료 |
+| `src/app/(hub)/hub/lounge/opt.tsx` | 안내 버튼을 ScreenState action 안으로 | 완료 |
+| `next.config.ts` | sass prependData 들여쓰기 제거 (새 sass 오류) | 완료 |
+| `src/lib/service/lounge/loungeMoments.ts` | 글 카드 만드는 부분 함수로 분리, ONE픽 사이트와 포스팅 함수 추가 | 완료 |
+| `src/app/(lounge)/lounge/moments/MomentsContent.tsx` | ONE픽 slick 섹션과 전체 보기 링크 | 완료 |
+| `src/app/(lounge)/lounge/moments/MomentSubMenu.tsx` | 전체보기 페이지에서만 전체보기 탭 표시 | 완료 |
+| `src/app/(lounge)/lounge/moments/all/page.tsx` | 새 파일, 전체보기 페이지 | 완료 |
+| `src/app/(lounge)/lounge/moments/all/opt.tsx` | 새 파일, ONE픽 사이트 목록과 페이지 번호 | 완료 |
+| `src/app/page.module.sass` | 전체 보기 링크, 페이지 번호 위치 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

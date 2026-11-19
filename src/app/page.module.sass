@@ -57,11 +57,42 @@
             html[data-theme="yellow-dark"] &
               color: rgba(ds.$rgb-secondary, .8)
 
+  .headline
+    display: flex
+    justify-content: space-between
+    position: relative
+    z-index: 1
+    padding-right: ds.rem(72)
+
   h2
     @include ds.fw(neo, 800)
     font-size: ds.rem(18)
     position: relative
     z-index: 1
+
+  .section-more
+    display: inline-flex
+    align-items: flex-end
+    gap: ds.rem(3)
+    @include ds.fw(neo, 600)
+    font-size: ds.rem(14)
+    color: ds.$hex-action
+
+    span
+      display: inline-flex
+      align-items: center
+      height: ds.rem(21)
+
+    svg
+      width: ds.rem(16)
+      height: ds.rem(16)
+
+    &:hover, &:focus-visible
+      text-decoration: underline
+
+  .one-pick-pagination
+    display: flex
+    justify-content: center
 
   .auth
     display: flex
