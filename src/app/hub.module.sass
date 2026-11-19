@@ -35,6 +35,10 @@
         gap: ds.rem(7)
         text-align: left
 
+        &:hover, &:focus-visible
+          strong
+            text-decoration: underline
+
         strong
           @include ds.fw(neo, 700)
           font-size: ds.rem(16)
@@ -71,23 +75,30 @@
         gap: ds.rem(10)
 
         li
-          display: flex
-          flex-direction: column
           gap: ds.rem(7)
           padding: ds.rem(16)
-          border: 1px solid ds.$hex-tertiary
-          border-radius: ds.rem(10)
-
-          html[data-theme="yellow-dark"] &
-            border-color: rgb(ds.$rgb-tertiary, .55)
 
           > p
             text-align: left
             font-size: ds.rem(15)
 
+            a
+              color: ds.$hex-action
+              text-decoration: underline
+
+              &:hover, &:focus-visible
+                color: ds.$hex-secondary
+
+                html[data-theme="yellow-dark"] &
+                  color: ds.$hex-light
+
           time
             color: ds.$hex-secondary
             font-size: ds.rem(13)
+            opacity: .5
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-light
 
       .report-heading
         display: flex
@@ -122,10 +133,10 @@
       div
         display: flex
         justify-content: space-between
-        padding: ds.rem(7) ds.rem(12)
         border-radius: ds.rem(7)
+        font-size: ds.rem(14)
 
-        &:hover
+        &:hover, &:focus-visible
           background-color: rgb(ds.$rgb-tertiary, .1)
 
           html[data-theme="yellow-dark"] &
@@ -148,16 +159,21 @@
         gap: ds.rem(7)
 
         dt
-          @include ds.fw(neo, 700)
-          font-size: ds.rem(16)
+          font-size: ds.rem(14)
+          color: ds.$hex-secondary
+          opacity: .7
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
+
+        dd
+          @include ds.fw(neo, 900)
+          text-align: right
+          font-size: ds.rem(24)
           color: ds.$hex-primary
 
           html[data-theme="yellow-dark"] &
             color: ds.$hex-bright
-
-        dd
-          text-align: right
-          font-size: ds.rem(14)
 
     td
       button
@@ -166,10 +182,13 @@
 
       a, button
         text-decoration: underline
-        color: ds.$hex-secondary
+        color: ds.$hex-action
 
-        html[data-theme="yellow-dark"] &
-          color: ds.$hex-bright
+        &:hover, &:focus-visible
+          color: ds.$hex-secondary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
 
 .revenue-container
   max-width: ds.rem(1347)
@@ -289,26 +308,17 @@
 
   .join
     .join-sites
-      display: flex
-      flex-direction: column
-      gap: 0
+      display: grid
+      gap: ds.rem(12)
+      grid-template-columns: repeat(1, 1fr)
+
+      @include ds.mq(minMedium)
+        grid-template-columns: repeat(2, 1fr)
 
     .join-site
       display: flex
       flex-direction: column
       gap: ds.rem(12)
-      padding: ds.rem(17) 0
-      border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
-
-      html[data-theme="yellow-dark"] &
-        border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
-
-      &:first-of-type
-        padding-top: 0
-        border-top: 0!important
-
-      &:last-of-type
-        padding-bottom: 0
 
       .join-site-info
         display: flex
@@ -436,8 +446,10 @@
                 opacity: .7
 
               cite
+                display: block
+                flex: none
                 width: ds.rem(72)
-                justify-content: flex-end
+                text-align: right
 
                 @include ds.mq(maxExtraSmall)
                   @include ds.screen-reader-only
@@ -446,7 +458,7 @@
                 width: ds.rem(57)
                 justify-content: flex-end
 
-              cite, time, small
+              time, small
                 display: flex
                 align-items: center
                 flex: none
@@ -462,6 +474,10 @@
   flex-direction: column
   align-items: center
   gap: ds.rem(32)
+  min-width: 0
+
+  > .content
+    min-width: 0
 
   .tabs
     display: flex
@@ -903,8 +919,10 @@
                 opacity: .7
 
               cite
+                display: block
+                flex: none
                 width: ds.rem(72)
-                justify-content: flex-end
+                text-align: right
 
                 @include ds.mq(maxExtraSmall)
                   @include ds.screen-reader-only
@@ -913,7 +931,7 @@
                 width: ds.rem(57)
                 justify-content: flex-end
 
-              cite, time, small
+              time, small
                 display: flex
                 align-items: center
                 flex: none
@@ -1132,6 +1150,19 @@
         padding: 0 ds.rem(8)
         @include ds.fw(pre, 700)
         font-size: ds.rem(11)
+
+  .cols
+    display: grid
+    gap: ds.rem(12)
+    grid-template-columns: repeat(1, 1fr)
+
+    @include ds.mq(minMedium)
+      grid-template-columns: repeat(2, 1fr)
+
+    .col
+      display: flex
+      flex-direction: column
+      gap: ds.rem(12)
 
 .owned-post-dialog
   :global(.MuiDialog-paper)

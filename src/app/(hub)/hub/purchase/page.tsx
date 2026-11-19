@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { getHubApiData } from '@/lib/service/hub/getData';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
-import { getHubApiData } from '@/lib/service/hub/getData';
 import Container from '../menu';
 import BillingMethods from './billingMethods';
 import Content from './tab';
@@ -184,34 +184,35 @@ export default async function Page() {
             </dl>
           </section>
 
-          <section className={`paper ${styles.paper}`}>
-            <h2>결제 유형별 지출 요약</h2>
-            <div>
-              <p>포스팅 소장, 구독, 후원 등 결제 유형별 누적 결제 금액입니다.</p>
-            </div>
-            {result.summary.amountByType.length === 0 ? (
-              <div className="paper page-info">
-                <ServiceNoDataIcon />
-                <p>결제 내역이 없습니다 🙂</p>
+          <section className={`paper ${styles.paper} ${styles.cols}`}>
+            <div className={styles.col}>
+              <h2>결제 유형별 지출 요약</h2>
+              <div>
+                <p>포스팅 소장, 구독, 후원 등 결제 유형별 누적 결제 금액입니다.</p>
               </div>
-            ) : (
-              <dl className={`paper ${styles['type-summary']}`}>
-                {result.summary.amountByType.map((item) => (
-                  <div key={item.paymentType}>
-                    <dt>{item.label}</dt>
-                    <dd>{formatAmount(item.amount)}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </section>
-
-          <section className={`paper ${styles.paper}`}>
-            <h2>결제수단</h2>
-            <BillingMethods
-              billingMethods={result.billingMethods}
-              isIdentityVerified={identityStatus.data?.exists === true}
-            />
+              {result.summary.amountByType.length === 0 ? (
+                <div className="paper page-info">
+                  <ServiceNoDataIcon />
+                  <p>결제 내역이 없습니다 🙂</p>
+                </div>
+              ) : (
+                <dl className={`paper ${styles['type-summary']}`}>
+                  {result.summary.amountByType.map((item) => (
+                    <div key={item.paymentType}>
+                      <dt>{item.label}</dt>
+                      <dd>{formatAmount(item.amount)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
+            <div className={styles.col}>
+              <h2>결제수단</h2>
+              <BillingMethods
+                billingMethods={result.billingMethods}
+                isIdentityVerified={identityStatus.data?.exists === true}
+              />
+            </div>
           </section>
 
           <section className={`paper ${styles.paper} ${styles.history}`}>

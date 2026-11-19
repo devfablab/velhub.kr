@@ -413,7 +413,7 @@
         background-color: #181818
         color: ds.$hex-white
 
-        &:hover
+        &:hover, &:focus-visible
           background-color: #181818
 
         html[data-theme="yellow-dark"] &
@@ -520,7 +520,7 @@
     transition: opacity .7s ease, transform .8s cubic-bezier(.2, .7, .2, 1), translate .3s ease, box-shadow .3s ease, border-color .3s ease
     transition-delay: calc(var(--reveal-order, 0) * 90ms), calc(var(--reveal-order, 0) * 90ms), 0s, 0s, 0s
 
-    &:hover
+    &:hover, &:focus-visible
       translate: 0 ds.rem(-6)
       border-color: rgba(238, 180, 0, .5)
       box-shadow: 0 ds.rem(16) ds.rem(32) rgba(24, 24, 24, .08)

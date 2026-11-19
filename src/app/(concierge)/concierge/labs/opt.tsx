@@ -216,7 +216,7 @@ export default function Opt({
             <Chip
               label="내 제안 보기"
               size="small"
-              className={`chip ${isMy ? 'success' : 'default outlined'}`}
+              className={`chip ${isMy ? 'success' : 'default outlined'} ${styles.chip}`}
               onClick={() => handleToggleMy(!isMy)}
               clickable
             />

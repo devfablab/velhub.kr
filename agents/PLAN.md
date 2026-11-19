@@ -5,6 +5,13 @@
 
 ## 4. 현재 상태
 
+- 웹 접근성 작업 (5단계 색 대비, 6단계 키보드 확인은 클로이가 직접)
+  0. [x] 목록 만들기: jsx-a11y 전체 규칙 임시 실행 + 코드 읽기, 묶음별 목록 (코드 수정 없음) → 클로이 검토 후 범위 확정
+  1. [ ] 공통 컴포넌트: 팝업, 헤더와 메뉴, Anchor와 ScreenState, 공통 입력칸
+  2. [ ] MUI 공통 처리: Pagination 한국어 읽기 문구, label 없는 TextField와 Select 이름
+  3. [ ] 라운지 slick 숨은 복제 슬라이드 포커스
+  4. [ ] 화면 묶음별: (auth) → (lounge) → (hub) → (library) → (new), (settings) → (concierge) → (site)
+
 - 지금 작업 중인 단계: 모먼트 ONE픽 (마이허브 라운지 노출 선택값을 모먼트에 반영)
   1. [x] 데이터 함수: ONE픽 사이트(최신 글 순), ONE픽 포스팅(좋아요 순), 페이지 나눔 (`src/lib/service/lounge/loungeMoments.ts`)
   2. [x] 크리에이터 모먼트: ONE픽 사이트, ONE픽 포스팅 slick을 '새로 문 연 공간' 위에 / 오너 모먼트: ONE픽 사이트 slick을 '새로 문 연 사이트' 위에, 제목 옆 '전체 보기' 링크

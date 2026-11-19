@@ -1,8 +1,7 @@
- 
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { formatDateTimeDetail } from '@/lib/utils';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
@@ -76,30 +75,34 @@ export default function Opt({
         <h2>포스트</h2>
       </div>
       {data.posts.length ? (
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>연재</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>사이트</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>게시일</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.posts.map((post) => (
-              <TableRow key={post.id}>
-                <TableCell>{post.seriesLabel}</TableCell>
-                <TableCell>
-                  <button type="button" className="button link" onClick={() => openPost(post.url)}>
-                    {post.subject}
-                  </button>
-                </TableCell>
-                <TableCell>{post.siteLabel}</TableCell>
-                <TableCell>{post.publishedAt ? formatDateTimeDetail(post.publishedAt) : '날짜 알 수 없음'}</TableCell>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>연재</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>사이트</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>게시일</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {data.posts.map((post) => (
+                <TableRow key={post.id}>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.seriesLabel}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <button type="button" className="button link" onClick={() => openPost(post.url)}>
+                      {post.subject}
+                    </button>
+                  </TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.siteLabel}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    {post.publishedAt ? formatDateTimeDetail(post.publishedAt) : '날짜 알 수 없음'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       ) : (
         <ScreenState>작성한 글이 없습니다.</ScreenState>
       )}

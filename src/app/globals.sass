@@ -199,7 +199,7 @@ a
   text-decoration: none
   -webkit-tap-highlight-color: rgba(255,255,255,.10)
 
-  &:focus
+  &:focus, &:focus-visible
     outline: 0
 
 fieldset
@@ -398,7 +398,7 @@ a, button, select, input
         html[data-theme="yellow-dark"] &
           border-bottom: 1px solid rgba(ds.$rgb-tertiary, .25)
 
-        &.pinned, &:hover
+        &.pinned, &:hover, &:focus-visible
           background-color: rgba(ds.$rgb-accent, .05)
 
           html[data-theme="yellow-dark"] &
@@ -779,6 +779,10 @@ a, button, select, input
   font-size: ds.rem(14)
   color: ds.$hex-accent
 
+.link, .link-normal
+  &:hover, &:focus-visible
+    text-decoration: underline
+
 .link-normal
   display: inline-flex
   flex-direction: row
@@ -810,6 +814,9 @@ a, button, select, input
   text-decoration: underline
   font-size: ds.rem(14)
   color: ds.$hex-action
+
+  &:hover, &:focus-visible
+    color: ds.$hex-accent
 
 #__app
   display: flex
@@ -905,7 +912,7 @@ main
       cursor: pointer
       padding: 4px 12px
 
-      &:hover
+      &:hover, &:focus-visible
         background-color: #dff4ff
 
 .toastui-editor-dark
@@ -1689,7 +1696,7 @@ html[data-site-type='blog']
           line-height: 20px
           white-space: nowrap
 
-          &:hover
+          &:hover, &:focus-visible
             color: #1f2328
             background-color: transparent
 
@@ -1731,7 +1738,7 @@ html[data-site-type='blog']
             width: 16px
             height: 16px
 
-          &:hover:not(:disabled)
+          &:hover:not(:disabled), &:focus-visible:not(:disabled)
             background-color: rgba(0, 0, 0, 0.08)
             color: #1f2328
 
@@ -1768,7 +1775,7 @@ html[data-site-type='blog']
       align-items: center
       text-align: left
 
-      &:hover
+      &:hover, &:focus-visible
         background-color: rgba(0, 0, 0, 0.06)
 
   .w-md-editor-text
@@ -1800,7 +1807,8 @@ html[data-site-type='blog']
     .w-md-editor-toolbar > ul:first-of-type > li
       > button
         color: #848d97
-        &:hover
+
+        &:hover, &:focus-visible
           color: #f0f6fc
 
       &.active > button
@@ -1812,7 +1820,7 @@ html[data-site-type='blog']
     .w-md-editor-toolbar > ul:last-of-type > li > button
       color: #848d97
 
-      &:hover:not(:disabled)
+      &:hover:not(:disabled), &:focus-visible:not(:disabled)
         background-color: rgba(255, 255, 255, 0.08)
         color: #f0f6fc
 
@@ -1826,7 +1834,8 @@ html[data-site-type='blog']
 
       .w-md-editor-toolbar ul > li button
         color: #f0f6fc
-        &:hover
+
+        &:hover, &:focus-visible
           background-color: rgba(255, 255, 255, 0.08)
 
     .w-md-editor-text

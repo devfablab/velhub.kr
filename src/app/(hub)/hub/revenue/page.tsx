@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import type { SettlementResponse } from '@/components/SettlementForm';
 import { getHubApiData } from '@/lib/service/hub/getData';
+import type { SettlementResponse } from '@/components/SettlementForm';
 import Container from '../menu';
 import RevenueHub, { RevenueSitesResponse } from './opt';
 import type { RevenueSummaryResponse } from '@/app/(site)/[siteName]/payments/RevenueSummary';

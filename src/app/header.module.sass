@@ -321,7 +321,7 @@ header.header
       html[data-theme="yellow-dark"] &
         background: ds.$hex-black
 
-      &:hover
+      &:hover, &:focus-visible
         background: rgba(0,0,0,.1)!important
 
       a, span
@@ -337,7 +337,7 @@ header.header
         background-color: transparent
         padding: ds.rem(14) ds.rem(17)
 
-        &:hover
+        &:hover, &:focus-visible
           background-color: transparent!important
 
         ul
@@ -349,14 +349,14 @@ header.header
         .notification-item
           padding: ds.rem(7) 0
 
-          &:hover
+          &:hover, &:focus-visible
             background-color: transparent!important
 
       &.notification-item
         padding: ds.rem(14) ds.rem(17)
         background-color: transparent
 
-        &:hover
+        &:hover, &:focus-visible
           background-color: transparent!important
 
         &.read-notification
@@ -404,7 +404,7 @@ header.header
       padding: ds.rem(17)
       margin-bottom: ds.rem(7)
 
-      &:hover
+      &:hover, &:focus-visible
         background: transparent!important
 
       & + .VhiDrawer-subheader
@@ -440,7 +440,7 @@ header.header
       html[data-theme="yellow-dark"] &
         color: ds.$hex-bright
 
-      &:hover
+      &:hover, &:focus-visible
         background: transparent!important
 
     .MenuItem, .MenuItem-icon, .MenuItem-text
@@ -452,7 +452,7 @@ header.header
     .MenuItem
       opacity: .7
 
-      &:hover
+      &:hover, &:focus-visible
         opacity: 1
 
     .MenuItem-icon
@@ -704,7 +704,7 @@ header.header
       html[data-theme="yellow-dark"] &
         background: ds.$hex-black
 
-      &:hover
+      &:hover, &:focus-visible
         background: rgba(0,0,0,.1)!important
 
       a, span
@@ -720,7 +720,7 @@ header.header
         background-color: transparent
         padding: ds.rem(14) ds.rem(17)
 
-        &:hover
+        &:hover, &:focus-visible
           background-color: transparent!important
 
         ul
@@ -732,14 +732,14 @@ header.header
         .notification-item
           padding: ds.rem(7) 0
 
-          &:hover
+          &:hover, &:focus-visible
             background-color: transparent!important
 
       &.notification-item
         padding: ds.rem(14) ds.rem(17)
         background-color: transparent
 
-        &:hover
+        &:hover, &:focus-visible
           background-color: transparent!important
 
         &.read-notification
@@ -782,7 +782,7 @@ header.header
       html[data-theme="yellow-dark"] &
         background-color: ds.$hex-black
 
-      &:hover
+      &:hover, &:focus-visible
         background: none!important
 
       strong
@@ -813,7 +813,7 @@ header.header
       padding: ds.rem(17)
       margin-bottom: ds.rem(7)
 
-      &:hover
+      &:hover, &:focus-visible
         background: transparent!important
 
       & + .VhiDrawer-subheader
@@ -848,7 +848,7 @@ header.header
     .searchform
       padding: ds.rem(7) ds.rem(17)
 
-      &:hover
+      &:hover, &:focus-visible
         background: none!important
 
     .search
@@ -908,7 +908,7 @@ header.header
       padding-top: ds.rem(3)
       margin: 0 ds.rem(17)
 
-      &:hover
+      &:hover, &:focus-visible
         background-color: transparent!important
 
       @include ds.mq(maxExtraSmall)
@@ -926,6 +926,10 @@ header.header
         padding: ds.rem(12) ds.rem(7)
         transition: all .4s cubic-bezier(.4,0,.2,1)
         border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+        &:hover, &:focus-visible
+          outline: 0
+          background-color: rgba(ds.$rgb-accent, .5)
 
         html[data-theme="yellow-dark"] &
           border: 1px solid rgba(ds.$rgb-tertiary, .5)
@@ -964,7 +968,7 @@ header.header
       html[data-theme="yellow-dark"] &
         color: ds.$hex-bright
 
-      &:hover
+      &:hover, &:focus-visible
         background: transparent!important
 
     .MenuItem, .MenuItem-icon, .MenuItem-text
@@ -977,7 +981,7 @@ header.header
       opacity: .7
       transition: all .4s cubic-bezier(.4,0,.2,1)
 
-      &:hover
+      &:hover, &:focus-visible
         opacity: 1
 
     .MenuItem-icon
@@ -1041,6 +1045,10 @@ header.header
               height: ds.rem(37)
               @include ds.fw(pre, 700)
               color: ds.$hex-primary
+
+              &:hover, &:focus-visible
+                outline: 0
+                box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
               html[data-theme="yellow-dark"] &
                 background-color: ds.$rgb-black

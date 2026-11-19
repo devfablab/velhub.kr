@@ -40,11 +40,10 @@ export default function Content({ children }: ContainerProps) {
   const pathname = usePathname();
 
   return (
-    <div className={`content ${styles.content} ${styles['hub-content']}`}>
-      <ol className="paper">
+    <div className={`content ${styles.contents}`}>
+      <ol className={styles.tabs}>
         {tabs.map((tab) => {
           const isCurrent = pathname === tab.href;
-
           return (
             <li
               key={tab.href}
@@ -57,8 +56,7 @@ export default function Content({ children }: ContainerProps) {
           );
         })}
       </ol>
-
-      {children}
+      <div className={`content ${styles.content} ${styles['hub-content']}`}>{children}</div>
     </div>
   );
 }

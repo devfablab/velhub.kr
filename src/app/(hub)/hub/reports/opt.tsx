@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Chip } from '@mui/material';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
@@ -69,10 +70,10 @@ export default function Opt({ initialItems, initialError }: { initialItems: Repo
       ) : (
         <ul className={styles['report-list']}>
           {items.map((item) => (
-            <li key={item.id}>
+            <li key={item.id} className="paper">
               <div className={styles['report-heading']}>
                 <strong>{item.reportTypeLabel}</strong>
-                <span>{item.statusLabel}</span>
+                <Chip label={item.statusLabel} size="small" className="chip outlined success" />
               </div>
               <p>{item.reportName}</p>
               <ReportTargetSummary item={item} />
