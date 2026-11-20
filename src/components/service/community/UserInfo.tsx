@@ -17,6 +17,12 @@ import {
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
+import {
+  getDisplayNameErrorMessage,
+  isValidDisplayName,
+  limitDisplayNameInput,
+  normalizeDisplayName,
+} from '@/lib/users/displayName';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -100,14 +106,14 @@ export default function UserInfo() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const trimmedNickname = useMemo(() => normalizeText(nickname), [nickname]);
+  const trimmedNickname = useMemo(() => normalizeDisplayName(nickname), [nickname]);
 
   const canSubmit = useMemo(() => {
     if (!userInfo) {
       return false;
     }
 
-    if (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10) {
+    if (!isValidDisplayName(trimmedNickname)) {
       return false;
     }
 
@@ -200,7 +206,7 @@ export default function UserInfo() {
   }
 
   function handleNicknameChange(event: ChangeEvent<HTMLInputElement>) {
-    setNickname(event.currentTarget.value);
+    setNickname(limitDisplayNameInput(event.currentTarget.value));
     setDialogErrorMessage('');
   }
 
@@ -213,11 +219,7 @@ export default function UserInfo() {
       return '별명을 입력해주세요.';
     }
 
-    if (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10) {
-      return '별명은 2자 이상 10자 이하로 입력해주세요.';
-    }
-
-    return '';
+    return getDisplayNameErrorMessage(trimmedNickname, '별명');
   }
 
   function handleNicknameInvalid(event: Parameters<ReactEventHandler<HTMLInputElement>>[0]) {
@@ -430,7 +432,7 @@ export default function UserInfo() {
                   required
                   error={Boolean(dialogErrorMessage)}
                   helperText={dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
-                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                  slotProps={{ htmlInput: { minLength: 2 } }}
                 />
                 <div className={styles.misc}>
                   <div className={styles.role}>
@@ -504,7 +506,7 @@ export default function UserInfo() {
                   required
                   error={Boolean(dialogErrorMessage)}
                   helperText={dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
-                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                  slotProps={{ htmlInput: { minLength: 2 } }}
                 />
                 <div className={styles.misc}>
                   <div className={styles.role}>

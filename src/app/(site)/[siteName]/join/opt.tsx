@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import { getDisplayNameErrorMessage, limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -117,7 +118,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
   const [uploadingQuestionId, setUploadingQuestionId] = useState('');
 
   function handleNicknameChange(event: InputChangeEvent) {
-    const nextValue = event.currentTarget.value;
+    const nextValue = limitDisplayNameInput(event.currentTarget.value);
 
     setNickname(nextValue);
     setIsNicknameChecked(false);
@@ -128,7 +129,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
   }
 
   async function handleCheckNickname() {
-    const trimmedNickname = nickname.trim();
+    const trimmedNickname = normalizeDisplayName(nickname);
 
     if (!trimmedNickname) {
       setNicknameErrorMessage('닉네임을 입력해주세요.');
@@ -138,8 +139,10 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
       return;
     }
 
-    if (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10) {
-      setNicknameErrorMessage('별명은 2자 이상 10자 이하로 입력해주세요.');
+    const nicknameValidationMessage = getDisplayNameErrorMessage(trimmedNickname, '별명');
+
+    if (nicknameValidationMessage) {
+      setNicknameErrorMessage(nicknameValidationMessage);
       setNicknameSuccessMessage('');
       setIsNicknameChecked(false);
       setCheckedNickname('');
@@ -344,7 +347,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
       return;
     }
 
-    const trimmedNickname = nickname.trim();
+    const trimmedNickname = normalizeDisplayName(nickname);
 
     if (trimmedNickname) {
       if (!isNicknameChecked || checkedNickname !== trimmedNickname) {
@@ -484,7 +487,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
         fullWidth
         size="small"
         slotProps={{
-          htmlInput: { minLength: 2, maxLength: 10 },
+          htmlInput: { minLength: 2 },
           input: {
             endAdornment: (
               <InputAdornment position="end">

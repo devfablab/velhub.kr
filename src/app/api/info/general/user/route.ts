@@ -1,9 +1,15 @@
-import { isValidActivityName } from '@/lib/auth/emailSignUp';
+import { getActivityNameErrorMessage } from '@/lib/auth/emailSignUp';
 import { getStoredImageSize, r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getSessionClaims } from '@/lib/session/server';
+import {
+  createActivityNameLookupHash,
+  DUPLICATE_ACTIVITY_NAME_MESSAGE,
+  isActivityNameTaken,
+} from '@/lib/users/activityName.server';
+import { normalizeDisplayName } from '@/lib/users/displayName';
 
 type RequestBody = {
   userName: string;
@@ -76,15 +82,21 @@ export async function POST(request: Request) {
 
     const requestBody = (await request.json()) as RequestBody;
 
-    const userName = requestBody.userName.trim();
+    const userName = normalizeDisplayName(requestBody.userName);
     const avatar = requestBody.avatar.trim();
     const bio = requestBody.bio.trim();
 
-    if (!isValidActivityName(userName)) {
-      return Response.json({ error: '활동명은 2자 이상 10자 이하로 입력해 주세요.' }, { status: 400 });
+    const userNameErrorMessage = getActivityNameErrorMessage(userName);
+
+    if (userNameErrorMessage) {
+      return Response.json({ error: userNameErrorMessage }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    if (await isActivityNameTaken(supabaseAdmin, userName, sessionClaims.userId)) {
+      return Response.json({ error: DUPLICATE_ACTIVITY_NAME_MESSAGE }, { status: 409 });
+    }
 
     const currentStigmaResult = await supabaseAdmin
       .from('stigmas')
@@ -106,6 +118,7 @@ export async function POST(request: Request) {
       .from('stigmas')
       .update({
         user_name: encrypt(userName),
+        user_name_lookup_hash: createActivityNameLookupHash(userName),
         bio: bio ? encrypt(bio) : null,
         avatar: avatar || null,
         ...(isAvatarChanged ? { avatar_width: avatarSize.width, avatar_height: avatarSize.height } : {}),

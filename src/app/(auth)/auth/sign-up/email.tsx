@@ -11,6 +11,7 @@ import {
   DialogTitle,
   Drawer,
   FormControlLabel,
+  InputAdornment,
   Stack,
   Switch,
   TextField,
@@ -19,17 +20,19 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  ACTIVITY_NAME_MAX_LENGTH,
   ACTIVITY_NAME_MIN_LENGTH,
   EMAIL_PATTERN,
   EMPTY_EMAIL_SIGN_UP_FIELD_ERRORS,
   type EmailSignUpFieldErrors,
+  getActivityNameErrorMessage,
   getEmailLocalPart,
-  isValidActivityName,
   validateEmailSignUpFields,
 } from '@/lib/auth/emailSignUp';
 import { PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import { limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
+import { ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE, useActivityNameCheck } from '@/lib/users/useActivityNameCheck';
 import Anchor from '@/components/Anchor';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -88,7 +91,9 @@ export default function EmailSignUp({
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
   const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
   const inviteProof = searchParams.get('inviteProof')?.trim() ?? '';
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(limitDisplayNameInput(getEmailLocalPart(initialInviteEmail)));
+  const [isUserNameEdited, setIsUserNameEdited] = useState(false);
+  const activityNameCheck = useActivityNameCheck();
   const [email, setEmail] = useState(initialInviteEmail);
   const isInviteEmailLocked = Boolean(initialInviteEmail);
   const [password, setPassword] = useState('');
@@ -103,8 +108,6 @@ export default function EmailSignUp({
     success: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const emailLocalPart = getEmailLocalPart(email.trim().toLowerCase());
-  const isActivityNameRequired = Boolean(email) && !isValidActivityName(emailLocalPart);
 
   function showPopup(
     title: string,
@@ -150,14 +153,26 @@ export default function EmailSignUp({
   }
 
   function handleUserNameChange(event: InputChangeEvent) {
-    setUserName(event.currentTarget.value);
+    setUserName(limitDisplayNameInput(event.currentTarget.value));
+    setIsUserNameEdited(true);
     clearFieldError('userName');
+    activityNameCheck.reset();
+  }
+
+  async function handleCheckUserName() {
+    clearFieldError('userName');
+    await activityNameCheck.check(userName);
   }
 
   function handleEmailChange(event: InputChangeEvent) {
     if (isInviteEmailLocked) return;
     setEmail(event.currentTarget.value);
     clearFieldError('email');
+
+    if (!isUserNameEdited) {
+      setUserName(limitDisplayNameInput(getEmailLocalPart(event.currentTarget.value.trim().toLowerCase())));
+      activityNameCheck.reset();
+    }
   }
 
   function handlePasswordChange(event: InputChangeEvent) {
@@ -172,7 +187,7 @@ export default function EmailSignUp({
 
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || activityNameCheck.isChecking) return;
 
     const trimmedEmail = email.trim().toLowerCase();
     const validation = validateEmailSignUpFields({
@@ -190,6 +205,14 @@ export default function EmailSignUp({
       return;
     }
 
+    if (!activityNameCheck.isChecked(userName)) {
+      showPopup('회원가입 정보 확인', [ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE], {
+        ...EMPTY_EMAIL_SIGN_UP_FIELD_ERRORS,
+        userName: ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE,
+      });
+      return;
+    }
+
     let isNavigating = false;
     setIsSubmitting(true);
 
@@ -200,7 +223,7 @@ export default function EmailSignUp({
         credentials: 'include',
         body: JSON.stringify({
           email: trimmedEmail,
-          userName: userName.trim(),
+          userName: normalizeDisplayName(userName),
           password,
           passwordConfirm,
           isAgreeTerm,
@@ -303,17 +326,37 @@ export default function EmailSignUp({
             name="userName"
             placeholder="활동명"
             type="text"
-            required={isActivityNameRequired}
-            slotProps={{ htmlInput: { minLength: ACTIVITY_NAME_MIN_LENGTH, maxLength: ACTIVITY_NAME_MAX_LENGTH } }}
+            required
+            slotProps={{
+              htmlInput: { minLength: ACTIVITY_NAME_MIN_LENGTH },
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <button
+                      type="button"
+                      className="button small action"
+                      onClick={handleCheckUserName}
+                      disabled={!userName.trim() || activityNameCheck.isChecking}
+                    >
+                      {activityNameCheck.isChecking ? <LoadingIndicator size={20} /> : null}
+                      중복 확인
+                    </button>
+                  </InputAdornment>
+                ),
+              },
+            }}
             autoComplete="nickname"
             value={userName}
             onChange={handleUserNameChange}
+            onKeyDown={(event) =>
+              runInputAdornmentAction(event, handleCheckUserName, !userName.trim() || activityNameCheck.isChecking)
+            }
             onInvalid={(event) => {
               event.preventDefault();
-              showNativeValidationError('userName', '활동명은 2자 이상 10자 이하로 입력해 주세요.');
+              showNativeValidationError('userName', getActivityNameErrorMessage(userName));
             }}
-            error={Boolean(fieldErrors.userName)}
-            helperText={fieldErrors.userName}
+            error={Boolean(fieldErrors.userName || activityNameCheck.errorMessage)}
+            helperText={fieldErrors.userName || activityNameCheck.errorMessage || activityNameCheck.successMessage}
             fullWidth
             size="small"
           />

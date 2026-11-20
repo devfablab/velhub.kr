@@ -1,8 +1,15 @@
 import { isValidPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  DISPLAY_NAME_MIN_LENGTH,
+  getDisplayNameErrorMessage,
+  isValidDisplayName,
+  normalizeDisplayName,
+} from '@/lib/users/displayName';
 
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const ACTIVITY_NAME_MIN_LENGTH = 2;
-export const ACTIVITY_NAME_MAX_LENGTH = 10;
+export const ACTIVITY_NAME_MIN_LENGTH = DISPLAY_NAME_MIN_LENGTH;
+export const ACTIVITY_NAME_MAX_LENGTH = DISPLAY_NAME_MAX_LENGTH;
 
 export type EmailSignUpFieldErrors = {
   email: string;
@@ -29,19 +36,11 @@ export function getEmailLocalPart(email: string) {
 }
 
 export function isValidActivityName(value: string) {
-  const length = [...value.trim()].length;
-  return length >= ACTIVITY_NAME_MIN_LENGTH && length <= ACTIVITY_NAME_MAX_LENGTH;
+  return isValidDisplayName(value);
 }
 
-export function resolveActivityName(userName: string, email: string) {
-  const normalizedUserName = userName.trim();
-
-  if (normalizedUserName) {
-    return isValidActivityName(normalizedUserName) ? normalizedUserName : null;
-  }
-
-  const emailLocalPart = getEmailLocalPart(email);
-  return isValidActivityName(emailLocalPart) ? emailLocalPart : null;
+export function getActivityNameErrorMessage(value: string) {
+  return normalizeDisplayName(value) ? getDisplayNameErrorMessage(value, '활동명') : '활동명을 입력해 주세요.';
 }
 
 export function validateEmailSignUpFields(params: {
@@ -54,21 +53,14 @@ export function validateEmailSignUpFields(params: {
   isAgreePrivacy: boolean;
 }) {
   const email = params.email.trim().toLowerCase();
-  const userName = params.userName.trim();
-  const emailLocalPart = getEmailLocalPart(email);
-  const mustEnterActivityName = !isValidActivityName(emailLocalPart);
+  const userName = normalizeDisplayName(params.userName);
   const fieldErrors: EmailSignUpFieldErrors = {
     email: !email
       ? '이메일을 입력해 주세요.'
       : !EMAIL_PATTERN.test(email)
         ? '올바른 이메일 형식으로 입력해 주세요.'
         : '',
-    userName:
-      !userName && mustEnterActivityName
-        ? '활동명은 2자 이상 10자 이하로 입력해 주세요.'
-        : userName && !isValidActivityName(userName)
-          ? '활동명은 2자 이상 10자 이하로 입력해 주세요.'
-          : '',
+    userName: getActivityNameErrorMessage(userName),
     password: !params.password
       ? '비밀번호를 입력해 주세요.'
       : !isValidPassword(params.password)
@@ -87,6 +79,6 @@ export function validateEmailSignUpFields(params: {
   return {
     fieldErrors,
     messages: Object.values(fieldErrors).filter(Boolean),
-    activityName: resolveActivityName(userName, email),
+    activityName: userName,
   };
 }

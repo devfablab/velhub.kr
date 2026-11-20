@@ -11,13 +11,17 @@ import {
   Box,
   Chip,
   Grid,
+  InputAdornment,
   Stack,
   styled,
   TextField,
   Typography,
 } from '@mui/material';
-import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, isValidActivityName } from '@/lib/auth/emailSignUp';
+import { ACTIVITY_NAME_MIN_LENGTH, getActivityNameErrorMessage } from '@/lib/auth/emailSignUp';
 import { r2PublicStorage } from '@/lib/clients/r2Public';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import { limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
+import { ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE, useActivityNameCheck } from '@/lib/users/useActivityNameCheck';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
@@ -68,6 +72,7 @@ export default function UserInfo({
 
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [userNameError, setUserNameError] = useState('');
+  const activityNameCheck = useActivityNameCheck(initialData?.userName ?? '');
   const [avatarError, setAvatarError] = useState('');
   const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] }>({
     title: null,
@@ -96,8 +101,14 @@ export default function UserInfo({
   }
 
   function handleUserNameChange(event: InputChangeEvent) {
-    setUserNameDraft(event.currentTarget.value);
+    setUserNameDraft(limitDisplayNameInput(event.currentTarget.value));
     setUserNameError('');
+    activityNameCheck.reset(userName);
+  }
+
+  async function handleCheckUserName() {
+    setUserNameError('');
+    await activityNameCheck.check(userNameDraft);
   }
 
   function openErrorDialog(title: string | null, messages: string[]) {
@@ -140,19 +151,21 @@ export default function UserInfo({
     setBio(savedInfo.bio ?? '');
 
     setUserNameDraft(savedInfo.userName ?? '');
+    activityNameCheck.reset(savedInfo.userName ?? '');
   }
 
   async function handleSubmitUserName(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmittingUserName) {
+    if (isSubmittingUserName || activityNameCheck.isChecking) {
       return;
     }
 
-    const trimmedUserName = userNameDraft.trim();
+    const trimmedUserName = normalizeDisplayName(userNameDraft);
+    const userNameErrorMessage = getActivityNameErrorMessage(trimmedUserName);
 
-    if (!isValidActivityName(trimmedUserName)) {
-      const message = '활동명은 2자 이상 10자 이하로 입력해 주세요.';
+    if (userNameErrorMessage || !activityNameCheck.isChecked(trimmedUserName)) {
+      const message = userNameErrorMessage || ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE;
       setUserNameError(message);
       (event.currentTarget as HTMLFormElement).reportValidity();
       openErrorDialog('활동명 수정', [message]);
@@ -279,6 +292,8 @@ export default function UserInfo({
 
   function handleCancelUserName() {
     setUserNameDraft(userName);
+    setUserNameError('');
+    activityNameCheck.reset(userName);
     setIsEditingUserName(false);
   }
 
@@ -377,17 +392,43 @@ export default function UserInfo({
                       size="small"
                       value={userNameDraft}
                       onChange={handleUserNameChange}
+                      onKeyDown={(event) =>
+                        runInputAdornmentAction(
+                          event,
+                          handleCheckUserName,
+                          !userNameDraft.trim() || activityNameCheck.isChecking,
+                        )
+                      }
                       slotProps={{
                         htmlInput: {
                           'aria-label': '활동명',
                           required: true,
                           minLength: ACTIVITY_NAME_MIN_LENGTH,
-                          maxLength: ACTIVITY_NAME_MAX_LENGTH,
+                        },
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <button
+                                type="button"
+                                className="button small action"
+                                onClick={handleCheckUserName}
+                                disabled={!userNameDraft.trim() || activityNameCheck.isChecking}
+                              >
+                                {activityNameCheck.isChecking ? <LoadingIndicator size={20} /> : null}
+                                중복 확인
+                              </button>
+                            </InputAdornment>
+                          ),
                         },
                       }}
                       fullWidth
-                      error={Boolean(userNameError)}
-                      helperText={userNameError || '활동명은 2자 이상 10자 이하로 입력해 주세요.'}
+                      error={Boolean(userNameError || activityNameCheck.errorMessage)}
+                      helperText={
+                        userNameError ||
+                        activityNameCheck.errorMessage ||
+                        activityNameCheck.successMessage ||
+                        '활동명은 2자 이상 10자 이하로 입력해 주세요.'
+                      }
                     />
 
                     <button

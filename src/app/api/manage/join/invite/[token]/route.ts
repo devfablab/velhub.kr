@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session/server';
+import { getDisplayNameErrorMessage, hasValidDisplayNameLength, normalizeDisplayName } from '@/lib/users/displayName';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -215,10 +216,12 @@ export async function POST(request: Request, context: RouteContext) {
     const requestBody = (await request.json().catch(() => ({}))) as {
       nickname?: string | null;
     };
-    const nickname = normalizeText(requestBody.nickname);
+    const nickname = normalizeDisplayName(requestBody.nickname);
 
-    if (nickname && (Array.from(nickname).length < 2 || Array.from(nickname).length > 10)) {
-      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    const nicknameErrorMessage = nickname ? getDisplayNameErrorMessage(nickname, '별명') : '';
+
+    if (nicknameErrorMessage) {
+      return Response.json({ error: nicknameErrorMessage }, { status: 400 });
     }
 
     if (!normalizedToken) {
@@ -301,7 +304,7 @@ export async function POST(request: Request, context: RouteContext) {
     const isAutoNickname = !nickname;
     let finalNickname = nickname || fallbackNickname || null;
 
-    if (!finalNickname || Array.from(finalNickname).length < 2 || Array.from(finalNickname).length > 10) {
+    if (!finalNickname || !hasValidDisplayNameLength(finalNickname)) {
       return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
     }
 
@@ -340,7 +343,7 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
-    if (!finalNickname || Array.from(finalNickname).length < 2 || Array.from(finalNickname).length > 10) {
+    if (!finalNickname || !hasValidDisplayNameLength(finalNickname)) {
       return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
     }
 

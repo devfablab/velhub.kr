@@ -26,7 +26,6 @@ import {
   useTheme,
   Tooltip,
 } from '@mui/material';
-import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import {
   EMPTY_SITE_CREATE_FIELD_ERRORS,
@@ -35,6 +34,7 @@ import {
   SiteCreateFieldErrors,
   validateSiteCreateFields,
 } from '@/lib/site/createValidation.shared';
+import { hasValidDisplayNameLength } from '@/lib/users/displayName';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -604,12 +604,12 @@ export default function Opt() {
                 runInputAdornmentAction(event, handleCheckSiteLabel, !siteLabel.trim() || isCheckingSiteLabel)
               }
               fullWidth
-              required={!isValidActivityName(normalizeSiteKey(siteKey))}
+              required={!hasValidDisplayNameLength(normalizeSiteKey(siteKey))}
               size="small"
               error={Boolean(fieldErrors.siteLabel)}
               helperText={
                 fieldErrors.siteLabel ||
-                (isValidActivityName(normalizeSiteKey(siteKey))
+                (hasValidDisplayNameLength(normalizeSiteKey(siteKey))
                   ? `입력하면 2자 이상 10자 이하로 작성해 주세요. 비우면 블로그 주소 기준으로 자동 생성됩니다. ${siteLabel.length} / 10`
                   : `블로그 주소가 10자를 초과하면 사이트명을 입력해야 합니다. ${siteLabel.length} / 10`)
               }

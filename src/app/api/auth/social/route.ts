@@ -4,6 +4,11 @@ import { type SocialSignUpFieldErrors, validateSocialSignUpFields } from '@/lib/
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getSessionClaims } from '@/lib/session/server';
+import {
+  createActivityNameLookupHash,
+  DUPLICATE_ACTIVITY_NAME_MESSAGE,
+  isActivityNameTaken,
+} from '@/lib/users/activityName.server';
 
 type SocialRequestBody = {
   authUserId?: string | null;
@@ -119,6 +124,11 @@ export async function POST(request: Request) {
       });
 
       if (validation.messages.length > 0) return validationError(validation.fieldErrors);
+
+      if (await isActivityNameTaken(supabaseAdmin, validation.userName, sessionClaims.userId)) {
+        return validationError({ ...validation.fieldErrors, userName: DUPLICATE_ACTIVITY_NAME_MESSAGE });
+      }
+
       userName = validation.userName;
       paymentEmail = validation.paymentEmail;
     } else {
@@ -154,6 +164,7 @@ export async function POST(request: Request) {
     const profilePayload = isSignUpRequest
       ? {
           user_name: encrypt(userName),
+          user_name_lookup_hash: createActivityNameLookupHash(userName),
           email: encrypt(email),
           payment_email: provider === 'naver' ? encrypt(paymentEmail) : null,
           avatar,
@@ -186,6 +197,7 @@ export async function POST(request: Request) {
         id: crypto.randomUUID(),
         user_id: sessionClaims.userId,
         user_name: encrypt(userName),
+        user_name_lookup_hash: createActivityNameLookupHash(userName),
         bio: null,
         avatar,
         role: 'user',

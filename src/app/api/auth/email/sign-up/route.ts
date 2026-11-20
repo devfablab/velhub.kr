@@ -4,6 +4,11 @@ import { verifyInviteEmailProof } from '@/lib/auth/inviteEmailProof';
 import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
+import {
+  createActivityNameLookupHash,
+  DUPLICATE_ACTIVITY_NAME_MESSAGE,
+  isActivityNameTaken,
+} from '@/lib/users/activityName.server';
 
 type EmailSignUpRequestBody = {
   email: string | null;
@@ -215,6 +220,17 @@ export async function POST(request: Request) {
     if (inviteVerification instanceof Response) return inviteVerification;
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    if (await isActivityNameTaken(supabaseAdmin, validation.activityName)) {
+      return knownErrorResponse({
+        status: 409,
+        code: 'activity_name_exists',
+        title: '활동명 확인',
+        errors: [DUPLICATE_ACTIVITY_NAME_MESSAGE],
+        fieldErrors: { userName: DUPLICATE_ACTIVITY_NAME_MESSAGE },
+      });
+    }
+
     const existingParticle = await supabaseAdmin
       .from('particles')
       .select('id, social')
@@ -335,6 +351,7 @@ export async function POST(request: Request) {
       id: crypto.randomUUID(),
       created_at: new Date().toISOString(),
       user_name: encrypt(validation.activityName),
+      user_name_lookup_hash: createActivityNameLookupHash(validation.activityName),
       bio: null,
       avatar: null,
       user_id: authUserId,

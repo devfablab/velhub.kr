@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import verifySession from '@/lib/session/verifySession';
+import { getDisplayNameErrorMessage, normalizeDisplayName } from '@/lib/users/displayName';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const nickname = normalizeText(requestBody.nickname);
+    const nickname = normalizeDisplayName(requestBody.nickname);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -21,8 +22,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '별명을 입력해주세요.' }, { status: 400 });
     }
 
-    if (Array.from(nickname).length < 2 || Array.from(nickname).length > 10) {
-      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    const nicknameErrorMessage = getDisplayNameErrorMessage(nickname, '별명');
+
+    if (nicknameErrorMessage) {
+      return Response.json({ error: nicknameErrorMessage }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();

@@ -18,6 +18,7 @@ import {
   useTheme,
   Tooltip,
 } from '@mui/material';
+import { getDisplayNameErrorMessage, limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -117,10 +118,11 @@ export default function InviteAcceptance({
     event.preventDefault();
     if (isSubmitting) return;
 
-    const trimmedNickname = nickname.trim();
+    const trimmedNickname = normalizeDisplayName(nickname);
+    const nicknameValidationMessage = trimmedNickname ? getDisplayNameErrorMessage(trimmedNickname, '별명') : '';
 
-    if (trimmedNickname && (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10)) {
-      const message = '별명은 2자 이상 10자 이하로 입력해주세요.';
+    if (nicknameValidationMessage) {
+      const message = nicknameValidationMessage;
       setNicknameError(message);
       showError(message);
       return;
@@ -209,7 +211,7 @@ export default function InviteAcceptance({
               placeholder="닉네임"
               value={nickname}
               onChange={(event) => {
-                setNickname(event.target.value);
+                setNickname(limitDisplayNameInput(event.target.value));
                 setNicknameError('');
               }}
               error={Boolean(nicknameError)}
@@ -218,7 +220,7 @@ export default function InviteAcceptance({
               }
               fullWidth
               size="small"
-              slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+              slotProps={{ htmlInput: { minLength: 2 } }}
             />
             <Stack direction="row" justifyContent="flex-end">
               <button type="submit" className="button medium submit" disabled={isSubmitting}>

@@ -25,6 +25,7 @@ import {
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
+import { getDisplayNameErrorMessage, limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
 import { formatDate } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -618,7 +619,7 @@ export default function Opt({
   }
 
   function handleChangeNickname(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setNicknameValue(event.target.value);
+    setNicknameValue(limitDisplayNameInput(event.target.value));
     setNicknameErrorMessage('');
   }
 
@@ -727,8 +728,10 @@ export default function Opt({
       return;
     }
 
-    if (Array.from(nicknameValue.trim()).length < 2 || Array.from(nicknameValue.trim()).length > 10) {
-      const message = '별명은 2자 이상 10자 이하로 입력해주세요.';
+    const nicknameValidationMessage = getDisplayNameErrorMessage(nicknameValue, '별명');
+
+    if (nicknameValidationMessage) {
+      const message = nicknameValidationMessage;
       setNicknameErrorMessage(message);
       showFormError('별명 확인', [message]);
       return;
@@ -746,7 +749,7 @@ export default function Opt({
         credentials: 'include',
         body: JSON.stringify({
           siteName,
-          nickname: nicknameValue,
+          nickname: normalizeDisplayName(nicknameValue),
         }),
       });
 
@@ -1881,7 +1884,7 @@ export default function Opt({
                   onChange={handleChangeNickname}
                   fullWidth
                   size="small"
-                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                  slotProps={{ htmlInput: { minLength: 2 } }}
                   error={Boolean(nicknameErrorMessage)}
                   helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
                 />
@@ -1946,7 +1949,7 @@ export default function Opt({
                   onChange={handleChangeNickname}
                   fullWidth
                   size="small"
-                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                  slotProps={{ htmlInput: { minLength: 2 } }}
                   error={Boolean(nicknameErrorMessage)}
                   helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
                 />

@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { createActivityNameLookupHash } from '@/lib/users/activityName.server';
 
 type NaverState = {
   stateToken: string;
@@ -283,6 +284,7 @@ async function saveNaverSocialUser(params: {
   const supabaseAdmin = getSupabaseAdmin();
   const encryptedEmail = encrypt(params.naverEmail);
   const encryptedUserName = encrypt(params.userName);
+  const userNameLookupHash = params.userName ? createActivityNameLookupHash(params.userName) : null;
   const tokenExpiresAt = params.expiresIn ? new Date(Date.now() + Number(params.expiresIn) * 1000).toISOString() : null;
 
   const particlesResult = await supabaseAdmin.from('particles').upsert(
@@ -311,6 +313,7 @@ async function saveNaverSocialUser(params: {
       .from('stigmas')
       .update({
         user_name: encryptedUserName,
+        user_name_lookup_hash: userNameLookupHash,
         email: encryptedEmail,
         avatar: params.avatar,
         avatar_width: null,
@@ -326,6 +329,7 @@ async function saveNaverSocialUser(params: {
       id: crypto.randomUUID(),
       user_id: params.authUserId,
       user_name: encryptedUserName,
+      user_name_lookup_hash: userNameLookupHash,
       bio: null,
       avatar: params.avatar,
       role: 'user',

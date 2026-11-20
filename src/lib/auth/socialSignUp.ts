@@ -2,8 +2,9 @@ import {
   ACTIVITY_NAME_MAX_LENGTH,
   ACTIVITY_NAME_MIN_LENGTH,
   EMAIL_PATTERN,
-  isValidActivityName,
+  getActivityNameErrorMessage,
 } from '@/lib/auth/emailSignUp';
+import { limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
 
 export type SocialSignUpFieldErrors = {
   userName: string;
@@ -25,18 +26,13 @@ export const SOCIAL_ACTIVITY_NAME_MIN_LENGTH = ACTIVITY_NAME_MIN_LENGTH;
 export const SOCIAL_ACTIVITY_NAME_MAX_LENGTH = ACTIVITY_NAME_MAX_LENGTH;
 
 export function getSocialActivityName(value: unknown, email: string, provider: string) {
-  const providerName = typeof value === 'string' ? value.trim() : '';
+  const providerName = limitDisplayNameInput(normalizeDisplayName(typeof value === 'string' ? value : ''));
 
-  if (isValidActivityName(providerName)) {
+  if (providerName || provider === 'naver') {
     return providerName;
   }
 
-  if (provider === 'naver') {
-    return '';
-  }
-
-  const emailLocalPart = email.split('@')[0]?.trim() ?? '';
-  return isValidActivityName(emailLocalPart) ? emailLocalPart : '';
+  return limitDisplayNameInput(normalizeDisplayName(email.split('@')[0] ?? ''));
 }
 
 export function validateSocialSignUpFields(params: {
@@ -47,15 +43,11 @@ export function validateSocialSignUpFields(params: {
   isAgreeTerm: boolean;
   isAgreePrivacy: boolean;
 }) {
-  const userName = params.userName.trim();
+  const userName = normalizeDisplayName(params.userName);
   const paymentEmail = params.paymentEmail.trim().toLowerCase();
   const needsPaymentEmail = params.provider === 'naver';
   const fieldErrors: SocialSignUpFieldErrors = {
-    userName: !userName
-      ? '활동명을 입력해 주세요.'
-      : !isValidActivityName(userName)
-        ? '활동명은 2자 이상 10자 이하로 입력해 주세요.'
-        : '',
+    userName: getActivityNameErrorMessage(userName),
     paymentEmail: needsPaymentEmail
       ? !paymentEmail
         ? '이메일을 입력해 주세요.'

@@ -6,6 +6,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Box, Paper, Stack, TextField, Typography } from '@mui/material';
+import { getDisplayNameErrorMessage, limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
 import { formatDateTimeDetail, maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
@@ -116,10 +117,11 @@ export default function Opt({
   }
 
   async function handleJoin() {
-    const trimmedNickname = nickname.trim();
+    const trimmedNickname = normalizeDisplayName(nickname);
+    const nicknameValidationMessage = trimmedNickname ? getDisplayNameErrorMessage(trimmedNickname, '별명') : '';
 
-    if (trimmedNickname && (Array.from(trimmedNickname).length < 2 || Array.from(trimmedNickname).length > 10)) {
-      showError('별명은 2자 이상 10자 이하로 입력해주세요.');
+    if (nicknameValidationMessage) {
+      showError(nicknameValidationMessage);
       return;
     }
 
@@ -206,7 +208,7 @@ export default function Opt({
                   label="별명"
                   value={nickname}
                   onChange={(event) => {
-                    setNickname(event.target.value);
+                    setNickname(limitDisplayNameInput(event.target.value));
                     setNicknameError('');
                   }}
                   error={Boolean(nicknameError)}
@@ -215,7 +217,7 @@ export default function Opt({
                   }
                   fullWidth
                   size="small"
-                  slotProps={{ htmlInput: { minLength: 2, maxLength: 10 } }}
+                  slotProps={{ htmlInput: { minLength: 2 } }}
                 />
                 <Box>
                   <button

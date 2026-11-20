@@ -11,22 +11,25 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
+  InputAdornment,
   Stack,
   TextField,
   useMediaQuery,
   useTheme,
   Tooltip,
 } from '@mui/material';
-import { EMAIL_PATTERN } from '@/lib/auth/emailSignUp';
+import { EMAIL_PATTERN, getActivityNameErrorMessage } from '@/lib/auth/emailSignUp';
 import {
   EMPTY_SOCIAL_SIGN_UP_FIELD_ERRORS,
-  SOCIAL_ACTIVITY_NAME_MAX_LENGTH,
   SOCIAL_ACTIVITY_NAME_MIN_LENGTH,
   type SocialSignUpFieldErrors,
   getSocialActivityName,
   validateSocialSignUpFields,
 } from '@/lib/auth/socialSignUp';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
+import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import { limitDisplayNameInput } from '@/lib/users/displayName';
+import { ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE, useActivityNameCheck } from '@/lib/users/useActivityNameCheck';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/auth.module.sass';
@@ -80,6 +83,7 @@ export default function Opt() {
   const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [userName, setUserName] = useState('');
+  const activityNameCheck = useActivityNameCheck();
   const [paymentEmail, setPaymentEmail] = useState('');
   const [fieldErrors, setFieldErrors] = useState<SocialSignUpFieldErrors>(EMPTY_SOCIAL_SIGN_UP_FIELD_ERRORS);
   const [popup, setPopup] = useState<ErrorPopup>({
@@ -221,9 +225,14 @@ export default function Opt() {
     router.replace(returnPath || '/');
   }
 
+  async function handleCheckUserName() {
+    clearFieldError('userName');
+    await activityNameCheck.check(userName);
+  }
+
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
-    if (!profile || isSubmitting) return;
+    if (!profile || isSubmitting || activityNameCheck.isChecking) return;
 
     const validation = validateSocialSignUpFields({
       provider: profile.provider,
@@ -236,6 +245,14 @@ export default function Opt() {
 
     if (validation.messages.length > 0) {
       showPopup('회원가입 정보 확인', validation.messages, validation.fieldErrors);
+      return;
+    }
+
+    if (!activityNameCheck.isChecked(validation.userName)) {
+      showPopup('회원가입 정보 확인', [ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE], {
+        ...EMPTY_SOCIAL_SIGN_UP_FIELD_ERRORS,
+        userName: ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE,
+      });
       return;
     }
 
@@ -316,19 +333,38 @@ export default function Opt() {
           autoComplete="nickname"
           required
           slotProps={{
-            htmlInput: { minLength: SOCIAL_ACTIVITY_NAME_MIN_LENGTH, maxLength: SOCIAL_ACTIVITY_NAME_MAX_LENGTH },
+            htmlInput: { minLength: SOCIAL_ACTIVITY_NAME_MIN_LENGTH },
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <button
+                    type="button"
+                    className="button small action"
+                    onClick={handleCheckUserName}
+                    disabled={!userName.trim() || activityNameCheck.isChecking || isLoading || isSubmitting}
+                  >
+                    {activityNameCheck.isChecking ? <LoadingIndicator size={20} /> : null}
+                    중복 확인
+                  </button>
+                </InputAdornment>
+              ),
+            },
           }}
           value={userName}
           onChange={(event: InputChangeEvent) => {
-            setUserName(event.currentTarget.value);
+            setUserName(limitDisplayNameInput(event.currentTarget.value));
             clearFieldError('userName');
+            activityNameCheck.reset();
           }}
+          onKeyDown={(event) =>
+            runInputAdornmentAction(event, handleCheckUserName, !userName.trim() || activityNameCheck.isChecking)
+          }
           onInvalid={(event) => {
             event.preventDefault();
-            showNativeValidationError('userName', '활동명은 2자 이상 10자 이하로 입력해 주세요.');
+            showNativeValidationError('userName', getActivityNameErrorMessage(userName));
           }}
-          error={Boolean(fieldErrors.userName)}
-          helperText={fieldErrors.userName}
+          error={Boolean(fieldErrors.userName || activityNameCheck.errorMessage)}
+          helperText={fieldErrors.userName || activityNameCheck.errorMessage || activityNameCheck.successMessage}
           fullWidth
           size="small"
           disabled={isLoading || isSubmitting}

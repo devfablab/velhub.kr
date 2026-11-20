@@ -396,6 +396,7 @@ export async function completeAccountWithdrawal({
     .from('stigmas')
     .update({
       user_name: encrypt(WITHDRAWN_USER_NAME),
+      user_name_lookup_hash: null,
       email: encrypt(''),
       payment_email: null,
       payment_phone: null,

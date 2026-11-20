@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
+import { getDisplayNameErrorMessage, normalizeDisplayName } from '@/lib/users/displayName';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -265,7 +266,7 @@ export async function POST(request: Request) {
     const requestBody = (await request.json()) as RequestBody;
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const nickname = normalizeText(requestBody.nickname);
+    const nickname = normalizeDisplayName(requestBody.nickname);
     const answeredQuestions = await Promise.all(
       normalizeAnsweredQuestions(requestBody.answeredQuestions).map(async (answer) => {
         if (!answer.answer_image) return answer;
@@ -355,8 +356,10 @@ export async function POST(request: Request) {
     const isAutoNickname = !nickname;
     let finalNickname = nickname || fallbackNickname || null;
 
-    if (nickname && (Array.from(nickname).length < 2 || Array.from(nickname).length > 10)) {
-      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+    const nicknameErrorMessage = nickname ? getDisplayNameErrorMessage(nickname, '별명') : '';
+
+    if (nicknameErrorMessage) {
+      return Response.json({ error: nicknameErrorMessage }, { status: 400 });
     }
 
     if (finalNickname) {
