@@ -4,6 +4,7 @@ import { useState } from 'react';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
@@ -207,6 +208,7 @@ export default function Opt({
         {data.features.ownerLounge || data.features.creatorLounge ? (
           <Stack direction="row" justifyContent="flex-end">
             <button type="submit" className="button medium submit" disabled={!hasChanges || isSaving}>
+              {isSaving ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </Stack>

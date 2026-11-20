@@ -29,6 +29,7 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import { getNotFoundPageMessage } from '@/lib/pageError';
@@ -42,6 +43,7 @@ import SubscriptionButton from '@/components/buttons/SubscriptionButton';
 import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import Comment from '@/components/comments/Comment';
 import type { CommentsResponse } from '@/components/comments/CommentList';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import CommunityMemberMenu from '@/components/service/community/CommunityMemberMenu';
@@ -89,12 +91,7 @@ type PostImage = {
 };
 
 type AuthorRole =
-  | 'owner'
-  | 'community-manager'
-  | 'board-manager'
-  | 'board-general-manager'
-  | 'board-assistant-manager'
-  | 'member';
+  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;
@@ -801,6 +798,7 @@ export default function Opt({
                 disabled={isDeletingPost}
                 className="button medium danger"
               >
+                {isDeletingPost ? <LoadingIndicator size={20} /> : null}
                 {isDeletingPost ? '삭제 중' : '삭제'}
               </button>
             </div>
@@ -853,6 +851,7 @@ export default function Opt({
                 disabled={isDeletingPost}
                 className="danger-button"
               >
+                {isDeletingPost ? <LoadingIndicator size={20} /> : null}
                 {isDeletingPost ? '삭제 중' : '삭제'}
               </button>
             </DialogActions>
@@ -1072,30 +1071,29 @@ export default function Opt({
                         <img src={content.images[galleryViewerIndex].url} alt="" />
                       </DialogContent>
                       <DialogActions className={styles['dialog-actions']}>
-                        <button
-                          type="button"
-                          onClick={showPreviousGalleryImage}
-                          className={`${styles['control-button']} ${styles['prev-button']}`}
-                          aria-label="이전 이미지"
-                        >
-                          <ArrowBackRoundedIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={showNextGalleryImage}
-                          className={`${styles['control-button']} ${styles['next-button']}`}
-                          aria-label="다음 이미지"
-                        >
-                          <ArrowForwardRoundedIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={closeGalleryViewer}
-                          className={styles['close-button']}
-                          aria-label="갤러리 닫기"
-                        >
-                          <CloseRoundedIcon />
-                        </button>
+                        <Tooltip title="이전 이미지">
+                          <button
+                            type="button"
+                            onClick={showPreviousGalleryImage}
+                            className={`${styles['control-button']} ${styles['prev-button']}`}
+                          >
+                            <ArrowBackRoundedIcon />
+                          </button>
+                        </Tooltip>
+                        <Tooltip title="다음 이미지">
+                          <button
+                            type="button"
+                            onClick={showNextGalleryImage}
+                            className={`${styles['control-button']} ${styles['next-button']}`}
+                          >
+                            <ArrowForwardRoundedIcon />
+                          </button>
+                        </Tooltip>
+                        <Tooltip title="갤러리 닫기">
+                          <button type="button" onClick={closeGalleryViewer} className={styles['close-button']}>
+                            <CloseRoundedIcon />
+                          </button>
+                        </Tooltip>
                       </DialogActions>
                     </Dialog>
                   ) : null}
@@ -1196,30 +1194,29 @@ export default function Opt({
                         <img src={content.images[galleryViewerIndex].url} alt="" />
                       </DialogContent>
                       <DialogActions className={styles['dialog-actions']}>
-                        <button
-                          type="button"
-                          onClick={showPreviousGalleryImage}
-                          className={`${styles['control-button']} ${styles['prev-button']}`}
-                          aria-label="이전 이미지"
-                        >
-                          <ArrowBackRoundedIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={showNextGalleryImage}
-                          className={`${styles['control-button']} ${styles['next-button']}`}
-                          aria-label="다음 이미지"
-                        >
-                          <ArrowForwardRoundedIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={closeGalleryViewer}
-                          className={styles['close-button']}
-                          aria-label="갤러리 닫기"
-                        >
-                          <CloseRoundedIcon />
-                        </button>
+                        <Tooltip title="이전 이미지">
+                          <button
+                            type="button"
+                            onClick={showPreviousGalleryImage}
+                            className={`${styles['control-button']} ${styles['prev-button']}`}
+                          >
+                            <ArrowBackRoundedIcon />
+                          </button>
+                        </Tooltip>
+                        <Tooltip title="다음 이미지">
+                          <button
+                            type="button"
+                            onClick={showNextGalleryImage}
+                            className={`${styles['control-button']} ${styles['next-button']}`}
+                          >
+                            <ArrowForwardRoundedIcon />
+                          </button>
+                        </Tooltip>
+                        <Tooltip title="갤러리 닫기">
+                          <button type="button" onClick={closeGalleryViewer} className={styles['close-button']}>
+                            <CloseRoundedIcon />
+                          </button>
+                        </Tooltip>
                       </DialogActions>
                     </Dialog>
                   ) : null}
@@ -1332,6 +1329,7 @@ export default function Opt({
                                         onClick={() => void submitPoll(optionIndex)}
                                         disabled={isSubmittingPoll}
                                       >
+                                        {isSubmittingPoll ? <LoadingIndicator size={20} /> : null}
                                         <div className={styles.label}>
                                           {option.image ? (
                                             <OptimizedImage

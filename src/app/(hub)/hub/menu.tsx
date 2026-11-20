@@ -192,9 +192,11 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
           className={`${styles.appbar} ${isMobile ? '' : styles.hidden}`}
           aria-hidden={isMobile ? undefined : true}
         >
-          <IconButton href={pageBack} aria-label="이전화면으로 이동" sx={{ width: 24, height: 24 }}>
-            <ArrowBackIosNewRoundedIcon />
-          </IconButton>
+          <Tooltip title="이전화면으로 이동">
+            <IconButton href={pageBack} sx={{ width: 24, height: 24 }}>
+              <ArrowBackIosNewRoundedIcon />
+            </IconButton>
+          </Tooltip>
           <h1>
             <span>데브공방 {pageTitle !== '마이허브' ? '- 마이허브 ' : null}</span>
             <strong>
@@ -225,9 +227,11 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                 <List>
                   <li className={styles['VhiDrawer-header']}>
                     <strong id="hub-menu-drawer-title">마이 메뉴</strong>
-                    <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                      <CloseRoundedIcon />
-                    </IconButton>
+                    <Tooltip title="메뉴 닫기">
+                      <IconButton type="button" onClick={handleCloseProfileDrawer}>
+                        <CloseRoundedIcon />
+                      </IconButton>
+                    </Tooltip>
                   </li>
 
                   <li className={styles['VhiMenu-profile']}>

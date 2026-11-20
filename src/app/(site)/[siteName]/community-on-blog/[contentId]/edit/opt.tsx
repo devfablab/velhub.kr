@@ -8,6 +8,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteGuidelineActions from '@/components/buttons/SiteGuidelineActions';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DrawEventFields, { type BlogCommunityDrawState } from '@/components/service/blog/community/DrawEventFields';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -173,6 +174,7 @@ export default function Opt({
                   className={`${styles.submit} button`}
                   disabled={!hasChanged || isOverLimit || isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   {isSubmitting ? '수정 중' : '수정'}
                 </button>
               </div>

@@ -17,6 +17,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 
 export type MockIdentity = {
@@ -117,9 +118,11 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
       slotProps={{ paper: { 'aria-labelledby': 'components-modals-dev-identity-bypass-modal-drawer-title' } }}
     >
       <h2 id="components-modals-dev-identity-bypass-modal-drawer-title">개발용 본인인증 바이패스</h2>
-      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={onClose}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <div className="VhiDrawer-bottom-content">{content('mobile-dev-identity-bypass-form')}</div>
       <div className="drawer-dialog-actions">
         <button type="button" className="button medium close" onClick={onClose}>
@@ -138,9 +141,11 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
   ) : (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth className="vh-dialog vh-alert-dialog">
       <DialogTitle>개발용 본인인증 바이패스</DialogTitle>
-      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={onClose}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <DialogContent dividers>{content('desktop-dev-identity-bypass-form')}</DialogContent>
       <DialogActions>
         <button type="button" className="cancel-button" onClick={onClose}>

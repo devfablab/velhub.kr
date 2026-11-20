@@ -20,6 +20,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/settings.module.sass';
 
 type WithdrawalResponse = {
@@ -151,6 +152,7 @@ export default function WithdrawalActions() {
               className="button medium danger"
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               탈퇴 신청
             </button>
           </div>
@@ -180,6 +182,7 @@ export default function WithdrawalActions() {
               취소
             </button>
             <button type="submit" form="desktop-withdrawal-form" className="danger-button" disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               탈퇴 신청
             </button>
           </DialogActions>

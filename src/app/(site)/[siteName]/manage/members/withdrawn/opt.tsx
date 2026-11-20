@@ -26,6 +26,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -38,6 +39,7 @@ import {
 } from '@/lib/users/memberRestrictionMessages';
 import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import ScreenState from '@/components/service/ScreenState';
@@ -470,6 +472,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={() => handleOpenActionDialog('unban')}
                 disabled={isActionSubmitting || selectionType !== 'banned'}
               >
+                {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                 가입불가 해제
               </button>
               <button
@@ -478,6 +481,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={() => handleOpenActionDialog('unkick')}
                 disabled={isActionSubmitting || selectionType !== 'kicked'}
               >
+                {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                 강제탈퇴 해제
               </button>
               <button
@@ -486,6 +490,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={() => handleOpenActionDialog('ban')}
                 disabled={isActionSubmitting || (selectionType !== 'kicked' && selectionType !== 'bannable')}
               >
+                {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                 가입불가
               </button>
             </Stack>
@@ -581,15 +586,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
           slotProps={{ paper: { 'aria-labelledby': 'manage-members-withdrawn-drawer-title' } }}
         >
           <h2 id="manage-members-withdrawn-drawer-title">{getActionTitle()}</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseActionDialog}
-            disabled={isActionSubmitting}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseActionDialog}
+              disabled={isActionSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-withdrawn-members-action-form"
@@ -661,6 +667,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="button medium submit"
               disabled={isActionSubmitting}
             >
+              {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </div>
@@ -674,15 +681,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{getActionTitle()}</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseActionDialog}
-            disabled={isActionSubmitting}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseActionDialog}
+              disabled={isActionSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-withdrawn-members-action-form"
@@ -750,6 +758,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             </button>
 
             <button type="submit" form="desktop-withdrawn-members-action-form" disabled={isActionSubmitting}>
+              {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </DialogActions>

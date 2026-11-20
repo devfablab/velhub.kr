@@ -22,12 +22,14 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
 import DonationButton from '@/components/buttons/DonationButton';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PaymentEmailDialog from '@/components/modals/PaymentEmailDialog';
 import PaymentTerms from '@/components/modals/PaymentTerms';
 import OptimizedImage from '@/components/OptimizedImage';
@@ -572,17 +574,17 @@ export default function SiteProfile() {
                 const ServiceIcon = option.Icon;
 
                 return (
-                  <IconButton
-                    key={link.id}
-                    component="a"
-                    href={`${option.prefix}${account}`}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
-                    aria-label={`${option.label} 링크`}
-                    size="small"
-                  >
-                    <ServiceIcon sx={{ width: 16, height: 16 }} />
-                  </IconButton>
+                  <Tooltip key={link.id} title={`${option.label} 링크`}>
+                    <IconButton
+                      component="a"
+                      href={`${option.prefix}${account}`}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      size="small"
+                    >
+                      <ServiceIcon sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                  </Tooltip>
                 );
               })}
             </Stack>
@@ -608,6 +610,7 @@ export default function SiteProfile() {
               onClick={hasIdentity ? handleBlogSubscriptionButtonClick : handleOpenIdentityDialog}
               disabled={isDonationProcessing || isBlogSubscriptionProcessing}
             >
+              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               {getBlogSubscriptionButtonLabel(blogSubscriptionStatus, isBlogSubscriptionRefundable)}
             </button>
           ) : null}
@@ -654,15 +657,16 @@ export default function SiteProfile() {
           <h2 id="components-service-blog-site-profile-drawer-title">
             {isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}
           </h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseBlogSubscriptionCancelDialog}
-            aria-label="닫기"
-            disabled={isBlogSubscriptionProcessing}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseBlogSubscriptionCancelDialog}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-blog-subscription-cancel-form"
@@ -697,6 +701,7 @@ export default function SiteProfile() {
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
+              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               계속 이용하기
             </button>
             <button
@@ -705,6 +710,7 @@ export default function SiteProfile() {
               className="button medium danger"
               disabled={isBlogSubscriptionProcessing}
             >
+              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
             </button>
           </div>
@@ -718,15 +724,16 @@ export default function SiteProfile() {
           className="VhiDialog"
         >
           <DialogTitle>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseBlogSubscriptionCancelDialog}
-            aria-label="닫기"
-            disabled={isBlogSubscriptionProcessing}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseBlogSubscriptionCancelDialog}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-blog-subscription-cancel-form"
@@ -761,6 +768,7 @@ export default function SiteProfile() {
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
+              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               계속 이용하기
             </button>
             <button
@@ -769,6 +777,7 @@ export default function SiteProfile() {
               className="button medium danger"
               disabled={isBlogSubscriptionProcessing}
             >
+              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
             </button>
           </DialogActions>
@@ -784,9 +793,11 @@ export default function SiteProfile() {
           slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-site-profile-drawer-title-2' } }}
         >
           <h2 id="components-service-blog-site-profile-drawer-title-2">본인인증 필요</h2>
-          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseIdentityDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
 
           <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
@@ -809,9 +820,11 @@ export default function SiteProfile() {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>본인인증 필요</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseIdentityDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
 
           <DialogContent>
             <Stack gap={1}>
@@ -845,9 +858,11 @@ export default function SiteProfile() {
                   ? '블로그 구독 재가입'
                   : '블로그 구독 가입'}
           </h2>
-          <button type="button" className="close-button" onClick={handleCloseBlogSubscriptionDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-blog-subscription-form"
@@ -901,6 +916,7 @@ export default function SiteProfile() {
               className="button medium submit"
               disabled={isBlogSubscriptionProcessing}
             >
+              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
             </button>
           </div>
@@ -922,9 +938,11 @@ export default function SiteProfile() {
                   ? '블로그 구독 재가입'
                   : '블로그 구독 가입'}
           </DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseBlogSubscriptionDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-blog-subscription-form"
@@ -978,6 +996,7 @@ export default function SiteProfile() {
               className="button medium submit"
               disabled={isBlogSubscriptionProcessing}
             >
+              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
             </button>
           </DialogActions>

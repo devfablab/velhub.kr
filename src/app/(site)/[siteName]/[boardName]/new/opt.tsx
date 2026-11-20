@@ -33,6 +33,7 @@ import {
   SelectChangeEvent,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -2361,6 +2362,7 @@ export default function Opt({
                     className={`button ${styles.button}`}
                     disabled={isSubmittingDraft || isSubmittingPublish || hasIncompleteAttachmentUpload}
                   >
+                    {isSubmittingPublish ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 </div>
@@ -2375,6 +2377,7 @@ export default function Opt({
                   disabled={isSubmittingDraft || isSubmittingPublish || hasIncompleteAttachmentUpload}
                   onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
                 >
+                  {isSubmittingDraft ? <LoadingIndicator size={20} /> : null}
                   임시 저장
                 </button>
                 <button
@@ -2382,6 +2385,7 @@ export default function Opt({
                   disabled={isSubmittingDraft || isSubmittingPublish || hasIncompleteAttachmentUpload}
                   className={`${styles.submit} button`}
                 >
+                  {isSubmittingPublish ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -2397,9 +2401,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'board-name-new-drawer-title' } }}
             >
               <h2 id="board-name-new-drawer-title">썸네일 이미지 업로드</h2>
-              <button className="close-button" onClick={closeThumbnailDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button className="close-button" onClick={closeThumbnailDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>
                 {thumbnailDialogMessage ? (
                   <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -2453,9 +2459,11 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
             >
               <DialogTitle>썸네일 이미지 업로드</DialogTitle>
-              <button type="button" className="close-button" onClick={closeThumbnailDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={closeThumbnailDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent className={styles['thumbnail-dialog-content']}>
                 {thumbnailDialogMessage ? (
                   <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -2515,9 +2523,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'board-name-new-drawer-title-2' } }}
             >
               <h2 id="board-name-new-drawer-title-2">갤러리 이미지 업로드</h2>
-              <button className="close-button" onClick={closeGalleryDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button className="close-button" onClick={closeGalleryDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>
                 {galleryDialogMessage ? (
                   <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -2551,14 +2561,15 @@ export default function Opt({
                       if ('file' in image) {
                         return (
                           <div key={image.id} className={styles['gallery-dialog-preview-image']}>
-                            <button
-                              type="button"
-                              onClick={() => removeGalleryDialogBlobImage(image.id)}
-                              aria-label="이미지 삭제"
-                              className={styles['gallery-dialog-remove-button']}
-                            >
-                              <CloseRoundedIcon />
-                            </button>
+                            <Tooltip title="이미지 삭제">
+                              <button
+                                type="button"
+                                onClick={() => removeGalleryDialogBlobImage(image.id)}
+                                className={styles['gallery-dialog-remove-button']}
+                              >
+                                <CloseRoundedIcon />
+                              </button>
+                            </Tooltip>
                             <img src={image.previewUrl} alt="" />
                           </div>
                         );
@@ -2566,14 +2577,15 @@ export default function Opt({
 
                       return (
                         <div key={image.path} className={styles['gallery-dialog-preview-image']}>
-                          <button
-                            type="button"
-                            onClick={() => removeGalleryDialogServerImage(image.path)}
-                            aria-label="이미지 삭제"
-                            className={styles['gallery-dialog-remove-button']}
-                          >
-                            <CloseRoundedIcon />
-                          </button>
+                          <Tooltip title="이미지 삭제">
+                            <button
+                              type="button"
+                              onClick={() => removeGalleryDialogServerImage(image.path)}
+                              className={styles['gallery-dialog-remove-button']}
+                            >
+                              <CloseRoundedIcon />
+                            </button>
+                          </Tooltip>
                           <OptimizedImage
                             src={image.url}
                             width={image.width}
@@ -2602,9 +2614,11 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
             >
               <DialogTitle>갤러리 이미지 업로드</DialogTitle>
-              <button type="button" className="close-button" onClick={closeGalleryDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={closeGalleryDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent className={styles['thumbnail-dialog-content']}>
                 {galleryDialogMessage ? (
                   <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -2638,14 +2652,15 @@ export default function Opt({
                       if ('file' in image) {
                         return (
                           <div key={image.id} className={styles['gallery-dialog-preview-image']}>
-                            <button
-                              type="button"
-                              onClick={() => removeGalleryDialogBlobImage(image.id)}
-                              aria-label="이미지 삭제"
-                              className={styles['gallery-dialog-remove-button']}
-                            >
-                              <CloseRoundedIcon />
-                            </button>
+                            <Tooltip title="이미지 삭제">
+                              <button
+                                type="button"
+                                onClick={() => removeGalleryDialogBlobImage(image.id)}
+                                className={styles['gallery-dialog-remove-button']}
+                              >
+                                <CloseRoundedIcon />
+                              </button>
+                            </Tooltip>
                             <img src={image.previewUrl} alt="" />
                           </div>
                         );
@@ -2653,14 +2668,15 @@ export default function Opt({
 
                       return (
                         <div key={image.path} className={styles['gallery-dialog-preview-image']}>
-                          <button
-                            type="button"
-                            onClick={() => removeGalleryDialogServerImage(image.path)}
-                            aria-label="이미지 삭제"
-                            className={styles['gallery-dialog-remove-button']}
-                          >
-                            <CloseRoundedIcon />
-                          </button>
+                          <Tooltip title="이미지 삭제">
+                            <button
+                              type="button"
+                              onClick={() => removeGalleryDialogServerImage(image.path)}
+                              className={styles['gallery-dialog-remove-button']}
+                            >
+                              <CloseRoundedIcon />
+                            </button>
+                          </Tooltip>
                           <OptimizedImage
                             src={image.url}
                             width={image.width}
@@ -2693,9 +2709,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'board-name-new-drawer-title-3' } }}
             >
               <h2 id="board-name-new-drawer-title-3">투표 설정</h2>
-              <button className="close-button" onClick={closePollDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button className="close-button" onClick={closePollDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className={`VhiDrawer-bottom-content ${styles['poll-dialog-content']}`}>
                 {pollDialogMessage && pollWordingViolationFields.length === 0 ? (
                   <p className="alert error" role="alert">
@@ -2939,9 +2957,11 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
             >
               <DialogTitle>투표 설정</DialogTitle>
-              <button className="close-button" onClick={closePollDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button className="close-button" onClick={closePollDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent className={styles['poll-dialog-content']}>
                 {pollDialogMessage && pollWordingViolationFields.length === 0 ? (
                   <p className="alert error" role="alert">
@@ -3187,9 +3207,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'board-name-new-drawer-title-4' } }}
             >
               <h2 id="board-name-new-drawer-title-4">추첨 이벤트 설정</h2>
-              <button className="close-button" onClick={closeDrawDialog} aria-label="추첨 이벤트 설정 닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="추첨 이벤트 설정 닫기">
+                <button className="close-button" onClick={closeDrawDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className={`VhiDrawer-bottom-content ${styles['draw-dialog-content']}`}>
                 {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
 
@@ -3290,9 +3312,11 @@ export default function Opt({
               className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
             >
               <DialogTitle>추첨 이벤트 설정</DialogTitle>
-              <button type="button" className="close-button" onClick={closeDrawDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={closeDrawDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent className={styles['draw-dialog-content']}>
                 {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
 
@@ -3395,14 +3419,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'board-name-new-drawer-title-5' } }}
             >
               <h2 id="board-name-new-drawer-title-5">{accessDialog.title}</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={accessDialog.onCancel}
-                aria-label={`${accessDialog.title} 닫기`}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title={`${accessDialog.title} 닫기`}>
+                <button type="button" className="close-button" onClick={accessDialog.onCancel}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
               </div>
@@ -3426,14 +3447,11 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{accessDialog.title}</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={accessDialog.onCancel}
-                aria-label={`${accessDialog.title} 닫기`}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title={`${accessDialog.title} 닫기`}>
+                <button type="button" className="close-button" onClick={accessDialog.onCancel}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <DialogContentText sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                   {accessDialog.content}

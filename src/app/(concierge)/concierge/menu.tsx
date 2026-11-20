@@ -234,9 +234,11 @@ export default function Container({ children }: ContainerProps) {
                   <List>
                     <li className={styles['VhiDrawer-header']}>
                       <strong id="concierge-menu-drawer-title">마이 메뉴</strong>
-                      <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                        <CloseRoundedIcon />
-                      </IconButton>
+                      <Tooltip title="메뉴 닫기">
+                        <IconButton type="button" onClick={handleCloseProfileDrawer}>
+                          <CloseRoundedIcon />
+                        </IconButton>
+                      </Tooltip>
                     </li>
 
                     {isLoggedIn ? (

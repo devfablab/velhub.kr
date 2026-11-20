@@ -18,10 +18,12 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeDetail } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
@@ -285,9 +287,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch} aria-label="이름으로 검색">
-                <SearchRoundedIcon />
-              </button>
+              <Tooltip title="이름으로 검색">
+                <button type="button" className="button medium action" onClick={handleSearch}>
+                  <SearchRoundedIcon />
+                </button>
+              </Tooltip>
             </Stack>
           </div>
 
@@ -315,6 +319,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenConfirmAction('approve')}
                   disabled={isSubmitting || selectedUserIds.length === 0}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입 승인
                 </button>
                 <button
@@ -323,6 +328,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenConfirmAction('reject')}
                   disabled={isSubmitting || selectedUserIds.length === 0}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입 거절
                 </button>
               </Stack>
@@ -370,15 +376,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-approved-drawer-title' } }}
             >
               <h2 id="manage-join-approved-drawer-title">가입 신청 답변</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => setSelectedUser(null)}
-                aria-label="가입 신청 답변 닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="가입 신청 답변 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => setSelectedUser(null)}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <div className={`paper ${styles['paper-sub']}`}>
                   {selectedUser?.answeredQuestions && selectedUser.answeredQuestions.length > 0 ? (
@@ -448,15 +455,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="VhiDialog"
             >
               <DialogTitle>가입 신청 답변</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => setSelectedUser(null)}
-                aria-label="가입 신청 답변 닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="가입 신청 답변 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => setSelectedUser(null)}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <div className={`paper ${styles['paper-sub']}`}>
                   {selectedUser?.answeredQuestions && selectedUser.answeredQuestions.length > 0 ? (
@@ -527,15 +535,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-approved-drawer-title-2' } }}
             >
               <h2 id="manage-join-approved-drawer-title-2">{getConfirmActionTitle()}</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseConfirmAction}
-                aria-label={`${getConfirmActionTitle()} 창 닫기`}
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title={`${getConfirmActionTitle()} 창 닫기`}>
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseConfirmAction}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-join-approved-action-form"
@@ -564,6 +573,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className={confirmActionType === 'approve' ? 'button medium submit' : 'button medium danger'}
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   {getConfirmActionButtonLabel()}
                 </button>
               </div>
@@ -577,15 +587,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{getConfirmActionTitle()}</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseConfirmAction}
-                aria-label={`${getConfirmActionTitle()} 창 닫기`}
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title={`${getConfirmActionTitle()} 창 닫기`}>
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseConfirmAction}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-join-approved-action-form"
@@ -614,6 +625,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className={confirmActionType === 'approve' ? undefined : 'danger-button'}
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   {getConfirmActionButtonLabel()}
                 </button>
               </DialogActions>

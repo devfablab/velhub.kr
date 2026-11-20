@@ -15,10 +15,12 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import styles from '@/app/manage.module.sass';
@@ -222,6 +224,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
                   disabled={isSubmitting}
                   onClick={() => void respond(coPost.id, { action: 'decline' })}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   거절
                 </button>
                 <button
@@ -230,6 +233,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
                   disabled={isSubmitting}
                   onClick={() => void openAccept(coPost)}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   수락
                 </button>
               </>,
@@ -250,6 +254,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
                 disabled={isSubmitting}
                 onClick={() => void respond(coPost.id, { action: 'cancel' })}
               >
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 초대 취소
               </button>,
             ),
@@ -273,15 +278,18 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
           slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-co-post-invitations-drawer-title' } }}
         >
           <h2 id="manage-contents-posts-co-post-invitations-drawer-title">공동 집필 수락</h2>
-          <button type="button" className="close-button" onClick={() => setAcceptState(null)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setAcceptState(null)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{acceptContent}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={() => setAcceptState(null)}>
               취소
             </button>
             <button type="button" className="button medium submit" disabled={isSubmitting} onClick={submitAccept}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               수락
             </button>
           </div>
@@ -295,15 +303,18 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
           className="VhiDialog"
         >
           <DialogTitle>공동 집필 수락</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setAcceptState(null)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setAcceptState(null)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{acceptContent}</DialogContent>
           <DialogActions>
             <button type="button" className="button medium close" onClick={() => setAcceptState(null)}>
               취소
             </button>
             <button type="button" className="button medium submit" disabled={isSubmitting} onClick={submitAccept}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               수락
             </button>
           </DialogActions>

@@ -17,9 +17,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
@@ -238,9 +240,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch} aria-label="이름으로 검색">
-                <SearchRoundedIcon />
-              </button>
+              <Tooltip title="이름으로 검색">
+                <button type="button" className="button medium action" onClick={handleSearch}>
+                  <SearchRoundedIcon />
+                </button>
+              </Tooltip>
             </Stack>
           </div>
 
@@ -268,6 +272,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={handleOpenDialog}
                   disabled={isSubmitting || selectedUserIds.length === 0}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입불가 해제
                 </button>
               </Stack>
@@ -315,15 +320,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-banned-drawer-title' } }}
             >
               <h2 id="manage-join-banned-drawer-title">가입불가 해제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                aria-label="가입불가 해제 닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="가입불가 해제 닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-join-banned-form"
@@ -365,6 +366,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium submit"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </div>
@@ -378,15 +380,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>가입불가 해제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                aria-label="가입불가 해제 닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="가입불가 해제 닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-join-banned-form"
@@ -418,6 +416,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="submit" form="desktop-join-banned-form" disabled={isSubmitting}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </DialogActions>

@@ -7,7 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
+import { Checkbox, FormControl, FormControlLabel, Stack, TextField, Typography, Tooltip } from '@mui/material';
 import { type FavoriteFolder, validateFavoriteFolderLabel } from '@/lib/service/hubFavoriteFolder.shared';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
@@ -293,9 +293,11 @@ function SortableFolderItem({ folder }: { folder: FavoriteFolder }) {
       className={`paper ${styles['folder-order-item']}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
     >
-      <button type="button" className={styles['drag-handle']} aria-label="순서 변경" {...attributes} {...listeners}>
-        <DragIndicatorIcon />
-      </button>
+      <Tooltip title="순서 변경">
+        <button type="button" className={styles['drag-handle']} {...attributes} {...listeners}>
+          <DragIndicatorIcon />
+        </button>
+      </Tooltip>
       <strong>{folder.label}</strong>
     </li>
   );

@@ -18,6 +18,7 @@ import {
   RadioGroup,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -188,9 +189,11 @@ export default function DrawEventFields({
           }}
         >
           <h2 id="components-service-blog-community-draw-event-fields-drawer-title">추첨 이벤트 설정</h2>
-          <button type="button" className="close-button" onClick={closeDialog} aria-label="추첨 이벤트 설정 닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="추첨 이벤트 설정 닫기">
+            <button type="button" className="close-button" onClick={closeDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className={`VhiDrawer-bottom-content ${classes['draw-dialog-content']}`}>{settings}</div>
           <div className="drawer-dialog-actions">
             {enabled ? (
@@ -228,9 +231,11 @@ export default function DrawEventFields({
           className={`vh-dialog vh-alert-dialog ${classes['draw-dialog']}`}
         >
           <DialogTitle>추첨 이벤트 설정</DialogTitle>
-          <button type="button" className="close-button" onClick={closeDialog} aria-label="추첨 이벤트 설정 닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="추첨 이벤트 설정 닫기">
+            <button type="button" className="close-button" onClick={closeDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent className={classes['draw-dialog-content']}>{settings}</DialogContent>
           <DialogActions className={enabled ? 'complex-buttons' : undefined}>{desktopActions}</DialogActions>
         </Dialog>

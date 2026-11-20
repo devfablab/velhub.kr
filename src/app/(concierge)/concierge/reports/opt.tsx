@@ -830,6 +830,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => setStatusChangeDialog({ report, status: 'dismissed' })}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               이상 없음
                             </button>
                           ) : null}
@@ -840,6 +841,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => setStatusChangeDialog({ report, status: 'completed' })}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               처리완료
                             </button>
                           ) : null}
@@ -850,6 +852,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => handleOpenAppealDialog(report)}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               소명 요청서 작성
                             </button>
                           ) : null}
@@ -860,6 +863,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => handleOpenAppealDialog(report)}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               {report.appeal.opinionSubmittedAt ? '소명 의견서' : '소명 요청서'}
                             </button>
                           ) : null}
@@ -870,6 +874,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => handleOpenMessageDialog(report)}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               메모 보내기
                             </button>
                           ) : null}
@@ -884,6 +889,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => setSiteActionDialog({ report, action: 'block' })}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               사이트 차단
                             </button>
                           ) : null}
@@ -894,6 +900,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => setSiteActionDialog({ report, action: 'unblock' })}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               차단 해제
                             </button>
                           ) : null}
@@ -904,6 +911,7 @@ export default function Opt({
                               disabled={actionLoading}
                               onClick={() => setSiteActionDialog({ report, action: 'close' })}
                             >
+                              {actionLoading ? <LoadingIndicator size={20} /> : null}
                               사이트 폐쇄
                             </button>
                           ) : null}

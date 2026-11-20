@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
@@ -123,6 +124,7 @@ export default function Opt({
           disabled={isReadingAll || !items.some((item) => !item.isRead)}
           className="button small action"
         >
+          {isReadingAll ? <LoadingIndicator size={20} /> : null}
           모두 읽음
         </button>
       </div>

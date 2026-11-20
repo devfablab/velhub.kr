@@ -6,7 +6,7 @@ import LibraryBooksOutlinedIcon from '@mui/icons-material/LibraryBooksOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Chip, useMediaQuery, useTheme } from '@mui/material';
+import { Chip, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import DonationButton, { type DonationStatusResponse } from '@/components/buttons/DonationButton';
@@ -390,9 +390,11 @@ export default function Opt({
         {totalPage > 1 ? (
           <nav className={styles.pagination} aria-label="페이지네이션">
             {pageNumbers[0] > 1 ? (
-              <Anchor href={getPageHref(pageNumbers[0] - 1)} className={styles.pager} aria-label="이전 페이지 묶음">
-                <ArrowBackIosRoundedIcon />
-              </Anchor>
+              <Tooltip title="이전 페이지 묶음">
+                <Anchor href={getPageHref(pageNumbers[0] - 1)} className={styles.pager}>
+                  <ArrowBackIosRoundedIcon />
+                </Anchor>
+              </Tooltip>
             ) : null}
 
             {pageNumbers.map((pageNumber) => (
@@ -407,13 +409,11 @@ export default function Opt({
             ))}
 
             {pageNumbers[pageNumbers.length - 1] < totalPage ? (
-              <Anchor
-                href={getPageHref(pageNumbers[pageNumbers.length - 1] + 1)}
-                className={styles.pager}
-                aria-label="다음 페이지 묶음"
-              >
-                <ArrowForwardIosRoundedIcon />
-              </Anchor>
+              <Tooltip title="다음 페이지 묶음">
+                <Anchor href={getPageHref(pageNumbers[pageNumbers.length - 1] + 1)} className={styles.pager}>
+                  <ArrowForwardIosRoundedIcon />
+                </Anchor>
+              </Tooltip>
             ) : null}
           </nav>
         ) : null}

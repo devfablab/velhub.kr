@@ -1498,6 +1498,7 @@ export default function Opt({
 
         <Stack direction="row" justifyContent="flex-end">
           <button type="submit" className="button medium submit" disabled={submitting || hasIncompleteUpload}>
+            {submitting ? <LoadingIndicator size={20} /> : null}
             {submitting ? '접수 중' : '신고 접수'}
           </button>
         </Stack>

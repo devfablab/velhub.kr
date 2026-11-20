@@ -27,6 +27,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { normalizeCustomDomain } from '@/lib/site/customDomain';
@@ -35,6 +36,7 @@ import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage, { getHeightBasedSizes } from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
@@ -1164,6 +1166,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               onClick={handleClickAvatarUpload}
               disabled={isUploadingAvatar}
             >
+              {isUploadingAvatar ? <LoadingIndicator size={20} /> : null}
               {profilePictureUrl ? '사이트 아바타 이미지 교체' : '사이트 아바타 이미지 추가'}
             </button>
             {fieldErrors.profile_picture ? (
@@ -1203,6 +1206,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={handleClickLogoUpload}
                 disabled={isUploadingLogo}
               >
+                {isUploadingLogo ? <LoadingIndicator size={20} /> : null}
                 {profileLogoUrl ? '로고 교체' : '로고 추가'}
               </button>
             </Stack>
@@ -1241,6 +1245,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               onClick={() => void handleCheckSiteKey()}
                               disabled={isCheckingSiteKey}
                             >
+                              {isCheckingSiteKey ? <LoadingIndicator size={20} /> : null}
                               중복 확인
                             </button>
                           </InputAdornment>
@@ -1262,6 +1267,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       onClick={() => void saveField('site_key')}
                       disabled={isSubmitting || isCheckingSiteKey}
                     >
+                      {isSubmitting || isCheckingSiteKey ? <LoadingIndicator size={20} /> : null}
                       수정 완료
                     </button>
                   </Stack>
@@ -1329,6 +1335,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               onClick={() => void handleCheckCustomDomain()}
                               disabled={isCheckingCustomDomain}
                             >
+                              {isCheckingCustomDomain ? <LoadingIndicator size={20} /> : null}
                               중복 확인
                             </button>
                           </InputAdornment>
@@ -1357,6 +1364,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('custom_domain')}
                     disabled={isSubmitting || !hasOwnerDomainFeature}
                   >
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     수정 완료
                   </button>
                 </Stack>
@@ -1463,6 +1471,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       onClick={handleBlogTypeSave}
                       disabled={isSubmitting || draftValue === (blogType === 'team' ? 'team' : 'personal')}
                     >
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       수정 완료
                     </button>
                   </Stack>
@@ -1505,6 +1514,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               onClick={() => void handleCheckSiteLabel()}
                               disabled={isCheckingSiteLabel}
                             >
+                              {isCheckingSiteLabel ? <LoadingIndicator size={20} /> : null}
                               중복 확인
                             </button>
                           </InputAdornment>
@@ -1526,6 +1536,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       onClick={() => void saveField('site_label')}
                       disabled={isSubmitting || isCheckingSiteLabel}
                     >
+                      {isSubmitting || isCheckingSiteLabel ? <LoadingIndicator size={20} /> : null}
                       수정 완료
                     </button>
                   </Stack>
@@ -1582,6 +1593,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('summary')}
                     disabled={isSubmitting}
                   >
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     수정 완료
                   </button>
                 </Stack>
@@ -1652,6 +1664,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => void handleRemoveSiteOgImage()}
                   disabled={isUploadingSiteOg}
                 >
+                  {isUploadingSiteOg ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               ) : null}
@@ -1661,6 +1674,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={handleClickSiteOgUpload}
                 disabled={isUploadingSiteOg}
               >
+                {isUploadingSiteOg ? <LoadingIndicator size={20} /> : null}
                 {siteOgImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
@@ -1717,6 +1731,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => void handleRemovePromotionImage()}
                   disabled={isUploadingPromotion}
                 >
+                  {isUploadingPromotion ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               ) : null}
@@ -1726,6 +1741,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={handleClickPromotionUpload}
                 disabled={isUploadingPromotion}
               >
+                {isUploadingPromotion ? <LoadingIndicator size={20} /> : null}
                 {promotionImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
@@ -1772,6 +1788,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('theme_type')}
                     disabled={isSubmitting}
                   >
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     변경 완료
                   </button>
                 </Stack>
@@ -1832,6 +1849,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('visibility_type')}
                     disabled={isSubmitting}
                   >
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     변경 완료
                   </button>
                 </Stack>
@@ -1943,14 +1961,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
           slotProps={{ paper: { 'aria-labelledby': 'manage-settings-general-drawer-title-2' } }}
         >
           <h2 id="manage-settings-general-drawer-title-2">블로그 타입 변경 안내</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">팀원 존재시 1인 블로그로 전환하실 수 없어요.</div>
           <div className="drawer-dialog-actions">
             <button
@@ -1971,14 +1986,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>블로그 타입 변경 안내</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>팀원 존재시 1인 블로그로 전환하실 수 없어요.</DialogContent>
           <DialogActions>
             <button type="button" onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}>

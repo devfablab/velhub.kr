@@ -177,6 +177,7 @@ export default function LoginMethod({
               className="button medium submit"
               disabled={isSubmitting || selectedLoginMethod === savedLoginMethod}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               기본 로그인 방식 변경
             </button>
 

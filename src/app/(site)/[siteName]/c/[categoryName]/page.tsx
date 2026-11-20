@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { Tooltip } from '@mui/material';
 import { getPostList } from '@/lib/board/getPostList';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getCategoryPageMetadata } from '@/lib/seoSite';
@@ -199,9 +200,11 @@ export default async function Page(context: RouteContext) {
           {postList.totalPage > 1 ? (
             <nav className={styles.pagination} aria-label="페이지네이션">
               {pageNumbers[0] > 1 ? (
-                <Anchor href={getPageHref(pageNumbers[0] - 1)} className={styles.pager} aria-label="이전 페이지 묶음">
-                  <ArrowBackIosRoundedIcon />
-                </Anchor>
+                <Tooltip title="이전 페이지 묶음">
+                  <Anchor href={getPageHref(pageNumbers[0] - 1)} className={styles.pager}>
+                    <ArrowBackIosRoundedIcon />
+                  </Anchor>
+                </Tooltip>
               ) : null}
 
               {pageNumbers.map((pageNumber) => (
@@ -216,13 +219,11 @@ export default async function Page(context: RouteContext) {
               ))}
 
               {pageNumbers[pageNumbers.length - 1] < postList.totalPage ? (
-                <Anchor
-                  href={getPageHref(pageNumbers[pageNumbers.length - 1] + 1)}
-                  className={styles.pager}
-                  aria-label="다음 페이지 묶음"
-                >
-                  <ArrowForwardIosRoundedIcon />
-                </Anchor>
+                <Tooltip title="다음 페이지 묶음">
+                  <Anchor href={getPageHref(pageNumbers[pageNumbers.length - 1] + 1)} className={styles.pager}>
+                    <ArrowForwardIosRoundedIcon />
+                  </Anchor>
+                </Tooltip>
               ) : null}
             </nav>
           ) : null}

@@ -18,9 +18,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -467,6 +469,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           {!enabled ? (
             <div className={`paper ${styles.paper}`}>
               <button type="button" className="button medium action" onClick={handleEnableLevels} disabled={isEnabling}>
+                {isEnabling ? <LoadingIndicator size={20} /> : null}
                 등업 시스템 사용하기
               </button>
             </div>
@@ -529,14 +532,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               ))}
                             </Select>
                           </Stack>
-                          <button
-                            type="button"
-                            className="button medium close"
-                            onClick={() => handleClearLevel(level.id)}
-                            aria-label={`lv.${level.lv} 정보 초기화`}
-                          >
-                            <DeleteForeverRoundedIcon />
-                          </button>
+                          <Tooltip title={`lv.${level.lv} 정보 초기화`}>
+                            <button
+                              type="button"
+                              className="button medium close"
+                              onClick={() => handleClearLevel(level.id)}
+                            >
+                              <DeleteForeverRoundedIcon />
+                            </button>
+                          </Tooltip>
                         </Stack>
                         <Stack direction="row" gap={1.5}>
                           <TextField
@@ -644,12 +648,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 {isMobile ? (
                   <div className={styles['button-top']}>
                     <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   </div>
                 ) : (
                   <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
                     <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   </Stack>
@@ -667,9 +673,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-members-levels-drawer-title' } }}
             >
               <h2 id="manage-members-levels-drawer-title">아이콘 변경</h2>
-              <button type="button" className="close-button" onClick={handleCloseIconDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseIconDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <div className={styles['popup-level-rows']}>
@@ -706,32 +714,34 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         </Stack>
 
                         <Stack direction="row" gap={1}>
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => handleClickIconUpload(level.id)}
-                            disabled={isUploadingIcon}
-                            aria-label={`lv.${level.lv} 아이콘 변경`}
-                          >
-                            <VisuallyHiddenInput
-                              ref={fileInputRef}
-                              type="file"
-                              accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                              onChange={handleIconFileChange}
-                            />
-                            <CompareArrowsRoundedIcon />
-                          </button>
-
-                          {level.icon ? (
+                          <Tooltip title={`lv.${level.lv} 아이콘 변경`}>
                             <button
                               type="button"
-                              className="button small warning"
-                              onClick={() => handleDeleteIcon(level.id)}
-                              disabled={deletingIconLevelId === level.id}
-                              aria-label={`lv.${level.lv} 아이콘 삭제`}
+                              className="button small action"
+                              onClick={() => handleClickIconUpload(level.id)}
+                              disabled={isUploadingIcon}
                             >
-                              <DeleteForeverRoundedIcon />
+                              <VisuallyHiddenInput
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                                onChange={handleIconFileChange}
+                              />
+                              <CompareArrowsRoundedIcon />
                             </button>
+                          </Tooltip>
+
+                          {level.icon ? (
+                            <Tooltip title={`lv.${level.lv} 아이콘 삭제`}>
+                              <button
+                                type="button"
+                                className="button small warning"
+                                onClick={() => handleDeleteIcon(level.id)}
+                                disabled={deletingIconLevelId === level.id}
+                              >
+                                <DeleteForeverRoundedIcon />
+                              </button>
+                            </Tooltip>
                           ) : null}
                         </Stack>
                       </div>
@@ -759,9 +769,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>아이콘 변경</DialogTitle>
-              <button type="button" className="close-button" onClick={handleCloseIconDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseIconDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <div className={styles['popup-level-rows']}>
                   {levels.map((level) => (
@@ -797,32 +809,34 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       </Stack>
 
                       <Stack direction="row" gap={1}>
-                        <button
-                          type="button"
-                          className="button small action"
-                          onClick={() => handleClickIconUpload(level.id)}
-                          disabled={isUploadingIcon}
-                          aria-label={`lv.${level.lv} 아이콘 변경`}
-                        >
-                          <VisuallyHiddenInput
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                            onChange={handleIconFileChange}
-                          />
-                          <CompareArrowsRoundedIcon />
-                        </button>
-
-                        {level.icon ? (
+                        <Tooltip title={`lv.${level.lv} 아이콘 변경`}>
                           <button
                             type="button"
-                            className="button small warning"
-                            onClick={() => handleDeleteIcon(level.id)}
-                            disabled={deletingIconLevelId === level.id}
-                            aria-label={`lv.${level.lv} 아이콘 삭제`}
+                            className="button small action"
+                            onClick={() => handleClickIconUpload(level.id)}
+                            disabled={isUploadingIcon}
                           >
-                            <DeleteForeverRoundedIcon />
+                            <VisuallyHiddenInput
+                              ref={fileInputRef}
+                              type="file"
+                              accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                              onChange={handleIconFileChange}
+                            />
+                            <CompareArrowsRoundedIcon />
                           </button>
+                        </Tooltip>
+
+                        {level.icon ? (
+                          <Tooltip title={`lv.${level.lv} 아이콘 삭제`}>
+                            <button
+                              type="button"
+                              className="button small warning"
+                              onClick={() => handleDeleteIcon(level.id)}
+                              disabled={deletingIconLevelId === level.id}
+                            >
+                              <DeleteForeverRoundedIcon />
+                            </button>
+                          </Tooltip>
                         ) : null}
                       </Stack>
                     </div>

@@ -2,6 +2,7 @@
 
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import { Tooltip } from '@mui/material';
 import YouTube, { type YouTubeEvent, type YouTubeProps } from 'react-youtube';
 import { ServiceTimelineIcon } from '../Svgs';
 import styles from '@/app/youtube.module.sass';
@@ -78,11 +79,13 @@ const YoutubeEmbed = forwardRef<YoutubePlayerHandle, Props>(function YoutubeEmbe
         {thumbnailImage && isThumbnailVisible ? (
           <div className={styles.thumbnail}>
             <img src={thumbnailImage} alt="" />
-            <button type="button" aria-label="영상 재생하기" onClick={handlePlayButtonClick}>
-              <span>
-                <PlayArrowRoundedIcon />
-              </span>
-            </button>
+            <Tooltip title="영상 재생하기">
+              <button type="button" onClick={handlePlayButtonClick}>
+                <span>
+                  <PlayArrowRoundedIcon />
+                </span>
+              </button>
+            </Tooltip>
           </div>
         ) : null}
 

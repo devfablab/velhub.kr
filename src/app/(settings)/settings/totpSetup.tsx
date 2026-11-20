@@ -394,6 +394,7 @@ export default function TotpSetup({
                       취소
                     </button>
                     <button type="submit" className="button medium warning" disabled={isVerifying}>
+                      {isVerifying ? <LoadingIndicator size={20} /> : null}
                       인증 후 재설정
                     </button>
                   </Stack>
@@ -454,6 +455,7 @@ export default function TotpSetup({
                     </Stack>
 
                     <button type="submit" className="button medium submit" disabled={isVerifying}>
+                      {isVerifying ? <LoadingIndicator size={20} /> : null}
                       인증 코드 확인
                     </button>
                   </Stack>
@@ -466,6 +468,7 @@ export default function TotpSetup({
                 onClick={() => void handleSetOrReset()}
                 disabled={isSetting}
               >
+                {isSetting ? <LoadingIndicator size={20} /> : null}
                 {verifiedFactor ? '2단계 인증 재설정' : '2단계 인증 설정'}
               </button>
             )}

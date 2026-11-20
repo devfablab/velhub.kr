@@ -34,9 +34,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -393,6 +395,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onClick={() => void handleApply()}
                         disabled={isSubmitting}
                       >
+                        {isSubmitting ? <LoadingIndicator size={20} /> : null}
                         적용
                       </button>
                     </div>
@@ -404,6 +407,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onClick={() => void handleApply()}
                         disabled={isSubmitting}
                       >
+                        {isSubmitting ? <LoadingIndicator size={20} /> : null}
                         적용
                       </button>
                     </Stack>
@@ -440,15 +444,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-design-blog-menu-drawer-title' } }}
             >
               <h2 id="manage-design-blog-menu-drawer-title">게시판 이름 변경</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRenameDialog}
-                aria-label="게시판 이름 변경 닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="게시판 이름 변경 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRenameDialog}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <TextField
                   placeholder="게시판 이름"
@@ -477,6 +482,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => void handleRename()}
                   disabled={isRenaming}
                 >
+                  {isRenaming ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -490,15 +496,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시판 이름 변경</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRenameDialog}
-                aria-label="게시판 이름 변경 닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="게시판 이름 변경 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRenameDialog}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <TextField
                   placeholder="게시판 이름"
@@ -517,6 +524,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="button" onClick={() => void handleRename()} disabled={isRenaming}>
+                  {isRenaming ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>

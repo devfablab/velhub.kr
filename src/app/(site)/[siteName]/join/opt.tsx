@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -493,6 +494,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
                   onClick={handleCheckNickname}
                   disabled={!nickname.trim() || isCheckingNickname}
                 >
+                  {isCheckingNickname ? <LoadingIndicator size={20} /> : null}
                   중복 확인
                 </button>
               </InputAdornment>
@@ -559,6 +561,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
 
                   <Stack direction="row" gap={1}>
                     <Button component="label" className="button small action" disabled={Boolean(uploadingQuestionId)}>
+                      {uploadingQuestionId === question.id ? <LoadingIndicator size={20} /> : null}
                       {answers[question.id]?.answer_image ? '이미지 교체' : '이미지 업로드'}
                       <VisuallyHiddenInput
                         type="file"
@@ -575,6 +578,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
                         onClick={() => void handleDeleteAnswerImage(question.id)}
                         disabled={Boolean(uploadingQuestionId)}
                       >
+                        {uploadingQuestionId === question.id ? <LoadingIndicator size={20} /> : null}
                         이미지 삭제
                       </button>
                     ) : null}
@@ -595,6 +599,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
 
       <Stack direction="row" justifyContent="flex-end">
         <button type="submit" className="button medium submit" disabled={isSubmitting || Boolean(uploadingQuestionId)}>
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           가입하기
         </button>
       </Stack>

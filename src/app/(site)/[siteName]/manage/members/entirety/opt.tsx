@@ -22,6 +22,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -30,6 +31,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -930,14 +932,11 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 slotProps={{ paper: { 'aria-labelledby': 'manage-members-entirety-drawer-title' } }}
               >
                 <h2 id="manage-members-entirety-drawer-title">멤버 검색</h2>
-                <button
-                  type="button"
-                  className="close-button"
-                  onClick={() => setIsSearchOpen(false)}
-                  aria-label="검색창 닫기"
-                >
-                  <CloseRoundedIcon />
-                </button>
+                <Tooltip title="검색창 닫기">
+                  <button type="button" className="close-button" onClick={() => setIsSearchOpen(false)}>
+                    <CloseRoundedIcon />
+                  </button>
+                </Tooltip>
                 <div className="VhiDrawer-bottom-content">{searchContent}</div>
                 <div className="drawer-dialog-actions">
                   <button type="button" className="button medium close" onClick={() => setIsSearchOpen(false)}>
@@ -954,14 +953,11 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 className="vh-dialog vh-alert-dialog"
               >
                 <DialogTitle>멤버 검색</DialogTitle>
-                <button
-                  type="button"
-                  className="close-button"
-                  onClick={() => setIsSearchOpen(false)}
-                  aria-label="검색창 닫기"
-                >
-                  <CloseRoundedIcon />
-                </button>
+                <Tooltip title="검색창 닫기">
+                  <button type="button" className="close-button" onClick={() => setIsSearchOpen(false)}>
+                    <CloseRoundedIcon />
+                  </button>
+                </Tooltip>
                 <DialogContent>{searchContent}</DialogContent>
                 <DialogActions>
                   <button type="button" onClick={() => setIsSearchOpen(false)}>
@@ -1050,6 +1046,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     }}
                     disabled={isLevelChanging}
                   >
+                    {isLevelChanging ? <LoadingIndicator size={20} /> : null}
                     변경
                   </button>
                   {isMobile ? (
@@ -1065,15 +1062,16 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       slotProps={{ paper: { 'aria-labelledby': 'manage-members-entirety-drawer-title-2' } }}
                     >
                       <h2 id="manage-members-entirety-drawer-title-2">등급 변경</h2>
-                      <button
-                        type="button"
-                        className="close-button"
-                        onClick={() => setIsLevelChangeDialogOpen(false)}
-                        aria-label="등급 변경창 닫기"
-                        disabled={isLevelChanging}
-                      >
-                        <CloseRoundedIcon />
-                      </button>
+                      <Tooltip title="등급 변경창 닫기">
+                        <button
+                          type="button"
+                          className="close-button"
+                          onClick={() => setIsLevelChangeDialogOpen(false)}
+                          disabled={isLevelChanging}
+                        >
+                          <CloseRoundedIcon />
+                        </button>
+                      </Tooltip>
                       <div className="VhiDrawer-bottom-content">
                         <form
                           id="mobile-member-level-form"
@@ -1100,6 +1098,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                           className="button medium submit"
                           disabled={isLevelChanging}
                         >
+                          {isLevelChanging ? <LoadingIndicator size={20} /> : null}
                           변경
                         </button>
                       </div>
@@ -1117,15 +1116,16 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       className="vh-dialog vh-alert-dialog"
                     >
                       <DialogTitle>등급 변경</DialogTitle>
-                      <button
-                        type="button"
-                        className="close-button"
-                        onClick={() => setIsLevelChangeDialogOpen(false)}
-                        aria-label="등급 변경창 닫기"
-                        disabled={isLevelChanging}
-                      >
-                        <CloseRoundedIcon />
-                      </button>
+                      <Tooltip title="등급 변경창 닫기">
+                        <button
+                          type="button"
+                          className="close-button"
+                          onClick={() => setIsLevelChangeDialogOpen(false)}
+                          disabled={isLevelChanging}
+                        >
+                          <CloseRoundedIcon />
+                        </button>
+                      </Tooltip>
                       <DialogContent>
                         <form
                           id="desktop-member-level-form"
@@ -1147,6 +1147,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                           취소
                         </button>
                         <button type="submit" form="desktop-member-level-form" disabled={isLevelChanging}>
+                          {isLevelChanging ? <LoadingIndicator size={20} /> : null}
                           변경
                         </button>
                       </DialogActions>
@@ -1251,15 +1252,16 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 slotProps={{ paper: { 'aria-labelledby': 'manage-members-entirety-drawer-title-3' } }}
               >
                 <h2 id="manage-members-entirety-drawer-title-3">{getActionTitle()}</h2>
-                <button
-                  type="button"
-                  className="close-button"
-                  onClick={handleCloseActionDialog}
-                  disabled={isActionSubmitting}
-                  aria-label="닫기"
-                >
-                  <CloseRoundedIcon />
-                </button>
+                <Tooltip title="닫기">
+                  <button
+                    type="button"
+                    className="close-button"
+                    onClick={handleCloseActionDialog}
+                    disabled={isActionSubmitting}
+                  >
+                    <CloseRoundedIcon />
+                  </button>
+                </Tooltip>
                 <div className="VhiDrawer-bottom-content">
                   <form
                     id="mobile-members-action-form"
@@ -1333,6 +1335,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     className="button medium submit"
                     disabled={isActionSubmitting}
                   >
+                    {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                     확인
                   </button>
                 </div>
@@ -1346,15 +1349,16 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 className="vh-dialog vh-alert-dialog"
               >
                 <DialogTitle>{getActionTitle()}</DialogTitle>
-                <button
-                  type="button"
-                  className="close-button"
-                  onClick={handleCloseActionDialog}
-                  disabled={isLevelChanging}
-                  aria-label="닫기"
-                >
-                  <CloseRoundedIcon />
-                </button>
+                <Tooltip title="닫기">
+                  <button
+                    type="button"
+                    className="close-button"
+                    onClick={handleCloseActionDialog}
+                    disabled={isLevelChanging}
+                  >
+                    <CloseRoundedIcon />
+                  </button>
+                </Tooltip>
                 <DialogContent>
                   <form
                     id="desktop-members-action-form"
@@ -1423,6 +1427,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     취소
                   </button>
                   <button type="submit" form="desktop-members-action-form" disabled={isActionSubmitting}>
+                    {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                     확인
                   </button>
                 </DialogActions>

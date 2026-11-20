@@ -6,7 +6,7 @@ import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRound
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Chip } from '@mui/material';
+import { Chip, Tooltip } from '@mui/material';
 import Slider from 'react-slick';
 import { formatDate, formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -23,9 +23,11 @@ function NextArrow(props: ArrowProps) {
   const { onClick } = props;
   return (
     <div className={`${styles['slick-arrow']} ${styles['slick-next']}`}>
-      <button type="button" onClick={onClick} aria-label="다음 슬라이드 보기">
-        <ArrowForwardIosRoundedIcon />
-      </button>
+      <Tooltip title="다음 슬라이드 보기">
+        <button type="button" onClick={onClick}>
+          <ArrowForwardIosRoundedIcon />
+        </button>
+      </Tooltip>
     </div>
   );
 }
@@ -34,9 +36,11 @@ function PrevArrow(props: ArrowProps) {
   const { onClick } = props;
   return (
     <div className={`${styles['slick-arrow']} ${styles['slick-prev']}`}>
-      <button type="button" onClick={onClick} aria-label="이전 슬라이드 보기">
-        <ArrowBackIosRoundedIcon />
-      </button>
+      <Tooltip title="이전 슬라이드 보기">
+        <button type="button" onClick={onClick}>
+          <ArrowBackIosRoundedIcon />
+        </button>
+      </Tooltip>
     </div>
   );
 }

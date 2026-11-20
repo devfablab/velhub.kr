@@ -15,6 +15,7 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -192,16 +193,17 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
               onChange={(event) => changeHashtag(item.key, event.target.value)}
               helperText={item.id ? `글 ${item.postCount.toLocaleString()}개` : undefined}
             />
-            <IconButton
-              size="small"
-              aria-label="해시태그 삭제"
-              aria-disabled={isInUse}
-              disabled={isSaving}
-              sx={{ opacity: isInUse ? 0.38 : undefined, mt: 0.5 }}
-              onClick={() => removeHashtag(item)}
-            >
-              <RemoveCircleOutlineRoundedIcon />
-            </IconButton>
+            <Tooltip title="해시태그 삭제">
+              <IconButton
+                size="small"
+                aria-disabled={isInUse}
+                disabled={isSaving}
+                sx={{ opacity: isInUse ? 0.38 : undefined, mt: 0.5 }}
+                onClick={() => removeHashtag(item)}
+              >
+                <RemoveCircleOutlineRoundedIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         );
       })}
@@ -229,6 +231,7 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
                   disabled={!newLabel.trim() || isSaving}
                   onClick={addHashtag}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   추가
                 </button>
               </InputAdornment>
@@ -254,9 +257,11 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
           slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-hashtag-settings-dialog-drawer-title' } }}
         >
           <h2 id="manage-contents-posts-hashtag-settings-dialog-drawer-title">해시태그 관리</h2>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{content}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={closeDialog} disabled={isSaving}>
@@ -268,6 +273,7 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
               onClick={() => void saveHashtags()}
               disabled={!isDirty || isSaving}
             >
+              {isSaving ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </div>
@@ -275,9 +281,11 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
       ) : (
         <Dialog open={isOpen} onClose={closeDialog} fullWidth maxWidth="sm" className="VhiDialog">
           <DialogTitle>해시태그 관리</DialogTitle>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{content}</DialogContent>
           <DialogActions>
             <button type="button" className="button medium cancel" onClick={closeDialog} disabled={isSaving}>
@@ -289,6 +297,7 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
               onClick={() => void saveHashtags()}
               disabled={!isDirty || isSaving}
             >
+              {isSaving ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </DialogActions>

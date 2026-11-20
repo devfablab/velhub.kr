@@ -18,6 +18,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -26,6 +27,7 @@ import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -775,14 +777,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               <Stack gap={1}>
                                 <Stack direction="row" alignItems="center">
                                   <Typography variant="subtitle2">선택지</Typography>
-                                  <button
-                                    type="button"
-                                    className="button small close"
-                                    onClick={() => handleAddOption(question.id)}
-                                    aria-label={`질문 ${questionIndex + 1}에 선택지 추가`}
-                                  >
-                                    <AddCircleOutlineRoundedIcon />
-                                  </button>
+                                  <Tooltip title={`질문 ${questionIndex + 1}에 선택지 추가`}>
+                                    <button
+                                      type="button"
+                                      className="button small close"
+                                      onClick={() => handleAddOption(question.id)}
+                                    >
+                                      <AddCircleOutlineRoundedIcon />
+                                    </button>
+                                  </Tooltip>
                                 </Stack>
                                 {question.options.map((option, optionIndex) => (
                                   <Stack key={`${question.id}-${optionIndex}`} direction="row" gap={1}>
@@ -809,14 +812,15 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                       fullWidth
                                       size="small"
                                     />
-                                    <button
-                                      type="button"
-                                      className={`button small close ${styles.remove}`}
-                                      onClick={() => handleDeleteOption(question.id, optionIndex)}
-                                      aria-label={`질문 ${questionIndex + 1}의 선택지 ${optionIndex + 1} 삭제`}
-                                    >
-                                      <RemoveCircleOutlineRoundedIcon />
-                                    </button>
+                                    <Tooltip title={`질문 ${questionIndex + 1}의 선택지 ${optionIndex + 1} 삭제`}>
+                                      <button
+                                        type="button"
+                                        className={`button small close ${styles.remove}`}
+                                        onClick={() => handleDeleteOption(question.id, optionIndex)}
+                                      >
+                                        <RemoveCircleOutlineRoundedIcon />
+                                      </button>
+                                    </Tooltip>
                                   </Stack>
                                 ))}
                               </Stack>
@@ -836,12 +840,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {isMobile ? (
                 <div className={styles['button-top']}>
                   <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 </div>
               ) : (
                 <Stack direction="row" justifyContent="flex-end">
                   <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 </Stack>

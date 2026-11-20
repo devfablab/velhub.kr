@@ -20,9 +20,11 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import asideStyles from '@/app/aside.module.sass';
 import boardStyles from '@/app/board.module.sass';
 
@@ -316,9 +318,11 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
           }}
         >
           <h2 id="components-service-community-community-member-menu-drawer-title">멤버 정보</h2>
-          <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div
             className={`VhiDrawer-bottom-content ${asideStyles['info-content']} ${boardStyles['member-info-dialog']}`}
           >
@@ -339,9 +343,11 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
           className={`VhiDialog ${asideStyles['info-dialog']}`}
         >
           <DialogTitle>멤버 정보</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent className={`${asideStyles['info-content']} ${boardStyles['member-info-dialog']}`}>
             {detailContent}
           </DialogContent>
@@ -364,9 +370,11 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
           }}
         >
           <h2 id="components-service-community-community-member-menu-drawer-title-2">{`${name} 님에 대해 활동정지`}</h2>
-          <button type="button" className="close-button" onClick={closeBlockDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeBlockDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{blockContent}</div>
           <div className="drawer-dialog-actions">
             <button
@@ -383,6 +391,7 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
               disabled={isBlockSubmitting}
               onClick={() => void submitBlock()}
             >
+              {isBlockSubmitting ? <LoadingIndicator size={20} /> : null}
               승인
             </button>
           </div>
@@ -390,15 +399,18 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
       ) : (
         <Dialog open={isBlockDialogOpen} onClose={closeBlockDialog} fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>{`${name} 님에 대해 활동정지`}</DialogTitle>
-          <button type="button" className="close-button" onClick={closeBlockDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeBlockDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{blockContent}</DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" disabled={isBlockSubmitting} onClick={closeBlockDialog}>
               취소
             </button>
             <button type="button" disabled={isBlockSubmitting} onClick={() => void submitBlock()}>
+              {isBlockSubmitting ? <LoadingIndicator size={20} /> : null}
               승인
             </button>
           </DialogActions>

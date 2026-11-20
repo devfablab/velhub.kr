@@ -15,10 +15,12 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
 import { formatDateTimeDetail } from '@/lib/utils';
 import CommentForm, { type CommentImageChange } from '@/components/comments/CommentForm';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
 import ReportButton from '../buttons/ReportButton';
@@ -508,12 +510,14 @@ export default function CommentItem({
 
           {depth === 0 && !comment.is_deleted && !comment.is_blinded ? (
             <button type="button" onClick={() => onReplyClick(comment)} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               답글 달기
             </button>
           ) : null}
 
           {comment.can_edit ? (
             <button type="button" onClick={() => setIsEditing(true)} disabled={isSubmitting || isEditing}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               수정
             </button>
           ) : null}
@@ -524,12 +528,14 @@ export default function CommentItem({
               onClick={() => setConfirmAction(comment.is_pinned ? 'unpin' : 'pin')}
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {comment.is_pinned ? '댓글 고정취소' : '댓글 고정'}
             </button>
           ) : null}
 
           {comment.can_delete || isStaff ? (
             <button type="button" onClick={() => setConfirmAction('delete')} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               삭제
             </button>
           ) : null}
@@ -600,14 +606,11 @@ export default function CommentItem({
           slotProps={{ paper: { 'aria-labelledby': 'components-comments-comment-item-drawer-title' } }}
         >
           <h2 id="components-comments-comment-item-drawer-title">{confirmDialog.title}</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setConfirmAction(null)}
-            aria-label={`${confirmDialog.title} 닫기`}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={`${confirmDialog.title} 닫기`}>
+            <button type="button" className="close-button" onClick={() => setConfirmAction(null)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmDialog.content}</p>
           </div>
@@ -623,6 +626,7 @@ export default function CommentItem({
                 confirmDialog.confirmClassName === 'delete-button' ? 'button medium danger' : 'button medium submit'
               }
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {confirmDialog.confirmLabel}
             </button>
           </div>
@@ -636,14 +640,11 @@ export default function CommentItem({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{confirmDialog.title}</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setConfirmAction(null)}
-            aria-label={`${confirmDialog.title} 닫기`}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={`${confirmDialog.title} 닫기`}>
+            <button type="button" className="close-button" onClick={() => setConfirmAction(null)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <DialogContentText sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {confirmDialog.content}
@@ -659,6 +660,7 @@ export default function CommentItem({
               disabled={isSubmitting}
               className={confirmDialog.confirmClassName || undefined}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {confirmDialog.confirmLabel}
             </button>
           </DialogActions>

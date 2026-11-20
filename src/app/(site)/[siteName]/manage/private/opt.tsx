@@ -22,9 +22,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../menu';
 import styles from '@/app/manage.module.sass';
@@ -291,19 +293,18 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       error={Boolean(categoryErrors[index])}
                       helperText={categoryErrors[index]}
                     />
-                    <IconButton
-                      aria-label="카테고리 삭제"
-                      disabled={categories.length === 1}
-                      onClick={() => handleRequestCategoryDelete(index)}
-                    >
-                      <DeleteOutlineRoundedIcon />
-                    </IconButton>
+                    <Tooltip title="카테고리 삭제">
+                      <IconButton disabled={categories.length === 1} onClick={() => handleRequestCategoryDelete(index)}>
+                        <DeleteOutlineRoundedIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Stack>
                 ))}
               </Stack>
             </div>
             <Stack direction="row" justifyContent="flex-end">
               <button type="submit" className="button medium submit" disabled={isSaving}>
+                {isSaving ? <LoadingIndicator size={20} /> : null}
                 {isInstalled ? '수정 완료' : '설치 완료'}
               </button>
             </Stack>
@@ -319,9 +320,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
           slotProps={{ paper: { 'aria-labelledby': 'manage-private-drawer-title' } }}
         >
           <h2 id="manage-private-drawer-title">{notice?.title}</h2>
-          <button type="button" className="close-button" onClick={() => setNotice(null)} aria-label="팝업 닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="팝업 닫기">
+            <button type="button" className="close-button" onClick={() => setNotice(null)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <Typography variant="subtitle2">{notice?.message}</Typography>
           </div>
@@ -340,9 +343,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{notice?.title}</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setNotice(null)} aria-label="팝업 닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="팝업 닫기">
+            <button type="button" className="close-button" onClick={() => setNotice(null)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <Typography variant="subtitle2">{notice?.message}</Typography>
           </DialogContent>

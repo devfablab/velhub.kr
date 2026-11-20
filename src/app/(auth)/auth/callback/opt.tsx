@@ -15,6 +15,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies.client';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
@@ -530,9 +531,11 @@ export default function Opt() {
           slotProps={{ paper: { 'aria-labelledby': 'auth-callback-drawer-title' } }}
         >
           <h2 id="auth-callback-drawer-title">소셜 로그인 확인</h2>
-          <button className="close-button" onClick={handleCancelSocialLogin} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button className="close-button" onClick={handleCancelSocialLogin}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <Typography variant="subtitle2">{confirmMessage}</Typography>
           </div>
@@ -554,9 +557,11 @@ export default function Opt() {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>소셜 로그인 확인</DialogTitle>
-          <button className="close-button" onClick={handleCancelSocialLogin} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button className="close-button" onClick={handleCancelSocialLogin}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <Typography variant="subtitle2">{confirmMessage}</Typography>
           </DialogContent>
@@ -580,9 +585,11 @@ export default function Opt() {
           slotProps={{ paper: { 'aria-labelledby': errorTitle ? 'auth-callback-error-drawer-title' : undefined } }}
         >
           {errorTitle ? <h2 id="auth-callback-error-drawer-title">{errorTitle}</h2> : null}
-          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             {errorTitle ? (
               <ul className="error-messages">
@@ -612,9 +619,11 @@ export default function Opt() {
           className="vh-dialog vh-alert-dialog"
         >
           {errorTitle ? <DialogTitle>{errorTitle}</DialogTitle> : null}
-          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             {errorTitle ? (
               <ul className="error-messages">

@@ -13,10 +13,12 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MinorPaymentControl, { type MinorPaymentControlResult } from '../MinorPaymentControl';
 import PaymentEmailDialog from '../modals/PaymentEmailDialog';
 import PaymentTerms from '../modals/PaymentTerms';
@@ -363,6 +365,7 @@ export default function PostPurchaseButton(props: Props) {
                   onClick={check}
                   disabled={disabled || isProcessing || isChecking}
                 >
+                  {isProcessing || isChecking ? <LoadingIndicator size={20} /> : null}
                   {popup || hideButtonIcon ? null : <SellOutlinedIcon />}
                   <strong>{purchaseButtonLabel}</strong>
                 </button>
@@ -375,6 +378,7 @@ export default function PostPurchaseButton(props: Props) {
               onClick={check}
               disabled={disabled || isProcessing || isChecking}
             >
+              {isProcessing || isChecking ? <LoadingIndicator size={20} /> : null}
               {hideButtonIcon ? null : <SellOutlinedIcon />}
               <strong>{triggerButtonLabel}</strong>
             </button>
@@ -419,6 +423,7 @@ export default function PostPurchaseButton(props: Props) {
               className="button medium submit"
               disabled={disabled || isProcessing}
             >
+              {isProcessing ? <LoadingIndicator size={20} /> : null}
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
             </button>
           </div>
@@ -461,6 +466,7 @@ export default function PostPurchaseButton(props: Props) {
               className="button medium submit"
               disabled={disabled || isProcessing}
             >
+              {isProcessing ? <LoadingIndicator size={20} /> : null}
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
             </button>
           </DialogActions>
@@ -482,9 +488,11 @@ export default function PostPurchaseButton(props: Props) {
           slotProps={{ paper: { 'aria-labelledby': 'components-buttons-post-purchase-button-drawer-title-2' } }}
         >
           <h2 id="components-buttons-post-purchase-button-drawer-title-2">본인인증 필요</h2>
-          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseIdentityDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
 
           <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
@@ -507,9 +515,11 @@ export default function PostPurchaseButton(props: Props) {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>본인인증 필요</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseIdentityDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent dividers>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>

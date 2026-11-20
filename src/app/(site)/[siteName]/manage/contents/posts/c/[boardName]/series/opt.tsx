@@ -28,11 +28,13 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { formatDateTimeDetail, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
@@ -954,15 +956,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <h2 id="manage-contents-posts-c-board-name-series-drawer-title">
                 {dialogMode === 'new' ? '연재 추가' : '연재 수정'}
               </h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                disabled={isSubmitting || isUploadingImage || isDeletingImage}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-community-series-form"
@@ -995,6 +998,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                   onClick={handleCheckSeriesKey}
                                   disabled={isCheckingKey}
                                 >
+                                  {isCheckingKey ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1026,6 +1030,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                   onClick={handleCheckSeriesLabel}
                                   disabled={isCheckingLabel}
                                 >
+                                  {isCheckingLabel ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1055,6 +1060,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
                         <Stack direction="row" gap={1}>
                           <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            {isUploadingImage ? <LoadingIndicator size={20} /> : null}
                             이미지 선택
                             <VisuallyHiddenInput
                               ref={fileInputReference}
@@ -1071,6 +1077,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               onClick={handleDeleteImage}
                               disabled={isDeletingImage}
                             >
+                              {isDeletingImage ? <LoadingIndicator size={20} /> : null}
                               이미지 삭제
                             </button>
                           ) : null}
@@ -1186,6 +1193,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium submit"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
+                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -1199,15 +1207,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{dialogMode === 'new' ? '연재 추가' : '연재 수정'}</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                disabled={isSubmitting || isUploadingImage || isDeletingImage}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-community-series-form"
@@ -1253,6 +1262,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                   onClick={handleCheckSeriesKey}
                                   disabled={isCheckingKey}
                                 >
+                                  {isCheckingKey ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1283,6 +1293,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                   onClick={handleCheckSeriesLabel}
                                   disabled={isCheckingLabel}
                                 >
+                                  {isCheckingLabel ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1311,6 +1322,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
                         <Stack direction="row" gap={1}>
                           <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            {isUploadingImage ? <LoadingIndicator size={20} /> : null}
                             이미지 선택
                             <VisuallyHiddenInput
                               ref={fileInputReference}
@@ -1327,6 +1339,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                               onClick={handleDeleteImage}
                               disabled={isDeletingImage}
                             >
+                              {isDeletingImage ? <LoadingIndicator size={20} /> : null}
                               이미지 삭제
                             </button>
                           ) : null}
@@ -1442,6 +1455,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   form="desktop-community-series-form"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
+                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>
@@ -1457,15 +1471,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-series-drawer-title-2' } }}
             >
               <h2 id="manage-contents-posts-c-board-name-series-drawer-title-2">연재 삭제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                disabled={isSubmitting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-community-series-delete-form"
@@ -1501,6 +1511,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium danger"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </div>
@@ -1514,15 +1525,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>연재 삭제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                disabled={isSubmitting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-community-series-delete-form"
@@ -1553,6 +1560,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="danger-button"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </DialogActions>
@@ -1568,15 +1576,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-series-drawer-title-3' } }}
             >
               <h2 id="manage-contents-posts-c-board-name-series-drawer-title-3">사용자 검색</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseUserDialog}
-                disabled={isUserSearching}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseUserDialog}
+                  disabled={isUserSearching}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   onSubmit={(event) => {
@@ -1594,6 +1603,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         size="small"
                       />
                       <button type="submit" className="button medium submit" disabled={isUserSearching}>
+                        {isUserSearching ? <LoadingIndicator size={20} /> : null}
                         검색
                       </button>
                     </Stack>
@@ -1661,15 +1671,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>사용자 검색</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseUserDialog}
-                disabled={isUserSearching}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseUserDialog}
+                  disabled={isUserSearching}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   onSubmit={(event) => {
@@ -1687,6 +1698,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         size="small"
                       />
                       <button type="submit" className="button medium submit" disabled={isUserSearching}>
+                        {isUserSearching ? <LoadingIndicator size={20} /> : null}
                         검색
                       </button>
                     </Stack>

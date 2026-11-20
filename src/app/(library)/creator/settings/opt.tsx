@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
@@ -152,6 +153,7 @@ export default function Opt({ initialReady, initialError }: { initialReady: bool
               설정 취소
             </Anchor>
             <button type="button" className="button medium submit" onClick={save} disabled={saving}>
+              {saving ? <LoadingIndicator size={20} /> : null}
               {saving ? '저장 중' : '설정 완료'}
             </button>
           </div>

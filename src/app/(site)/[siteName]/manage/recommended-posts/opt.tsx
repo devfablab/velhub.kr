@@ -25,9 +25,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../menu';
@@ -284,6 +286,7 @@ export default function Opt({
               endAdornment: (
                 <InputAdornment position="end">
                   <button type="submit" className="button small action" disabled={isSearching}>
+                    {isSearching ? <LoadingIndicator size={20} /> : null}
                     <SearchRoundedIcon />
                     검색
                   </button>
@@ -366,6 +369,7 @@ export default function Opt({
                   onClick={() => setIsSearchOpen(true)}
                   disabled={posts.length >= maxPosts || isSaving}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   <AddRoundedIcon />
                   추천 포스팅 추가
                 </button>
@@ -375,6 +379,7 @@ export default function Opt({
                   onClick={() => void handleSave()}
                   disabled={!hasChanges || isSaving}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </Stack>
@@ -392,15 +397,11 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'manage-recommended-posts-drawer-title' } }}
         >
           <h2 id="manage-recommended-posts-drawer-title">추천 포스팅 추가</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={closeSearchDialog}
-            aria-label="닫기"
-            disabled={isSearching}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeSearchDialog} disabled={isSearching}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{searchContent}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={closeSearchDialog} disabled={isSearching}>
@@ -425,15 +426,11 @@ export default function Opt({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>추천 포스팅 추가</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={closeSearchDialog}
-            aria-label="닫기"
-            disabled={isSearching}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeSearchDialog} disabled={isSearching}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{searchContent}</DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={closeSearchDialog} disabled={isSearching}>

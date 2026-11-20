@@ -10,6 +10,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -627,6 +628,7 @@ export default function Opt() {
                             onClick={() => void handleCheckSlug()}
                             disabled={isCheckingSlug}
                           >
+                            {isCheckingSlug ? <LoadingIndicator size={20} /> : null}
                             중복 확인
                           </button>
                         </InputAdornment>
@@ -685,6 +687,7 @@ export default function Opt() {
                     onClick={handleClickOgImageUpload}
                     disabled={isUploadingOgImage}
                   >
+                    {isUploadingOgImage ? <LoadingIndicator size={20} /> : null}
                     {ogImageUrl ? '이미지 교체' : '이미지 추가'}
                   </button>
                 </Stack>
@@ -726,11 +729,13 @@ export default function Opt() {
                 {isMobile ? (
                   <div className={styles['button-top']}>
                     <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   </div>
                 ) : (
                   <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 )}

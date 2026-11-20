@@ -31,6 +31,7 @@ import {
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ConciergeFileUploader, {
@@ -809,6 +810,7 @@ export default function Opt({
                                     disabled={!siteQuery.trim() || searchingTargets}
                                     onClick={() => void searchSites()}
                                   >
+                                    {searchingTargets ? <LoadingIndicator size={20} /> : null}
                                     검색
                                   </button>
                                 </InputAdornment>
@@ -887,6 +889,7 @@ export default function Opt({
                                     disabled={!postQuery.trim() || searchingTargets}
                                     onClick={() => void searchPosts()}
                                   >
+                                    {searchingTargets ? <LoadingIndicator size={20} /> : null}
                                     검색
                                   </button>
                                 </InputAdornment>
@@ -1204,6 +1207,7 @@ export default function Opt({
           </Anchor>
           {!inquiryUnavailableReason ? (
             <button type="submit" className="button medium submit" disabled={isSubmitting || hasIncompleteUpload}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {isSubmitting ? '접수 중' : '문의 접수'}
             </button>
           ) : null}

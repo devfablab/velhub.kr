@@ -55,6 +55,7 @@ export type BlogSubscriptionResponse = {
   error?: string;
 };
 
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SettlementForm, { type SettlementResponse } from '@/components/SettlementForm';
 import { ServiceErrorIcon } from '@/components/Svgs';
 
@@ -309,6 +310,7 @@ export default function Opt({
 
           <div>
             <button type="submit" className="button medium submit" disabled={isSaving}>
+              {isSaving ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </div>

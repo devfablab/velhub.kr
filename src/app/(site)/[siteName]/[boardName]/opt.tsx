@@ -17,7 +17,7 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import DonationButton from '@/components/buttons/DonationButton';
@@ -595,18 +595,17 @@ export default function Opt({
                     />
                   </div>
                   {keywordInput ? (
-                    <button
-                      type="button"
-                      className={styles['search-reset']}
-                      onClick={() => setKeywordInput('')}
-                      aria-label="검색어 지우기"
-                    >
-                      <CloseRoundedIcon />
-                    </button>
+                    <Tooltip title="검색어 지우기">
+                      <button type="button" className={styles['search-reset']} onClick={() => setKeywordInput('')}>
+                        <CloseRoundedIcon />
+                      </button>
+                    </Tooltip>
                   ) : null}
-                  <button type="submit" className={styles['search-submit']} disabled={isNavigating} aria-label="검색">
-                    <SearchIcon />
-                  </button>
+                  <Tooltip title="검색">
+                    <button type="submit" className={styles['search-submit']} disabled={isNavigating}>
+                      <SearchIcon />
+                    </button>
+                  </Tooltip>
                 </div>
               </fieldset>
             </form>
@@ -618,24 +617,26 @@ export default function Opt({
             <div className={styles['select-board-type']}>
               <ul>
                 <li>
-                  <button
-                    type="button"
-                    aria-label="갤러리로 보기"
-                    className={boardViewType === 'default' ? styles.selected : undefined}
-                    onClick={() => setBoardViewType('default')}
-                  >
-                    <CollectionsOutlinedIcon />
-                  </button>
+                  <Tooltip title="갤러리로 보기">
+                    <button
+                      type="button"
+                      className={boardViewType === 'default' ? styles.selected : undefined}
+                      onClick={() => setBoardViewType('default')}
+                    >
+                      <CollectionsOutlinedIcon />
+                    </button>
+                  </Tooltip>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    aria-label="리스트로 보기"
-                    className={boardViewType === 'list' ? styles.selected : undefined}
-                    onClick={() => setBoardViewType('list')}
-                  >
-                    <FormatListNumberedOutlinedIcon />
-                  </button>
+                  <Tooltip title="리스트로 보기">
+                    <button
+                      type="button"
+                      className={boardViewType === 'list' ? styles.selected : undefined}
+                      onClick={() => setBoardViewType('list')}
+                    >
+                      <FormatListNumberedOutlinedIcon />
+                    </button>
+                  </Tooltip>
                 </li>
               </ul>
             </div>
@@ -645,24 +646,26 @@ export default function Opt({
             <div className={styles['select-board-type']}>
               <ul>
                 <li>
-                  <button
-                    type="button"
-                    aria-label="유튜브로 보기"
-                    className={boardViewType === 'default' ? styles.selected : undefined}
-                    onClick={() => setBoardViewType('default')}
-                  >
-                    <OndemandVideoOutlinedIcon />
-                  </button>
+                  <Tooltip title="유튜브로 보기">
+                    <button
+                      type="button"
+                      className={boardViewType === 'default' ? styles.selected : undefined}
+                      onClick={() => setBoardViewType('default')}
+                    >
+                      <OndemandVideoOutlinedIcon />
+                    </button>
+                  </Tooltip>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    aria-label="리스트로 보기"
-                    className={boardViewType === 'list' ? styles.selected : undefined}
-                    onClick={() => setBoardViewType('list')}
-                  >
-                    <FormatListNumberedOutlinedIcon />
-                  </button>
+                  <Tooltip title="리스트로 보기">
+                    <button
+                      type="button"
+                      className={boardViewType === 'list' ? styles.selected : undefined}
+                      onClick={() => setBoardViewType('list')}
+                    >
+                      <FormatListNumberedOutlinedIcon />
+                    </button>
+                  </Tooltip>
                 </li>
               </ul>
             </div>
@@ -672,24 +675,26 @@ export default function Opt({
             <div className={styles['select-board-type']}>
               <ul>
                 <li>
-                  <button
-                    type="button"
-                    aria-label="피드로 보기"
-                    className={boardViewType === 'default' ? styles.selected : undefined}
-                    onClick={() => setBoardViewType('default')}
-                  >
-                    <DynamicFeedOutlinedIcon />
-                  </button>
+                  <Tooltip title="피드로 보기">
+                    <button
+                      type="button"
+                      className={boardViewType === 'default' ? styles.selected : undefined}
+                      onClick={() => setBoardViewType('default')}
+                    >
+                      <DynamicFeedOutlinedIcon />
+                    </button>
+                  </Tooltip>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    aria-label="리스트로 보기"
-                    className={boardViewType === 'list' ? styles.selected : undefined}
-                    onClick={() => setBoardViewType('list')}
-                  >
-                    <FormatListNumberedOutlinedIcon />
-                  </button>
+                  <Tooltip title="리스트로 보기">
+                    <button
+                      type="button"
+                      className={boardViewType === 'list' ? styles.selected : undefined}
+                      onClick={() => setBoardViewType('list')}
+                    >
+                      <FormatListNumberedOutlinedIcon />
+                    </button>
+                  </Tooltip>
                 </li>
               </ul>
             </div>
@@ -789,14 +794,15 @@ export default function Opt({
                               </small>
                             ) : null}
                             {!seriesNameParam && content.series_label ? (
-                              <button
-                                type="button"
-                                className="series-name board-chip"
-                                aria-label="연재명"
-                                onClick={() => handleSeriesClick(content.series_key)}
-                              >
-                                {content.series_label}
-                              </button>
+                              <Tooltip title="연재명">
+                                <button
+                                  type="button"
+                                  className="series-name board-chip"
+                                  onClick={() => handleSeriesClick(content.series_key)}
+                                >
+                                  {content.series_label}
+                                </button>
+                              </Tooltip>
                             ) : null}
                             {content.is_poll ? (
                               <i className="poll-icon" aria-label="투표글">
@@ -1069,14 +1075,15 @@ export default function Opt({
                               </small>
                             ) : null}
                             {!seriesNameParam && content.series_label ? (
-                              <button
-                                type="button"
-                                className="series-name board-chip"
-                                aria-label="연재명"
-                                onClick={() => handleSeriesClick(content.series_key)}
-                              >
-                                {content.series_label}
-                              </button>
+                              <Tooltip title="연재명">
+                                <button
+                                  type="button"
+                                  className="series-name board-chip"
+                                  onClick={() => handleSeriesClick(content.series_key)}
+                                >
+                                  {content.series_label}
+                                </button>
+                              </Tooltip>
                             ) : null}
                             {content.is_poll ? (
                               <i className="poll-icon" aria-label="투표글">
@@ -1104,14 +1111,11 @@ export default function Opt({
           {totalPage > 1 ? (
             <nav className={styles.pagination} aria-label="페이지네이션">
               {hasPreviousPager ? (
-                <button
-                  type="button"
-                  onClick={() => handlePageClick(pageNumbers[0] - 1)}
-                  className={styles.pager}
-                  aria-label="이전 페이지 묶음"
-                >
-                  <ArrowBackIosRoundedIcon />
-                </button>
+                <Tooltip title="이전 페이지 묶음">
+                  <button type="button" onClick={() => handlePageClick(pageNumbers[0] - 1)} className={styles.pager}>
+                    <ArrowBackIosRoundedIcon />
+                  </button>
+                </Tooltip>
               ) : null}
 
               {pageNumbers.map((pageNumber) => (
@@ -1127,14 +1131,15 @@ export default function Opt({
               ))}
 
               {hasNextPager ? (
-                <button
-                  type="button"
-                  onClick={() => handlePageClick(pageNumbers[pageNumbers.length - 1] + 1)}
-                  className={styles.pager}
-                  aria-label="다음 페이지 묶음"
-                >
-                  <ArrowForwardIosRoundedIcon />
-                </button>
+                <Tooltip title="다음 페이지 묶음">
+                  <button
+                    type="button"
+                    onClick={() => handlePageClick(pageNumbers[pageNumbers.length - 1] + 1)}
+                    className={styles.pager}
+                  >
+                    <ArrowForwardIosRoundedIcon />
+                  </button>
+                </Tooltip>
               ) : null}
             </nav>
           ) : null}

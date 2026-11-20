@@ -8,6 +8,7 @@ import type { PartnershipFormInfo } from '@/lib/service/concierge/partnerships';
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 import styles from '@/app/concierge.module.sass';
@@ -505,6 +506,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
             취소
           </Anchor>
           <button type="submit" className="button medium submit" disabled={isSubmitting || isSubmissionLocked}>
+            {isSubmitting ? <LoadingIndicator size={20} /> : null}
             제휴 제안 보내기
           </button>
         </Stack>

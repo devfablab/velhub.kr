@@ -17,8 +17,10 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
@@ -311,15 +313,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-invite-drawer-title' } }}
             >
               <h2 id="manage-join-invite-drawer-title">멤버 초대</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseInviteDialog}
-                aria-label="멤버 초대 닫기"
-                disabled={isInviteSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="멤버 초대 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseInviteDialog}
+                  disabled={isInviteSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Box id="community-invite-form" component="form" onSubmit={handleSubmitInvite}>
                   <Stack gap={2} sx={{ pt: 1 }}>
@@ -363,6 +366,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium submit"
                   disabled={isInviteSubmitting}
                 >
+                  {isInviteSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대하기
                 </button>
               </div>
@@ -376,15 +380,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>멤버 초대</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseInviteDialog}
-                aria-label="멤버 초대 닫기"
-                disabled={isInviteSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="멤버 초대 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseInviteDialog}
+                  disabled={isInviteSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Box id="community-invite-form-desktop" component="form" onSubmit={handleSubmitInvite}>
                   <Stack gap={2} sx={{ pt: 1 }}>
@@ -422,6 +427,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="submit" form="community-invite-form-desktop" disabled={isInviteSubmitting}>
+                  {isInviteSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대하기
                 </button>
               </DialogActions>
@@ -437,15 +443,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-invite-drawer-title-2' } }}
             >
               <h2 id="manage-join-invite-drawer-title-2">초대 취소 답변</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseCancelDialog}
-                aria-label="멤버 초대 닫기"
-                disabled={isCancelSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="멤버 초대 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseCancelDialog}
+                  disabled={isCancelSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Typography variant="subtitle2">
                   정말로 초대를 취소하시겠습니까?
@@ -460,6 +467,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button
@@ -468,6 +476,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 취소
                 </button>
               </div>
@@ -481,15 +490,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>초대 취소</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseCancelDialog}
-                aria-label="멤버 초대 닫기"
-                disabled={isCancelSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="멤버 초대 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseCancelDialog}
+                  disabled={isCancelSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Typography variant="subtitle2">
                   정말로 초대를 취소하시겠습니까?
@@ -504,9 +514,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button type="button" onClick={handleSubmitCancelInvite} disabled={isCancelSubmitting}>
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 취소
                 </button>
               </DialogActions>
@@ -527,17 +539,18 @@ export default function Opt({ initialData, initialError }: OptProps) {
               }}
             >
               {inviteErrorTitle ? <h2 id="manage-join-invite-error-drawer-title">{inviteErrorTitle}</h2> : null}
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => {
-                  setInviteEmailError(pendingInviteEmailError);
-                  setErrorMessage('');
-                }}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setErrorMessage('');
+                  }}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 {inviteErrorTitle ? (
                   <p>{errorMessage}</p>
@@ -573,17 +586,18 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               {inviteErrorTitle ? <DialogTitle>{inviteErrorTitle}</DialogTitle> : null}
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => {
-                  setInviteEmailError(pendingInviteEmailError);
-                  setErrorMessage('');
-                }}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setErrorMessage('');
+                  }}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 {inviteErrorTitle ? (
                   <p>{errorMessage}</p>

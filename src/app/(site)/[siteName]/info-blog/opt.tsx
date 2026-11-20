@@ -20,6 +20,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -27,6 +28,7 @@ import { ko } from 'date-fns/locale';
 import { formatDate } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import styles from '@/app/blogInfo.module.sass';
 
@@ -1579,15 +1581,11 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title' } }}
         >
           <h2 id="info-blog-drawer-title">팀원 기본 정보</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseGeneralDialog}
-            aria-label="팀원 기본 정보 닫기"
-            disabled={isSubmitting}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="팀원 기본 정보 닫기">
+            <button type="button" className="close-button" onClick={handleCloseGeneralDialog} disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-info-general-form"
@@ -1691,6 +1689,7 @@ export default function Opt({
               className="button medium submit"
               disabled={isGeneralSubmitDisabled}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </div>
@@ -1704,15 +1703,11 @@ export default function Opt({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>팀원 기본 정보</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseGeneralDialog}
-            disabled={isSubmitting}
-            aria-label="팀원 기본 정보 닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="팀원 기본 정보 닫기">
+            <button type="button" className="close-button" onClick={handleCloseGeneralDialog} disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-info-general-form"
@@ -1806,6 +1801,7 @@ export default function Opt({
               취소
             </button>
             <button type="submit" form="desktop-info-general-form" disabled={isGeneralSubmitDisabled}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </DialogActions>
@@ -1838,6 +1834,7 @@ export default function Opt({
             onClick={() => void handleDeleteItem()}
             disabled={isItemSubmitting}
           >
+            {isItemSubmitting ? <LoadingIndicator size={20} /> : null}
             삭제
           </button>
         </DialogActions>
@@ -1859,15 +1856,16 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title-2' } }}
         >
           <h2 id="info-blog-drawer-title-2">별명 수정</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseNicknameDialog}
-            disabled={isNicknameSubmitting}
-            aria-label="별명 수정 닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="별명 수정 닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseNicknameDialog}
+              disabled={isNicknameSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-info-nickname-form"
@@ -1909,6 +1907,7 @@ export default function Opt({
               className="button medium submit"
               disabled={isNicknameSubmitDisabled}
             >
+              {isNicknameSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </div>
@@ -1922,15 +1921,16 @@ export default function Opt({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>별명 수정</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseNicknameDialog}
-            disabled={isNicknameSubmitting}
-            aria-label="별명 수정 닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="별명 수정 닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseNicknameDialog}
+              disabled={isNicknameSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-info-nickname-form"
@@ -1967,6 +1967,7 @@ export default function Opt({
               취소
             </button>
             <button type="submit" form="desktop-info-nickname-form" disabled={isNicknameSubmitDisabled}>
+              {isNicknameSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </DialogActions>
@@ -1984,14 +1985,11 @@ export default function Opt({
           <h2 id="info-blog-drawer-title-3">
             {itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}
           </h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseItemManageDialog}
-            aria-label={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}>
+            <button type="button" className="close-button" onClick={handleCloseItemManageDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <Stack direction="column" gap={1} sx={{ p: 1 }}>
               {itemManageDialogType ? (
@@ -2045,14 +2043,11 @@ export default function Opt({
           className="VhiDialog"
         >
           <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseItemManageDialog}
-            aria-label={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}>
+            <button type="button" className="close-button" onClick={handleCloseItemManageDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <Stack direction="column" gap={1} sx={{ p: 1 }}>
               {itemManageDialogType ? (
@@ -2110,17 +2105,20 @@ export default function Opt({
           <h2 id="info-blog-drawer-title-4">
             {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
           </h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseItemFormDialog}
-            disabled={isItemSubmitting}
-            aria-label={
+          <Tooltip
+            title={
               itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'} 닫기` : ''
             }
           >
-            <CloseRoundedIcon />
-          </button>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseItemFormDialog}
+              disabled={isItemSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-info-item-form"
@@ -2154,6 +2152,7 @@ export default function Opt({
               className="button medium submit"
               disabled={isItemSubmitDisabled}
             >
+              {isItemSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </div>
@@ -2169,17 +2168,20 @@ export default function Opt({
           <DialogTitle>
             {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
           </DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseItemFormDialog}
-            disabled={isItemSubmitting}
-            aria-label={
+          <Tooltip
+            title={
               itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'} 닫기` : ''
             }
           >
-            <CloseRoundedIcon />
-          </button>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseItemFormDialog}
+              disabled={isItemSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-info-item-form"
@@ -2208,6 +2210,7 @@ export default function Opt({
               취소
             </button>
             <button type="submit" form="desktop-info-item-form" disabled={isItemSubmitDisabled}>
+              {isItemSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </DialogActions>
@@ -2223,15 +2226,16 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title-5' } }}
         >
           <h2 id="info-blog-drawer-title-5">즐겨찾기 오류</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setIsFavoriteErrorDialogOpen(false)}
-            disabled={isSubmitting}
-            aria-label="즐겨찾기 오류 닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="즐겨찾기 오류 닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={() => setIsFavoriteErrorDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <div className={`paper paper-error ${styles.paper}`}>
               {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}
@@ -2252,15 +2256,16 @@ export default function Opt({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>즐겨찾기 오류</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setIsFavoriteErrorDialogOpen(false)}
-            disabled={isSubmitting}
-            aria-label="즐겨찾기 오류 닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="즐겨찾기 오류 닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={() => setIsFavoriteErrorDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <div className={`paper paper-error ${styles.paper}`}>
               {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}

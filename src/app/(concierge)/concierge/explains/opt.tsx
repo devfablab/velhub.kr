@@ -21,6 +21,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -874,6 +875,7 @@ export default function Opt({
                           disabled={actionLoading}
                           onClick={() => setEditReviewDialogItem(item)}
                         >
+                          {actionLoading ? <LoadingIndicator size={20} /> : null}
                           수정 확인 요청
                         </button>
                       ) : null}
@@ -895,9 +897,11 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'concierge-explains-drawer-title' } }}
         >
           <h2 id="concierge-explains-drawer-title">소명 의견서 제출</h2>
-          <button type="button" className="close-button" onClick={closeOpinion} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeOpinion}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             {opinionItem?.appeal ? (
               <Stack gap={2}>
@@ -1106,6 +1110,7 @@ export default function Opt({
               disabled={actionLoading || opinionFileUploading}
               onClick={submitOpinion}
             >
+              {actionLoading || opinionFileUploading ? <LoadingIndicator size={20} /> : null}
               제출
             </button>
           </div>
@@ -1119,9 +1124,11 @@ export default function Opt({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>소명 의견서 제출</DialogTitle>
-          <button type="button" className="close-button" onClick={closeOpinion} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeOpinion}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             {opinionItem?.appeal ? (
               <Stack gap={2}>
@@ -1325,6 +1332,7 @@ export default function Opt({
               취소
             </button>
             <button type="button" disabled={actionLoading || opinionFileUploading} onClick={submitOpinion}>
+              {actionLoading || opinionFileUploading ? <LoadingIndicator size={20} /> : null}
               제출
             </button>
           </DialogActions>

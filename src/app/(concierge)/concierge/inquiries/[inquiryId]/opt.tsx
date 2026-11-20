@@ -18,6 +18,7 @@ import {
 } from '@/lib/service/concierge/conciergeInquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
@@ -406,6 +407,7 @@ export default function Opt({
                     disabled={isSaving}
                     onClick={() => void saveParents()}
                   >
+                    {isSaving ? <LoadingIndicator size={20} /> : null}
                     부모 확인 정보 저장
                   </button>
                   {parentVerifiedAt && !inquiry.payment_control_requested_at ? (
@@ -415,6 +417,7 @@ export default function Opt({
                       disabled={isSaving}
                       onClick={() => void requestPaymentControl()}
                     >
+                      {isSaving ? <LoadingIndicator size={20} /> : null}
                       향후 결제 방침 선택 요청
                     </button>
                   ) : null}
@@ -566,6 +569,7 @@ export default function Opt({
                 disabled={isSaving}
                 onClick={() => void approveCancellation()}
               >
+                {isSaving ? <LoadingIndicator size={20} /> : null}
                 청약취소 승인 및 결제 취소
               </button>
             ) : null}
@@ -590,6 +594,7 @@ export default function Opt({
                   disabled={isSaving}
                   onClick={() => void markPgCancellationUnavailable()}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   원결제수단 취소 불가 확정
                 </button>
               </>
@@ -603,6 +608,7 @@ export default function Opt({
                 disabled={isSaving}
                 onClick={() => void completeManualRefund()}
               >
+                {isSaving ? <LoadingIndicator size={20} /> : null}
                 계좌 반환 완료 처리
               </button>
             ) : null}
@@ -612,6 +618,7 @@ export default function Opt({
                 className="button medium submit"
                 disabled={isSaving || (status === inquiry.status && status !== 'info_requested')}
               >
+                {isSaving ? <LoadingIndicator size={20} /> : null}
                 {isSaving ? '저장 중' : '저장'}
               </button>
             </Stack>

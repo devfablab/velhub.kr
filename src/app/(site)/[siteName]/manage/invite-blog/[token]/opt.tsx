@@ -9,6 +9,7 @@ import { Box, Paper, Stack, TextField, Typography } from '@mui/material';
 import { formatDateTimeDetail, maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export type InviteResponse = {
   ok: boolean;
@@ -223,6 +224,7 @@ export default function Opt({
                     onClick={() => void handleJoin()}
                     disabled={isSubmitting}
                   >
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     초대 수락하기
                   </button>
                 </Box>

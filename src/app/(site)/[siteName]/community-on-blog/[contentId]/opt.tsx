@@ -19,6 +19,7 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
@@ -327,34 +328,33 @@ export default function Opt({
                 slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-content-id-drawer-title' } }}
               >
                 <h2 id="community-on-blog-content-id-drawer-title">{`${imageIndex + 1}번째 이미지`}</h2>
-                <button
-                  type="button"
-                  className={styles['close-button']}
-                  onClick={() => setIsImageViewerOpen(false)}
-                  aria-label="이미지 닫기"
-                >
-                  <CloseRoundedIcon />
-                </button>
+                <Tooltip title="이미지 닫기">
+                  <button type="button" className={styles['close-button']} onClick={() => setIsImageViewerOpen(false)}>
+                    <CloseRoundedIcon />
+                  </button>
+                </Tooltip>
                 <div className={styles['dialog-content']}>
                   <img src={post.images[imageIndex]?.url} alt="" />
                 </div>
                 <div className={styles['dialog-actions']}>
-                  <button
-                    type="button"
-                    onClick={showPreviousImage}
-                    className={`${styles['control-button']} ${styles['prev-button']}`}
-                    aria-label="이전 이미지"
-                  >
-                    <ArrowBackRoundedIcon />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={showNextImage}
-                    className={`${styles['control-button']} ${styles['next-button']}`}
-                    aria-label="다음 이미지"
-                  >
-                    <ArrowForwardRoundedIcon />
-                  </button>
+                  <Tooltip title="이전 이미지">
+                    <button
+                      type="button"
+                      onClick={showPreviousImage}
+                      className={`${styles['control-button']} ${styles['prev-button']}`}
+                    >
+                      <ArrowBackRoundedIcon />
+                    </button>
+                  </Tooltip>
+                  <Tooltip title="다음 이미지">
+                    <button
+                      type="button"
+                      onClick={showNextImage}
+                      className={`${styles['control-button']} ${styles['next-button']}`}
+                    >
+                      <ArrowForwardRoundedIcon />
+                    </button>
+                  </Tooltip>
                 </div>
               </Drawer>
             ) : (
@@ -369,30 +369,33 @@ export default function Opt({
                   <img src={post.images[imageIndex]?.url} alt="" />
                 </DialogContent>
                 <DialogActions className={styles['dialog-actions']}>
-                  <button
-                    type="button"
-                    onClick={showPreviousImage}
-                    className={`${styles['control-button']} ${styles['prev-button']}`}
-                    aria-label="이전 이미지"
-                  >
-                    <ArrowBackRoundedIcon />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={showNextImage}
-                    className={`${styles['control-button']} ${styles['next-button']}`}
-                    aria-label="다음 이미지"
-                  >
-                    <ArrowForwardRoundedIcon />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsImageViewerOpen(false)}
-                    className={styles['close-button']}
-                    aria-label="이미지 닫기"
-                  >
-                    <CloseRoundedIcon />
-                  </button>
+                  <Tooltip title="이전 이미지">
+                    <button
+                      type="button"
+                      onClick={showPreviousImage}
+                      className={`${styles['control-button']} ${styles['prev-button']}`}
+                    >
+                      <ArrowBackRoundedIcon />
+                    </button>
+                  </Tooltip>
+                  <Tooltip title="다음 이미지">
+                    <button
+                      type="button"
+                      onClick={showNextImage}
+                      className={`${styles['control-button']} ${styles['next-button']}`}
+                    >
+                      <ArrowForwardRoundedIcon />
+                    </button>
+                  </Tooltip>
+                  <Tooltip title="이미지 닫기">
+                    <button
+                      type="button"
+                      onClick={() => setIsImageViewerOpen(false)}
+                      className={styles['close-button']}
+                    >
+                      <CloseRoundedIcon />
+                    </button>
+                  </Tooltip>
                 </DialogActions>
               </Dialog>
             )

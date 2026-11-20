@@ -18,6 +18,7 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { format } from 'date-fns';
 import type { CommunityChatMessage } from '@/lib/service/site/community/communityChat';
@@ -65,9 +66,11 @@ function ConfirmPopup({
         slotProps={{ paper: { 'aria-labelledby': 'community-chat-drawer-title' } }}
       >
         <h2 id="community-chat-drawer-title">{confirm?.title}</h2>
-        <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-          <CloseRoundedIcon />
-        </button>
+        <Tooltip title="닫기">
+          <button type="button" className="close-button" onClick={onClose}>
+            <CloseRoundedIcon />
+          </button>
+        </Tooltip>
         <div className="VhiDrawer-bottom-content">
           <p style={{ whiteSpace: 'pre-wrap' }}>{confirm?.content}</p>
         </div>
@@ -81,6 +84,7 @@ function ConfirmPopup({
             disabled={isSubmitting}
             onClick={() => void confirm?.onConfirm()}
           >
+            {isSubmitting ? <LoadingIndicator size={20} /> : null}
             {confirm?.confirmLabel}
           </button>
         </div>
@@ -91,9 +95,11 @@ function ConfirmPopup({
   return (
     <Dialog open={Boolean(confirm)} onClose={onClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
       <DialogTitle>{confirm?.title}</DialogTitle>
-      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={onClose}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <DialogContent>
         <DialogContentText sx={{ whiteSpace: 'pre-wrap' }}>{confirm?.content}</DialogContentText>
       </DialogContent>
@@ -107,6 +113,7 @@ function ConfirmPopup({
           disabled={isSubmitting}
           onClick={() => void confirm?.onConfirm()}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           {confirm?.confirmLabel}
         </button>
       </DialogActions>
@@ -442,23 +449,26 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
 
   return (
     <>
-      <button
-        ref={launcherRef}
-        type="button"
-        className={`${styles.launcher} ${isWindowOpen ? '' : styles.default}`}
-        onClick={handleLauncherClick}
-        aria-label={isWindowOpen ? '단체 채팅 닫기' : '단체 채팅 열기'}
-      >
-        {isWindowOpen ? <CloseRoundedIcon /> : <FaceRetouchingNaturalRoundedIcon />}
-      </button>
+      <Tooltip title={isWindowOpen ? '단체 채팅 닫기' : '단체 채팅 열기'}>
+        <button
+          ref={launcherRef}
+          type="button"
+          className={`${styles.launcher} ${isWindowOpen ? '' : styles.default}`}
+          onClick={handleLauncherClick}
+        >
+          {isWindowOpen ? <CloseRoundedIcon /> : <FaceRetouchingNaturalRoundedIcon />}
+        </button>
+      </Tooltip>
 
       {isWindowOpen ? (
         <section ref={windowRef} className={styles.window} aria-label="단체 채팅">
           <div className={styles.header}>
             <h2>단체 채팅</h2>
-            <button type="button" onClick={() => setIsWindowOpen(false)} aria-label="단체 채팅 닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="단체 채팅 닫기">
+              <button type="button" onClick={() => setIsWindowOpen(false)}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
           </div>
 
           <div
@@ -477,6 +487,7 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
                   disabled={isLoadingOlder}
                   onClick={() => void loadOlderMessages()}
                 >
+                  {isLoadingOlder ? <LoadingIndicator size={20} /> : null}
                   이전 메시지 보기
                 </button>
               </div>
@@ -516,9 +527,11 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
                       </div>
                       <div className={styles.meta}>
                         {(canDelete || isMine) && message.state === 'sent' ? (
-                          <button type="button" aria-label="메시지 지우기" onClick={() => requestDelete(message.id)}>
-                            <DeleteOutlineRoundedIcon />
-                          </button>
+                          <Tooltip title="메시지 지우기">
+                            <button type="button" onClick={() => requestDelete(message.id)}>
+                              <DeleteOutlineRoundedIcon />
+                            </button>
+                          </Tooltip>
                         ) : null}
                         <time dateTime={message.createdAt}>{format(new Date(message.createdAt), 'HH:mm')}</time>
                       </div>
@@ -557,14 +570,11 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
                   }
                 }}
               />
-              <IconButton
-                size="small"
-                aria-label="보내기"
-                disabled={!inputValue.trim()}
-                onClick={() => void sendMessage()}
-              >
-                <SendRoundedIcon />
-              </IconButton>
+              <Tooltip title="보내기">
+                <IconButton size="small" disabled={!inputValue.trim()} onClick={() => void sendMessage()}>
+                  <SendRoundedIcon />
+                </IconButton>
+              </Tooltip>
             </div>
           ) : null}
         </section>

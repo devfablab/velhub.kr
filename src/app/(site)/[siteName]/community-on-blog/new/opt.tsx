@@ -13,6 +13,7 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
@@ -130,14 +131,15 @@ function ImagePicker({
         <div className={styles['gallery-dialog-preview']}>
           {draft.map((image) => (
             <div key={image.previewUrl} className={styles['gallery-dialog-preview-image']}>
-              <button
-                type="button"
-                onClick={() => removeImage(image.previewUrl)}
-                aria-label="이미지 삭제"
-                className={styles['gallery-dialog-remove-button']}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="이미지 삭제">
+                <button
+                  type="button"
+                  onClick={() => removeImage(image.previewUrl)}
+                  className={styles['gallery-dialog-remove-button']}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <img src={image.previewUrl} alt="" />
             </div>
           ))}
@@ -168,9 +170,11 @@ function ImagePicker({
           slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-new-drawer-title' } }}
         >
           <h2 id="community-on-blog-new-drawer-title">이미지 첨부</h2>
-          <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>{content}</div>
           <div className="drawer-dialog-actions">
             <button type="button" onClick={closeDialog} className="button medium close">
@@ -184,9 +188,11 @@ function ImagePicker({
       ) : (
         <Dialog open={open} onClose={closeDialog} className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}>
           <DialogTitle>이미지 첨부</DialogTitle>
-          <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent className={styles['thumbnail-dialog-content']}>{content}</DialogContent>
           <DialogActions>
             <button type="button" onClick={closeDialog} className="cancel-button">

@@ -25,8 +25,10 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/reports.module.sass';
 
 type Reason =
@@ -222,6 +224,7 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
         onClick={() => void submit()}
         disabled={isSubmitting || !selectedReason}
       >
+        {isSubmitting ? <LoadingIndicator size={20} /> : null}
         신고 접수
       </button>
     );
@@ -229,14 +232,15 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
 
   return (
     <>
-      <IconButton
-        type="button"
-        aria-label="신고 메뉴 열기"
-        aria-haspopup="menu"
-        onClick={(event: MouseEvent<HTMLButtonElement>) => setMenuAnchorElement(event.currentTarget)}
-      >
-        <MoreHorizIcon />
-      </IconButton>
+      <Tooltip title="신고 메뉴 열기">
+        <IconButton
+          type="button"
+          aria-haspopup="menu"
+          onClick={(event: MouseEvent<HTMLButtonElement>) => setMenuAnchorElement(event.currentTarget)}
+        >
+          <MoreHorizIcon />
+        </IconButton>
+      </Tooltip>
       <Menu anchorEl={menuAnchorElement} open={Boolean(menuAnchorElement)} onClose={closeMenu}>
         <MenuItem dense onClick={openReport}>
           <ListItemIcon>
@@ -254,12 +258,15 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
           slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-blog-ad-report-button-drawer-title' } }}
         >
           <h2 id="components-service-blog-blog-ad-report-button-drawer-title">신고하기</h2>
-          <button type="button" className="close-button" onClick={closeReport} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeReport}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{renderContent()}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={closeReport} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}
@@ -268,12 +275,15 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
       ) : (
         <Dialog open={open} onClose={closeReport} fullWidth maxWidth="sm" className="vh-dialog vh-alert-dialog">
           <DialogTitle>신고하기</DialogTitle>
-          <button type="button" className="close-button" onClick={closeReport} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeReport}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{renderContent()}</DialogContent>
           <DialogActions>
             <button type="button" onClick={closeReport} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}

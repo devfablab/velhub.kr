@@ -15,8 +15,10 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -261,9 +263,11 @@ export default function Verify2fa() {
           slotProps={{ paper: { 'aria-labelledby': 'components-auth-verify2fa-drawer-title' } }}
         >
           <h2 id="components-auth-verify2fa-drawer-title">2단계 인증</h2>
-          <button className="close-button" onClick={handleSignOut} aria-label="닫기" disabled={isSubmitting}>
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button className="close-button" onClick={handleSignOut} disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <Box id="verify-2fa-form" component="form" onSubmit={handleSubmit}>
               {content}
@@ -271,6 +275,7 @@ export default function Verify2fa() {
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleSignOut} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               로그아웃
             </button>
             <button
@@ -279,6 +284,7 @@ export default function Verify2fa() {
               className="button medium submit"
               disabled={isLoading || isSubmitting || !factorId}
             >
+              {isLoading || isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </div>
@@ -286,9 +292,11 @@ export default function Verify2fa() {
       ) : (
         <Dialog open={true} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
           <DialogTitle>2단계 인증</DialogTitle>
-          <button className="close-button" onClick={handleSignOut} aria-label="닫기" disabled={isSubmitting}>
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button className="close-button" onClick={handleSignOut} disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <Box id="verify-2fa-dialog-form" component="form" onSubmit={handleSubmit}>
               {content}
@@ -296,9 +304,11 @@ export default function Verify2fa() {
           </DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={handleSignOut} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               로그아웃
             </button>
             <button type="submit" form="verify-2fa-dialog-form" disabled={isLoading || isSubmitting || !factorId}>
+              {isLoading || isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </DialogActions>

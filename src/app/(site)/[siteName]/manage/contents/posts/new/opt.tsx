@@ -31,6 +31,7 @@ import SpellCheckDialog, {
 } from '@/components/editor/SpellCheckDialog';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/PostAttachmentUploader';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -917,6 +918,7 @@ export default function Opt({
                         onClick={handleClickThumbnailUpload}
                         disabled={isUploadingThumbnail}
                       >
+                        {isUploadingThumbnail ? <LoadingIndicator size={20} /> : null}
                         {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
                       </button>
                     </Stack>
@@ -1085,6 +1087,7 @@ export default function Opt({
                       className={`button ${styles.button}`}
                       disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                     >
+                      {isSubmitting || isUploadingThumbnail ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   </div>
@@ -1094,6 +1097,7 @@ export default function Opt({
                     className="button medium submit"
                     disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                   >
+                    {isSubmitting || isUploadingThumbnail ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 )}

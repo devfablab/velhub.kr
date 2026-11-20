@@ -18,6 +18,7 @@ import Anchor from '@/components/Anchor';
 import BillingMethodButton from '@/components/buttons/BillingMethodButton';
 import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import type { MinorPaymentControlResponse } from '@/components/MinorPaymentControl';
 import PaymentTerms from '@/components/modals/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
@@ -546,6 +547,7 @@ export default function MembershipPlan({
                   onClick={() => void openPaymentPopup()}
                   disabled={!selectedBillingMethodId || isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   {isMinorUser
                     ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제`
                     : `${formatMembershipPrice(selectedPrice)} 결제하기`}

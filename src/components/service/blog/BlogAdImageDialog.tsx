@@ -12,7 +12,9 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/board.module.sass';
 
 const MAX_FILE_SIZE = 1024 * 1024;
@@ -114,6 +116,7 @@ export default function BlogAdImageDialog({
           onClick={() => inputReference.current?.click()}
           className={styles['thumbnail-upload-button']}
         >
+          {isUploading ? <LoadingIndicator size={20} /> : null}
           <span>이미지를 선택해주세요</span>
           <CropOriginalOutlinedIcon />
         </button>
@@ -147,9 +150,11 @@ export default function BlogAdImageDialog({
           slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-blog-ad-image-dialog-drawer-title' } }}
         >
           <h2 id="components-service-blog-blog-ad-image-dialog-drawer-title">상품 이미지 업로드</h2>
-          <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>{content}</div>
           <div className="drawer-dialog-actions">
             <button type="button" onClick={closeDialog} disabled={isUploading} className="button medium close">
@@ -161,6 +166,7 @@ export default function BlogAdImageDialog({
               disabled={!selectedFile || isUploading}
               className="button medium submit"
             >
+              {isUploading ? <LoadingIndicator size={20} /> : null}
               {isUploading ? '업로드 중' : '이미지 업로드'}
             </button>
           </div>
@@ -168,15 +174,18 @@ export default function BlogAdImageDialog({
       ) : (
         <Dialog open={open} onClose={closeDialog} className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}>
           <DialogTitle>상품 이미지 업로드</DialogTitle>
-          <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent className={styles['thumbnail-dialog-content']}>{content}</DialogContent>
           <DialogActions>
             <button type="button" onClick={closeDialog} disabled={isUploading} className="cancel-button">
               취소
             </button>
             <button type="button" onClick={() => void applyImage()} disabled={!selectedFile || isUploading}>
+              {isUploading ? <LoadingIndicator size={20} /> : null}
               {isUploading ? '업로드 중' : '이미지 업로드'}
             </button>
           </DialogActions>

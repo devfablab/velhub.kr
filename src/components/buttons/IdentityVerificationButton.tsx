@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import PortOne from '@portone/browser-sdk/v2';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DevIdentityBypassModal from '@/components/modals/DevIdentityBypassModal';
 import IdentityAgreement from '@/components/modals/IdentityAgreement';
 import PopupMessage from '@/components/PopupMessage';
@@ -173,6 +174,7 @@ export default function IdentityVerificationButton({
   return (
     <>
       <button type="button" className={className} onClick={() => setAgreementOpen(true)} disabled={isProcessing}>
+        {isProcessing ? <LoadingIndicator size={20} /> : null}
         {isProcessing ? '처리 중' : children}
       </button>
       <IdentityAgreement

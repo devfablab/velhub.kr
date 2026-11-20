@@ -208,9 +208,11 @@ export default function Container({ children }: ContainerProps) {
             {isSearchResult ? (
               <>
                 <div className={styles.location} style={{ marginLeft: '-12px' }}>
-                  <IconButton href="/" aria-label="검색 닫기">
-                    <CloseRoundedIcon />
-                  </IconButton>
+                  <Tooltip title="검색 닫기">
+                    <IconButton href="/">
+                      <CloseRoundedIcon />
+                    </IconButton>
+                  </Tooltip>
                 </div>
                 <LoungeSearch />
               </>
@@ -257,13 +259,11 @@ export default function Container({ children }: ContainerProps) {
                     slotProps={{ paper: { 'aria-label': '검색' } }}
                   >
                     <div className={styles['mobile-search']}>
-                      <IconButton
-                        className={styles['icon-button']}
-                        onClick={handleCloseSearchDrawer}
-                        aria-label="검색 닫기"
-                      >
-                        <CloseRoundedIcon />
-                      </IconButton>
+                      <Tooltip title="검색 닫기">
+                        <IconButton className={styles['icon-button']} onClick={handleCloseSearchDrawer}>
+                          <CloseRoundedIcon />
+                        </IconButton>
+                      </Tooltip>
                       <LoungeSearch onNavigate={handleCloseSearchDrawer} />
                     </div>
                   </Drawer>
@@ -279,9 +279,11 @@ export default function Container({ children }: ContainerProps) {
                       <List>
                         <li className={styles['VhiDrawer-header']}>
                           <strong id="lounge-menu-drawer-title-2">마이 메뉴</strong>
-                          <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                            <CloseRoundedIcon />
-                          </IconButton>
+                          <Tooltip title="메뉴 닫기">
+                            <IconButton type="button" onClick={handleCloseProfileDrawer}>
+                              <CloseRoundedIcon />
+                            </IconButton>
+                          </Tooltip>
                         </li>
 
                         {isLoggedIn ? (

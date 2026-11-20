@@ -16,6 +16,7 @@ import {
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { ACCOUNT_WITHDRAWAL_GRACE_MS } from '@/lib/users/accountWithdrawal.shared';
 import { formatDateTimeDetail } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useAuthState } from './AuthStateProvider';
 
 type WithdrawalStatusResponse = {
@@ -171,6 +172,7 @@ export default function WithdrawalGuard({
               onClick={handleLogout}
               disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
+              {isLoggingOut ? <LoadingIndicator size={20} /> : null}
               로그아웃하기
             </button>
             <button
@@ -179,6 +181,7 @@ export default function WithdrawalGuard({
               onClick={handleCancelWithdrawal}
               disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
+              {isCanceling ? <LoadingIndicator size={20} /> : null}
               탈퇴신청 취소
             </button>
           </div>
@@ -202,6 +205,7 @@ export default function WithdrawalGuard({
               onClick={handleLogout}
               disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
+              {isLoggingOut ? <LoadingIndicator size={20} /> : null}
               로그아웃하기
             </button>
             <button
@@ -209,6 +213,7 @@ export default function WithdrawalGuard({
               onClick={handleCancelWithdrawal}
               disabled={isAuthServiceUnavailable || isCanceling || isLoggingOut}
             >
+              {isCanceling ? <LoadingIndicator size={20} /> : null}
               탈퇴신청 취소
             </button>
           </DialogActions>

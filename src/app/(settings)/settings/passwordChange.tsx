@@ -236,6 +236,7 @@ export default function PasswordChange({
               </p>
 
               <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 비밀번호 변경
               </button>
 

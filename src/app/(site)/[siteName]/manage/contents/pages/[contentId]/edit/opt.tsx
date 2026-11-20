@@ -21,6 +21,7 @@ import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -691,6 +692,7 @@ export default function Opt({
                             onClick={() => void handleCheckSlug()}
                             disabled={isCheckingSlug}
                           >
+                            {isCheckingSlug ? <LoadingIndicator size={20} /> : null}
                             중복 확인
                           </button>
                         </InputAdornment>
@@ -745,6 +747,7 @@ export default function Opt({
                     onClick={handleClickOgImageUpload}
                     disabled={isUploadingOgImage}
                   >
+                    {isUploadingOgImage ? <LoadingIndicator size={20} /> : null}
                     {ogImageUrl ? '이미지 교체' : '이미지 추가'}
                   </button>
                 </Stack>
@@ -798,6 +801,7 @@ export default function Opt({
                       className={`button ${styles.button}`}
                       disabled={isSubmitting || !boardName || !hasChanges}
                     >
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   </div>
@@ -807,6 +811,7 @@ export default function Opt({
                     className="button medium submit"
                     disabled={isSubmitting || !boardName || !hasChanges}
                   >
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 )}

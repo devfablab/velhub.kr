@@ -15,6 +15,7 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { EMAIL_PATTERN } from '@/lib/auth/emailSignUp';
 import {
@@ -27,6 +28,7 @@ import {
 } from '@/lib/auth/socialSignUp';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -348,6 +350,7 @@ export default function Opt() {
             className={`button medium submit ${styles.submit}`}
             disabled={isLoading || isSubmitting || !profile}
           >
+            {isLoading || isSubmitting ? <LoadingIndicator size={20} /> : null}
             회원가입 완료
           </button>
         </div>
@@ -364,9 +367,11 @@ export default function Opt() {
           }}
         >
           {popup.title ? <h2 id="auth-social-sign-up-popup-drawer-title">{popup.title}</h2> : null}
-          <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handlePopupClose}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             {popup.title ? (
               <ul className="error-messages">
@@ -398,9 +403,11 @@ export default function Opt() {
           className="vh-dialog vh-alert-dialog"
         >
           {popup.title ? <DialogTitle>{popup.title}</DialogTitle> : null}
-          <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handlePopupClose}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             {popup.title ? (
               <ul className="error-messages">

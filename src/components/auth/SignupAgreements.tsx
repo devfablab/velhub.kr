@@ -22,6 +22,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 
 type AgreementState = {
@@ -150,9 +151,11 @@ function PrivacyAgreement({
           slotProps={{ paper: { 'aria-labelledby': 'components-auth-signup-agreements-drawer-title' } }}
         >
           <h2 id="components-auth-signup-agreements-drawer-title">개인정보 수집 및 이용 동의</h2>
-          <button className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button className="close-button" onClick={() => setOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <PrivacyContent />
           </div>
@@ -165,9 +168,11 @@ function PrivacyAgreement({
       ) : (
         <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth className="VhiDialog">
           <DialogTitle>개인정보 수집 및 이용 동의</DialogTitle>
-          <button className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button className="close-button" onClick={() => setOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <PrivacyContent />
           </DialogContent>

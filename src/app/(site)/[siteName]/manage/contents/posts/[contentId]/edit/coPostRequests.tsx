@@ -8,6 +8,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 
 type RequestType = 'publish' | 'reschedule' | 'apply_revision' | 'unpublish';
@@ -164,6 +165,7 @@ export default function CoPostRequests({
               void send(requestsApi, 'POST', { type: timeRequestType, publishAt: selectedTime?.toISOString() })
             }
           >
+            {isSubmitting ? <LoadingIndicator size={20} /> : null}
             {timeRequestType === 'publish' ? '공개 협의 요청' : '일시 변경 요청'}
           </button>
         </Stack>
@@ -178,6 +180,7 @@ export default function CoPostRequests({
               disabled={isSubmitting}
               onClick={() => void send(requestsApi, 'POST', { type: 'apply_revision' })}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               수정본 반영 요청
             </button>
           ) : null}
@@ -188,6 +191,7 @@ export default function CoPostRequests({
               disabled={isSubmitting}
               onClick={() => void send(requestsApi, 'POST', { type: 'unpublish' })}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               삭제 요청
             </button>
           )}
@@ -215,6 +219,7 @@ export default function CoPostRequests({
                 disabled={isSubmitting}
                 onClick={() => void send(`${requestsApi}/${item.id}`, 'PATCH', { action: 'cancel' })}
               >
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 요청 취소
               </button>
             ) : (
@@ -225,6 +230,7 @@ export default function CoPostRequests({
                   disabled={isSubmitting}
                   onClick={() => void send(`${requestsApi}/${item.id}`, 'PATCH', { action: 'decline' })}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   거절
                 </button>
                 <button
@@ -240,6 +246,7 @@ export default function CoPostRequests({
                     )
                   }
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   동의
                 </button>
               </>

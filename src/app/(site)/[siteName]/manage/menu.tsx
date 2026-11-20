@@ -688,15 +688,19 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
           <>
             <div className={styles.location}>
               {pageEnterance ? (
-                <IconButton href={`/${siteName}`} aria-label={isBlog ? '블로그로 이동' : '커뮤니티로 이동'}>
-                  <CloseRoundedIcon />
-                </IconButton>
+                <Tooltip title={isBlog ? '블로그로 이동' : '커뮤니티로 이동'}>
+                  <IconButton href={`/${siteName}`}>
+                    <CloseRoundedIcon />
+                  </IconButton>
+                </Tooltip>
               ) : (
                 <>
                   {pageBack ? (
-                    <IconButton href={pageBack} aria-label="이전화면으로 이동">
-                      <ArrowBackIosNewRoundedIcon />
-                    </IconButton>
+                    <Tooltip title="이전화면으로 이동">
+                      <IconButton href={pageBack}>
+                        <ArrowBackIosNewRoundedIcon />
+                      </IconButton>
+                    </Tooltip>
                   ) : null}
                 </>
               )}
@@ -737,9 +741,11 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                   <List>
                     <li className={styles['VhiDrawer-header']}>
                       <strong id="manage-menu-drawer-title">마이 메뉴</strong>
-                      <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                        <CloseRoundedIcon />
-                      </IconButton>
+                      <Tooltip title="메뉴 닫기">
+                        <IconButton type="button" onClick={handleCloseProfileDrawer}>
+                          <CloseRoundedIcon />
+                        </IconButton>
+                      </Tooltip>
                     </li>
 
                     {isLoggedIn ? (

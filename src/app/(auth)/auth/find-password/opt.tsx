@@ -14,9 +14,11 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { EMAIL_PATTERN } from '@/lib/auth/emailSignUp';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../container';
 import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';
@@ -158,9 +160,11 @@ export default function Opt() {
             <DialogTitle>{popup.title}</DialogTitle>
           )
         ) : null}
-        <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
-          <CloseRoundedIcon />
-        </button>
+        <Tooltip title="닫기">
+          <button type="button" className="close-button" onClick={handlePopupClose}>
+            <CloseRoundedIcon />
+          </button>
+        </Tooltip>
         {popup.title ? (
           isDrawer ? (
             <div className="VhiDrawer-bottom-content">
@@ -232,6 +236,7 @@ export default function Opt() {
 
             <div className={styles.actions}>
               <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 재설정 메일 보내기
               </button>
             </div>

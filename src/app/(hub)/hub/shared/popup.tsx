@@ -2,7 +2,16 @@
 
 import type { ReactNode } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+  Tooltip,
+} from '@mui/material';
 import type { DialogProps } from '@mui/material/Dialog';
 
 export type ResponsivePopupAction = {
@@ -67,9 +76,11 @@ export default function ResponsivePopup({
       slotProps={{ paper: { 'aria-labelledby': 'hub-shared-popup-drawer-title' } }}
     >
       <h2 id="hub-shared-popup-drawer-title">{title}</h2>
-      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={onClose}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <div className="VhiDrawer-bottom-content">
         {formId ? (
           <form
@@ -109,9 +120,11 @@ export default function ResponsivePopup({
       className={`${variant === 'content' ? 'VhiDialog' : 'vh-dialog vh-alert-dialog'} ${dialogClassName}`.trim()}
     >
       <DialogTitle>{title}</DialogTitle>
-      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={onClose}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <DialogContent>
         {formId ? (
           <form

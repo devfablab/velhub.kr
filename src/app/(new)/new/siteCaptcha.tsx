@@ -5,6 +5,7 @@ import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlin
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/new.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -163,7 +164,7 @@ export default function SiteCaptcha({ onPassTokenChange, onBlockedChange }: Prop
           <Stack direction="row" gap={1} alignItems="center">
             <div className={styles['captcha-image']} dangerouslySetInnerHTML={{ __html: challenge.image }} />
             <button type="button" className="button small action" disabled={isChecking} onClick={handleRefresh}>
-              새 문자
+              {isChecking ? <LoadingIndicator size={20} /> : null}새 문자
             </button>
           </Stack>
           <TextField
@@ -185,6 +186,7 @@ export default function SiteCaptcha({ onPassTokenChange, onBlockedChange }: Prop
                       disabled={isChecking || !answer.trim()}
                       onClick={handleCheck}
                     >
+                      {isChecking ? <LoadingIndicator size={20} /> : null}
                       확인
                     </button>
                   </InputAdornment>

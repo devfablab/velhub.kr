@@ -12,9 +12,11 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type PaymentEmailDialogProps = {
   open: boolean;
@@ -216,15 +218,18 @@ export default function PaymentEmailDialog({
           slotProps={{ paper: { 'aria-labelledby': 'components-modals-payment-email-dialog-drawer-title' } }}
         >
           <h2 id="components-modals-payment-email-dialog-drawer-title">결제 정보 입력</h2>
-          <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleClose}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{renderContent('payment-email-form-mobile')}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleClose} disabled={isSaving}>
               취소
             </button>
             <button type="submit" form="payment-email-form-mobile" className="button medium submit" disabled={isSaving}>
+              {isSaving ? <LoadingIndicator size={20} /> : null}
               저장하고 계속
             </button>
           </div>
@@ -243,15 +248,18 @@ export default function PaymentEmailDialog({
     <>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
         <DialogTitle>결제 정보 입력</DialogTitle>
-        <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
-          <CloseRoundedIcon />
-        </button>
+        <Tooltip title="닫기">
+          <button type="button" className="close-button" onClick={handleClose}>
+            <CloseRoundedIcon />
+          </button>
+        </Tooltip>
         <DialogContent>{renderContent('payment-email-form-desktop')}</DialogContent>
         <DialogActions>
           <button type="button" className="cancel-button" onClick={handleClose} disabled={isSaving}>
             취소
           </button>
           <button type="submit" form="payment-email-form-desktop" disabled={isSaving}>
+            {isSaving ? <LoadingIndicator size={20} /> : null}
             저장하고 계속
           </button>
         </DialogActions>

@@ -27,6 +27,7 @@ import {
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import ContentWithInlineLinks from '@/components/service/blog/community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
@@ -339,6 +340,7 @@ export default function Opt({
             onClick={handleRemoveImage}
             disabled={isSubmitting}
           >
+            {isSubmitting ? <LoadingIndicator size={20} /> : null}
             이미지 삭제
           </Button>
         </Stack>
@@ -350,6 +352,7 @@ export default function Opt({
           startIcon={<AddPhotoAlternateOutlinedIcon />}
           disabled={isSubmitting}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           이미지 추가 (1MB 미만의 JPG/PNG/WEBP)
           <VisuallyHiddenInput
             type="file"
@@ -429,6 +432,7 @@ export default function Opt({
                               onClick={() => void handleTogglePrivate(post)}
                               disabled={togglingPostId === post.id}
                             >
+                              {togglingPostId === post.id ? <LoadingIndicator size={20} /> : null}
                               {post.isPrivate ? <LockOpenOutlinedIcon /> : <LockOutlinedIcon />}
                               <strong>{post.isPrivate ? '공개로 전환' : '비공개로 전환'}</strong>
                             </button>
@@ -481,9 +485,11 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'notice-drawer-title' } }}
         >
           <h2 id="notice-drawer-title">상세보기</h2>
-          <button type="button" className="close-button" onClick={() => setDetailPost(null)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setDetailPost(null)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className={`VhiDrawer-bottom-content ${styles['content-simple']}`}>
             <p>{detailPost ? <ContentWithInlineLinks content={detailPost.content} /> : null}</p>
           </div>
@@ -522,15 +528,11 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'notice-drawer-title-2' } }}
         >
           <h2 id="notice-drawer-title-2">{editorTitle}</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={closeEditor}
-            disabled={isSubmitting}
-            aria-label={`${editorTitle} 닫기`}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={`${editorTitle} 닫기`}>
+            <button type="button" className="close-button" onClick={closeEditor} disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{editorFields}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={closeEditor} disabled={isSubmitting}>
@@ -542,6 +544,7 @@ export default function Opt({
               onClick={() => void handleSubmit()}
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {editor?.post ? '수정' : '등록'}
             </button>
           </div>
@@ -555,21 +558,18 @@ export default function Opt({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>{editorTitle}</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={closeEditor}
-            disabled={isSubmitting}
-            aria-label={`${editorTitle} 닫기`}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={`${editorTitle} 닫기`}>
+            <button type="button" className="close-button" onClick={closeEditor} disabled={isSubmitting}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{editorFields}</DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={closeEditor} disabled={isSubmitting}>
               취소
             </button>
             <button type="button" onClick={() => void handleSubmit()} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {editor?.post ? '수정' : '등록'}
             </button>
           </DialogActions>

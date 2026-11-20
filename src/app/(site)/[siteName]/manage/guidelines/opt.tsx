@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
-import { IconButton, Stack, TextField, Typography } from '@mui/material';
+import { IconButton, Stack, TextField, Typography, Tooltip } from '@mui/material';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../menu';
@@ -173,9 +174,11 @@ function GuidelineSection({
                   value={item.content}
                   onChange={(event) => updateItem(index, event.target.value)}
                 />
-                <IconButton aria-label="가이드라인 삭제" onClick={() => removeItem(index)}>
-                  <RemoveCircleOutlineRoundedIcon />
-                </IconButton>
+                <Tooltip title="가이드라인 삭제">
+                  <IconButton onClick={() => removeItem(index)}>
+                    <RemoveCircleOutlineRoundedIcon />
+                  </IconButton>
+                </Tooltip>
               </Stack>
             ))}
 
@@ -197,6 +200,7 @@ function GuidelineSection({
                 가이드라인 추가
               </button>
               <button type="button" className="button small submit" disabled={!canSave} onClick={() => void save()}>
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 저장
               </button>
             </Stack>

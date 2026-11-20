@@ -24,6 +24,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
@@ -36,6 +37,7 @@ import {
 } from '@/lib/site/createValidation.shared';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import SiteCaptcha from '@/app/(new)/new/siteCaptcha';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
@@ -611,6 +613,7 @@ export default function Opt() {
                         onClick={handleCheckSiteKey}
                         disabled={isCheckingSiteKey}
                       >
+                        {isCheckingSiteKey ? <LoadingIndicator size={20} /> : null}
                         중복 확인
                       </button>
                     </InputAdornment>
@@ -656,6 +659,7 @@ export default function Opt() {
                         onClick={handleCheckSiteLabel}
                         disabled={isCheckingSiteLabel}
                       >
+                        {isCheckingSiteLabel ? <LoadingIndicator size={20} /> : null}
                         중복 확인
                       </button>
                     </InputAdornment>
@@ -883,6 +887,7 @@ export default function Opt() {
           className="button medium submit"
           disabled={isSubmitting || isCheckingSiteKey || isCaptchaBlocked}
         >
+          {isSubmitting || isCheckingSiteKey ? <LoadingIndicator size={20} /> : null}
           커뮤니티 개설
         </button>
       </div>
@@ -898,9 +903,11 @@ export default function Opt() {
           slotProps={{ paper: { 'aria-labelledby': 'new-community-drawer-title' } }}
         >
           <h2 id="new-community-drawer-title">개설 취소</h2>
-          <button type="button" className="close-button" onClick={closeCancelDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeCancelDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <Typography>정말로 개설을 취소하시겠어요?</Typography>
           </div>
@@ -922,9 +929,11 @@ export default function Opt() {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>개설 취소</DialogTitle>
-          <button type="button" className="close-button" onClick={closeCancelDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeCancelDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <Typography>정말로 개설을 취소하시겠어요?</Typography>
           </DialogContent>
@@ -950,9 +959,11 @@ export default function Opt() {
           }}
         >
           {errorDialog.title ? <h2 id="new-community-error-drawer-title">{errorDialog.title}</h2> : null}
-          <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeErrorDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             {errorDialog.title ? (
               <ul className="error-messages">
@@ -982,9 +993,11 @@ export default function Opt() {
           className="vh-dialog vh-alert-dialog"
         >
           {errorDialog.title ? <DialogTitle>{errorDialog.title}</DialogTitle> : null}
-          <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeErrorDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             {errorDialog.title ? (
               <ul className="error-messages">

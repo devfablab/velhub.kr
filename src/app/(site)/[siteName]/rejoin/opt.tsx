@@ -15,8 +15,10 @@ import {
   Stack,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Props = {
   siteName: string;
@@ -100,6 +102,7 @@ export default function Opt({ siteName }: Props) {
           onClick={() => void handleRejoin('restore')}
           disabled={isSubmitting}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           복구 후 재가입하기
         </button>
         <button
@@ -108,6 +111,7 @@ export default function Opt({ siteName }: Props) {
           onClick={() => setIsResetConfirmOpen(true)}
           disabled={isSubmitting}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           초기화 후 재가입하기
         </button>
       </Stack>
@@ -121,15 +125,16 @@ export default function Opt({ siteName }: Props) {
           slotProps={{ paper: { 'aria-labelledby': 'rejoin-drawer-title' } }}
         >
           <h2 id="rejoin-drawer-title">초기화 후 재가입</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setIsResetConfirmOpen(false)}
-            disabled={isSubmitting}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button
+              type="button"
+              className="close-button"
+              onClick={() => setIsResetConfirmOpen(false)}
+              disabled={isSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <ul>
               <li>기존 글, 댓글, 첨부 파일은 영구 삭제되며 복구할 수 없습니다.</li>
@@ -151,6 +156,7 @@ export default function Opt({ siteName }: Props) {
               onClick={() => void handleRejoin('reset')}
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               초기화 후 재가입
             </button>
           </div>
@@ -185,6 +191,7 @@ export default function Opt({ siteName }: Props) {
               onClick={() => void handleRejoin('reset')}
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               초기화 후 재가입
             </button>
           </DialogActions>

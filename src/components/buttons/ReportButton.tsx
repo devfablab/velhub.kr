@@ -25,6 +25,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   type GuidelineReportCategory,
@@ -32,6 +33,7 @@ import {
   type ReportTargetType,
 } from '@/lib/reports/guidelines';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/reports.module.sass';
 
 type ReportButtonProps = {
@@ -300,6 +302,7 @@ export default function ReportButton({
         className={isMobile ? 'button medium submit' : undefined}
         disabled={submitting || !selectedCategory}
       >
+        {submitting ? <LoadingIndicator size={20} /> : null}
         신고 접수
       </button>
     );
@@ -314,9 +317,11 @@ export default function ReportButton({
         </button>
       ) : (
         <>
-          <IconButton type="button" aria-label="신고 메뉴 열기" aria-haspopup="menu" onClick={handleMenuOpen}>
-            <MoreHorizIcon />
-          </IconButton>
+          <Tooltip title="신고 메뉴 열기">
+            <IconButton type="button" aria-haspopup="menu" onClick={handleMenuOpen}>
+              <MoreHorizIcon />
+            </IconButton>
+          </Tooltip>
 
           <Menu anchorEl={menuAnchorElement} open={menuOpen} onClose={handleMenuClose}>
             <MenuItem dense onClick={handleOpen}>
@@ -351,13 +356,16 @@ export default function ReportButton({
           slotProps={{ paper: { 'aria-labelledby': 'components-buttons-report-button-drawer-title' } }}
         >
           <h2 id="components-buttons-report-button-drawer-title">신고하기</h2>
-          <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleClose}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
 
           <div className="VhiDrawer-bottom-content">{renderContent('mobile-report-form')}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleClose} disabled={submitting}>
+              {submitting ? <LoadingIndicator size={20} /> : null}
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}
@@ -366,14 +374,17 @@ export default function ReportButton({
       ) : (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" className="vh-dialog vh-alert-dialog">
           <DialogTitle>신고하기</DialogTitle>
-          <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleClose}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
 
           <DialogContent>{renderContent('desktop-report-form')}</DialogContent>
 
           <DialogActions>
             <button type="button" onClick={handleClose} disabled={submitting}>
+              {submitting ? <LoadingIndicator size={20} /> : null}
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}

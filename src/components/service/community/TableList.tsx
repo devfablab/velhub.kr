@@ -17,6 +17,7 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
@@ -195,9 +196,11 @@ export default function TableList({ writeHref }: Props) {
           slotProps={{ paper: { 'aria-labelledby': 'components-service-community-table-list-drawer-title' } }}
         >
           <h2 id="components-service-community-table-list-drawer-title">안내</h2>
-          <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setAlertMessage('')}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <DialogContentText>{alertMessage}</DialogContentText>
           </div>
@@ -216,9 +219,11 @@ export default function TableList({ writeHref }: Props) {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>안내</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setAlertMessage('')}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <DialogContentText>{alertMessage}</DialogContentText>
           </DialogContent>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ModeCommentOutlinedIcon from '@mui/icons-material/ModeCommentOutlined';
+import { Tooltip } from '@mui/material';
 import { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -50,24 +51,26 @@ export default function LikedItems({ initialData, initialError }: Props) {
         <div className={styles.buttons}>
           <ul>
             <li>
-              <button
-                type="button"
-                className={viewType === 'posts' ? styles.selected : undefined}
-                aria-label="글 보기"
-                onClick={() => setViewType('posts')}
-              >
-                <ArticleOutlinedIcon />
-              </button>
+              <Tooltip title="글 보기">
+                <button
+                  type="button"
+                  className={viewType === 'posts' ? styles.selected : undefined}
+                  onClick={() => setViewType('posts')}
+                >
+                  <ArticleOutlinedIcon />
+                </button>
+              </Tooltip>
             </li>
             <li>
-              <button
-                type="button"
-                className={viewType === 'comments' ? styles.selected : undefined}
-                aria-label="댓글 보기"
-                onClick={() => setViewType('comments')}
-              >
-                <ModeCommentOutlinedIcon />
-              </button>
+              <Tooltip title="댓글 보기">
+                <button
+                  type="button"
+                  className={viewType === 'comments' ? styles.selected : undefined}
+                  onClick={() => setViewType('comments')}
+                >
+                  <ModeCommentOutlinedIcon />
+                </button>
+              </Tooltip>
             </li>
           </ul>
         </div>

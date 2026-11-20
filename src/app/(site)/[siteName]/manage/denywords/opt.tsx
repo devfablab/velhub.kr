@@ -7,7 +7,8 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { IconButton, Stack, TextField, Typography } from '@mui/material';
+import { IconButton, Stack, TextField, Typography, Tooltip } from '@mui/material';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -110,9 +111,11 @@ export default function Opt({
                     }
                     onChange={(event) => updateWord(index, event.target.value)}
                   />
-                  <IconButton aria-label="단어 삭제" onClick={() => removeWord(index)}>
-                    <RemoveCircleOutlineRoundedIcon />
-                  </IconButton>
+                  <Tooltip title="단어 삭제">
+                    <IconButton onClick={() => removeWord(index)}>
+                      <RemoveCircleOutlineRoundedIcon />
+                    </IconButton>
+                  </Tooltip>
                 </Stack>
               ))}
 
@@ -133,6 +136,7 @@ export default function Opt({
                   단어 추가
                 </button>
                 <button type="submit" className="button medium submit" disabled={!canSave}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </Stack>

@@ -17,6 +17,7 @@ import {
   MenuItem,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
@@ -268,9 +269,11 @@ export default function TableListMobile({
         {shouldRenderWriteLink ? (
           <div className={styles['board-post']}>
             <ReportButton targetType="board" siteName={siteName} boardName={boardName} />
-            <Anchor href={resolvedWriteHref} aria-label="글쓰기">
-              <EditRoundedIcon />
-            </Anchor>
+            <Tooltip title="글쓰기">
+              <Anchor href={resolvedWriteHref}>
+                <EditRoundedIcon />
+              </Anchor>
+            </Tooltip>
           </div>
         ) : (
           <i />
@@ -285,9 +288,11 @@ export default function TableListMobile({
             slotProps={{ paper: { 'aria-labelledby': 'components-service-community-table-list-mobile-drawer-title' } }}
           >
             <h2 id="components-service-community-table-list-mobile-drawer-title">안내</h2>
-            <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={() => setAlertMessage('')}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <DialogContentText>{alertMessage}</DialogContentText>
             </div>
@@ -306,9 +311,11 @@ export default function TableListMobile({
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>안내</DialogTitle>
-            <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={() => setAlertMessage('')}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <DialogContentText>{alertMessage}</DialogContentText>
             </DialogContent>

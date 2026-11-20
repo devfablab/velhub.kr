@@ -30,6 +30,7 @@ import Anchor from '@/components/Anchor';
 import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEditor';
 import MarkdownPreview from '@/components/editor/MarkdownPreview';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import type { LabsIssueRow } from '../page';
 import styles from '@/app/concierge.module.sass';
@@ -462,6 +463,7 @@ export default function Opt({
               onClick={() => void handleSaveTitle()}
               disabled={isSavingTitle || !editTitle.trim()}
             >
+              {isSavingTitle ? <LoadingIndicator size={20} /> : null}
               {isSavingTitle ? '저장 중...' : '저장'}
             </button>
             <button
@@ -584,6 +586,7 @@ export default function Opt({
                 onClick={() => void handleSaveIssue()}
                 disabled={isSavingIssue || !editIssueContent.trim()}
               >
+                {isSavingIssue ? <LoadingIndicator size={20} /> : null}
                 {isSavingIssue ? '저장 중...' : '저장'}
               </button>
             </Stack>
@@ -664,6 +667,7 @@ export default function Opt({
                         onClick={() => void handleSaveComment(comment.id)}
                         disabled={isSavingComment || !editCommentBody.trim()}
                       >
+                        {isSavingComment ? <LoadingIndicator size={20} /> : null}
                         {isSavingComment ? '저장 중...' : '저장'}
                       </button>
                     </Stack>
@@ -700,6 +704,7 @@ export default function Opt({
                   disabled={isSubmittingComment || !newComment.trim()}
                   className="button small submit"
                 >
+                  {isSubmittingComment ? <LoadingIndicator size={20} /> : null}
                   {isSubmittingComment ? '등록 중' : '답변 등록'}
                 </button>
               </Stack>
@@ -724,6 +729,7 @@ export default function Opt({
         <DialogActions>
           <Button onClick={() => setIsCancelConfirmOpen(false)}>닫기</Button>
           <Button onClick={() => void handleCancelIssue()} color="error" disabled={isCancelling}>
+            {isCancelling ? <LoadingIndicator size={20} /> : null}
             {isCancelling ? '처리 중...' : '취소하기'}
           </Button>
         </DialogActions>

@@ -22,9 +22,11 @@ import {
   TableRow,
   TextField,
   Typography,
+  Tooltip,
 } from '@mui/material';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 
 type Subscriber = {
@@ -590,6 +592,7 @@ export default function SeriesSubscriptions({
             취소
           </button>
           <button type="submit" className="button medium submit" disabled={isSaving}>
+            {isSaving ? <LoadingIndicator size={20} /> : null}
             저장
           </button>
         </Stack>
@@ -660,22 +663,24 @@ export default function SeriesSubscriptions({
                         </Typography>
                       </Stack>
                       <Stack direction="row" gap={1}>
-                        <IconButton
-                          type="button"
-                          aria-label="연재 구독 수정"
-                          onClick={() => handleEditRow(row)}
-                          disabled={isSaving || Boolean(editingRow)}
-                        >
-                          <EditRoundedIcon sx={{ width: 17, height: 17 }} />
-                        </IconButton>
-                        <IconButton
-                          type="button"
-                          aria-label="연재 구독 해제"
-                          onClick={() => void handleDisableSeriesSubscription(row)}
-                          disabled={isSaving}
-                        >
-                          <RemoveRoundedIcon sx={{ width: 17, height: 17 }} />
-                        </IconButton>
+                        <Tooltip title="연재 구독 수정">
+                          <IconButton
+                            type="button"
+                            onClick={() => handleEditRow(row)}
+                            disabled={isSaving || Boolean(editingRow)}
+                          >
+                            <EditRoundedIcon sx={{ width: 17, height: 17 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="연재 구독 해제">
+                          <IconButton
+                            type="button"
+                            onClick={() => void handleDisableSeriesSubscription(row)}
+                            disabled={isSaving}
+                          >
+                            <RemoveRoundedIcon sx={{ width: 17, height: 17 }} />
+                          </IconButton>
+                        </Tooltip>
                       </Stack>
                     </Stack>
 
@@ -721,6 +726,7 @@ export default function SeriesSubscriptions({
             onClick={handleAddRow}
             disabled={isSaving || Boolean(editingRow) || availableSeriesRows.length === 0}
           >
+            {isSaving ? <LoadingIndicator size={20} /> : null}
             <span>연재 구독 추가</span>
             <AddRoundedIcon />
           </button>

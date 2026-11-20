@@ -16,10 +16,12 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -329,15 +331,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-pages-content-id-drawer-title' } }}
             >
               <h2 id="manage-contents-pages-content-id-drawer-title">페이지 삭제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                aria-label="닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-page-delete-form"
                 className="VhiDrawer-bottom-content"
@@ -372,6 +375,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium danger"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </div>
@@ -385,15 +389,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>페이지 삭제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                disabled={isSubmitting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-page-delete-form"
@@ -424,6 +429,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="submit" form="desktop-page-delete-form" className="danger-button" disabled={isSubmitting}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </DialogActions>
@@ -439,15 +445,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-pages-content-id-drawer-title-2' } }}
             >
               <h2 id="manage-contents-pages-content-id-drawer-title-2">페이지 복구</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRestoreDialog}
-                aria-label="닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-page-restore-form"
                 className="VhiDrawer-bottom-content"
@@ -482,6 +489,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium submit"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </div>
@@ -495,15 +503,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>페이지 복구</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRestoreDialog}
-                disabled={isSubmitting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-page-restore-form"
@@ -534,6 +543,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="submit" form="desktop-page-restore-form" disabled={isSubmitting}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </DialogActions>

@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui/material';
+import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
+import { FormControlLabel, IconButton, Stack, TextField, Typography, Tooltip } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { hasMultipleBlogAdLinkDomains } from '@/lib/service/site/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
 import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import BlogAdImageDialog from '@/components/service/blog/BlogAdImageDialog';
@@ -320,12 +321,13 @@ export default function Opt({
                   </Stack>
                 </div>
                 <div className={styles['ad-product-delete']}>
-                  <IconButton
-                    aria-label="상품 삭제"
-                    onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-                  >
-                    <CloseRoundedIcon />
-                  </IconButton>
+                  <Tooltip title="상품 삭제">
+                    <IconButton
+                      onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                    >
+                      <RemoveCircleOutlineRoundedIcon />
+                    </IconButton>
+                  </Tooltip>
                 </div>
               </div>
             ))}
@@ -348,12 +350,14 @@ export default function Opt({
                 ])
               }
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               상품 추가{' '}
               <span>
                 <AddRoundedIcon fontSize="small" />
               </span>
             </button>
             <button type="submit" className="button medium submit" disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               상품 등록하기
             </button>
           </form>

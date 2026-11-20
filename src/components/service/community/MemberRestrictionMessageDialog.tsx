@@ -14,6 +14,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   getRestrictionInitialMessageCreatedAt,
@@ -229,9 +230,11 @@ export default function MemberRestrictionMessageDialog({
           slotProps={{ transition: { onEntered: () => void loadMessages() } }}
         >
           <DialogTitle>소명 메시지</DialogTitle>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={saving} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog} disabled={saving}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{content}</DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={closeDialog} disabled={saving}>
@@ -242,6 +245,7 @@ export default function MemberRestrictionMessageDialog({
               onClick={() => void sendMessage()}
               disabled={saving || loading || !messageText.trim()}
             >
+              {saving || loading ? <LoadingIndicator size={20} /> : null}
               보내기
             </button>
           </DialogActions>
@@ -258,9 +262,11 @@ export default function MemberRestrictionMessageDialog({
           }}
         >
           <h2 id="components-service-community-member-restriction-message-dialog-drawer-title">소명 메시지</h2>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={saving} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog} disabled={saving}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{content}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={closeDialog} disabled={saving}>
@@ -272,6 +278,7 @@ export default function MemberRestrictionMessageDialog({
               onClick={() => void sendMessage()}
               disabled={saving || loading || !messageText.trim()}
             >
+              {saving || loading ? <LoadingIndicator size={20} /> : null}
               보내기
             </button>
           </div>

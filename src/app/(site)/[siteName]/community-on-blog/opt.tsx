@@ -24,6 +24,7 @@ import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ReportButton from '@/components/buttons/ReportButton';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import ContentWithInlineLinks from '@/components/service/blog/community/ContentWithInlineLinks';
 import SiteProfile from '@/components/service/blog/SiteProfile';
@@ -298,34 +299,33 @@ export default function Opt({
             slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-drawer-title' } }}
           >
             <h2 id="community-on-blog-drawer-title">{`${imageViewer.index + 1}번째 이미지`}</h2>
-            <button
-              type="button"
-              className={styles['close-button']}
-              onClick={closeImageViewer}
-              aria-label="이미지 닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="이미지 닫기">
+              <button type="button" className={styles['close-button']} onClick={closeImageViewer}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className={styles['dialog-content']}>
               <img src={imageViewer.images[imageViewer.index]} alt="" />
             </div>
             <div className={styles['dialog-actions']}>
-              <button
-                type="button"
-                onClick={showPreviousImage}
-                className={`${styles['control-button']} ${styles['prev-button']}`}
-                aria-label="이전 이미지"
-              >
-                <ArrowBackRoundedIcon />
-              </button>
-              <button
-                type="button"
-                onClick={showNextImage}
-                className={`${styles['control-button']} ${styles['next-button']}`}
-                aria-label="다음 이미지"
-              >
-                <ArrowForwardRoundedIcon />
-              </button>
+              <Tooltip title="이전 이미지">
+                <button
+                  type="button"
+                  onClick={showPreviousImage}
+                  className={`${styles['control-button']} ${styles['prev-button']}`}
+                >
+                  <ArrowBackRoundedIcon />
+                </button>
+              </Tooltip>
+              <Tooltip title="다음 이미지">
+                <button
+                  type="button"
+                  onClick={showNextImage}
+                  className={`${styles['control-button']} ${styles['next-button']}`}
+                >
+                  <ArrowForwardRoundedIcon />
+                </button>
+              </Tooltip>
             </div>
           </Drawer>
         ) : (
@@ -335,30 +335,29 @@ export default function Opt({
               <img src={imageViewer.images[imageViewer.index]} alt="" />
             </DialogContent>
             <DialogActions className={styles['dialog-actions']}>
-              <button
-                type="button"
-                onClick={showPreviousImage}
-                className={`${styles['control-button']} ${styles['prev-button']}`}
-                aria-label="이전 이미지"
-              >
-                <ArrowBackRoundedIcon />
-              </button>
-              <button
-                type="button"
-                onClick={showNextImage}
-                className={`${styles['control-button']} ${styles['next-button']}`}
-                aria-label="다음 이미지"
-              >
-                <ArrowForwardRoundedIcon />
-              </button>
-              <button
-                type="button"
-                onClick={closeImageViewer}
-                className={styles['close-button']}
-                aria-label="이미지 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="이전 이미지">
+                <button
+                  type="button"
+                  onClick={showPreviousImage}
+                  className={`${styles['control-button']} ${styles['prev-button']}`}
+                >
+                  <ArrowBackRoundedIcon />
+                </button>
+              </Tooltip>
+              <Tooltip title="다음 이미지">
+                <button
+                  type="button"
+                  onClick={showNextImage}
+                  className={`${styles['control-button']} ${styles['next-button']}`}
+                >
+                  <ArrowForwardRoundedIcon />
+                </button>
+              </Tooltip>
+              <Tooltip title="이미지 닫기">
+                <button type="button" onClick={closeImageViewer} className={styles['close-button']}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
             </DialogActions>
           </Dialog>
         )
@@ -372,15 +371,11 @@ export default function Opt({
           slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-drawer-title-2' } }}
         >
           <h2 id="community-on-blog-drawer-title-2">글 삭제</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setDeleteTarget(null)}
-            disabled={isDeleting}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <p>정말로 글을 삭제하시겠습니까?</p>
           </div>
@@ -399,6 +394,7 @@ export default function Opt({
               onClick={() => void deletePost()}
               disabled={isDeleting}
             >
+              {isDeleting ? <LoadingIndicator size={20} /> : null}
               삭제
             </button>
           </div>
@@ -419,6 +415,7 @@ export default function Opt({
               취소
             </button>
             <button type="button" className="danger-button" onClick={() => void deletePost()} disabled={isDeleting}>
+              {isDeleting ? <LoadingIndicator size={20} /> : null}
               삭제
             </button>
           </DialogActions>

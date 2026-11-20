@@ -2,7 +2,7 @@ import * as React from 'react';
 import { NumberField as BaseNumberField } from '@base-ui/react/number-field';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { FormLabel } from '@mui/material';
+import { FormLabel, Tooltip } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -93,11 +93,23 @@ export default function NumberField({
                   },
                 }}
               >
-                <BaseNumberField.Increment render={<IconButton size={size} aria-label="Increase" />}>
+                <BaseNumberField.Increment
+                  render={
+                    <Tooltip title="Increase">
+                      <IconButton size={size} />
+                    </Tooltip>
+                  }
+                >
                   <KeyboardArrowUpIcon fontSize={size} sx={{ transform: 'translateY(2px)' }} />
                 </BaseNumberField.Increment>
 
-                <BaseNumberField.Decrement render={<IconButton size={size} aria-label="Decrease" />}>
+                <BaseNumberField.Decrement
+                  render={
+                    <Tooltip title="Decrease">
+                      <IconButton size={size} />
+                    </Tooltip>
+                  }
+                >
                   <KeyboardArrowDownIcon fontSize={size} sx={{ transform: 'translateY(-2px)' }} />
                 </BaseNumberField.Decrement>
               </InputAdornment>

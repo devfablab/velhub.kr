@@ -5,6 +5,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Button, styled } from '@mui/material';
 import AwsS3 from '@uppy/aws-s3';
 import Uppy, { type UppyFile } from '@uppy/core';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/board.module.sass';
 
 const MAX_FILE_COUNT = 5;
@@ -388,6 +389,7 @@ export default function PostAttachmentUploader({
                   disabled={disabled || isDeleting}
                   onClick={() => handleRemoveExistingAttachment(attachment.storagePath)}
                 >
+                  {isDeleting ? <LoadingIndicator size={20} /> : null}
                   {isDeleting ? '삭제중' : '삭제'}
                 </button>
               </li>
@@ -446,6 +448,7 @@ export default function PostAttachmentUploader({
                     disabled={disabled || isDeleting}
                     onClick={() => void handleRemoveUploadedFile(file)}
                   >
+                    {isDeleting ? <LoadingIndicator size={20} /> : null}
                     {isDeleting ? '삭제중' : '삭제'}
                   </button>
                 </div>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DuplicateBillingMethodDialog from '@/components/modals/DuplicateBillingMethodDialog';
 import styles from '@/app/hub.module.sass';
 
@@ -194,6 +195,7 @@ export default function ChangePaymentMethodButton() {
   return (
     <div className={styles.buttons}>
       <button type="button" className="button small action" onClick={handleChangePaymentMethod} disabled={isProcessing}>
+        {isProcessing ? <LoadingIndicator size={20} /> : null}
         결제수단 변경
       </button>
       {billingMethodMessage ? <p role="status">{billingMethodMessage}</p> : null}

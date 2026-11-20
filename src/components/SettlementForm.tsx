@@ -20,6 +20,7 @@ import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/opt
 import { maskEmail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DevIdentityBypassModal from '@/components/modals/DevIdentityBypassModal';
 import IdentityAgreement from '@/components/modals/IdentityAgreement';
 import MenuItem from '@/components/SelectMenuItem';
@@ -799,6 +800,7 @@ export default function SettlementForm({
                         onClick={() => void handleGuardianVerify()}
                         disabled={isGuardianVerifying}
                       >
+                        {isGuardianVerifying ? <LoadingIndicator size={20} /> : null}
                         {isGuardianVerifying ? '인증 중...' : '법정대리인 본인인증'}
                       </button>
                     </div>
@@ -856,6 +858,7 @@ export default function SettlementForm({
                   취소
                 </button>
                 <button type="submit" className="button medium submit" disabled={isSubmitting || isApproved}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   {isSubmitting ? '저장 중' : settlement ? '정산정보 수정' : '작가 신청'}
                 </button>
               </Stack>

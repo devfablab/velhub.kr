@@ -25,7 +25,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
-import { Snackbar } from '@mui/material';
+import { Snackbar, Tooltip } from '@mui/material';
 import {
   type FavoriteBlog,
   type FavoriteBlogsResponse,
@@ -122,9 +122,11 @@ function SortableBlog({ blog, onRemove }: { blog: FavoriteBlog; onRemove: (blog:
       <FavoriteBlogCard
         blog={blog}
         handle={
-          <button type="button" className={styles['drag-handle']} aria-label="순서 변경" {...attributes} {...listeners}>
-            <DragIndicatorIcon />
-          </button>
+          <Tooltip title="순서 변경">
+            <button type="button" className={styles['drag-handle']} {...attributes} {...listeners}>
+              <DragIndicatorIcon />
+            </button>
+          </Tooltip>
         }
         action={
           <button

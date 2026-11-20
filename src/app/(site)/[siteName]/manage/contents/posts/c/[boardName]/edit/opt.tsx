@@ -22,6 +22,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -511,6 +512,7 @@ export default function Opt({
                               onClick={handleCheckBoardKey}
                               disabled={isChecking}
                             >
+                              {isChecking ? <LoadingIndicator size={20} /> : null}
                               중복 확인
                             </button>
                           </InputAdornment>
@@ -542,6 +544,7 @@ export default function Opt({
                               onClick={handleCheckBoardLabel}
                               disabled={isCheckingBoardLabel}
                             >
+                              {isCheckingBoardLabel ? <LoadingIndicator size={20} /> : null}
                               중복 확인
                             </button>
                           </InputAdornment>
@@ -688,11 +691,13 @@ export default function Opt({
                   {isMobile ? (
                     <div className={styles['button-top']}>
                       <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                        {isSubmitting ? <LoadingIndicator size={20} /> : null}
                         저장
                       </button>
                     </div>
                   ) : (
                     <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   )}

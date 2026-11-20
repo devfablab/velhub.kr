@@ -20,9 +20,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -165,9 +167,11 @@ function SortableItem({
               }}
             />
 
-            <IconButton type="button" onClick={() => onRemove(item.localId)} aria-label="링크 삭제">
-              <CloseIcon />
-            </IconButton>
+            <Tooltip title="링크 삭제">
+              <IconButton type="button" onClick={() => onRemove(item.localId)}>
+                <CloseIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
 
           <Stack direction="row" gap={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ pl: 4.5 }}>
@@ -514,11 +518,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {isMobile ? (
                 <div className={styles['button-top']}>
                   <button type="submit" className={`button ${styles.button}`} disabled={isSaveDisabled}>
+                    {isSaving ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 </div>
               ) : (
                 <button type="submit" className="button medium submit" disabled={isSaveDisabled}>
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               )}

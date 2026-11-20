@@ -11,6 +11,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
@@ -74,9 +75,11 @@ export default function SiteGuidelineDialog({ open, onClose, data }: Props) {
         slotProps={{ paper: { 'aria-labelledby': 'components-modals-site-guideline-dialog-drawer-title' } }}
       >
         <h2 id="components-modals-site-guideline-dialog-drawer-title">{title}</h2>
-        <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-          <CloseRoundedIcon />
-        </button>
+        <Tooltip title="닫기">
+          <button type="button" className="close-button" onClick={onClose}>
+            <CloseRoundedIcon />
+          </button>
+        </Tooltip>
         <div className="VhiDrawer-bottom-content">{content}</div>
         <div className="drawer-dialog-actions">
           <button type="button" className="button medium submit" onClick={onClose}>

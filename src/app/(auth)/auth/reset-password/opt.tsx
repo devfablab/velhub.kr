@@ -15,9 +15,11 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { isValidPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../container';
 import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';
@@ -219,9 +221,11 @@ export default function Opt() {
             <DialogTitle>{popup.title}</DialogTitle>
           )
         ) : null}
-        <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
-          <CloseRoundedIcon />
-        </button>
+        <Tooltip title="닫기">
+          <button type="button" className="close-button" onClick={handlePopupClose}>
+            <CloseRoundedIcon />
+          </button>
+        </Tooltip>
         {popup.title ? (
           isDrawer ? (
             <div className="VhiDrawer-bottom-content">
@@ -310,6 +314,7 @@ export default function Opt() {
                 className={`button medium submit ${styles.submit}`}
                 disabled={isSubmitting || !isRecoveryReady}
               >
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 비밀번호 재설정
               </button>
             </div>

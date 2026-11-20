@@ -6,6 +6,7 @@ import type { PartnershipProposalDetail } from '@/lib/service/concierge/partners
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 
 export default function Opt({
@@ -27,8 +28,7 @@ export default function Opt({
     try {
       const response = await fetch(`/api/concierge/partnerships/${proposalId}`, { cache: 'no-store' });
       const result = (await response.json().catch(() => null)) as
-        | (PartnershipProposalDetail & { error?: string })
-        | null;
+        (PartnershipProposalDetail & { error?: string }) | null;
       if (!response.ok || !result) return false;
       setProposal(result);
       return true;
@@ -133,6 +133,7 @@ export default function Opt({
                   목록
                 </Anchor>
                 <button type="submit" className="button medium submit" disabled={isSubmitting || !content.trim()}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   추가 내용 보내기
                 </button>
               </Stack>

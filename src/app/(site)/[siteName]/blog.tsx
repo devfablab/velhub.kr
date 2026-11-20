@@ -7,7 +7,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
-import { Avatar, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Avatar, Typography, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import Slider from 'react-slick';
 import type { PostListItem } from '@/lib/board/getPostList';
 import { formatTimeAgo } from '@/lib/utils';
@@ -138,9 +138,11 @@ function SliderArrow({ direction, onClick }: Pick<SliderArrowProps, 'direction' 
 
   return (
     <div className={`${styles['slick-arrow']} ${isNext ? styles['slick-next'] : styles['slick-prev']}`}>
-      <button type="button" onClick={onClick} aria-label={isNext ? '다음 게시물 보기' : '이전 게시물 보기'}>
-        {isNext ? <ArrowForwardIosRoundedIcon /> : <ArrowBackIosRoundedIcon />}
-      </button>
+      <Tooltip title={isNext ? '다음 게시물 보기' : '이전 게시물 보기'}>
+        <button type="button" onClick={onClick}>
+          {isNext ? <ArrowForwardIosRoundedIcon /> : <ArrowBackIosRoundedIcon />}
+        </button>
+      </Tooltip>
     </div>
   );
 }
@@ -148,9 +150,11 @@ function SliderArrow({ direction, onClick }: Pick<SliderArrowProps, 'direction' 
 function BlogPostNextArrow({ onClick }: Pick<SliderArrowProps, 'onClick'>) {
   return (
     <div className={`${styles['slick-arrow']} ${styles['slick-next']}`}>
-      <button type="button" onClick={onClick} aria-label="다음 슬라이드 보기">
-        <ArrowForwardIosRoundedIcon />
-      </button>
+      <Tooltip title="다음 슬라이드 보기">
+        <button type="button" onClick={onClick}>
+          <ArrowForwardIosRoundedIcon />
+        </button>
+      </Tooltip>
     </div>
   );
 }
@@ -158,9 +162,11 @@ function BlogPostNextArrow({ onClick }: Pick<SliderArrowProps, 'onClick'>) {
 function BlogPostPrevArrow({ onClick }: Pick<SliderArrowProps, 'onClick'>) {
   return (
     <div className={`${styles['slick-arrow']} ${styles['slick-prev']}`}>
-      <button type="button" onClick={onClick} aria-label="이전 슬라이드 보기">
-        <ArrowBackIosRoundedIcon />
-      </button>
+      <Tooltip title="이전 슬라이드 보기">
+        <button type="button" onClick={onClick}>
+          <ArrowBackIosRoundedIcon />
+        </button>
+      </Tooltip>
     </div>
   );
 }

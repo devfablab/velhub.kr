@@ -25,6 +25,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import {
@@ -1071,9 +1072,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             slotProps={{ paper: { 'aria-labelledby': 'manage-reports-report-manage-drawer-title' } }}
           >
             <h2 id="manage-reports-report-manage-drawer-title">신고 처리</h2>
-            <button type="button" className="close-button" onClick={handleClose} disabled={saving} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleClose} disabled={saving}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">{detailContent}</div>
             <div className="drawer-dialog-actions">
               <button
@@ -1095,6 +1098,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   onClick={handleSave}
                   disabled={saving || !nextStatus}
                 >
+                  {saving ? <LoadingIndicator size={20} /> : null}
                   {getSubmitLabel(targetType, nextStatus)}
                 </button>
               ) : null}
@@ -1109,9 +1113,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             className={isDetailContentPopup ? 'VhiDialog' : 'vh-dialog vh-alert-dialog'}
           >
             <DialogTitle>신고 처리</DialogTitle>
-            <button type="button" className="close-button" onClick={handleClose} disabled={saving} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleClose} disabled={saving}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>{detailContent}</DialogContent>
             <DialogActions>
               <button
@@ -1138,6 +1144,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   onClick={handleSave}
                   disabled={saving || !nextStatus}
                 >
+                  {saving ? <LoadingIndicator size={20} /> : null}
                   {getSubmitLabel(targetType, nextStatus)}
                 </button>
               ) : null}
@@ -1169,6 +1176,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={handleConfirmCompletion}
                 disabled={saving}
               >
+                {saving ? <LoadingIndicator size={20} /> : null}
                 변경
               </button>
             </div>
@@ -1192,6 +1200,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 취소
               </button>
               <button type="button" onClick={handleConfirmCompletion} disabled={saving}>
+                {saving ? <LoadingIndicator size={20} /> : null}
                 변경
               </button>
             </DialogActions>
@@ -1207,15 +1216,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             slotProps={{ paper: { 'aria-labelledby': 'manage-reports-report-manage-drawer-title-3' } }}
           >
             <h2 id="manage-reports-report-manage-drawer-title-3">소명 메시지</h2>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCloseMessages}
-              disabled={messageSaving}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCloseMessages} disabled={messageSaving}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">{messageContent}</div>
             <div className="drawer-dialog-actions">
               <button
@@ -1238,6 +1243,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   messageReport?.status === 'dismissed'
                 }
               >
+                {messageSaving || messageLoading ? <LoadingIndicator size={20} /> : null}
                 보내기
               </button>
             </div>
@@ -1251,15 +1257,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>소명 메시지</DialogTitle>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCloseMessages}
-              disabled={messageSaving}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCloseMessages} disabled={messageSaving}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>{messageContent}</DialogContent>
             <DialogActions>
               <button type="button" className="cancel-button" onClick={handleCloseMessages} disabled={messageSaving}>
@@ -1276,6 +1278,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   messageReport?.status === 'dismissed'
                 }
               >
+                {messageSaving || messageLoading ? <LoadingIndicator size={20} /> : null}
                 보내기
               </button>
             </DialogActions>
@@ -1291,15 +1294,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             slotProps={{ paper: { 'aria-labelledby': 'manage-reports-report-manage-drawer-title-4' } }}
           >
             <h2 id="manage-reports-report-manage-drawer-title-4">최종 판단</h2>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCloseFinal}
-              disabled={finalSaving}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCloseFinal} disabled={finalSaving}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <Typography variant="body2">선택하세요.</Typography>
             </div>
@@ -1313,6 +1312,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={() => void handleFinalize('keep_deleted')}
                 disabled={finalSaving}
               >
+                {finalSaving ? <LoadingIndicator size={20} /> : null}
                 삭제상태 유지
               </button>
               <button
@@ -1321,6 +1321,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={() => void handleFinalize('restore')}
                 disabled={finalSaving}
               >
+                {finalSaving ? <LoadingIndicator size={20} /> : null}
                 복구하기
               </button>
             </div>
@@ -1334,15 +1335,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>최종 판단</DialogTitle>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCloseFinal}
-              disabled={finalSaving}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCloseFinal} disabled={finalSaving}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <Typography variant="body2">선택하세요.</Typography>
             </DialogContent>
@@ -1356,9 +1353,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={() => void handleFinalize('keep_deleted')}
                 disabled={finalSaving}
               >
+                {finalSaving ? <LoadingIndicator size={20} /> : null}
                 삭제상태 유지
               </button>
               <button type="button" onClick={() => void handleFinalize('restore')} disabled={finalSaving}>
+                {finalSaving ? <LoadingIndicator size={20} /> : null}
                 복구하기
               </button>
             </DialogActions>

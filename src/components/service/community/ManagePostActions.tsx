@@ -15,7 +15,9 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
 
@@ -226,9 +228,11 @@ export default function ManagePostActions({
           slotProps={{ paper: { 'aria-labelledby': 'components-service-community-manage-post-actions-drawer-title' } }}
         >
           <h2 id="components-service-community-manage-post-actions-drawer-title">{title}</h2>
-          <button type="button" className="close-button" onClick={close} disabled={busy} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={close} disabled={busy}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{content}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={close} disabled={busy}>
@@ -240,6 +244,7 @@ export default function ManagePostActions({
               disabled={submitDisabled}
               onClick={() => void save()}
             >
+              {busy ? <LoadingIndicator size={20} /> : null}
               {submitLabel}
             </button>
           </div>
@@ -247,15 +252,18 @@ export default function ManagePostActions({
       ) : (
         <Dialog open={Boolean(mode)} onClose={close} fullWidth maxWidth="sm" className="vh-dialog vh-alert-dialog">
           <DialogTitle>{title}</DialogTitle>
-          <button type="button" className="close-button" onClick={close} disabled={busy} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={close} disabled={busy}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{content}</DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={close} disabled={busy}>
               취소
             </button>
             <button type="button" disabled={submitDisabled} onClick={() => void save()}>
+              {busy ? <LoadingIndicator size={20} /> : null}
               {submitLabel}
             </button>
           </DialogActions>

@@ -14,8 +14,10 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Anchor from '../Anchor';
 import FormErrorDialog from '../FormErrorDialog';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
@@ -253,15 +255,16 @@ export default function FooterSite() {
             slotProps={{ paper: { 'aria-labelledby': 'components-footers-site-drawer-title' } }}
           >
             <h2 id="components-footers-site-drawer-title">운영자 교체</h2>
-            <button
-              type="button"
-              className="close-button"
-              onClick={() => setOwnerTransfer(null)}
-              disabled={isResponding}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => setOwnerTransfer(null)}
+                disabled={isResponding}
+              >
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
               {ownerTransferError ? (
@@ -278,6 +281,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('rejected')}
                 disabled={isResponding}
               >
+                {isResponding ? <LoadingIndicator size={20} /> : null}
                 거절
               </button>
               <button
@@ -286,6 +290,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('accepted')}
                 disabled={isResponding}
               >
+                {isResponding ? <LoadingIndicator size={20} /> : null}
                 수락
               </button>
             </div>
@@ -299,15 +304,16 @@ export default function FooterSite() {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>운영자 교체</DialogTitle>
-            <button
-              type="button"
-              className="close-button"
-              onClick={() => setOwnerTransfer(null)}
-              disabled={isResponding}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => setOwnerTransfer(null)}
+                disabled={isResponding}
+              >
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
               {ownerTransferError ? (
@@ -324,6 +330,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('rejected')}
                 disabled={isResponding}
               >
+                {isResponding ? <LoadingIndicator size={20} /> : null}
                 거절
               </button>
               <button
@@ -331,6 +338,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('accepted')}
                 disabled={isResponding}
               >
+                {isResponding ? <LoadingIndicator size={20} /> : null}
                 수락
               </button>
             </DialogActions>
@@ -353,14 +361,11 @@ export default function FooterSite() {
             slotProps={{ paper: { 'aria-labelledby': 'components-footers-site-drawer-title-2' } }}
           >
             <h2 id="components-footers-site-drawer-title-2">가입</h2>
-            <button
-              type="button"
-              className="close-button"
-              onClick={() => setIsInvitePromptOpen(false)}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={() => setIsInvitePromptOpen(false)}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <Typography variant="body2">초대에 응하시겠어요?</Typography>
             </div>
@@ -384,14 +389,11 @@ export default function FooterSite() {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>가입</DialogTitle>
-            <button
-              type="button"
-              className="close-button"
-              onClick={() => setIsInvitePromptOpen(false)}
-              aria-label="닫기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={() => setIsInvitePromptOpen(false)}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <Typography variant="body2">초대에 응하시겠어요?</Typography>
             </DialogContent>

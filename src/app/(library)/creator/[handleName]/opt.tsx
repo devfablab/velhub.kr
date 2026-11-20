@@ -24,6 +24,7 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import ScreenState from '@/components/service/ScreenState';
 import Profile from './profile';
@@ -407,6 +408,7 @@ export function ProfileForm({
           취소
         </button>
         <button type="button" className="button medium submit" disabled={saving} onClick={save}>
+          {saving ? <LoadingIndicator size={20} /> : null}
           {saving ? '저장 중' : '저장'}
         </button>
       </Stack>

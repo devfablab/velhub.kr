@@ -346,6 +346,7 @@ export default function UserInfo({
                 onClick={handleClickAvatarUpload}
                 disabled={isSubmittingAvatar}
               >
+                {isSubmittingAvatar ? <LoadingIndicator size={20} /> : null}
                 아바타 수정
               </button>
               {avatarError ? (
@@ -398,6 +399,7 @@ export default function UserInfo({
                       취소
                     </button>
                     <button type="submit" className="button medium submit" disabled={isSubmittingUserName}>
+                      {isSubmittingUserName ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   </Stack>

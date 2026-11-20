@@ -27,9 +27,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
@@ -372,9 +374,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <h2 id="manage-contents-posts-c-board-name-prefix-drawer-title">
                 {dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}
               </h2>
-              <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-prefix-form"
@@ -419,6 +423,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium submit"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -432,15 +437,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                disabled={isSubmitting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-prefix-form"
@@ -475,6 +476,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="submit" form="desktop-prefix-form" disabled={isSubmitting}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>
@@ -490,15 +492,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-prefix-drawer-title-2' } }}
             >
               <h2 id="manage-contents-posts-c-board-name-prefix-drawer-title-2">말머리 삭제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                disabled={isSubmitting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-prefix-delete-form"
@@ -534,6 +532,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium danger"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </div>
@@ -547,15 +546,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>말머리 삭제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                disabled={isSubmitting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-prefix-delete-form"
@@ -586,6 +581,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="danger-button"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </DialogActions>

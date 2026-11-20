@@ -19,10 +19,12 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { formatDate, getOgImageUrl, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -585,15 +587,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title' } }}
             >
               <h2 id="manage-contents-posts-content-id-drawer-title">게시물 삭제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                aria-label="닫기"
-                disabled={isDeleting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-post-delete-form"
                 className="VhiDrawer-bottom-content"
@@ -645,6 +643,7 @@ export default function Opt({
                   className="button medium danger"
                   disabled={isDeleting}
                 >
+                  {isDeleting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </div>
@@ -658,15 +657,11 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 삭제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                aria-label="닫기"
-                disabled={isDeleting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-post-delete-form"
@@ -709,6 +704,7 @@ export default function Opt({
                   취소
                 </button>
                 <button type="submit" form="desktop-post-delete-form" className="danger-button" disabled={isDeleting}>
+                  {isDeleting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </DialogActions>
@@ -724,15 +720,16 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title-2' } }}
             >
               <h2 id="manage-contents-posts-content-id-drawer-title-2">게시물 복구</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRestoreDialog}
-                aria-label="닫기"
-                disabled={isRestoring}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isRestoring}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-post-restore-form"
                 className="VhiDrawer-bottom-content"
@@ -766,6 +763,7 @@ export default function Opt({
                   className="button medium submit"
                   disabled={isRestoring}
                 >
+                  {isRestoring ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </div>
@@ -779,15 +777,16 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 복구</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRestoreDialog}
-                aria-label="닫기"
-                disabled={isRestoring}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isRestoring}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-post-restore-form"
@@ -817,6 +816,7 @@ export default function Opt({
                   취소
                 </button>
                 <button type="submit" form="desktop-post-restore-form" disabled={isRestoring}>
+                  {isRestoring ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </DialogActions>
@@ -832,15 +832,16 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title-3' } }}
             >
               <h2 id="manage-contents-posts-content-id-drawer-title-3">카테고리 설정</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseCategoryDialog}
-                aria-label="닫기"
-                disabled={isCategorySubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseCategoryDialog}
+                  disabled={isCategorySubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-post-category-form"
                 className="VhiDrawer-bottom-content"
@@ -894,6 +895,7 @@ export default function Opt({
                   className="button medium submit"
                   disabled={isCategorySubmitting}
                 >
+                  {isCategorySubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -907,15 +909,16 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>카테고리 설정</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseCategoryDialog}
-                aria-label="닫기"
-                disabled={isCategorySubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseCategoryDialog}
+                  disabled={isCategorySubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-post-category-form"
@@ -965,6 +968,7 @@ export default function Opt({
                   취소
                 </button>
                 <button type="submit" form="desktop-post-category-form" disabled={isCategorySubmitting}>
+                  {isCategorySubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>
@@ -980,15 +984,16 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title-4' } }}
             >
               <h2 id="manage-contents-posts-content-id-drawer-title-4">연재 설정</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseSeriesDialog}
-                aria-label="닫기"
-                disabled={isSeriesSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseSeriesDialog}
+                  disabled={isSeriesSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-post-series-form"
                 className="VhiDrawer-bottom-content"
@@ -1050,6 +1055,7 @@ export default function Opt({
                   className="button medium submit"
                   disabled={isSeriesSubmitting}
                 >
+                  {isSeriesSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -1063,15 +1069,16 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>연재 설정</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseSeriesDialog}
-                aria-label="닫기"
-                disabled={isSeriesSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseSeriesDialog}
+                  disabled={isSeriesSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-post-series-form"
@@ -1131,6 +1138,7 @@ export default function Opt({
                   취소
                 </button>
                 <button type="submit" form="desktop-post-series-form" disabled={isSeriesSubmitting}>
+                  {isSeriesSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>

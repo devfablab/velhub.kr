@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Avatar, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/new.module.sass';
 
 export type CreatorProfile = {
@@ -143,6 +144,7 @@ export default function Profile({
                         disabled={followSubmitting}
                         onClick={onToggleFollow}
                       >
+                        {followSubmitting ? <LoadingIndicator size={20} /> : null}
                         {followSubmitting ? '처리 중' : following ? '팔로우 취소하기' : '팔로우하기'}
                       </button>
                     </div>

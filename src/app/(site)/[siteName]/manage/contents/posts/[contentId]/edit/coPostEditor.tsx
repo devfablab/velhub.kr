@@ -12,6 +12,7 @@ import {
 } from '@/lib/editor/convertImageToWebpFile.client';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../menu';
 import CoPostChanges from './coPostChanges';
@@ -430,6 +431,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
                   disabled={isSaving}
                   onClick={() => void finishEditing()}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   수정 마치기
                 </button>
                 <button
@@ -438,6 +440,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
                   disabled={isSaving || !isDirty}
                   onClick={() => void save()}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </Stack>

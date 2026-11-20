@@ -19,6 +19,7 @@ import {
 } from '@/lib/service/concierge/conciergeInquiries';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import IdentityAgreement from '@/components/modals/IdentityAgreement';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
@@ -438,6 +439,7 @@ export default function Opt({
                 disabled={!responseMessage.trim() || savingResponse}
                 onClick={() => void saveResponse()}
               >
+                {savingResponse ? <LoadingIndicator size={20} /> : null}
                 {savingResponse ? '제출 중' : '답변 제출'}
               </button>
             </>
@@ -497,6 +499,7 @@ export default function Opt({
                   disabled={verifyingIdentity || Boolean(guardianIdentityVerificationId)}
                   onClick={() => setAgreementOpen(true)}
                 >
+                  {verifyingIdentity ? <LoadingIndicator size={20} /> : null}
                   {guardianIdentityVerificationId ? '본인인증 완료' : verifyingIdentity ? '처리 중' : '본인인증 진행'}
                 </button>
                 {guardianIdentityName ? <Typography variant="body2">{guardianIdentityName}</Typography> : null}
@@ -540,6 +543,7 @@ export default function Opt({
               }
               onClick={() => void upload()}
             >
+              {uploading ? <LoadingIndicator size={20} /> : null}
               {uploading ? '제출 중' : '제출'}
             </button>
           </Box>
@@ -587,6 +591,7 @@ export default function Opt({
               disabled={!paymentControlMode || savingControl}
               onClick={() => void savePaymentControl()}
             >
+              {savingControl ? <LoadingIndicator size={20} /> : null}
               {savingControl ? '저장 중' : '방침 저장'}
             </button>
           </Box>
@@ -668,6 +673,7 @@ export default function Opt({
             disabled={withdrawing}
             onClick={() => setIsWithdrawConfirmOpen(true)}
           >
+            {withdrawing ? <LoadingIndicator size={20} /> : null}
             {withdrawing ? '철회 중' : '문의 철회'}
           </button>
         ) : null}

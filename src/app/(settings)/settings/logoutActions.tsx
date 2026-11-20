@@ -19,9 +19,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/settings.module.sass';
 
 export default function LogoutActions() {
@@ -146,7 +148,7 @@ export default function LogoutActions() {
               onClick={handleLogoutCurrentDevice}
               disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
             >
-              이 디바이스에서 로그아웃
+              {isLoggingOutCurrentDevice ? <LoadingIndicator size={20} /> : null}이 디바이스에서 로그아웃
             </button>
 
             <button
@@ -155,6 +157,7 @@ export default function LogoutActions() {
               onClick={handleOpenConfirm}
               disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
             >
+              {isLoggingOutAllDevices ? <LoadingIndicator size={20} /> : null}
               모든 디바이스 로그아웃
             </button>
 
@@ -177,9 +180,11 @@ export default function LogoutActions() {
           slotProps={{ paper: { 'aria-labelledby': 'settings-logout-actions-drawer-title' } }}
         >
           <h2 id="settings-logout-actions-drawer-title">모든 디바이스 로그아웃</h2>
-          <button type="button" className="close-button" onClick={handleCloseConfirm} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseConfirm}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
           </div>
@@ -198,6 +203,7 @@ export default function LogoutActions() {
               onClick={handleLogoutAllDevices}
               disabled={isLoggingOutAllDevices}
             >
+              {isLoggingOutAllDevices ? <LoadingIndicator size={20} /> : null}
               로그아웃
             </button>
           </div>
@@ -211,9 +217,11 @@ export default function LogoutActions() {
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>모든 디바이스 로그아웃</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseConfirm} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseConfirm}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
           </DialogContent>
@@ -232,6 +240,7 @@ export default function LogoutActions() {
               onClick={handleLogoutAllDevices}
               disabled={isLoggingOutAllDevices}
             >
+              {isLoggingOutAllDevices ? <LoadingIndicator size={20} /> : null}
               로그아웃
             </button>
           </DialogActions>

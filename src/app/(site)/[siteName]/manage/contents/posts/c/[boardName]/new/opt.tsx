@@ -25,6 +25,7 @@ import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
@@ -847,6 +848,7 @@ export default function Opt({
                         onClick={handleClickThumbnailUpload}
                         disabled={isUploadingThumbnail}
                       >
+                        {isUploadingThumbnail ? <LoadingIndicator size={20} /> : null}
                         {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
                       </button>
                     </Stack>
@@ -879,6 +881,7 @@ export default function Opt({
                         onClick={handleClickGalleryUpload}
                         disabled={isUploadingImages}
                       >
+                        {isUploadingImages ? <LoadingIndicator size={20} /> : null}
                         갤러리 이미지 업로드
                       </button>
                     </Stack>
@@ -1011,6 +1014,7 @@ export default function Opt({
                     disabled={isSubmittingDraft || isSubmittingPublish}
                     onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
                   >
+                    {isSubmittingDraft ? <LoadingIndicator size={20} /> : null}
                     임시 저장
                   </button>
                   {isMobile ? (
@@ -1020,6 +1024,7 @@ export default function Opt({
                         className={`button ${styles.button}`}
                         disabled={isSubmittingDraft || isSubmittingPublish}
                       >
+                        {isSubmittingPublish ? <LoadingIndicator size={20} /> : null}
                         저장
                       </button>
                     </div>
@@ -1029,6 +1034,7 @@ export default function Opt({
                       className="button medium submit"
                       disabled={isSubmittingDraft || isSubmittingPublish}
                     >
+                      {isSubmittingPublish ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   )}

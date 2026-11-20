@@ -5,6 +5,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Button, styled } from '@mui/material';
 import AwsS3 from '@uppy/aws-s3';
 import Uppy, { type UppyFile } from '@uppy/core';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/concierge.module.sass';
 
 export type ConciergeUploadPurpose =
@@ -294,6 +295,7 @@ export default function ConciergeFileUploader({
                     disabled={disabled || isDeleting}
                     onClick={() => void removeFile(file.storagePath)}
                   >
+                    {isDeleting ? <LoadingIndicator size={20} /> : null}
                     {isDeleting ? '삭제중' : '삭제'}
                   </button>
                 </div>
@@ -348,6 +350,7 @@ export default function ConciergeFileUploader({
                       storagePath ? void removeFile(storagePath, file.id) : uppyReference.current?.removeFile(file.id)
                     }
                   >
+                    {isDeleting ? <LoadingIndicator size={20} /> : null}
                     {isDeleting ? '삭제중' : '삭제'}
                   </button>
                 </div>

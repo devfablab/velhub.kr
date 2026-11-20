@@ -141,6 +141,7 @@ export default function PasswordSetup({
               onClick={handleSendPasswordSetupEmail}
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               비밀번호 설정 메일 보내기
             </button>
 

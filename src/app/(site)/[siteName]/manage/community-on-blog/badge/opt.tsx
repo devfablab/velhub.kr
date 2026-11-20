@@ -6,6 +6,7 @@ import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import { Avatar, Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import styles from '@/app/manage.module.sass';
 
@@ -177,6 +178,7 @@ export default function Opt({
           disabled={saving || !Object.keys(files).length}
           onClick={() => void save()}
         >
+          {saving ? <LoadingIndicator size={20} /> : null}
           저장
         </button>
       </div>

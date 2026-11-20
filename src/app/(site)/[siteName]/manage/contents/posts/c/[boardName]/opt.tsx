@@ -25,6 +25,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -698,15 +699,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-drawer-title' } }}
             >
               <h2 id="manage-contents-posts-c-board-name-drawer-title">게시물 삭제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                disabled={isDeleting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-community-post-list-delete-form"
                 className="VhiDrawer-bottom-content"
@@ -755,6 +752,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium danger"
                   disabled={isDeleting}
                 >
+                  {isDeleting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </div>
@@ -768,15 +766,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 삭제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                disabled={isDeleting}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-community-post-list-delete-form"
@@ -821,6 +815,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="danger-button"
                   disabled={isDeleting}
                 >
+                  {isDeleting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </DialogActions>
@@ -836,15 +831,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-drawer-title-2' } }}
             >
               <h2 id="manage-contents-posts-c-board-name-drawer-title-2">게시물 복구</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                aria-label="닫기"
-                disabled={isDeleting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <form
                 id="mobile-community-post-list-restore-form"
                 className="VhiDrawer-bottom-content"
@@ -882,6 +873,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium submit"
                   disabled={isDeleting}
                 >
+                  {isDeleting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </div>
@@ -895,15 +887,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>게시물 복구</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDeleteDialog}
-                aria-label="닫기"
-                disabled={isDeleting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-community-post-list-restore-form"
@@ -932,6 +920,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="submit" form="desktop-community-post-list-restore-form" disabled={isDeleting}>
+                  {isDeleting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </DialogActions>

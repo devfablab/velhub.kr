@@ -16,6 +16,7 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   ACTIVITY_NAME_MAX_LENGTH,
@@ -31,6 +32,7 @@ import { PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';
 
@@ -387,6 +389,7 @@ export default function EmailSignUp({
 
           <div className={styles.actions}>
             <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               이메일로 시작하기
             </button>
           </div>
@@ -403,9 +406,11 @@ export default function EmailSignUp({
             }}
           >
             {popup.title ? <h2 id="auth-sign-up-email-popup-drawer-title">{popup.title}</h2> : null}
-            <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handlePopupClose}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <ul className="error-messages">
                 {popup.messages.map((message, index) => (
@@ -430,9 +435,11 @@ export default function EmailSignUp({
             className="vh-dialog vh-alert-dialog"
           >
             {popup.title ? <DialogTitle>{popup.title}</DialogTitle> : null}
-            <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handlePopupClose}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <ul className="error-messages">
                 {popup.messages.map((message, index) => (

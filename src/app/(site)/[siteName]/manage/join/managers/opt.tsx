@@ -27,9 +27,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
@@ -916,12 +918,14 @@ export default function Opt({
             onClick={handleDeleteManager}
             disabled={isSubmittingDelete}
           >
+            {isSubmittingDelete ? <LoadingIndicator size={20} /> : null}
             해임
           </button>
         ) : (
           <i />
         )}
         <button type="button" className="button medium submit" onClick={handleMoveManager} disabled={isSubmittingMove}>
+          {isSubmittingMove ? <LoadingIndicator size={20} /> : null}
           이동
         </button>
       </Stack>
@@ -952,6 +956,7 @@ export default function Opt({
               onClick={() => void openIconDialog()}
               disabled={isLoadingIcons}
             >
+              {isLoadingIcons ? <LoadingIndicator size={20} /> : null}
               아이콘 변경
             </button>
             <button type="button" className="button small action" onClick={() => openSearchDialog('manager')}>
@@ -1027,15 +1032,16 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title' } }}
             >
               <h2 id="manage-join-managers-drawer-title">아이콘 변경</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={closeIconDialog}
-                aria-label="아이콘 변경 닫기"
-                disabled={isUploadingIcon || Boolean(deletingIconId)}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="아이콘 변경 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={closeIconDialog}
+                  disabled={isUploadingIcon || Boolean(deletingIconId)}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {iconErrorMessage ? (
@@ -1087,32 +1093,34 @@ export default function Opt({
                           </Stack>
 
                           <Stack direction="row" gap={1}>
-                            <button
-                              type="button"
-                              className="button medium action"
-                              onClick={() => handleClickIconUpload(icon.id)}
-                              disabled={isUploadingIcon}
-                              aria-label={`${roleOption.label} 아이콘 변경`}
-                            >
-                              <VisuallyHiddenInput
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                                onChange={handleIconFileChange}
-                              />
-                              <CompareArrowsRoundedIcon />
-                            </button>
-
-                            {icon.icon ? (
+                            <Tooltip title={`${roleOption.label} 아이콘 변경`}>
                               <button
                                 type="button"
-                                className="button medium warning"
-                                onClick={() => void handleDeleteIcon(icon.id)}
-                                disabled={deletingIconId === icon.id}
-                                aria-label={`${roleOption.label} 아이콘 삭제`}
+                                className="button medium action"
+                                onClick={() => handleClickIconUpload(icon.id)}
+                                disabled={isUploadingIcon}
                               >
-                                <DeleteForeverRoundedIcon />
+                                <VisuallyHiddenInput
+                                  ref={fileInputRef}
+                                  type="file"
+                                  accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                                  onChange={handleIconFileChange}
+                                />
+                                <CompareArrowsRoundedIcon />
                               </button>
+                            </Tooltip>
+
+                            {icon.icon ? (
+                              <Tooltip title={`${roleOption.label} 아이콘 삭제`}>
+                                <button
+                                  type="button"
+                                  className="button medium warning"
+                                  onClick={() => void handleDeleteIcon(icon.id)}
+                                  disabled={deletingIconId === icon.id}
+                                >
+                                  <DeleteForeverRoundedIcon />
+                                </button>
+                              </Tooltip>
                             ) : null}
                           </Stack>
                         </div>
@@ -1141,15 +1149,16 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>아이콘 변경</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={closeIconDialog}
-                aria-label="아이콘 변경 닫기"
-                disabled={isUploadingIcon || Boolean(deletingIconId)}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="아이콘 변경 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={closeIconDialog}
+                  disabled={isUploadingIcon || Boolean(deletingIconId)}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {iconErrorMessage ? (
@@ -1201,26 +1210,28 @@ export default function Opt({
                           </Stack>
 
                           <Stack direction="row" gap={1}>
-                            <button
-                              type="button"
-                              className="button medium action"
-                              onClick={() => handleClickIconUpload(icon.id)}
-                              disabled={isUploadingIcon}
-                              aria-label={`${roleOption.label} 아이콘 변경`}
-                            >
-                              <CompareArrowsRoundedIcon />
-                            </button>
-
-                            {icon.icon ? (
+                            <Tooltip title={`${roleOption.label} 아이콘 변경`}>
                               <button
                                 type="button"
-                                className="button medium warning"
-                                onClick={() => void handleDeleteIcon(icon.id)}
-                                disabled={deletingIconId === icon.id}
-                                aria-label=""
+                                className="button medium action"
+                                onClick={() => handleClickIconUpload(icon.id)}
+                                disabled={isUploadingIcon}
                               >
-                                <DeleteForeverRoundedIcon />
+                                <CompareArrowsRoundedIcon />
                               </button>
+                            </Tooltip>
+
+                            {icon.icon ? (
+                              <Tooltip title={`${roleOption.label} 아이콘 삭제`}>
+                                <button
+                                  type="button"
+                                  className="button medium warning"
+                                  onClick={() => void handleDeleteIcon(icon.id)}
+                                  disabled={deletingIconId === icon.id}
+                                >
+                                  <DeleteForeverRoundedIcon />
+                                </button>
+                              </Tooltip>
                             ) : null}
                           </Stack>
                         </div>
@@ -1253,15 +1264,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title-2' } }}
             >
               <h2 id="manage-join-managers-drawer-title-2">멤버 검색</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={closeSearchDialog}
-                aria-label="멤버 검색 닫기"
-                disabled={isSubmittingNew}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="멤버 검색 닫기">
+                <button type="button" className="close-button" onClick={closeSearchDialog} disabled={isSubmittingNew}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 {searchDialogErrorMessage ? (
                   <p className="alert error" role="alert">
@@ -1279,6 +1286,7 @@ export default function Opt({
                       size="small"
                     />
                     <button type="submit" className="button medium action" disabled={isSearching}>
+                      {isSearching ? <LoadingIndicator size={20} /> : null}
                       검색
                     </button>
                   </Stack>
@@ -1458,6 +1466,7 @@ export default function Opt({
                           onClick={handleCreateManager}
                           disabled={isSubmittingNew}
                         >
+                          {isSubmittingNew ? <LoadingIndicator size={20} /> : null}
                           위임
                         </button>
                       </Stack>
@@ -1497,15 +1506,11 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>멤버 검색</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={closeSearchDialog}
-                aria-label="멤버 검색 닫기"
-                disabled={isSubmittingNew}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="멤버 검색 닫기">
+                <button type="button" className="close-button" onClick={closeSearchDialog} disabled={isSubmittingNew}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Stack component="form" gap={2} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
                   {searchDialogErrorMessage ? (
@@ -1523,6 +1528,7 @@ export default function Opt({
                       size="small"
                     />
                     <button type="submit" className="button medium action" disabled={isSearching}>
+                      {isSearching ? <LoadingIndicator size={20} /> : null}
                       검색
                     </button>
                   </Stack>
@@ -1705,6 +1711,7 @@ export default function Opt({
                         onClick={handleCreateManager}
                         disabled={isSubmittingNew}
                       >
+                        {isSubmittingNew ? <LoadingIndicator size={20} /> : null}
                         위임
                       </button>
                     </Stack>
@@ -1742,15 +1749,16 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title-3' } }}
             >
               <h2 id="manage-join-managers-drawer-title-3">운영자 교체</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={closeOwnerTransferConfirm}
-                aria-label="운영자 교체 닫기"
-                disabled={isSubmittingOwnerTransfer}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="운영자 교체 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={closeOwnerTransferConfirm}
+                  disabled={isSubmittingOwnerTransfer}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Stack gap={3}>
                   <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
@@ -1760,6 +1768,7 @@ export default function Opt({
                     onClick={() => void handleRequestOwnerTransfer()}
                     disabled={isSubmittingOwnerTransfer}
                   >
+                    {isSubmittingOwnerTransfer ? <LoadingIndicator size={20} /> : null}
                     확인
                   </button>
                   <button
@@ -1787,15 +1796,16 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>운영자 교체</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={closeOwnerTransferConfirm}
-                aria-label="운영자 교체 닫기"
-                disabled={isSubmittingOwnerTransfer}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="운영자 교체 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={closeOwnerTransferConfirm}
+                  disabled={isSubmittingOwnerTransfer}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
               </DialogContent>
@@ -1813,6 +1823,7 @@ export default function Opt({
                   onClick={() => void handleRequestOwnerTransfer()}
                   disabled={isSubmittingOwnerTransfer}
                 >
+                  {isSubmittingOwnerTransfer ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </DialogActions>
@@ -1830,14 +1841,11 @@ export default function Opt({
                   slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title-4' } }}
                 >
                   <h2 id="manage-join-managers-drawer-title-4">매니저 변경</h2>
-                  <button
-                    type="button"
-                    className="close-button"
-                    onClick={closeManagerEdit}
-                    aria-label="매니저 변경 닫기"
-                  >
-                    <CloseRoundedIcon />
-                  </button>
+                  <Tooltip title="매니저 변경 닫기">
+                    <button type="button" className="close-button" onClick={closeManagerEdit}>
+                      <CloseRoundedIcon />
+                    </button>
+                  </Tooltip>
                   <div className="VhiDrawer-bottom-content">{managerEditContent}</div>
                   <div className="drawer-dialog-actions">
                     <button
@@ -1859,14 +1867,11 @@ export default function Opt({
                   className="vh-dialog vh-alert-dialog"
                 >
                   <DialogTitle>매니저 변경</DialogTitle>
-                  <button
-                    type="button"
-                    className="close-button"
-                    onClick={closeManagerEdit}
-                    aria-label="매니저 변경 닫기"
-                  >
-                    <CloseRoundedIcon />
-                  </button>
+                  <Tooltip title="매니저 변경 닫기">
+                    <button type="button" className="close-button" onClick={closeManagerEdit}>
+                      <CloseRoundedIcon />
+                    </button>
+                  </Tooltip>
                   <DialogContent>{managerEditContent}</DialogContent>
                   <DialogActions>
                     <button type="button" onClick={closeManagerEdit} disabled={isSubmittingDelete || isSubmittingMove}>

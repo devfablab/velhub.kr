@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { FormControl, IconButton, ListItemText, Stack, TextField, Typography } from '@mui/material';
+import { FormControl, IconButton, ListItemText, Stack, TextField, Typography, Tooltip } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import MenuItem from '@/components/SelectMenuItem';
@@ -278,15 +278,16 @@ export default function BlogPostPromotionFields({
                 </div>
                 {isSubscriptionSeries && value.items.length > 1 ? (
                   <div className={classes.adProductDelete}>
-                    <IconButton
-                      aria-label="상품 삭제"
-                      disabled={disabled}
-                      onClick={() =>
-                        onChange({ ...value, items: value.items.filter((_, itemIndex) => itemIndex !== index) })
-                      }
-                    >
-                      <CloseRoundedIcon />
-                    </IconButton>
+                    <Tooltip title="상품 삭제">
+                      <IconButton
+                        disabled={disabled}
+                        onClick={() =>
+                          onChange({ ...value, items: value.items.filter((_, itemIndex) => itemIndex !== index) })
+                        }
+                      >
+                        <CloseRoundedIcon />
+                      </IconButton>
+                    </Tooltip>
                   </div>
                 ) : null}
               </div>

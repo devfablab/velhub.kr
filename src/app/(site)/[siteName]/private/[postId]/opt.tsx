@@ -21,10 +21,12 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import RecentTableList from '@/components/service/community/RecentTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -178,14 +180,15 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
         <div className={styles['gallery-dialog-preview']}>
           {dialogImages.map((image) => (
             <div key={image.id} className={styles['gallery-dialog-preview-image']}>
-              <button
-                type="button"
-                onClick={() => removeImage(image.id)}
-                aria-label="이미지 삭제"
-                className={styles['gallery-dialog-remove-button']}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="이미지 삭제">
+                <button
+                  type="button"
+                  onClick={() => removeImage(image.id)}
+                  className={styles['gallery-dialog-remove-button']}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={image.url} alt="" />
             </div>
@@ -204,9 +207,11 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
       slotProps={{ paper: { 'aria-labelledby': 'private-post-id-drawer-title' } }}
     >
       <h2 id="private-post-id-drawer-title">첨부 이미지 업로드</h2>
-      <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={closeDialog}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>{uploader}</div>
       <div className="drawer-dialog-actions">
         <button type="button" onClick={closeDialog} className="button medium close">
@@ -225,9 +230,11 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
   ) : (
     <Dialog open={open} onClose={closeDialog} className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}>
       <DialogTitle>첨부 이미지 업로드</DialogTitle>
-      <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={closeDialog}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <DialogContent className={styles['thumbnail-dialog-content']}>{uploader}</DialogContent>
       <DialogActions>
         <button type="button" onClick={closeDialog} className="cancel-button">
@@ -526,30 +533,29 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                         <img src={galleryImages[galleryViewerIndex]?.url} alt="" />
                       </DialogContent>
                       <DialogActions className={styles['dialog-actions']}>
-                        <button
-                          type="button"
-                          onClick={showPreviousGalleryImage}
-                          className={`${styles['control-button']} ${styles['prev-button']}`}
-                          aria-label="이전 이미지"
-                        >
-                          <ArrowBackRoundedIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={showNextGalleryImage}
-                          className={`${styles['control-button']} ${styles['next-button']}`}
-                          aria-label="다음 이미지"
-                        >
-                          <ArrowForwardRoundedIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={closeGalleryViewer}
-                          className={styles['close-button']}
-                          aria-label="갤러리 닫기"
-                        >
-                          <CloseRoundedIcon />
-                        </button>
+                        <Tooltip title="이전 이미지">
+                          <button
+                            type="button"
+                            onClick={showPreviousGalleryImage}
+                            className={`${styles['control-button']} ${styles['prev-button']}`}
+                          >
+                            <ArrowBackRoundedIcon />
+                          </button>
+                        </Tooltip>
+                        <Tooltip title="다음 이미지">
+                          <button
+                            type="button"
+                            onClick={showNextGalleryImage}
+                            className={`${styles['control-button']} ${styles['next-button']}`}
+                          >
+                            <ArrowForwardRoundedIcon />
+                          </button>
+                        </Tooltip>
+                        <Tooltip title="갤러리 닫기">
+                          <button type="button" onClick={closeGalleryViewer} className={styles['close-button']}>
+                            <CloseRoundedIcon />
+                          </button>
+                        </Tooltip>
                       </DialogActions>
                     </Dialog>
                   ) : null}
@@ -659,6 +665,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                             취소
                           </button>
                           <button type="submit" className={`${styles.submit} button`} disabled={isSavingReply}>
+                            {isSavingReply ? <LoadingIndicator size={20} /> : null}
                             수정 완료
                           </button>
                         </div>
@@ -751,6 +758,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                       disabled={isSaving}
                       onClick={() => void reply()}
                     >
+                      {isSaving ? <LoadingIndicator size={20} /> : null}
                       {data.isStaff ? '답변 등록' : '추가 문의 등록'}
                     </button>
                   </div>
@@ -789,14 +797,11 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
               slotProps={{ paper: { 'aria-labelledby': 'private-post-id-drawer-title-2' } }}
             >
               <h2 id="private-post-id-drawer-title-2">글 삭제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => setDeleteDialogOpen(false)}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <p>정말로 글을 삭제하시겠습니까?</p>
                 {deleteErrorMessage ? (
@@ -816,6 +821,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                   disabled={isDeletingPost}
                   onClick={() => void deletePost()}
                 >
+                  {isDeletingPost ? <LoadingIndicator size={20} /> : null}
                   {isDeletingPost ? '삭제 중' : '삭제'}
                 </button>
               </div>
@@ -828,14 +834,11 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle className={styles['dialog-title']}>글 삭제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => setDeleteDialogOpen(false)}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent className={styles['dialog-content']}>
                 <p>정말로 글을 삭제하시겠습니까?</p>
                 {deleteErrorMessage ? (
@@ -855,6 +858,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
                   disabled={isDeletingPost}
                   onClick={() => void deletePost()}
                 >
+                  {isDeletingPost ? <LoadingIndicator size={20} /> : null}
                   {isDeletingPost ? '삭제 중' : '삭제'}
                 </button>
               </DialogActions>

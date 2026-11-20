@@ -109,6 +109,7 @@ export default function CoPostPartnerPicker({ siteName, value, disabled = false,
                   disabled={disabled || !keyword.trim() || isSearching}
                   onClick={() => void search()}
                 >
+                  {isSearching ? <LoadingIndicator size={20} /> : null}
                   검색
                 </button>
               </InputAdornment>

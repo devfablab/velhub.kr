@@ -16,10 +16,12 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MinorPaymentControl, { type MinorPaymentControlResult } from '../MinorPaymentControl';
 import PaymentEmailDialog from '../modals/PaymentEmailDialog';
@@ -636,6 +638,7 @@ export default function SubscriptionButton({
               onClick={check}
               disabled={isProcessing || isChecking}
             >
+              {isProcessing || isChecking ? <LoadingIndicator size={20} /> : null}
               {selectedBoard ? null : <LoyaltyOutlinedIcon />}
               <strong>{getSubscribeButtonText({ subscriptionStatus })}</strong>
             </button>
@@ -650,6 +653,7 @@ export default function SubscriptionButton({
           onClick={handleOpenCancelDialog}
           disabled={isProcessing}
         >
+          {isProcessing ? <LoadingIndicator size={20} /> : null}
           {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
           <strong>{isRefundableCancellation ? '연재 구독 환불' : '연재 구독 취소'}</strong>
         </button>
@@ -664,6 +668,7 @@ export default function SubscriptionButton({
               onClick={check}
               disabled={isProcessing || isChecking}
             >
+              {isProcessing || isChecking ? <LoadingIndicator size={20} /> : null}
               {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
               <strong>연재 구독 유지하기</strong>
             </button>
@@ -698,15 +703,11 @@ export default function SubscriptionButton({
           <h2 id="components-buttons-subscription-button-drawer-title">
             {getDialogTitle({ subscriptionStatus, isMinor })}
           </h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseDialog}
-            disabled={isProcessing}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-subscription-form"
@@ -764,6 +765,7 @@ export default function SubscriptionButton({
               className="button medium submit"
               disabled={isProcessing}
             >
+              {isProcessing ? <LoadingIndicator size={20} /> : null}
               {getDialogSubmitText(subscriptionStatus)}
             </button>
           </div>
@@ -777,15 +779,11 @@ export default function SubscriptionButton({
           className="VhiDialog"
         >
           <DialogTitle id="subscription-dialog-title">{getDialogTitle({ subscriptionStatus, isMinor })}</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseDialog}
-            disabled={isProcessing}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-subscription-form"
@@ -843,6 +841,7 @@ export default function SubscriptionButton({
               className="button medium submit"
               disabled={isProcessing}
             >
+              {isProcessing ? <LoadingIndicator size={20} /> : null}
               {getDialogSubmitText(subscriptionStatus)}
             </button>
           </DialogActions>
@@ -860,15 +859,11 @@ export default function SubscriptionButton({
           <h2 id="components-buttons-subscription-button-drawer-title-2">
             {getCancelDialogTitle(isRefundableCancellation)}
           </h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseCancelDialog}
-            disabled={isProcessing}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <form
               id="mobile-subscription-cancel-form"
@@ -910,6 +905,7 @@ export default function SubscriptionButton({
               className="button medium danger"
               disabled={isProcessing}
             >
+              {isProcessing ? <LoadingIndicator size={20} /> : null}
               {isRefundableCancellation ? '환불하기' : '구독 취소'}
             </button>
           </div>
@@ -925,15 +921,11 @@ export default function SubscriptionButton({
           <DialogTitle id="subscription-cancel-dialog-title">
             {getCancelDialogTitle(isRefundableCancellation)}
           </DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseCancelDialog}
-            disabled={isProcessing}
-            aria-label="닫기"
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <form
               id="desktop-subscription-cancel-form"
@@ -975,6 +967,7 @@ export default function SubscriptionButton({
               className="button medium danger"
               disabled={isProcessing}
             >
+              {isProcessing ? <LoadingIndicator size={20} /> : null}
               {isRefundableCancellation ? '환불하기' : '구독 취소'}
             </button>
           </DialogActions>
@@ -989,9 +982,11 @@ export default function SubscriptionButton({
           slotProps={{ paper: { 'aria-labelledby': 'components-buttons-subscription-button-drawer-title-3' } }}
         >
           <h2 id="components-buttons-subscription-button-drawer-title-3">본인인증 필요</h2>
-          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseIdentityDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
 
           <div className="VhiDrawer-bottom-content">
             <Stack gap={1}>
@@ -1014,9 +1009,11 @@ export default function SubscriptionButton({
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>본인인증 필요</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleCloseIdentityDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent dividers>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>

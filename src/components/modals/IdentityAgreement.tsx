@@ -19,6 +19,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 
 type AgreementType = 'identity' | 'settlement';
@@ -189,9 +190,11 @@ export default function IdentityAgreement({
         slotProps={{ paper: { 'aria-labelledby': 'components-modals-identity-agreement-drawer-title' } }}
       >
         <h2 id="components-modals-identity-agreement-drawer-title">{title}</h2>
-        <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-          <CloseRoundedIcon />
-        </button>
+        <Tooltip title="닫기">
+          <button type="button" className="close-button" onClick={onClose}>
+            <CloseRoundedIcon />
+          </button>
+        </Tooltip>
         <div className="VhiDrawer-bottom-content">{content}</div>
         <div className="drawer-dialog-actions">
           {showAgreementCheck ? (
@@ -216,9 +219,11 @@ export default function IdentityAgreement({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth className="VhiDialog">
       <DialogTitle>{title}</DialogTitle>
-      <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-        <CloseRoundedIcon />
-      </button>
+      <Tooltip title="닫기">
+        <button type="button" className="close-button" onClick={onClose}>
+          <CloseRoundedIcon />
+        </button>
+      </Tooltip>
       <DialogContent>{content}</DialogContent>
       <DialogActions>
         {showAgreementCheck ? (

@@ -16,6 +16,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   locateCorrection,
@@ -25,6 +26,7 @@ import {
   type SpellCheckSectionKind,
   splitSpellCheckBlocks,
 } from '@/lib/spellCheck/markdownBlocks';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { LoadingIndicator } from '../LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 
@@ -477,6 +479,7 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
                               disabled={Boolean(busyItemId)}
                               onClick={() => void addExclusion(item)}
                             >
+                              {busyItemId === item.id ? <LoadingIndicator size={20} /> : null}
                               검사 제외 목록에 추가
                             </button>
                           ) : null}
@@ -522,6 +525,7 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
                           disabled={Boolean(busyItemId)}
                           onClick={() => void addExclusion(item)}
                         >
+                          {busyItemId === item.id ? <LoadingIndicator size={20} /> : null}
                           검사 제외 목록에 추가
                         </button>
                       </Stack>
@@ -640,9 +644,11 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
         >
           <h2 id="components-editor-spell-check-dialog-drawer-title">{title}</h2>
           {step !== 'checking' ? (
-            <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={onClose}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
           ) : null}
           <div className="VhiDrawer-bottom-content">{content}</div>
           {actions ? <div className="drawer-dialog-actions">{actions}</div> : null}
@@ -651,9 +657,11 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
         <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm" className="VhiDialog">
           <DialogTitle>{title}</DialogTitle>
           {step !== 'checking' ? (
-            <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={onClose}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
           ) : null}
           <DialogContent>{content}</DialogContent>
           {actions ? <DialogActions>{actions}</DialogActions> : null}

@@ -108,6 +108,7 @@ export default function Opt({
       </Stack>
 
       <button type="submit" className="button medium submit" disabled={isSubmitting}>
+        {isSubmitting ? <LoadingIndicator size={20} /> : null}
         수정 완료
       </button>
 

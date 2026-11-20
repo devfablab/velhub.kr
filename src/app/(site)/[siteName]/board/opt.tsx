@@ -11,7 +11,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FabNew from '@/components/buttons/FabNew';
@@ -304,18 +304,17 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                   />
                 </div>
                 {keywordInput ? (
-                  <button
-                    type="button"
-                    className={styles['search-reset']}
-                    onClick={() => setKeywordInput('')}
-                    aria-label="검색어 지우기"
-                  >
-                    <CloseRoundedIcon />
-                  </button>
+                  <Tooltip title="검색어 지우기">
+                    <button type="button" className={styles['search-reset']} onClick={() => setKeywordInput('')}>
+                      <CloseRoundedIcon />
+                    </button>
+                  </Tooltip>
                 ) : null}
-                <button type="submit" className={styles['search-submit']} disabled={isNavigating} aria-label="검색">
-                  <SearchIcon />
-                </button>
+                <Tooltip title="검색">
+                  <button type="submit" className={styles['search-submit']} disabled={isNavigating}>
+                    <SearchIcon />
+                  </button>
+                </Tooltip>
               </div>
             </fieldset>
           </form>
@@ -582,14 +581,11 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
         {totalPage > 1 ? (
           <nav className={styles.pagination} aria-label="페이지네이션">
             {hasPreviousPager ? (
-              <button
-                type="button"
-                onClick={() => handlePageClick(pageNumbers[0] - 1)}
-                className={styles.pager}
-                aria-label="이전 페이지 묶음"
-              >
-                <ArrowBackIosRoundedIcon />
-              </button>
+              <Tooltip title="이전 페이지 묶음">
+                <button type="button" onClick={() => handlePageClick(pageNumbers[0] - 1)} className={styles.pager}>
+                  <ArrowBackIosRoundedIcon />
+                </button>
+              </Tooltip>
             ) : null}
 
             {pageNumbers.map((pageNumber) => (
@@ -605,14 +601,15 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
             ))}
 
             {hasNextPager ? (
-              <button
-                type="button"
-                onClick={() => handlePageClick(pageNumbers[pageNumbers.length - 1] + 1)}
-                className={styles.pager}
-                aria-label="다음 페이지 묶음"
-              >
-                <ArrowForwardIosRoundedIcon />
-              </button>
+              <Tooltip title="다음 페이지 묶음">
+                <button
+                  type="button"
+                  onClick={() => handlePageClick(pageNumbers[pageNumbers.length - 1] + 1)}
+                  className={styles.pager}
+                >
+                  <ArrowForwardIosRoundedIcon />
+                </button>
+              </Tooltip>
             ) : null}
           </nav>
         ) : null}

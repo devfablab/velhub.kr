@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { Autocomplete } from '@mui/material';
+import { Autocomplete, Tooltip } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import styles from '@/app/header.module.sass';
@@ -208,28 +208,28 @@ export default function SiteSearchAutocomplete({
             )}
           />
           {keyword ? (
-            <button
-              type="button"
-              className={styles['search-reset']}
-              onClick={() => setKeyword('')}
-              aria-label="검색어 지우기"
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="검색어 지우기">
+              <button type="button" className={styles['search-reset']} onClick={() => setKeyword('')}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
           ) : null}
           {(isCancelVisible ?? Boolean(urlKeyword)) ? (
-            <Anchor href={cancelHref ?? searchPath} aria-label="검색취소" onClick={onNavigate}>
-              <CloseRoundedIcon />
-            </Anchor>
+            <Tooltip title="검색취소">
+              <Anchor href={cancelHref ?? searchPath} onClick={onNavigate}>
+                <CloseRoundedIcon />
+              </Anchor>
+            </Tooltip>
           ) : null}
-          <button
-            type="submit"
-            className={styles['search-submit']}
-            disabled={keyword.trim().length < minLength || isNavigating}
-            aria-label="검색"
-          >
-            <SearchRoundedIcon />
-          </button>
+          <Tooltip title="검색">
+            <button
+              type="submit"
+              className={styles['search-submit']}
+              disabled={keyword.trim().length < minLength || isNavigating}
+            >
+              <SearchRoundedIcon />
+            </button>
+          </Tooltip>
         </div>
       </fieldset>
     </form>

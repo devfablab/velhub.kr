@@ -16,6 +16,7 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -182,9 +183,11 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
             disabled={isSaving}
             onChange={(event) => changeWord(item.key, event.target.value)}
           />
-          <IconButton size="small" aria-label="단어 삭제" disabled={isSaving} onClick={() => removeWord(item)}>
-            <RemoveCircleOutlineRoundedIcon />
-          </IconButton>
+          <Tooltip title="단어 삭제">
+            <IconButton size="small" disabled={isSaving} onClick={() => removeWord(item)}>
+              <RemoveCircleOutlineRoundedIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ))}
 
@@ -211,6 +214,7 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
                   disabled={!newWord.trim() || isSaving}
                   onClick={addWord}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   추가
                 </button>
               ),
@@ -243,9 +247,11 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
           slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-spell-check-settings-dialog-drawer-title' } }}
         >
           <h2 id="manage-contents-posts-spell-check-settings-dialog-drawer-title">맞춤법 검사 설정</h2>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">{content}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={closeDialog} disabled={isSaving}>
@@ -257,6 +263,7 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
               onClick={() => void saveWords()}
               disabled={!isDirty || isSaving}
             >
+              {isSaving ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </div>
@@ -264,9 +271,11 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
       ) : (
         <Dialog open={isOpen} onClose={closeDialog} fullWidth maxWidth="sm" className="VhiDialog">
           <DialogTitle>맞춤법 검사 설정</DialogTitle>
-          <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>{content}</DialogContent>
           <DialogActions>
             <button type="button" className="button medium cancel" onClick={closeDialog} disabled={isSaving}>
@@ -278,6 +287,7 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
               onClick={() => void saveWords()}
               disabled={!isDirty || isSaving}
             >
+              {isSaving ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </DialogActions>

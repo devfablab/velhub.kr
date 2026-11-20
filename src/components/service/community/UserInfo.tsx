@@ -13,12 +13,14 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
@@ -406,9 +408,11 @@ export default function UserInfo() {
           slotProps={{ paper: { 'aria-labelledby': 'components-service-community-user-info-drawer-title' } }}
         >
           <h2 id="components-service-community-user-info-drawer-title">프로필 설정</h2>
-          <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="프로필 설정 닫기">
+            <button type="button" className="close-button" onClick={handleCloseDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
             <form id="community-profile-form-mobile" onSubmit={handleSubmit}>
               <div className={styles['form-group']}>
@@ -464,6 +468,7 @@ export default function UserInfo() {
               disabled={!canSubmit || isSubmitting}
               className="button medium submit"
             >
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </div>
@@ -477,9 +482,11 @@ export default function UserInfo() {
           className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
         >
           <DialogTitle>프로필 설정</DialogTitle>
-          <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="프로필 설정 닫기">
+            <button type="button" className="close-button" onClick={handleCloseDialog}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent className={styles['info-content']}>
             <form id="community-profile-form-desktop" onSubmit={handleSubmit}>
               <div className={styles['form-group']}>
@@ -530,6 +537,7 @@ export default function UserInfo() {
               취소
             </button>
             <button type="submit" form="community-profile-form-desktop" disabled={!canSubmit || isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </DialogActions>
@@ -546,15 +554,16 @@ export default function UserInfo() {
           <h2 id="components-service-community-user-info-drawer-title-2">
             {isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}
           </h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseWithdrawDialog}
-            disabled={isWithdrawSubmitting}
-            aria-label={isWithdrawBlocked ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={isWithdrawBlocked ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseWithdrawDialog}
+              disabled={isWithdrawSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
             {isWithdrawBlocked ? (
               <Typography variant="subtitle2">{withdrawBlockedMessage}</Typography>
@@ -598,6 +607,7 @@ export default function UserInfo() {
                   className="button medium danger"
                   disabled={isWithdrawSubmitting}
                 >
+                  {isWithdrawSubmitting ? <LoadingIndicator size={20} /> : null}
                   탈퇴하기
                 </button>
               </>
@@ -613,15 +623,16 @@ export default function UserInfo() {
           className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
         >
           <DialogTitle>{isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={handleCloseWithdrawDialog}
-            disabled={isWithdrawSubmitting}
-            aria-label={isWithdrawBlocked ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}
-          >
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title={isWithdrawBlocked ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseWithdrawDialog}
+              disabled={isWithdrawSubmitting}
+            >
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
 
           <DialogContent className={styles['info-content']}>
             {isWithdrawBlocked ? (
@@ -668,6 +679,7 @@ export default function UserInfo() {
                   className="danger-button"
                   disabled={isWithdrawSubmitting}
                 >
+                  {isWithdrawSubmitting ? <LoadingIndicator size={20} /> : null}
                   탈퇴하기
                 </button>
               </>

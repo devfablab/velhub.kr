@@ -14,6 +14,7 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -288,6 +289,7 @@ export default function Opt({
                 취소
               </Anchor>
               <button type="submit" className={`${styles.submit} button`} disabled={isSaving}>
+                {isSaving ? <LoadingIndicator size={20} /> : null}
                 등록
               </button>
             </div>
@@ -303,9 +305,11 @@ export default function Opt({
             slotProps={{ paper: { 'aria-labelledby': 'private-new-drawer-title' } }}
           >
             <h2 id="private-new-drawer-title">첨부 이미지 업로드</h2>
-            <button type="button" className="close-button" onClick={closeImageDialog} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={closeImageDialog}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>
               {imageDialogMessage ? (
                 <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -336,14 +340,15 @@ export default function Opt({
                 <div className={styles['gallery-dialog-preview']}>
                   {imageDialogImages.map((image) => (
                     <div key={image.id} className={styles['gallery-dialog-preview-image']}>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(image.id)}
-                        aria-label="이미지 삭제"
-                        className={styles['gallery-dialog-remove-button']}
-                      >
-                        <CloseRoundedIcon />
-                      </button>
+                      <Tooltip title="이미지 삭제">
+                        <button
+                          type="button"
+                          onClick={() => removeImage(image.id)}
+                          className={styles['gallery-dialog-remove-button']}
+                        >
+                          <CloseRoundedIcon />
+                        </button>
+                      </Tooltip>
                       <img src={image.previewUrl} alt="" />
                     </div>
                   ))}
@@ -371,9 +376,11 @@ export default function Opt({
             className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
           >
             <DialogTitle>첨부 이미지 업로드</DialogTitle>
-            <button type="button" className="close-button" onClick={closeImageDialog} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={closeImageDialog}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent className={styles['thumbnail-dialog-content']}>
               {imageDialogMessage ? (
                 <DialogContentText className={styles['thumbnail-dialog-message']}>
@@ -404,14 +411,15 @@ export default function Opt({
                 <div className={styles['gallery-dialog-preview']}>
                   {imageDialogImages.map((image) => (
                     <div key={image.id} className={styles['gallery-dialog-preview-image']}>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(image.id)}
-                        aria-label="이미지 삭제"
-                        className={styles['gallery-dialog-remove-button']}
-                      >
-                        <CloseRoundedIcon />
-                      </button>
+                      <Tooltip title="이미지 삭제">
+                        <button
+                          type="button"
+                          onClick={() => removeImage(image.id)}
+                          className={styles['gallery-dialog-remove-button']}
+                        >
+                          <CloseRoundedIcon />
+                        </button>
+                      </Tooltip>
                       <img src={image.previewUrl} alt="" />
                     </div>
                   ))}

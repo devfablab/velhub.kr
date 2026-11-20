@@ -4,6 +4,7 @@ import { useState } from 'react';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DuplicateBillingMethodDialog from '../modals/DuplicateBillingMethodDialog';
 import PaymentEmailDialog from '../modals/PaymentEmailDialog';
 
@@ -204,6 +205,7 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
   return (
     <>
       <button type="button" className="button small action" onClick={handleAddBillingMethod} disabled={isProcessing}>
+        {isProcessing ? <LoadingIndicator size={20} /> : null}
         결제 수단 추가
       </button>
 

@@ -6,6 +6,7 @@ import { MenuItem, Stack, TextField, Typography, useMediaQuery, useTheme } from 
 import type { SiteCategoryGroup } from '@/lib/service/siteCategories';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
@@ -375,12 +376,14 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
             {isMobile ? (
               <div className={styles['button-top']}>
                 <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
             ) : (
               <Stack direction="row" justifyContent="flex-end">
                 <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </Stack>

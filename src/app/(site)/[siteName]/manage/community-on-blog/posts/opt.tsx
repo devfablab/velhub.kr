@@ -6,6 +6,7 @@ import { FormControlLabel, Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -121,6 +122,7 @@ export default function Opt({
                   disabled={isSaving}
                   onClick={() => void handleChange(true)}
                 >
+                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   커뮤니티 시작하기
                 </button>
               )}

@@ -23,6 +23,7 @@ import { Box, FormControlLabel, Stack, Typography, useMediaQuery, useTheme } fro
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -342,6 +343,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
                 <Box>
                   <button type="submit" className="button medium submit" disabled={isInitializing}>
+                    {isInitializing ? <LoadingIndicator size={20} /> : null}
                     커뮤니티 홈 초기 세팅하기
                   </button>
                 </Box>
@@ -374,16 +376,19 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void loadHomeOrders()}
                     disabled={isSubmitting}
                   >
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     다시 불러오기
                   </button>
                   {isMobile ? (
                     <div className={styles['button-top']}>
                       <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                        {isSubmitting ? <LoadingIndicator size={20} /> : null}
                         저장
                       </button>
                     </div>
                   ) : (
                     <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   )}

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import { Avatar, IconButton, TextField } from '@mui/material';
+import { Avatar, IconButton, TextField, Tooltip } from '@mui/material';
 import { format } from 'date-fns';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/communityChat.module.sass';
@@ -277,9 +277,11 @@ export default function CoPostChat({ coPostId, onSent }: { coPostId: string; onS
                   </div>
                   <div className={styles.meta}>
                     {isMine && !message.isDeleted ? (
-                      <button type="button" aria-label="메시지 지우기" onClick={() => void deleteMessage(message.id)}>
-                        <DeleteOutlineRoundedIcon />
-                      </button>
+                      <Tooltip title="메시지 지우기">
+                        <button type="button" onClick={() => void deleteMessage(message.id)}>
+                          <DeleteOutlineRoundedIcon />
+                        </button>
+                      </Tooltip>
                     ) : null}
                     <time dateTime={message.createdAt}>{format(new Date(message.createdAt), 'M/d HH:mm')}</time>
                   </div>
@@ -317,14 +319,11 @@ export default function CoPostChat({ coPostId, onSent }: { coPostId: string; onS
             }
           }}
         />
-        <IconButton
-          size="small"
-          aria-label="보내기"
-          disabled={!inputValue.trim() || isSending}
-          onClick={() => void sendMessage()}
-        >
-          <SendRoundedIcon />
-        </IconButton>
+        <Tooltip title="보내기">
+          <IconButton size="small" disabled={!inputValue.trim() || isSending} onClick={() => void sendMessage()}>
+            <SendRoundedIcon />
+          </IconButton>
+        </Tooltip>
       </div>
     </section>
   );

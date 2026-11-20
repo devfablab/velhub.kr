@@ -29,11 +29,13 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
@@ -879,6 +881,7 @@ export default function Opt({
             </button>
             {isOrderChanged ? (
               <button type="button" className="button small submit" onClick={handleSaveOrder} disabled={isOrdering}>
+                {isOrdering ? <LoadingIndicator size={20} /> : null}
                 순서 저장
               </button>
             ) : null}
@@ -947,15 +950,16 @@ export default function Opt({
               <h2 id="manage-contents-posts-category-drawer-title">
                 {dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}
               </h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                aria-label="닫기"
-                disabled={isSubmitting || isUploadingImage || isDeletingImage}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-category-form"
@@ -991,6 +995,7 @@ export default function Opt({
                                   onClick={handleCheckCategoryKey}
                                   disabled={isCheckingKey}
                                 >
+                                  {isCheckingKey ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1019,6 +1024,7 @@ export default function Opt({
                                   onClick={handleCheckCategoryLabel}
                                   disabled={isCheckingLabel}
                                 >
+                                  {isCheckingLabel ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1047,6 +1053,7 @@ export default function Opt({
 
                         <Stack direction="row" gap={1}>
                           <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            {isUploadingImage ? <LoadingIndicator size={20} /> : null}
                             이미지 선택
                             <VisuallyHiddenInput
                               ref={fileInputRef}
@@ -1063,6 +1070,7 @@ export default function Opt({
                               onClick={handleDeleteImage}
                               disabled={isDeletingImage}
                             >
+                              {isDeletingImage ? <LoadingIndicator size={20} /> : null}
                               이미지 삭제
                             </button>
                           ) : null}
@@ -1111,6 +1119,7 @@ export default function Opt({
                   className="button medium submit"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
+                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -1124,15 +1133,16 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                aria-label="닫기"
-                disabled={isSubmitting || isUploadingImage || isDeletingImage}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-category-form"
@@ -1168,6 +1178,7 @@ export default function Opt({
                                   onClick={handleCheckCategoryKey}
                                   disabled={isCheckingKey}
                                 >
+                                  {isCheckingKey ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1196,6 +1207,7 @@ export default function Opt({
                                   onClick={handleCheckCategoryLabel}
                                   disabled={isCheckingLabel}
                                 >
+                                  {isCheckingLabel ? <LoadingIndicator size={20} /> : null}
                                   중복 확인
                                 </button>
                               </InputAdornment>
@@ -1224,6 +1236,7 @@ export default function Opt({
 
                         <Stack direction="row" gap={1}>
                           <Button component="label" className="button small action" disabled={isUploadingImage}>
+                            {isUploadingImage ? <LoadingIndicator size={20} /> : null}
                             이미지 선택
                             <VisuallyHiddenInput
                               ref={fileInputRef}
@@ -1240,6 +1253,7 @@ export default function Opt({
                               onClick={handleDeleteImage}
                               disabled={isDeletingImage}
                             >
+                              {isDeletingImage ? <LoadingIndicator size={20} /> : null}
                               이미지 삭제
                             </button>
                           ) : null}
@@ -1287,6 +1301,7 @@ export default function Opt({
                   form="desktop-category-form"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
+                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>
@@ -1302,15 +1317,11 @@ export default function Opt({
               slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-category-drawer-title-2' } }}
             >
               <h2 id="manage-contents-posts-category-drawer-title-2">카테고리 삭제</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                aria-label="닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-category-delete-form"
@@ -1346,6 +1357,7 @@ export default function Opt({
                   className="button medium danger"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </div>
@@ -1359,15 +1371,11 @@ export default function Opt({
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>카테고리 삭제</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseDialog}
-                aria-label="닫기"
-                disabled={isSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-category-delete-form"
@@ -1398,6 +1406,7 @@ export default function Opt({
                   className="danger-button"
                   disabled={isSubmitting}
                 >
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               </DialogActions>

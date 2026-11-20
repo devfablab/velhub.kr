@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import { DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -226,9 +226,11 @@ export default function SiteInfo() {
           slotProps={{ paper: { 'aria-labelledby': 'components-service-community-site-info-drawer-title' } }}
         >
           <h2 id="components-service-community-site-info-drawer-title">커뮤니티 정보</h2>
-          <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>{infoContent}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={() => setIsDialogOpen(false)}>
@@ -245,9 +247,11 @@ export default function SiteInfo() {
           className={`VhiDialog ${styles['info-dialog']}`}
         >
           <DialogTitle>커뮤니티 정보</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent className={styles['info-content']}>{infoContent}</DialogContent>
           <DialogActions>
             <button type="button" className="button medium submit" onClick={() => setIsDialogOpen(false)}>

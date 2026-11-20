@@ -12,6 +12,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 
 export type PaymentTermsType = 'donation' | 'subscription' | 'purchase' | 'membership';
@@ -102,9 +103,11 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
           slotProps={{ paper: { 'aria-labelledby': 'components-modals-payment-terms-drawer-title' } }}
         >
           <h2 id="components-modals-payment-terms-drawer-title">{terms.title}</h2>
-          <button type="button" className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <Stack gap={1.25}>
               {terms.items.map((item, index) => (
@@ -123,9 +126,11 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
       ) : (
         <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" className="VhiDialog">
           <DialogTitle>{terms.title}</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <Stack gap={1.25}>
               {terms.items.map((item, index) => (

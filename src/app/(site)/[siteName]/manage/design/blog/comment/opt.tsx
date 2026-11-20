@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -491,12 +492,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {isMobile ? (
                 <div className={styles['button-top']}>
                   <button type="submit" className={`button ${styles.button}`} disabled={isSubmitDisabled}>
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 </div>
               ) : (
                 <Stack direction="row" justifyContent="flex-end">
                   <button type="submit" className="button medium submit" disabled={isSubmitDisabled}>
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     적용하기
                   </button>
                 </Stack>

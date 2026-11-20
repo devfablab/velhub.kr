@@ -19,6 +19,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -30,6 +31,7 @@ import {
 } from '@/lib/users/memberRestrictionMessages';
 import { formatDate, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import ScreenState from '@/components/service/ScreenState';
@@ -354,9 +356,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch} aria-label="이름으로 검색">
-                <SearchRoundedIcon />
-              </button>
+              <Tooltip title="이름으로 검색">
+                <button type="button" className="button medium action" onClick={handleSearch}>
+                  <SearchRoundedIcon />
+                </button>
+              </Tooltip>
             </Stack>
           </div>
 
@@ -384,6 +388,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenActionDialog('kick')}
                   disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
+                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   강제 탈퇴
                 </button>
                 <button
@@ -392,6 +397,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenActionDialog('ban')}
                   disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
+                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입 불가
                 </button>
                 <button
@@ -400,6 +406,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenActionDialog('unblock')}
                   disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
+                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   활동 정지 해제
                 </button>
               </Stack>
@@ -474,9 +481,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               slotProps={{ paper: { 'aria-labelledby': 'manage-members-blocked-drawer-title' } }}
             >
               <h2 id="manage-members-blocked-drawer-title">{getActionTitle()}</h2>
-              <button type="button" className="close-button" onClick={handleCloseActionDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseActionDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <form
                   id="mobile-blocked-members-action-form"
@@ -552,6 +561,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   className="button medium submit"
                   disabled={isActionSubmitting}
                 >
+                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </div>
@@ -565,9 +575,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>{getActionTitle()}</DialogTitle>
-              <button type="button" className="close-button" onClick={handleCloseActionDialog} aria-label="닫기">
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button type="button" className="close-button" onClick={handleCloseActionDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <form
                   id="desktop-blocked-members-action-form"
@@ -634,6 +646,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   취소
                 </button>
                 <button type="submit" form="desktop-blocked-members-action-form" disabled={isActionSubmitting}>
+                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
               </DialogActions>

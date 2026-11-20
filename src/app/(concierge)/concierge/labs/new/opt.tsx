@@ -8,6 +8,7 @@ import { LABS_CATEGORIES, LabsCategory } from '@/lib/service/concierge/githubLab
 import Anchor from '@/components/Anchor';
 import MarkdownEditor, { IMAGE_INPUT_ID } from '@/components/editor/MarkdownEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -212,6 +213,7 @@ export default function Opt() {
             disabled={isSubmitting || !category || !title.trim() || !content.trim()}
             className="button medium submit"
           >
+            {isSubmitting ? <LoadingIndicator size={20} /> : null}
             {isSubmitting ? '등록 중...' : '제안 등록하기'}
           </button>
         </Stack>

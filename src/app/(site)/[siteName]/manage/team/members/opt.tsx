@@ -22,9 +22,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { formatDateTimeFull, maskEmail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
 import ScreenState from '@/components/service/ScreenState';
@@ -609,15 +611,16 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title' } }}
             >
               <h2 id="manage-team-members-drawer-title">운영자 교체</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseOwnerTransfer}
-                aria-label="운영자 교체 창 닫기"
-                disabled={isOwnerTransferSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="운영자 교체 창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseOwnerTransfer}
+                  disabled={isOwnerTransferSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Typography variant="body2">
                   선택한 팀원이 수락하면 운영자 권한이 이전되고 현재 운영자는 일반 팀원이 됩니다.
@@ -665,6 +668,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleSubmitOwnerTransfer}
                   disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
                 >
+                  {isOwnerTransferSubmitting ? <LoadingIndicator size={20} /> : null}
                   요청하기
                 </button>
               </div>
@@ -678,15 +682,16 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>운영자 교체</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseOwnerTransfer}
-                aria-label="운영자 교체 창 닫기"
-                disabled={isOwnerTransferSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="운영자 교체 창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseOwnerTransfer}
+                  disabled={isOwnerTransferSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Stack gap={2}>
                   <Typography variant="body2">
@@ -737,6 +742,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleSubmitOwnerTransfer}
                   disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
                 >
+                  {isOwnerTransferSubmitting ? <LoadingIndicator size={20} /> : null}
                   요청하기
                 </button>
               </DialogActions>
@@ -759,17 +765,18 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               }}
             >
               {inviteErrorTitle ? <h2 id="manage-team-members-invite-error-drawer-title">{inviteErrorTitle}</h2> : null}
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => {
-                  setInviteEmailError(pendingInviteEmailError);
-                  setInviteErrorMessage('');
-                }}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setInviteErrorMessage('');
+                  }}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 {inviteErrorTitle ? (
                   <p>{inviteErrorMessage}</p>
@@ -805,17 +812,18 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="vh-dialog vh-alert-dialog"
             >
               {inviteErrorTitle ? <DialogTitle>{inviteErrorTitle}</DialogTitle> : null}
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => {
-                  setInviteEmailError(pendingInviteEmailError);
-                  setInviteErrorMessage('');
-                }}
-                aria-label="닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => {
+                    setInviteEmailError(pendingInviteEmailError);
+                    setInviteErrorMessage('');
+                  }}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 {inviteErrorTitle ? (
                   <p>{inviteErrorMessage}</p>
@@ -855,15 +863,16 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     ? '팀원으로 변경'
                     : '역할 변경'}
               </h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRoleDialog}
-                aria-label="역할 변경 창 닫기"
-                disabled={isRoleSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="역할 변경 창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRoleDialog}
+                  disabled={isRoleSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Typography>
                   {nextRole === 'observer' ? (
@@ -898,6 +907,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleSubmitRole}
                   disabled={isRoleSubmitting}
                 >
+                  {isRoleSubmitting ? <LoadingIndicator size={20} /> : null}
                   {nextRole === 'observer' ? '차단' : targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                 </button>
               </div>
@@ -917,15 +927,16 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     ? '팀원으로 변경'
                     : '역할 변경'}
               </DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseRoleDialog}
-                disabled={isRoleSubmitting}
-                aria-label="역할 변경 창 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="역할 변경 창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseRoleDialog}
+                  disabled={isRoleSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Typography>
                   {nextRole === 'observer' ? (
@@ -955,6 +966,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   취소
                 </button>
                 <button type="button" onClick={handleSubmitRole} disabled={isRoleSubmitting}>
+                  {isRoleSubmitting ? <LoadingIndicator size={20} /> : null}
                   {nextRole === 'observer' ? '차단' : targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                 </button>
               </DialogActions>
@@ -970,15 +982,16 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title-3' } }}
             >
               <h2 id="manage-team-members-drawer-title-3">팀원 초대</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseInviteDialog}
-                aria-label="초대 창 닫기"
-                disabled={isInviteSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="초대 창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseInviteDialog}
+                  disabled={isInviteSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Box
                   id="team-invite-form"
@@ -1058,6 +1071,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   className="button medium submit"
                   disabled={isInviteSubmitting}
                 >
+                  {isInviteSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대하기
                 </button>
               </div>
@@ -1071,15 +1085,16 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>팀원 초대</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseInviteDialog}
-                aria-label="초대 창 닫기"
-                disabled={isInviteSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="초대 창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseInviteDialog}
+                  disabled={isInviteSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Box
                   id="team-invite-form-desktop"
@@ -1151,6 +1166,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   취소
                 </button>
                 <button type="submit" form="team-invite-form-desktop" disabled={isInviteSubmitting}>
+                  {isInviteSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대하기
                 </button>
               </DialogActions>
@@ -1166,14 +1182,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title-4' } }}
             >
               <h2 id="manage-team-members-drawer-title-4">초대 현황</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseInviteListDialog}
-                aria-label="초대 현황 창 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="초대 현황 창 닫기">
+                <button type="button" className="close-button" onClick={handleCloseInviteListDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <div className={`paper ${styles.paper}`}>
                   <Table size="small">
@@ -1225,14 +1238,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="VhiDialog"
             >
               <DialogTitle>초대 현황</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseInviteListDialog}
-                aria-label="초대 현황 창 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="초대 현황 창 닫기">
+                <button type="button" className="close-button" onClick={handleCloseInviteListDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <div className={`paper ${styles.paper}`}>
                   <Table size="small">
@@ -1286,15 +1296,16 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title-5' } }}
             >
               <h2 id="manage-team-members-drawer-title-5">초대 취소</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseCancelDialog}
-                aria-label="초대 취소 창 닫기"
-                disabled={isCancelSubmitting}
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="초대 취소 창 닫기">
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseCancelDialog}
+                  disabled={isCancelSubmitting}
+                >
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <div className="VhiDrawer-bottom-content">
                 <Typography>
                   정말로 초대를 취소하시겠습니까?
@@ -1309,6 +1320,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button
@@ -1317,6 +1329,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 취소
                 </button>
               </div>
@@ -1330,14 +1343,11 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               className="vh-dialog vh-alert-dialog"
             >
               <DialogTitle>초대 취소</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={handleCloseCancelDialog}
-                aria-label="초대 취소 창 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
+              <Tooltip title="초대 취소 창 닫기">
+                <button type="button" className="close-button" onClick={handleCloseCancelDialog}>
+                  <CloseRoundedIcon />
+                </button>
+              </Tooltip>
               <DialogContent>
                 <Typography>
                   정말로 초대를 취소하시겠습니까?
@@ -1352,6 +1362,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button
@@ -1360,6 +1371,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >
+                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 취소
                 </button>
               </DialogActions>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
-import { Avatar } from '@mui/material';
+import { Avatar, Tooltip } from '@mui/material';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
 import type { SiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import DonationButton from '@/components/buttons/DonationButton';
@@ -582,9 +582,11 @@ export default function CommentList({
           <span>댓글</span>
           <span aria-label="댓글 갯수">{commentCount}</span>
         </strong>
-        <button type="button" aria-label="댓글 새로고침" onClick={() => void loadComments()} disabled={isSubmitting}>
-          <RefreshRoundedIcon />
-        </button>
+        <Tooltip title="댓글 새로고침">
+          <button type="button" onClick={() => void loadComments()} disabled={isSubmitting}>
+            <RefreshRoundedIcon />
+          </button>
+        </Tooltip>
       </div>
 
       <SiteGuidelineActions siteName={siteName} data={guidelineDialogData} />

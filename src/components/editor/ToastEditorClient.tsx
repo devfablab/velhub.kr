@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+  Tooltip,
+} from '@mui/material';
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js';
 import '@toast-ui/editor/dist/i18n/ko-kr';
 import { Editor } from '@toast-ui/react-editor';
@@ -169,9 +178,11 @@ export default function ToastEditorClient({
           slotProps={{ paper: { 'aria-labelledby': 'components-editor-toast-editor-client-drawer-title' } }}
         >
           <h2 id="components-editor-toast-editor-client-drawer-title">이미지 등록 안내</h2>
-          <button type="button" className="close-button" onClick={() => setImageErrorMessage('')} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setImageErrorMessage('')}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <p>{imageErrorMessage}</p>
           </div>
@@ -190,9 +201,11 @@ export default function ToastEditorClient({
           className="VhiDialog"
         >
           <DialogTitle>이미지 등록 안내</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setImageErrorMessage('')} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setImageErrorMessage('')}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <p>{imageErrorMessage}</p>
           </DialogContent>

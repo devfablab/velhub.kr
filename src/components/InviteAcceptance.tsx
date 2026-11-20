@@ -16,9 +16,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
@@ -220,6 +222,7 @@ export default function InviteAcceptance({
             />
             <Stack direction="row" justifyContent="flex-end">
               <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 가입하기
               </button>
             </Stack>
@@ -238,9 +241,11 @@ export default function InviteAcceptance({
           }}
         >
           {errorPopup.title ? <h2 id="invite-acceptance-error-drawer-title">{errorPopup.title}</h2> : null}
-          <button type="button" className="close-button" onClick={handleErrorClose} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleErrorClose}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <ul className="error-messages">
               {errorPopup.messages.map((message, index) => (
@@ -265,9 +270,11 @@ export default function InviteAcceptance({
           className="vh-dialog vh-alert-dialog"
         >
           {errorPopup.title ? <DialogTitle>{errorPopup.title}</DialogTitle> : null}
-          <button type="button" className="close-button" onClick={handleErrorClose} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={handleErrorClose}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <ul className="error-messages">
               {errorPopup.messages.map((message, index) => (

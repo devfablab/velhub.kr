@@ -393,9 +393,11 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
             {pageBack ? (
               <>
                 <div className={styles.location} style={{ marginLeft: '-12px' }}>
-                  <IconButton href={pageBack} aria-label={isSearchResult ? '검색 닫기' : '이전화면으로 이동'}>
-                    {isSearchResult ? <CloseRoundedIcon /> : <ArrowBackIosNewRoundedIcon />}
-                  </IconButton>
+                  <Tooltip title={isSearchResult ? '검색 닫기' : '이전화면으로 이동'}>
+                    <IconButton href={pageBack}>
+                      {isSearchResult ? <CloseRoundedIcon /> : <ArrowBackIosNewRoundedIcon />}
+                    </IconButton>
+                  </Tooltip>
                 </div>
               </>
             ) : (
@@ -473,13 +475,11 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                         slotProps={{ paper: { 'aria-label': '검색' } }}
                       >
                         <div className={styles['mobile-search']}>
-                          <IconButton
-                            className={styles['icon-button']}
-                            onClick={handleCloseSearchDrawer}
-                            aria-label="검색 닫기"
-                          >
-                            <CloseRoundedIcon />
-                          </IconButton>
+                          <Tooltip title="검색 닫기">
+                            <IconButton className={styles['icon-button']} onClick={handleCloseSearchDrawer}>
+                              <CloseRoundedIcon />
+                            </IconButton>
+                          </Tooltip>
 
                           {siteType === 'blog' ? (
                             <BlogSearch siteName={siteName} isBlog={isBlog} />
@@ -509,9 +509,11 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                           <List>
                             <li className={styles['VhiDrawer-header']}>
                               <strong id="site-menu-drawer-title-2">화면모드 설정</strong>
-                              <IconButton type="button" onClick={handleCloseThemeModeDrawer} aria-label="메뉴 닫기">
-                                <CloseRoundedIcon />
-                              </IconButton>
+                              <Tooltip title="메뉴 닫기">
+                                <IconButton type="button" onClick={handleCloseThemeModeDrawer}>
+                                  <CloseRoundedIcon />
+                                </IconButton>
+                              </Tooltip>
                             </li>
                             <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
                               <ListItemIcon className={styles['MenuItem-icon']}>
@@ -562,9 +564,11 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                       <List>
                         <li className={styles['VhiDrawer-header']}>
                           <strong id="site-menu-drawer-title-3">{pageFin ? '설정 및 메뉴' : '마이 메뉴'}</strong>
-                          <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                            <CloseRoundedIcon />
-                          </IconButton>
+                          <Tooltip title="메뉴 닫기">
+                            <IconButton type="button" onClick={handleCloseProfileDrawer}>
+                              <CloseRoundedIcon />
+                            </IconButton>
+                          </Tooltip>
                         </li>
 
                         {isLoggedIn ? (

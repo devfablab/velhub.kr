@@ -5,8 +5,18 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import GoogleIcon from '@mui/icons-material/Google';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+  Tooltip,
+} from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import VhiKakao from '../icons/VhiKakao';
 import VhiNaver from '../icons/VhiNaver';
 import styles from '@/app/auth.module.sass';
@@ -205,6 +215,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleNaverLogin}
           disabled={isSubmitting}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           <VhiNaver />
           <span>네이버 아이디로 {actionText}</span>
         </button>
@@ -217,6 +228,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleKakaoLogin}
           disabled={isSubmitting}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           <VhiKakao />
           <span>카카오 아이디로 {actionText}</span>
         </button>
@@ -229,6 +241,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleGoogleLogin}
           disabled={isSubmitting}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           <GoogleIcon />
           <span>Google 아이디로 {actionText}</span>
         </button>
@@ -241,6 +254,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleGithubLogin}
           disabled={isSubmitting}
         >
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           <GitHubIcon />
           <span>GitHub 아이디로 {actionText}</span>
         </button>
@@ -255,9 +269,11 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           slotProps={{ paper: { 'aria-labelledby': 'components-auth-social-login-buttons-drawer-title' } }}
         >
           <h2 id="components-auth-social-login-buttons-drawer-title">소셜 로그인 오류</h2>
-          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <div className="VhiDrawer-bottom-content">
             <p style={{ whiteSpace: 'pre-line' }}>{errorMessage}</p>
           </div>
@@ -276,9 +292,11 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           className="vh-dialog vh-alert-dialog"
         >
           <DialogTitle>소셜 로그인 오류</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
+          <Tooltip title="닫기">
+            <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+          </Tooltip>
           <DialogContent>
             <p style={{ whiteSpace: 'pre-line' }}>{errorMessage}</p>
           </DialogContent>

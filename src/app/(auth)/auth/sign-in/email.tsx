@@ -17,10 +17,12 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies.client';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DarkThemeProvider from '../DarkThemeProvider';
 import HCaptchaBox from './hCaptcha';
 import styles from '@/app/auth.module.sass';
@@ -568,6 +570,7 @@ export default function EmailSignIn() {
 
           <div className={styles.actions}>
             <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               이메일로 계속하기
             </button>
           </div>
@@ -588,9 +591,11 @@ export default function EmailSignIn() {
             slotProps={{ paper: { 'aria-labelledby': 'auth-sign-in-email-drawer-title' } }}
           >
             <h2 id="auth-sign-in-email-drawer-title">{errorPopup.title}</h2>
-            <button type="button" className="close-button" onClick={handleErrorPopupClose} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleErrorPopupClose}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <ul className="error-messages">
                 {errorPopup.messages.map((message, index) => (
@@ -615,9 +620,11 @@ export default function EmailSignIn() {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>{errorPopup.title}</DialogTitle>
-            <button type="button" className="close-button" onClick={handleErrorPopupClose} aria-label="닫기">
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleErrorPopupClose}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <ul className="error-messages">
                 {errorPopup.messages.map((message, index) => (
@@ -643,15 +650,11 @@ export default function EmailSignIn() {
             slotProps={{ paper: { 'aria-labelledby': 'auth-sign-in-email-drawer-title-2' } }}
           >
             <h2 id="auth-sign-in-email-drawer-title-2">이메일 로그인 설정</h2>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCancelDecision}
-              aria-label="닫기"
-              disabled={isSubmitting}
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCancelDecision} disabled={isSubmitting}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </div>
@@ -670,6 +673,7 @@ export default function EmailSignIn() {
                 onClick={handleConfirmEnableEmailLogin}
                 disabled={isSubmitting}
               >
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 비밀번호 설정 메일 보내기
               </button>
             </div>
@@ -683,15 +687,11 @@ export default function EmailSignIn() {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>이메일 로그인 설정</DialogTitle>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCancelDecision}
-              aria-label="닫기"
-              disabled={isSubmitting}
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCancelDecision} disabled={isSubmitting}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </DialogContent>
@@ -700,6 +700,7 @@ export default function EmailSignIn() {
                 취소
               </button>
               <button type="button" onClick={handleConfirmEnableEmailLogin} disabled={isSubmitting}>
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 비밀번호 설정 메일 보내기
               </button>
             </DialogActions>
@@ -715,15 +716,11 @@ export default function EmailSignIn() {
             slotProps={{ paper: { 'aria-labelledby': 'auth-sign-in-email-drawer-title-3' } }}
           >
             <h2 id="auth-sign-in-email-drawer-title-3">이메일 로그인 확인</h2>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCancelDecision}
-              aria-label="닫기"
-              disabled={isSubmitting}
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCancelDecision} disabled={isSubmitting}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <div className="VhiDrawer-bottom-content">
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </div>
@@ -742,6 +739,7 @@ export default function EmailSignIn() {
                 onClick={handleConfirmEmailLogin}
                 disabled={isSubmitting}
               >
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 이메일 로그인
               </button>
             </div>
@@ -755,15 +753,11 @@ export default function EmailSignIn() {
             className="vh-dialog vh-alert-dialog"
           >
             <DialogTitle>이메일 로그인 확인</DialogTitle>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCancelDecision}
-              aria-label="닫기"
-              disabled={isSubmitting}
-            >
-              <CloseRoundedIcon />
-            </button>
+            <Tooltip title="닫기">
+              <button type="button" className="close-button" onClick={handleCancelDecision} disabled={isSubmitting}>
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
             <DialogContent>
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </DialogContent>
@@ -772,6 +766,7 @@ export default function EmailSignIn() {
                 취소
               </button>
               <button type="button" onClick={handleConfirmEmailLogin} disabled={isSubmitting}>
+                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 이메일 로그인
               </button>
             </DialogActions>
