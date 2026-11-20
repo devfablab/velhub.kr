@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import { normalizeText } from '@/lib/utils';
 import Opt, { type BoardResponse } from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{

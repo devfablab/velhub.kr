@@ -1,6 +1,6 @@
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type Props = {
   params: Promise<{ siteName: string; boardName: string; contentId: string }>;

@@ -6,11 +6,7 @@ import { getSiteRoutingInfo } from '@/lib/site/siteState.server';
 import { normalizeText } from '@/lib/utils';
 
 type CommunityManageRole =
-  | 'owner'
-  | 'community-manager'
-  | 'board-manager'
-  | 'board-general-manager'
-  | 'board-assistant-manager';
+  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager';
 
 type CommunityManageLevel = CommunityManageRole | 'member';
 
@@ -904,13 +900,11 @@ export async function proxy(request: NextRequest) {
             isSiteOwner = staff.response.ok && (staff.result?.role === 'owner' || staff.result?.role === 'admin');
           }
 
-          if (
-            !(
-              isSiteOwner &&
-              (rhizomeState.result.siteInfo.is_blocked === null || rhizomeState.result.siteInfo.is_blocked === false) &&
-              isManagePath(pathname)
-            )
-          ) {
+          if (!(
+            isSiteOwner &&
+            (rhizomeState.result.siteInfo.is_blocked === null || rhizomeState.result.siteInfo.is_blocked === false) &&
+            isManagePath(pathname)
+          )) {
             const redirectPath = getShutdownRedirectPath({
               siteName,
               isSiteOwner,

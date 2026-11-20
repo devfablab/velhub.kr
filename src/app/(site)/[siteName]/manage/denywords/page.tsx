@@ -1,5 +1,5 @@
-import Opt, { type DenywordsResponse } from './opt';
 import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
+import Opt, { type DenywordsResponse } from './opt';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

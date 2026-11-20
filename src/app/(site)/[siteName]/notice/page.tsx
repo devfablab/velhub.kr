@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
-import Opt, { type NoticeResponse } from './opt';
 import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
+import Opt, { type NoticeResponse } from './opt';
 
 export default async function Page({
   params,

@@ -17,7 +17,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { inquiryId } = await params;
   const body = (await request.json().catch(() => null)) as { file?: unknown; identityVerificationId?: unknown } | null;
-  const file = body?.file as { fileName?: unknown; fileSize?: unknown; mimeType?: unknown; storagePath?: unknown } | null;
+  const file = body?.file as {
+    fileName?: unknown;
+    fileSize?: unknown;
+    mimeType?: unknown;
+    storagePath?: unknown;
+  } | null;
   const identityVerificationId = body?.identityVerificationId ?? null;
 
   if (identityVerificationId && typeof identityVerificationId !== 'string') {
@@ -63,7 +68,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return Response.json({ error: '가족관계증명서 PDF를 선택해 주세요.' }, { status: 400 });
     }
 
-    if (file.mimeType !== 'application/pdf' || typeof file.fileName !== 'string' || !file.fileName.toLowerCase().endsWith('.pdf')) {
+    if (
+      file.mimeType !== 'application/pdf' ||
+      typeof file.fileName !== 'string' ||
+      !file.fileName.toLowerCase().endsWith('.pdf')
+    ) {
       return Response.json({ error: '가족관계증명서는 PDF 파일만 제출할 수 있습니다.' }, { status: 400 });
     }
 
@@ -83,7 +92,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   if (isCertificateRequired && file) {
-    if (typeof file.storagePath !== 'string' || !file.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/family_relation_certificate/`)) return Response.json({ error: '첨부 파일 경로가 올바르지 않습니다.' }, { status: 400 });
+    if (
+      typeof file.storagePath !== 'string' ||
+      !file.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/family_relation_certificate/`)
+    )
+      return Response.json({ error: '첨부 파일 경로가 올바르지 않습니다.' }, { status: 400 });
     const uploadError = await verifyConciergeTemporaryFile({
       bucket,
       file: file as { fileSize: number; mimeType: string; storagePath: string },

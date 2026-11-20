@@ -4,7 +4,6 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { type BlogSubscriptionBadge, getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments, canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
-import { findSharedCoPostByPostId, findSharedCoPostForSite } from '@/lib/service/site/blog/coPosts';
 import {
   getCommentImageUrl,
   POST_COMMENT_IMAGE_BUCKET,
@@ -13,6 +12,7 @@ import {
   type UploadedCommentImage,
   uploadCommentImage,
 } from '@/lib/service/commentImage.server';
+import { findSharedCoPostByPostId, findSharedCoPostForSite } from '@/lib/service/site/blog/coPosts';
 import {
   assertCommunityCommentWritePolicy,
   increaseCommunityCommentCount,
@@ -30,12 +30,7 @@ type RouteContext = {
 };
 
 type AuthorRole =
-  | 'owner'
-  | 'community-manager'
-  | 'board-manager'
-  | 'board-general-manager'
-  | 'board-assistant-manager'
-  | 'member';
+  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;

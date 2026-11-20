@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
 import type { CoPostListResponse } from './coPostInvitations';
 import Opt, { type BoardContentsResponse, type BoardsResponse, type InitialPostsData } from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{

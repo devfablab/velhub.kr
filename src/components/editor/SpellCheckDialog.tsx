@@ -26,7 +26,6 @@ import {
   type SpellCheckSectionKind,
   splitSpellCheckBlocks,
 } from '@/lib/spellCheck/markdownBlocks';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { LoadingIndicator } from '../LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 

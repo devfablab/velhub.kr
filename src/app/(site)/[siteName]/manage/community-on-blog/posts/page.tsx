@@ -1,5 +1,5 @@
-import Opt, { type BlogCommunityManageResponse } from './opt';
 import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
+import Opt, { type BlogCommunityManageResponse } from './opt';
 
 export default async function Page({ params }: { params: Promise<{ siteName: string }> }) {
   const { siteName } = await params;

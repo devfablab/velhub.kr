@@ -1,6 +1,7 @@
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { detectAdult } from '@/lib/service/detectAdult.server';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import type { SettlementResponse } from '@/components/SettlementForm';
@@ -9,7 +10,6 @@ import type { BlogSubscriptionResponse } from './blog';
 import BlogSubscription from './blog';
 import type { SeriesSubscriptionsResponse } from './series';
 import SeriesSubscriptions from './series';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import styles from '@/app/manage.module.sass';
 
 type RouteContext = {

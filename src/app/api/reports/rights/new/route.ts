@@ -17,12 +17,7 @@ type RightsReportCategory =
   | 'rights_design_patent_utility';
 
 type RightsReasonType =
-  | 'defamation'
-  | 'personality_rights'
-  | 'copyright'
-  | 'trademark'
-  | 'counterfeit'
-  | 'design_patent_utility';
+  'defamation' | 'personality_rights' | 'copyright' | 'trademark' | 'counterfeit' | 'design_patent_utility';
 
 type RightsOwnerType = 'individual' | 'organization';
 type ReporterCapacity = 'direct' | 'proxy';

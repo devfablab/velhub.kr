@@ -107,9 +107,7 @@ export async function getUsersWithMembershipFeature(stigmaIds: string[], feature
     throw new Error('멤버십 정보를 확인하지 못했습니다.');
   }
 
-  const membershipUserIds = new Map(
-    membershipsResult.data.map((membership) => [membership.id, membership.user_id]),
-  );
+  const membershipUserIds = new Map(membershipsResult.data.map((membership) => [membership.id, membership.user_id]));
   const membershipIds = [...membershipUserIds.keys()];
 
   if (membershipIds.length === 0) {
@@ -144,9 +142,7 @@ export async function getUsersWithMembershipFeature(stigmaIds: string[], feature
   );
   const availablePlanIds = [
     ...new Set(
-      itemsResult.data
-        .filter((item) => availableMembershipIds.has(item.membership_id))
-        .map((item) => item.plan_id),
+      itemsResult.data.filter((item) => availableMembershipIds.has(item.membership_id)).map((item) => item.plan_id),
     ),
   ];
 
@@ -161,9 +157,7 @@ export async function getUsersWithMembershipFeature(stigmaIds: string[], feature
   }
 
   const eligiblePlanIds = new Set(
-    plansResult.data
-      .filter((plan) => plan.plan_key.replace(/^all_in_one_/, '') === featureKey)
-      .map((plan) => plan.id),
+    plansResult.data.filter((plan) => plan.plan_key.replace(/^all_in_one_/, '') === featureKey).map((plan) => plan.id),
   );
   const usersWithFeature = new Set<string>();
 

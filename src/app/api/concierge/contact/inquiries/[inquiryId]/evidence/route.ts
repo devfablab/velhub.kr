@@ -27,11 +27,21 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
     return Response.json({ error: '현재 증빙 파일을 첨부할 수 있는 문의가 아닙니다.' }, { status: 400 });
 
   const body = (await request.json().catch(() => null)) as { file?: unknown } | null;
-  const file = body?.file as { fileName?: unknown; fileSize?: unknown; mimeType?: unknown; storagePath?: unknown } | null;
+  const file = body?.file as {
+    fileName?: unknown;
+    fileSize?: unknown;
+    mimeType?: unknown;
+    storagePath?: unknown;
+  } | null;
   if (!file || !allowedMimeTypes.has(String(file.mimeType)))
     return Response.json({ error: 'PDF, JPG, PNG 또는 WEBP 파일만 첨부할 수 있습니다.' }, { status: 400 });
-  if (typeof file.fileSize !== 'number' || file.fileSize > 1024 * 1024) return Response.json({ error: '첨부 파일은 1MB 이하만 가능합니다.' }, { status: 400 });
-  if (typeof file.storagePath !== 'string' || !file.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/contact_evidence/`)) return Response.json({ error: '첨부 파일 경로가 올바르지 않습니다.' }, { status: 400 });
+  if (typeof file.fileSize !== 'number' || file.fileSize > 1024 * 1024)
+    return Response.json({ error: '첨부 파일은 1MB 이하만 가능합니다.' }, { status: 400 });
+  if (
+    typeof file.storagePath !== 'string' ||
+    !file.storagePath.startsWith(`temp/concierge/${currentStigma.userId}/contact_evidence/`)
+  )
+    return Response.json({ error: '첨부 파일 경로가 올바르지 않습니다.' }, { status: 400 });
   const uploadError = await verifyConciergeTemporaryFile({
     bucket,
     file: file as { fileSize: number; mimeType: string; storagePath: string },

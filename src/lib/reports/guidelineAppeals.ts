@@ -9,10 +9,7 @@ export type GuidelineAppealMessage = {
 };
 
 export type GuidelineAppealMessageStatus =
-  | 'appellant_sent'
-  | 'appellant_new_reply'
-  | 'staff_new_appeal'
-  | 'staff_replied';
+  'appellant_sent' | 'appellant_new_reply' | 'staff_new_appeal' | 'staff_replied';
 
 export type GuidelineAppealItem = {
   reportId: string;

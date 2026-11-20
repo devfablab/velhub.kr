@@ -240,15 +240,13 @@ export async function loadMemberRestrictionMessages(context: MemberRestrictionMe
   }
 
   const siteName = context.site.site_label || context.site.site_key;
-  const messages = ((messagesResult.data ?? []) as MessageRow[]).map(
-    (message): MemberRestrictionMessage => ({
-      id: message.id,
-      senderType: message.sender_type,
-      senderName: message.sender_type === 'staff' ? siteName : context.memberName,
-      message: message.message,
-      createdAt: message.created_at,
-    }),
-  );
+  const messages = ((messagesResult.data ?? []) as MessageRow[]).map((message): MemberRestrictionMessage => ({
+    id: message.id,
+    senderType: message.sender_type,
+    senderName: message.sender_type === 'staff' ? siteName : context.memberName,
+    message: message.message,
+    createdAt: message.created_at,
+  }));
 
   return {
     siteName,

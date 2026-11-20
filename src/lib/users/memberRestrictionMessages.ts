@@ -20,10 +20,7 @@ export type MemberRestrictionMessagesResponse = {
 };
 
 export type MemberRestrictionMessageStatus =
-  | 'appellant_sent'
-  | 'appellant_new_reply'
-  | 'staff_new_appeal'
-  | 'staff_replied';
+  'appellant_sent' | 'appellant_new_reply' | 'staff_new_appeal' | 'staff_replied';
 
 export function isMemberRestrictionType(value: unknown): value is MemberRestrictionType {
   return memberRestrictionTypes.includes(value as MemberRestrictionType);

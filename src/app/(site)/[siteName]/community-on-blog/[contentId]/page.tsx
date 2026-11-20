@@ -1,7 +1,7 @@
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import Opt, { type BlogCommunityPostResponse } from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 export default async function Page({ params }: { params: Promise<{ siteName: string; contentId: string }> }) {
   const { siteName, contentId } = await params;

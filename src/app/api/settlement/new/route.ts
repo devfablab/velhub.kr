@@ -264,8 +264,7 @@ export async function POST(request: NextRequest) {
         .eq('id', settlementRow.id);
       if (parentError) {
         await supabaseAdmin.from('chorogons_banque').delete().eq('chorogon_id', settlementRow.id);
-        if (guardianDocumentUrl)
-          await r2Storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([guardianDocumentUrl]);
+        if (guardianDocumentUrl) await r2Storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).remove([guardianDocumentUrl]);
         return NextResponse.json({ message: '법정대리인 정보를 저장하지 못했습니다.' }, { status: 500 });
       }
     }

@@ -227,7 +227,9 @@ export async function PUT(request: Request) {
         const record = (item ?? {}) as { id?: unknown; word?: unknown };
         return { id: normalizeText(typeof record.id === 'string' ? record.id : ''), word: normalizeWord(record.word) };
       })
-      .filter((item) => currentWords.has(item.id) && !deleteSet.has(item.id) && currentWords.get(item.id) !== item.word);
+      .filter(
+        (item) => currentWords.has(item.id) && !deleteSet.has(item.id) && currentWords.get(item.id) !== item.word,
+      );
     const creates = (Array.isArray(body.creates) ? body.creates : []).map(normalizeWord);
 
     for (const word of [...updates.map((item) => item.word), ...creates]) {

@@ -298,15 +298,13 @@ export async function loadGuidelineAppealMessages(context: GuidelineAppealContex
   });
   const siteName = context.site.site_label || context.site.site_key;
 
-  return ((messagesResult.data ?? []) as MessageRow[]).map(
-    (message): GuidelineAppealMessage => ({
-      id: message.id,
-      senderType: message.sender_type,
-      senderName: message.sender_type === 'staff' ? siteName : authorName,
-      message: message.message,
-      createdAt: message.created_at,
-    }),
-  );
+  return ((messagesResult.data ?? []) as MessageRow[]).map((message): GuidelineAppealMessage => ({
+    id: message.id,
+    senderType: message.sender_type,
+    senderName: message.sender_type === 'staff' ? siteName : authorName,
+    message: message.message,
+    createdAt: message.created_at,
+  }));
 }
 
 async function loadBlogCommunityGuidelineAppealItems({ stigmaId, origin }: { stigmaId: string; origin: string }) {

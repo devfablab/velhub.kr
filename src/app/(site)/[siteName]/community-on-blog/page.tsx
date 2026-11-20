@@ -1,5 +1,5 @@
-import Opt, { type BlogCommunityResponse } from './opt';
 import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
+import Opt, { type BlogCommunityResponse } from './opt';
 
 export default async function Page({
   params,

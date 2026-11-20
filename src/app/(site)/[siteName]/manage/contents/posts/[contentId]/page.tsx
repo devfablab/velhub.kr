@@ -3,10 +3,10 @@ import {
   getCoPostPublishState,
   getLatestCoPostRevision,
 } from '@/lib/service/site/blog/coPosts';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 import type { StatusResponse, ContentResponse, CategoryListResponse, SeriesListResponse } from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 type Props = { params: Promise<{ siteName: string; contentId: string }> };
 export default async function Page({ params }: Props) {
   const { siteName, contentId } = await params;

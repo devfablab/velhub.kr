@@ -1,5 +1,5 @@
-import Opt, { type RecommendedPostsResponse } from './opt';
 import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
+import Opt, { type RecommendedPostsResponse } from './opt';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

@@ -3,7 +3,6 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
-import { findSharedCoPostByPostId } from '@/lib/service/site/blog/coPosts';
 import {
   getCommentImageUrl,
   POST_COMMENT_IMAGE_BUCKET,
@@ -12,6 +11,7 @@ import {
   type UploadedCommentImage,
   uploadCommentImage,
 } from '@/lib/service/commentImage.server';
+import { findSharedCoPostByPostId } from '@/lib/service/site/blog/coPosts';
 import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -39,12 +39,7 @@ type LevelRow = {
 };
 
 type AuthorRole =
-  | 'owner'
-  | 'community-manager'
-  | 'board-manager'
-  | 'board-general-manager'
-  | 'board-assistant-manager'
-  | 'member';
+  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;

@@ -1,6 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { canUploadBlogCommunityCommentImage } from '@/lib/payments/postCommentAccess';
-import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/site/blog/blogCommunity/access';
 import {
   BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET,
   readCommentRequest,
@@ -8,6 +7,7 @@ import {
   type UploadedCommentImage,
   uploadCommentImage,
 } from '@/lib/service/commentImage.server';
+import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/site/blog/blogCommunity/access';
 import { isNumericContentSlug } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler.server';

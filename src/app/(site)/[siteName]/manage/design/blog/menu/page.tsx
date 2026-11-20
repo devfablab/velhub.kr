@@ -1,6 +1,6 @@
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import Opt from './opt';
 import type { InitialMenuResponse } from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 export default async function Page({ params }: RouteContext) {

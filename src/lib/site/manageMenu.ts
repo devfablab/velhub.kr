@@ -1,13 +1,5 @@
 export type ManageMenuKind =
-  | 'contents'
-  | 'design'
-  | 'join'
-  | 'members'
-  | 'settings'
-  | 'team'
-  | 'payments'
-  | 'stats'
-  | 'reports';
+  'contents' | 'design' | 'join' | 'members' | 'settings' | 'team' | 'payments' | 'stats' | 'reports';
 
 export type ManageTabMenuItem = {
   href: string;

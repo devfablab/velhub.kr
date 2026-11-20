@@ -1,6 +1,6 @@
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import Opt from './opt';
 import type { JoinStatsResponse } from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

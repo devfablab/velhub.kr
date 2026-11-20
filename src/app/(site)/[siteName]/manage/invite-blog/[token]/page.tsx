@@ -1,8 +1,8 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import { getSessionClaims } from '@/lib/session/server';
 import Opt from './opt';
 import type { InviteResponse } from './opt';
-import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type PageProps = {
   params: Promise<{

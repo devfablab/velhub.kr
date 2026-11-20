@@ -91,9 +91,8 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     '사이트 정보를 불러오지 못했습니다.',
   );
   const whenSiteType = <T,>(siteType: 'blog' | 'community', load: () => Promise<{ data: T | null }>) =>
-    headerPromise.then(
-      (result): Promise<{ data: T | null }> =>
-        result.data?.siteType === siteType ? load() : Promise.resolve({ data: null }),
+    headerPromise.then((result): Promise<{ data: T | null }> =>
+      result.data?.siteType === siteType ? load() : Promise.resolve({ data: null }),
     );
   const [
     settings,

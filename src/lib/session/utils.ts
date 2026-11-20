@@ -19,15 +19,7 @@ export type SessionRouteResult =
     };
 
 export type SitePathKind =
-  | 'outside'
-  | 'home'
-  | 'board'
-  | 'content'
-  | 'board_new'
-  | 'content_edit'
-  | 'join'
-  | 'forbidden'
-  | 'other';
+  'outside' | 'home' | 'board' | 'content' | 'board_new' | 'content_edit' | 'join' | 'forbidden' | 'other';
 
 export function getSitePathKind(pathname: string, siteName: string): SitePathKind {
   const normalizedPathname = normalizeText(pathname);
