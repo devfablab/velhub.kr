@@ -9,7 +9,7 @@ import type { BlogSubscriptionResponse } from './blog';
 import BlogSubscription from './blog';
 import type { SeriesSubscriptionsResponse } from './series';
 import SeriesSubscriptions from './series';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 import styles from '@/app/manage.module.sass';
 
 type RouteContext = {

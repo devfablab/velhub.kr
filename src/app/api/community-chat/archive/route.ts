@@ -4,7 +4,7 @@ import {
   type CommunityChatMessage,
   getCommunityChatRetentionDate,
   isCommunityChatWorkerRequest,
-} from '@/lib/service/community/communityChat';
+} from '@/lib/service/site/community/communityChat';
 
 function isMessage(value: unknown): value is CommunityChatMessage {
   if (!value || typeof value !== 'object') return false;

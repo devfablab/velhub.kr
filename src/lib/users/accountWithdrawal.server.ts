@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { cancelAccountRecurringPayments } from '@/lib/payments/cancelAccountRecurringPayments';
-import { callCommunityChatWorker } from '@/lib/service/community/communityChat';
+import { callCommunityChatWorker } from '@/lib/service/site/community/communityChat';
 
 export { ACCOUNT_WITHDRAWAL_GRACE_MS } from '@/lib/users/accountWithdrawal.shared';
 

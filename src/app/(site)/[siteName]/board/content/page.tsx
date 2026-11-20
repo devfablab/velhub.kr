@@ -6,7 +6,7 @@ import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
 import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import type { CommentsResponse } from '@/components/comments/CommentList';
-import { getSiteApiData } from '../../../getSiteApiData';
+import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Opt, { type ContentResponse, type PollResponse } from './opt';
 
 type CountResponse = {

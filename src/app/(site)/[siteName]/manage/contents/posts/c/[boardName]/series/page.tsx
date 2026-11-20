@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt, { type SeriesListResponse } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{

@@ -7,8 +7,8 @@ import {
   getBlogCommunityContext,
   getBlogCommunityEnablement,
   assertBlogCommunityUse,
-} from '@/lib/service/blog/blogCommunity/access';
-import { normalizeBlogCommunityDraw } from '@/lib/service/blog/blogCommunity/draw';
+} from '@/lib/service/site/blog/blogCommunity/access';
+import { normalizeBlogCommunityDraw } from '@/lib/service/site/blog/blogCommunity/draw';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';
 

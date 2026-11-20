@@ -9,7 +9,7 @@ import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 import type { DonationStatusResponse } from '@/components/buttons/DonationButton';
 import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
-import { getSiteApiData } from '../../../getSiteApiData';
+import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Container from '../../menu';
 import Opt, { type SeriesContentItem } from './opt';
 

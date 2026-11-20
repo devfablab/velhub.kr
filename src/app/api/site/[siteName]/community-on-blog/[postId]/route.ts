@@ -1,8 +1,11 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
-import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
-import { completeBlogCommunityRandomDraw, normalizeBlogCommunityDraw } from '@/lib/service/blog/blogCommunity/draw';
+import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/site/blog/blogCommunity/access';
+import {
+  completeBlogCommunityRandomDraw,
+  normalizeBlogCommunityDraw,
+} from '@/lib/service/site/blog/blogCommunity/draw';
 import { isNumericContentSlug } from '@/lib/utils';
 import { normalizeText } from '@/lib/utils';
 import { getWordingProfilerViolationFields, WORDING_PROFILER_POST_EDIT_ERROR } from '@/lib/wordingProfiler.server';

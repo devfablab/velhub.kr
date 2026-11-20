@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
-import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
+import { getVisibleBlogHomeAds } from '@/lib/service/site/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import OptimizedImage from '@/components/OptimizedImage';

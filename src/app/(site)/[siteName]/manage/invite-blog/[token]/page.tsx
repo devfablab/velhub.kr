@@ -2,7 +2,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims } from '@/lib/session/server';
 import Opt from './opt';
 import type { InviteResponse } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type PageProps = {
   params: Promise<{

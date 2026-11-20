@@ -1,5 +1,5 @@
 import Opt, { type GuidelinesResponse } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

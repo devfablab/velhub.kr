@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { canUploadBlogCommunityCommentImage } from '@/lib/payments/postCommentAccess';
-import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
+import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/site/blog/blogCommunity/access';
 import {
   BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET,
   readCommentRequest,

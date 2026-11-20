@@ -2,7 +2,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   type CommunityManageRoleType,
   isCommunityManageRole,
-} from '@/lib/service/community/communityManager/permissions';
+} from '@/lib/service/site/community/communityManager/permissions';
 import { getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';
 

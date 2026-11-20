@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { type CoPostPayload, getCoPost, getCoPostRole } from '@/lib/service/blog/coPosts';
+import { type CoPostPayload, getCoPost, getCoPostRole } from '@/lib/service/site/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 
 type RouteContext = { params: Promise<{ coPostId: string }> };

@@ -3,7 +3,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getPostList } from '@/lib/board/getPostList';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
-import { getHashtagKey, normalizeHashtagLabel } from '@/lib/service/blog/blogHashtags';
+import { getHashtagKey, normalizeHashtagLabel } from '@/lib/service/site/blog/blogHashtags';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import OptimizedImage from '@/components/OptimizedImage';

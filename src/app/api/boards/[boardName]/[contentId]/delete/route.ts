@@ -1,10 +1,10 @@
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { CO_POST_DIRECT_CHANGE_ERROR, isPostInCoPost } from '@/lib/service/blog/coPosts';
+import { CO_POST_DIRECT_CHANGE_ERROR, isPostInCoPost } from '@/lib/service/site/blog/coPosts';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
-} from '@/lib/service/community/communityManager/utils';
+} from '@/lib/service/site/community/communityManager/utils';
 import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import verifySession from '@/lib/session/verifySession';

@@ -8,7 +8,7 @@ import type { SubscriptionStatusResponse } from '@/components/buttons/Subscripti
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import type { BoardRecentResponse } from '@/components/service/community/BoardRecentTableList';
-import { getSiteApiData } from '../../../getSiteApiData';
+import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Opt, { type ContentResponse, type PollResponse } from './opt';
 
 type CountResponse = {

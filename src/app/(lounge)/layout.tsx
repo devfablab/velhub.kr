@@ -71,8 +71,16 @@ export default async function RootLayout({
 
   return (
     <LoungeHeaderProvider value={header}>
+      <a href="#content" className="sr-only">
+        본문영역 바로가기
+      </a>
+      <hr id="header" />
       <HeaderLounge />
+      <hr id="content" />
       {children}
+      <a href="#header" className="sr-only">
+        메뉴영역 바로가기
+      </a>
       <Footer />
       <ChannelWorks />
     </LoungeHeaderProvider>

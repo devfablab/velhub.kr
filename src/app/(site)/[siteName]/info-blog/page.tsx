@@ -2,7 +2,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Container from '../menu';
 import Opt, { type FavoriteResponse } from './opt';
 

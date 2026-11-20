@@ -20,7 +20,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { format } from 'date-fns';
-import type { CommunityChatMessage } from '@/lib/service/community/communityChat';
+import type { CommunityChatMessage } from '@/lib/service/site/community/communityChat';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/communityChat.module.sass';
 

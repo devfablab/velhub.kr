@@ -1,5 +1,5 @@
 import type { SettlementResponse } from '@/components/SettlementForm';
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Container from '../menu';
 import { getRevenueSummary } from './getInitialData';
 import RevenueSummary from './RevenueSummary';

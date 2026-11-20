@@ -1,6 +1,6 @@
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
-import { getOwnerTransferAvailability } from '@/lib/service/community/ownerTransfers';
+import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
+import { getOwnerTransferAvailability } from '@/lib/service/site/community/ownerTransfers';
 import { normalizeText } from '@/lib/utils';
 
 type OwnerTransferRequestBody = {

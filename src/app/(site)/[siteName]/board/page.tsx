@@ -3,7 +3,7 @@ import { DEFAULT_LIST_BOARD_PAGE_SIZE, LIST_BOARD_PAGE_SIZES, normalizePageSize 
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Container from '../menu';
 import Opt, { type BoardListResponse } from './opt';
 

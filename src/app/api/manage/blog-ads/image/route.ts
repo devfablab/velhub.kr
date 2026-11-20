@@ -7,7 +7,7 @@ import {
   MAX_BLOG_AD_IMAGE_SIZE,
   getBlogAdIdentityStatus,
   getBlogAdSiteContext,
-} from '@/lib/service/blog/blogAds/server';
+} from '@/lib/service/site/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 
 export async function POST(request: Request) {

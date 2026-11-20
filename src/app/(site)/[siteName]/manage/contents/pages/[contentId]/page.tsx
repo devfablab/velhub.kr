@@ -1,6 +1,6 @@
 import Opt from './opt';
 import type { InitialPageDetail } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = { params: Promise<{ siteName: string; contentId: string }> };
 type StatusResponse = { hasBoard?: boolean; boardName?: string; error?: string };

@@ -3,8 +3,8 @@ import sharp from 'sharp';
 import { sanitizeSvg } from '@/lib/attachments/sanitizeSvg.server';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
-import { refreshCommunitySiteMemberLevels } from '@/lib/service/community/refreshMemberLevel';
+import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
+import { refreshCommunitySiteMemberLevels } from '@/lib/service/site/community/refreshMemberLevel';
 import { normalizeText } from '@/lib/utils';
 
 const MAX_ICON_FILE_SIZE = 1024 * 1024;

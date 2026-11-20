@@ -5,7 +5,7 @@ import {
   type CommunityManagerAccess,
   getCommunityManagerAccess,
   getCommunityManagerRows,
-} from '@/lib/service/community/communityManager/utils';
+} from '@/lib/service/site/community/communityManager/utils';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

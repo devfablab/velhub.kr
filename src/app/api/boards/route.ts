@@ -2,8 +2,8 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   canManageAllCommunityBoardContents,
   getCommunityManagerAccess,
-} from '@/lib/service/community/communityManager/utils';
-import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
+} from '@/lib/service/site/community/communityManager/utils';
+import { getVisibleCommunityBoards } from '@/lib/service/site/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

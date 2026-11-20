@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
+import { findSharedCoPostForSite } from '@/lib/service/site/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

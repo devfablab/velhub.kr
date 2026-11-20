@@ -1,6 +1,9 @@
 import { createR2UploadSignature } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
+import {
+  assertCommunityBoardWritePermission,
+  assertCommunityPostWritePolicy,
+} from '@/lib/service/site/community/policies';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

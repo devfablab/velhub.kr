@@ -4,7 +4,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { type BlogSubscriptionBadge, getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments, canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
-import { findSharedCoPostByPostId, findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
+import { findSharedCoPostByPostId, findSharedCoPostForSite } from '@/lib/service/site/blog/coPosts';
 import {
   getCommentImageUrl,
   POST_COMMENT_IMAGE_BUCKET,
@@ -13,8 +13,11 @@ import {
   type UploadedCommentImage,
   uploadCommentImage,
 } from '@/lib/service/commentImage.server';
-import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/service/community/policies';
-import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
+import {
+  assertCommunityCommentWritePolicy,
+  increaseCommunityCommentCount,
+} from '@/lib/service/site/community/policies';
+import { refreshCommunityMemberLevel } from '@/lib/service/site/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation } from '@/lib/wordingProfiler.server';

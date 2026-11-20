@@ -2,7 +2,7 @@ import { AUTO_OG_IMAGE_HEIGHT, AUTO_OG_IMAGE_WIDTH, getAutoOgImageUrl } from '@/
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getCoAuthorNamesByPostIds } from '@/lib/service/blog/coPosts';
+import { getCoAuthorNamesByPostIds } from '@/lib/service/site/blog/coPosts';
 import { normalizeText } from '@/lib/utils';
 
 type SiteType = 'blog' | 'community';

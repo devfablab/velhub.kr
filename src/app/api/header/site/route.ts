@@ -1,7 +1,7 @@
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
+import { refreshCommunityMemberLevel } from '@/lib/service/site/community/refreshMemberLevel';
 import { getLibraryStatus } from '@/lib/session/libraryStatus';
 import { getSessionClaims } from '@/lib/session/server';
 import verifySession from '@/lib/session/verifySession';

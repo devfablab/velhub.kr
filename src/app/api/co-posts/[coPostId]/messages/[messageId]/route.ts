@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getCoPost, getCoPostRole } from '@/lib/service/blog/coPosts';
-import { callCommunityChatWorker } from '@/lib/service/community/communityChat';
+import { getCoPost, getCoPostRole } from '@/lib/service/site/blog/coPosts';
+import { callCommunityChatWorker } from '@/lib/service/site/community/communityChat';
 import verifySession from '@/lib/session/verifySession';
 
 type RouteContext = { params: Promise<{ coPostId: string; messageId: string }> };

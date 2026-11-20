@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { findSharedCoPostForSite } from '@/lib/service/blog/coPosts';
-import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
+import { findSharedCoPostForSite } from '@/lib/service/site/blog/coPosts';
+import { refreshCommunityMemberLevel } from '@/lib/service/site/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import verifySession from '@/lib/session/verifySession';

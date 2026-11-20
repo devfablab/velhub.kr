@@ -1,5 +1,5 @@
 import { isPast } from 'date-fns';
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Opt, { type UserInfoResponse } from './opt';
 
 export default async function Page({ params }: { params: Promise<{ siteName: string }> }) {

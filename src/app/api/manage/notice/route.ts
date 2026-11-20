@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getNoticeContext, NOTICE_DEFAULT_BOARD_LABEL } from '@/lib/service/blog/notice/access';
+import { getNoticeContext, NOTICE_DEFAULT_BOARD_LABEL } from '@/lib/service/site/blog/notice/access';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

@@ -6,7 +6,7 @@ import { normalizeText } from '@/lib/utils';
 import FooterSite from '@/components/footers/Site';
 import HeaderSite from '@/components/headers/Site';
 import SiteGoogleAnalytics from '@/components/SiteGoogleAnalytics';
-import { getSiteApiData } from '../getSiteApiData';
+import { getSiteApiData } from '../../../lib/service/site/getSiteApiData';
 import CommunityChat from './communityChat';
 import { SiteHeaderProvider, type SiteHeaderData } from './SiteHeaderContext';
 import { SiteInitialDataProvider } from './SiteInitialDataContext';

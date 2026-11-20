@@ -3,8 +3,8 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getBlogSubscriptionBadges } from '@/lib/payments/blogDonation';
 import { canUploadBlogCommunityCommentImage } from '@/lib/payments/postCommentAccess';
-import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
-import { registerBlogCommunityFirstComeDraw } from '@/lib/service/blog/blogCommunity/draw';
+import { assertBlogCommunityUse, getBlogCommunityContext } from '@/lib/service/site/blog/blogCommunity/access';
+import { registerBlogCommunityFirstComeDraw } from '@/lib/service/site/blog/blogCommunity/draw';
 import {
   BLOG_COMMUNITY_COMMENT_IMAGE_BUCKET,
   getCommentImageUrl,

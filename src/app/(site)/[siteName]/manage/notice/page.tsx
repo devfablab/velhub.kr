@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Opt, { type NoticeManageResponse } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

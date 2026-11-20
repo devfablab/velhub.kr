@@ -1,5 +1,5 @@
 import SiteInfo from '@/components/service/community/SiteInfo';
-import { getSiteApiData } from '../../../getSiteApiData';
+import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Container from '../../menu';
 import Aside from './aside';
 import Opt, { type InviteResponse } from './opt';

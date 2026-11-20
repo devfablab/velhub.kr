@@ -1,8 +1,8 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
-import { getBlogCommunityContext } from '@/lib/service/blog/blogCommunity/access';
-import { isPersonalBlogType } from '@/lib/service/blog/notice/access';
-import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getVisibleBlogHomeAds } from '@/lib/service/site/blog/blogAds/server';
+import { getBlogCommunityContext } from '@/lib/service/site/blog/blogCommunity/access';
+import { isPersonalBlogType } from '@/lib/service/site/blog/notice/access';
+import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

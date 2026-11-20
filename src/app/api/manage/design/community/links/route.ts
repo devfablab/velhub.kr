@@ -3,7 +3,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { canEditCommunityDesign, getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import { normalizeText } from '@/lib/utils';
 
 type ServiceValue = 'toonation' | 'kakaotalk' | 'discord';

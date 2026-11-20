@@ -13,7 +13,7 @@ import { normalizeText } from '@/lib/utils';
 import type { DonationStatusResponse } from '@/components/buttons/DonationButton';
 import type { SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Opt, { type BoardListResponse } from './opt';
 
 type SeriesListResponse = {

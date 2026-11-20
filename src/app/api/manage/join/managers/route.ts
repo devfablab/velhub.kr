@@ -6,8 +6,8 @@ import {
   buildCommunityManagerList,
   getBoardSummaries,
   getCommunityManagerAccess,
-} from '@/lib/service/community/communityManager/utils';
-import { getOwnerTransferAvailability } from '@/lib/service/community/ownerTransfers';
+} from '@/lib/service/site/community/communityManager/utils';
+import { getOwnerTransferAvailability } from '@/lib/service/site/community/ownerTransfers';
 import { normalizeText } from '@/lib/utils';
 
 const MAX_ICON_FILE_SIZE = 1024 * 1024;

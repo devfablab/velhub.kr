@@ -5,7 +5,7 @@ import {
   type CommunityManageRoleType,
   getMergedCommunityManagePermission,
   isCommunityManageRole,
-} from '@/lib/service/community/communityManager/permissions';
+} from '@/lib/service/site/community/communityManager/permissions';
 import verifySession from '@/lib/session/verifySession';
 import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';

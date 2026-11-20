@@ -8,12 +8,12 @@ import {
   getCoPostParticipants,
   getCoPostRole,
   toCoPostMessage,
-} from '@/lib/service/blog/coPosts';
+} from '@/lib/service/site/blog/coPosts';
 import {
   callCommunityChatWorker,
   createCommunityChatToken,
   getCommunityChatWorkerUrl,
-} from '@/lib/service/community/communityChat';
+} from '@/lib/service/site/community/communityChat';
 import verifySession from '@/lib/session/verifySession';
 
 type RouteContext = { params: Promise<{ coPostId: string }> };

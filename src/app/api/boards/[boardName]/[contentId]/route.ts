@@ -5,13 +5,17 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { canAccessSubscriptionSeriesComments } from '@/lib/payments/postCommentAccess';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { getVisibleBlogPostPromotion } from '@/lib/service/blog/blogAds/server';
-import { getHashtagsByIds } from '@/lib/service/blog/blogHashtags';
-import { findSharedCoPostForSite, getActiveCoPostByPostId, getCoPostParticipants } from '@/lib/service/blog/coPosts';
+import { getVisibleBlogPostPromotion } from '@/lib/service/site/blog/blogAds/server';
+import { getHashtagsByIds } from '@/lib/service/site/blog/blogHashtags';
+import {
+  findSharedCoPostForSite,
+  getActiveCoPostByPostId,
+  getCoPostParticipants,
+} from '@/lib/service/site/blog/coPosts';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
-} from '@/lib/service/community/communityManager/utils';
+} from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { canManageBlogContents } from '@/lib/site/contentAccess';
 import { normalizeText } from '@/lib/utils';

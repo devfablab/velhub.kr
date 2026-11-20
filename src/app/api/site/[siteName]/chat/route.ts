@@ -7,7 +7,7 @@ import {
   createCommunityChatToken,
   getCommunityChatContext,
   getCommunityChatWorkerUrl,
-} from '@/lib/service/community/communityChat';
+} from '@/lib/service/site/community/communityChat';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

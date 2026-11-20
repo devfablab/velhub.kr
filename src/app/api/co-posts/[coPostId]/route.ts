@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { getCoPost, getCoPostRole, sendCoPostNotification } from '@/lib/service/blog/coPosts';
+import { getCoPost, getCoPostRole, sendCoPostNotification } from '@/lib/service/site/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

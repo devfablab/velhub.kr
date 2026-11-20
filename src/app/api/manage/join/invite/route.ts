@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
 import { createInviteEmailProof } from '@/lib/auth/inviteEmailProof';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

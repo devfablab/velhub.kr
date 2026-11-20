@@ -5,12 +5,18 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
-import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
-import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/service/blog/blogRecommendations.server';
-import { type CoPostPartnerCandidate, createCoPostInvite, validateCoPostInvite } from '@/lib/service/blog/coPosts';
-import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
-import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
+import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/site/blog/blogAds/server';
+import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/site/blog/blogHashtags';
+import {
+  addRecommendedBlogPost,
+  getBlogRecommendationContext,
+} from '@/lib/service/site/blog/blogRecommendations.server';
+import { type CoPostPartnerCandidate, createCoPostInvite, validateCoPostInvite } from '@/lib/service/site/blog/coPosts';
+import {
+  assertCommunityBoardWritePermission,
+  assertCommunityPostWritePolicy,
+} from '@/lib/service/site/community/policies';
+import { refreshCommunityMemberLevel } from '@/lib/service/site/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';

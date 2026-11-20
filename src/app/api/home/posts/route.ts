@@ -4,7 +4,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
-import { getCoAuthorNamesByPostIds } from '@/lib/service/blog/coPosts';
+import { getCoAuthorNamesByPostIds } from '@/lib/service/site/blog/coPosts';
 import { fetchPagedRows, getDateBefore, PERIOD_DAYS } from '@/lib/service/lounge/loungeMoments';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { normalizeText } from '@/lib/utils';

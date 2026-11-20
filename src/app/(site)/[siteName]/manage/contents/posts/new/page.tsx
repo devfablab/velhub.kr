@@ -4,7 +4,7 @@ import { normalizeText } from '@/lib/utils';
 import type { BlogPromotionStatus } from '@/components/service/blog/BlogPostPromotionFields';
 import Opt from './opt';
 import type { CategoryListResponse, SeriesListResponse, StatusResponse } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{

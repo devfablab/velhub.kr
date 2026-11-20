@@ -8,7 +8,7 @@ import {
   getCommunityChatAuthor,
   getCommunityChatContext,
   getCommunityChatRetentionDate,
-} from '@/lib/service/community/communityChat';
+} from '@/lib/service/site/community/communityChat';
 import { hasChatWordingViolation } from '@/lib/wordingProfiler.server';
 
 type RouteContext = { params: Promise<{ siteName: string }> };

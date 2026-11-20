@@ -7,7 +7,7 @@ import {
   canManageCommunityBoardContents,
   canManageCommunityBoardSettings,
   getCommunityManagerAccess,
-} from '@/lib/service/community/communityManager/utils';
+} from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { canManageBlogContents } from '@/lib/site/contentAccess';
 import { findUserIdsByDisplayName } from '@/lib/users/findUsersByDisplayName';

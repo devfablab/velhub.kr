@@ -4,7 +4,7 @@ import {
   getRecommendedBlogPosts,
   removeRecommendedBlogPost,
   reorderRecommendedBlogPosts,
-} from '@/lib/service/blog/blogRecommendations.server';
+} from '@/lib/service/site/blog/blogRecommendations.server';
 import { normalizeText } from '@/lib/utils';
 
 type PostRequestBody = {

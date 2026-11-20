@@ -1,10 +1,13 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { assertCommunityBoardWritePermission, assertCommunityPostWritePolicy } from '@/lib/service/community/policies';
+import {
+  assertCommunityBoardWritePermission,
+  assertCommunityPostWritePolicy,
+} from '@/lib/service/site/community/policies';
 import verifySession from '@/lib/session/verifySession';
 import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
-import { getSiteApiData } from '../../../getSiteApiData';
+import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Opt, {
   type BoardInfoResponse,
   type BoardsResponse,

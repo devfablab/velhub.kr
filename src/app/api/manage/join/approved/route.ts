@@ -2,7 +2,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawal.server';
 import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';

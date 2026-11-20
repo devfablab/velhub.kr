@@ -1,5 +1,5 @@
 import { cookies, headers } from 'next/headers';
-import { callSiteApiRoute } from './siteApiRoutes';
+import { callSiteApiRoute } from '@/lib/service/site/siteApiRoutes';
 
 async function readRouteResponse<T>(
   response: Response,

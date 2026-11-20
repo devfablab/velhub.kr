@@ -1,9 +1,9 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
-import { getVisibleBlogHomeAds } from '@/lib/service/blog/blogAds/server';
-import { isPersonalBlogType } from '@/lib/service/blog/notice/access';
-import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
+import { getVisibleBlogHomeAds } from '@/lib/service/site/blog/blogAds/server';
+import { isPersonalBlogType } from '@/lib/service/site/blog/notice/access';
+import { getVisibleCommunityBoards } from '@/lib/service/site/community/managerOnlyBoards';
 import { getSessionClaims } from '@/lib/session/server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';

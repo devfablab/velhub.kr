@@ -8,7 +8,7 @@ import type {
   SeriesListResponse,
   PromotionResponse,
 } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 type Props = { params: Promise<{ siteName: string; contentId: string }> };
 export default async function Page({ params }: Props) {
   const { siteName, contentId } = await params;

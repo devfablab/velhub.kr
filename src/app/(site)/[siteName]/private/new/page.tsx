@@ -1,4 +1,4 @@
-import { getSiteApiData } from '../../../getSiteApiData';
+import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Container from '../../menu';
 import Opt, { type Response } from './opt';
 

@@ -1,6 +1,6 @@
 import { getPostList } from '@/lib/board/getPostList';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getVisibleCommunityBoards } from '@/lib/service/community/managerOnlyBoards';
+import { getVisibleCommunityBoards } from '@/lib/service/site/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   canManageCommunityBoardSettings,
   getCommunityManagerAccess,
-} from '@/lib/service/community/communityManager/utils';
+} from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';

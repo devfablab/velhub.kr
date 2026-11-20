@@ -1,5 +1,5 @@
 import { getSitePageMetadata } from '@/lib/seoSite';
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Opt, { type UserInfoResponse } from './opt';
 
 type RouteContext = {

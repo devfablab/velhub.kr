@@ -6,7 +6,7 @@ import {
   getCoPostRole,
   getLatestCoPostRevision,
   isCoPostLockHeld,
-} from '@/lib/service/blog/coPosts';
+} from '@/lib/service/site/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

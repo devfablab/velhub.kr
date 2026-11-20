@@ -1,6 +1,6 @@
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
 type Props = {
   params: Promise<{ siteName: string }>;

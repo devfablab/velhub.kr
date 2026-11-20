@@ -26,8 +26,11 @@ import {
   REFUND_POLICY,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
-import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/service/community/policies';
-import { refreshCommunityMemberLevel } from '@/lib/service/community/refreshMemberLevel';
+import {
+  assertCommunityCommentWritePolicy,
+  increaseCommunityCommentCount,
+} from '@/lib/service/site/community/policies';
+import { refreshCommunityMemberLevel } from '@/lib/service/site/community/refreshMemberLevel';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

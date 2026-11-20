@@ -1,8 +1,11 @@
 import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/blog/blogAds/server';
-import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
-import { addRecommendedBlogPost, getBlogRecommendationContext } from '@/lib/service/blog/blogRecommendations.server';
+import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/site/blog/blogAds/server';
+import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/site/blog/blogHashtags';
+import {
+  addRecommendedBlogPost,
+  getBlogRecommendationContext,
+} from '@/lib/service/site/blog/blogRecommendations.server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

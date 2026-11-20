@@ -9,7 +9,7 @@ import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPaymentOrder } from '@/lib/payments/paymentOrder';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { assertCommunityCommentWritePolicy } from '@/lib/service/community/policies';
+import { assertCommunityCommentWritePolicy } from '@/lib/service/site/community/policies';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

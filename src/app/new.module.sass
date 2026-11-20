@@ -52,6 +52,16 @@ header.header
             color: rgba(ds.$rgb-light, .8)
             background-color: ds.$hex-black
 
+          &:hover, &:focus-visible
+            @include ds.fw(neo, 700)
+            color: ds.$hex-secondary
+            border: 1px solid ds.$hex-accent
+            background-color: ds.$hex-accent!important
+            color: ds.$hex-white
+
+            html[data-theme="yellow-dark"] &
+              color: rgba(ds.$rgb-secondary, .8)
+
         &.current
           a
             @include ds.fw(neo, 700)
@@ -417,6 +427,16 @@ header.header
           html[data-theme="yellow-dark"] &
             color: rgba(ds.$rgb-light, .8)
             background-color: ds.$hex-black
+
+          &:hover, &:focus-visible
+            @include ds.fw(neo, 700)
+            color: ds.$hex-secondary
+            border: 1px solid ds.$hex-accent
+            background-color: ds.$hex-accent!important
+            color: ds.$hex-white
+
+            html[data-theme="yellow-dark"] &
+              color: rgba(ds.$rgb-secondary, .8)
 
         &.current
           a, button

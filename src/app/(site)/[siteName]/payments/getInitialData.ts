@@ -1,4 +1,4 @@
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import type { RevenueListResponse, RevenueListType } from './RevenueList';
 import type { RevenueSummaryResponse } from './RevenueSummary';
 

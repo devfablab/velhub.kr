@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { getHashtagsByIds } from '@/lib/service/blog/blogHashtags';
+import { getHashtagsByIds } from '@/lib/service/site/blog/blogHashtags';
 import { normalizeText } from '@/lib/utils';
 
 type OgType =

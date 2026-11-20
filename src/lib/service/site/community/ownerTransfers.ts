@@ -1,4 +1,4 @@
-import type { CommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import type { CommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 
 const OWNER_TRANSFER_WAIT_MS = 30 * 24 * 60 * 60 * 1000;
 

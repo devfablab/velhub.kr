@@ -8,8 +8,8 @@ import {
   isImmediateBlogAdReport,
   isValidBlogAdUrl,
   MAX_BLOG_AD_ITEMS,
-} from '@/lib/service/blog/blogAds/server';
-import { hasMultipleBlogAdLinkDomains } from '@/lib/service/blog/blogAds/validation';
+} from '@/lib/service/site/blog/blogAds/server';
+import { hasMultipleBlogAdLinkDomains } from '@/lib/service/site/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
 
 type Item = { id?: unknown; productName?: unknown; thumbnailImage?: unknown; linkUrl?: unknown };

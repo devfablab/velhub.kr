@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { normalizeText } from '@/lib/utils';
-import { getSiteApiData } from '../../../../getSiteApiData';
+import { getSiteApiData } from '../../../../../../lib/service/site/getSiteApiData';
 import Opt, {
   type BoardInfoResponse,
   type ContentResponse,

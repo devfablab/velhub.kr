@@ -1,5 +1,8 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { canManageCommunityPages, getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import {
+  canManageCommunityPages,
+  getCommunityManagerAccess,
+} from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

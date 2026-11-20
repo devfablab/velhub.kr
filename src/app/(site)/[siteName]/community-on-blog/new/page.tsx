@@ -1,7 +1,7 @@
 import { getSiteGuidelineDialogData } from '@/lib/site/siteGuidelines.server';
 import { type BlogCommunityResponse } from '../opt';
 import Opt from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 export default async function Page({ params }: { params: Promise<{ siteName: string }> }) {
   const { siteName } = await params;
   const [initial, guidelineDialogData] = await Promise.all([

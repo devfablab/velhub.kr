@@ -3,7 +3,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { canUploadPostCommentImage } from '@/lib/payments/postCommentAccess';
-import { findSharedCoPostByPostId } from '@/lib/service/blog/coPosts';
+import { findSharedCoPostByPostId } from '@/lib/service/site/blog/coPosts';
 import {
   getCommentImageUrl,
   POST_COMMENT_IMAGE_BUCKET,
@@ -12,7 +12,7 @@ import {
   type UploadedCommentImage,
   uploadCommentImage,
 } from '@/lib/service/commentImage.server';
-import { getCommunityManagerAccess } from '@/lib/service/community/communityManager/utils';
+import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 import { hasWordingProfilerViolation, WORDING_PROFILER_COMMENT_EDIT_ERROR } from '@/lib/wordingProfiler.server';

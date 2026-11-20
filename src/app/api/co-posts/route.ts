@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { CO_POST_COLUMNS, type CoPostRow, getPersonalBlogOwner } from '@/lib/service/blog/coPosts';
+import { CO_POST_COLUMNS, type CoPostRow, getPersonalBlogOwner } from '@/lib/service/site/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 import { decryptNullable } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';

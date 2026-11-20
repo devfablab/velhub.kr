@@ -9,7 +9,7 @@ import {
   getCoPostOtherParty,
   getCoPostRole,
   sendCoPostNotification,
-} from '@/lib/service/blog/coPosts';
+} from '@/lib/service/site/blog/coPosts';
 import verifySession from '@/lib/session/verifySession';
 
 type RouteContext = { params: Promise<{ coPostId: string; requestId: string }> };

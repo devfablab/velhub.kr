@@ -5,7 +5,7 @@ import {
   getHashtagLabelError,
   getSiteHashtags,
   normalizeHashtagLabel,
-} from '@/lib/service/blog/blogHashtags';
+} from '@/lib/service/site/blog/blogHashtags';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -327,8 +327,7 @@ export async function PUT(request: Request) {
       if (updated.error) {
         return Response.json(
           {
-            error:
-              updated.error.code === '23505' ? '이미 등록된 해시태그입니다.' : '해시태그를 수정하지 못했습니다.',
+            error: updated.error.code === '23505' ? '이미 등록된 해시태그입니다.' : '해시태그를 수정하지 못했습니다.',
           },
           { status: 500 },
         );
@@ -348,8 +347,7 @@ export async function PUT(request: Request) {
       if (inserted.error) {
         return Response.json(
           {
-            error:
-              inserted.error.code === '23505' ? '이미 등록된 해시태그입니다.' : '해시태그를 추가하지 못했습니다.',
+            error: inserted.error.code === '23505' ? '이미 등록된 해시태그입니다.' : '해시태그를 추가하지 못했습니다.',
           },
           { status: 500 },
         );

@@ -1,7 +1,7 @@
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 import type { ContentResponse } from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 type Props = { params: Promise<{ siteName: string; boardName: string; contentId: string }> };
 export default async function Page({ params }: Props) {
   const { siteName, boardName, contentId } = await params;

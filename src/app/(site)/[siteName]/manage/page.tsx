@@ -1,4 +1,4 @@
-import { getSiteApiData } from '../../getSiteApiData';
+import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Opt, { type StaffResponse } from './opt';
 
 export default async function Page({ params }: { params: Promise<{ siteName: string }> }) {

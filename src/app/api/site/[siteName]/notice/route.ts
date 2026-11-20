@@ -7,7 +7,7 @@ import {
   getNoticeImagePath,
   validateNoticeContent,
   validateNoticeImage,
-} from '@/lib/service/blog/notice/access';
+} from '@/lib/service/site/blog/notice/access';
 import { getStigmaAvatarUrl } from '@/lib/users/utils';
 import { normalizeText } from '@/lib/utils';
 

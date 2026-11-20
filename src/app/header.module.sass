@@ -270,7 +270,7 @@ header.header
           align-items: flex-end
           height: ds.rem(40)
 
-          &:hover, &:focus-visible, &.current
+          &.current
             a
               span
                 color: ds.$hex-accent!important
@@ -283,6 +283,13 @@ header.header
             flex-direction: column
             transition: all .4s cubic-bezier(.4,0,.2,1)
             white-space: nowrap
+
+            &:hover, &:focus-visible
+              span
+                color: ds.$hex-accent!important
+
+              i
+                background-color: ds.$hex-accent
 
             span
               display: inline-flex
@@ -591,7 +598,7 @@ header.header
             li
               display: inline-flex
 
-              &:hover, &:focus-visible, &.current
+              &.current
                 a
                   span
                     color: ds.$hex-accent!important
@@ -604,6 +611,13 @@ header.header
                 flex-direction: column
                 transition: all .4s cubic-bezier(.4,0,.2,1)
                 white-space: nowrap
+
+                &:hover, &:focus-visible
+                  span
+                    color: ds.$hex-accent!important
+
+                  i
+                    background-color: ds.$hex-accent
 
                 span
                   display: inline-flex
@@ -1155,6 +1169,38 @@ main.manage
 
             html[data-theme="yellow-dark"] &
               background-color: ds.$hex-black
+
+          &:hover, &:focus-visible
+            @include ds.fw(neo, 700)
+            color: ds.$hex-secondary
+
+            @include ds.mq(maxMedium)
+              border-bottom: ds.rem(3) solid ds.$hex-accent
+              padding: ds.rem(5) 0 ds.rem(7)
+
+            @include ds.mq(minLarge)
+              border: 1px solid ds.$hex-accent
+              background-color: ds.$hex-accent!important
+              color: ds.$hex-white
+
+              html[data-theme="yellow-dark"] &
+                color: rgba(ds.$rgb-secondary, .8)
+
+            &:hover, &:focus-visible
+              @include ds.fw(neo, 700)
+              color: ds.$hex-secondary
+
+              @include ds.mq(maxMedium)
+                border-bottom: ds.rem(3) solid ds.$hex-accent
+                padding: ds.rem(5) 0 ds.rem(7)
+
+              @include ds.mq(minLarge)
+                border: 1px solid ds.$hex-accent
+                background-color: ds.$hex-accent!important
+                color: ds.$hex-white
+
+                html[data-theme="yellow-dark"] &
+                  color: rgba(ds.$rgb-secondary, .8)
 
         &.current
           a

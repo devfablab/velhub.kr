@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { Typography } from '@mui/material';
-import { getBlogCommunityEnablement } from '@/lib/service/blog/blogCommunity/access';
+import { getBlogCommunityEnablement } from '@/lib/service/site/blog/blogCommunity/access';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import Opt from './opt';

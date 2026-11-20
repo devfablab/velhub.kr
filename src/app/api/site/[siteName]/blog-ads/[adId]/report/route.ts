@@ -2,7 +2,7 @@ import {
   BLOG_AD_REPORT_REASON_LABELS,
   getBlogAdSiteContext,
   isBlogAdReportReason,
-} from '@/lib/service/blog/blogAds/server';
+} from '@/lib/service/site/blog/blogAds/server';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ siteName: string; adId: string }> };

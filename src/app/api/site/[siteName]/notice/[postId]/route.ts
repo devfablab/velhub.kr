@@ -6,7 +6,7 @@ import {
   getNoticeImagePath,
   validateNoticeContent,
   validateNoticeImage,
-} from '@/lib/service/blog/notice/access';
+} from '@/lib/service/site/blog/notice/access';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = { params: Promise<{ siteName: string; postId: string }> };

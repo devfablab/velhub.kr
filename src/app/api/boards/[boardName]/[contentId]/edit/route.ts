@@ -6,17 +6,17 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
-import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/blog/blogHashtags';
+import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/site/blog/blogHashtags';
 import {
   addRecommendedBlogPost,
   getBlogRecommendationContext,
   removeRecommendedBlogPost,
-} from '@/lib/service/blog/blogRecommendations.server';
-import { CO_POST_DIRECT_CHANGE_ERROR, isPostInCoPost } from '@/lib/service/blog/coPosts';
+} from '@/lib/service/site/blog/blogRecommendations.server';
+import { CO_POST_DIRECT_CHANGE_ERROR, isPostInCoPost } from '@/lib/service/site/blog/coPosts';
 import {
   canManageCommunityBoardContents,
   getCommunityManagerAccess,
-} from '@/lib/service/community/communityManager/utils';
+} from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { canManageBlogContents } from '@/lib/site/contentAccess';
