@@ -54,20 +54,7 @@ type ContainerProps = {
   pageTitle?: string;
   pageBack?: string;
   pageEnterance?: boolean;
-  menu?:
-    | 'contents'
-    | 'design'
-    | 'join'
-    | 'members'
-    | 'settings'
-    | 'team'
-    | 'payments'
-    | 'stats'
-    | 'reports'
-    | 'community'
-    | 'denywords'
-    | 'guidelines'
-    | 'notice';
+  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'payments' | 'stats' | 'reports' | 'community';
   children: React.ReactNode;
 };
 
@@ -611,18 +598,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       ];
     }
 
-    if (menu === 'denywords') {
-      return [{ href: `/${siteName}/manage/denywords`, label: '단어차단 필터링', startsWith: true }];
-    }
-
-    if (menu === 'guidelines') {
-      return [{ href: `/${siteName}/manage/guidelines`, label: '가이드라인', startsWith: true }];
-    }
-
-    if (menu === 'notice') {
-      return [{ href: `/${siteName}/manage/notice`, label: '공지', startsWith: true }];
-    }
-
     if (menu === 'design') {
       if (isBlog) {
         return [
@@ -671,10 +646,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
         { href: `/${siteName}/manage/settings/general`, label: '기본설정' },
         { href: `/${siteName}/manage/settings/advanced`, label: '추가설정' },
       ];
-    }
-
-    if (menu === 'team') {
-      return [{ href: `/${siteName}/manage/team/members`, label: '팀원 목록' }];
     }
 
     if (menu === 'stats') {

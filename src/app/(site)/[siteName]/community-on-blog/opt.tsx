@@ -16,6 +16,7 @@ import {
   DialogTitle,
   Drawer,
   Fab,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -272,9 +273,11 @@ export default function Opt({
           ) : null}
           {isMobile ? (
             <div className="fab">
-              <Fab aria-label="새글 쓰기" href={`/${siteName}/community-on-blog/new`} size="medium">
-                <EditRoundedIcon />
-              </Fab>
+              <Tooltip title="새글 쓰기">
+                <Fab href={`/${siteName}/community-on-blog/new`} size="medium">
+                  <EditRoundedIcon />
+                </Fab>
+              </Tooltip>
             </div>
           ) : (
             <div className={styles['button-group']}>

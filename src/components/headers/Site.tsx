@@ -670,7 +670,7 @@ export default function HeaderSite() {
                   <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
                     <Anchor href={`/${siteName}/manage`}>
                       <DashboardOutlinedIcon fontSize="small" />
-                      <span>사이트 설정</span>
+                      <span>사이트 관리</span>
                     </Anchor>
                   </MenuItem>,
                 ]

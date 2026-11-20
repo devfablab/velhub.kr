@@ -66,10 +66,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }
 
   return (
-    <Container pageTitle="공지 관리" pageBack={`/${siteName}/manage`} menu="notice">
+    <Container pageTitle="공지 관리" pageBack={`/${siteName}/manage`}>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
-          <Stack gap={2}>
+          <Stack gap={2} sx={{ p: 2 }}>
             <p className="alert info" style={{ paddingTop: 23 }}>
               <InfoOutlineRoundedIcon />
               <span>
@@ -77,7 +77,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 있습니다.
               </span>
             </p>
-            <Stack sx={{ p: 2 }}>
+            <Stack>
               <FormControlLabel
                 label="공지 게시판 사용"
                 disabled={isSaving}

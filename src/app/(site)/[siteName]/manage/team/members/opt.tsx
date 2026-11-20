@@ -207,7 +207,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
 
   if (!initialTeams || !initialInvites) {
     return (
-      <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`} menu="team">
+      <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`}>
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <ScreenState kind="error">{initialError || '팀원 관리 정보를 불러오지 못했습니다.'}</ScreenState>
@@ -525,7 +525,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   }
 
   return (
-    <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`} menu="team">
+    <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`}>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}

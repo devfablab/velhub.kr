@@ -20,6 +20,7 @@ import {
   Stack,
   styled,
   TextField,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -454,9 +455,11 @@ export default function Opt({
           {isOwner ? (
             isMobile ? (
               <div className="fab">
-                <Fab aria-label="공지 쓰기" size="medium" onClick={() => openEditor(null)}>
-                  <EditRoundedIcon />
-                </Fab>
+                <Tooltip title="공지 쓰기">
+                  <Fab size="medium" onClick={() => openEditor(null)}>
+                    <EditRoundedIcon />
+                  </Fab>
+                </Tooltip>
               </div>
             ) : (
               <div className={styles['button-group']}>

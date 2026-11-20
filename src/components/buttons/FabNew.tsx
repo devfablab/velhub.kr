@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import { Fab, useMediaQuery, useTheme } from '@mui/material';
+import { Fab, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/board.module.sass';
@@ -37,9 +37,11 @@ export default function FabNew({ isCommunity, withDesktopButton = false }: Props
 
   return (
     <div className="fab">
-      <Fab aria-label="새글 쓰기" href={href} size="medium">
-        <EditRoundedIcon />
-      </Fab>
+      <Tooltip title="새글 쓰기">
+        <Fab href={href} size="medium">
+          <EditRoundedIcon />
+        </Fab>
+      </Tooltip>
     </div>
   );
 }
