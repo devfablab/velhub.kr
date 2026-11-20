@@ -152,7 +152,7 @@ export default function SiteCaptcha({ onPassTokenChange, onBlockedChange }: Prop
       ) : null}
 
       {isBlocked ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>개설하실 수 없습니다.</span>
         </p>
@@ -196,7 +196,7 @@ export default function SiteCaptcha({ onPassTokenChange, onBlockedChange }: Prop
       ) : null}
 
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>

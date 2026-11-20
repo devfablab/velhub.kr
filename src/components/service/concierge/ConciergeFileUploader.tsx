@@ -269,7 +269,7 @@ export default function ConciergeFileUploader({
         <span>{`첨부 ${fileCount}/${maxFiles}`}</span>
       </div>
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>

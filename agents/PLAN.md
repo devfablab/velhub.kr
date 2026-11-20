@@ -5,12 +5,15 @@
 
 ## 4. 현재 상태
 
-- 웹 접근성 작업 (5단계 색 대비, 6단계 키보드 확인은 클로이가 직접)
+- 웹 접근성 작업 (sass 전부, 키보드 확인은 클로이가 직접. 색은 문제 없음, 고대비 모드는 실제 사용자 확인 끝나 제외)
   0. [x] 목록 만들기: jsx-a11y 전체 규칙 임시 실행 + 코드 읽기, 묶음별 목록 (코드 수정 없음) → 클로이 검토 후 범위 확정
-  1. [ ] 공통 컴포넌트: 팝업, 헤더와 메뉴, Anchor와 ScreenState, 공통 입력칸
-  2. [ ] MUI 공통 처리: Pagination 한국어 읽기 문구, label 없는 TextField와 Select 이름
-  3. [ ] 라운지 slick 숨은 복제 슬라이드 포커스
-  4. [ ] 화면 묶음별: (auth) → (lounge) → (hub) → (library) → (new), (settings) → (concierge) → (site)
+  1. [ ] 공통 컴포넌트: 팝업, 헤더와 메뉴(글자 없는 버튼은 aria-label 대신 Tooltip title, `Concierge.tsx` 참고), Anchor와 ScreenState, 공통 입력칸, 본문 바로가기 링크 (site)에 추가 완료(`headers/Site.tsx`, `footers/Site.tsx`), aria-* 빠진 곳(펼침 상태, 연결 대상, 현재 위치, 알림 읽기 등) 정리
+  - [x] 1-1 헤더와 상단 바: 글자 없는 아이콘 버튼 Tooltip, 메뉴 여는 버튼 aria-haspopup, aria-expanded, aria-controls / 본문 바로가기 (site)
+  - [x] 1-2 팝업 이름(Drawer 제목 연결, 테마에서 Drawer를 dialog로), 안내 메시지 읽기(alert error, ScreenState), 장식 아이콘 숨김
+  - [x] 1-3 나머지 aria: 관리 목록 체크박스 이름, 켜짐 상태(aria-pressed), 펼침(aria-expanded), 현재 게시판(aria-current). 탭 연결은 지금도 동작해 제외
+  2. [x] MUI 공통 처리: Pagination 한국어 읽기 문구(테마에 koKR + 우리 문구), 이름 없는 입력칸(위 제목 글자로 aria-label)과 선택칸(위 제목에 id, labelId 연결). 빈 값 문구가 있는 선택칸은 그대로
+  3. [x] slick: 복제 슬라이드 링크는 Tab 건너뜀, 진짜 슬라이드는 숨김 표시 해제, Tab으로 화면 밖 카드에 가면 그 카드로 넘김 (inert는 보이는 카드 클릭까지 막아서 쓰지 않음). 라운지 `slick.tsx`, 블로그 홈 `blog.tsx` 2곳
+  4. [x] 화면 묶음별: 1~3단계로 공통 처리된 뒤 전체 재검사. 남은 것은 관리 > 페이지 목록 끌기 항목 키보드 처리 1곳. `board/content/opt.tsx` 이전글, 다음글을 `[boardName]/[contentId]`와 같게 적용
 
 - 지금 작업 중인 단계: 모먼트 ONE픽 (마이허브 라운지 노출 선택값을 모먼트에 반영)
   1. [x] 데이터 함수: ONE픽 사이트(최신 글 순), ONE픽 포스팅(좋아요 순), 페이지 나눔 (`src/lib/service/lounge/loungeMoments.ts`)
@@ -73,6 +76,28 @@
 | `src/app/(lounge)/lounge/moments/all/page.tsx` | 새 파일, 전체보기 페이지 | 완료 |
 | `src/app/(lounge)/lounge/moments/all/opt.tsx` | 새 파일, ONE픽 사이트 목록과 페이지 번호 | 완료 |
 | `src/app/page.module.sass` | 전체 보기 링크, 페이지 번호 위치 | 완료 |
+| `src/components/headers/Site.tsx` | 본문영역 바로가기 링크와 header, content 위치 표시 | 완료 |
+| `src/components/footers/Site.tsx` | 푸터 앞 메뉴영역 바로가기 링크 | 완료 |
+| `src/components/headers/Lounge.tsx`, `Hub.tsx`, `Site.tsx`, `Concierge.tsx` | 화면모드, 개인 메뉴 버튼 Tooltip과 메뉴 열림 상태 | 완료 |
+| `src/components/buttons/NotificationButton.tsx` | 알림 버튼 읽지 않은 수 읽기, 열림 상태, 닫기 버튼 Tooltip | 완료 |
+| `src/app/(concierge)/concierge/menu.tsx`, `(hub)/hub/menu.tsx`, `(lounge)/menu.tsx`, `(site)/[siteName]/menu.tsx`, `(site)/[siteName]/manage/menu.tsx` | 휴대폰 상단 바 아이콘 버튼 Tooltip과 열림 상태 | 완료 |
+| `src/app/(site)/[siteName]/manage/design/blog/links/opt.tsx` | 링크 삭제 버튼 Tooltip | 완료 |
+| `src/app/(concierge)/concierge/labs/[issueNumber]/opt.tsx` | 제목 수정 버튼 title 대신 Tooltip | 완료 |
+| `src/app/themeProvider.tsx` | MUI 한국어(koKR), 페이지 번호 읽기 문구, Drawer를 팝업(dialog)으로 읽게 | 완료 |
+| Drawer가 있는 화면 약 90개 파일 (`src/app/**`, `src/components/**`) | 맨 위 제목(h2, strong)에 id를 주고 Drawer에 aria-labelledby 연결 | 완료 |
+| `src/components/PopupMessage.tsx` | 제목 없는 안내 팝업은 메시지로 이름 연결, alertdialog | 완료 |
+| `p.alert.error`가 있는 98개 파일 | role="alert" 추가 | 완료 |
+| `src/components/service/ScreenState.tsx` | 오류는 alert, 나머지는 status로 읽기 | 완료 |
+| `src/components/Svgs.tsx` | 상태 화면 그림 아이콘 aria-hidden | 완료 |
+| `(site)/[siteName]/manage/` 글 목록, 가입, 회원 목록 8개 | 전체 선택과 줄마다 체크박스 이름 | 완료 |
+| `src/components/comments/CommentItem.tsx`, `(lounge)/lounge/categorySites.tsx`, 상단 바 menu.tsx 4개 | 좋아요, 싫어요, 카테고리, 화면모드 버튼 켜짐 상태 | 완료 |
+| `coPostChanges.tsx`, `SpellCheckDialog.tsx` | 펼치기 버튼 열림 상태 | 완료 |
+| `src/components/service/community/TableListMobile.tsx` | 선택된 게시판과 연재 현재 위치 | 완료 |
+| `src/app/(site)/[siteName]/board/content/opt.tsx` | 빈 다음글 링크 대신 이전글, 다음글 (API에서 이미 받던 값) | 완료 |
+| `src/app/(site)/[siteName]/manage/contents/pages/opt.tsx` | 페이지 목록: Enter로 열기, Space로 순서 끌기 | 완료 |
+| `src/app/(lounge)/lounge/slick.tsx`, `src/app/(site)/[siteName]/blog.tsx` | slick 복제 슬라이드 Tab 제외, 진짜 슬라이드 읽기, 포커스 따라 넘김 | 완료 |
+| 입력칸, 선택칸이 있는 화면 약 50개 파일 | 입력칸은 위 제목 글자로 aria-label, 선택칸은 위 제목에 id 주고 labelId 연결 | 완료 |
+| `board/opt.tsx`, `[boardName]/opt.tsx`, `stats/join`, `stats/inactive-user` | Select에 붙어 있던 aria-label을 실제 선택칸에 닿도록 inputProps로 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

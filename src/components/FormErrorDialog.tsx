@@ -27,8 +27,14 @@ export default function FormErrorDialog({ open, title, messages, onClose }: Prop
   );
 
   return isMobile ? (
-    <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-      {title ? <h2>{title}</h2> : null}
+    <Drawer
+      anchor="bottom"
+      open={open}
+      onClose={onClose}
+      className="VhiDrawer-bottom VhiDrawer-bottom-service"
+      slotProps={{ paper: { 'aria-labelledby': title ? 'form-error-drawer-title' : undefined } }}
+    >
+      {title ? <h2 id="form-error-drawer-title">{title}</h2> : null}
       <div className="VhiDrawer-bottom-content">{messageContent}</div>
       <div className="drawer-dialog-actions">
         <button type="button" className="button medium submit" onClick={onClose}>

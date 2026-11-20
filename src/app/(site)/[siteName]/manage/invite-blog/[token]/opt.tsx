@@ -166,7 +166,7 @@ export default function Opt({
     <Paper sx={{ p: 3 }}>
       <Stack gap={3}>
         {errorMessage ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>

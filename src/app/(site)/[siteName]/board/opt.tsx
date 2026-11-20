@@ -279,7 +279,11 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
 
         <div className={styles['board-search-container']}>
           <FormControl size="small" className={styles['page-size-select']}>
-            <Select value={String(pageSize)} onChange={handlePageSizeChange} aria-label="페이지당 게시글 수">
+            <Select
+              value={String(pageSize)}
+              onChange={handlePageSizeChange}
+              inputProps={{ 'aria-label': '페이지당 게시글 수' }}
+            >
               {pageSizeOptions.map((sizeOption) => (
                 <MenuItem key={sizeOption} value={String(sizeOption)}>
                   {sizeOption}개씩

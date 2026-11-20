@@ -375,6 +375,8 @@ export default function Opt({
   const [board] = useState<BoardInfo | null>(initialData?.board ?? null);
   const content = initialData?.content ?? null;
   const [series] = useState<SeriesItem | null>(initialData?.series ?? null);
+  const previousPost = initialData?.previousPost ?? null;
+  const nextPost = initialData?.nextPost ?? null;
   const [seriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
   const [isAuthor] = useState(initialData?.isAuthor ?? false);
   const [isStaff] = useState(initialData?.isStaff ?? false);
@@ -756,8 +758,9 @@ export default function Opt({
             open={deleteDialogOpen}
             onClose={() => setDeleteDialogOpen(false)}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'board-content-drawer-title' } }}
           >
-            <h2>글 삭제</h2>
+            <h2 id="board-content-drawer-title">글 삭제</h2>
             <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
               <CloseRoundedIcon />
             </button>
@@ -782,7 +785,7 @@ export default function Opt({
                 />
               ) : null}
               {deleteErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{deleteErrorMessage}</span>
                 </p>
@@ -834,7 +837,7 @@ export default function Opt({
                 />
               ) : null}
               {deleteErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{deleteErrorMessage}</span>
                 </p>
@@ -923,14 +926,23 @@ export default function Opt({
                 <span>최신글 보기</span>
               </h2>
               <div className={styles['top-buttons']}>
-                <Anchor href={`/${siteName}/board`} className="button">
-                  <ArrowBackIosRoundedIcon />
+                <Anchor href={`/${siteName}/board`} className={`${styles.button} button`}>
                   <span>목록</span>
                 </Anchor>
-                <Anchor href="" className="button">
-                  <span>다음글</span>
-                  <ArrowForwardIosRoundedIcon />
-                </Anchor>
+                <div className={styles.buttons}>
+                  {previousPost ? (
+                    <Anchor href={previousPost.href} className="button">
+                      <ArrowBackIosRoundedIcon />
+                      <span>이전글</span>
+                    </Anchor>
+                  ) : null}
+                  {nextPost ? (
+                    <Anchor href={nextPost.href} className="button">
+                      <span>다음글</span>
+                      <ArrowForwardIosRoundedIcon />
+                    </Anchor>
+                  ) : null}
+                </div>
               </div>
             </>
           )}

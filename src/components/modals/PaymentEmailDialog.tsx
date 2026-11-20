@@ -208,8 +208,14 @@ export default function PaymentEmailDialog({
   if (isMobile) {
     return (
       <>
-        <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-          <h2>결제 정보 입력</h2>
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={handleClose}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-modals-payment-email-dialog-drawer-title' } }}
+        >
+          <h2 id="components-modals-payment-email-dialog-drawer-title">결제 정보 입력</h2>
           <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

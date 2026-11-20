@@ -216,8 +216,14 @@ export default function SiteInfo() {
       </div>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isDialogOpen} onClose={() => setIsDialogOpen(false)} className="VhiDrawer-bottom">
-          <h2>커뮤니티 정보</h2>
+        <Drawer
+          anchor="bottom"
+          open={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-community-site-info-drawer-title' } }}
+        >
+          <h2 id="components-service-community-site-info-drawer-title">커뮤니티 정보</h2>
           <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

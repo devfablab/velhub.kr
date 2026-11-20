@@ -294,8 +294,9 @@ export default function Opt({
             open={imageDialogOpen}
             onClose={closeImageDialog}
             className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+            slotProps={{ paper: { 'aria-labelledby': 'private-new-drawer-title' } }}
           >
-            <h2>첨부 이미지 업로드</h2>
+            <h2 id="private-new-drawer-title">첨부 이미지 업로드</h2>
             <button type="button" className="close-button" onClick={closeImageDialog} aria-label="닫기">
               <CloseRoundedIcon />
             </button>

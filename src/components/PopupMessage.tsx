@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Dialog, DialogActions, DialogContent, Drawer, Stack, useMediaQuery, useTheme } from '@mui/material';
@@ -14,15 +15,22 @@ type Props = {
 export default function PopupMessage({ open, message, onClose, kind = 'info' }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const messageId = useId();
   const messageContent = (
     <p className={`alert popup-${kind}`}>
       {kind === 'error' ? <ErrorOutlineRoundedIcon /> : <InfoOutlineRoundedIcon />}
-      <span>{message}</span>
+      <span id={messageId}>{message}</span>
     </p>
   );
 
   return isMobile ? (
-    <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom">
+    <Drawer
+      anchor="bottom"
+      open={open}
+      onClose={onClose}
+      className="VhiDrawer-bottom"
+      slotProps={{ paper: { role: 'alertdialog', 'aria-labelledby': messageId } }}
+    >
       <Stack gap={2} sx={{ pt: 1 }}>
         {messageContent}
         <Stack direction="column" gap={1.5}>
@@ -33,7 +41,15 @@ export default function PopupMessage({ open, message, onClose, kind = 'info' }: 
       </Stack>
     </Drawer>
   ) : (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" className="vh-dialog vh-alert-dialog">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="xs"
+      className="vh-dialog vh-alert-dialog"
+      aria-labelledby={messageId}
+      slotProps={{ paper: { role: 'alertdialog' } }}
+    >
       <DialogContent>{messageContent}</DialogContent>
       <DialogActions>
         <button type="button" onClick={onClose}>

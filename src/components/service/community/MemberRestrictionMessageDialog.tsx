@@ -171,7 +171,7 @@ export default function MemberRestrictionMessageDialog({
   const content = (
     <Stack gap={2}>
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>
@@ -252,9 +252,12 @@ export default function MemberRestrictionMessageDialog({
           open={open}
           onClose={closeDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
-          slotProps={{ transition: { onEntered: () => void loadMessages() } }}
+          slotProps={{
+            paper: { 'aria-labelledby': 'components-service-community-member-restriction-message-dialog-drawer-title' },
+            transition: { onEntered: () => void loadMessages() },
+          }}
         >
-          <h2>소명 메시지</h2>
+          <h2 id="components-service-community-member-restriction-message-dialog-drawer-title">소명 메시지</h2>
           <button type="button" className="close-button" onClick={closeDialog} disabled={saving} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

@@ -20,6 +20,7 @@ import {
   SelectChangeEvent,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
@@ -480,14 +481,15 @@ export default function Opt({
           <h1>
             {dbIssue.title} <span>#{issueNumber}</span>
             {(isAuthor || isAdmin) && currentStatus !== '반려됨' ? (
-              <IconButton
-                size="small"
-                onClick={() => setIsEditingTitle(true)}
-                title="제목 수정"
-                sx={{ ml: 1, verticalAlign: 'middle' }}
-              >
-                <EditRoundedIcon fontSize="small" />
-              </IconButton>
+              <Tooltip title="제목 수정">
+                <IconButton
+                  size="small"
+                  onClick={() => setIsEditingTitle(true)}
+                  sx={{ ml: 1, verticalAlign: 'middle' }}
+                >
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             ) : null}
           </h1>
         )}

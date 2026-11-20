@@ -248,11 +248,11 @@ function ProfileForm({
           }}
           error={Boolean(introductionError)}
           helperText={introductionError || '2자 이상 72자 이하로 입력해 주세요.'}
-          slotProps={{ htmlInput: { maxLength: INTRODUCTION_MAX_LENGTH } }}
+          slotProps={{ htmlInput: { 'aria-label': '소개', maxLength: INTRODUCTION_MAX_LENGTH } }}
         />
       </Stack>
       {message ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{message}</span>
         </p>

@@ -285,8 +285,9 @@ export default function Opt({
             open
             onClose={closeImageViewer}
             className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['gallery-viewer-dialog']}`}
+            slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-drawer-title' } }}
           >
-            <h2>{`${imageViewer.index + 1}번째 이미지`}</h2>
+            <h2 id="community-on-blog-drawer-title">{`${imageViewer.index + 1}번째 이미지`}</h2>
             <button
               type="button"
               className={styles['close-button']}
@@ -358,8 +359,9 @@ export default function Opt({
           open={Boolean(deleteTarget)}
           onClose={() => !isDeleting && setDeleteTarget(null)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-drawer-title-2' } }}
         >
-          <h2>글 삭제</h2>
+          <h2 id="community-on-blog-drawer-title-2">글 삭제</h2>
           <button
             type="button"
             className="close-button"

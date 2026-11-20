@@ -220,7 +220,7 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
       </Stack>
 
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>
@@ -235,8 +235,14 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
       </button>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isOpen} onClose={closeDialog} className="VhiDrawer-bottom">
-          <h2>맞춤법 검사 설정</h2>
+        <Drawer
+          anchor="bottom"
+          open={isOpen}
+          onClose={closeDialog}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-spell-check-settings-dialog-drawer-title' } }}
+        >
+          <h2 id="manage-contents-posts-spell-check-settings-dialog-drawer-title">맞춤법 검사 설정</h2>
           <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

@@ -942,8 +942,11 @@ export default function Opt({
               open={dialogMode === 'new' || dialogMode === 'edit'}
               onClose={handleCloseDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-category-drawer-title' } }}
             >
-              <h2>{dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}</h2>
+              <h2 id="manage-contents-posts-category-drawer-title">
+                {dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}
+              </h2>
               <button
                 type="button"
                 className="close-button"
@@ -973,6 +976,7 @@ export default function Opt({
                         size="medium"
                         helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
                         slotProps={{
+                          htmlInput: { 'aria-label': '사이트 주소' },
                           input: {
                             startAdornment: (
                               <InputAdornment position="start">
@@ -1005,6 +1009,7 @@ export default function Opt({
                         fullWidth
                         size="medium"
                         slotProps={{
+                          htmlInput: { 'aria-label': '카테고리명' },
                           input: {
                             endAdornment: (
                               <InputAdornment position="end">
@@ -1032,6 +1037,7 @@ export default function Opt({
                         multiline
                         minRows={3}
                         size="small"
+                        slotProps={{ htmlInput: { 'aria-label': '카테고리 설명' } }}
                       />
                     </Stack>
 
@@ -1076,7 +1082,7 @@ export default function Opt({
                     </Stack>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1147,6 +1153,7 @@ export default function Opt({
                         size="medium"
                         helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
                         slotProps={{
+                          htmlInput: { 'aria-label': '사이트 주소' },
                           input: {
                             startAdornment: (
                               <InputAdornment position="start">
@@ -1179,6 +1186,7 @@ export default function Opt({
                         fullWidth
                         size="medium"
                         slotProps={{
+                          htmlInput: { 'aria-label': '카테고리명' },
                           input: {
                             endAdornment: (
                               <InputAdornment position="end">
@@ -1206,6 +1214,7 @@ export default function Opt({
                         multiline
                         minRows={3}
                         size="small"
+                        slotProps={{ htmlInput: { 'aria-label': '카테고리 설명' } }}
                       />
                     </Stack>
 
@@ -1250,7 +1259,7 @@ export default function Opt({
                     </Stack>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1290,8 +1299,9 @@ export default function Opt({
               open={dialogMode === 'delete'}
               onClose={handleCloseDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-category-drawer-title-2' } }}
             >
-              <h2>카테고리 삭제</h2>
+              <h2 id="manage-contents-posts-category-drawer-title-2">카테고리 삭제</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1313,7 +1323,7 @@ export default function Opt({
                     <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1370,7 +1380,7 @@ export default function Opt({
                     <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>

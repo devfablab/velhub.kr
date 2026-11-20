@@ -704,6 +704,7 @@ export default function Opt({
                       }
                       fullWidth
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '제목' } }}
                     />
                   </Stack>
                 ) : null}
@@ -711,7 +712,13 @@ export default function Opt({
                 {isGalleryBoard ? (
                   <Stack gap={1}>
                     <Typography variant="subtitle2">부제목</Typography>
-                    <TextField value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+                    <TextField
+                      value={summary}
+                      onChange={handleSummaryChange}
+                      fullWidth
+                      size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '부제목' } }}
+                    />
                   </Stack>
                 ) : null}
 
@@ -733,6 +740,7 @@ export default function Opt({
                         multiline
                         rows={5}
                         size="small"
+                        slotProps={{ htmlInput: { 'aria-label': '간단 설명' } }}
                       />
                     </Stack>
                     <Stack gap={1}>
@@ -749,6 +757,7 @@ export default function Opt({
                         }
                         fullWidth
                         size="small"
+                        slotProps={{ htmlInput: { 'aria-label': '유튜브 영상 주소' } }}
                       />
                       <input type="hidden" value={youtubeId} />
                     </Stack>
@@ -883,7 +892,7 @@ export default function Opt({
                         <span>{isGalleryBoard ? '2개 이상' : '1개 이상'} 등록해야 하며, 순서 변경은 불가능합니다.</span>
                       </p>
                       {formErrorDialog?.messages.some((message) => message.includes('이미지')) ? (
-                        <p className="alert error">
+                        <p className="alert error" role="alert">
                           {formErrorDialog.messages.find((message) => message.includes('이미지'))}
                         </p>
                       ) : null}
@@ -945,6 +954,7 @@ export default function Opt({
                       multiline
                       minRows={6}
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '내용' } }}
                     />
                   </Stack>
                 ) : null}
@@ -966,7 +976,9 @@ export default function Opt({
                       onUploadImage={handleUploadEditorImage}
                     />
                     {formErrorDialog?.messages.includes('내용을 입력해주세요.') ? (
-                      <p className="alert error">내용을 입력해주세요.</p>
+                      <p className="alert error" role="alert">
+                        내용을 입력해주세요.
+                      </p>
                     ) : null}
                   </Box>
                 ) : null}

@@ -26,12 +26,7 @@ import CommunityMemberMenu from '../service/community/CommunityMemberMenu';
 import styles from '@/app/comments.module.sass';
 
 type AuthorRole =
-  | 'owner'
-  | 'community-manager'
-  | 'board-manager'
-  | 'board-general-manager'
-  | 'board-assistant-manager'
-  | 'member';
+  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;
@@ -430,7 +425,7 @@ export default function CommentItem({
             ) : null}
             {comment.is_me && comment.is_wording_blinded ? (
               <div className="paper" style={{ marginBottom: '7px' }}>
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>워딩 프로파일러에 의해 댓글이 비공개 처리되었습니다. 혐오 표현은 사용하실 수 없어요.</span>
                 </p>
@@ -477,7 +472,7 @@ export default function CommentItem({
 
         {comment.blinded_message ? (
           <div className="paper" style={{ marginBottom: '7px' }}>
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>{comment.blinded_message}</span>
             </p>
@@ -493,6 +488,7 @@ export default function CommentItem({
               onClick={() => void handleLike()}
               disabled={isSubmitting || isReacting}
               className={comment.is_liked ? styles.active : undefined}
+              aria-pressed={Boolean(comment.is_liked)}
             >
               좋아요
             </button>
@@ -504,6 +500,7 @@ export default function CommentItem({
               onClick={() => void handleDislike()}
               disabled={isSubmitting || isReacting}
               className={comment.is_disliked ? styles.active : undefined}
+              aria-pressed={Boolean(comment.is_disliked)}
             >
               싫어요
             </button>
@@ -600,8 +597,9 @@ export default function CommentItem({
           open={Boolean(confirmAction)}
           onClose={() => setConfirmAction(null)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-comments-comment-item-drawer-title' } }}
         >
-          <h2>{confirmDialog.title}</h2>
+          <h2 id="components-comments-comment-item-drawer-title">{confirmDialog.title}</h2>
           <button
             type="button"
             className="close-button"

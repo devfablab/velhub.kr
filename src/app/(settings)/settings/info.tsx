@@ -349,7 +349,7 @@ export default function UserInfo({
                 아바타 수정
               </button>
               {avatarError ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{avatarError}</span>
                 </p>
@@ -378,6 +378,7 @@ export default function UserInfo({
                       onChange={handleUserNameChange}
                       slotProps={{
                         htmlInput: {
+                          'aria-label': '활동명',
                           required: true,
                           minLength: ACTIVITY_NAME_MIN_LENGTH,
                           maxLength: ACTIVITY_NAME_MAX_LENGTH,
@@ -405,7 +406,7 @@ export default function UserInfo({
             </Stack>
 
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>

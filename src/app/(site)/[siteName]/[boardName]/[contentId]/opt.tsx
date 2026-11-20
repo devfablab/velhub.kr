@@ -110,12 +110,7 @@ type PostImage = {
 };
 
 type AuthorRole =
-  | 'owner'
-  | 'community-manager'
-  | 'board-manager'
-  | 'board-general-manager'
-  | 'board-assistant-manager'
-  | 'member';
+  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;
@@ -924,8 +919,9 @@ export default function Opt({
             open={deleteDialogOpen}
             onClose={() => setDeleteDialogOpen(false)}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'board-name-content-id-drawer-title' } }}
           >
-            <h2>글 삭제</h2>
+            <h2 id="board-name-content-id-drawer-title">글 삭제</h2>
             <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
               <CloseRoundedIcon />
             </button>
@@ -950,7 +946,7 @@ export default function Opt({
                 />
               ) : null}
               {deleteErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{deleteErrorMessage}</span>
                 </p>
@@ -1002,7 +998,7 @@ export default function Opt({
                 />
               ) : null}
               {deleteErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{deleteErrorMessage}</span>
                 </p>
@@ -1275,7 +1271,7 @@ export default function Opt({
             )}
             {initialData?.isAuthor && content.is_wording_blinded ? (
               <div className="paper">
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>워딩 프로파일러에 의해 글이 비공개 처리되었습니다. 혐오 표현은 사용하실 수 없어요.</span>
                 </p>
@@ -1876,8 +1872,9 @@ export default function Opt({
               open={isSeriesMoveDialogOpen}
               onClose={() => setIsSeriesMoveDialogOpen(false)}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'board-name-content-id-drawer-title-2' } }}
             >
-              <h2>글 이동</h2>
+              <h2 id="board-name-content-id-drawer-title-2">글 이동</h2>
               <button type="button" className="close-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
                 <CloseRoundedIcon />
               </button>
@@ -1917,8 +1914,9 @@ export default function Opt({
               open={isPostMoveDialogOpen}
               onClose={() => setIsPostMoveDialogOpen(false)}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'board-name-content-id-drawer-title-3' } }}
             >
-              <h2>글 이동</h2>
+              <h2 id="board-name-content-id-drawer-title-3">글 이동</h2>
               <button type="button" className="close-button" onClick={() => setIsPostMoveDialogOpen(false)}>
                 <CloseRoundedIcon />
               </button>

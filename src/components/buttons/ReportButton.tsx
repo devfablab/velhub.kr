@@ -277,7 +277,7 @@ export default function ReportButton({
         }}
       >
         {errorMessage ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>
@@ -343,8 +343,14 @@ export default function ReportButton({
       )}
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-          <h2>신고하기</h2>
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={handleClose}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-report-button-drawer-title' } }}
+        >
+          <h2 id="components-buttons-report-button-drawer-title">신고하기</h2>
           <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

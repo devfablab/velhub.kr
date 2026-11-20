@@ -183,8 +183,11 @@ export default function DrawEventFields({
           open={open}
           onClose={closeDialog}
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${classes['draw-dialog']}`}
+          slotProps={{
+            paper: { 'aria-labelledby': 'components-service-blog-community-draw-event-fields-drawer-title' },
+          }}
         >
-          <h2>추첨 이벤트 설정</h2>
+          <h2 id="components-service-blog-community-draw-event-fields-drawer-title">추첨 이벤트 설정</h2>
           <button type="button" className="close-button" onClick={closeDialog} aria-label="추첨 이벤트 설정 닫기">
             <CloseRoundedIcon />
           </button>

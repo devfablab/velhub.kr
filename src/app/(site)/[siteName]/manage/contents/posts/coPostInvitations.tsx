@@ -270,8 +270,9 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
           open={Boolean(acceptState)}
           onClose={() => setAcceptState(null)}
           className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-co-post-invitations-drawer-title' } }}
         >
-          <h2>공동 집필 수락</h2>
+          <h2 id="manage-contents-posts-co-post-invitations-drawer-title">공동 집필 수락</h2>
           <button type="button" className="close-button" onClick={() => setAcceptState(null)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

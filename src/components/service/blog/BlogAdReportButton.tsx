@@ -177,7 +177,7 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
     return (
       <>
         {error ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{error}</span>
           </p>
@@ -246,8 +246,14 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
         </MenuItem>
       </Menu>
       {isMobile ? (
-        <Drawer anchor="bottom" open={open} onClose={closeReport} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-          <h2>신고하기</h2>
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={closeReport}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-blog-ad-report-button-drawer-title' } }}
+        >
+          <h2 id="components-service-blog-blog-ad-report-button-drawer-title">신고하기</h2>
           <button type="button" className="close-button" onClick={closeReport} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

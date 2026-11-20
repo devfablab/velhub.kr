@@ -437,8 +437,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={Boolean(renameTarget)}
               onClose={handleCloseRenameDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-design-blog-menu-drawer-title' } }}
             >
-              <h2>게시판 이름 변경</h2>
+              <h2 id="manage-design-blog-menu-drawer-title">게시판 이름 변경</h2>
               <button
                 type="button"
                 className="close-button"

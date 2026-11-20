@@ -17,7 +17,7 @@ export default function Opt() {
     <div className="paper">
       <Typography variant="h1">블로그 구독 가입 실패</Typography>
 
-      <p className="alert error">
+      <p className="alert error" role="alert">
         <ErrorOutlineRoundedIcon />
         <span>{message}</span>
       </p>

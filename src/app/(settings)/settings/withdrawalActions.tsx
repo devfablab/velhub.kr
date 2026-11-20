@@ -113,7 +113,7 @@ export default function WithdrawalActions() {
               </button>
             </Stack>
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
@@ -128,8 +128,9 @@ export default function WithdrawalActions() {
           open={isConfirmOpen}
           onClose={handleCloseConfirm}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'settings-withdrawal-actions-drawer-title' } }}
         >
-          <h2>데브허브 탈퇴</h2>
+          <h2 id="settings-withdrawal-actions-drawer-title">데브허브 탈퇴</h2>
           <form
             id="mobile-withdrawal-form"
             className="VhiDrawer-bottom-content"

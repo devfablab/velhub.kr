@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
-import Badge from '@mui/material/Badge';
-import Drawer from '@mui/material/Drawer';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
+import { Badge, Drawer, IconButton, Menu, Tooltip } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
@@ -160,7 +157,7 @@ export default function NotificationButton({ isMobile }: Props) {
     if (errorMessage) {
       return (
         <li className={styles['notification-item']}>
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>
@@ -195,19 +192,36 @@ export default function NotificationButton({ isMobile }: Props) {
 
   return (
     <>
-      <IconButton onClick={handleOpen} aria-label="알림" aria-expanded={isOpen} className={styles['theme-mode-button']}>
-        <Badge badgeContent={unreadCount} color="error" max={99}>
-          <NotificationsNoneRoundedIcon />
-        </Badge>
-      </IconButton>
+      <Tooltip title={unreadCount ? `읽지 않은 알림 ${unreadCount}개` : '알림'}>
+        <IconButton
+          onClick={handleOpen}
+          aria-haspopup={isMobile ? 'dialog' : 'menu'}
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? 'notification-menu' : undefined}
+          className={styles['theme-mode-button']}
+        >
+          <Badge badgeContent={unreadCount} color="error" max={99}>
+            <NotificationsNoneRoundedIcon />
+          </Badge>
+        </IconButton>
+      </Tooltip>
 
       {isMobile ? (
-        <Drawer anchor="right" open={isDrawerOpen} onClose={handleClose} className={styles.VhiDrawer}>
+        <Drawer
+          id="notification-menu"
+          anchor="right"
+          open={isDrawerOpen}
+          onClose={handleClose}
+          className={styles.VhiDrawer}
+          slotProps={{ paper: { 'aria-labelledby': 'notification-drawer-title' } }}
+        >
           <li className={styles['VhiDrawer-header']}>
-            <strong>알림</strong>
-            <IconButton type="button" onClick={handleClose} aria-label="알림 닫기">
-              <CloseRoundedIcon />
-            </IconButton>
+            <strong id="notification-drawer-title">알림</strong>
+            <Tooltip title="알림 닫기">
+              <IconButton type="button" onClick={handleClose}>
+                <CloseRoundedIcon />
+              </IconButton>
+            </Tooltip>
           </li>
           <li className={styles['notification-items']}>
             <ul>{renderContent()}</ul>
@@ -219,7 +233,13 @@ export default function NotificationButton({ isMobile }: Props) {
           </li>
         </Drawer>
       ) : (
-        <Menu anchorEl={anchorElement} open={Boolean(anchorElement)} onClose={handleClose} className={styles.VhiMenu}>
+        <Menu
+          id="notification-menu"
+          anchorEl={anchorElement}
+          open={Boolean(anchorElement)}
+          onClose={handleClose}
+          className={styles.VhiMenu}
+        >
           {renderContent()}
           <li className={styles['notification-items']}>
             <Anchor href="/hub/notifications" className="button small action">

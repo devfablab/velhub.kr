@@ -252,8 +252,9 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           open={isErrorPopupOpen}
           onClose={() => setIsErrorPopupOpen(false)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-auth-social-login-buttons-drawer-title' } }}
         >
-          <h2>소셜 로그인 오류</h2>
+          <h2 id="components-auth-social-login-buttons-drawer-title">소셜 로그인 오류</h2>
           <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

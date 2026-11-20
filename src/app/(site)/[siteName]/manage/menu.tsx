@@ -32,6 +32,7 @@ import {
   ListItemText,
   ListSubheader,
   MenuItem,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -744,19 +745,27 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
               )}
             </h1>
             <div className={styles.iconbuttons}>
-              <IconButton onClick={handleOpenProfileDrawer} sx={{ width: 40, height: 40 }}>
-                <MoreHorizRoundedIcon />
-              </IconButton>
+              <Tooltip title="메뉴">
+                <IconButton
+                  onClick={handleOpenProfileDrawer}
+                  aria-haspopup="dialog"
+                  aria-expanded={isProfileDrawerOpen}
+                  sx={{ width: 40, height: 40 }}
+                >
+                  <MoreHorizRoundedIcon />
+                </IconButton>
+              </Tooltip>
               <Drawer
                 anchor="right"
                 open={isProfileDrawerOpen}
                 onClose={handleCloseProfileDrawer}
                 className={styles.VhiDrawer}
+                slotProps={{ paper: { 'aria-labelledby': 'manage-menu-drawer-title' } }}
               >
                 <Box role="presentation">
                   <List>
                     <li className={styles['VhiDrawer-header']}>
-                      <strong>마이 메뉴</strong>
+                      <strong id="manage-menu-drawer-title">마이 메뉴</strong>
                       <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
                         <CloseRoundedIcon />
                       </IconButton>

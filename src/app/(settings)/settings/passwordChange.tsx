@@ -194,7 +194,7 @@ export default function PasswordChange({
                   fullWidth
                   error={Boolean(fieldErrors.currentPassword)}
                   helperText={fieldErrors.currentPassword}
-                  slotProps={{ htmlInput: { required: true } }}
+                  slotProps={{ htmlInput: { 'aria-label': '현재 비밀번호', required: true } }}
                 />
               </Stack>
 
@@ -210,7 +210,7 @@ export default function PasswordChange({
                   fullWidth
                   error={Boolean(fieldErrors.nextPassword)}
                   helperText={fieldErrors.nextPassword || PASSWORD_REQUIREMENTS}
-                  slotProps={{ htmlInput: { required: true } }}
+                  slotProps={{ htmlInput: { 'aria-label': '새 비밀번호', required: true } }}
                 />
               </Stack>
 
@@ -226,11 +226,11 @@ export default function PasswordChange({
                   fullWidth
                   error={Boolean(fieldErrors.nextPasswordConfirm)}
                   helperText={fieldErrors.nextPasswordConfirm}
-                  slotProps={{ htmlInput: { required: true } }}
+                  slotProps={{ htmlInput: { 'aria-label': '새 비밀번호 확인', required: true } }}
                 />
               </Stack>
 
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>비밀번호 변경시 자동으로 로그아웃됩니다.</span>
               </p>
@@ -240,7 +240,7 @@ export default function PasswordChange({
               </button>
 
               {errorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{errorMessage}</span>
                 </p>

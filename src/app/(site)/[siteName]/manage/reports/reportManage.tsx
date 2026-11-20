@@ -888,7 +888,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
         {errorMessage && isListError ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
         {errorMessage && !isListError ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>
@@ -1068,8 +1068,9 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             open={Boolean(selectedReport)}
             onClose={handleClose}
             className={isDetailContentPopup ? 'VhiDrawer-bottom' : 'VhiDrawer-bottom VhiDrawer-bottom-service'}
+            slotProps={{ paper: { 'aria-labelledby': 'manage-reports-report-manage-drawer-title' } }}
           >
-            <h2>신고 처리</h2>
+            <h2 id="manage-reports-report-manage-drawer-title">신고 처리</h2>
             <button type="button" className="close-button" onClick={handleClose} disabled={saving} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
@@ -1150,8 +1151,9 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             open={isCompletionConfirmOpen}
             onClose={() => setIsCompletionConfirmOpen(false)}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'manage-reports-report-manage-drawer-title-2' } }}
           >
-            <h2>상태 변경</h2>
+            <h2 id="manage-reports-report-manage-drawer-title-2">상태 변경</h2>
             <div className="VhiDrawer-bottom-content">
               <Typography variant="subtitle2" sx={{ whiteSpace: 'pre-line' }}>
                 {'처리완료는 발견된 문제가 해결됐음을 의미합니다.\n정말로 처리완료로 변경하시겠어요?'}
@@ -1202,8 +1204,9 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             open={Boolean(messageReport)}
             onClose={handleCloseMessages}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'manage-reports-report-manage-drawer-title-3' } }}
           >
-            <h2>소명 메시지</h2>
+            <h2 id="manage-reports-report-manage-drawer-title-3">소명 메시지</h2>
             <button
               type="button"
               className="close-button"
@@ -1285,8 +1288,9 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             open={Boolean(finalReport)}
             onClose={handleCloseFinal}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'manage-reports-report-manage-drawer-title-4' } }}
           >
-            <h2>최종 판단</h2>
+            <h2 id="manage-reports-report-manage-drawer-title-4">최종 판단</h2>
             <button
               type="button"
               className="close-button"

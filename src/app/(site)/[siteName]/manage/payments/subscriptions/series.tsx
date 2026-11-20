@@ -566,6 +566,7 @@ export default function SeriesSubscriptions({
           fullWidth
           size="small"
           slotProps={{
+            htmlInput: { 'aria-label': '연재 구독 가격' },
             input: {
               endAdornment: <InputAdornment position="end">원</InputAdornment>,
             },
@@ -609,7 +610,7 @@ export default function SeriesSubscriptions({
         ))}
 
         {errorMessage ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>

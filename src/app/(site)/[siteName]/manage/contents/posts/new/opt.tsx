@@ -964,7 +964,7 @@ export default function Opt({
                   replacementMarkdown={contentReplacement}
                 />
                 {fieldErrors.content ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <span>{fieldErrors.content}</span>
                   </p>
                 ) : null}
@@ -1039,7 +1039,7 @@ export default function Opt({
                       }}
                     />
                     {fieldErrors.scheduled ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <span>{fieldErrors.scheduled}</span>
                       </p>
                     ) : null}

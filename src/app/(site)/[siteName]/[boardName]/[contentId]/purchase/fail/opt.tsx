@@ -16,12 +16,12 @@ export default function Opt({ siteName, boardName, contentId, message, logErrorM
               <Typography variant="h6" component="h1">
                 포스팅 구매 실패
               </Typography>
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{message}</span>
               </p>
               {logErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{logErrorMessage}</span>
                 </p>

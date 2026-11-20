@@ -559,7 +559,13 @@ export default function Opt() {
               }
               size="small"
               slotProps={{
-                htmlInput: { required: true, minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' },
+                htmlInput: {
+                  'aria-label': '블로그 주소',
+                  required: true,
+                  minLength: 5,
+                  maxLength: 15,
+                  pattern: '[a-z][a-z0-9-]*',
+                },
                 input: {
                   startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
                   endAdornment: (
@@ -605,7 +611,7 @@ export default function Opt() {
                   : `블로그 주소가 10자를 초과하면 사이트명을 입력해야 합니다. ${siteLabel.length} / 10`)
               }
               slotProps={{
-                htmlInput: { minLength: 2, maxLength: 10 },
+                htmlInput: { 'aria-label': '블로그 이름', minLength: 2, maxLength: 10 },
                 input: {
                   endAdornment: siteLabel.trim() ? (
                     <InputAdornment position="end">
@@ -656,7 +662,7 @@ export default function Opt() {
               </Stack>
             ) : null}
             {fieldErrors.profilePicture ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.profilePicture}</span>
               </p>
@@ -674,13 +680,22 @@ export default function Opt() {
               minRows={4}
               error={Boolean(fieldErrors.summary)}
               helperText={fieldErrors.summary || `${summary.length} / 52`}
-              slotProps={{ htmlInput: { maxLength: 52 } }}
+              slotProps={{ htmlInput: { 'aria-label': '블로그 간단설명', maxLength: 52 } }}
             />
           </Stack>
 
           <Stack gap={1}>
-            <Typography variant="subtitle2">테마</Typography>
-            <TextField select value={themeType} onChange={handleThemeTypeChange} fullWidth size="small">
+            <Typography id="new-blog-field-label" variant="subtitle2">
+              테마
+            </Typography>
+            <TextField
+              select
+              value={themeType}
+              onChange={handleThemeTypeChange}
+              fullWidth
+              size="small"
+              slotProps={{ select: { labelId: 'new-blog-field-label' } }}
+            >
               {THEME_TYPES.map((themeValue) => (
                 <MenuItem key={themeValue} value={themeValue}>
                   {themeType === themeValue ? (
@@ -731,7 +746,7 @@ export default function Opt() {
           <SiteCaptcha onPassTokenChange={setCaptchaPassToken} onBlockedChange={setIsCaptchaBlocked} />
 
           {errorMessage ? (
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>{errorMessage}</span>
             </p>
@@ -759,8 +774,9 @@ export default function Opt() {
           open={isCancelDialogOpen}
           onClose={closeCancelDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'new-blog-drawer-title' } }}
         >
-          <h2>개설 취소</h2>
+          <h2 id="new-blog-drawer-title">개설 취소</h2>
           <button type="button" className="close-button" onClick={closeCancelDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
@@ -808,8 +824,9 @@ export default function Opt() {
           open={isErrorDialogOpen}
           onClose={closeErrorDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': errorDialog.title ? 'new-blog-error-drawer-title' : undefined } }}
         >
-          {errorDialog.title ? <h2>{errorDialog.title}</h2> : null}
+          {errorDialog.title ? <h2 id="new-blog-error-drawer-title">{errorDialog.title}</h2> : null}
           <button type="button" className="close-button" onClick={closeErrorDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

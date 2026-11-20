@@ -50,7 +50,7 @@ export default async function Page() {
           {!canCreateSite ? (
             <div className="paper page-error">
               <ServiceErrorIcon />
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{blockMessage}</span>
               </p>

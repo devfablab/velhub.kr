@@ -949,8 +949,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={dialogMode === 'new' || dialogMode === 'edit'}
               onClose={handleCloseDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-series-drawer-title' } }}
             >
-              <h2>{dialogMode === 'new' ? '연재 추가' : '연재 수정'}</h2>
+              <h2 id="manage-contents-posts-c-board-name-series-drawer-title">
+                {dialogMode === 'new' ? '연재 추가' : '연재 수정'}
+              </h2>
               <button
                 type="button"
                 className="close-button"
@@ -982,6 +985,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
                         size="small"
                         slotProps={{
+                          htmlInput: { 'aria-label': '연재 식별자' },
                           input: {
                             endAdornment: (
                               <InputAdornment position="end">
@@ -1012,6 +1016,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
                         size="small"
                         slotProps={{
+                          htmlInput: { 'aria-label': '연재명' },
                           input: {
                             endAdornment: (
                               <InputAdornment position="end">
@@ -1040,6 +1045,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         multiline
                         minRows={3}
                         size="small"
+                        slotProps={{ htmlInput: { 'aria-label': '연재 설명' } }}
                       />
                     </Stack>
 
@@ -1150,14 +1156,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </div>
 
                     {dialogHelperMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogHelperMessage}</span>
                       </p>
                     ) : null}
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1219,7 +1225,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     ) : null}
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1237,6 +1243,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
                         size="small"
                         slotProps={{
+                          htmlInput: { 'aria-label': '연재 식별자' },
                           input: {
                             endAdornment: (
                               <InputAdornment position="end">
@@ -1266,6 +1273,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
                         size="small"
                         slotProps={{
+                          htmlInput: { 'aria-label': '연재명' },
                           input: {
                             endAdornment: (
                               <InputAdornment position="end">
@@ -1293,6 +1301,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         multiline
                         minRows={3}
                         size="small"
+                        slotProps={{ htmlInput: { 'aria-label': '연재 설명' } }}
                       />
                     </Stack>
 
@@ -1411,7 +1420,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     ) : null}
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1445,8 +1454,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={dialogMode === 'delete'}
               onClose={handleCloseDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-series-drawer-title-2' } }}
             >
-              <h2>연재 삭제</h2>
+              <h2 id="manage-contents-posts-c-board-name-series-drawer-title-2">연재 삭제</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1468,7 +1478,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1525,7 +1535,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -1555,8 +1565,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={isUserDialogOpen}
               onClose={handleCloseUserDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-series-drawer-title-3' } }}
             >
-              <h2>사용자 검색</h2>
+              <h2 id="manage-contents-posts-c-board-name-series-drawer-title-3">사용자 검색</h2>
               <button
                 type="button"
                 className="close-button"

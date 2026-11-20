@@ -181,8 +181,14 @@ export default function IdentityAgreement({
 
   if (isMobile) {
     return (
-      <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom">
-        <h2>{title}</h2>
+      <Drawer
+        anchor="bottom"
+        open={open}
+        onClose={onClose}
+        className="VhiDrawer-bottom"
+        slotProps={{ paper: { 'aria-labelledby': 'components-modals-identity-agreement-drawer-title' } }}
+      >
+        <h2 id="components-modals-identity-agreement-drawer-title">{title}</h2>
         <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>

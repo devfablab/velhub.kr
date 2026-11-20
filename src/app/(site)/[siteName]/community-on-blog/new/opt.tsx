@@ -165,8 +165,9 @@ function ImagePicker({
           open={open}
           onClose={closeDialog}
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+          slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-new-drawer-title' } }}
         >
-          <h2>이미지 첨부</h2>
+          <h2 id="community-on-blog-new-drawer-title">이미지 첨부</h2>
           <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

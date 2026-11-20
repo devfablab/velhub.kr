@@ -606,8 +606,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               open={isOwnerTransferOpen}
               onClose={handleCloseOwnerTransfer}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title' } }}
             >
-              <h2>운영자 교체</h2>
+              <h2 id="manage-team-members-drawer-title">운영자 교체</h2>
               <button
                 type="button"
                 className="close-button"
@@ -622,7 +623,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   선택한 팀원이 수락하면 운영자 권한이 이전되고 현재 운영자는 일반 팀원이 됩니다.
                 </Typography>
                 <Stack gap={1}>
-                  <Typography variant="subtitle2">새 운영자</Typography>
+                  <Typography id="manage-team-members-field-label" variant="subtitle2">
+                    새 운영자
+                  </Typography>
                   <TextField
                     select
                     value={ownerTransferTargetId}
@@ -630,8 +633,8 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     size="small"
                     fullWidth
                     slotProps={{
+                      select: { labelId: 'manage-team-members-field-label', displayEmpty: true },
                       input: { startAdornment: <SelectCheckAdornment /> },
-                      select: { displayEmpty: true },
                     }}
                   >
                     <MenuItem value="" disabled>
@@ -690,7 +693,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     선택한 팀원이 수락하면 운영자 권한이 이전되고 현재 운영자는 일반 팀원이 됩니다.
                   </Typography>
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">새 운영자</Typography>
+                    <Typography id="manage-team-members-field-label-2" variant="subtitle2">
+                      새 운영자
+                    </Typography>
                     <TextField
                       select
                       name="role"
@@ -700,8 +705,8 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                       size="small"
                       fullWidth
                       slotProps={{
+                        select: { labelId: 'manage-team-members-field-label-2', displayEmpty: true },
                         input: { startAdornment: <SelectCheckAdornment /> },
-                        select: { displayEmpty: true },
                       }}
                     >
                       <MenuItem value="" disabled>
@@ -747,8 +752,13 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 setInviteErrorMessage('');
               }}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{
+                paper: {
+                  'aria-labelledby': inviteErrorTitle ? 'manage-team-members-invite-error-drawer-title' : undefined,
+                },
+              }}
             >
-              {inviteErrorTitle ? <h2>{inviteErrorTitle}</h2> : null}
+              {inviteErrorTitle ? <h2 id="manage-team-members-invite-error-drawer-title">{inviteErrorTitle}</h2> : null}
               <button
                 type="button"
                 className="close-button"
@@ -836,8 +846,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               open={Boolean(targetRoleTeam)}
               onClose={handleCloseRoleDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title-2' } }}
             >
-              <h2>
+              <h2 id="manage-team-members-drawer-title-2">
                 {nextRole === 'observer'
                   ? '팀원 차단'
                   : targetRoleTeam?.role === 'observer'
@@ -956,8 +967,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               open={isInviteDialogOpen}
               onClose={handleCloseInviteDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title-3' } }}
             >
-              <h2>팀원 초대</h2>
+              <h2 id="manage-team-members-drawer-title-3">팀원 초대</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1007,7 +1019,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     </Stack>
 
                     <Stack>
-                      <Typography variant="subtitle2">역할</Typography>
+                      <Typography id="manage-team-members-field-label-3" variant="subtitle2">
+                        역할
+                      </Typography>
                       <TextField
                         select
                         name="role"
@@ -1016,7 +1030,10 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                         onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
                         fullWidth
                         size="small"
-                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                        slotProps={{
+                          select: { labelId: 'manage-team-members-field-label-3' },
+                          input: { startAdornment: <SelectCheckAdornment /> },
+                        }}
                       >
                         <MenuItem value="manager">매니저</MenuItem>
                         <MenuItem value="member">멤버</MenuItem>
@@ -1103,14 +1120,19 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                     </Stack>
 
                     <Stack>
-                      <Typography variant="subtitle2">역할</Typography>
+                      <Typography id="manage-team-members-field-label-4" variant="subtitle2">
+                        역할
+                      </Typography>
                       <TextField
                         select
                         value={inviteRole}
                         onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
                         fullWidth
                         size="small"
-                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                        slotProps={{
+                          select: { labelId: 'manage-team-members-field-label-4' },
+                          input: { startAdornment: <SelectCheckAdornment /> },
+                        }}
                       >
                         <MenuItem value="manager">매니저</MenuItem>
                         <MenuItem value="member">멤버</MenuItem>
@@ -1141,8 +1163,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               open={isInviteListDialogOpen}
               onClose={handleCloseInviteListDialog}
               className="VhiDrawer-bottom"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title-4' } }}
             >
-              <h2>초대 현황</h2>
+              <h2 id="manage-team-members-drawer-title-4">초대 현황</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1260,8 +1283,9 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               open={Boolean(targetInvite)}
               onClose={handleCloseCancelDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-team-members-drawer-title-5' } }}
             >
-              <h2>초대 취소</h2>
+              <h2 id="manage-team-members-drawer-title-5">초대 취소</h2>
               <button
                 type="button"
                 className="close-button"

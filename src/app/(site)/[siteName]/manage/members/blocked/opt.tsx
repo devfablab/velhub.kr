@@ -369,7 +369,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
               sx={{ p: isMobile ? 1.5 : 2.5, pb: 0 }}
             >
               <Stack direction="row" gap={0.5} alignItems="center">
-                <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
+                <Checkbox
+                  checked={allFilteredSelected}
+                  onChange={handleToggleAll}
+                  size="small"
+                  slotProps={{ input: { 'aria-label': '전체 선택' } }}
+                />
                 <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
               </Stack>
               <Stack direction="row" gap={1.5} alignItems="center">
@@ -416,6 +421,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           checked={selectedUserIds.includes(user.userId)}
                           onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                           size="small"
+                          slotProps={{ input: { 'aria-label': `${user.nickname} 선택` } }}
                         />
                         <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.nickname} />
                         <Stack gap={1}>
@@ -465,8 +471,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={Boolean(actionType)}
               onClose={handleCloseActionDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-members-blocked-drawer-title' } }}
             >
-              <h2>{getActionTitle()}</h2>
+              <h2 id="manage-members-blocked-drawer-title">{getActionTitle()}</h2>
               <button type="button" className="close-button" onClick={handleCloseActionDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
@@ -491,6 +498,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           size="small"
                           error={Boolean(dialogErrorMessage)}
                           helperText={dialogErrorMessage}
+                          slotProps={{ htmlInput: { 'aria-label': getActionReasonLabel() } }}
                         />
                       </Stack>
                     ) : null}
@@ -521,7 +529,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     ) : null}
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -584,6 +592,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           size="small"
                           error={Boolean(dialogErrorMessage)}
                           helperText={dialogErrorMessage}
+                          slotProps={{ htmlInput: { 'aria-label': getActionReasonLabel() } }}
                         />
                       </>
                     ) : null}
@@ -607,7 +616,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     ) : null}
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>

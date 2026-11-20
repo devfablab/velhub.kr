@@ -389,8 +389,9 @@ export default function Opt({
           open={isSearchOpen}
           onClose={closeSearchDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-recommended-posts-drawer-title' } }}
         >
-          <h2>추천 포스팅 추가</h2>
+          <h2 id="manage-recommended-posts-drawer-title">추천 포스팅 추가</h2>
           <button
             type="button"
             className="close-button"

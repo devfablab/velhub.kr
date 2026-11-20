@@ -171,6 +171,7 @@ function SortableLinkItem({
               size="small"
               value={link.label}
               onChange={(event) => updateLink(index, 'label', event.target.value)}
+              slotProps={{ htmlInput: { 'aria-label': '레이블' } }}
             />
           </Stack>
           <Stack gap={1}>
@@ -179,6 +180,7 @@ function SortableLinkItem({
               size="small"
               value={link.url}
               onChange={(event) => updateLink(index, 'url', event.target.value)}
+              slotProps={{ htmlInput: { 'aria-label': '링크' } }}
             />
           </Stack>
         </Stack>
@@ -357,7 +359,7 @@ export function ProfileForm({
           }}
           error={Boolean(introductionError)}
           helperText={introductionError || '2자 이상 72자 이하로 입력해 주세요.'}
-          slotProps={{ htmlInput: { maxLength: INTRODUCTION_MAX_LENGTH } }}
+          slotProps={{ htmlInput: { 'aria-label': '소개', maxLength: INTRODUCTION_MAX_LENGTH } }}
         />
       </Stack>
       <Stack gap={2}>
@@ -389,7 +391,7 @@ export function ProfileForm({
         ) : null}
       </Stack>
       {message ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{message}</span>
         </p>

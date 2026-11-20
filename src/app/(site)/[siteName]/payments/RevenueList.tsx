@@ -302,12 +302,15 @@ export default function RevenueList({
                     </MenuItem>
                   ))}
                 </Select>
-                <Typography sx={{ alignSelf: 'center' }}>~</Typography>
+                <Typography id="payments-revenue-list-field-label" sx={{ alignSelf: 'center' }}>
+                  ~
+                </Typography>
                 <Select
                   size="small"
                   displayEmpty
                   value={selectedEndYear}
                   onChange={(changeEvent) => updateSearchParams({ endYear: changeEvent.target.value })}
+                  labelId="payments-revenue-list-field-label"
                 >
                   <MenuItem value="">종료 년도</MenuItem>
                   {responseData.filters.years.map((year) => (

@@ -246,8 +246,14 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
       </button>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isOpen} onClose={closeDialog} className="VhiDrawer-bottom">
-          <h2>해시태그 관리</h2>
+        <Drawer
+          anchor="bottom"
+          open={isOpen}
+          onClose={closeDialog}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-hashtag-settings-dialog-drawer-title' } }}
+        >
+          <h2 id="manage-contents-posts-hashtag-settings-dialog-drawer-title">해시태그 관리</h2>
           <button type="button" className="close-button" onClick={closeDialog} disabled={isSaving} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

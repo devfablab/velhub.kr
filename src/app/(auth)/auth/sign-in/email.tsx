@@ -585,8 +585,9 @@ export default function EmailSignIn() {
             open={errorPopup.open}
             onClose={handleErrorPopupClose}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'auth-sign-in-email-drawer-title' } }}
           >
-            <h2>{errorPopup.title}</h2>
+            <h2 id="auth-sign-in-email-drawer-title">{errorPopup.title}</h2>
             <button type="button" className="close-button" onClick={handleErrorPopupClose} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
@@ -639,8 +640,9 @@ export default function EmailSignIn() {
             open={decisionState === 'confirm-enable-email-login'}
             onClose={handleCancelDecision}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'auth-sign-in-email-drawer-title-2' } }}
           >
-            <h2>이메일 로그인 설정</h2>
+            <h2 id="auth-sign-in-email-drawer-title-2">이메일 로그인 설정</h2>
             <button
               type="button"
               className="close-button"
@@ -710,8 +712,9 @@ export default function EmailSignIn() {
             open={decisionState === 'confirm-email-login'}
             onClose={handleCancelDecision}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'auth-sign-in-email-drawer-title-3' } }}
           >
-            <h2>이메일 로그인 확인</h2>
+            <h2 id="auth-sign-in-email-drawer-title-3">이메일 로그인 확인</h2>
             <button
               type="button"
               className="close-button"

@@ -283,7 +283,7 @@ export default function UserInfo() {
   if (errorMessage) {
     return (
       <div className={`${styles['user-status']} paper`}>
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>
@@ -403,8 +403,9 @@ export default function UserInfo() {
           open={isDialogOpen}
           onClose={handleCloseDialog}
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['info-dialog']}`}
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-community-user-info-drawer-title' } }}
         >
-          <h2>프로필 설정</h2>
+          <h2 id="components-service-community-user-info-drawer-title">프로필 설정</h2>
           <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
             <CloseRoundedIcon />
           </button>
@@ -540,8 +541,11 @@ export default function UserInfo() {
           open={isWithdrawDialogOpen}
           onClose={handleCloseWithdrawDialog}
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-community-user-info-drawer-title-2' } }}
         >
-          <h2>{isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}</h2>
+          <h2 id="components-service-community-user-info-drawer-title-2">
+            {isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}
+          </h2>
           <button
             type="button"
             className="close-button"
@@ -564,7 +568,7 @@ export default function UserInfo() {
               >
                 <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
                 {withdrawErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{withdrawErrorMessage}</span>
                   </p>
@@ -633,7 +637,7 @@ export default function UserInfo() {
                 <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
 
                 {withdrawErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{withdrawErrorMessage}</span>
                   </p>

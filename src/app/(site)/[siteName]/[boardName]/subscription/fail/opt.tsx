@@ -15,12 +15,12 @@ export default function Opt({ siteName, boardName, message, logErrorMessage }: P
               <Typography variant="h6" component="h1">
                 연재 구독 실패
               </Typography>
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{message}</span>
               </p>
               {logErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{logErrorMessage}</span>
                 </p>

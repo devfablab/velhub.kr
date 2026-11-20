@@ -232,7 +232,7 @@ function ContentBody({
 function PostPreview({ response, errorMessage }: { response: ContentResponse | null; errorMessage: string }) {
   if (errorMessage) {
     return (
-      <p className="alert error">
+      <p className="alert error" role="alert">
         <ErrorOutlineRoundedIcon />
         <span>{errorMessage}</span>
       </p>

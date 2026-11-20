@@ -16,7 +16,7 @@ export default function ScreenState({ children, kind = 'empty', action }: Props)
   return (
     <div className={`paper ${className}`}>
       {kind === 'error' ? <ServiceErrorIcon /> : kind === 'warning' ? <ServiceWarningIcon /> : <ServiceNoDataIcon />}
-      <p>{children}</p>
+      <p role={kind === 'error' ? 'alert' : 'status'}>{children}</p>
       {action ? <Box sx={{ mt: 0.5 }}>{action}</Box> : null}
     </div>
   );

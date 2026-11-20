@@ -151,7 +151,13 @@ export default function Opt() {
   function renderPopupContents(isDrawer: boolean) {
     return (
       <>
-        {popup.title ? isDrawer ? <h2>{popup.title}</h2> : <DialogTitle>{popup.title}</DialogTitle> : null}
+        {popup.title ? (
+          isDrawer ? (
+            <h2 id="auth-find-password-popup-drawer-title">{popup.title}</h2>
+          ) : (
+            <DialogTitle>{popup.title}</DialogTitle>
+          )
+        ) : null}
         <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>
@@ -234,7 +240,15 @@ export default function Opt() {
       </Container>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={popup.open} onClose={handlePopupClose} className="VhiDrawer-bottom">
+        <Drawer
+          anchor="bottom"
+          open={popup.open}
+          onClose={handlePopupClose}
+          className="VhiDrawer-bottom"
+          slotProps={{
+            paper: { 'aria-labelledby': popup.title ? 'auth-find-password-popup-drawer-title' : undefined },
+          }}
+        >
           {renderPopupContents(true)}
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handlePopupClose}>

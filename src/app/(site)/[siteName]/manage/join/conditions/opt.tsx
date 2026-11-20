@@ -516,12 +516,22 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   multiline
                   minRows={4}
                   size="small"
+                  slotProps={{ htmlInput: { 'aria-label': '가입 안내 문구' } }}
                 />
               </div>
 
               <div className={`paper ${styles.paper}`}>
-                <Typography variant="subtitle2">글 작성 정책</Typography>
-                <TextField select value={policyPost} onChange={handlePolicyPostChange} fullWidth size="small">
+                <Typography id="manage-join-conditions-field-label" variant="subtitle2">
+                  글 작성 정책
+                </Typography>
+                <TextField
+                  select
+                  value={policyPost}
+                  onChange={handlePolicyPostChange}
+                  fullWidth
+                  size="small"
+                  slotProps={{ select: { labelId: 'manage-join-conditions-field-label' } }}
+                >
                   <MenuItem value="comment_0">
                     {policyPost === 'comment_0' ? (
                       <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
@@ -558,8 +568,17 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </div>
 
               <div className={`paper ${styles.paper}`}>
-                <Typography variant="subtitle2">댓글 작성 정책</Typography>
-                <TextField select value={policyComment} onChange={handlePolicyCommentChange} fullWidth size="small">
+                <Typography id="manage-join-conditions-field-label-2" variant="subtitle2">
+                  댓글 작성 정책
+                </Typography>
+                <TextField
+                  select
+                  value={policyComment}
+                  onChange={handlePolicyCommentChange}
+                  fullWidth
+                  size="small"
+                  slotProps={{ select: { labelId: 'manage-join-conditions-field-label-2' } }}
+                >
                   <MenuItem value="estimate_0">
                     {policyComment === 'estimate_0' ? (
                       <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
@@ -659,7 +678,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       <span>답변 데이터 보호를 위해 저장된 가입 질문의 순서 변경은 제한됩니다.</span>
                     </p>
 
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>
                         문항 순서 변경은 지원하지 않습니다. 필요한 경우 새 문항을 추가하고 기존 문항을 삭제해주세요.
@@ -682,7 +701,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                             </Stack>
 
                             <Stack gap={1}>
-                              <Typography variant="subtitle2">질문 유형</Typography>
+                              <Typography id="manage-join-conditions-field-label-3" variant="subtitle2">
+                                질문 유형
+                              </Typography>
                               <TextField
                                 select
                                 value={question.type}
@@ -694,6 +715,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 }
                                 fullWidth
                                 size="small"
+                                slotProps={{ select: { labelId: 'manage-join-conditions-field-label-3' } }}
                               >
                                 <MenuItem value="subjective">
                                   {question.type === 'subjective' ? (
@@ -732,6 +754,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 multiline
                                 minRows={2}
                                 size="small"
+                                slotProps={{ htmlInput: { 'aria-label': '질문 내용' } }}
                               />
 
                               {question.type === 'subjective' ? (

@@ -253,7 +253,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
               sx={{ p: isMobile ? 1.5 : 2.5, pb: 0 }}
             >
               <Stack direction="row" gap={0.5} alignItems="center">
-                <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
+                <Checkbox
+                  checked={allFilteredSelected}
+                  onChange={handleToggleAll}
+                  size="small"
+                  slotProps={{ input: { 'aria-label': '전체 선택' } }}
+                />
                 <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
               </Stack>
               <Stack direction="row" gap={1.5} sx={{ pl: isMobile ? 1.5 : undefined }}>
@@ -276,6 +281,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       checked={selectedUserIds.includes(user.userId)}
                       onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                       size="small"
+                      slotProps={{ input: { 'aria-label': `${user.displayName} 선택` } }}
                     />
                     <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.displayName} />
                     <Stack gap={1}>
@@ -306,8 +312,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={isDialogOpen}
               onClose={handleCloseDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-banned-drawer-title' } }}
             >
-              <h2>가입불가 해제</h2>
+              <h2 id="manage-join-banned-drawer-title">가입불가 해제</h2>
               <button
                 type="button"
                 className="close-button"

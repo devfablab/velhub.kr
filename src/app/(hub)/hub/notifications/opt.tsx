@@ -130,7 +130,7 @@ export default function Opt({
       {errorMessage && !hasLoadedNotifications ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
       {errorMessage && hasLoadedNotifications ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>

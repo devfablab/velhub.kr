@@ -78,11 +78,7 @@ type MemberSearchItem = {
 };
 
 type ManagerIconRole =
-  | 'owner'
-  | 'community-manager'
-  | 'board-manager'
-  | 'board-general-manager'
-  | 'board-assistant-manager';
+  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager';
 
 type ManagerIconItem = {
   id: string;
@@ -843,7 +839,7 @@ export default function Opt({
   const managerEditContent = selectedManager ? (
     <Stack gap={3}>
       {managerEditErrorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{managerEditErrorMessage}</span>
         </p>
@@ -1028,8 +1024,9 @@ export default function Opt({
               open={isIconDialogOpen}
               onClose={closeIconDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title' } }}
             >
-              <h2>아이콘 변경</h2>
+              <h2 id="manage-join-managers-drawer-title">아이콘 변경</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1042,7 +1039,7 @@ export default function Opt({
               <div className="VhiDrawer-bottom-content">
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {iconErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{iconErrorMessage}</span>
                     </p>
@@ -1156,7 +1153,7 @@ export default function Opt({
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {iconErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{iconErrorMessage}</span>
                     </p>
@@ -1253,8 +1250,9 @@ export default function Opt({
               open={isSearchDialogOpen}
               onClose={closeSearchDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title-2' } }}
             >
-              <h2>멤버 검색</h2>
+              <h2 id="manage-join-managers-drawer-title-2">멤버 검색</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1266,7 +1264,7 @@ export default function Opt({
               </button>
               <div className="VhiDrawer-bottom-content">
                 {searchDialogErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{searchDialogErrorMessage}</span>
                   </p>
@@ -1309,6 +1307,7 @@ export default function Opt({
                                   disabled={
                                     searchMode === 'manager' && (member.isOwner || member.manageRoles.length > 0)
                                   }
+                                  slotProps={{ input: { 'aria-label': `${member.nickname || member.userName} 선택` } }}
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.nickname || member.userName}</TableCell>
@@ -1336,7 +1335,9 @@ export default function Opt({
                     <>
                       <Stack direction="row" gap={1.5}>
                         <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
-                          <Typography variant="subtitle2">매니저 구분</Typography>
+                          <Typography id="manage-join-managers-field-label" variant="subtitle2">
+                            매니저 구분
+                          </Typography>
                           <TextField
                             select
                             value={assignManagerGroup}
@@ -1348,7 +1349,10 @@ export default function Opt({
                             }}
                             size="small"
                             fullWidth
-                            slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                            slotProps={{
+                              select: { labelId: 'manage-join-managers-field-label' },
+                              input: { startAdornment: <SelectCheckAdornment /> },
+                            }}
                           >
                             <MenuItem value="common">기타 매니저</MenuItem>
                             <MenuItem value="board">개별 게시판 매니저</MenuItem>
@@ -1357,7 +1361,9 @@ export default function Opt({
 
                         {assignManagerGroup === 'common' ? (
                           <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
-                            <Typography variant="subtitle2">위임 역할</Typography>
+                            <Typography id="manage-join-managers-field-label-2" variant="subtitle2">
+                              위임 역할
+                            </Typography>
                             <TextField
                               select
                               value={assignCommonRole}
@@ -1366,7 +1372,10 @@ export default function Opt({
                               }
                               size="small"
                               fullWidth
-                              slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                              slotProps={{
+                                select: { labelId: 'manage-join-managers-field-label-2' },
+                                input: { startAdornment: <SelectCheckAdornment /> },
+                              }}
                             >
                               <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
                               <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
@@ -1375,14 +1384,16 @@ export default function Opt({
                         ) : (
                           <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
                             <Stack direction="column" gap={1}>
-                              <Typography variant="subtitle2">게시판</Typography>
+                              <Typography id="manage-join-managers-field-label-3" variant="subtitle2">
+                                게시판
+                              </Typography>
 
                               <TextField
                                 select
                                 value={assignBoardId}
                                 slotProps={{
+                                  select: { labelId: 'manage-join-managers-field-label-3', displayEmpty: true },
                                   input: { startAdornment: <SelectCheckAdornment /> },
-                                  select: { displayEmpty: true },
                                 }}
                                 onChange={(event) => {
                                   const nextBoardId = event.target.value;
@@ -1406,7 +1417,9 @@ export default function Opt({
 
                             {assignBoardId && selectedAssignBoard ? (
                               <Stack direction="column" gap={1}>
-                                <Typography variant="subtitle2">위임 역할</Typography>
+                                <Typography id="manage-join-managers-field-label-4" variant="subtitle2">
+                                  위임 역할
+                                </Typography>
 
                                 <TextField
                                   select
@@ -1418,7 +1431,10 @@ export default function Opt({
                                   }
                                   size="small"
                                   fullWidth
-                                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                                  slotProps={{
+                                    select: { labelId: 'manage-join-managers-field-label-4' },
+                                    input: { startAdornment: <SelectCheckAdornment /> },
+                                  }}
                                 >
                                   <MenuItem
                                     value="board-general-manager"
@@ -1493,7 +1509,7 @@ export default function Opt({
               <DialogContent>
                 <Stack component="form" gap={2} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
                   {searchDialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{searchDialogErrorMessage}</span>
                     </p>
@@ -1535,6 +1551,7 @@ export default function Opt({
                                   disabled={
                                     searchMode === 'manager' && (member.isOwner || member.manageRoles.length > 0)
                                   }
+                                  slotProps={{ input: { 'aria-label': `${member.nickname || member.userName} 선택` } }}
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.nickname || member.userName}</TableCell>
@@ -1561,7 +1578,9 @@ export default function Opt({
                   {selectedSearchMemberId && searchMode === 'manager' ? (
                     <Stack direction="row" gap={1.5}>
                       <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
-                        <Typography variant="subtitle2">매니저 구분</Typography>
+                        <Typography id="manage-join-managers-field-label-5" variant="subtitle2">
+                          매니저 구분
+                        </Typography>
                         <TextField
                           select
                           value={assignManagerGroup}
@@ -1573,7 +1592,10 @@ export default function Opt({
                           }}
                           size="small"
                           sx={{ minWidth: 180 }}
-                          slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                          slotProps={{
+                            select: { labelId: 'manage-join-managers-field-label-5' },
+                            input: { startAdornment: <SelectCheckAdornment /> },
+                          }}
                         >
                           <MenuItem value="common">기타 매니저</MenuItem>
                           <MenuItem value="board">개별 게시판 매니저</MenuItem>
@@ -1582,7 +1604,9 @@ export default function Opt({
 
                       {assignManagerGroup === 'common' ? (
                         <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
-                          <Typography variant="subtitle2">위임 역할</Typography>
+                          <Typography id="manage-join-managers-field-label-6" variant="subtitle2">
+                            위임 역할
+                          </Typography>
 
                           <TextField
                             select
@@ -1592,7 +1616,10 @@ export default function Opt({
                             }
                             size="small"
                             sx={{ minWidth: 240 }}
-                            slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                            slotProps={{
+                              select: { labelId: 'manage-join-managers-field-label-6' },
+                              input: { startAdornment: <SelectCheckAdornment /> },
+                            }}
                           >
                             <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
                             <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
@@ -1601,14 +1628,16 @@ export default function Opt({
                       ) : (
                         <>
                           <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
-                            <Typography variant="subtitle2">게시판</Typography>
+                            <Typography id="manage-join-managers-field-label-7" variant="subtitle2">
+                              게시판
+                            </Typography>
 
                             <TextField
                               select
                               value={assignBoardId}
                               slotProps={{
+                                select: { labelId: 'manage-join-managers-field-label-7', displayEmpty: true },
                                 input: { startAdornment: <SelectCheckAdornment /> },
-                                select: { displayEmpty: true },
                               }}
                               onChange={(event) => {
                                 const nextBoardId = event.target.value;
@@ -1633,7 +1662,9 @@ export default function Opt({
 
                           {assignBoardId && selectedAssignBoard ? (
                             <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
-                              <Typography variant="subtitle2">위임 역할</Typography>
+                              <Typography id="manage-join-managers-field-label-8" variant="subtitle2">
+                                위임 역할
+                              </Typography>
 
                               <TextField
                                 select
@@ -1645,7 +1676,10 @@ export default function Opt({
                                 }
                                 size="small"
                                 sx={{ minWidth: 240 }}
-                                slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                                slotProps={{
+                                  select: { labelId: 'manage-join-managers-field-label-8' },
+                                  input: { startAdornment: <SelectCheckAdornment /> },
+                                }}
                               >
                                 <MenuItem
                                   value="board-general-manager"
@@ -1705,8 +1739,9 @@ export default function Opt({
               open={isOwnerTransferConfirmOpen}
               onClose={closeOwnerTransferConfirm}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title-3' } }}
             >
-              <h2>운영자 교체</h2>
+              <h2 id="manage-join-managers-drawer-title-3">운영자 교체</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1792,8 +1827,9 @@ export default function Opt({
                   open={isManagerEditOpen}
                   onClose={closeManagerEdit}
                   className="VhiDrawer-bottom VhiDrawer-bottom-service"
+                  slotProps={{ paper: { 'aria-labelledby': 'manage-join-managers-drawer-title-4' } }}
                 >
-                  <h2>매니저 변경</h2>
+                  <h2 id="manage-join-managers-drawer-title-4">매니저 변경</h2>
                   <button
                     type="button"
                     className="close-button"

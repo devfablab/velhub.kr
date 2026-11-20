@@ -254,8 +254,13 @@ export default function Verify2fa() {
   return (
     <>
       {isMobile ? (
-        <Drawer anchor="bottom" open={true} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-          <h2>2단계 인증</h2>
+        <Drawer
+          anchor="bottom"
+          open={true}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-auth-verify2fa-drawer-title' } }}
+        >
+          <h2 id="components-auth-verify2fa-drawer-title">2단계 인증</h2>
           <button className="close-button" onClick={handleSignOut} aria-label="닫기" disabled={isSubmitting}>
             <CloseRoundedIcon />
           </button>

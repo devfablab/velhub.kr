@@ -241,7 +241,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               </Select>
             </FormControl>
             {fieldErrors.categoryId ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.categoryId}</span>
               </p>
@@ -320,7 +320,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
               />
             )}
             {formInfo.isLoggedIn && formInfo.paymentEmail && fieldErrors.proposerEmail ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.proposerEmail}</span>
               </p>
@@ -400,7 +400,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
           </div>
         ) : null}
         {fieldErrors.attachment ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{fieldErrors.attachment}</span>
           </p>
@@ -489,7 +489,7 @@ export default function Opt({ formInfo }: { formInfo: PartnershipFormInfo }) {
           </Stack>
         </Stack>
         {fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{fieldErrors.personalInfoAgreed || fieldErrors.noticeAgreed}</span>
           </p>

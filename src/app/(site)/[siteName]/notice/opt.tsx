@@ -475,8 +475,9 @@ export default function Opt({
           open={Boolean(detailPost)}
           onClose={() => setDetailPost(null)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'notice-drawer-title' } }}
         >
-          <h2>상세보기</h2>
+          <h2 id="notice-drawer-title">상세보기</h2>
           <button type="button" className="close-button" onClick={() => setDetailPost(null)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
@@ -515,8 +516,9 @@ export default function Opt({
           open={Boolean(editor)}
           onClose={closeEditor}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'notice-drawer-title-2' } }}
         >
-          <h2>{editorTitle}</h2>
+          <h2 id="notice-drawer-title-2">{editorTitle}</h2>
           <button
             type="button"
             className="close-button"

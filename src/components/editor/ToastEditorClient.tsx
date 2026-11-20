@@ -164,8 +164,9 @@ export default function ToastEditorClient({
           open={Boolean(imageErrorMessage)}
           onClose={() => setImageErrorMessage('')}
           className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-editor-toast-editor-client-drawer-title' } }}
         >
-          <h2>이미지 등록 안내</h2>
+          <h2 id="components-editor-toast-editor-client-drawer-title">이미지 등록 안내</h2>
           <button type="button" className="close-button" onClick={() => setImageErrorMessage('')} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

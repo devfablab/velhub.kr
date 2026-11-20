@@ -41,7 +41,7 @@ export default function YoutubePreview({ onTimestampAdd, validationResult }: Pro
 
   if (validationResult.status === 'unavailable') {
     return (
-      <p className="alert error">
+      <p className="alert error" role="alert">
         <ErrorOutlineRoundedIcon />
         <span>존재하지 않는 영상입니다. 주소를 확인해 주세요.</span>
       </p>

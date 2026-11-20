@@ -439,7 +439,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             </Stack>
 
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
@@ -459,6 +459,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onChange={handleToggleAll}
                 disabled={isActionSubmitting || filteredUsers.length === 0}
                 size="small"
+                slotProps={{ input: { 'aria-label': '전체 선택' } }}
               />
               <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
             </Stack>
@@ -507,6 +508,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                           isActionSubmitting || (selectionType !== null && getUserSelectionType(user) !== selectionType)
                         }
                         size="small"
+                        slotProps={{ input: { 'aria-label': `${user.displayName} 선택` } }}
                       />
                       <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.displayName} />
                       <Stack gap={1}>
@@ -576,8 +578,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
           open={Boolean(actionType)}
           onClose={handleCloseActionDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-members-withdrawn-drawer-title' } }}
         >
-          <h2>{getActionTitle()}</h2>
+          <h2 id="manage-members-withdrawn-drawer-title">{getActionTitle()}</h2>
           <button
             type="button"
             className="close-button"
@@ -637,7 +640,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               ) : null}
             </form>
             {dialogErrorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{dialogErrorMessage}</span>
               </p>
@@ -728,7 +731,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 ) : null}
 
                 {dialogErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{dialogErrorMessage}</span>
                   </p>

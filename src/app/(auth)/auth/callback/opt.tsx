@@ -527,8 +527,9 @@ export default function Opt() {
           open={processingState === 'confirm'}
           onClose={handleCancelSocialLogin}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'auth-callback-drawer-title' } }}
         >
-          <h2>소셜 로그인 확인</h2>
+          <h2 id="auth-callback-drawer-title">소셜 로그인 확인</h2>
           <button className="close-button" onClick={handleCancelSocialLogin} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
@@ -576,8 +577,9 @@ export default function Opt() {
           open={isErrorPopupOpen}
           onClose={() => setIsErrorPopupOpen(false)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': errorTitle ? 'auth-callback-error-drawer-title' : undefined } }}
         >
-          {errorTitle ? <h2>{errorTitle}</h2> : null}
+          {errorTitle ? <h2 id="auth-callback-error-drawer-title">{errorTitle}</h2> : null}
           <button type="button" className="close-button" onClick={() => setIsErrorPopupOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

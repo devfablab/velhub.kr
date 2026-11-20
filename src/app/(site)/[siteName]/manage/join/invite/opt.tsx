@@ -308,8 +308,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={isInviteDialogOpen}
               onClose={handleCloseInviteDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-invite-drawer-title' } }}
             >
-              <h2>멤버 초대</h2>
+              <h2 id="manage-join-invite-drawer-title">멤버 초대</h2>
               <button
                 type="button"
                 className="close-button"
@@ -433,8 +434,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={Boolean(targetInvite)}
               onClose={handleCloseCancelDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-invite-drawer-title-2' } }}
             >
-              <h2>초대 취소 답변</h2>
+              <h2 id="manage-join-invite-drawer-title-2">초대 취소 답변</h2>
               <button
                 type="button"
                 className="close-button"
@@ -520,8 +522,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 setErrorMessage('');
               }}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{
+                paper: { 'aria-labelledby': inviteErrorTitle ? 'manage-join-invite-error-drawer-title' : undefined },
+              }}
             >
-              {inviteErrorTitle ? <h2>{inviteErrorTitle}</h2> : null}
+              {inviteErrorTitle ? <h2 id="manage-join-invite-error-drawer-title">{inviteErrorTitle}</h2> : null}
               <button
                 type="button"
                 className="close-button"

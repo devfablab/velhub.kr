@@ -582,8 +582,9 @@ export default function Opt({
               open={isDeleteDialogOpen}
               onClose={handleCloseDeleteDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title' } }}
             >
-              <h2>게시물 삭제</h2>
+              <h2 id="manage-contents-posts-content-id-drawer-title">게시물 삭제</h2>
               <button
                 type="button"
                 className="close-button"
@@ -622,7 +623,7 @@ export default function Opt({
                   />
 
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>
@@ -695,7 +696,7 @@ export default function Opt({
                     />
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -720,8 +721,9 @@ export default function Opt({
               open={isRestoreDialogOpen}
               onClose={handleCloseRestoreDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title-2' } }}
             >
-              <h2>게시물 복구</h2>
+              <h2 id="manage-contents-posts-content-id-drawer-title-2">게시물 복구</h2>
               <button
                 type="button"
                 className="close-button"
@@ -743,7 +745,7 @@ export default function Opt({
                   해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
                 </Typography>
                 {dialogErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{dialogErrorMessage}</span>
                   </p>
@@ -798,7 +800,7 @@ export default function Opt({
                     해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
                   </Typography>
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>
@@ -827,8 +829,9 @@ export default function Opt({
               open={isCategoryDialogOpen}
               onClose={handleCloseCategoryDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title-3' } }}
             >
-              <h2>카테고리 설정</h2>
+              <h2 id="manage-contents-posts-content-id-drawer-title-3">카테고리 설정</h2>
               <button
                 type="button"
                 className="close-button"
@@ -869,7 +872,7 @@ export default function Opt({
                   </FormControl>
 
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>
@@ -944,7 +947,7 @@ export default function Opt({
                     </FormControl>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -974,8 +977,9 @@ export default function Opt({
               open={isSeriesDialogOpen}
               onClose={handleCloseSeriesDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-content-id-drawer-title-4' } }}
             >
-              <h2>연재 설정</h2>
+              <h2 id="manage-contents-posts-content-id-drawer-title-4">연재 설정</h2>
               <button
                 type="button"
                 className="close-button"
@@ -1017,14 +1021,14 @@ export default function Opt({
                   </FormControl>
 
                   {isSeriesLocked ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>연재가 설정된 글은 연재를 변경할 수 없습니다.</span>
                     </p>
                   ) : null}
 
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>
@@ -1102,14 +1106,14 @@ export default function Opt({
                     </FormControl>
 
                     {isSeriesLocked ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>연재가 설정된 글은 연재를 변경할 수 없습니다.</span>
                       </p>
                     ) : null}
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>

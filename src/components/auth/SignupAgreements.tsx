@@ -142,8 +142,14 @@ function PrivacyAgreement({
         </button>
       </Stack>
       {isMobile ? (
-        <Drawer anchor="bottom" open={open} onClose={() => setOpen(false)} className="VhiDrawer-bottom">
-          <h2>개인정보 수집 및 이용 동의</h2>
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={() => setOpen(false)}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-auth-signup-agreements-drawer-title' } }}
+        >
+          <h2 id="components-auth-signup-agreements-drawer-title">개인정보 수집 및 이용 동의</h2>
           <button className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

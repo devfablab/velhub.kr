@@ -2330,8 +2330,9 @@ export default function Opt({
             open={thumbnailDialogOpen}
             onClose={closeThumbnailDialog}
             className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+            slotProps={{ paper: { 'aria-labelledby': 'board-new-drawer-title' } }}
           >
-            <h2>썸네일 이미지 업로드</h2>
+            <h2 id="board-new-drawer-title">썸네일 이미지 업로드</h2>
             <button className="close-button" onClick={closeThumbnailDialog} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
@@ -2440,8 +2441,9 @@ export default function Opt({
             open={galleryDialogOpen}
             onClose={closeGalleryDialog}
             className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+            slotProps={{ paper: { 'aria-labelledby': 'board-new-drawer-title-2' } }}
           >
-            <h2>갤러리 이미지 업로드</h2>
+            <h2 id="board-new-drawer-title-2">갤러리 이미지 업로드</h2>
             <button className="close-button" onClick={closeGalleryDialog} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
@@ -2622,14 +2624,15 @@ export default function Opt({
             open={pollDialogOpen}
             onClose={closePollDialog}
             className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['poll-dialog']}`}
+            slotProps={{ paper: { 'aria-labelledby': 'board-new-drawer-title-3' } }}
           >
-            <h2>투표 설정</h2>
+            <h2 id="board-new-drawer-title-3">투표 설정</h2>
             <button className="close-button" onClick={closePollDialog} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
             <div className={`VhiDrawer-bottom-content ${styles['poll-dialog-content']}`}>
               {pollDialogMessage && pollWordingViolationFields.length === 0 ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{pollDialogMessage}</span>
                 </p>
@@ -2672,7 +2675,7 @@ export default function Opt({
                 />
               </div>
               {pollWordingViolationFields.includes('pollQuestion') ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>혐오 표현이 여전히 존재합니다.</span>
                 </p>
@@ -2699,7 +2702,7 @@ export default function Opt({
                     </div>
 
                     {pollWordingViolationFields.includes(`pollOption${index}`) ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>혐오 표현이 여전히 존재합니다.</span>
                       </p>
@@ -2875,7 +2878,7 @@ export default function Opt({
             </button>
             <DialogContent className={styles['poll-dialog-content']}>
               {pollDialogMessage && pollWordingViolationFields.length === 0 ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{pollDialogMessage}</span>
                 </p>
@@ -2918,7 +2921,7 @@ export default function Opt({
                 />
               </div>
               {pollWordingViolationFields.includes('pollQuestion') ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>혐오 표현이 여전히 존재합니다.</span>
                 </p>
@@ -2945,7 +2948,7 @@ export default function Opt({
                     </div>
 
                     {pollWordingViolationFields.includes(`pollOption${index}`) ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>혐오 표현이 여전히 존재합니다.</span>
                       </p>
@@ -3115,8 +3118,9 @@ export default function Opt({
             open={drawDialogOpen}
             onClose={closeDrawDialog}
             className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
+            slotProps={{ paper: { 'aria-labelledby': 'board-new-drawer-title-4' } }}
           >
-            <h2>추첨 이벤트 설정</h2>
+            <h2 id="board-new-drawer-title-4">추첨 이벤트 설정</h2>
             <button className="close-button" onClick={closeDrawDialog} aria-label="추첨 이벤트 설정 닫기">
               <CloseRoundedIcon />
             </button>
@@ -3322,8 +3326,9 @@ export default function Opt({
             open={accessDialog.open}
             onClose={accessDialog.onCancel}
             className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['poll-dialog']}`}
+            slotProps={{ paper: { 'aria-labelledby': 'board-new-drawer-title-5' } }}
           >
-            <h2>{accessDialog.title}</h2>
+            <h2 id="board-new-drawer-title-5">{accessDialog.title}</h2>
             <button
               type="button"
               className="close-button"

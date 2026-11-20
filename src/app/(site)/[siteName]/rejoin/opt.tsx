@@ -87,7 +87,7 @@ export default function Opt({ siteName }: Props) {
       </p>
 
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>
@@ -118,8 +118,9 @@ export default function Opt({ siteName }: Props) {
           open={isResetConfirmOpen}
           onClose={() => !isSubmitting && setIsResetConfirmOpen(false)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'rejoin-drawer-title' } }}
         >
-          <h2>초기화 후 재가입</h2>
+          <h2 id="rejoin-drawer-title">초기화 후 재가입</h2>
           <button
             type="button"
             className="close-button"

@@ -129,8 +129,7 @@ export default function CoPostChat({ coPostId, onSent }: { coPostId: string; onS
 
       try {
         const payload = JSON.parse(String(event.data)) as
-          | { type: 'message'; message: ChatMessage }
-          | { type: 'deleted'; id: string };
+          { type: 'message'; message: ChatMessage } | { type: 'deleted'; id: string };
 
         if (payload.type === 'message') {
           setMessages((current) => mergeMessages(current, [payload.message]));
@@ -293,7 +292,7 @@ export default function CoPostChat({ coPostId, onSent }: { coPostId: string; onS
 
       {errorMessage ? (
         <div className={styles.error}>
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>

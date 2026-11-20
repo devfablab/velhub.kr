@@ -322,7 +322,7 @@ export default function Opt({
             </Typography>
           </Stack>
           {errorMessage ? (
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>{errorMessage}</span>
             </p>
@@ -510,7 +510,7 @@ function MembershipCard({
           <Typography variant="body2">{basic}</Typography>
         </Stack>
         {!available && disabledMessage ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{disabledMessage}</span>
           </p>

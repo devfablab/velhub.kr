@@ -563,6 +563,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 sx={{ width: 60 }}
                                 error={Boolean(levelErrors[level.id])}
                                 helperText={levelErrors[level.id] ?? ''}
+                                slotProps={{ htmlInput: { 'aria-label': '게시글' } }}
                               />
                               <Typography variant="body2">개,</Typography>
                             </Stack>
@@ -579,6 +580,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 size="small"
                                 sx={{ width: 60 }}
                                 error={Boolean(levelErrors[level.id])}
+                                slotProps={{ htmlInput: { 'aria-label': '댓글' } }}
                               />
                               <Typography variant="body2">개,</Typography>
                             </Stack>
@@ -595,6 +597,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 size="small"
                                 sx={{ width: 60 }}
                                 error={Boolean(levelErrors[level.id])}
+                                slotProps={{ htmlInput: { 'aria-label': '방문' } }}
                               />
                               <Typography variant="body2">회,</Typography>
                             </Stack>
@@ -611,6 +614,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 size="small"
                                 sx={{ width: 60 }}
                                 error={Boolean(levelErrors[level.id])}
+                                slotProps={{ htmlInput: { 'aria-label': '좋아요' } }}
                               />
                               <Typography variant="body2">회,</Typography>
                             </Stack>
@@ -627,6 +631,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                 size="small"
                                 sx={{ width: 60 }}
                                 error={Boolean(levelErrors[level.id])}
+                                slotProps={{ htmlInput: { 'aria-label': '가입' } }}
                               />
                               <Typography variant="body2">일 후 만족 시 자동등업</Typography>
                             </Stack>
@@ -659,8 +664,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={isIconDialogOpen}
               onClose={handleCloseIconDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-members-levels-drawer-title' } }}
             >
-              <h2>아이콘 변경</h2>
+              <h2 id="manage-members-levels-drawer-title">아이콘 변경</h2>
               <button type="button" className="close-button" onClick={handleCloseIconDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>

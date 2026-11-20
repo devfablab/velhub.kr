@@ -383,8 +383,14 @@ export default function PostPurchaseButton(props: Props) {
       </MinorPaymentControl>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">
-          <h2>포스팅 소장</h2>
+        <Drawer
+          anchor="bottom"
+          open={isConfirmOpen}
+          onClose={handleCloseConfirm}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-post-purchase-button-drawer-title' } }}
+        >
+          <h2 id="components-buttons-post-purchase-button-drawer-title">포스팅 소장</h2>
           <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
@@ -473,8 +479,9 @@ export default function PostPurchaseButton(props: Props) {
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-post-purchase-button-drawer-title-2' } }}
         >
-          <h2>본인인증 필요</h2>
+          <h2 id="components-buttons-post-purchase-button-drawer-title-2">본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

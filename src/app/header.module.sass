@@ -220,6 +220,10 @@ header.header
             background-color: ds.$rgb-black
             color: ds.$hex-bright
 
+          &:hover, &:focus-visible
+            outline: 0
+            box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)!important
+
       button, a
         position: absolute
         top: 50%

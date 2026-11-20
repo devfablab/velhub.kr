@@ -807,11 +807,31 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                           ? '댓글 수'
                           : '방문 수'}
                     </Typography>
-                    <TextField value={countValue} onChange={handleCountValueChange} size="small" fullWidth />
-                    <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                    <TextField
+                      value={countValue}
+                      onChange={handleCountValueChange}
+                      size="small"
+                      fullWidth
+                      slotProps={{
+                        htmlInput: {
+                          'aria-label':
+                            detailSearchType === 'post_count'
+                              ? '게시글 수'
+                              : detailSearchType === 'comment_count'
+                                ? '댓글 수'
+                                : '방문 수',
+                        },
+                      }}
+                    />
+                    <Typography id="manage-members-entirety-field-label" variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                       {detailSearchType === 'checkin_count' ? '회' : '개'}
                     </Typography>
-                    <Select value={countCompare} onChange={handleCountCompareChange} size="small">
+                    <Select
+                      value={countCompare}
+                      onChange={handleCountCompareChange}
+                      size="small"
+                      labelId="manage-members-entirety-field-label"
+                    >
                       <MenuItem value="gte">이상</MenuItem>
                       <MenuItem value="lte">이하</MenuItem>
                     </Select>
@@ -907,8 +927,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 open={isSearchOpen}
                 onClose={() => setIsSearchOpen(false)}
                 className="VhiDrawer-bottom VhiDrawer-bottom-service"
+                slotProps={{ paper: { 'aria-labelledby': 'manage-members-entirety-drawer-title' } }}
               >
-                <h2>멤버 검색</h2>
+                <h2 id="manage-members-entirety-drawer-title">멤버 검색</h2>
                 <button
                   type="button"
                   className="close-button"
@@ -953,7 +974,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
             <div className={`paper ${styles.paper}`}>
               <Stack direction="column" gap={1.5}>
                 <Stack direction="row" gap={1.5} alignItems="center">
-                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                  <Typography id="manage-members-entirety-field-label-2" variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                     선택 멤버를
                   </Typography>
                   <Select
@@ -969,6 +990,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     size="small"
                     disabled={isActionSubmitting}
                     fullWidth
+                    labelId="manage-members-entirety-field-label-2"
                   >
                     <MenuItem value="">활동상태 선택</MenuItem>
                     <MenuItem value="block">활동 정지</MenuItem>
@@ -981,7 +1003,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 </Stack>
 
                 <Stack direction="row" gap={1.5} alignItems="center">
-                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                  <Typography id="manage-members-entirety-field-label-3" variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                     또는
                   </Typography>
                   <Select
@@ -990,6 +1012,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                     size="small"
                     fullWidth
                     displayEmpty
+                    labelId="manage-members-entirety-field-label-3"
                   >
                     <MenuItem value="" disabled>
                       멤버등급 선택
@@ -1039,8 +1062,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         }
                       }}
                       className="VhiDrawer-bottom VhiDrawer-bottom-service"
+                      slotProps={{ paper: { 'aria-labelledby': 'manage-members-entirety-drawer-title-2' } }}
                     >
-                      <h2>등급 변경</h2>
+                      <h2 id="manage-members-entirety-drawer-title-2">등급 변경</h2>
                       <button
                         type="button"
                         className="close-button"
@@ -1159,6 +1183,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       disabled={selectableFilteredUsers.length === 0}
                       onChange={handleToggleAll}
                       size="small"
+                      slotProps={{ input: { 'aria-label': '전체 선택' } }}
                     />
                     <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
                   </Stack>
@@ -1179,6 +1204,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                         disabled={!user.membership.is_selectable}
                         onChange={(event) => handleToggleUser(user, event.currentTarget.checked)}
                         size="small"
+                        slotProps={{ input: { 'aria-label': `${getDisplayNickname(user)} 선택` } }}
                       />
                       <Avatar src={user.avatar || '/broken-image.jpg'} alt={getDisplayNickname(user)} />
                       <Stack gap={1}>
@@ -1222,8 +1248,9 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 open={Boolean(actionType)}
                 onClose={handleCloseActionDialog}
                 className="VhiDrawer-bottom VhiDrawer-bottom-service"
+                slotProps={{ paper: { 'aria-labelledby': 'manage-members-entirety-drawer-title-3' } }}
               >
-                <h2>{getActionTitle()}</h2>
+                <h2 id="manage-members-entirety-drawer-title-3">{getActionTitle()}</h2>
                 <button
                   type="button"
                   className="close-button"
@@ -1253,6 +1280,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                           size="small"
                           error={Boolean(dialogErrorMessage)}
                           helperText={dialogErrorMessage}
+                          slotProps={{ htmlInput: { 'aria-label': getActionReasonLabel() } }}
                         />
                       </Stack>
                       {actionType ? (
@@ -1282,7 +1310,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       ) : null}
 
                       {dialogErrorMessage ? (
-                        <p className="alert error">
+                        <p className="alert error" role="alert">
                           <ErrorOutlineRoundedIcon />
                           <span>{dialogErrorMessage}</span>
                         </p>
@@ -1347,6 +1375,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                           size="small"
                           error={Boolean(dialogErrorMessage)}
                           helperText={dialogErrorMessage}
+                          slotProps={{ htmlInput: { 'aria-label': getActionReasonLabel() } }}
                         />
                       </Stack>
                       {actionType ? (
@@ -1376,7 +1405,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       ) : null}
 
                       {dialogErrorMessage ? (
-                        <p className="alert error">
+                        <p className="alert error" role="alert">
                           <ErrorOutlineRoundedIcon />
                           <span>{dialogErrorMessage}</span>
                         </p>

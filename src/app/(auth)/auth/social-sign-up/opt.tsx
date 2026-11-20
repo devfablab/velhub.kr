@@ -359,8 +359,11 @@ export default function Opt() {
           open={popup.open}
           onClose={handlePopupClose}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{
+            paper: { 'aria-labelledby': popup.title ? 'auth-social-sign-up-popup-drawer-title' : undefined },
+          }}
         >
-          {popup.title ? <h2>{popup.title}</h2> : null}
+          {popup.title ? <h2 id="auth-social-sign-up-popup-drawer-title">{popup.title}</h2> : null}
           <button type="button" className="close-button" onClick={handlePopupClose} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

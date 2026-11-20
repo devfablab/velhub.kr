@@ -165,6 +165,7 @@
         color: ds.$hex-light
 
       &.current, &:hover, &:focus-visible
+        outline: 0
         color: ds.$hex-accent
         background-color: rgba(ds.$rgb-accent, .12)
 
@@ -273,6 +274,9 @@
       &:hover, &:focus-visible
         box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .1)
 
+        html[data-theme="yellow-dark"] &
+          box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .5)
+
       svg
         width: ds.rem(16)
         height: ds.rem(16)
@@ -295,10 +299,21 @@
       button
         background: none
         padding: ds.rem(7)
+        width: ds.rem(35)
+        height: ds.rem(35)
+        border-radius: ds.rem(35)
+        display: flex
+        justify-content: center
+        align-items: center
+        transition: all .4s cubic-bezier(.4,0,.2,1)
+        outline: 1px solid transparent
 
         svg
           width: ds.rem(17)
           height: ds.rem(17)
+
+        &:hover, &:focus-visible
+          outline: 1px solid ds.$hex-accent
 
     div
       &[class~="slick-slide"]

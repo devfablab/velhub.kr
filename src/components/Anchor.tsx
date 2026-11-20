@@ -1,22 +1,17 @@
 import Link from 'next/link';
 
-interface Props extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+interface Props extends React.ComponentPropsWithRef<'a'> {
   href: string;
 }
 
-const domainRegex = /http[s]*:\/\/[www.]*domain\.com[/]?/;
+const domainRegex = /^https?:\/\/(www\.)?domain\.com\/?/;
 
-export default function Anchor({ href, className, children, ...rest }: Props) {
-  const isSameDomain = domainRegex.test(href);
-  let resolvedHref = href;
-
-  if (isSameDomain) {
-    resolvedHref = resolvedHref.replace(domainRegex, '/');
-  }
+export default function Anchor({ href, ref, children, ...rest }: Props) {
+  const resolvedHref = domainRegex.test(href) ? href.replace(domainRegex, '/') : href;
 
   if (resolvedHref.startsWith('/')) {
     return (
-      <Link href={resolvedHref} className={className} {...rest}>
+      <Link ref={ref} href={resolvedHref} {...rest}>
         {children}
       </Link>
     );
@@ -24,14 +19,14 @@ export default function Anchor({ href, className, children, ...rest }: Props) {
 
   if (!resolvedHref.startsWith('http')) {
     return (
-      <a href={resolvedHref} className={className} {...rest}>
+      <a ref={ref} href={resolvedHref} {...rest}>
         {children}
       </a>
     );
   }
 
   return (
-    <a href={resolvedHref} className={className} target="_blank" rel="noopener noreferrer nofollow" {...rest}>
+    <a ref={ref} href={resolvedHref} target="_blank" rel="noopener noreferrer nofollow" {...rest}>
       {children}
     </a>
   );

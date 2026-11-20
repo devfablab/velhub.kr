@@ -31,6 +31,7 @@ import {
   ListItemText,
   ListSubheader,
   MenuItem,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -221,27 +222,39 @@ export default function Container({ children }: ContainerProps) {
                   </Anchor>
                 </h1>
                 <div className={styles.iconbuttons}>
-                  <IconButton onClick={handleOpenSearchDrawer} aria-label="검색 열기" sx={{ width: 24, height: 24 }}>
-                    <SearchOutlinedIcon />
-                  </IconButton>
-                  <NotificationButton isMobile={true} />
-                  <IconButton
-                    onClick={handleOpenProfileDrawer}
-                    className={styles['theme-mode-button']}
-                    sx={{ width: 24, height: 24 }}
-                  >
-                    <Avatar
-                      src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
-                      alt={userProfile.name || ''}
+                  <Tooltip title="검색">
+                    <IconButton
+                      onClick={handleOpenSearchDrawer}
+                      aria-haspopup="dialog"
+                      aria-expanded={isSearchDrawerOpen}
                       sx={{ width: 24, height: 24 }}
-                    />
-                  </IconButton>
+                    >
+                      <SearchOutlinedIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <NotificationButton isMobile={true} />
+                  <Tooltip title="개인 메뉴">
+                    <IconButton
+                      onClick={handleOpenProfileDrawer}
+                      aria-haspopup="dialog"
+                      aria-expanded={isProfileDrawerOpen}
+                      className={styles['theme-mode-button']}
+                      sx={{ width: 24, height: 24 }}
+                    >
+                      <Avatar
+                        src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
+                        alt={userProfile.name || ''}
+                        sx={{ width: 24, height: 24 }}
+                      />
+                    </IconButton>
+                  </Tooltip>
 
                   <Drawer
                     anchor="top"
                     open={isSearchDrawerOpen}
                     onClose={handleCloseSearchDrawer}
                     className={styles['VhiDrawer-search']}
+                    slotProps={{ paper: { 'aria-label': '검색' } }}
                   >
                     <div className={styles['mobile-search']}>
                       <IconButton
@@ -260,11 +273,12 @@ export default function Container({ children }: ContainerProps) {
                     open={isProfileDrawerOpen}
                     onClose={handleCloseProfileDrawer}
                     className={styles.VhiDrawer}
+                    slotProps={{ paper: { 'aria-labelledby': 'lounge-menu-drawer-title-2' } }}
                   >
                     <Box role="presentation">
                       <List>
                         <li className={styles['VhiDrawer-header']}>
-                          <strong>마이 메뉴</strong>
+                          <strong id="lounge-menu-drawer-title-2">마이 메뉴</strong>
                           <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
                             <CloseRoundedIcon />
                           </IconButton>
@@ -293,6 +307,7 @@ export default function Container({ children }: ContainerProps) {
                             type="button"
                             onClick={() => handleSelectThemeMode('light')}
                             className={themeMode === 'light' ? styles.active : undefined}
+                            aria-pressed={themeMode === 'light'}
                           >
                             {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
                             <span>라이트 모드</span>
@@ -301,6 +316,7 @@ export default function Container({ children }: ContainerProps) {
                             type="button"
                             onClick={() => handleSelectThemeMode('system')}
                             className={themeMode === 'system' ? styles.active : undefined}
+                            aria-pressed={themeMode === 'system'}
                           >
                             {themeMode === 'system' ? <SettingsBrightnessIcon /> : <SettingsBrightnessOutlinedIcon />}
                             <span>시스템</span>
@@ -309,6 +325,7 @@ export default function Container({ children }: ContainerProps) {
                             type="button"
                             onClick={() => handleSelectThemeMode('dark')}
                             className={themeMode === 'dark' ? styles.active : undefined}
+                            aria-pressed={themeMode === 'dark'}
                           >
                             {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
                             <span>다크 모드</span>

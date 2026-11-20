@@ -1167,7 +1167,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               {profilePictureUrl ? '사이트 아바타 이미지 교체' : '사이트 아바타 이미지 추가'}
             </button>
             {fieldErrors.profile_picture ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.profile_picture}</span>
               </p>
@@ -1207,7 +1207,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </button>
             </Stack>
             {fieldErrors.profile_logo ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.profile_logo}</span>
               </p>
@@ -1230,7 +1230,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       `영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`
                     }
                     slotProps={{
-                      htmlInput: { maxLength: 15 },
+                      htmlInput: { 'aria-label': '사이트 주소', maxLength: 15 },
                       input: {
                         startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
                         endAdornment: (
@@ -1318,7 +1318,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         : '프로토콜 없이 입력해주세요. 예: example.com'
                     }
                     slotProps={{
-                      htmlInput: { maxLength: 253 },
+                      htmlInput: { 'aria-label': '커스텀 도메인', maxLength: 253 },
                       input: {
                         startAdornment: <InputAdornment position="start">https://</InputAdornment>,
                         endAdornment: (
@@ -1337,7 +1337,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     }}
                   />
                   {customDomainCheckError ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>사용하실 수 없는 도메인입니다.</span>
                     </p>
@@ -1361,7 +1361,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </button>
                 </Stack>
                 {fieldErrors.blog_type ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{fieldErrors.blog_type}</span>
                   </p>
@@ -1434,7 +1434,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </div>
           {siteInfo.site_type === 'blog' && (
             <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">블로그 타입</Typography>
+              <Typography id="manage-settings-general-field-label" variant="subtitle2">
+                블로그 타입
+              </Typography>
               {editingField === 'blog_type' ? (
                 <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems="center">
                   <Select
@@ -1442,6 +1444,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onChange={(event) => setDraftValue(event.target.value)}
                     size="small"
                     fullWidth
+                    labelId="manage-settings-general-field-label"
                   >
                     <MenuItem value="personal">1인 블로그</MenuItem>
                     <MenuItem value="team">팀 블로그</MenuItem>
@@ -1492,7 +1495,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     error={Boolean(fieldErrors.site_label)}
                     helperText={fieldErrors.site_label || `${String(draftValue).length} / 10`}
                     slotProps={{
-                      htmlInput: { maxLength: 10 },
+                      htmlInput: { 'aria-label': '사이트명', maxLength: 10 },
                       input: {
                         endAdornment: (
                           <InputAdornment position="end">
@@ -1560,7 +1563,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   minRows={4}
                   error={Boolean(fieldErrors.summary)}
                   helperText={fieldErrors.summary || `${String(draftValue).length} / 52`}
-                  slotProps={{ htmlInput: { maxLength: 52 } }}
+                  slotProps={{ htmlInput: { 'aria-label': '사이트 설명', maxLength: 52 } }}
                 />
                 <Stack
                   direction="row"
@@ -1583,7 +1586,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </button>
                 </Stack>
                 {fieldErrors.theme_type ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{fieldErrors.theme_type}</span>
                   </p>
@@ -1662,7 +1665,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </button>
             </Stack>
             {fieldErrors.og_image ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.og_image}</span>
               </p>
@@ -1727,14 +1730,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
               </button>
             </Stack>
             {fieldErrors.promotion_image ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.promotion_image}</span>
               </p>
             ) : null}
           </div>
           <div className={`paper ${styles.paper}`}>
-            <Typography variant="subtitle2">테마</Typography>
+            <Typography id="manage-settings-general-field-label-2" variant="subtitle2">
+              테마
+            </Typography>
             {editingField === 'theme_type' ? (
               <>
                 <Select
@@ -1742,6 +1747,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onChange={handleThemeTypeChange}
                   fullWidth
                   size="small"
+                  labelId="manage-settings-general-field-label-2"
                 >
                   {THEME_TYPES.map((themeValue) => (
                     <MenuItem key={themeValue} value={themeValue}>
@@ -1770,7 +1776,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </button>
                 </Stack>
                 {fieldErrors.visibility_type ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{fieldErrors.visibility_type}</span>
                   </p>
@@ -1877,8 +1883,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
           open={isTeamConversionConfirmOpen}
           onClose={() => setIsTeamConversionConfirmOpen(false)}
           className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-settings-general-drawer-title' } }}
         >
-          <h2>블로그 타입 변경</h2>
+          <h2 id="manage-settings-general-drawer-title">블로그 타입 변경</h2>
           <div className="VhiDrawer-bottom-content">
             팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?
           </div>
@@ -1933,8 +1940,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
           open={isTeamMemberBlogTypeDialogOpen}
           onClose={() => setIsTeamMemberBlogTypeDialogOpen(false)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-settings-general-drawer-title-2' } }}
         >
-          <h2>블로그 타입 변경 안내</h2>
+          <h2 id="manage-settings-general-drawer-title-2">블로그 타입 변경 안내</h2>
           <button
             type="button"
             className="close-button"

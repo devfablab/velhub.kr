@@ -148,12 +148,17 @@ export default function WithdrawalGuard({
     <>
       {children}
       {isMobile ? (
-        <Drawer anchor="bottom" open={isOpen} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-          <h2>탈퇴 신청한 계정입니다</h2>
+        <Drawer
+          anchor="bottom"
+          open={isOpen}
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-auth-withdrawal-guard-drawer-title' } }}
+        >
+          <h2 id="components-auth-withdrawal-guard-drawer-title">탈퇴 신청한 계정입니다</h2>
           <div className="VhiDrawer-bottom-content">
             <Typography variant="body2">{withdrawalMessage}</Typography>
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
@@ -184,7 +189,7 @@ export default function WithdrawalGuard({
           <DialogContent>
             <Typography variant="body2">{withdrawalMessage}</Typography>
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>

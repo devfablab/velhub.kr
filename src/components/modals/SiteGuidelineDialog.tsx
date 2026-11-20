@@ -66,8 +66,14 @@ export default function SiteGuidelineDialog({ open, onClose, data }: Props) {
 
   if (isMobile) {
     return (
-      <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-        <h2>{title}</h2>
+      <Drawer
+        anchor="bottom"
+        open={open}
+        onClose={onClose}
+        className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        slotProps={{ paper: { 'aria-labelledby': 'components-modals-site-guideline-dialog-drawer-title' } }}
+      >
+        <h2 id="components-modals-site-guideline-dialog-drawer-title">{title}</h2>
         <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>

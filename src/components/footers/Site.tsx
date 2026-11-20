@@ -137,252 +137,273 @@ export default function FooterSite() {
   }
 
   return (
-    <footer className={styles.footer}>
-      <div className="container">
-        <div className={`content ${styles.content}`}>
-          <div className={styles.pages}>
-            <div className={styles.copyrights}>
-              <div className={`${styles.loves} ${styles['loves-site']}`}>
-                <p className={styles.copyright}>
-                  <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
-                </p>
-                <p className={styles.love}>
-                  <Anchor href="/" style={{ color: 'hotpink' }}>
-                    <FavoriteRoundedIcon /> <span>velhub</span>
-                  </Anchor>
+    <>
+      <a href="#header" className="sr-only">
+        메뉴영역 바로가기
+      </a>
+      <footer className={styles.footer}>
+        <div className="container">
+          <div className={`content ${styles.content}`}>
+            <div className={styles.pages}>
+              <div className={styles.copyrights}>
+                <div className={`${styles.loves} ${styles['loves-site']}`}>
+                  <p className={styles.copyright}>
+                    <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
+                  </p>
+                  <p className={styles.love}>
+                    <Anchor href="/" style={{ color: 'hotpink' }}>
+                      <FavoriteRoundedIcon /> <span>velhub</span>
+                    </Anchor>
+                  </p>
+                </div>
+                <p className={styles.note}>
+                  {siteInfo.site_label}에 게시된 콘텐츠의 저작권은 각 작성자 또는 별도 표시된 권리자에게 있습니다.
                 </p>
               </div>
-              <p className={styles.note}>
-                {siteInfo.site_label}에 게시된 콘텐츠의 저작권은 각 작성자 또는 별도 표시된 권리자에게 있습니다.
-              </p>
+              <ul className={styles['parents-items']}>
+                <li className={styles['parents-item']}>
+                  <ul className={styles.children}>
+                    <li>
+                      <Anchor href="/">데브허브 라운지</Anchor>
+                    </li>
+                  </ul>
+                </li>
+                <li className={styles['parents-item']}>
+                  <ul className={styles.children}>
+                    <li>
+                      <button type="button" onClick={() => openTerms('/luvelhub/b/3220865262')}>
+                        데브허브 이용약관
+                      </button>
+                    </li>
+                    <li>
+                      <button type="button" onClick={() => openTerms('/luvelhub/b/3220865264')}>
+                        데브허브 개인정보처리방침
+                      </button>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
             </div>
-            <ul className={styles['parents-items']}>
-              <li className={styles['parents-item']}>
-                <ul className={styles.children}>
-                  <li>
-                    <Anchor href="/">데브허브 라운지</Anchor>
-                  </li>
-                </ul>
-              </li>
-              <li className={styles['parents-item']}>
-                <ul className={styles.children}>
-                  <li>
-                    <button type="button" onClick={() => openTerms('/luvelhub/b/3220865262')}>
-                      데브허브 이용약관
-                    </button>
-                  </li>
-                  <li>
-                    <button type="button" onClick={() => openTerms('/luvelhub/b/3220865264')}>
-                      데브허브 개인정보처리방침
-                    </button>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-          <div className={styles.legals}>
-            <dl>
+            <div className={styles.legals}>
+              <dl>
+                <div>
+                  <div>
+                    <dt>플랫폼 운영</dt>
+                    <dd>데브런닷스튜디오</dd>
+                  </div>
+                  <div>
+                    <dt>호스팅서비스제공자</dt>
+                    <dd>Vercel Inc. & Supabase Inc.</dd>
+                  </div>
+                </div>
+                <div>
+                  <div>
+                    <dt>사업자등록번호</dt>
+                    <dd>319-21-01382</dd>
+                  </div>
+                  <div>
+                    <dt>통신판매업 신고번호</dt>
+                    <dd>2026-서울관악-</dd>
+                  </div>
+                </div>
+                <div>
+                  <div>
+                    <dt>데브런닷스튜디오 대표</dt>
+                    <dd>고종길</dd>
+                  </div>
+                  <div>
+                    <dt>주소</dt>
+                    <dd>
+                      <address>서울시 관악구 조원로 20길 10 204호</address>
+                    </dd>
+                  </div>
+                </div>
+                <div>
+                  <div>
+                    <dt>대표 전화</dt>
+                    <dd>070-4577-7513</dd>
+                  </div>
+                  <div>
+                    <dt>대표 이메일</dt>
+                    <dd>chloe@dev1stud.io</dd>
+                  </div>
+                </div>
+              </dl>
               <div>
-                <div>
-                  <dt>플랫폼 운영</dt>
-                  <dd>데브런닷스튜디오</dd>
-                </div>
-                <div>
-                  <dt>호스팅서비스제공자</dt>
-                  <dd>Vercel Inc. & Supabase Inc.</dd>
-                </div>
+                <p>이 사이트는 데브허브(velhub) 플랫폼에서 운영됩니다.</p>
+                <p>
+                  데브허브 플랫폼 내 서비스 명칭, 로고, 디자인 및 화면 구성의 무단 복제 · 전송 · 배포 · 스크래핑 등은
+                  관련 법령에 따라 금지됩니다.
+                </p>
+                <p>{siteInfo.site_label} 및 작성자/작가가 게시한 콘텐츠의 권리는 해당 권리자에게 있습니다.</p>
+                <p>
+                  유료 콘텐츠 등 입점 판매자와의 거래에서 데브허브 플랫폼 운영사인 데브런닷스튜디오는 플랫폼 운영, 결제
+                  · 환불 · 정산 지원 및 고객 문의 · 분쟁 처리를 담당합니다.
+                </p>
               </div>
-              <div>
-                <div>
-                  <dt>사업자등록번호</dt>
-                  <dd>319-21-01382</dd>
-                </div>
-                <div>
-                  <dt>통신판매업 신고번호</dt>
-                  <dd>2026-서울관악-</dd>
-                </div>
-              </div>
-              <div>
-                <div>
-                  <dt>데브런닷스튜디오 대표</dt>
-                  <dd>고종길</dd>
-                </div>
-                <div>
-                  <dt>주소</dt>
-                  <dd>
-                    <address>서울시 관악구 조원로 20길 10 204호</address>
-                  </dd>
-                </div>
-              </div>
-              <div>
-                <div>
-                  <dt>대표 전화</dt>
-                  <dd>070-4577-7513</dd>
-                </div>
-                <div>
-                  <dt>대표 이메일</dt>
-                  <dd>chloe@dev1stud.io</dd>
-                </div>
-              </div>
-            </dl>
-            <div>
-              <p>이 사이트는 데브허브(velhub) 플랫폼에서 운영됩니다.</p>
-              <p>
-                데브허브 플랫폼 내 서비스 명칭, 로고, 디자인 및 화면 구성의 무단 복제 · 전송 · 배포 · 스크래핑 등은 관련
-                법령에 따라 금지됩니다.
-              </p>
-              <p>{siteInfo.site_label} 및 작성자/작가가 게시한 콘텐츠의 권리는 해당 권리자에게 있습니다.</p>
-              <p>
-                유료 콘텐츠 등 입점 판매자와의 거래에서 데브허브 플랫폼 운영사인 데브런닷스튜디오는 플랫폼 운영, 결제 ·
-                환불 · 정산 지원 및 고객 문의 · 분쟁 처리를 담당합니다.
-              </p>
             </div>
           </div>
         </div>
-      </div>
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={Boolean(ownerTransfer)}
-          onClose={() => !isResponding && setOwnerTransfer(null)}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
-        >
-          <h2>운영자 교체</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setOwnerTransfer(null)}
-            disabled={isResponding}
-            aria-label="닫기"
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={Boolean(ownerTransfer)}
+            onClose={() => !isResponding && setOwnerTransfer(null)}
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'components-footers-site-drawer-title' } }}
           >
-            <CloseRoundedIcon />
-          </button>
-          <div className="VhiDrawer-bottom-content">
-            <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
-            {ownerTransferError ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{ownerTransferError}</span>
-              </p>
-            ) : null}
-          </div>
-          <div className="drawer-dialog-actions">
+            <h2 id="components-footers-site-drawer-title">운영자 교체</h2>
             <button
               type="button"
-              className="button medium close"
-              onClick={() => void handleOwnerTransferDecision('rejected')}
+              className="close-button"
+              onClick={() => setOwnerTransfer(null)}
               disabled={isResponding}
+              aria-label="닫기"
             >
-              거절
+              <CloseRoundedIcon />
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleOwnerTransferDecision('accepted')}
-              disabled={isResponding}
-            >
-              수락
-            </button>
-          </div>
-        </Drawer>
-      ) : (
-        <Dialog
-          open={Boolean(ownerTransfer)}
-          onClose={() => !isResponding && setOwnerTransfer(null)}
-          fullWidth
-          maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
-        >
-          <DialogTitle>운영자 교체</DialogTitle>
-          <button
-            type="button"
-            className="close-button"
-            onClick={() => setOwnerTransfer(null)}
-            disabled={isResponding}
-            aria-label="닫기"
+            <div className="VhiDrawer-bottom-content">
+              <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
+              {ownerTransferError ? (
+                <p className="alert error" role="alert">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{ownerTransferError}</span>
+                </p>
+              ) : null}
+            </div>
+            <div className="drawer-dialog-actions">
+              <button
+                type="button"
+                className="button medium close"
+                onClick={() => void handleOwnerTransferDecision('rejected')}
+                disabled={isResponding}
+              >
+                거절
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleOwnerTransferDecision('accepted')}
+                disabled={isResponding}
+              >
+                수락
+              </button>
+            </div>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={Boolean(ownerTransfer)}
+            onClose={() => !isResponding && setOwnerTransfer(null)}
+            fullWidth
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
           >
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
-            {ownerTransferError ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{ownerTransferError}</span>
-              </p>
-            ) : null}
-          </DialogContent>
-          <DialogActions>
+            <DialogTitle>운영자 교체</DialogTitle>
             <button
               type="button"
-              className="cancel-button"
-              onClick={() => void handleOwnerTransferDecision('rejected')}
+              className="close-button"
+              onClick={() => setOwnerTransfer(null)}
               disabled={isResponding}
+              aria-label="닫기"
             >
-              거절
+              <CloseRoundedIcon />
             </button>
-            <button type="button" onClick={() => void handleOwnerTransferDecision('accepted')} disabled={isResponding}>
-              수락
-            </button>
-          </DialogActions>
-        </Dialog>
-      )}
+            <DialogContent>
+              <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
+              {ownerTransferError ? (
+                <p className="alert error" role="alert">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{ownerTransferError}</span>
+                </p>
+              ) : null}
+            </DialogContent>
+            <DialogActions>
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => void handleOwnerTransferDecision('rejected')}
+                disabled={isResponding}
+              >
+                거절
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleOwnerTransferDecision('accepted')}
+                disabled={isResponding}
+              >
+                수락
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
 
-      <FormErrorDialog
-        open={Boolean(ownerTransferErrorPopup)}
-        title={ownerTransferErrorPopup?.title ?? null}
-        messages={ownerTransferErrorPopup?.messages ?? []}
-        onClose={() => setOwnerTransferErrorPopup(null)}
-      />
+        <FormErrorDialog
+          open={Boolean(ownerTransferErrorPopup)}
+          title={ownerTransferErrorPopup?.title ?? null}
+          messages={ownerTransferErrorPopup?.messages ?? []}
+          onClose={() => setOwnerTransferErrorPopup(null)}
+        />
 
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={isInvitePromptOpen && !ownerTransfer}
-          onClose={() => setIsInvitePromptOpen(false)}
-          className="VhiDrawer-bottom VhiDrawer-bottom-service"
-        >
-          <h2>가입</h2>
-          <button type="button" className="close-button" onClick={() => setIsInvitePromptOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
-          <div className="VhiDrawer-bottom-content">
-            <Typography variant="body2">초대에 응하시겠어요?</Typography>
-          </div>
-          <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={() => setIsInvitePromptOpen(false)}>
-              둘러보기
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={isInvitePromptOpen && !ownerTransfer}
+            onClose={() => setIsInvitePromptOpen(false)}
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'components-footers-site-drawer-title-2' } }}
+          >
+            <h2 id="components-footers-site-drawer-title-2">가입</h2>
+            <button
+              type="button"
+              className="close-button"
+              onClick={() => setIsInvitePromptOpen(false)}
+              aria-label="닫기"
+            >
+              <CloseRoundedIcon />
             </button>
-            {inviteHref ? (
-              <Anchor className="button medium submit" href={inviteHref}>
-                가입하기
-              </Anchor>
-            ) : null}
-          </div>
-        </Drawer>
-      ) : (
-        <Dialog
-          open={isInvitePromptOpen && !ownerTransfer}
-          onClose={() => setIsInvitePromptOpen(false)}
-          fullWidth
-          maxWidth="xs"
-          className="vh-dialog vh-alert-dialog"
-        >
-          <DialogTitle>가입</DialogTitle>
-          <button type="button" className="close-button" onClick={() => setIsInvitePromptOpen(false)} aria-label="닫기">
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent>
-            <Typography variant="body2">초대에 응하시겠어요?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" onClick={() => setIsInvitePromptOpen(false)}>
-              둘러보기
+            <div className="VhiDrawer-bottom-content">
+              <Typography variant="body2">초대에 응하시겠어요?</Typography>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button type="button" className="button medium close" onClick={() => setIsInvitePromptOpen(false)}>
+                둘러보기
+              </button>
+              {inviteHref ? (
+                <Anchor className="button medium submit" href={inviteHref}>
+                  가입하기
+                </Anchor>
+              ) : null}
+            </div>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={isInvitePromptOpen && !ownerTransfer}
+            onClose={() => setIsInvitePromptOpen(false)}
+            fullWidth
+            maxWidth="xs"
+            className="vh-dialog vh-alert-dialog"
+          >
+            <DialogTitle>가입</DialogTitle>
+            <button
+              type="button"
+              className="close-button"
+              onClick={() => setIsInvitePromptOpen(false)}
+              aria-label="닫기"
+            >
+              <CloseRoundedIcon />
             </button>
-            {inviteHref ? <Anchor href={inviteHref}>가입하기</Anchor> : null}
-          </DialogActions>
-        </Dialog>
-      )}
-    </footer>
+            <DialogContent>
+              <Typography variant="body2">초대에 응하시겠어요?</Typography>
+            </DialogContent>
+            <DialogActions>
+              <button type="button" onClick={() => setIsInvitePromptOpen(false)}>
+                둘러보기
+              </button>
+              {inviteHref ? <Anchor href={inviteHref}>가입하기</Anchor> : null}
+            </DialogActions>
+          </Dialog>
+        )}
+      </footer>
+    </>
   );
 }

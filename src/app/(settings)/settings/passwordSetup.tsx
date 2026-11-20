@@ -145,7 +145,7 @@ export default function PasswordSetup({
             </button>
 
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>

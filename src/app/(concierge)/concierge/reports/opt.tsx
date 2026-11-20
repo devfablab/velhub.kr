@@ -1054,7 +1054,7 @@ export default function Opt({
                     <LoadingIndicator />
                   </Stack>
                 ) : appealTargetContentError ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{appealTargetContentError}</span>
                   </p>

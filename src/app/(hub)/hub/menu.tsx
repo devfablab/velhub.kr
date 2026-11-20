@@ -35,6 +35,7 @@ import {
   ListItemText,
   ListSubheader,
   MenuItem,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -201,24 +202,29 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
             </strong>
           </h1>
           <div className={styles.iconbuttons}>
-            <IconButton
-              onClick={handleOpenProfileDrawer}
-              className={styles['theme-mode-button']}
-              sx={{ width: 24, height: 24 }}
-            >
-              <MoreHorizRoundedIcon />
-            </IconButton>
+            <Tooltip title="메뉴">
+              <IconButton
+                onClick={handleOpenProfileDrawer}
+                aria-haspopup="dialog"
+                aria-expanded={isProfileDrawerOpen}
+                className={styles['theme-mode-button']}
+                sx={{ width: 24, height: 24 }}
+              >
+                <MoreHorizRoundedIcon />
+              </IconButton>
+            </Tooltip>
 
             <Drawer
               anchor="right"
               open={isProfileDrawerOpen}
               onClose={handleCloseProfileDrawer}
               className={styles.VhiDrawer}
+              slotProps={{ paper: { 'aria-labelledby': 'hub-menu-drawer-title' } }}
             >
               <Box role="presentation">
                 <List>
                   <li className={styles['VhiDrawer-header']}>
-                    <strong>마이 메뉴</strong>
+                    <strong id="hub-menu-drawer-title">마이 메뉴</strong>
                     <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
                       <CloseRoundedIcon />
                     </IconButton>
@@ -238,6 +244,7 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                       type="button"
                       onClick={() => handleSelectThemeMode('light')}
                       className={themeMode === 'light' ? styles.active : undefined}
+                      aria-pressed={themeMode === 'light'}
                     >
                       {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
                       <span>라이트 모드</span>
@@ -246,6 +253,7 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                       type="button"
                       onClick={() => handleSelectThemeMode('system')}
                       className={themeMode === 'system' ? styles.active : undefined}
+                      aria-pressed={themeMode === 'system'}
                     >
                       {themeMode === 'system' ? <SettingsBrightnessIcon /> : <SettingsBrightnessOutlinedIcon />}
                       <span>시스템</span>
@@ -254,6 +262,7 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                       type="button"
                       onClick={() => handleSelectThemeMode('dark')}
                       className={themeMode === 'dark' ? styles.active : undefined}
+                      aria-pressed={themeMode === 'dark'}
                     >
                       {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
                       <span>다크 모드</span>

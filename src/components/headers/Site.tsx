@@ -15,7 +15,17 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Avatar,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { maskEmail, normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
@@ -380,6 +390,10 @@ export default function HeaderSite() {
 
   return (
     <>
+      <a href="#content" className="sr-only">
+        본문영역 바로가기
+      </a>
+      <hr id="header" />
       {isMobile ? (
         <header hidden aria-hidden />
       ) : (
@@ -429,17 +443,32 @@ export default function HeaderSite() {
                 </div>
 
                 <div className={styles.iconbuttons}>
-                  <IconButton onClick={handleOpenThemeModeMenu} className={styles['icon-button']}>
-                    {renderThemeModeIcon()}
-                  </IconButton>
+                  <Tooltip title="화면모드 설정">
+                    <IconButton
+                      onClick={handleOpenThemeModeMenu}
+                      aria-haspopup="menu"
+                      aria-expanded={Boolean(themeModeAnchorElement)}
+                      aria-controls={themeModeAnchorElement ? 'theme-mode-menu' : undefined}
+                      className={styles['icon-button']}
+                    >
+                      {renderThemeModeIcon()}
+                    </IconButton>
+                  </Tooltip>
                   <NotificationButton isMobile={false} />
-                  <IconButton onClick={handleOpenProfileMenu}>
-                    <Avatar
-                      src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
-                      alt={userProfile.name || ''}
-                      sx={{ width: 24, height: 24 }}
-                    />
-                  </IconButton>
+                  <Tooltip title="개인 메뉴">
+                    <IconButton
+                      onClick={handleOpenProfileMenu}
+                      aria-haspopup="menu"
+                      aria-expanded={Boolean(profileAnchorElement)}
+                      aria-controls={profileAnchorElement ? 'profile-menu' : undefined}
+                    >
+                      <Avatar
+                        src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
+                        alt={userProfile.name || ''}
+                        sx={{ width: 24, height: 24 }}
+                      />
+                    </IconButton>
+                  </Tooltip>
                 </div>
               </div>
               {siteLabel ? (
@@ -518,23 +547,39 @@ export default function HeaderSite() {
                 </div>
 
                 <div className={styles.iconbuttons}>
-                  <IconButton onClick={handleOpenThemeModeMenu} className={styles['icon-button']}>
-                    {renderThemeModeIcon()}
-                  </IconButton>
+                  <Tooltip title="화면모드 설정">
+                    <IconButton
+                      onClick={handleOpenThemeModeMenu}
+                      aria-haspopup="menu"
+                      aria-expanded={Boolean(themeModeAnchorElement)}
+                      aria-controls={themeModeAnchorElement ? 'theme-mode-menu' : undefined}
+                      className={styles['icon-button']}
+                    >
+                      {renderThemeModeIcon()}
+                    </IconButton>
+                  </Tooltip>
                   <NotificationButton isMobile={false} />
-                  <IconButton onClick={handleOpenProfileMenu}>
-                    <Avatar
-                      src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
-                      alt={userProfile.name || ''}
-                      sx={{ width: 24, height: 24 }}
-                    />
-                  </IconButton>
+                  <Tooltip title="개인 메뉴">
+                    <IconButton
+                      onClick={handleOpenProfileMenu}
+                      aria-haspopup="menu"
+                      aria-expanded={Boolean(profileAnchorElement)}
+                      aria-controls={profileAnchorElement ? 'profile-menu' : undefined}
+                    >
+                      <Avatar
+                        src={isLoggedIn ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
+                        alt={userProfile.name || ''}
+                        sx={{ width: 24, height: 24 }}
+                      />
+                    </IconButton>
+                  </Tooltip>
                 </div>
               </div>
             </div>
           </header>
           <Menu
             anchorEl={themeModeAnchorElement}
+            id="theme-mode-menu"
             open={Boolean(themeModeAnchorElement)}
             onClose={handleCloseThemeModeMenu}
             className={styles.VhiMenu}
@@ -562,6 +607,7 @@ export default function HeaderSite() {
           </Menu>
           <Menu
             anchorEl={profileAnchorElement}
+            id="profile-menu"
             open={Boolean(profileAnchorElement)}
             onClose={handleCloseProfileMenu}
             className={styles.VhiMenu}
@@ -709,6 +755,7 @@ export default function HeaderSite() {
           </Menu>
         </>
       )}
+      <hr id="content" />
     </>
   );
 }

@@ -282,7 +282,9 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack component="form" gap={3} onSubmit={handleSubmit}>
             <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">카테고리</Typography>
+              <Typography id="manage-settings-advanced-field-label" variant="subtitle2">
+                카테고리
+              </Typography>
               <Stack direction="row" gap={1}>
                 <TextField
                   select
@@ -291,7 +293,9 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
                   fullWidth
                   size="small"
                   disabled={!canEditCategory}
-                  slotProps={{ select: { displayEmpty: true } }}
+                  slotProps={{
+                    select: { labelId: 'manage-settings-advanced-field-label', displayEmpty: true },
+                  }}
                 >
                   <MenuItem value="" disabled>
                     선택하세요
@@ -338,6 +342,7 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
                 size="small"
                 error={Boolean(fieldErrors.searchKeywords)}
                 helperText={fieldErrors.searchKeywords || '쉼표(,)로 구분해서 입력'}
+                slotProps={{ htmlInput: { 'aria-label': '검색엔진 등록 키워드' } }}
               />
             </div>
 
@@ -363,6 +368,7 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
                 size="small"
                 error={Boolean(fieldErrors.googleSearch)}
                 helperText={fieldErrors.googleSearch || 'meta 태그의 content 값만 입력하세요'}
+                slotProps={{ htmlInput: { 'aria-label': 'Google Search Console 인증 코드' } }}
               />
             </div>
 

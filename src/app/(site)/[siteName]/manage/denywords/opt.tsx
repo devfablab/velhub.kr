@@ -117,7 +117,7 @@ export default function Opt({
               ))}
 
               {error ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{error}</span>
                 </p>

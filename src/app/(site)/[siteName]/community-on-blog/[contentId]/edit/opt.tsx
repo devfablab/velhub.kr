@@ -152,7 +152,7 @@ export default function Opt({
                 />
               </div>
               {hasWordingViolation || fieldError ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{hasWordingViolation ? '혐오 표현이 여전히 존재합니다.' : fieldError}</span>
                 </p>

@@ -1142,6 +1142,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('school', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '학교명' } }}
             />
           </Stack>
           <Stack>
@@ -1151,6 +1152,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('major', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '전공' } }}
             />
           </Stack>
           <Stack>
@@ -1194,6 +1196,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('subject', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '수상명' } }}
             />
           </Stack>
           <Stack>
@@ -1204,6 +1207,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('institution', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '수여기관' } }}
             />
           </Stack>
           <Stack>
@@ -1234,6 +1238,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('subject', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '프로젝트명' } }}
             />
           </Stack>
           <Stack>
@@ -1271,6 +1276,7 @@ export default function Opt({
               size="small"
               multiline
               minRows={3}
+              slotProps={{ htmlInput: { 'aria-label': '설명' } }}
             />
           </Stack>
           <Stack>
@@ -1280,6 +1286,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('client', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '수주사/원청' } }}
             />
           </Stack>
           <Stack>
@@ -1289,6 +1296,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('agency', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '소속 단체/회사/팀' } }}
             />
           </Stack>
           <Stack>
@@ -1298,6 +1306,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('siteNameValue', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '사이트명' } }}
             />
           </Stack>
           <Stack>
@@ -1308,6 +1317,7 @@ export default function Opt({
               onChange={(event) => handleChangeItemTextField('siteUrl', event)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '사이트 URL' } }}
             />
           </Stack>
         </>
@@ -1324,6 +1334,7 @@ export default function Opt({
             onChange={(event) => handleChangeItemTextField('organization', event)}
             fullWidth
             size="small"
+            slotProps={{ htmlInput: { 'aria-label': '소속 단체' } }}
           />
         </Stack>
         <Stack>
@@ -1334,6 +1345,7 @@ export default function Opt({
             onChange={(event) => handleChangeItemTextField('teamPosition', event)}
             fullWidth
             size="small"
+            slotProps={{ htmlInput: { 'aria-label': '팀명 또는 위치' } }}
           />
         </Stack>
         <Stack>
@@ -1344,6 +1356,7 @@ export default function Opt({
             onChange={(event) => handleChangeItemTextField('roleJob', event)}
             fullWidth
             size="small"
+            slotProps={{ htmlInput: { 'aria-label': '역할 또는 직무' } }}
           />
         </Stack>
         <Stack>
@@ -1563,8 +1576,9 @@ export default function Opt({
           open={isGeneralDialogOpen}
           onClose={handleCloseGeneralDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title' } }}
         >
-          <h2>팀원 기본 정보</h2>
+          <h2 id="info-blog-drawer-title">팀원 기본 정보</h2>
           <button
             type="button"
             className="close-button"
@@ -1591,6 +1605,7 @@ export default function Opt({
                       onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
                       fullWidth
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '국문명' } }}
                     />
                   </Stack>
 
@@ -1601,6 +1616,7 @@ export default function Opt({
                       onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
                       fullWidth
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '영문명' } }}
                     />
                   </Stack>
 
@@ -1613,6 +1629,7 @@ export default function Opt({
                       size="small"
                       multiline
                       minRows={3}
+                      slotProps={{ htmlInput: { 'aria-label': '본인소개 국문' } }}
                     />
                   </Stack>
 
@@ -1625,6 +1642,7 @@ export default function Opt({
                       size="small"
                       multiline
                       minRows={3}
+                      slotProps={{ htmlInput: { 'aria-label': '본인소개 영문' } }}
                     />
                   </Stack>
 
@@ -1649,6 +1667,7 @@ export default function Opt({
                       onChange={(event) => handleChangeGeneralTextField('job', event)}
                       fullWidth
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '직업' } }}
                     />
                   </Stack>
 
@@ -1711,6 +1730,7 @@ export default function Opt({
                       onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
                       fullWidth
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '국문명' } }}
                     />
                   </Stack>
 
@@ -1721,6 +1741,7 @@ export default function Opt({
                       onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
                       fullWidth
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '영문명' } }}
                     />
                   </Stack>
 
@@ -1733,6 +1754,7 @@ export default function Opt({
                       size="small"
                       multiline
                       minRows={3}
+                      slotProps={{ htmlInput: { 'aria-label': '본인소개 국문' } }}
                     />
                   </Stack>
 
@@ -1745,6 +1767,7 @@ export default function Opt({
                       size="small"
                       multiline
                       minRows={3}
+                      slotProps={{ htmlInput: { 'aria-label': '본인소개 영문' } }}
                     />
                   </Stack>
 
@@ -1769,6 +1792,7 @@ export default function Opt({
                       onChange={(event) => handleChangeGeneralTextField('job', event)}
                       fullWidth
                       size="small"
+                      slotProps={{ htmlInput: { 'aria-label': '직업' } }}
                     />
                   </Stack>
 
@@ -1832,8 +1856,9 @@ export default function Opt({
           open={isNicknameDialogOpen}
           onClose={handleCloseNicknameDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title-2' } }}
         >
-          <h2>별명 수정</h2>
+          <h2 id="info-blog-drawer-title-2">별명 수정</h2>
           <button
             type="button"
             className="close-button"
@@ -1954,8 +1979,11 @@ export default function Opt({
           open={Boolean(itemManageDialogType)}
           onClose={handleCloseItemManageDialog}
           className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title-3' } }}
         >
-          <h2>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</h2>
+          <h2 id="info-blog-drawer-title-3">
+            {itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}
+          </h2>
           <button
             type="button"
             className="close-button"
@@ -2077,8 +2105,9 @@ export default function Opt({
           open={Boolean(itemFormDialogType)}
           onClose={handleCloseItemFormDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title-4' } }}
         >
-          <h2>
+          <h2 id="info-blog-drawer-title-4">
             {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
           </h2>
           <button
@@ -2191,8 +2220,9 @@ export default function Opt({
           open={isFavoriteErrorDialogOpen}
           onClose={() => setIsFavoriteErrorDialogOpen(false)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'info-blog-drawer-title-5' } }}
         >
-          <h2>즐겨찾기 오류</h2>
+          <h2 id="info-blog-drawer-title-5">즐겨찾기 오류</h2>
           <button
             type="button"
             className="close-button"

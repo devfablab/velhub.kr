@@ -571,7 +571,7 @@ export default function CommentList({
   return (
     <section className={`${styles['comment-section']} paper`}>
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>

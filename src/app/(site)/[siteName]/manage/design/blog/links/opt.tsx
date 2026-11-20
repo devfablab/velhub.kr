@@ -15,7 +15,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
-import { Box, IconButton, InputAdornment, Stack, TextField, useMediaQuery, useTheme } from '@mui/material';
+import { Box, IconButton, InputAdornment, Stack, TextField, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
@@ -148,15 +148,18 @@ function SortableItem({
             fullWidth
             size="small"
             slotProps={{
+              htmlInput: { 'aria-label': '계정' },
               input: {
                 startAdornment: <InputAdornment position="start">{serviceMeta?.prefix ?? ''}</InputAdornment>,
               },
             }}
           />
 
-          <IconButton type="button" onClick={() => onRemove(item.localId)}>
-            <CloseIcon />
-          </IconButton>
+          <Tooltip title="링크 삭제">
+            <IconButton type="button" onClick={() => onRemove(item.localId)}>
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
       </div>
     </Box>

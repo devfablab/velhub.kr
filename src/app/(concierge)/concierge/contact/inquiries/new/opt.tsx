@@ -33,7 +33,9 @@ import Anchor from '@/components/Anchor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import MenuItem from '@/components/SelectMenuItem';
 import { SelectCheckAdornment } from '@/components/SelectWithCheck';
-import ConciergeFileUploader, { type ConciergeUploadedFile } from '@/components/service/concierge/ConciergeFileUploader';
+import ConciergeFileUploader, {
+  type ConciergeUploadedFile,
+} from '@/components/service/concierge/ConciergeFileUploader';
 
 export type PaymentRow = {
   id: string;
@@ -331,10 +333,11 @@ export default function Opt({
         },
       };
       const requestPayload = { ...payload, attachment: evidence };
-      const response = await fetch(
-        '/api/concierge/contact/inquiries',
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestPayload) },
-      );
+      const response = await fetch('/api/concierge/contact/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestPayload),
+      });
       const result = (await response.json().catch(() => null)) as {
         inquiry?: { id: string };
         error?: string;
@@ -514,13 +517,18 @@ export default function Opt({
           ) : (
             <>
               <Stack gap={1}>
-                <Typography variant="subtitle2">문의 유형</Typography>
+                <Typography id="concierge-contact-inquiries-new-field-label" variant="subtitle2">
+                  문의 유형
+                </Typography>
                 <TextField
                   select
                   fullWidth
                   size="small"
                   value={inquiryType}
-                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                  slotProps={{
+                    select: { labelId: 'concierge-contact-inquiries-new-field-label' },
+                    input: { startAdornment: <SelectCheckAdornment /> },
+                  }}
                   onChange={(event) => {
                     const next = event.target.value as InquiryType;
                     setInquiryType(next);
@@ -537,13 +545,18 @@ export default function Opt({
                 </TextField>
               </Stack>
               <Stack gap={1}>
-                <Typography variant="subtitle2">세부 유형</Typography>
+                <Typography id="concierge-contact-inquiries-new-field-label-2" variant="subtitle2">
+                  세부 유형
+                </Typography>
                 <TextField
                   select
                   fullWidth
                   size="small"
                   value={inquirySubtype}
-                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                  slotProps={{
+                    select: { labelId: 'concierge-contact-inquiries-new-field-label-2' },
+                    input: { startAdornment: <SelectCheckAdornment /> },
+                  }}
                   onChange={(event) => {
                     setInquirySubtype(event.target.value);
                     setPaymentId('');
@@ -573,7 +586,7 @@ export default function Opt({
                 }}
                 error={Boolean(fieldErrors.title)}
                 helperText={fieldErrors.title}
-                slotProps={{ htmlInput: { maxLength: 120 } }}
+                slotProps={{ htmlInput: { 'aria-label': '제목', maxLength: 120 } }}
               />
             </Stack>
           ) : null}
@@ -614,7 +627,7 @@ export default function Opt({
                     ))}
                   </RadioGroup>
                   {fieldErrors.paymentId ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{fieldErrors.paymentId}</span>
                     </p>
@@ -654,7 +667,7 @@ export default function Opt({
                         ))}
                       </RadioGroup>
                       {fieldErrors.paymentId ? (
-                        <p className="alert error">
+                        <p className="alert error" role="alert">
                           <ErrorOutlineRoundedIcon />
                           <span>{fieldErrors.paymentId}</span>
                         </p>
@@ -692,13 +705,18 @@ export default function Opt({
                   {attemptedPaymentKind === 'membership' ? (
                     <>
                       <Stack gap={1}>
-                        <Typography variant="subtitle2">멤버십 종류</Typography>
+                        <Typography id="concierge-contact-inquiries-new-field-label-3" variant="subtitle2">
+                          멤버십 종류
+                        </Typography>
                         <TextField
                           select
                           fullWidth
                           size="small"
                           value={attemptedMembershipType}
-                          slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                          slotProps={{
+                            select: { labelId: 'concierge-contact-inquiries-new-field-label-3' },
+                            input: { startAdornment: <SelectCheckAdornment /> },
+                          }}
                           onChange={(event) => {
                             setAttemptedMembershipType(event.target.value as MembershipType);
                             setAttemptedFeatureKeys([]);
@@ -739,7 +757,7 @@ export default function Opt({
 
                   {attemptedPaymentKind === 'subscription' || attemptedPaymentKind === 'donation' ? (
                     <Stack gap={1}>
-                      <Typography variant="subtitle2">
+                      <Typography id="concierge-contact-inquiries-new-field-label-4" variant="subtitle2">
                         {attemptedPaymentKind === 'subscription' ? '구독 종류' : '후원 종류'}
                       </Typography>
                       <TextField
@@ -747,7 +765,10 @@ export default function Opt({
                         fullWidth
                         size="small"
                         value={attemptedPaymentSubtype}
-                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                        slotProps={{
+                          select: { labelId: 'concierge-contact-inquiries-new-field-label-4' },
+                          input: { startAdornment: <SelectCheckAdornment /> },
+                        }}
                         onChange={(event) => {
                           setAttemptedPaymentSubtype(event.target.value);
                           setSelectedSite(null);
@@ -814,14 +835,19 @@ export default function Opt({
 
                   {selectedSite && needsSeries ? (
                     <Stack gap={1}>
-                      <Typography variant="subtitle2">연재 선택</Typography>
+                      <Typography id="concierge-contact-inquiries-new-field-label-5" variant="subtitle2">
+                        연재 선택
+                      </Typography>
                       <TextField
                         select
                         required
                         fullWidth
                         size="small"
                         value={selectedSeriesId}
-                        slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                        slotProps={{
+                          select: { labelId: 'concierge-contact-inquiries-new-field-label-5' },
+                          input: { startAdornment: <SelectCheckAdornment /> },
+                        }}
                         onChange={(event) => {
                           setSelectedSeriesId(event.target.value);
                           setSelectedPostId('');
@@ -895,6 +921,7 @@ export default function Opt({
                         onChange={(event) => setAttemptedAmount(formatCurrencyInput(event.target.value))}
                         inputMode="numeric"
                         slotProps={{
+                          htmlInput: { 'aria-label': '후원하려던 금액' },
                           input: {
                             endAdornment: <InputAdornment position="end">원</InputAdornment>,
                           },
@@ -905,7 +932,7 @@ export default function Opt({
                 </Stack>
               )}
               {fieldErrors.attemptedPayment ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{fieldErrors.attemptedPayment}</span>
                 </p>
@@ -956,7 +983,7 @@ export default function Opt({
                       }}
                       error={Boolean(fieldErrors.displayedMessage)}
                       helperText={fieldErrors.displayedMessage}
-                      slotProps={{ htmlInput: { maxLength: 5000 } }}
+                      slotProps={{ htmlInput: { 'aria-label': '화면에 표시된 메시지', maxLength: 5000 } }}
                     />
                   </Stack>
                   <Stack gap={1}>
@@ -974,7 +1001,7 @@ export default function Opt({
                       }}
                       error={Boolean(fieldErrors.actualBehavior)}
                       helperText={fieldErrors.actualBehavior}
-                      slotProps={{ htmlInput: { maxLength: 5000 } }}
+                      slotProps={{ htmlInput: { 'aria-label': '실제로 발생한 상황', maxLength: 5000 } }}
                     />
                   </Stack>
                 </>
@@ -997,7 +1024,7 @@ export default function Opt({
                   }}
                   error={Boolean(fieldErrors.pageUrl)}
                   helperText={fieldErrors.pageUrl}
-                  slotProps={{ htmlInput: { maxLength: 2000 } }}
+                  slotProps={{ htmlInput: { 'aria-label': '문제가 발생한 화면 주소', maxLength: 2000 } }}
                 />
               </Stack>
               <Stack gap={1}>
@@ -1039,7 +1066,7 @@ export default function Opt({
                   }}
                   error={Boolean(fieldErrors.attemptedAction)}
                   helperText={fieldErrors.attemptedAction}
-                  slotProps={{ htmlInput: { maxLength: 2000 } }}
+                  slotProps={{ htmlInput: { 'aria-label': '하려고 했던 작업', maxLength: 2000 } }}
                 />
               </Stack>
               <Stack gap={1}>
@@ -1057,17 +1084,22 @@ export default function Opt({
                   }}
                   error={Boolean(fieldErrors.actualBehavior)}
                   helperText={fieldErrors.actualBehavior}
-                  slotProps={{ htmlInput: { maxLength: 5000 } }}
+                  slotProps={{ htmlInput: { 'aria-label': '실제로 발생한 문제', maxLength: 5000 } }}
                 />
               </Stack>
               <Stack gap={1}>
-                <Typography variant="subtitle2">같은 문제가 다시 발생하나요?</Typography>
+                <Typography id="concierge-contact-inquiries-new-field-label-6" variant="subtitle2">
+                  같은 문제가 다시 발생하나요?
+                </Typography>
                 <TextField
                   select
                   fullWidth
                   size="small"
                   value={recurrence}
-                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                  slotProps={{
+                    select: { labelId: 'concierge-contact-inquiries-new-field-label-6' },
+                    input: { startAdornment: <SelectCheckAdornment /> },
+                  }}
                   onChange={(event) => {
                     setRecurrence(event.target.value);
                     clearFieldError('recurrence');
@@ -1097,7 +1129,7 @@ export default function Opt({
                   }}
                   error={Boolean(fieldErrors.errorMessage)}
                   helperText={fieldErrors.errorMessage}
-                  slotProps={{ htmlInput: { maxLength: 5000 } }}
+                  slotProps={{ htmlInput: { 'aria-label': '화면에 표시된 에러 메시지', maxLength: 5000 } }}
                 />
               </Stack>
             </Stack>
@@ -1130,7 +1162,7 @@ export default function Opt({
                 addLabel="파일 선택"
               />
               {fieldErrors.evidence ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{fieldErrors.evidence}</span>
                 </p>
@@ -1154,13 +1186,13 @@ export default function Opt({
                   }}
                   error={Boolean(fieldErrors.content)}
                   helperText={fieldErrors.content}
-                  slotProps={{ htmlInput: { maxLength: 10000 } }}
+                  slotProps={{ htmlInput: { 'aria-label': '문의 내용', maxLength: 10000 } }}
                 />
               </Stack>
             </Stack>
           ) : null}
           {error && !inquiryUnavailableReason ? (
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>{error}</span>
             </p>

@@ -458,7 +458,7 @@ export default function DonationButton(props: Props) {
             helperText={amountError || '1,000원부터 100,000원까지 1,000원 단위로 입력해주세요.'}
             inputMode="numeric"
             slotProps={{
-              htmlInput: { min: 1000, max: 100000, step: 1000 },
+              htmlInput: { 'aria-label': '후원 금액', min: 1000, max: 100000, step: 1000 },
               input: {
                 endAdornment: <InputAdornment position="end">원</InputAdornment>,
               },
@@ -525,8 +525,9 @@ export default function DonationButton(props: Props) {
           open={isDialogOpen}
           onClose={handleCloseDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-donation-button-drawer-title' } }}
         >
-          <h2>{donationTitle}</h2>
+          <h2 id="components-buttons-donation-button-drawer-title">{donationTitle}</h2>
           <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
@@ -569,8 +570,9 @@ export default function DonationButton(props: Props) {
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-donation-button-drawer-title-2' } }}
         >
-          <h2>본인인증 필요</h2>
+          <h2 id="components-buttons-donation-button-drawer-title-2">본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

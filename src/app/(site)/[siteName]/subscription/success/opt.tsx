@@ -12,7 +12,7 @@ export default function Opt({ siteName, errorMessage }: Props) {
     <div className="paper">
       <Typography variant="h1">블로그 구독 가입</Typography>
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>

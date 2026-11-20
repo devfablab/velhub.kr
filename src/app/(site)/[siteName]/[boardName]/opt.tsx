@@ -554,7 +554,12 @@ export default function Opt({
           <div className={styles['board-search-container']}>
             {hasSeriesOptions ? (
               <FormControl size="small" className={styles['series-select']}>
-                <Select value={seriesNameParam} onChange={handleSeriesChange} displayEmpty aria-label="연재 선택">
+                <Select
+                  value={seriesNameParam}
+                  onChange={handleSeriesChange}
+                  displayEmpty
+                  inputProps={{ 'aria-label': '연재 선택' }}
+                >
                   <MenuItem value="">연재 선택</MenuItem>
                   {seriesOptions.map((series) => (
                     <MenuItem key={series.series_key} value={series.series_key}>
@@ -565,7 +570,11 @@ export default function Opt({
               </FormControl>
             ) : null}
             <FormControl size="small" className={styles['page-size-select']}>
-              <Select value={String(pageSize)} onChange={handlePageSizeChange} aria-label="페이지당 게시글 수">
+              <Select
+                value={String(pageSize)}
+                onChange={handlePageSizeChange}
+                inputProps={{ 'aria-label': '페이지당 게시글 수' }}
+              >
                 {pageSizeOptions.map((sizeOption) => (
                   <MenuItem key={sizeOption} value={String(sizeOption)}>
                     {sizeOption}개씩

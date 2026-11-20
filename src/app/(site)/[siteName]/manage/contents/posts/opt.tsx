@@ -986,6 +986,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
                 onChange={handleToggleAllCurrentPage}
                 size="small"
+                slotProps={{ input: { 'aria-label': '전체 선택' } }}
               />
               <Typography variant="subtitle2">{selectedIds.length}개의 게시물이 선택됨</Typography>
             </Stack>
@@ -1016,6 +1017,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       checked={selectedIds.includes(post.id)}
                       onChange={() => handleToggleSingle(post.id)}
                       size="small"
+                      slotProps={{ input: { 'aria-label': `${post.subject} 선택` } }}
                     />
                     <Stack direction="column" gap={0.5} sx={{ width: '100%' }}>
                       <div className={styles.title}>
@@ -1126,8 +1128,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
             open={dialogMode === 'delete'}
             onClose={handleCloseDeleteDialog}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-drawer-title' } }}
           >
-            <h2>게시물 삭제</h2>
+            <h2 id="manage-contents-posts-drawer-title">게시물 삭제</h2>
             <button
               type="button"
               className="close-button"
@@ -1172,7 +1175,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 )}
 
                 {dialogErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{dialogErrorMessage}</span>
                   </p>
@@ -1251,7 +1254,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   )}
 
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>
@@ -1281,8 +1284,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
             open={dialogMode === 'restore'}
             onClose={handleCloseDeleteDialog}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-drawer-title-2' } }}
           >
-            <h2>게시물 복구</h2>
+            <h2 id="manage-contents-posts-drawer-title-2">게시물 복구</h2>
             <button
               type="button"
               className="close-button"
@@ -1308,7 +1312,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Typography>
 
                 {dialogErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{dialogErrorMessage}</span>
                   </p>
@@ -1368,7 +1372,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   </Typography>
 
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>

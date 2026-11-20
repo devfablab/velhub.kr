@@ -16,7 +16,7 @@ export default function Opt({ siteName, errorMessage }: Props) {
             <p>후원을 다시 시도해 주세요.</p>
           </div>
           {errorMessage ? (
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>{errorMessage}</span>
             </p>

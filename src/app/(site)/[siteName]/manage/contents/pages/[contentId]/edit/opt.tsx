@@ -676,7 +676,7 @@ export default function Opt({
                   size="small"
                   helperText={fieldErrors.slug || `관리 화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
                   slotProps={{
-                    htmlInput: { pattern: '[a-z][a-z0-9-]*' },
+                    htmlInput: { 'aria-label': '페이지 식별자', pattern: '[a-z][a-z0-9-]*' },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
@@ -716,11 +716,18 @@ export default function Opt({
                   onInvalid={() => handleInputInvalid('subject', '페이지 제목을 입력해주세요.')}
                   fullWidth
                   size="small"
+                  slotProps={{ htmlInput: { 'aria-label': '페이지 제목' } }}
                 />
               </Stack>
               <Stack gap={1}>
                 <Typography variant="subtitle2">페이지 부제목</Typography>
-                <TextField value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+                <TextField
+                  value={summary}
+                  onChange={handleSummaryChange}
+                  fullWidth
+                  size="small"
+                  slotProps={{ htmlInput: { 'aria-label': '페이지 부제목' } }}
+                />
               </Stack>
               <Stack direction="column" gap={1.5}>
                 <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
@@ -768,7 +775,7 @@ export default function Opt({
                   onUploadImage={handleUploadEditorImage}
                 />
                 {fieldErrors.content ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{fieldErrors.content}</span>
                   </p>

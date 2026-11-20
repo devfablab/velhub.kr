@@ -300,7 +300,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
               sx={{ p: isMobile ? 1.5 : 2.5, pb: 0 }}
             >
               <Stack direction="row" gap={0.5} alignItems="center">
-                <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} size="small" />
+                <Checkbox
+                  checked={allFilteredSelected}
+                  onChange={handleToggleAll}
+                  size="small"
+                  slotProps={{ input: { 'aria-label': '전체 선택' } }}
+                />
                 <Typography variant="subtitle2">{selectedUserIds.length}명이 선택됨</Typography>
               </Stack>
               <Stack direction="row" gap={1.5} sx={{ pl: isMobile ? 1.5 : undefined }}>
@@ -333,6 +338,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                         size="small"
                         className={styles.checkbox}
+                        slotProps={{ input: { 'aria-label': `${user.nickname || user.userName} 선택` } }}
                       />
                       <Avatar src={user.avatarUrl || '/broken-image.jpg'} alt={user.nickname || user.userName} />
                       <div className={styles.summary}>
@@ -361,8 +367,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={Boolean(selectedUser)}
               onClose={() => setSelectedUser(null)}
               className="VhiDrawer-bottom"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-approved-drawer-title' } }}
             >
-              <h2>가입 신청 답변</h2>
+              <h2 id="manage-join-approved-drawer-title">가입 신청 답변</h2>
               <button
                 type="button"
                 className="close-button"
@@ -517,8 +524,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={Boolean(confirmActionType)}
               onClose={handleCloseConfirmAction}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-join-approved-drawer-title-2' } }}
             >
-              <h2>{getConfirmActionTitle()}</h2>
+              <h2 id="manage-join-approved-drawer-title-2">{getConfirmActionTitle()}</h2>
               <button
                 type="button"
                 className="close-button"

@@ -175,7 +175,11 @@ export default function ManagePostActions({
       ) : (
         <p>게시물을 복구하시겠습니까?</p>
       )}
-      {error ? <p className="alert error">{error}</p> : null}
+      {error ? (
+        <p className="alert error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </Stack>
   );
   const submitDisabled = busy || ((mode === 'prefix' || mode === 'series') && !settings);
@@ -219,8 +223,9 @@ export default function ManagePostActions({
           open={Boolean(mode)}
           onClose={close}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-community-manage-post-actions-drawer-title' } }}
         >
-          <h2>{title}</h2>
+          <h2 id="components-service-community-manage-post-actions-drawer-title">{title}</h2>
           <button type="button" className="close-button" onClick={close} disabled={busy} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

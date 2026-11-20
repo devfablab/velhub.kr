@@ -194,7 +194,7 @@ export default function CommentForm({
       <fieldset>
         <legend>댓글쓰기 폼</legend>
         {errorMessage || externalErrorMessage ? (
-          <p className="alert error" style={{ marginBottom: '0.5rem' }}>
+          <p className="alert error" role="alert" style={{ marginBottom: '0.5rem' }}>
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage || externalErrorMessage}</span>
           </p>

@@ -1,5 +1,6 @@
 'use client';
 
+import { type FocusEvent, useEffect, useRef } from 'react';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
@@ -40,7 +41,58 @@ function PrevArrow(props: ArrowProps) {
   );
 }
 
+function syncSlideAccessibility(container: HTMLElement | null) {
+  if (!container) {
+    return;
+  }
+
+  container.querySelectorAll<HTMLElement>('.slick-slide').forEach((slide) => {
+    const isCloned = slide.classList.contains('slick-cloned');
+
+    if (isCloned) {
+      slide.setAttribute('aria-hidden', 'true');
+    } else {
+      slide.removeAttribute('aria-hidden');
+    }
+
+    slide.querySelectorAll<HTMLElement>('a, button').forEach((element) => {
+      if (isCloned) {
+        element.setAttribute('tabindex', '-1');
+      } else {
+        element.removeAttribute('tabindex');
+      }
+    });
+  });
+}
+
+function moveSliderToFocusedSlide(event: FocusEvent<HTMLElement>, slider: Slider | null) {
+  const list = event.currentTarget.querySelector<HTMLElement>('.slick-list');
+
+  if (list) {
+    list.scrollLeft = 0;
+  }
+
+  const slide = (event.target as HTMLElement).closest<HTMLElement>('.slick-slide');
+
+  if (!slider || !slide || slide.classList.contains('slick-active') || slide.classList.contains('slick-cloned')) {
+    return;
+  }
+
+  const index = Number(slide.dataset.index);
+
+  if (!Number.isNaN(index)) {
+    slider.slickGoTo(index);
+  }
+}
+
 export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrariesData, postsData, isHub }: SlickProps) {
+  const sliderReference = useRef<Slider>(null);
+  const containerReference = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    syncSlideAccessibility(containerReference.current);
+  });
+
   const settings = {
     className: styles.slider,
     dots: false,
@@ -51,6 +103,9 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
     variableWidth: true,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
+    onInit: () => syncSlideAccessibility(containerReference.current),
+    onReInit: () => syncSlideAccessibility(containerReference.current),
+    afterChange: () => syncSlideAccessibility(containerReference.current),
   };
 
   function getYoutubeThumbnailUrl(videoId: string) {
@@ -71,8 +126,12 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
 
   if (sitesCreatedData) {
     return (
-      <div className={`${styles.slider} ${styles['slider-created-sites']}`}>
-        <Slider {...settings}>
+      <div
+        ref={containerReference}
+        className={`${styles.slider} ${styles['slider-created-sites']}`}
+        onFocus={(event) => moveSliderToFocusedSlide(event, sliderReference.current)}
+      >
+        <Slider ref={sliderReference} {...settings}>
           {sitesCreatedData.sites.map((site) => (
             <Anchor key={site.site_key} href={site.site_url}>
               <em>{site.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>
@@ -88,8 +147,12 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
 
   if (sitesHitsData) {
     return (
-      <div className={`${styles.slider} ${styles['slider-hits-sites']}`}>
-        <Slider {...settings}>
+      <div
+        ref={containerReference}
+        className={`${styles.slider} ${styles['slider-hits-sites']}`}
+        onFocus={(event) => moveSliderToFocusedSlide(event, sliderReference.current)}
+      >
+        <Slider ref={sliderReference} {...settings}>
           {sitesHitsData.sites.map((site) => (
             <div key={site.site_key}>
               <Anchor
@@ -124,8 +187,12 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
 
   if (creatorLibrariesData) {
     return (
-      <div className={`${styles.slider} ${styles['slider-hits-sites']}`}>
-        <Slider {...settings}>
+      <div
+        ref={containerReference}
+        className={`${styles.slider} ${styles['slider-hits-sites']}`}
+        onFocus={(event) => moveSliderToFocusedSlide(event, sliderReference.current)}
+      >
+        <Slider ref={sliderReference} {...settings}>
           {creatorLibrariesData.creators.map((creator) => (
             <div key={creator.handleName}>
               <Anchor
@@ -147,8 +214,12 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
 
   if (postsData) {
     return (
-      <div className={`${styles.slider} ${styles['slider-thumbnail']} ${styles['slider-posts']}`}>
-        <Slider {...settings}>
+      <div
+        ref={containerReference}
+        className={`${styles.slider} ${styles['slider-thumbnail']} ${styles['slider-posts']}`}
+        onFocus={(event) => moveSliderToFocusedSlide(event, sliderReference.current)}
+      >
+        <Slider ref={sliderReference} {...settings}>
           {postsData.posts.map((post) => (
             <div key={`${post.site_key}-${post.board_key}-${post.slug}`}>
               <Anchor

@@ -11,7 +11,17 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Avatar,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { maskEmail } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
@@ -221,12 +231,21 @@ export default function HeaderHub() {
               </div>
 
               <div className={styles.iconbuttons}>
-                <IconButton onClick={handleOpenThemeModeMenu} className={styles['theme-mode-button']}>
-                  {renderThemeModeIcon()}
-                </IconButton>
+                <Tooltip title="화면모드 설정">
+                  <IconButton
+                    onClick={handleOpenThemeModeMenu}
+                    aria-haspopup="menu"
+                    aria-expanded={Boolean(themeModeAnchorElement)}
+                    aria-controls={themeModeAnchorElement ? 'theme-mode-menu' : undefined}
+                    className={styles['theme-mode-button']}
+                  >
+                    {renderThemeModeIcon()}
+                  </IconButton>
+                </Tooltip>
 
                 <Menu
                   anchorEl={themeModeAnchorElement}
+                  id="theme-mode-menu"
                   open={Boolean(themeModeAnchorElement)}
                   onClose={handleCloseThemeModeMenu}
                   className={styles.VhiMenu}
@@ -253,16 +272,24 @@ export default function HeaderHub() {
                   </MenuItem>
                 </Menu>
 
-                <IconButton onClick={handleOpenProfileMenu}>
-                  <Avatar
-                    src={isAuthenticated ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
-                    alt={isAuthenticated ? userProfile.name || '' : ''}
-                    sx={{ width: 24, height: 24 }}
-                  />
-                </IconButton>
+                <Tooltip title="개인 메뉴">
+                  <IconButton
+                    onClick={handleOpenProfileMenu}
+                    aria-haspopup="menu"
+                    aria-expanded={Boolean(profileAnchorElement)}
+                    aria-controls={profileAnchorElement ? 'profile-menu' : undefined}
+                  >
+                    <Avatar
+                      src={isAuthenticated ? userProfile.avatarUrl || '/broken-image.jpg' : undefined}
+                      alt={isAuthenticated ? userProfile.name || '' : ''}
+                      sx={{ width: 24, height: 24 }}
+                    />
+                  </IconButton>
+                </Tooltip>
 
                 <Menu
                   anchorEl={profileAnchorElement}
+                  id="profile-menu"
                   open={Boolean(profileAnchorElement)}
                   onClose={handleCloseProfileMenu}
                   className={styles.VhiMenu}

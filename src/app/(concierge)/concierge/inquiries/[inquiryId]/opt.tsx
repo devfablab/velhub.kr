@@ -240,7 +240,7 @@ export default function Opt({
 
   if (error && !inquiry)
     return (
-      <p className="alert error">
+      <p className="alert error" role="alert">
         <ErrorOutlineRoundedIcon />
         <span>{error}</span>
       </p>
@@ -367,6 +367,7 @@ export default function Opt({
                   size="small"
                   value={fatherName}
                   onChange={(event) => setFatherName(event.target.value)}
+                  slotProps={{ htmlInput: { 'aria-label': '부 성명' } }}
                 />
               </Stack>
               <Stack gap={1}>
@@ -376,6 +377,7 @@ export default function Opt({
                   size="small"
                   value={fatherBirthDate}
                   onChange={(event) => setFatherBirthDate(event.target.value)}
+                  slotProps={{ htmlInput: { 'aria-label': '부 생년월일' } }}
                 />
               </Stack>
               <Stack gap={1}>
@@ -385,6 +387,7 @@ export default function Opt({
                   size="small"
                   value={motherName}
                   onChange={(event) => setMotherName(event.target.value)}
+                  slotProps={{ htmlInput: { 'aria-label': '모 성명' } }}
                 />
               </Stack>
               <Stack gap={1}>
@@ -394,6 +397,7 @@ export default function Opt({
                   size="small"
                   value={motherBirthDate}
                   onChange={(event) => setMotherBirthDate(event.target.value)}
+                  slotProps={{ htmlInput: { 'aria-label': '모 생년월일' } }}
                 />
                 <Stack direction="row" justifyContent="flex-end" gap={2}>
                   <button
@@ -429,13 +433,18 @@ export default function Opt({
         <form onSubmit={save}>
           <div className="paper">
             <h2>처리폼</h2>
-            <Typography variant="subtitle2">문의 상태</Typography>
+            <Typography id="concierge-inquiries-inquiry-id-field-label" variant="subtitle2">
+              문의 상태
+            </Typography>
             <TextField
               select
               fullWidth
               size="small"
               value={status}
-              slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+              slotProps={{
+                select: { labelId: 'concierge-inquiries-inquiry-id-field-label' },
+                input: { startAdornment: <SelectCheckAdornment /> },
+              }}
               onChange={(event) => setStatus(event.target.value as Inquiry['status'])}
             >
               {statusOptions.map((value) => (
@@ -446,13 +455,18 @@ export default function Opt({
             </TextField>
             {status === 'closed' ? (
               <>
-                <Typography variant="subtitle2">종결 결과</Typography>
+                <Typography id="concierge-inquiries-inquiry-id-field-label-2" variant="subtitle2">
+                  종결 결과
+                </Typography>
                 <TextField
                   select
                   fullWidth
                   size="small"
                   value={resolutionCode}
-                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                  slotProps={{
+                    select: { labelId: 'concierge-inquiries-inquiry-id-field-label-2' },
+                    input: { startAdornment: <SelectCheckAdornment /> },
+                  }}
                   onChange={(event) => setResolutionCode(event.target.value as InquiryResolutionCode)}
                 >
                   {options.map((value) => (
@@ -470,18 +484,24 @@ export default function Opt({
                   size="small"
                   value={summary}
                   onChange={(event) => setSummary(event.target.value)}
+                  slotProps={{ htmlInput: { 'aria-label': '계정주 안내 내용' } }}
                 />
               </>
             ) : null}
             {status === 'info_requested' ? (
               <>
-                <Typography variant="subtitle2">요청할 정보</Typography>
+                <Typography id="concierge-inquiries-inquiry-id-field-label-3" variant="subtitle2">
+                  요청할 정보
+                </Typography>
                 <TextField
                   select
                   fullWidth
                   size="small"
                   value={informationRequestType}
-                  slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+                  slotProps={{
+                    select: { labelId: 'concierge-inquiries-inquiry-id-field-label-3' },
+                    input: { startAdornment: <SelectCheckAdornment /> },
+                  }}
                   onChange={(event) => setInformationRequestType(event.target.value as InquiryInformationRequestType)}
                 >
                   <MenuItem value="text_response">{inquiryInformationRequestLabels.text_response}</MenuItem>
@@ -525,14 +545,14 @@ export default function Opt({
                       size="small"
                       value={informationRequestMessage}
                       onChange={(event) => setInformationRequestMessage(event.target.value)}
-                      slotProps={{ htmlInput: { maxLength: 10000 } }}
+                      slotProps={{ htmlInput: { 'aria-label': '요청 내용', maxLength: 10000 } }}
                     />
                   </>
                 ) : null}
               </>
             ) : null}
             {error ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{error}</span>
               </p>

@@ -120,7 +120,7 @@ export default function CoPostPartnerPicker({ siteName, value, disabled = false,
       {isSearching ? <LoadingIndicator size={18} /> : null}
 
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>

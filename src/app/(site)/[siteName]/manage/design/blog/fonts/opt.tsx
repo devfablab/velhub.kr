@@ -274,13 +274,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Typography>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label" variant="body2" sx={{ mb: 1 }}>
                     서체
                   </Typography>
                   <Select
                     size="small"
                     value={subjectFontFamily}
                     onChange={(event) => setSubjectFontFamily(event.target.value as FontFamily | '')}
+                    labelId="manage-design-blog-fonts-field-label"
                   >
                     {SUBJECT_FONT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
@@ -291,13 +292,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label-2" variant="body2" sx={{ mb: 1 }}>
                     자간
                   </Typography>
                   <Select
                     size="small"
                     value={subjectLetterSpacing}
                     onChange={(event) => setSubjectLetterSpacing(event.target.value as number | '')}
+                    labelId="manage-design-blog-fonts-field-label-2"
                   >
                     {LETTER_SPACING_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
@@ -308,13 +310,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label-3" variant="body2" sx={{ mb: 1 }}>
                     행간
                   </Typography>
                   <Select
                     size="small"
                     value={subjectLineHeight}
                     onChange={(event) => setSubjectLineHeight(event.target.value as number | '')}
+                    labelId="manage-design-blog-fonts-field-label-3"
                   >
                     {LINE_HEIGHT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
@@ -333,13 +336,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Typography>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label-4" variant="body2" sx={{ mb: 1 }}>
                     서체
                   </Typography>
                   <Select
                     size="small"
                     value={descriptionFontFamily}
                     onChange={(event) => setDescriptionFontFamily(event.target.value as FontFamily | '')}
+                    labelId="manage-design-blog-fonts-field-label-4"
                   >
                     {DESCRIPTION_FONT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
@@ -350,13 +354,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label-5" variant="body2" sx={{ mb: 1 }}>
                     크기
                   </Typography>
                   <Select
                     size="small"
                     value={descriptionFontSize}
                     onChange={(event) => setDescriptionFontSize(event.target.value as number | '')}
+                    labelId="manage-design-blog-fonts-field-label-5"
                   >
                     {FONT_SIZE_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
@@ -367,13 +372,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label-6" variant="body2" sx={{ mb: 1 }}>
                     자간
                   </Typography>
                   <Select
                     size="small"
                     value={descriptionLetterSpacing}
                     onChange={(event) => setDescriptionLetterSpacing(event.target.value as number | '')}
+                    labelId="manage-design-blog-fonts-field-label-6"
                   >
                     {LETTER_SPACING_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
@@ -384,13 +390,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label-7" variant="body2" sx={{ mb: 1 }}>
                     행간
                   </Typography>
                   <Select
                     size="small"
                     value={descriptionLineHeight}
                     onChange={(event) => setDescriptionLineHeight(event.target.value as number | '')}
+                    labelId="manage-design-blog-fonts-field-label-7"
                   >
                     {LINE_HEIGHT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
@@ -401,13 +408,14 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
+                  <Typography id="manage-design-blog-fonts-field-label-8" variant="body2" sx={{ mb: 1 }}>
                     마진
                   </Typography>
                   <Select
                     size="small"
                     value={descriptionMargin}
                     onChange={(event) => setDescriptionMargin(event.target.value as number | '')}
+                    labelId="manage-design-blog-fonts-field-label-8"
                   >
                     {MARGIN_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>

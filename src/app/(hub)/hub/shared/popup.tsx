@@ -64,8 +64,9 @@ export default function ResponsivePopup({
       open={open}
       onClose={onClose}
       className={`VhiDrawer-bottom ${variant === 'content' ? '' : 'VhiDrawer-bottom-service'} ${drawerClassName}`.trim()}
+      slotProps={{ paper: { 'aria-labelledby': 'hub-shared-popup-drawer-title' } }}
     >
-      <h2>{title}</h2>
+      <h2 id="hub-shared-popup-drawer-title">{title}</h2>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>

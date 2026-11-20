@@ -109,8 +109,14 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
   );
 
   return isMobile ? (
-    <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-      <h2>개발용 본인인증 바이패스</h2>
+    <Drawer
+      anchor="bottom"
+      open={open}
+      onClose={onClose}
+      className="VhiDrawer-bottom VhiDrawer-bottom-service"
+      slotProps={{ paper: { 'aria-labelledby': 'components-modals-dev-identity-bypass-modal-drawer-title' } }}
+    >
+      <h2 id="components-modals-dev-identity-bypass-modal-drawer-title">개발용 본인인증 바이패스</h2>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>

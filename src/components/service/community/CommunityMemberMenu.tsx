@@ -306,8 +306,16 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
       </Menu>
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isDialogOpen} onClose={() => setIsDialogOpen(false)} className="VhiDrawer-bottom">
-          <h2>멤버 정보</h2>
+        <Drawer
+          anchor="bottom"
+          open={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          className="VhiDrawer-bottom"
+          slotProps={{
+            paper: { 'aria-labelledby': 'components-service-community-community-member-menu-drawer-title' },
+          }}
+        >
+          <h2 id="components-service-community-community-member-menu-drawer-title">멤버 정보</h2>
           <button type="button" className="close-button" onClick={() => setIsDialogOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
@@ -346,8 +354,16 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
       )}
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isBlockDialogOpen} onClose={closeBlockDialog} className="VhiDrawer-bottom">
-          <h2>{`${name} 님에 대해 활동정지`}</h2>
+        <Drawer
+          anchor="bottom"
+          open={isBlockDialogOpen}
+          onClose={closeBlockDialog}
+          className="VhiDrawer-bottom"
+          slotProps={{
+            paper: { 'aria-labelledby': 'components-service-community-community-member-menu-drawer-title-2' },
+          }}
+        >
+          <h2 id="components-service-community-community-member-menu-drawer-title-2">{`${name} 님에 대해 활동정지`}</h2>
           <button type="button" className="close-button" onClick={closeBlockDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

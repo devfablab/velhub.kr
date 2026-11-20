@@ -467,8 +467,17 @@ export default function Opt({
                   />
 
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">게시판 종류 *</Typography>
-                    <TextField select value={boardType} onChange={handleBoardTypeChange} fullWidth size="small">
+                    <Typography id="manage-contents-posts-c-new-field-label" variant="subtitle2">
+                      게시판 종류 *
+                    </Typography>
+                    <TextField
+                      select
+                      value={boardType}
+                      onChange={handleBoardTypeChange}
+                      fullWidth
+                      size="small"
+                      slotProps={{ select: { labelId: 'manage-contents-posts-c-new-field-label' } }}
+                    >
                       <MenuItem value="basic">
                         {boardType === 'basic' ? (
                           <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
@@ -506,7 +515,12 @@ export default function Opt({
                       fullWidth
                       size="small"
                       slotProps={{
-                        htmlInput: { minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' },
+                        htmlInput: {
+                          'aria-label': '게시판 식별자',
+                          minLength: 5,
+                          maxLength: 15,
+                          pattern: '[a-z][a-z0-9-]*',
+                        },
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
@@ -544,6 +558,7 @@ export default function Opt({
                       fullWidth
                       size="small"
                       slotProps={{
+                        htmlInput: { 'aria-label': '게시판 이름' },
                         input: {
                           endAdornment: (
                             <InputAdornment position="end">
@@ -575,8 +590,17 @@ export default function Opt({
                   />
 
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">목록 표시 개수 *</Typography>
-                    <TextField select value={postPerPage} onChange={handlePostPerPageChange} fullWidth size="small">
+                    <Typography id="manage-contents-posts-c-new-field-label-2" variant="subtitle2">
+                      목록 표시 개수 *
+                    </Typography>
+                    <TextField
+                      select
+                      value={postPerPage}
+                      onChange={handlePostPerPageChange}
+                      fullWidth
+                      size="small"
+                      slotProps={{ select: { labelId: 'manage-contents-posts-c-new-field-label-2' } }}
+                    >
                       {POST_PER_PAGE_OPTIONS.map((count) => (
                         <MenuItem key={count} value={count}>
                           {postPerPage === count ? (
@@ -591,13 +615,16 @@ export default function Opt({
                   </Stack>
 
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">마크다운 사용 여부 *</Typography>
+                    <Typography id="manage-contents-posts-c-new-field-label-3" variant="subtitle2">
+                      마크다운 사용 여부 *
+                    </Typography>
                     <TextField
                       select
                       value={markdownStatus}
                       onChange={handleMarkdownStatusChange}
                       fullWidth
                       size="small"
+                      slotProps={{ select: { labelId: 'manage-contents-posts-c-new-field-label-3' } }}
                     >
                       {MARKDOWN_STATUS_OPTIONS.map((option) => (
                         <MenuItem key={option.value} value={option.value}>
@@ -625,7 +652,9 @@ export default function Opt({
                     ) : null}
                   </Stack>
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">글 작성 권한 *</Typography>
+                    <Typography id="manage-contents-posts-c-new-field-label-4" variant="subtitle2">
+                      글 작성 권한 *
+                    </Typography>
                     <TextField
                       select
                       value={writePermission}
@@ -633,6 +662,7 @@ export default function Opt({
                       disabled={isManagerOnly}
                       fullWidth
                       size="small"
+                      slotProps={{ select: { labelId: 'manage-contents-posts-c-new-field-label-4' } }}
                     >
                       {WRITE_PERMISSION_OPTIONS.map((option) => (
                         <MenuItem key={option.value} value={option.value}>

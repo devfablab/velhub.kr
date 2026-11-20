@@ -132,7 +132,7 @@ export default function Opt({ initialReady, initialError }: { initialReady: bool
               value={handleName}
               onChange={(event) => setHandleName(event.target.value)}
               slotProps={{
-                htmlInput: { maxLength: 15 },
+                htmlInput: { 'aria-label': '핸들네임', maxLength: 15 },
                 input: {
                   startAdornment: <InputAdornment position="start">{baseUrl}/user/</InputAdornment>,
                 },
@@ -141,7 +141,7 @@ export default function Opt({ initialReady, initialError }: { initialReady: bool
             />
           </Stack>
           {message ? (
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>{message}</span>
             </p>

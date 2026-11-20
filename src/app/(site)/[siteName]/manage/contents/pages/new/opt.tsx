@@ -659,7 +659,13 @@ export default function Opt() {
 
               <Stack gap={1}>
                 <Typography variant="subtitle2">페이지 부제목</Typography>
-                <TextField value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+                <TextField
+                  value={summary}
+                  onChange={handleSummaryChange}
+                  fullWidth
+                  size="small"
+                  slotProps={{ htmlInput: { 'aria-label': '페이지 부제목' } }}
+                />
               </Stack>
 
               <Stack direction="column">
@@ -706,7 +712,7 @@ export default function Opt() {
                   onUploadImage={handleUploadEditorImage}
                 />
                 {fieldErrors.content ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{fieldErrors.content}</span>
                   </p>

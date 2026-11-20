@@ -492,7 +492,12 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
         {ignoredItems.length > 0 ? (
           <Stack gap={1}>
             <div>
-              <button type="button" className={itemButtonClass} onClick={() => setIsIgnoredOpen((open) => !open)}>
+              <button
+                type="button"
+                className={itemButtonClass}
+                onClick={() => setIsIgnoredOpen((open) => !open)}
+                aria-expanded={isIgnoredOpen}
+              >
                 의도된 맞춤법 무시 케이스 ({ignoredItems.length})
               </button>
             </div>
@@ -529,7 +534,7 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
         ) : null}
 
         {errorMessage ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>
@@ -552,7 +557,7 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
           </Typography>
         ) : null}
         {errorMessage ? (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
           </p>
@@ -626,8 +631,14 @@ export default function SpellCheckDialog({ ref, siteName, onApplySection, onConf
       ) : null}
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isOpen} onClose={onClose} className="VhiDrawer-bottom">
-          <h2>{title}</h2>
+        <Drawer
+          anchor="bottom"
+          open={isOpen}
+          onClose={onClose}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-editor-spell-check-dialog-drawer-title' } }}
+        >
+          <h2 id="components-editor-spell-check-dialog-drawer-title">{title}</h2>
           {step !== 'checking' ? (
             <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
               <CloseRoundedIcon />

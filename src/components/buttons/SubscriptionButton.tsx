@@ -112,11 +112,7 @@ type SubscriptionActionResponse =
   | {
       ok: true;
       mode:
-        | 'canceled_without_payment'
-        | 'cancel_scheduled'
-        | 'full_refund'
-        | 'partial_refund'
-        | 'resume_scheduled_cancel';
+        'canceled_without_payment' | 'cancel_scheduled' | 'full_refund' | 'partial_refund' | 'resume_scheduled_cancel';
       refundAmount?: number;
       retainedAmount?: number;
       usedDays?: number;
@@ -692,8 +688,16 @@ export default function SubscriptionButton({
       ) : null}
 
       {isMobile ? (
-        <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
-          <h2>{getDialogTitle({ subscriptionStatus, isMinor })}</h2>
+        <Drawer
+          anchor="bottom"
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-subscription-button-drawer-title' } }}
+        >
+          <h2 id="components-buttons-subscription-button-drawer-title">
+            {getDialogTitle({ subscriptionStatus, isMinor })}
+          </h2>
           <button
             type="button"
             className="close-button"
@@ -743,7 +747,7 @@ export default function SubscriptionButton({
                 </>
               )}
               {errorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{errorMessage}</span>
                 </p>
@@ -822,7 +826,7 @@ export default function SubscriptionButton({
                 </>
               )}
               {errorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{errorMessage}</span>
                 </p>
@@ -851,8 +855,11 @@ export default function SubscriptionButton({
           open={isCancelDialogOpen}
           onClose={handleCloseCancelDialog}
           className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-subscription-button-drawer-title-2' } }}
         >
-          <h2>{getCancelDialogTitle(isRefundableCancellation)}</h2>
+          <h2 id="components-buttons-subscription-button-drawer-title-2">
+            {getCancelDialogTitle(isRefundableCancellation)}
+          </h2>
           <button
             type="button"
             className="close-button"
@@ -880,7 +887,7 @@ export default function SubscriptionButton({
                   {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
                 </Typography>
                 {errorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{errorMessage}</span>
                   </p>
@@ -945,7 +952,7 @@ export default function SubscriptionButton({
                   {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
                 </Typography>
                 {errorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{errorMessage}</span>
                   </p>
@@ -979,8 +986,9 @@ export default function SubscriptionButton({
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-buttons-subscription-button-drawer-title-3' } }}
         >
-          <h2>본인인증 필요</h2>
+          <h2 id="components-buttons-subscription-button-drawer-title-3">본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

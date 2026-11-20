@@ -201,8 +201,9 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
       open={open}
       onClose={closeDialog}
       className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+      slotProps={{ paper: { 'aria-labelledby': 'private-post-id-drawer-title' } }}
     >
-      <h2>첨부 이미지 업로드</h2>
+      <h2 id="private-post-id-drawer-title">첨부 이미지 업로드</h2>
       <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
         <CloseRoundedIcon />
       </button>
@@ -690,7 +691,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
               </article>
             ))}
             {data.error ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{data.error}</span>
               </p>
@@ -785,8 +786,9 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
               open={deleteDialogOpen}
               onClose={() => setDeleteDialogOpen(false)}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'private-post-id-drawer-title-2' } }}
             >
-              <h2>글 삭제</h2>
+              <h2 id="private-post-id-drawer-title-2">글 삭제</h2>
               <button
                 type="button"
                 className="close-button"
@@ -798,7 +800,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
               <div className="VhiDrawer-bottom-content">
                 <p>정말로 글을 삭제하시겠습니까?</p>
                 {deleteErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{deleteErrorMessage}</span>
                   </p>
@@ -837,7 +839,7 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
               <DialogContent className={styles['dialog-content']}>
                 <p>정말로 글을 삭제하시겠습니까?</p>
                 {deleteErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{deleteErrorMessage}</span>
                   </p>

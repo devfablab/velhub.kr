@@ -615,14 +615,14 @@ export default function SiteProfile() {
       ) : null}
 
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>
       ) : null}
 
       {blogSubscriptionErrorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{blogSubscriptionErrorMessage}</span>
         </p>
@@ -649,8 +649,11 @@ export default function SiteProfile() {
           open={isBlogSubscriptionCancelDialogOpen}
           onClose={handleCloseBlogSubscriptionCancelDialog}
           className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-site-profile-drawer-title' } }}
         >
-          <h2>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</h2>
+          <h2 id="components-service-blog-site-profile-drawer-title">
+            {isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}
+          </h2>
           <button
             type="button"
             className="close-button"
@@ -679,7 +682,7 @@ export default function SiteProfile() {
                   })}
                 </Typography>
                 {blogSubscriptionErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{blogSubscriptionErrorMessage}</span>
                   </p>
@@ -743,7 +746,7 @@ export default function SiteProfile() {
                   })}
                 </Typography>
                 {blogSubscriptionErrorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{blogSubscriptionErrorMessage}</span>
                   </p>
@@ -778,8 +781,9 @@ export default function SiteProfile() {
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-site-profile-drawer-title-2' } }}
         >
-          <h2>본인인증 필요</h2>
+          <h2 id="components-service-blog-site-profile-drawer-title-2">본인인증 필요</h2>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
@@ -830,8 +834,9 @@ export default function SiteProfile() {
           open={isBlogSubscriptionDialogOpen}
           onClose={handleCloseBlogSubscriptionDialog}
           className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-site-profile-drawer-title-3' } }}
         >
-          <h2>
+          <h2 id="components-service-blog-site-profile-drawer-title-3">
             {isMinor
               ? '1개월 구독권'
               : isResumingScheduledBlogSubscription
@@ -874,7 +879,7 @@ export default function SiteProfile() {
               )}
 
               {blogSubscriptionErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{blogSubscriptionErrorMessage}</span>
                 </p>
@@ -951,7 +956,7 @@ export default function SiteProfile() {
               )}
 
               {blogSubscriptionErrorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{blogSubscriptionErrorMessage}</span>
                 </p>

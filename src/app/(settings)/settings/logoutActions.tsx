@@ -159,7 +159,7 @@ export default function LogoutActions() {
             </button>
 
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
@@ -174,8 +174,9 @@ export default function LogoutActions() {
           open={isConfirmOpen}
           onClose={handleCloseConfirm}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'settings-logout-actions-drawer-title' } }}
         >
-          <h2>모든 디바이스 로그아웃</h2>
+          <h2 id="settings-logout-actions-drawer-title">모든 디바이스 로그아웃</h2>
           <button type="button" className="close-button" onClick={handleCloseConfirm} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

@@ -179,7 +179,7 @@ export default function Opt({
             </div>
             {post.isAuthor && post.isWordingBlinded ? (
               <div className="paper">
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>워딩 프로파일러에 의해 글이 비공개 처리되었습니다. 혐오 표현은 사용하실 수 없어요.</span>
                 </p>
@@ -324,8 +324,9 @@ export default function Opt({
                 open={isImageViewerOpen}
                 onClose={() => setIsImageViewerOpen(false)}
                 className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['gallery-viewer-dialog']}`}
+                slotProps={{ paper: { 'aria-labelledby': 'community-on-blog-content-id-drawer-title' } }}
               >
-                <h2>{`${imageIndex + 1}번째 이미지`}</h2>
+                <h2 id="community-on-blog-content-id-drawer-title">{`${imageIndex + 1}번째 이미지`}</h2>
                 <button
                   type="button"
                   className={styles['close-button']}

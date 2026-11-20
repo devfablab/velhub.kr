@@ -468,7 +468,10 @@ export default function Opt({
                     }
                     fullWidth
                     size="small"
-                    slotProps={{ input: { readOnly: true, disabled: true } }}
+                    slotProps={{
+                      htmlInput: { 'aria-label': '게시판 종류' },
+                      input: { readOnly: true, disabled: true },
+                    }}
                   />
                 </Stack>
 
@@ -488,7 +491,12 @@ export default function Opt({
                     fullWidth
                     size="small"
                     slotProps={{
-                      htmlInput: { minLength: 5, maxLength: 15, pattern: '[a-z][a-z0-9-]*' },
+                      htmlInput: {
+                        'aria-label': '게시판 식별자',
+                        minLength: 5,
+                        maxLength: 15,
+                        pattern: '[a-z][a-z0-9-]*',
+                      },
                       input: {
                         startAdornment: (
                           <InputAdornment position="start">
@@ -524,6 +532,7 @@ export default function Opt({
                     fullWidth
                     size="small"
                     slotProps={{
+                      htmlInput: { 'aria-label': '게시판 이름' },
                       input: {
                         endAdornment: (
                           <InputAdornment position="end">
@@ -572,8 +581,17 @@ export default function Opt({
                 </FormControl>
 
                 <Stack gap={1}>
-                  <Typography variant="subtitle2">목록 표시 개수 *</Typography>
-                  <TextField select value={postPerPage} onChange={handlePostPerPageChange} fullWidth size="small">
+                  <Typography id="manage-contents-posts-c-board-name-edit-field-label" variant="subtitle2">
+                    목록 표시 개수 *
+                  </Typography>
+                  <TextField
+                    select
+                    value={postPerPage}
+                    onChange={handlePostPerPageChange}
+                    fullWidth
+                    size="small"
+                    slotProps={{ select: { labelId: 'manage-contents-posts-c-board-name-edit-field-label' } }}
+                  >
                     {POST_PER_PAGE_OPTIONS.map((count) => (
                       <MenuItem key={count} value={count}>
                         {postPerPage === count ? (
@@ -588,13 +606,16 @@ export default function Opt({
                 </Stack>
 
                 <Stack gap={1}>
-                  <Typography variant="subtitle2">마크다운 사용여부 *</Typography>
+                  <Typography id="manage-contents-posts-c-board-name-edit-field-label-2" variant="subtitle2">
+                    마크다운 사용여부 *
+                  </Typography>
                   <TextField
                     select
                     value={markdownStatus || 'markdown_default'}
                     onChange={handleMarkdownStatusChange}
                     fullWidth
                     size="small"
+                    slotProps={{ select: { labelId: 'manage-contents-posts-c-board-name-edit-field-label-2' } }}
                   >
                     {MARKDOWN_STATUS_OPTIONS.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
@@ -611,13 +632,16 @@ export default function Opt({
 
                 {initialBoard?.write_permission !== 'manager' ? (
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">글 작성 권한 *</Typography>
+                    <Typography id="manage-contents-posts-c-board-name-edit-field-label-3" variant="subtitle2">
+                      글 작성 권한 *
+                    </Typography>
                     <TextField
                       select
                       value={writePermission}
                       onChange={handleWritePermissionChange}
                       fullWidth
                       size="small"
+                      slotProps={{ select: { labelId: 'manage-contents-posts-c-board-name-edit-field-label-3' } }}
                     >
                       {WRITE_PERMISSION_OPTIONS.map((option) => (
                         <MenuItem key={option.value} value={option.value}>

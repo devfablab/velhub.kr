@@ -343,6 +343,7 @@ function ContentEditor({
               onChange={(event) => update('youtubeUrl', event.currentTarget.value)}
               fullWidth
               size="small"
+              slotProps={{ htmlInput: { 'aria-label': '유튜브 영상 주소' } }}
             />
           </Stack>
           <Stack gap={0.5}>
@@ -605,7 +606,7 @@ export default function Opt({
 
   function renderOpinionFieldError(field: string) {
     return opinionFieldErrors[field] ? (
-      <p className="alert error">
+      <p className="alert error" role="alert">
         <ErrorOutlineRoundedIcon />
         <span>{opinionFieldErrors[field]}</span>
       </p>
@@ -891,8 +892,9 @@ export default function Opt({
           open={Boolean(opinionItem)}
           onClose={closeOpinion}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'concierge-explains-drawer-title' } }}
         >
-          <h2>소명 의견서 제출</h2>
+          <h2 id="concierge-explains-drawer-title">소명 의견서 제출</h2>
           <button type="button" className="close-button" onClick={closeOpinion} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

@@ -180,7 +180,7 @@ function GuidelineSection({
             ))}
 
             {error ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{error}</span>
               </p>
@@ -227,7 +227,7 @@ function GuidelineSection({
             ))}
           </ol>
         ) : (
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>등록된 가이드라인이 없습니다.</span>
           </p>

@@ -391,7 +391,7 @@ export default function Opt({
 
   function renderFieldError(field: string) {
     return fieldErrors[field] ? (
-      <p className="alert error">
+      <p className="alert error" role="alert">
         <ErrorOutlineRoundedIcon />
         <span>{fieldErrors[field]}</span>
       </p>
@@ -703,7 +703,11 @@ export default function Opt({
 
     return (
       <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
-        <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+        <Typography
+          id="concierge-rights-inquery-field-label"
+          variant="subtitle2"
+          sx={{ minWidth: isMobile ? 'auto' : 150 }}
+        >
           신고 사유
         </Typography>
         <FormControl fullWidth size="small">
@@ -717,6 +721,7 @@ export default function Opt({
               }
               return rightsReportCategoryOptions.find((option) => option.value === selected)?.label ?? '';
             }}
+            labelId="concierge-rights-inquery-field-label"
           >
             <MenuItem value="" disabled>
               신고 사유 선택
@@ -982,6 +987,7 @@ export default function Opt({
             helperText={fieldErrors.reportUrl}
             fullWidth
             size="small"
+            slotProps={{ htmlInput: { 'aria-label': '신고대상 URL' } }}
           />
         </Stack>
         <p className="alert info">
@@ -1014,6 +1020,7 @@ export default function Opt({
             helperText={fieldErrors.email}
             fullWidth
             size="small"
+            slotProps={{ htmlInput: { 'aria-label': '이메일' } }}
           />
         </Stack>
 
@@ -1033,6 +1040,7 @@ export default function Opt({
             helperText={fieldErrors.phone}
             fullWidth
             size="small"
+            slotProps={{ htmlInput: { 'aria-label': '전화번호' } }}
           />
         </Stack>
 
@@ -1161,6 +1169,7 @@ export default function Opt({
                 helperText={fieldErrors.rightsHolderName}
                 fullWidth
                 size="small"
+                slotProps={{ htmlInput: { 'aria-label': isOrganization ? '피해단체 이름' : '피해자 이름' } }}
               />
             </Stack>
 
@@ -1180,6 +1189,7 @@ export default function Opt({
                 helperText={fieldErrors.rightsHolderPhone}
                 fullWidth
                 size="small"
+                slotProps={{ htmlInput: { 'aria-label': isOrganization ? '피해단체 전화번호' : '피해자 전화번호' } }}
               />
             </Stack>
 

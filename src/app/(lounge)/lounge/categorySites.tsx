@@ -32,6 +32,7 @@ export default function CategorySites({ groups }: { groups: CategoryRisingSiteGr
               <button
                 type="button"
                 className={group.id === selectedGroup.id ? styles.current : undefined}
+                aria-pressed={group.id === selectedGroup.id}
                 onClick={() => selectGroup(group.id)}
               >
                 {group.label}
@@ -45,6 +46,7 @@ export default function CategorySites({ groups }: { groups: CategoryRisingSiteGr
               <button
                 type="button"
                 className={category.id === selectedCategory.id ? styles.current : undefined}
+                aria-pressed={category.id === selectedCategory.id}
                 onClick={() => setCategoryId(category.id)}
               >
                 {category.label}

@@ -226,7 +226,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     return (
       <Container pageTitle="비공개 게시판" pageBack={`/${siteName}/manage`}>
         <div className={`container ${styles.container}`}>
-          <p className="alert error">
+          <p className="alert error" role="alert">
             <ErrorOutlineRoundedIcon />
             <span>커뮤니티에서만 사용할 수 있습니다.</span>
           </p>
@@ -316,8 +316,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
           open={Boolean(notice)}
           onClose={() => setNotice(null)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-private-drawer-title' } }}
         >
-          <h2>{notice?.title}</h2>
+          <h2 id="manage-private-drawer-title">{notice?.title}</h2>
           <button type="button" className="close-button" onClick={() => setNotice(null)} aria-label="팝업 닫기">
             <CloseRoundedIcon />
           </button>
@@ -358,8 +359,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
           open={pendingCategoryIndex !== null}
           onClose={() => setPendingCategoryIndex(null)}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'manage-private-drawer-title-2' } }}
         >
-          <h2>카테고리 삭제</h2>
+          <h2 id="manage-private-drawer-title-2">카테고리 삭제</h2>
           <div className="VhiDrawer-bottom-content">
             <Typography variant="subtitle2">
               해당 카테고리의 글은 {categoryMoveTargetLabel} 카테고리로 이동합니다.

@@ -326,8 +326,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={isDeleteDialogOpen}
               onClose={handleCloseDeleteDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-pages-content-id-drawer-title' } }}
             >
-              <h2>페이지 삭제</h2>
+              <h2 id="manage-contents-pages-content-id-drawer-title">페이지 삭제</h2>
               <button
                 type="button"
                 className="close-button"
@@ -349,7 +350,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>
@@ -405,7 +406,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -435,8 +436,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={isRestoreDialogOpen}
               onClose={handleCloseRestoreDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-pages-content-id-drawer-title-2' } }}
             >
-              <h2>페이지 복구</h2>
+              <h2 id="manage-contents-pages-content-id-drawer-title-2">페이지 복구</h2>
               <button
                 type="button"
                 className="close-button"
@@ -458,7 +460,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{dialogErrorMessage}</span>
                     </p>
@@ -514,7 +516,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>

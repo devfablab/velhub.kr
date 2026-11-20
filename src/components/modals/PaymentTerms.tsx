@@ -94,8 +94,14 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
         </button>
       </Stack>
       {isMobile ? (
-        <Drawer anchor="bottom" open={open} onClose={() => setOpen(false)} className="VhiDrawer-bottom">
-          <h2>{terms.title}</h2>
+        <Drawer
+          anchor="bottom"
+          open={open}
+          onClose={() => setOpen(false)}
+          className="VhiDrawer-bottom"
+          slotProps={{ paper: { 'aria-labelledby': 'components-modals-payment-terms-drawer-title' } }}
+        >
+          <h2 id="components-modals-payment-terms-drawer-title">{terms.title}</h2>
           <button type="button" className="close-button" onClick={() => setOpen(false)} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

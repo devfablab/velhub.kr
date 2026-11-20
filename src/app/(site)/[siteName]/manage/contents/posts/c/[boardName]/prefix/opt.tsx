@@ -367,8 +367,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={dialogMode === 'new' || dialogMode === 'edit'}
               onClose={handleCloseDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-prefix-drawer-title' } }}
             >
-              <h2>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</h2>
+              <h2 id="manage-contents-posts-c-board-name-prefix-drawer-title">
+                {dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}
+              </h2>
               <button type="button" className="close-button" onClick={handleCloseDialog} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
@@ -393,7 +396,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     />
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -459,7 +462,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     />
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -484,8 +487,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
               open={dialogMode === 'delete'}
               onClose={handleCloseDialog}
               className="VhiDrawer-bottom VhiDrawer-bottom-service"
+              slotProps={{ paper: { 'aria-labelledby': 'manage-contents-posts-c-board-name-prefix-drawer-title-2' } }}
             >
-              <h2>말머리 삭제</h2>
+              <h2 id="manage-contents-posts-c-board-name-prefix-drawer-title-2">말머리 삭제</h2>
               <button
                 type="button"
                 className="close-button"
@@ -507,7 +511,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>
@@ -564,7 +568,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
 
                     {dialogErrorMessage ? (
-                      <p className="alert error">
+                      <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
                         <span>{dialogErrorMessage}</span>
                       </p>

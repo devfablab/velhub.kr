@@ -158,6 +158,7 @@ function SortableItem({
               fullWidth
               size="small"
               slotProps={{
+                htmlInput: { 'aria-label': '계정' },
                 input: {
                   startAdornment: <InputAdornment position="start">{serviceMeta?.prefix ?? ''}</InputAdornment>,
                 },

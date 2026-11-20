@@ -213,7 +213,11 @@ export default function TableListMobile({
 
             <Menu anchorEl={menuAnchorEl} open={isMenuOpen} onClose={handleMenuClose} className="VhiMenu-popover">
               <MenuItem onClick={handleMenuClose}>
-                <Anchor href={`/${siteName}/board`} className={!boardName ? 'current' : undefined}>
+                <Anchor
+                  href={`/${siteName}/board`}
+                  className={!boardName ? 'current' : undefined}
+                  aria-current={!boardName ? 'page' : undefined}
+                >
                   {!boardName ? <CheckRoundedIcon /> : <i />}
                   <span>최신글 보기</span>
                 </Anchor>
@@ -224,7 +228,11 @@ export default function TableListMobile({
 
                 return (
                   <MenuItem key={board.id} onClick={handleMenuClose}>
-                    <Anchor href={`/${siteName}/${board.board_key}`} className={isSelected ? 'current' : undefined}>
+                    <Anchor
+                      href={`/${siteName}/${board.board_key}`}
+                      className={isSelected ? 'current' : undefined}
+                      aria-current={isSelected ? 'page' : undefined}
+                    >
                       {isSelected ? <CheckRoundedIcon /> : <i />}
                       <span>{board.board_label}</span>
                     </Anchor>
@@ -274,8 +282,9 @@ export default function TableListMobile({
             open={Boolean(alertMessage)}
             onClose={() => setAlertMessage('')}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            slotProps={{ paper: { 'aria-labelledby': 'components-service-community-table-list-mobile-drawer-title' } }}
           >
-            <h2>안내</h2>
+            <h2 id="components-service-community-table-list-mobile-drawer-title">안내</h2>
             <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
@@ -332,7 +341,11 @@ export default function TableListMobile({
                 className="VhiMenu-popover"
               >
                 <MenuItem onClick={handleSeriesMenuClose}>
-                  <Anchor href={getSeriesHref('')} className={!selectedSeriesKey ? 'current' : undefined}>
+                  <Anchor
+                    href={getSeriesHref('')}
+                    className={!selectedSeriesKey ? 'current' : undefined}
+                    aria-current={!selectedSeriesKey ? 'page' : undefined}
+                  >
                     {!selectedSeriesKey ? <CheckRoundedIcon /> : <i />}
                     <span>연재 선택</span>
                   </Anchor>
@@ -342,7 +355,11 @@ export default function TableListMobile({
 
                   return (
                     <MenuItem key={series.series_key} onClick={handleSeriesMenuClose}>
-                      <Anchor href={getSeriesHref(series.series_key)} className={isSelected ? 'current' : undefined}>
+                      <Anchor
+                        href={getSeriesHref(series.series_key)}
+                        className={isSelected ? 'current' : undefined}
+                        aria-current={isSelected ? 'page' : undefined}
+                      >
                         {isSelected ? <CheckRoundedIcon /> : <i />}
                         <span>{series.series_label}</span>
                       </Anchor>

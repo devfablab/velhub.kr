@@ -587,7 +587,7 @@ export default function Opt({ siteName, initialData, initialError }: Props) {
       ) : null}
 
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>

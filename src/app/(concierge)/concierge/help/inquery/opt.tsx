@@ -385,7 +385,7 @@ export default function Opt({
     return messages.length ? (
       <Stack gap={0.5}>
         {messages.map((message) => (
-          <p className="alert error" key={message}>
+          <p className="alert error" role="alert" key={message}>
             <ErrorOutlineRoundedIcon />
             <span>{message}</span>
           </p>
@@ -613,7 +613,11 @@ export default function Opt({
 
     return (
       <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
-        <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+        <Typography
+          id="concierge-help-inquery-field-label"
+          variant="subtitle2"
+          sx={{ minWidth: isMobile ? 'auto' : 150 }}
+        >
           신고 유형
         </Typography>
         <FormControl fullWidth size="small">
@@ -630,6 +634,7 @@ export default function Opt({
               }
               return legalTypeOptions.find((option) => option.value === selected)?.label ?? '';
             }}
+            labelId="concierge-help-inquery-field-label"
           >
             <MenuItem value="" disabled>
               신고 유형 선택
@@ -666,6 +671,7 @@ export default function Opt({
             size="small"
             error={Boolean(fieldErrors.email)}
             helperText={fieldErrors.email}
+            slotProps={{ htmlInput: { 'aria-label': '이메일' } }}
           />
         </Stack>
 
@@ -685,6 +691,7 @@ export default function Opt({
             size="small"
             error={Boolean(fieldErrors.phone)}
             helperText={fieldErrors.phone}
+            slotProps={{ htmlInput: { 'aria-label': '휴대폰 또는 전화번호' } }}
           />
         </Stack>
 
@@ -709,7 +716,7 @@ export default function Opt({
               <span>PDF 파일 최대 2개, 1개당 5MB 이하로 첨부할 수 있습니다.</span>
             </p>
             {fieldErrors.attachment ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{fieldErrors.attachment}</span>
               </p>
@@ -821,6 +828,7 @@ export default function Opt({
                 size="small"
                 error={Boolean(fieldErrors.reportUrl)}
                 helperText={fieldErrors.reportUrl}
+                slotProps={{ htmlInput: { 'aria-label': '신고대상 URL' } }}
               />
             </Stack>
             <p className="alert info">
@@ -833,7 +841,11 @@ export default function Opt({
         ) : null}
 
         <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
-          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+          <Typography
+            id="concierge-help-inquery-field-label-2"
+            variant="subtitle2"
+            sx={{ minWidth: isMobile ? 'auto' : 150 }}
+          >
             신고 · 요청 구분
           </Typography>
           <Select
@@ -848,6 +860,7 @@ export default function Opt({
               }
               return selected === 'illegal_info' ? '불법정보' : '허위조작정보';
             }}
+            labelId="concierge-help-inquery-field-label-2"
           >
             <MenuItem value="" disabled>
               신고 · 요청 구분 선택
@@ -1112,6 +1125,7 @@ export default function Opt({
                 onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
                 fullWidth
                 size="small"
+                slotProps={{ htmlInput: { 'aria-label': '신고대상 URL' } }}
               />
             </Stack>
             <p className="alert info">
@@ -1327,6 +1341,7 @@ export default function Opt({
                 onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
                 fullWidth
                 size="small"
+                slotProps={{ htmlInput: { 'aria-label': '신고대상 URL' } }}
               />
             </Stack>
             <p className="alert info">
@@ -1339,7 +1354,11 @@ export default function Opt({
         ) : null}
         {!hasTargetParams ? (
           <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
-            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+            <Typography
+              id="concierge-help-inquery-field-label-3"
+              variant="subtitle2"
+              sx={{ minWidth: isMobile ? 'auto' : 150 }}
+            >
               신고유형
             </Typography>
             <Select
@@ -1355,6 +1374,7 @@ export default function Opt({
 
                 return privacyReportTypeOptions.find((option) => option.value === selected)?.label ?? '';
               }}
+              labelId="concierge-help-inquery-field-label-3"
             >
               <MenuItem value="" disabled>
                 신고유형 선택

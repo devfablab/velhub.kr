@@ -62,8 +62,9 @@ function ConfirmPopup({
         open={Boolean(confirm)}
         onClose={onClose}
         className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        slotProps={{ paper: { 'aria-labelledby': 'community-chat-drawer-title' } }}
       >
-        <h2>{confirm?.title}</h2>
+        <h2 id="community-chat-drawer-title">{confirm?.title}</h2>
         <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>
@@ -177,8 +178,7 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
 
       try {
         const payload = JSON.parse(String(event.data)) as
-          | { type: 'message'; message: CommunityChatMessage }
-          | { type: 'delete'; id: string };
+          { type: 'message'; message: CommunityChatMessage } | { type: 'delete'; id: string };
 
         if (payload.type === 'message') {
           setMessages((current) => mergeMessages(current, [{ ...payload.message, state: 'sent' }]));
@@ -531,7 +531,7 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
 
           {errorMessage ? (
             <div className={styles.error}>
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>

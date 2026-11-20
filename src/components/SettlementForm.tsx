@@ -594,7 +594,7 @@ export default function SettlementForm({
           >
             <Stack gap={2}>
               {errorMessage ? (
-                <p className="alert error">
+                <p className="alert error" role="alert">
                   <ErrorOutlineRoundedIcon />
                   <span>{errorMessage}</span>
                 </p>
@@ -647,13 +647,16 @@ export default function SettlementForm({
                   </Stack>
 
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">업종 선택</Typography>
+                    <Typography id="components-settlement-form-field-label" variant="subtitle2">
+                      업종 선택
+                    </Typography>
                     <Select
                       disabled={isApproved}
                       size="small"
                       displayEmpty
                       value={businessIncomeCode}
                       onChange={(event) => setBusinessIncomeCode(event.target.value)}
+                      labelId="components-settlement-form-field-label"
                     >
                       <MenuItem value="" disabled>
                         업종코드를 선택해 주세요
@@ -722,7 +725,9 @@ export default function SettlementForm({
                 />
               </Stack>
               <Stack gap={1}>
-                <Typography variant="subtitle2">정산 정보 입력</Typography>
+                <Typography id="components-settlement-form-field-label-2" variant="subtitle2">
+                  정산 정보 입력
+                </Typography>
                 <Stack gap={1}>
                   <Select
                     disabled={isApproved}
@@ -730,6 +735,7 @@ export default function SettlementForm({
                     displayEmpty
                     value={bankCode}
                     onChange={(event) => setBankCode(event.target.value)}
+                    labelId="components-settlement-form-field-label-2"
                   >
                     <MenuItem value="" disabled>
                       입금 은행을 선택해 주세요
@@ -766,7 +772,7 @@ export default function SettlementForm({
                   />
                 </Stack>
                 {errorMessage ? (
-                  <p className="alert error">
+                  <p className="alert error" role="alert">
                     <ErrorOutlineRoundedIcon />
                     <span>{errorMessage}</span>
                   </p>
@@ -798,7 +804,7 @@ export default function SettlementForm({
                     </div>
                   )}
                   {guardianErrorMessage ? (
-                    <p className="alert error">
+                    <p className="alert error" role="alert">
                       <ErrorOutlineRoundedIcon />
                       <span>{guardianErrorMessage}</span>
                     </p>

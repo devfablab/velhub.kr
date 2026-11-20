@@ -212,7 +212,7 @@ export default function Opt({
   if (blogSubscriptionData?.ownerStatus && !blogSubscriptionData.ownerStatus.isCreator) {
     return (
       <Stack gap={3}>
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>운영자는 작가가 아니기 때문에 수익을 낼 수 없습니다.</span>
         </p>
@@ -223,7 +223,7 @@ export default function Opt({
   if (blogSubscriptionData?.ownerStatus && blogSubscriptionData.ownerStatus.status !== 'approved') {
     return (
       <Stack gap={3}>
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>운영자 계정의 정산정보에 문제가 있습니다.</span>
         </p>
@@ -239,7 +239,7 @@ export default function Opt({
   return (
     <Stack gap={3}>
       {errorMessage ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>
@@ -300,6 +300,7 @@ export default function Opt({
             fullWidth
             size="small"
             slotProps={{
+              htmlInput: { 'aria-label': '블로그 구독 가격' },
               input: {
                 endAdornment: <InputAdornment position="end">원</InputAdornment>,
               },

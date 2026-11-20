@@ -32,6 +32,7 @@ import {
   ListItemText,
   ListSubheader,
   MenuItem,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -441,20 +442,35 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                 </h1>
                 <div className={styles.iconbuttons}>
                   {pageFin ? (
-                    <IconButton onClick={handleOpenProfileDrawer} sx={{ width: 40, height: 40 }}>
-                      <MoreHorizRoundedIcon />
-                    </IconButton>
+                    <Tooltip title="메뉴">
+                      <IconButton
+                        onClick={handleOpenProfileDrawer}
+                        aria-haspopup="dialog"
+                        aria-expanded={isProfileDrawerOpen}
+                        sx={{ width: 40, height: 40 }}
+                      >
+                        <MoreHorizRoundedIcon />
+                      </IconButton>
+                    </Tooltip>
                   ) : (
                     <>
                       <ReportButton targetType="site" siteName={siteName} />
-                      <IconButton onClick={handleOpenSearchDrawer} sx={{ width: 40, height: 40 }}>
-                        <SearchOutlinedIcon />
-                      </IconButton>
+                      <Tooltip title="검색">
+                        <IconButton
+                          onClick={handleOpenSearchDrawer}
+                          aria-haspopup="dialog"
+                          aria-expanded={isSearchDrawerOpen}
+                          sx={{ width: 40, height: 40 }}
+                        >
+                          <SearchOutlinedIcon />
+                        </IconButton>
+                      </Tooltip>
                       <Drawer
                         anchor="top"
                         open={isSearchDrawerOpen}
                         onClose={handleCloseSearchDrawer}
                         className={styles['VhiDrawer-search']}
+                        slotProps={{ paper: { 'aria-label': '검색' } }}
                       >
                         <div className={styles['mobile-search']}>
                           <IconButton
@@ -472,19 +488,27 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                           )}
                         </div>
                       </Drawer>
-                      <IconButton onClick={handleOpenThemeModeMenu} sx={{ width: 40, height: 40 }}>
-                        {renderThemeModeIcon()}
-                      </IconButton>
+                      <Tooltip title="화면모드 설정">
+                        <IconButton
+                          onClick={handleOpenThemeModeMenu}
+                          aria-haspopup="dialog"
+                          aria-expanded={isThemeModeDrawerOpen}
+                          sx={{ width: 40, height: 40 }}
+                        >
+                          {renderThemeModeIcon()}
+                        </IconButton>
+                      </Tooltip>
                       <Drawer
                         anchor="right"
                         open={isThemeModeDrawerOpen}
                         onClose={handleCloseThemeModeDrawer}
                         className={styles.VhiDrawer}
+                        slotProps={{ paper: { 'aria-labelledby': 'site-menu-drawer-title-2' } }}
                       >
                         <Box role="presentation">
                           <List>
                             <li className={styles['VhiDrawer-header']}>
-                              <strong>화면모드 설정</strong>
+                              <strong id="site-menu-drawer-title-2">화면모드 설정</strong>
                               <IconButton type="button" onClick={handleCloseThemeModeDrawer} aria-label="메뉴 닫기">
                                 <CloseRoundedIcon />
                               </IconButton>
@@ -513,13 +537,17 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                         </Box>
                       </Drawer>
                       <NotificationButton isMobile={true} />
-                      <IconButton
-                        onClick={handleOpenProfileDrawer}
-                        className={styles['theme-mode-button']}
-                        sx={{ width: 40, height: 40 }}
-                      >
-                        <MenuRoundedIcon />
-                      </IconButton>
+                      <Tooltip title="메뉴">
+                        <IconButton
+                          onClick={handleOpenProfileDrawer}
+                          aria-haspopup="dialog"
+                          aria-expanded={isProfileDrawerOpen}
+                          className={styles['theme-mode-button']}
+                          sx={{ width: 40, height: 40 }}
+                        >
+                          <MenuRoundedIcon />
+                        </IconButton>
+                      </Tooltip>
                     </>
                   )}
 
@@ -528,11 +556,12 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                     open={isProfileDrawerOpen}
                     onClose={handleCloseProfileDrawer}
                     className={styles.VhiDrawer}
+                    slotProps={{ paper: { 'aria-labelledby': 'site-menu-drawer-title-3' } }}
                   >
                     <Box role="presentation">
                       <List>
                         <li className={styles['VhiDrawer-header']}>
-                          <strong>{pageFin ? '설정 및 메뉴' : '마이 메뉴'}</strong>
+                          <strong id="site-menu-drawer-title-3">{pageFin ? '설정 및 메뉴' : '마이 메뉴'}</strong>
                           <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
                             <CloseRoundedIcon />
                           </IconButton>
@@ -600,6 +629,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                                 type="button"
                                 onClick={() => handleSelectThemeMode('light')}
                                 className={themeMode === 'light' ? styles.active : undefined}
+                                aria-pressed={themeMode === 'light'}
                               >
                                 {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
                                 <span>라이트 모드</span>
@@ -608,6 +638,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                                 type="button"
                                 onClick={() => handleSelectThemeMode('system')}
                                 className={themeMode === 'system' ? styles.active : undefined}
+                                aria-pressed={themeMode === 'system'}
                               >
                                 {themeMode === 'system' ? (
                                   <SettingsBrightnessIcon />
@@ -620,6 +651,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                                 type="button"
                                 onClick={() => handleSelectThemeMode('dark')}
                                 className={themeMode === 'dark' ? styles.active : undefined}
+                                aria-pressed={themeMode === 'dark'}
                               >
                                 {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
                                 <span>다크 모드</span>

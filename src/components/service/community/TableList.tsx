@@ -192,8 +192,9 @@ export default function TableList({ writeHref }: Props) {
           open={Boolean(alertMessage)}
           onClose={() => setAlertMessage('')}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-community-table-list-drawer-title' } }}
         >
-          <h2>안내</h2>
+          <h2 id="components-service-community-table-list-drawer-title">안내</h2>
           <button type="button" className="close-button" onClick={() => setAlertMessage('')} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

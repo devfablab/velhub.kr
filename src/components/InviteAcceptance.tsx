@@ -233,8 +233,11 @@ export default function InviteAcceptance({
           open={errorPopup.open}
           onClose={handleErrorClose}
           className="VhiDrawer-bottom VhiDrawer-bottom-service"
+          slotProps={{
+            paper: { 'aria-labelledby': errorPopup.title ? 'invite-acceptance-error-drawer-title' : undefined },
+          }}
         >
-          {errorPopup.title ? <h2>{errorPopup.title}</h2> : null}
+          {errorPopup.title ? <h2 id="invite-acceptance-error-drawer-title">{errorPopup.title}</h2> : null}
           <button type="button" className="close-button" onClick={handleErrorClose} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

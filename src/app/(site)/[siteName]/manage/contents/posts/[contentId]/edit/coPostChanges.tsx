@@ -72,7 +72,12 @@ export default function CoPostChanges({ coPostId, reloadKey }: { coPostId: strin
   return (
     <Stack gap={1}>
       <Stack direction="row" justifyContent="flex-end">
-        <button type="button" className="button small action" onClick={() => setIsOpen((value) => !value)}>
+        <button
+          type="button"
+          className="button small action"
+          onClick={() => setIsOpen((value) => !value)}
+          aria-expanded={isOpen}
+        >
           {isOpen ? '변경점 닫기' : '변경점 보기'}
         </button>
       </Stack>

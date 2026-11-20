@@ -344,7 +344,7 @@ export default function PostAttachmentUploader({
         <div className={styles['attachment-uploader-headline']}>
           <p>7z, zip 파일을 최대 5개, 전체 10MB까지 첨부할 수 있습니다.</p>
           {errorMessage ? (
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>{errorMessage}</span>
             </p>

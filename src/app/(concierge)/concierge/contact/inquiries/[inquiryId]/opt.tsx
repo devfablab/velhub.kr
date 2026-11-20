@@ -285,7 +285,7 @@ export default function Opt({
 
   if (error && !inquiry)
     return (
-      <p className="alert error">
+      <p className="alert error" role="alert">
         <ErrorOutlineRoundedIcon />
         <span>{error}</span>
       </p>
@@ -430,7 +430,7 @@ export default function Opt({
                 size="small"
                 value={responseMessage}
                 onChange={(event) => setResponseMessage(event.target.value)}
-                slotProps={{ htmlInput: { maxLength: 10000 } }}
+                slotProps={{ htmlInput: { 'aria-label': '추가 정보 답변', maxLength: 10000 } }}
               />
               <button
                 type="button"
@@ -455,7 +455,7 @@ export default function Opt({
                 : '증빙 파일 제출'}
           </h2>
           {searchParams.get('attachment') === 'failed' ? (
-            <p className="alert error">
+            <p className="alert error" role="alert">
               <ErrorOutlineRoundedIcon />
               <span>문의는 접수됐지만 첨부 파일을 저장하지 못했습니다. 이 화면에서 다시 제출해 주세요.</span>
             </p>
@@ -598,13 +598,18 @@ export default function Opt({
           <Typography variant="body2">
             원결제수단 취소가 불가능하여 계정주 본인, 부 또는 모 명의 계좌로 전액을 반환합니다.
           </Typography>
-          <Typography variant="subtitle2">계좌 명의자</Typography>
+          <Typography id="concierge-contact-inquiries-inquiry-id-field-label" variant="subtitle2">
+            계좌 명의자
+          </Typography>
           <TextField
             select
             fullWidth
             size="small"
             value={holderType}
-            slotProps={{ input: { startAdornment: <SelectCheckAdornment /> } }}
+            slotProps={{
+              select: { labelId: 'concierge-contact-inquiries-inquiry-id-field-label' },
+              input: { startAdornment: <SelectCheckAdornment /> },
+            }}
             onChange={(event) => setHolderType(event.target.value)}
           >
             <MenuItem value="account_holder">계정주 본인</MenuItem>
@@ -617,15 +622,23 @@ export default function Opt({
             size="small"
             value={holderName}
             onChange={(event) => setHolderName(event.target.value)}
+            slotProps={{ htmlInput: { 'aria-label': '예금주명' } }}
           />
           <Typography variant="subtitle2">은행 코드</Typography>
-          <TextField fullWidth size="small" value={bankCode} onChange={(event) => setBankCode(event.target.value)} />
+          <TextField
+            fullWidth
+            size="small"
+            value={bankCode}
+            onChange={(event) => setBankCode(event.target.value)}
+            slotProps={{ htmlInput: { 'aria-label': '은행 코드' } }}
+          />
           <Typography variant="subtitle2">계좌번호</Typography>
           <TextField
             fullWidth
             size="small"
             value={accountNumber}
             onChange={(event) => setAccountNumber(event.target.value)}
+            slotProps={{ htmlInput: { 'aria-label': '계좌번호' } }}
           />
           <button type="button" className="button medium submit" onClick={() => void saveRefundAccount()}>
             반환 계좌 저장
@@ -633,7 +646,7 @@ export default function Opt({
         </div>
       ) : null}
       {error ? (
-        <p className="alert error">
+        <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />
           <span>{error}</span>
         </p>

@@ -60,8 +60,9 @@ export default function ResponsivePopup({
       open={open}
       onClose={onClose}
       className={variant === 'content' ? 'VhiDrawer-bottom' : 'VhiDrawer-bottom VhiDrawer-bottom-service'}
+      slotProps={{ paper: { 'aria-labelledby': 'concierge-responsive-popup-drawer-title' } }}
     >
-      <h2>{title}</h2>
+      <h2 id="concierge-responsive-popup-drawer-title">{title}</h2>
       <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>

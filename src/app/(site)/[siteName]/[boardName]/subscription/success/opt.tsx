@@ -15,7 +15,7 @@ export default function Opt({ siteName, boardName, errorMessage }: Props) {
           <h2>연재 구독</h2>
           <div className="paper" style={{ marginTop: 12 }}>
             {errorMessage ? (
-              <p className="alert error">
+              <p className="alert error" role="alert">
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>

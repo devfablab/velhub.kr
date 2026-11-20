@@ -295,6 +295,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         fullWidth
                         size="small"
                         required
+                        slotProps={{ htmlInput: { 'aria-label': 'repo' } }}
                       />
                     </Stack>
                     <Stack>
@@ -311,10 +312,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         fullWidth
                         size="small"
                         required
+                        slotProps={{ htmlInput: { 'aria-label': 'repoId' } }}
                       />
                     </Stack>
                     <Stack>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      <Typography id="manage-design-blog-comment-field-label" variant="subtitle2" sx={{ mb: 1 }}>
                         category
                       </Typography>
                       <TextField
@@ -330,6 +332,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         fullWidth
                         size="small"
                         required
+                        slotProps={{ select: { labelId: 'manage-design-blog-comment-field-label' } }}
                       >
                         {GISCUS_CATEGORY_OPTIONS.map((category) => (
                           <MenuItem key={category} value={category}>
@@ -354,11 +357,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         fullWidth
                         size="small"
                         required
+                        slotProps={{ htmlInput: { 'aria-label': 'categoryId' } }}
                       />
                     </Stack>
 
                     <Stack>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      <Typography id="manage-design-blog-comment-field-label-2" variant="subtitle2" sx={{ mb: 1 }}>
                         inputPosition
                       </Typography>
                       <TextField
@@ -368,6 +372,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         fullWidth
                         size="small"
                         required
+                        slotProps={{ select: { labelId: 'manage-design-blog-comment-field-label-2' } }}
                       >
                         <MenuItem value="top">
                           {giscusSettings.inputPosition === 'top' ? (
@@ -389,7 +394,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </Stack>
 
                     <Stack>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      <Typography id="manage-design-blog-comment-field-label-3" variant="subtitle2" sx={{ mb: 1 }}>
                         strict
                       </Typography>
                       <TextField
@@ -398,6 +403,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onChange={(event) => handleChangeGiscusFlag('strict', event.target.value)}
                         fullWidth
                         size="small"
+                        slotProps={{ select: { labelId: 'manage-design-blog-comment-field-label-3' } }}
                       >
                         <MenuItem value="0">
                           {giscusSettings.strict === '0' ? (
@@ -419,7 +425,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </Stack>
 
                     <Stack>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      <Typography id="manage-design-blog-comment-field-label-4" variant="subtitle2" sx={{ mb: 1 }}>
                         reactionsEnabled
                       </Typography>
                       <TextField
@@ -428,6 +434,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onChange={(event) => handleChangeGiscusFlag('reactionsEnabled', event.target.value)}
                         fullWidth
                         size="small"
+                        slotProps={{ select: { labelId: 'manage-design-blog-comment-field-label-4' } }}
                       >
                         <MenuItem value="0">
                           {giscusSettings.reactionsEnabled === '0' ? (
@@ -449,7 +456,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     </Stack>
 
                     <Stack>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      <Typography id="manage-design-blog-comment-field-label-5" variant="subtitle2" sx={{ mb: 1 }}>
                         emitMetadata
                       </Typography>
                       <TextField
@@ -458,6 +465,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onChange={(event) => handleChangeGiscusFlag('emitMetadata', event.target.value)}
                         fullWidth
                         size="small"
+                        slotProps={{ select: { labelId: 'manage-design-blog-comment-field-label-5' } }}
                       >
                         <MenuItem value="0">
                           {giscusSettings.emitMetadata === '0' ? (

@@ -144,8 +144,9 @@ export default function BlogAdImageDialog({
           open={open}
           onClose={closeDialog}
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+          slotProps={{ paper: { 'aria-labelledby': 'components-service-blog-blog-ad-image-dialog-drawer-title' } }}
         >
-          <h2>상품 이미지 업로드</h2>
+          <h2 id="components-service-blog-blog-ad-image-dialog-drawer-title">상품 이미지 업로드</h2>
           <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>

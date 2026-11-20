@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type FocusEvent, useEffect, useRef, useState } from 'react';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -182,7 +182,58 @@ function getContentDescription(contentHtml: string | null) {
   return Array.from(plainText).slice(0, 327).join('');
 }
 
+function syncSlideAccessibility(container: HTMLElement | null) {
+  if (!container) {
+    return;
+  }
+
+  container.querySelectorAll<HTMLElement>('.slick-slide').forEach((slide) => {
+    const isCloned = slide.classList.contains('slick-cloned');
+
+    if (isCloned) {
+      slide.setAttribute('aria-hidden', 'true');
+    } else {
+      slide.removeAttribute('aria-hidden');
+    }
+
+    slide.querySelectorAll<HTMLElement>('a, button').forEach((element) => {
+      if (isCloned) {
+        element.setAttribute('tabindex', '-1');
+      } else {
+        element.removeAttribute('tabindex');
+      }
+    });
+  });
+}
+
+function moveSliderToFocusedSlide(event: FocusEvent<HTMLElement>, slider: Slider | null) {
+  const list = event.currentTarget.querySelector<HTMLElement>('.slick-list');
+
+  if (list) {
+    list.scrollLeft = 0;
+  }
+
+  const slide = (event.target as HTMLElement).closest<HTMLElement>('.slick-slide');
+
+  if (!slider || !slide || slide.classList.contains('slick-active') || slide.classList.contains('slick-cloned')) {
+    return;
+  }
+
+  const index = Number(slide.dataset.index);
+
+  if (!Number.isNaN(index)) {
+    slider.slickGoTo(index);
+  }
+}
+
 function BlogPostCarousel({ posts, siteName }: { posts: BlogHomePost[]; siteName: string }) {
+  const sliderReference = useRef<Slider>(null);
+  const containerReference = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    syncSlideAccessibility(containerReference.current);
+  });
+
   const settings = {
     className: styles.slider,
     dots: false,
@@ -193,11 +244,18 @@ function BlogPostCarousel({ posts, siteName }: { posts: BlogHomePost[]; siteName
     variableWidth: true,
     nextArrow: <BlogPostNextArrow />,
     prevArrow: <BlogPostPrevArrow />,
+    onInit: () => syncSlideAccessibility(containerReference.current),
+    onReInit: () => syncSlideAccessibility(containerReference.current),
+    afterChange: () => syncSlideAccessibility(containerReference.current),
   };
 
   return (
-    <div className={`${styles.slider} ${styles['slider-thumbnail']}`}>
-      <Slider {...settings}>
+    <div
+      ref={containerReference}
+      className={`${styles.slider} ${styles['slider-thumbnail']}`}
+      onFocus={(event) => moveSliderToFocusedSlide(event, sliderReference.current)}
+    >
+      <Slider ref={sliderReference} {...settings}>
         {posts.map((post) => (
           <div key={post.id}>
             <Anchor
@@ -235,6 +293,7 @@ function BlogCommunityCarousel({
   communityTitle: string;
 }) {
   const containerReference = useRef<HTMLDivElement | null>(null);
+  const sliderReference = useRef<Slider>(null);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const [truncatedPostIds, setTruncatedPostIds] = useState<string[]>([]);
   const theme = useTheme();
@@ -284,6 +343,10 @@ function BlogCommunityCarousel({
     };
   }, [hasImages, posts, truncatedPostIds]);
 
+  useEffect(() => {
+    syncSlideAccessibility(containerReference.current);
+  });
+
   const settings = {
     className: styles.slider,
     dots: false,
@@ -293,6 +356,9 @@ function BlogCommunityCarousel({
     slidesToScroll: 1,
     nextArrow: <SliderArrow direction="next" />,
     prevArrow: <SliderArrow direction="previous" />,
+    onInit: () => syncSlideAccessibility(containerReference.current),
+    onReInit: () => syncSlideAccessibility(containerReference.current),
+    afterChange: () => syncSlideAccessibility(containerReference.current),
   };
 
   return (
@@ -300,8 +366,9 @@ function BlogCommunityCarousel({
       ref={containerReference}
       className={`${styles['blog-community-slider']} ${hasImages ? styles['blog-community-slider-image'] : ''}`}
       style={contentHeight ? ({ '--blog-community-card-height': `${contentHeight}px` } as CSSProperties) : undefined}
+      onFocus={(event) => moveSliderToFocusedSlide(event, sliderReference.current)}
     >
-      <Slider {...settings}>
+      <Slider ref={sliderReference} {...settings}>
         {posts.map((post) => (
           <div key={post.id} className={styles['blog-home-community-slide']}>
             <Anchor

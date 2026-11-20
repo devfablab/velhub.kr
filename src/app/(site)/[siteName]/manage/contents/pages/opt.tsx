@@ -2,8 +2,22 @@
 
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
@@ -47,6 +61,13 @@ function SortableItem({ page, onClick }: SortableItemProps) {
       {...attributes}
       {...listeners}
       onClick={() => onClick(page.slug)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          onClick(page.slug);
+          return;
+        }
+        listeners?.onKeyDown?.(event);
+      }}
     >
       <Typography>{page.subject}</Typography>
     </div>
@@ -65,6 +86,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
       activationConstraint: {
         distance: 4,
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
     }),
   );
 

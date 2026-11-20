@@ -16,8 +16,14 @@ export default function DuplicateBillingMethodDialog({ open, title, onClose, onC
 
   if (isMobile) {
     return (
-      <Drawer anchor="bottom" open={open} onClose={onClose} className="VhiDrawer-bottom VhiDrawer-bottom-service">
-        <h2>{title}</h2>
+      <Drawer
+        anchor="bottom"
+        open={open}
+        onClose={onClose}
+        className="VhiDrawer-bottom VhiDrawer-bottom-service"
+        slotProps={{ paper: { 'aria-labelledby': 'components-modals-duplicate-billing-method-dialog-drawer-title' } }}
+      >
+        <h2 id="components-modals-duplicate-billing-method-dialog-drawer-title">{title}</h2>
         <button type="button" className="close-button" onClick={onClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>
