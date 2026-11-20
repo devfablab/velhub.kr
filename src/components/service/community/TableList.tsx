@@ -159,7 +159,7 @@ export default function TableList({ writeHref }: Props) {
     <div className={`${styles['table-list']} paper`}>
       {shouldRenderWriteLink ? (
         <p className={styles.button}>
-          <Anchor href={resolvedWriteHref} className="button">
+          <Anchor href={resolvedWriteHref} className="button medium submit">
             글쓰기
           </Anchor>
         </p>

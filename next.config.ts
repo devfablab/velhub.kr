@@ -20,6 +20,7 @@ const r2ImageHostnames = [
   'series.dist.velhub.xyz',
   'site-logos.dist.velhub.xyz',
   'site-ogs.dist.velhub.xyz',
+  'notices.dist.velhub.xyz',
 ];
 
 const nextConfig: NextConfig = {

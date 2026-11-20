@@ -76,7 +76,7 @@ export default function AuthActions({ initialProfile }: { initialProfile: AuthAc
 
   return (
     <div className={`${styles['user-status']} paper`}>
-      <Anchor href="/auth/sign-in" className="button">
+      <Anchor href="/auth/sign-in" className="button medium submit">
         로그인하기
       </Anchor>
     </div>

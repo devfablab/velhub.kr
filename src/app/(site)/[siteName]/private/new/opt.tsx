@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
@@ -65,7 +65,6 @@ export default function Opt({
   const [error, setError] = useState(initialError);
   const [isLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const categorySelectReference = useRef<HTMLDivElement | null>(null);
   const imageInputReference = useRef<HTMLInputElement | null>(null);
   const [subjectPaddingLeft, setSubjectPaddingLeft] = useState(12);
   const theme = useTheme();
@@ -76,14 +75,21 @@ export default function Opt({
     if (initialStatus === 401) router.replace(`/auth/sign-in?next=/${siteName}/private/new`);
   }, [initialStatus, router, siteName]);
 
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      const width = categorySelectReference.current?.getBoundingClientRect().width ?? 0;
-      setSubjectPaddingLeft(Math.ceil(width) + 12);
-    });
+  const observeSubjectSelectWidth = useCallback((element: HTMLDivElement | null) => {
+    if (!element) {
+      return;
+    }
 
-    return () => window.cancelAnimationFrame(frameId);
-  }, [categories, categoryId]);
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      setSubjectPaddingLeft(Math.ceil(entry.target.getBoundingClientRect().width) + 12);
+    });
+    resizeObserver.observe(element);
+
+    return () => {
+      resizeObserver.disconnect();
+      setSubjectPaddingLeft(12);
+    };
+  }, []);
 
   async function submit() {
     if (isSaving) return;
@@ -230,7 +236,7 @@ export default function Opt({
             <div className="paper">
               <div className={styles['post-info']}>
                 <div className={styles['form-group']}>
-                  <div ref={categorySelectReference} className={styles['form-select']}>
+                  <div ref={observeSubjectSelectWidth} className={styles['form-select']}>
                     <Select
                       displayEmpty
                       value={categoryId}

@@ -206,9 +206,11 @@ export default function SiteInfo() {
 
         <div className={styles.button}>
           {isManagerRole(siteRole) ? (
-            <Anchor href={`/${siteName}/manage`}>커뮤니티 관리</Anchor>
+            <Anchor className="button small normal" href={`/${siteName}/manage`}>
+              커뮤니티 관리
+            </Anchor>
           ) : (
-            <button type="button" onClick={() => setIsDialogOpen(true)}>
+            <button type="button" className="button small normal" onClick={() => setIsDialogOpen(true)}>
               커뮤니티 정보
             </button>
           )}

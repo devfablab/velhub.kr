@@ -122,6 +122,10 @@
             border-radius: ds.rem(7)
             @include ds.fw(pre, 700)
             color: ds.$hex-accent
+            transition: all .4s cubic-bezier(.4,0,.2,1)
+
+            &:hover, &:focus-visible
+              box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
             html[data-theme="yellow-dark"] &
               background-color: rgba(ds.$rgb-bright, .1)
@@ -220,7 +224,6 @@
         .form-group
           display: flex
           align-items: center
-          flex-drection: row
           height: ds.rem(37)
           position: relative
 
@@ -241,6 +244,8 @@
 
             fieldset
               border: 0
+              top: 0
+              border-radius: ds.rem(7)
 
           label
             position: relative
@@ -286,6 +291,9 @@
               background-color: ds.$hex-white
               border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
+              &:hover, &:focus-visible
+                border: 1px solid ds.$hex-accent
+
               html[data-theme="yellow-dark"] &
                 background-color: ds.$hex-black
                 border: 1px solid rgba(ds.$rgb-tertiary, .5)
@@ -306,11 +314,12 @@
             border-radius: ds.rem(7)
             background-color: transparent
             color: ds.$hex-primary
+            transition: all .4s cubic-bezier(.4,0,.2,1)
 
             html[data-theme="yellow-dark"] &
               color: ds.$hex-bright
 
-            &.enabled
+            &.enabled, &:hover, &:focus-visible
               color: ds.$hex-accent!important
 
             svg

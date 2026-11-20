@@ -298,7 +298,7 @@ export default function UserInfo() {
   if (status === 'guest') {
     return (
       <div className={`${styles['user-status']} paper`}>
-        <Anchor href={`/${siteName}/join`} className="button">
+        <Anchor href={`/${siteName}/join`} className="button medium submit">
           로그인하러 가기
         </Anchor>
       </div>
@@ -308,7 +308,7 @@ export default function UserInfo() {
   if (status === 'not_joined') {
     return (
       <div className={`${styles['user-status']} paper`}>
-        <Anchor href={`/${siteName}/join`} className="button">
+        <Anchor href={`/${siteName}/join`} className="button medium submit">
           가입하러 가기
         </Anchor>
       </div>
@@ -336,7 +336,7 @@ export default function UserInfo() {
     return (
       <div className={`${styles['user-status']} paper`}>
         <p>받은 초대장이 있습니다</p>
-        <Anchor href={inviteHref} className="button">
+        <Anchor href={inviteHref} className="button medium submit">
           초대에 응하기
         </Anchor>
       </div>
@@ -385,12 +385,12 @@ export default function UserInfo() {
         </div>
         <div className={styles.button}>
           <div>
-            <button type="button" onClick={handleOpenDialog}>
+            <button type="button" className="button small normal" onClick={handleOpenDialog}>
               프로필 설정
             </button>
           </div>
           <div>
-            <button type="button" onClick={handleOpenWithdrawDialog}>
+            <button type="button" className="button small danger" onClick={handleOpenWithdrawDialog}>
               탈퇴하기
             </button>
           </div>

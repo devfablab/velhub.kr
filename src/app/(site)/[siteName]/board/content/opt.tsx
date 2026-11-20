@@ -931,13 +931,13 @@ export default function Opt({
                 </Anchor>
                 <div className={styles.buttons}>
                   {previousPost ? (
-                    <Anchor href={previousPost.href} className="button">
+                    <Anchor href={previousPost.href} className="button medium submit">
                       <ArrowBackIosRoundedIcon />
                       <span>이전글</span>
                     </Anchor>
                   ) : null}
                   {nextPost ? (
-                    <Anchor href={nextPost.href} className="button">
+                    <Anchor href={nextPost.href} className="button medium submit">
                       <span>다음글</span>
                       <ArrowForwardIosRoundedIcon />
                     </Anchor>

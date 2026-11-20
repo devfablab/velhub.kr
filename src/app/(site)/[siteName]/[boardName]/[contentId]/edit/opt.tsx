@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type JSX, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
@@ -701,8 +701,6 @@ export default function Opt({
   const youtubeValidationTimerRef = useRef<number | null>(null);
   const youtubeValidationRequestRef = useRef(0);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
-  const prefixSelectReference = useRef<HTMLDivElement | null>(null);
-  const seriesSelectReference = useRef<HTMLDivElement | null>(null);
 
   const [accessDialogType] = useState<AccessDialogType>(null);
   const [alertMessage, setAlertMessage] = useState(initialBoardError);
@@ -1059,25 +1057,29 @@ export default function Opt({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      if (postType === 'prefix') {
-        const width = prefixSelectReference.current?.getBoundingClientRect().width ?? 0;
-        setSubjectPaddingLeft(Math.ceil(width) + 12);
-        return;
-      }
+  const openSeriesList = seriesList.filter(
+    (seriesItem) =>
+      (!initialSeriesKey || Boolean(seriesItem.is_subscription) === initialSeriesIsSubscription) &&
+      (!seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey),
+  );
+  const isPrefixSelectVisible = postType === 'prefix' && prefixList.length > 0;
+  const isSeriesSelectVisible = (postType === 'series' || postType === 'both') && openSeriesList.length > 0;
 
-      if (postType === 'series' || postType === 'both') {
-        const width = seriesSelectReference.current?.getBoundingClientRect().width ?? 0;
-        setSubjectPaddingLeft(Math.ceil(width) + 12);
-        return;
-      }
+  const observeSubjectSelectWidth = useCallback((element: HTMLDivElement | null) => {
+    if (!element) {
+      return;
+    }
 
-      setSubjectPaddingLeft(12);
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      setSubjectPaddingLeft(Math.ceil(entry.target.getBoundingClientRect().width) + 12);
     });
+    resizeObserver.observe(element);
 
-    return () => window.cancelAnimationFrame(frameId);
-  }, [postType, prefixList, seriesList, selectedPrefixId, selectedSeriesKey, boardName, isLoadingBoardMeta]);
+    return () => {
+      resizeObserver.disconnect();
+      setSubjectPaddingLeft(12);
+    };
+  }, []);
 
   function openThumbnailDialog() {
     setThumbnailDialogFile(thumbnailBlobFile);
@@ -2105,8 +2107,8 @@ export default function Opt({
                     {!isFeedBoard ? (
                       <div className={styles['post-info']}>
                         <div className={styles['form-group']}>
-                          {postType === 'prefix' ? (
-                            <div ref={prefixSelectReference} className={styles['form-select']}>
+                          {isPrefixSelectVisible ? (
+                            <div ref={observeSubjectSelectWidth} className={styles['form-select']}>
                               <Select
                                 displayEmpty
                                 value={selectedPrefixId}
@@ -2123,8 +2125,8 @@ export default function Opt({
                             </div>
                           ) : null}
 
-                          {postType === 'series' || postType === 'both' ? (
-                            <div ref={seriesSelectReference} className={styles['form-select']}>
+                          {isSeriesSelectVisible ? (
+                            <div ref={observeSubjectSelectWidth} className={styles['form-select']}>
                               <Select
                                 displayEmpty
                                 value={selectedSeriesKey}
@@ -2132,18 +2134,11 @@ export default function Opt({
                                 className={styles['MuiInputBase-root']}
                               >
                                 {!initialSeriesKey ? <MenuItem value="">연재 선택</MenuItem> : null}
-                                {seriesList
-                                  .filter(
-                                    (seriesItem) =>
-                                      (!initialSeriesKey ||
-                                        Boolean(seriesItem.is_subscription) === initialSeriesIsSubscription) &&
-                                      (!seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey),
-                                  )
-                                  .map((seriesItem) => (
-                                    <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
-                                      {seriesItem.series_label}
-                                    </MenuItem>
-                                  ))}
+                                {openSeriesList.map((seriesItem) => (
+                                  <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
+                                    {seriesItem.series_label}
+                                  </MenuItem>
+                                ))}
                               </Select>
                             </div>
                           ) : null}

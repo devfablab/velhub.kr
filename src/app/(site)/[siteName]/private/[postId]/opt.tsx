@@ -441,12 +441,12 @@ export default function Opt({ initialData, initialError }: { initialData: Data |
         {isMobile ? null : (
           <>
             <div className={styles['top-buttons']}>
-              <Anchor href={`/${siteName}/private`} className="button">
+              <Anchor href={`/${siteName}/private`} className="button medium submit">
                 <ArrowBackIosRoundedIcon />
                 <span>목록</span>
               </Anchor>
               {data.nextPost ? (
-                <Anchor href={`/${siteName}/private/${data.nextPost.id}`} className="button">
+                <Anchor href={`/${siteName}/private/${data.nextPost.id}`} className="button medium submit">
                   <span>다음글</span>
                   <ArrowForwardIosRoundedIcon />
                 </Anchor>

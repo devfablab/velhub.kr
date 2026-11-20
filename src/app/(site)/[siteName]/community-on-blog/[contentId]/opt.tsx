@@ -132,13 +132,13 @@ export default function Opt({
               </Anchor>
               <div className={styles.buttons}>
                 {previousPost ? (
-                  <Anchor href={`/${siteName}/community-on-blog/${previousPost.slug}`} className="button">
+                  <Anchor href={`/${siteName}/community-on-blog/${previousPost.slug}`} className="button medium submit">
                     <ArrowBackIosRoundedIcon />
                     <span>이전글</span>
                   </Anchor>
                 ) : null}
                 {nextPost ? (
-                  <Anchor href={`/${siteName}/community-on-blog/${nextPost.slug}`} className="button">
+                  <Anchor href={`/${siteName}/community-on-blog/${nextPost.slug}`} className="button medium submit">
                     <span>다음글</span>
                     <ArrowForwardIosRoundedIcon />
                   </Anchor>
@@ -302,13 +302,13 @@ export default function Opt({
               </Anchor>
               <div className={styles.buttons}>
                 {previousPost ? (
-                  <Anchor href={`/${siteName}/community-on-blog/${previousPost.slug}`} className="button">
+                  <Anchor href={`/${siteName}/community-on-blog/${previousPost.slug}`} className="button medium submit">
                     <ArrowBackIosRoundedIcon />
                     <span>이전글</span>
                   </Anchor>
                 ) : null}
                 {nextPost ? (
-                  <Anchor href={`/${siteName}/community-on-blog/${nextPost.slug}`} className="button">
+                  <Anchor href={`/${siteName}/community-on-blog/${nextPost.slug}`} className="button medium submit">
                     <span>다음글</span>
                     <ArrowForwardIosRoundedIcon />
                   </Anchor>

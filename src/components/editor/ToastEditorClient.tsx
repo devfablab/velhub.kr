@@ -88,7 +88,9 @@ export default function ToastEditorClient({
 
   const editorInitialValue = useMemo(() => {
     if (initialEditType === 'markdown') {
-      return initialMarkdown && initialMarkdown.trim() ? initialMarkdown : ' ';
+      return initialMarkdown && initialMarkdown.trim()
+        ? initialMarkdown
+        : '당신의 이야기에 모두가 귀 기울이고 있습니다...';
     }
 
     return initialValue && initialValue.trim() ? initialValue : ' ';

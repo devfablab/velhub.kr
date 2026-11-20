@@ -144,6 +144,13 @@ export default function Opt({
       <div className="container">
         <div className={`content ${styles.content} ${styles['blog-content']}`}>
           <SiteProfile />
+          {isMobile ? null : (
+            <div className={styles['button-group']}>
+              <Anchor href={`/${siteName}/community-on-blog/new`} className={`${styles.submit} button`}>
+                글쓰기
+              </Anchor>
+            </div>
+          )}
           {posts.length ? (
             <div className={styles['blog-community-items']}>
               {posts.map((post) => (
