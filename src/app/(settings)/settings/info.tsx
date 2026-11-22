@@ -427,7 +427,7 @@ export default function UserInfo({
                         userNameError ||
                         activityNameCheck.errorMessage ||
                         activityNameCheck.successMessage ||
-                        '활동명은 2자 이상 10자 이하로 입력해 주세요.'
+                        '활동명은 2자 이상 20자 이하로 입력해 주세요.'
                       }
                     />
 

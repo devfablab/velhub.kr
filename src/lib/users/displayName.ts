@@ -1,5 +1,5 @@
 export const DISPLAY_NAME_MIN_LENGTH = 2;
-export const DISPLAY_NAME_MAX_LENGTH = 10;
+export const DISPLAY_NAME_MAX_LENGTH = 20;
 
 const DISPLAY_NAME_CHARACTER_PATTERN =
   /^(?:[\p{L}\p{M}\p{N}()[\]{}_\- ]|\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|[‍️⃣])+$/u;
@@ -48,7 +48,7 @@ export function isValidDisplayName(value: string) {
 
 export function getDisplayNameErrorMessage(value: string, label: '별명' | '활동명') {
   if (!hasValidDisplayNameLength(value)) {
-    return `${label}은 2자 이상 10자 이하로 입력해 주세요.`;
+    return `${label}은 ${DISPLAY_NAME_MIN_LENGTH}자 이상 ${DISPLAY_NAME_MAX_LENGTH}자 이하로 입력해 주세요.`;
   }
 
   if (!hasValidDisplayNameCharacters(value)) {

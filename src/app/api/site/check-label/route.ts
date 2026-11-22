@@ -1,6 +1,6 @@
-import { isValidActivityName } from '@/lib/auth/emailSignUp';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims } from '@/lib/session/server';
+import { isValidSiteLabel } from '@/lib/site/createValidation.shared';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!isValidActivityName(normalizedSiteLabel)) {
+    if (!isValidSiteLabel(normalizedSiteLabel)) {
       return Response.json(
         {
           ok: false,

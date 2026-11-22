@@ -6,8 +6,8 @@ import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_
 import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
+import { hasValidSiteLabelLength } from '@/lib/site/createValidation.shared';
 import { getCustomDomainError, normalizeCustomDomain } from '@/lib/site/customDomain';
-import { hasValidDisplayNameLength } from '@/lib/users/displayName';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -318,7 +318,7 @@ export async function POST(request: Request, context: RouteContext) {
     } else if (requestBody.field === 'site_label') {
       const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
 
-      if (normalizedValue && !hasValidDisplayNameLength(normalizedValue)) {
+      if (normalizedValue && !hasValidSiteLabelLength(normalizedValue)) {
         return Response.json({ error: '사이트명은 2자 이상 10자 이하여야 합니다.' }, { status: 400 });
       }
 

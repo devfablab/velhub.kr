@@ -216,7 +216,7 @@ export default function InviteAcceptance({
               }}
               error={Boolean(nicknameError)}
               helperText={
-                nicknameError || '입력하지 않으면 활동명이 사용됩니다. 입력하는 경우 2자 이상 10자 이하입니다.'
+                nicknameError || '입력하지 않으면 활동명이 사용됩니다. 입력하는 경우 2자 이상 20자 이하입니다.'
               }
               fullWidth
               size="small"

@@ -30,28 +30,26 @@ export default function HostingProviderInfo() {
         disableTouchListener
         onClose={close}
       >
-        <Tooltip title="호스팅서비스 제공자 안내">
-          <button
-            type="button"
-            className={styles['hosting-provider-info']}
-            aria-expanded={open}
-            onPointerEnter={(event) => {
-              if (event.pointerType === 'mouse') setOpen(true);
-            }}
-            onPointerLeave={(event) => {
-              if (event.pointerType === 'mouse') close();
-            }}
-            onClick={() => setOpen((previous) => !previous)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                setOpen((previous) => !previous);
-              }
-            }}
-          >
-            <InfoOutlinedIcon />
-          </button>
-        </Tooltip>
+        <button
+          type="button"
+          className={styles['hosting-provider-info']}
+          aria-expanded={open}
+          onPointerEnter={(event) => {
+            if (event.pointerType === 'mouse') setOpen(true);
+          }}
+          onPointerLeave={(event) => {
+            if (event.pointerType === 'mouse') close();
+          }}
+          onClick={() => setOpen((previous) => !previous)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setOpen((previous) => !previous);
+            }
+          }}
+        >
+          <InfoOutlinedIcon />
+        </button>
       </Tooltip>
     </span>
   );

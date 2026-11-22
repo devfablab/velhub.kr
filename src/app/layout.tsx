@@ -2,12 +2,15 @@ import { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Hahmlet, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google';
 import localFont from 'next/font/local';
+import { headers } from 'next/headers';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { getSupabaseAuthHealth } from '@/lib/auth/health.server';
+import { getSecurityState } from '@/lib/auth/securityCheck.server';
 import { getChannelWorksMember } from '@/lib/channelWorks/member.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims, hasCurrentAuthSessionCookie } from '@/lib/session/server';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
+import SecurityCheckGuard from '@/components/auth/SecurityCheck';
 import TotpGuard from '@/components/auth/TotpGuard';
 import WithdrawalGuard from '@/components/auth/WithdrawalGuard';
 import { ChannelWorksMemberProvider } from '@/components/ChannelWorksContext';
@@ -87,6 +90,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     sessionClaims.hasTotp === true &&
     sessionClaims.hasTotpRecoveryAccess === false,
   );
+  const securityState =
+    sessionClaims?.userId && !needsTotp
+      ? await getSecurityState(sessionClaims, await headers()).catch((error) => {
+          console.error('[root-layout] security state error', error);
+          return null;
+        })
+      : null;
   let withdrawalStatus: string | null = null;
   let withdrawalRequestedAt: string | null = null;
 
@@ -114,7 +124,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <AppRouterCacheProvider>
                 <ThemeProviderClient>
                   <WithdrawalGuard initialStatus={withdrawalStatus} initialRequestedAt={withdrawalRequestedAt}>
-                    <TotpGuard needsTotp={needsTotp}>{children}</TotpGuard>
+                    <TotpGuard needsTotp={needsTotp}>
+                      <SecurityCheckGuard needsCheck={securityState?.needsAccessCheck === true} purpose="access">
+                        {children}
+                      </SecurityCheckGuard>
+                    </TotpGuard>
                   </WithdrawalGuard>
                 </ThemeProviderClient>
               </AppRouterCacheProvider>

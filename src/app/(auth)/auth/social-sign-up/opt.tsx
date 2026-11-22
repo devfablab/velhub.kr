@@ -19,6 +19,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { EMAIL_PATTERN, getActivityNameErrorMessage } from '@/lib/auth/emailSignUp';
+import { getSecurityPinErrorMessage, SECURITY_PIN_ACKNOWLEDGE_MESSAGE } from '@/lib/auth/securityPin';
 import {
   EMPTY_SOCIAL_SIGN_UP_FIELD_ERRORS,
   SOCIAL_ACTIVITY_NAME_MIN_LENGTH,
@@ -30,6 +31,7 @@ import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { limitDisplayNameInput } from '@/lib/users/displayName';
 import { ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE, useActivityNameCheck } from '@/lib/users/useActivityNameCheck';
+import SecurityPinFields from '@/components/auth/SecurityPinFields';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/auth.module.sass';
@@ -85,6 +87,10 @@ export default function Opt() {
   const [userName, setUserName] = useState('');
   const activityNameCheck = useActivityNameCheck();
   const [paymentEmail, setPaymentEmail] = useState('');
+  const [securityPin, setSecurityPin] = useState('');
+  const [securityPinConfirm, setSecurityPinConfirm] = useState('');
+  const [isSecurityPinAcknowledged, setIsSecurityPinAcknowledged] = useState(false);
+  const [securityPinError, setSecurityPinError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<SocialSignUpFieldErrors>(EMPTY_SOCIAL_SIGN_UP_FIELD_ERRORS);
   const [popup, setPopup] = useState<ErrorPopup>({
     open: false,
@@ -256,6 +262,16 @@ export default function Opt() {
       return;
     }
 
+    const nextSecurityPinError =
+      getSecurityPinErrorMessage(securityPin, securityPinConfirm) ||
+      (isSecurityPinAcknowledged ? '' : SECURITY_PIN_ACKNOWLEDGE_MESSAGE);
+
+    if (nextSecurityPinError) {
+      setSecurityPinError(nextSecurityPinError);
+      showPopup('회원가입 정보 확인', [nextSecurityPinError]);
+      return;
+    }
+
     let isNavigating = false;
     setIsSubmitting(true);
 
@@ -267,6 +283,8 @@ export default function Opt() {
         body: JSON.stringify({
           ...profile,
           userName: validation.userName,
+          securityPin,
+          securityPinConfirm,
           paymentEmail: profile.provider === 'naver' ? validation.paymentEmail : undefined,
           isAgreeTerm,
           isAgreeChild,
@@ -332,6 +350,7 @@ export default function Opt() {
           placeholder="활동명"
           autoComplete="nickname"
           required
+          className={styles.username}
           slotProps={{
             htmlInput: { minLength: SOCIAL_ACTIVITY_NAME_MIN_LENGTH },
             input: {
@@ -369,6 +388,28 @@ export default function Opt() {
           size="small"
           disabled={isLoading || isSubmitting}
         />
+        {isLoading ? null : (
+          <SecurityPinFields
+            pin={securityPin}
+            pinConfirm={securityPinConfirm}
+            isAcknowledged={isSecurityPinAcknowledged}
+            onPinChange={(value) => {
+              setSecurityPin(value);
+              setSecurityPinError('');
+            }}
+            onPinConfirmChange={(value) => {
+              setSecurityPinConfirm(value);
+              setSecurityPinError('');
+            }}
+            onAcknowledgedChange={(value) => {
+              setIsSecurityPinAcknowledged(value);
+              setSecurityPinError('');
+            }}
+            showWarning
+            errorMessage={securityPinError}
+            disabled={isSubmitting}
+          />
+        )}
         {isLoading ? null : (
           <SignupAgreementFields
             errors={{

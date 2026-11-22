@@ -348,10 +348,28 @@ header.header
     @include ds.mq(maxMedium)
       font-size: ds.rem(24)
 
+.username
+  > div
+    background-color: ds.$hex-black
+
 .alert
   background-color: ds.$hex-white
   padding: ds.rem(17)
   border-radius: ds.rem(17)
+
+  p
+    margin: ds.rem(7) 0
+    font-size: ds.rem(14)
+    line-height: 1.35
+
+    &:first-of-type
+      margin-top: ds.rem(3)
+
+    &:last-of-type
+      margin-bottom: 0
+
+    strong
+      @include ds.fw(pre, 700)
 
   span
     @include ds.fw(pre, 700)

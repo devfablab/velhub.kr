@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { type EmailSignUpFieldErrors, validateEmailSignUpFields } from '@/lib/auth/emailSignUp';
 import { verifyInviteEmailProof } from '@/lib/auth/inviteEmailProof';
+import { getSecurityPinErrorMessage, normalizeSecurityPin } from '@/lib/auth/securityPin';
+import { createSecurityPinHash } from '@/lib/auth/securityPin.server';
 import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
@@ -15,6 +17,8 @@ type EmailSignUpRequestBody = {
   userName: string | null;
   password: string | null;
   passwordConfirm: string | null;
+  securityPin?: string | null;
+  securityPinConfirm?: string | null;
   bypassEmailConfirm?: boolean | null;
   isAgreeTerm?: boolean | null;
   isAgreeChild?: boolean | null;
@@ -209,6 +213,20 @@ export async function POST(request: Request) {
       return validationResponse(validation.fieldErrors);
     }
 
+    const securityPin = normalizeSecurityPin(requestBody.securityPin);
+    const securityPinConfirm = normalizeSecurityPin(requestBody.securityPinConfirm);
+    const hasSecurityPin = Boolean(securityPin || securityPinConfirm);
+    const securityPinErrorMessage = hasSecurityPin ? getSecurityPinErrorMessage(securityPin, securityPinConfirm) : '';
+
+    if (securityPinErrorMessage) {
+      return knownErrorResponse({
+        status: 400,
+        code: 'invalid_security_pin',
+        title: '회원가입 정보 확인',
+        errors: [securityPinErrorMessage],
+      });
+    }
+
     const inviteVerification = await verifyEmailInvite({
       inviteToken: requestBody.inviteToken?.trim() ?? '',
       inviteSiteName: requestBody.inviteSiteName?.trim().toLowerCase() ?? '',
@@ -352,6 +370,7 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
       user_name: encrypt(validation.activityName),
       user_name_lookup_hash: createActivityNameLookupHash(validation.activityName),
+      security_pin_hash: hasSecurityPin ? createSecurityPinHash(authUserId, securityPin) : null,
       bio: null,
       avatar: null,
       user_id: authUserId,

@@ -9,13 +9,15 @@ import { redis } from '@/lib/clients/redis';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type SessionClaims = {
+export type SessionClaims = {
   userId: string;
   email: string | null;
   sessionId: string | null;
   authenticationLevel: string | null;
   role: string | null;
   expiresAt: number | null;
+  issuedAt: number | null;
+  passwordSignedInAt: number | null;
   autoLogin: boolean;
   lastActiveAt: number;
   hasTotp: boolean;
@@ -147,6 +149,8 @@ async function buildSessionClaimsFromAuthClaims(
     aal?: string;
     role?: string;
     exp?: number;
+    iat?: number;
+    amr?: { method?: string; timestamp?: number }[];
   },
   cookieFingerprint: string,
 ) {
@@ -172,6 +176,9 @@ async function buildSessionClaimsFromAuthClaims(
     authenticationLevel: claims.aal ?? null,
     role: claims.role ?? null,
     expiresAt: claims.exp ?? null,
+    issuedAt: claims.iat ?? null,
+    passwordSignedInAt:
+      claims.amr?.find((authenticationMethod) => authenticationMethod.method === 'password')?.timestamp ?? null,
     autoLogin,
     lastActiveAt,
     hasTotp,
@@ -280,6 +287,8 @@ export async function updateSession(request: NextRequest) {
     aal?: string;
     role?: string;
     exp?: number;
+    iat?: number;
+    amr?: { method?: string; timestamp?: number }[];
   };
 
   const cookieFingerprint = getAuthCookieFingerprint(request.cookies.getAll());
@@ -345,6 +354,8 @@ export const getSessionClaims = cache(async () => {
     aal?: string;
     role?: string;
     exp?: number;
+    iat?: number;
+    amr?: { method?: string; timestamp?: number }[];
   };
 
   const cookieFingerprint = getAuthCookieFingerprint(cookieStore.getAll());

@@ -24,7 +24,7 @@ function decryptEmail(value: string | null) {
   }
 }
 
-async function getRecoveryRecipient(userId: string) {
+export async function getRecoveryRecipient(userId: string) {
   const stigmaResult = await getSupabaseAdmin()
     .from('stigmas')
     .select('email, payment_email')

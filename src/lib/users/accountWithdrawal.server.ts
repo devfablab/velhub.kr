@@ -392,11 +392,21 @@ export async function completeAccountWithdrawal({
   await deleteAccountRelations(supabaseAdmin, stigma);
   await anonymizeAccount(supabaseAdmin, stigma);
 
+  const accessContextDeleteResult = await supabaseAdmin
+    .from('stigma_access_contexts')
+    .delete()
+    .eq('user_id', authUserId);
+
+  if (accessContextDeleteResult.error) {
+    throw new Error('접속 기록을 삭제하지 못했습니다.');
+  }
+
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .update({
       user_name: encrypt(WITHDRAWN_USER_NAME),
       user_name_lookup_hash: null,
+      security_pin_hash: null,
       email: encrypt(''),
       payment_email: null,
       payment_phone: null,

@@ -9,6 +9,7 @@ import LoginMethod from './loginMethod';
 import LogoutActions from './logoutActions';
 import PasswordChange from './passwordChange';
 import PasswordSetup from './passwordSetup';
+import SecurityPin from './securityPin';
 import TotpSetup from './totpSetup';
 import WithdrawalActions from './withdrawalActions';
 import styles from '@/app/settings.module.sass';
@@ -32,6 +33,8 @@ export default async function Page() {
   let passwordError = '';
   let totpFactors: { id: string; status?: string; friendly_name?: string | null }[] = [];
   let totpError = '';
+  let hasSecurityPin = false;
+  let securityPinError = '';
   try {
     const cookieStore = await cookies();
     const headerList = await headers();
@@ -96,6 +99,19 @@ export default async function Page() {
   } catch (error) {
     loginMethodError = error instanceof Error ? error.message : '기본 로그인 방식을 확인하지 못했습니다.';
   }
+  try {
+    const session = await getSessionClaims();
+    if (!session?.userId) throw new Error('보안 비밀번호 상태를 확인하지 못했습니다.');
+    const stigmaResult = await getSupabaseAdmin()
+      .from('stigmas')
+      .select('security_pin_hash')
+      .eq('user_id', session.userId)
+      .maybeSingle();
+    if (stigmaResult.error) throw new Error('보안 비밀번호 상태를 확인하지 못했습니다.');
+    hasSecurityPin = Boolean(stigmaResult.data?.security_pin_hash);
+  } catch (error) {
+    securityPinError = error instanceof Error ? error.message : '보안 비밀번호 상태를 확인하지 못했습니다.';
+  }
   return (
     <main>
       <div className={`container ${styles.container}`}>
@@ -111,6 +127,7 @@ export default async function Page() {
             />
             <LoginMethod initialData={loginMethod} initialError={loginMethodError} />
             <TotpSetup initialFactors={totpFactors} initialError={totpError} />
+            <SecurityPin initialHasSecurityPin={hasSecurityPin} initialError={securityPinError} />
             <LogoutActions />
             <WithdrawalActions />
           </Grid>

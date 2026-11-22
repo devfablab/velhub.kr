@@ -1,4 +1,16 @@
-import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, isValidActivityName } from '@/lib/auth/emailSignUp';
+import { getDisplayNameLength, hasValidDisplayNameCharacters, normalizeDisplayName } from '@/lib/users/displayName';
+
+export const SITE_LABEL_MIN_LENGTH = 2;
+export const SITE_LABEL_MAX_LENGTH = 10;
+
+export function hasValidSiteLabelLength(value: string) {
+  const length = getDisplayNameLength(normalizeDisplayName(value));
+  return length >= SITE_LABEL_MIN_LENGTH && length <= SITE_LABEL_MAX_LENGTH;
+}
+
+export function isValidSiteLabel(value: string) {
+  return hasValidSiteLabelLength(value) && hasValidDisplayNameCharacters(value);
+}
 
 export type SiteCreateFieldErrors = {
   siteKey: string;
@@ -26,11 +38,11 @@ export function getSiteKeyError(siteKey: string) {
 
 export function getSiteLabelError(siteKey: string, siteLabel: string) {
   if (!siteLabel) {
-    return siteKey.length > ACTIVITY_NAME_MAX_LENGTH ? '사이트 주소가 10자를 초과하므로 사이트명을 입력해 주세요.' : '';
+    return siteKey.length > SITE_LABEL_MAX_LENGTH ? '사이트 주소가 10자를 초과하므로 사이트명을 입력해 주세요.' : '';
   }
-  return isValidActivityName(siteLabel)
+  return isValidSiteLabel(siteLabel)
     ? ''
-    : `사이트명은 ${ACTIVITY_NAME_MIN_LENGTH}자 이상 ${ACTIVITY_NAME_MAX_LENGTH}자 이하여야 합니다.`;
+    : `사이트명은 ${SITE_LABEL_MIN_LENGTH}자 이상 ${SITE_LABEL_MAX_LENGTH}자 이하여야 합니다.`;
 }
 
 export function getSiteSummaryError(summary: string) {

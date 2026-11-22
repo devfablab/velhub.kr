@@ -431,7 +431,7 @@ export default function UserInfo() {
                   placeholder="별명을 입력하세요"
                   required
                   error={Boolean(dialogErrorMessage)}
-                  helperText={dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+                  helperText={dialogErrorMessage || '별명은 2자 이상 20자 이하로 입력해주세요.'}
                   slotProps={{ htmlInput: { minLength: 2 } }}
                 />
                 <div className={styles.misc}>
@@ -505,7 +505,7 @@ export default function UserInfo() {
                   placeholder="별명을 입력하세요"
                   required
                   error={Boolean(dialogErrorMessage)}
-                  helperText={dialogErrorMessage || '별명은 2자 이상 10자 이하로 입력해주세요.'}
+                  helperText={dialogErrorMessage || '별명은 2자 이상 20자 이하로 입력해주세요.'}
                   slotProps={{ htmlInput: { minLength: 2 } }}
                 />
                 <div className={styles.misc}>

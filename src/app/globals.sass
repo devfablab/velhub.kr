@@ -1443,9 +1443,11 @@ html[data-site-type='blog']
     .MuiDialogTitle-root
       font-size: ds.rem(16)
       border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
+      color: ds.$hex-primary
 
       html[data-theme="yellow-dark"] &
         border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
+        color: ds.$hex-bright
 
     .MuiDialogActions-root
       padding: ds.rem(7) ds.rem(27) ds.rem(27)
@@ -1551,6 +1553,24 @@ html[data-site-type='blog']
     background-color: ds.$hex-accent!important
     color: ds.$hex-secondary
     @include ds.fw(pre, 500)
+
+.security-pin-input
+  display: flex
+  width: 100%
+
+  div
+    @include ds.col
+
+    input
+      border: 0
+      border-radius: ds.rem(3)
+      width: 100%
+      height: ds.rem(37)
+      background-color: ds.$hex-bright!important
+      color: ds.$hex-warning!important
+      text-align: center
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(20)
 
 .alerts
   margin-top: ds.rem(23)

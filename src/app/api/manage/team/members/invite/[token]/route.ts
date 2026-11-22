@@ -322,7 +322,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (!hasValidDisplayNameLength(finalNickname)) {
-      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '별명은 2자 이상 20자 이하로 입력해주세요.' }, { status: 400 });
     }
 
     if (isAutoNickname) {
@@ -359,7 +359,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (!finalNickname || !hasValidDisplayNameLength(finalNickname)) {
-      return Response.json({ error: '별명은 2자 이상 10자 이하로 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '별명은 2자 이상 20자 이하로 입력해주세요.' }, { status: 400 });
     }
 
     const currentRhizomeStigma = await supabaseAdmin

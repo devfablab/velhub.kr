@@ -29,11 +29,13 @@ import {
   validateEmailSignUpFields,
 } from '@/lib/auth/emailSignUp';
 import { PASSWORD_REQUIREMENTS } from '@/lib/auth/password';
+import { getSecurityPinErrorMessage } from '@/lib/auth/securityPin';
 import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { limitDisplayNameInput, normalizeDisplayName } from '@/lib/users/displayName';
 import { ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE, useActivityNameCheck } from '@/lib/users/useActivityNameCheck';
 import Anchor from '@/components/Anchor';
+import SecurityPinFields from '@/components/auth/SecurityPinFields';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DarkThemeProvider from '../DarkThemeProvider';
@@ -98,6 +100,9 @@ export default function EmailSignUp({
   const isInviteEmailLocked = Boolean(initialInviteEmail);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [securityPin, setSecurityPin] = useState('');
+  const [securityPinConfirm, setSecurityPinConfirm] = useState('');
+  const [securityPinError, setSecurityPinError] = useState('');
   const [bypassEmailConfirm, setBypassEmailConfirm] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<EmailSignUpFieldErrors>(EMPTY_EMAIL_SIGN_UP_FIELD_ERRORS);
   const [popup, setPopup] = useState<SignUpPopup>({
@@ -213,6 +218,15 @@ export default function EmailSignUp({
       return;
     }
 
+    const nextSecurityPinError =
+      securityPin || securityPinConfirm ? getSecurityPinErrorMessage(securityPin, securityPinConfirm) : '';
+
+    if (nextSecurityPinError) {
+      setSecurityPinError(nextSecurityPinError);
+      showPopup('회원가입 정보 확인', [nextSecurityPinError]);
+      return;
+    }
+
     let isNavigating = false;
     setIsSubmitting(true);
 
@@ -226,6 +240,8 @@ export default function EmailSignUp({
           userName: normalizeDisplayName(userName),
           password,
           passwordConfirm,
+          securityPin,
+          securityPinConfirm,
           isAgreeTerm,
           isAgreeChild,
           isAgreePrivacy,
@@ -400,6 +416,25 @@ export default function EmailSignUp({
             helperText={fieldErrors.passwordConfirm}
             fullWidth
             size="small"
+          />
+
+          <SecurityPinFields
+            pin={securityPin}
+            pinConfirm={securityPinConfirm}
+            isAcknowledged
+            onPinChange={(value) => {
+              setSecurityPin(value);
+              setSecurityPinError('');
+            }}
+            onPinConfirmChange={(value) => {
+              setSecurityPinConfirm(value);
+              setSecurityPinError('');
+            }}
+            onAcknowledgedChange={() => undefined}
+            showWarning={false}
+            isOptional
+            errorMessage={securityPinError}
+            disabled={isSubmitting}
           />
 
           <SignupAgreementFields

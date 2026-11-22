@@ -1,5 +1,7 @@
 import crypto from 'crypto';
 import { EMAIL_PATTERN, isValidActivityName } from '@/lib/auth/emailSignUp';
+import { getSecurityPinErrorMessage, normalizeSecurityPin } from '@/lib/auth/securityPin';
+import { createSecurityPinHash } from '@/lib/auth/securityPin.server';
 import { type SocialSignUpFieldErrors, validateSocialSignUpFields } from '@/lib/auth/socialSignUp';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
@@ -16,6 +18,8 @@ type SocialRequestBody = {
   provider?: string | null;
   providerAccountId?: string | null;
   userName?: string | null;
+  securityPin?: string | null;
+  securityPinConfirm?: string | null;
   avatar?: string | null;
   accessToken?: string | null;
   refreshToken?: string | null;
@@ -112,6 +116,8 @@ export async function POST(request: Request) {
     const isSignUpRequest = !hasCompletedSignUp;
     let userName = requestBody.userName?.trim() ?? '';
     let paymentEmail = requestBody.paymentEmail?.trim().toLowerCase() ?? '';
+    const securityPin = normalizeSecurityPin(requestBody.securityPin);
+    const securityPinConfirm = normalizeSecurityPin(requestBody.securityPinConfirm);
 
     if (isSignUpRequest) {
       const validation = validateSocialSignUpFields({
@@ -127,6 +133,15 @@ export async function POST(request: Request) {
 
       if (await isActivityNameTaken(supabaseAdmin, validation.userName, sessionClaims.userId)) {
         return validationError({ ...validation.fieldErrors, userName: DUPLICATE_ACTIVITY_NAME_MESSAGE });
+      }
+
+      const securityPinErrorMessage = getSecurityPinErrorMessage(securityPin, securityPinConfirm);
+
+      if (securityPinErrorMessage) {
+        return Response.json(
+          { title: '회원가입 정보 확인', errors: [securityPinErrorMessage], fieldErrors: validation.fieldErrors },
+          { status: 400 },
+        );
       }
 
       userName = validation.userName;
@@ -165,6 +180,7 @@ export async function POST(request: Request) {
       ? {
           user_name: encrypt(userName),
           user_name_lookup_hash: createActivityNameLookupHash(userName),
+          security_pin_hash: createSecurityPinHash(sessionClaims.userId, securityPin),
           email: encrypt(email),
           payment_email: provider === 'naver' ? encrypt(paymentEmail) : null,
           avatar,
@@ -198,6 +214,7 @@ export async function POST(request: Request) {
         user_id: sessionClaims.userId,
         user_name: encrypt(userName),
         user_name_lookup_hash: createActivityNameLookupHash(userName),
+        security_pin_hash: createSecurityPinHash(sessionClaims.userId, securityPin),
         bio: null,
         avatar,
         role: 'user',

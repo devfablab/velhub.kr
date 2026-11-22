@@ -1,4 +1,16 @@
-import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, isValidActivityName } from '@/lib/auth/emailSignUp';
+import { getDisplayNameLength, hasValidDisplayNameCharacters, normalizeDisplayName } from '@/lib/users/displayName';
+
+export const FAVORITE_FOLDER_LABEL_MIN_LENGTH = 2;
+export const FAVORITE_FOLDER_LABEL_MAX_LENGTH = 10;
+
+function isValidFavoriteFolderLabel(value: string) {
+  const length = getDisplayNameLength(normalizeDisplayName(value));
+  return (
+    length >= FAVORITE_FOLDER_LABEL_MIN_LENGTH &&
+    length <= FAVORITE_FOLDER_LABEL_MAX_LENGTH &&
+    hasValidDisplayNameCharacters(value)
+  );
+}
 
 export function normalizeFavoriteFolderLabel(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -9,9 +21,9 @@ export function validateFavoriteFolderLabel(value: unknown) {
 
   return {
     label,
-    error: isValidActivityName(label)
+    error: isValidFavoriteFolderLabel(label)
       ? ''
-      : `폴더 이름은 ${ACTIVITY_NAME_MIN_LENGTH}자 이상 ${ACTIVITY_NAME_MAX_LENGTH}자 이하로 입력해 주세요.`,
+      : `폴더 이름은 ${FAVORITE_FOLDER_LABEL_MIN_LENGTH}자 이상 ${FAVORITE_FOLDER_LABEL_MAX_LENGTH}자 이하로 입력해 주세요.`,
   };
 }
 

@@ -1,4 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
+import { getSecurityState } from '@/lib/auth/securityCheck.server';
+import { getSessionClaims } from '@/lib/session/server';
+import SecurityCheckGuard from '@/components/auth/SecurityCheck';
 import ChannelWorks from '@/components/ChannelWorks';
 import HeaderSettings from '@/components/headers/Settings';
 
@@ -33,15 +37,28 @@ export const viewport: Viewport = {
   colorScheme: 'light',
 };
 
-export default function RootLayout({
+export default async function SettingsLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const sessionClaims = await getSessionClaims();
+  const securityState = sessionClaims?.userId
+    ? await getSecurityState(sessionClaims, await headers()).catch((error) => {
+        console.error('[settings-layout] security state error', error);
+        return null;
+      })
+    : null;
+  const needsSettingsCheck = Boolean(
+    sessionClaims?.userId && (!securityState || (!securityState.needsAccessCheck && !securityState.isSettingsVerified)),
+  );
+
   return (
     <>
       <HeaderSettings />
-      {children}
+      <SecurityCheckGuard needsCheck={needsSettingsCheck} purpose="settings">
+        {children}
+      </SecurityCheckGuard>
       <ChannelWorks />
     </>
   );

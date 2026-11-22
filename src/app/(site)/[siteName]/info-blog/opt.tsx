@@ -1886,7 +1886,7 @@ export default function Opt({
                   size="small"
                   slotProps={{ htmlInput: { minLength: 2 } }}
                   error={Boolean(nicknameErrorMessage)}
-                  helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
+                  helperText={nicknameErrorMessage || '2자 이상 20자 이하로 입력해주세요.'}
                 />
 
                 {nicknameErrorMessage ? (
@@ -1951,7 +1951,7 @@ export default function Opt({
                   size="small"
                   slotProps={{ htmlInput: { minLength: 2 } }}
                   error={Boolean(nicknameErrorMessage)}
-                  helperText={nicknameErrorMessage || '2자 이상 10자 이하로 입력해주세요.'}
+                  helperText={nicknameErrorMessage || '2자 이상 20자 이하로 입력해주세요.'}
                 />
 
                 {nicknameErrorMessage ? (

@@ -1,5 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAuthHealth, isSupabaseAuthOutage } from '@/lib/auth/health.server';
+import {
+  getReadSecurityState,
+  getSecurityState,
+  SECURITY_CHECK_REQUIRED_CODE,
+  type SecurityState,
+  SETTINGS_CHECK_REQUIRED_CODE,
+} from '@/lib/auth/securityCheck.server';
 import { updateSession } from '@/lib/session/server';
 import { getNeedsSocialSignUp, getSiteMemberState, getStigmaByUserId } from '@/lib/session/siteMember.server';
 import { getSiteRoutingInfo } from '@/lib/site/siteState.server';
@@ -51,6 +58,47 @@ type RhizomeStateResult = {
     is_blog_community_enabled?: boolean;
   };
 };
+
+const SETTINGS_API_PATHS = [
+  '/api/info/general/user',
+  '/api/info/advanced/user/edit',
+  '/api/attachment/add/avatar/user',
+  '/api/attachment/delete/avatar/user',
+  '/api/auth/default-login-method',
+  '/api/auth/mfa/recovery-code',
+  '/api/auth/password/change',
+  '/api/auth/security-pin',
+  '/api/notifications/email/password-reset',
+];
+
+const SECURITY_CHECK_EXEMPT_API_PATHS = ['/api/auth/security-check', '/api/auth/health'];
+
+const SIGN_IN_FLOW_API_PATHS = ['/api/auth/social', '/api/auth/social/check'];
+
+function isSettingsApiRequest(pathname: string, method: string) {
+  if (pathname === '/api/account/withdrawal') {
+    return method === 'POST';
+  }
+
+  return SETTINGS_API_PATHS.includes(pathname);
+}
+
+function securityJsonResponse(status: number, error: string, code: string) {
+  return NextResponse.json({ error, code }, { status, headers: { 'Cache-Control': 'no-store, max-age=0' } });
+}
+
+function signOutRevokedRequest(request: NextRequest, isApiRequest: boolean) {
+  const response = isApiRequest
+    ? securityJsonResponse(401, '로그인 정보가 만료되었습니다. 다시 로그인해 주세요.', 'session_revoked')
+    : NextResponse.redirect(new URL('/auth/sign-in', request.url));
+
+  request.cookies
+    .getAll()
+    .filter((cookieItem) => cookieItem.name.includes('-auth-token'))
+    .forEach((cookieItem) => response.cookies.delete(cookieItem.name));
+
+  return response;
+}
 
 function isJoinClosed(
   joinAcceptStatus: string | null | undefined,
@@ -745,6 +793,38 @@ export async function proxy(request: NextRequest) {
     }
 
     return response;
+  }
+
+  if (isLoggedIn && !SECURITY_CHECK_EXEMPT_API_PATHS.includes(pathname)) {
+    const isApiRequest = pathname.startsWith('/api');
+    const isSettingsApi = isApiRequest && isSettingsApiRequest(pathname, request.method);
+    let securityState: SecurityState | null = null;
+
+    try {
+      securityState =
+        isApiRequest && isReadRequest
+          ? await getReadSecurityState(sessionClaims, isSettingsApi)
+          : await getSecurityState(sessionClaims, request.headers);
+    } catch (error) {
+      console.error('[proxy] security state error', error);
+    }
+
+    if (securityState?.revoked) {
+      return signOutRevokedRequest(request, isApiRequest);
+    }
+
+    if (
+      isApiRequest &&
+      !isReadRequest &&
+      !SIGN_IN_FLOW_API_PATHS.includes(pathname) &&
+      securityState?.needsAccessCheck
+    ) {
+      return securityJsonResponse(403, '본인 확인 후 다시 시도해 주세요.', SECURITY_CHECK_REQUIRED_CODE);
+    }
+
+    if (isSettingsApi && !securityState?.isSettingsVerified) {
+      return securityJsonResponse(403, '본인 확인 후 다시 시도해 주세요.', SETTINGS_CHECK_REQUIRED_CODE);
+    }
   }
 
   if (pathname.startsWith('/user/settings')) {
