@@ -89,6 +89,7 @@ type RawPostRow = {
   post_count: number | null;
   is_pin: boolean;
   is_recommended: boolean;
+  ai_usage?: string | null;
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;
@@ -136,6 +137,7 @@ export type PostListItem = {
   post_count: number;
   is_pin: boolean;
   is_recommended: boolean;
+  ai_usage?: string | null;
   is_co_post: boolean;
   board_key: string;
   board_label: string;
@@ -153,7 +155,7 @@ export type GetPostListResult = {
 };
 
 const POST_SELECT =
-  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, series_idx, board_id, site_id, user_id, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, is_recommended, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, images, youtube_id, is_locked';
+  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, series_idx, board_id, site_id, user_id, is_closed, is_wording_blinded, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, is_recommended, ai_usage, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, images, youtube_id, is_locked';
 
 function stripHtml(value: string | null) {
   const normalizedValue = normalizeText(value);
@@ -617,6 +619,7 @@ export async function getPostList({
       post_count: typeof post.post_count === 'number' ? Number(post.post_count) : 0,
       is_pin: post.is_pin === true,
       is_recommended: post.is_recommended === true,
+      ai_usage: post.ai_usage ?? null,
       is_co_post: coPostIds.has(post.id),
       board_key: boardInfo?.board_key ?? '',
       board_label: boardInfo?.board_label ?? '',

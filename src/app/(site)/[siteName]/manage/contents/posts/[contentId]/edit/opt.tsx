@@ -15,6 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
+import { AI_USAGE_REQUIRED_MESSAGE, type AiUsage, normalizeAiUsage } from '@/lib/service/site/blog/aiUsage';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
@@ -28,6 +29,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/PostAttachmentUploader';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import BlogPostAiUsageField from '@/components/service/blog/BlogPostAiUsageField';
 import BlogPostPromotionFields, {
   emptyBlogPromotion,
   type BlogPromotionValue,
@@ -91,6 +93,7 @@ export type ContentResponse = {
     is_comment: boolean;
     blog_hashtags?: { id: string; label: string }[];
     is_recommended: boolean;
+    ai_usage?: string | null;
     markdown_status: string | null;
     attachments?: Array<{
       file_name: string;
@@ -410,6 +413,8 @@ export default function Opt({
   const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
   const [isComment, setIsComment] = useState(initialContent?.content?.is_comment ?? false);
   const [isRecommended, setIsRecommended] = useState(initialContent?.content?.is_recommended === true);
+  const [aiUsage, setAiUsage] = useState<AiUsage | null>(normalizeAiUsage(initialContent?.content?.ai_usage));
+  const [aiUsageError, setAiUsageError] = useState('');
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -735,9 +740,14 @@ export default function Opt({
     const nextErrors: { subject?: string; content?: string } = {};
     if (!subject.trim()) nextErrors.subject = '제목을 입력해주세요.';
     if (!hasEditorContent(contentHtml)) nextErrors.content = '내용을 입력해주세요.';
-    if (Object.keys(nextErrors).length > 0) {
+    const nextAiUsageError = aiUsage ? '' : AI_USAGE_REQUIRED_MESSAGE;
+    setAiUsageError(nextAiUsageError);
+    if (Object.keys(nextErrors).length > 0 || nextAiUsageError) {
       setFieldErrors(nextErrors);
-      setFormErrorDialog({ title: '글 수정', messages: Object.values(nextErrors) });
+      setFormErrorDialog({
+        title: '글 수정',
+        messages: [...Object.values(nextErrors), nextAiUsageError].filter(Boolean),
+      });
       return;
     }
 
@@ -783,6 +793,7 @@ export default function Opt({
           seriesKey: selectedSeriesKey || null,
           isComment: commentProvider === 'none' ? false : isComment,
           isRecommended,
+          aiUsage,
           attachments,
         }),
       });
@@ -943,6 +954,16 @@ export default function Opt({
                 value={promotion}
                 onChange={setPromotion}
                 onError={(message) => setFormErrorDialog({ title: null, messages: [message] })}
+              />
+
+              <BlogPostAiUsageField
+                value={aiUsage}
+                onChange={(value) => {
+                  setAiUsage(value);
+                  setAiUsageError('');
+                }}
+                disabled={isSubmitting}
+                errorMessage={aiUsageError}
               />
 
               <Stack direction="column">

@@ -122,7 +122,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   let postsQuery = supabaseAdmin
     .from('posts')
     .select(
-      'id, site_id, board_id, series_id, subject, slug, published_at, summary, content_html, content_markdown, content_simple, images, youtube_id',
+      'id, site_id, board_id, series_id, subject, slug, published_at, summary, content_html, content_markdown, content_simple, images, youtube_id, ai_usage',
       { count: 'exact' },
     )
     .eq('user_id', creator.user_id)
@@ -214,6 +214,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
             ? getFirstImageSize(post.images)
             : { imageWidth: null, imageHeight: null }),
           youtubeId: board.board_type === 'youtube' ? post.youtube_id : null,
+          aiUsage: post.ai_usage ?? null,
           creator: {
             activityName: decryptUserName(stigmaResult.data?.user_name ?? '') ?? '작가',
             handleName: creator.handle_name,

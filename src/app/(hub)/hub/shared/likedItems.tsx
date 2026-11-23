@@ -7,6 +7,7 @@ import { Tooltip } from '@mui/material';
 import { HubPostDisplay } from '@/lib/service/hub/postDisplay';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import styles from '@/app/hub.module.sass';
@@ -84,6 +85,9 @@ export default function LikedItems({ initialData, initialError }: Props) {
             {postLikes.map((post) => (
               <li key={post.id}>
                 <Anchor href={post.post.href} className="paper">
+                  <div>
+                    <AiUsageChip value={post.post.aiUsage} />
+                  </div>
                   <strong aria-label="글 제목">{post.post.subject}</strong>
                   <cite aria-label="작성자">{post.post.authorName}</cite>
                   <div className={styles.tail}>

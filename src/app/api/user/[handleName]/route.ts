@@ -114,7 +114,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     const postsResult = await supabaseAdmin
       .from('posts')
       .select(
-        'id, site_id, board_id, slug, published_at, user_id, summary, content_html, content_markdown, content_simple, images, youtube_id, youtube_url',
+        'id, site_id, board_id, slug, published_at, user_id, summary, content_html, content_markdown, content_simple, images, youtube_id, youtube_url, ai_usage',
       )
       .in('user_id', creatorUserIds)
       .eq('published_status', 'published')
@@ -188,6 +188,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
             image: boardType === 'gallery' ? getFirstImageUrl(post.images) : null,
             ...(boardType === 'gallery' ? getFirstImageSize(post.images) : { imageWidth: null, imageHeight: null }),
             youtubeId: boardType === 'youtube' ? post.youtube_id : null,
+            aiUsage: post.ai_usage ?? null,
             creator: {
               activityName: decryptUserName(stigma?.user_name ?? '') ?? '작가',
               handleName: postCreator.handle_name,
@@ -273,7 +274,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     const followingPostsResult = await supabaseAdmin
       .from('posts')
       .select(
-        'id, site_id, board_id, slug, published_at, user_id, summary, content_html, content_markdown, content_simple, images, youtube_id',
+        'id, site_id, board_id, slug, published_at, user_id, summary, content_html, content_markdown, content_simple, images, youtube_id, ai_usage',
       )
       .in('user_id', followedUserIds)
       .eq('published_status', 'published')
@@ -344,6 +345,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
             image: boardType === 'gallery' ? getFirstImageUrl(post.images) : null,
             ...(boardType === 'gallery' ? getFirstImageSize(post.images) : { imageWidth: null, imageHeight: null }),
             youtubeId: boardType === 'youtube' ? post.youtube_id : null,
+            aiUsage: post.ai_usage ?? null,
             creator: {
               activityName: decryptUserName(stigma?.user_name ?? '') ?? '작가',
               handleName: postCreator.handle_name,
@@ -363,7 +365,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
 
   let postsQuery = supabaseAdmin
     .from('posts')
-    .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
+    .select('id, site_id, board_id, series_id, subject, slug, published_at, ai_usage', { count: 'exact' })
     .eq('user_id', creator.user_id)
     .eq('published_status', 'published')
     .eq('is_closed', false);
@@ -418,6 +420,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
       seriesLabel: seriesMap.get(post.series_id) ?? '연재',
       siteLabel: siteMap.get(post.site_id)?.label ?? '사이트',
       url: `/${siteMap.get(post.site_id)?.key ?? ''}/${boardMap.get(post.board_id) ?? ''}/${post.slug ?? ''}`,
+      aiUsage: post.ai_usage ?? null,
     })),
     followingPosts: [],
     followingLibraries,

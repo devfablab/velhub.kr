@@ -26,6 +26,7 @@ import { formatTimeAgo } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import ScreenState from '@/components/service/ScreenState';
 import Profile from './profile';
 import CreatorTimelinePosts, { type CreatorTimelinePost } from './timelinePosts';
@@ -568,6 +569,7 @@ export default function Opt({
               {data.posts.map((post) => (
                 <li key={post.id}>
                   <button type="button" onClick={() => openPost(post.url)}>
+                    <AiUsageChip value={post.aiUsage} />
                     <strong>{post.subject}</strong>
                     <span className={styles['post-label']}>
                       <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>

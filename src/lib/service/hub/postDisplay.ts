@@ -22,6 +22,7 @@ type StoredPost = {
   auto_og_image: string | null;
   youtube_id: string | null;
   youtube_url: string | null;
+  ai_usage: string | null;
   published_at: string | null;
   post_count: number | null;
   user_id: string | null;
@@ -53,6 +54,7 @@ export type HubPostDisplay = {
   imageWidth: number | null;
   imageHeight: number | null;
   youtubeId: string | null;
+  aiUsage: string | null;
   isClosed: boolean;
   isPublished: boolean;
 };
@@ -154,7 +156,7 @@ export async function getHubPostDisplayMap({
   const postsResult = await supabaseAdmin
     .from('posts')
     .select(
-      'id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, post_count, user_id, site_id, board_id, published_status, is_closed',
+      'id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, ai_usage, published_at, post_count, user_id, site_id, board_id, published_status, is_closed',
     )
     .in('id', uniquePostIds)
     .or(`is_wording_blinded.eq.false,user_id.eq.${viewerStigmaId ?? ''}`);
@@ -238,6 +240,7 @@ export async function getHubPostDisplayMap({
       imageWidth: firstImage.width,
       imageHeight: firstImage.height,
       youtubeId: post.youtube_id || extractYoutubeId(post.youtube_url),
+      aiUsage: site.site_type === 'blog' ? (post.ai_usage ?? null) : null,
       isClosed: post.is_closed,
       isPublished: post.published_status === 'published',
     });

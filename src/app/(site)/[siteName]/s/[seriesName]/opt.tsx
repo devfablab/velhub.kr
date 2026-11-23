@@ -13,6 +13,7 @@ import DonationButton, { type DonationStatusResponse } from '@/components/button
 import FabNew from '@/components/buttons/FabNew';
 import SubscriptionButton, { type SubscriptionStatusResponse } from '@/components/buttons/SubscriptionButton';
 import OptimizedImage from '@/components/OptimizedImage';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -38,6 +39,7 @@ export type SeriesContentItem = {
   post_count: number;
   series_idx: number | null;
   is_pin: boolean;
+  ai_usage?: string | null;
   is_closed: boolean;
   author_name: string;
   comment_count: number;
@@ -138,6 +140,7 @@ function SeriesPostList({
               </div>
               <div className={styles.info}>
                 <div className={styles.subject}>
+                  <AiUsageChip value={content.ai_usage} />
                   <strong>{content.subject}</strong>
                   {content.is_closed ? <em>삭제된 연재글</em> : null}
                 </div>
@@ -178,6 +181,7 @@ function SeriesPostList({
             </div>
             <div className={styles.info}>
               <div className={styles.subject}>
+                <AiUsageChip value={content.ai_usage} />
                 <strong>{content.subject}</strong>
                 {content.is_closed ? <em>삭제된 연재글</em> : null}
                 <span>{content.summary}</span>
@@ -207,6 +211,7 @@ function SeriesPostList({
               href={getContentHref(siteName, boardName, content.slug, seriesName)}
             >
               <div className="subject">
+                <AiUsageChip value={content.ai_usage} />
                 <div className="board-subject">
                   {content.is_pin ? (
                     <i className="pin-icon" aria-label="상단고정글">
@@ -258,6 +263,7 @@ function SeriesPostList({
         {contents.map((content) => (
           <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
             <td className="long-cell">
+              <AiUsageChip value={content.ai_usage} />
               <div className="board-subject">
                 {content.is_pin ? (
                   <i className="pin-icon" aria-label="상단고정글">

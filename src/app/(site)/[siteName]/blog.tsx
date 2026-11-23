@@ -7,7 +7,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
-import { Avatar, Typography, useMediaQuery, useTheme, Tooltip } from '@mui/material';
+import { Avatar, Typography, useMediaQuery, useTheme, Tooltip, Box } from '@mui/material';
 import Slider from 'react-slick';
 import type { PostListItem } from '@/lib/board/getPostList';
 import { formatTimeAgo } from '@/lib/utils';
@@ -15,6 +15,7 @@ import Anchor from '@/components/Anchor';
 import ReportButton from '@/components/buttons/ReportButton';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import BlogAdReportButton from '@/components/service/blog/BlogAdReportButton';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import ScreenState from '@/components/service/ScreenState';
@@ -62,6 +63,7 @@ export type BlogHomePost = {
   likeCount: number;
   authorName: string;
   authorAvatarUrl: string | null;
+  aiUsage?: string | null;
 };
 
 export type BlogHomeCommunityPost = {
@@ -270,6 +272,9 @@ function BlogPostCarousel({ posts, siteName }: { posts: BlogHomePost[]; siteName
                 background: `url(${post.thumbnailImageUrl ?? '/dummy.webp'}) no-repeat center / cover`,
               }}
             >
+              <Box sx={{ mb: 0.5 }}>
+                <AiUsageChip value={post.aiUsage} />
+              </Box>
               <strong>{post.subject}</strong>
               <p>{getContentDescription(post.contentHtml)}</p>
               <div className={styles.tail}>
@@ -508,6 +513,9 @@ function BlogRecentPosts({ boardName, siteName }: { boardName: string; siteName:
                 </div>
                 <div className={styles.info}>
                   <div className={styles.subject}>
+                    <Box sx={{ mb: 0.5 }}>
+                      <AiUsageChip value={post.ai_usage} />
+                    </Box>
                     <strong>{post.series_label ? `[${post.series_label}] ${post.subject}` : post.subject}</strong>
                     <span>{post.summary}</span>
                   </div>

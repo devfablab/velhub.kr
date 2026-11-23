@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { normalizeAiUsage } from '@/lib/service/site/blog/aiUsage';
 import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/site/blog/blogHashtags';
 import {
   addRecommendedBlogPost,
@@ -85,6 +86,7 @@ type RequestBody = {
   prefixId?: string | null;
   isComment?: boolean | null;
   isRecommended?: boolean | null;
+  aiUsage?: string | null;
   isPin?: boolean | null;
   drawType?: 'first_come' | 'random' | null;
   drawLimit?: number | null;
@@ -1251,6 +1253,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       draw_limit: number | null;
       draw_ends_at: string | null;
       is_wording_blinded: boolean;
+      ai_usage?: string | null;
     } = {
       subject: finalSubject || null,
       summary: finalSummary,
@@ -1280,6 +1283,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       draw_ends_at: resolvedDrawEndsAt,
       is_wording_blinded: false,
     };
+
+    if (rhizomeData.site_type === 'blog' && requestBody.aiUsage !== undefined) {
+      updatePayload.ai_usage = normalizeAiUsage(requestBody.aiUsage);
+    }
 
     if (rhizomeData.site_type === 'blog' && requestBody.blogHashtags !== undefined) {
       const parsedHashtags = parsePostHashtagLabels(requestBody.blogHashtags);

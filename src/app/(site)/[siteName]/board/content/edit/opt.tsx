@@ -4,7 +4,9 @@ import { type ChangeEvent, type JSX, useCallback, useEffect, useMemo, useRef, us
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
+import CollectionsRoundedIcon from '@mui/icons-material/CollectionsRounded';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
+import CropOriginalRoundedIcon from '@mui/icons-material/CropOriginalRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
@@ -752,6 +754,8 @@ export default function Opt({
     })),
   );
   const [galleryBlobImages, setGalleryBlobImages] = useState<GalleryBlobImage[]>([]);
+  const hasThumbnailImage = Boolean(thumbnailBlobFile || thumbnailPreviewUrl || thumbnailImage || thumbnailImageUrl);
+  const hasGalleryImages = images.length > 0 || galleryBlobImages.length > 0;
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [galleryDialogImages, setGalleryDialogImages] = useState<PostImageRow[]>([]);
   const [galleryDialogBlobImages, setGalleryDialogBlobImages] = useState<GalleryBlobImage[]>([]);
@@ -2150,8 +2154,12 @@ export default function Opt({
                     <div className={styles['post-options']}>
                       {!isFeedBoard ? (
                         <div className={styles.image}>
-                          <button type="button" onClick={openThumbnailDialog}>
-                            <CropOriginalOutlinedIcon />
+                          <button
+                            type="button"
+                            onClick={openThumbnailDialog}
+                            className={hasThumbnailImage ? styles.enabled : undefined}
+                          >
+                            {hasThumbnailImage ? <CropOriginalRoundedIcon /> : <CropOriginalOutlinedIcon />}
                             <span>썸네일 이미지</span>
                           </button>
                         </div>
@@ -2159,8 +2167,12 @@ export default function Opt({
 
                       {isGalleryBoard || isFeedBoard ? (
                         <div className={styles.image}>
-                          <button type="button" onClick={openGalleryDialog}>
-                            <CollectionsOutlinedIcon />
+                          <button
+                            type="button"
+                            onClick={openGalleryDialog}
+                            className={hasGalleryImages ? styles.enabled : undefined}
+                          >
+                            {hasGalleryImages ? <CollectionsRoundedIcon /> : <CollectionsOutlinedIcon />}
                             <span>갤러리 이미지</span>
                           </button>
                         </div>
@@ -2346,18 +2358,20 @@ export default function Opt({
                             />
                           }
                         />
-                        <Divider orientation="vertical" variant="middle" flexItem sx={{ mr: 2 }} />
                         {canPinPost ? (
-                          <FormControlLabel
-                            label="상단고정글 등록"
-                            control={
-                              <IOSSwitch
-                                sx={{ m: 1 }}
-                                checked={isPin}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) => setIsPin(event.target.checked)}
-                              />
-                            }
-                          />
+                          <>
+                            <Divider orientation="vertical" variant="middle" flexItem sx={{ mr: 2 }} />
+                            <FormControlLabel
+                              label="상단고정글 등록"
+                              control={
+                                <IOSSwitch
+                                  sx={{ m: 1 }}
+                                  checked={isPin}
+                                  onChange={(event: ChangeEvent<HTMLInputElement>) => setIsPin(event.target.checked)}
+                                />
+                              }
+                            />
+                          </>
                         ) : null}
                       </FormGroup>
                     </div>

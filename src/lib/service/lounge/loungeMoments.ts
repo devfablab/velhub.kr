@@ -75,6 +75,7 @@ type MomentPostRow = {
   youtube_url: string | null;
   published_at: string;
   series_id: string | null;
+  ai_usage?: string | null;
 };
 
 export type MomentCreatorCard = {
@@ -120,6 +121,7 @@ export type MomentPostCard = {
   author_name: string;
   author_avatar: string | null;
   published_at: string;
+  ai_usage?: string | null;
   subject?: string | null;
   summary?: string | null;
   content_html?: string | null;
@@ -237,6 +239,7 @@ function toMomentPostCard({
     author_name: authorName,
     author_avatar: authorAvatar,
     published_at: post.published_at,
+    ai_usage: site.site_type === 'blog' ? (post.ai_usage ?? null) : null,
   };
 
   if (board.board_type === 'gallery') {
@@ -575,7 +578,7 @@ const getMomentPosts = cache(
       let postsQuery = supabaseAdmin
         .from('posts')
         .select(
-          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, series_id',
+          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, series_id, ai_usage',
         )
         .eq('published_status', 'published')
         .eq('is_closed', false)
@@ -1156,7 +1159,7 @@ const getOnePickPostCards = cache(async (): Promise<MomentPostCard[]> => {
       supabaseAdmin
         .from('posts')
         .select(
-          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, series_id, like_count',
+          'id, site_id, board_id, user_id, slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, published_at, series_id, like_count, ai_usage',
         )
         .in('id', chunk)
         .eq('published_status', 'published')

@@ -9,6 +9,7 @@ import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import OptimizedImage from '@/components/OptimizedImage';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import type { ListProps, PostsResponse } from '../page';
 import styles from '@/app/page.module.sass';
 
@@ -304,6 +305,9 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                         className="chip success"
                       />
                     </Box>
+                    <Box sx={{ mb: 1 }}>
+                      <AiUsageChip value={post.ai_usage} />
+                    </Box>
                     {post.board_type === 'gallery' && (
                       <div className={styles.info}>
                         <strong>{post.subject}</strong>
@@ -399,6 +403,9 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                           size="small"
                           className="chip success"
                         />
+                      </Box>
+                      <Box sx={{ mb: 1 }}>
+                        <AiUsageChip value={post.ai_usage} />
                       </Box>
                       {post.board_type === 'gallery' && (
                         <div className={styles.info}>

@@ -30,6 +30,7 @@ type PostRow = {
   youtube_created_at: string | null;
   youtube_id: string | null;
   youtube_url: string | null;
+  ai_usage: string | null;
 };
 
 type BoardInfo = {
@@ -52,7 +53,7 @@ type RhizomeInfo = {
 };
 
 const POST_SELECT =
-  'slug, subject, summary, content_html, content_markdown, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id';
+  'slug, subject, summary, content_html, content_markdown, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id, ai_usage';
 
 // .in() 조건이 URL에 들어가므로 id 목록을 나눠서 조회
 const ID_CHUNK_SIZE = 200;
@@ -497,6 +498,7 @@ export async function GET(request: NextRequest) {
         author_avatar: avatar,
         published_at: post.published_at,
         post_count: post.post_count,
+        ai_usage: rhizome?.site_type === 'blog' ? post.ai_usage : null,
       };
 
       if (boardType === 'gallery') {

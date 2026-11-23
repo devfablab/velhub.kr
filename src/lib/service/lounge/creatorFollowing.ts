@@ -16,6 +16,7 @@ export type CreatorFollowingPost = {
   imageWidth: number | null;
   imageHeight: number | null;
   youtubeId: string | null;
+  aiUsage: string | null;
   creator: {
     activityName: string;
     handleName: string;
@@ -186,7 +187,7 @@ export async function getCreatorFollowingTimeline(stigmaId: string): Promise<Cre
   const postsResult = await supabaseAdmin
     .from('posts')
     .select(
-      'id, site_id, board_id, slug, published_at, user_id, summary, content_html, content_markdown, content_simple, images, youtube_id, youtube_url',
+      'id, site_id, board_id, slug, published_at, user_id, summary, content_html, content_markdown, content_simple, images, youtube_id, youtube_url, ai_usage',
     )
     .in('user_id', creatorUserIds)
     .eq('published_status', 'published')
@@ -250,6 +251,7 @@ export async function getCreatorFollowingTimeline(stigmaId: string): Promise<Cre
           image: boardType === 'gallery' ? getFirstImageUrl(post.images) : null,
           ...(boardType === 'gallery' ? getFirstImageSize(post.images) : { imageWidth: null, imageHeight: null }),
           youtubeId: boardType === 'youtube' ? post.youtube_id : null,
+          aiUsage: post.ai_usage ?? null,
           creator: {
             activityName: decryptUserName(stigma?.user_name ?? '') ?? '작가',
             handleName: creator?.handle_name ?? '',

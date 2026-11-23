@@ -53,6 +53,7 @@ import OptimizedImage, { getCollageSizes } from '@/components/OptimizedImage';
 import PopupMessage from '@/components/PopupMessage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import BlogAdReportButton from '@/components/service/blog/BlogAdReportButton';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
@@ -111,7 +112,12 @@ type PostImage = {
 };
 
 type AuthorRole =
-  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
+  | 'owner'
+  | 'community-manager'
+  | 'board-manager'
+  | 'board-general-manager'
+  | 'board-assistant-manager'
+  | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;
@@ -241,6 +247,7 @@ type PostContent = {
   post_count: number;
   is_pin: boolean;
   is_recommended: boolean;
+  ai_usage?: string | null;
   author_name: string;
   author_avatar_url: string;
   author_level: AuthorLevel | null;
@@ -1175,6 +1182,7 @@ export default function Opt({
                     ) : null}
                   </div>
                   <h3>
+                    {!isCommunity ? <AiUsageChip value={content.ai_usage} /> : null}
                     {content.is_pin ? (
                       <i className={styles['pin-icon']} aria-label="상단고정글">
                         <PushPinRoundedIcon />

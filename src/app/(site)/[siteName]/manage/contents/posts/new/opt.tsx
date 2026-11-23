@@ -22,6 +22,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale/ko';
+import { AI_USAGE_REQUIRED_MESSAGE, type AiUsage, normalizeAiUsage } from '@/lib/service/site/blog/aiUsage';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
@@ -35,6 +36,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PostAttachmentUploader, { type PostAttachmentValue } from '@/components/PostAttachmentUploader';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import BlogPostAiUsageField from '@/components/service/blog/BlogPostAiUsageField';
 import BlogPostPromotionFields, {
   emptyBlogPromotion,
   type BlogPromotionStatus,
@@ -277,6 +279,8 @@ export default function Opt({
   const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
   const [isComment, setIsComment] = useState(initialStatus?.commentProvider !== 'none');
   const [isRecommended, setIsRecommended] = useState(false);
+  const [aiUsage, setAiUsage] = useState<AiUsage | null>(null);
+  const [aiUsageError, setAiUsageError] = useState('');
   const [canCoPost, setCanCoPost] = useState(false);
   const [isCoPost, setIsCoPost] = useState(false);
   const [coPostPartner, setCoPostPartner] = useState<CoPostPartner | null>(null);
@@ -664,9 +668,14 @@ export default function Opt({
     if (isScheduled && new Date(publishedAt).getTime() <= Date.now()) {
       nextErrors.scheduled = '예약 출간 시간은 현재 시각 이후로 설정해주세요.';
     }
-    if (Object.keys(nextErrors).length > 0) {
+    const nextAiUsageError = aiUsage ? '' : AI_USAGE_REQUIRED_MESSAGE;
+    setAiUsageError(nextAiUsageError);
+    if (Object.keys(nextErrors).length > 0 || nextAiUsageError) {
       setFieldErrors(nextErrors);
-      setFormErrorDialog({ title: '글쓰기', messages: Object.values(nextErrors) });
+      setFormErrorDialog({
+        title: '글쓰기',
+        messages: [...Object.values(nextErrors), nextAiUsageError].filter(Boolean),
+      });
       return;
     }
 
@@ -717,6 +726,7 @@ export default function Opt({
           publishedAt: isScheduled ? publishedAt : null,
           isComment: commentProvider === 'none' ? false : isComment,
           isRecommended: !isCoPost && publishTimeMode === 'now' ? isRecommended : false,
+          aiUsage,
           attachments,
         }),
       });
@@ -890,6 +900,16 @@ export default function Opt({
                 value={promotion}
                 onChange={setPromotion}
                 onError={(message) => setFormErrorDialog({ title: null, messages: [message] })}
+              />
+
+              <BlogPostAiUsageField
+                value={aiUsage}
+                onChange={(value) => {
+                  setAiUsage(value);
+                  setAiUsageError('');
+                }}
+                disabled={isSubmitting}
+                errorMessage={aiUsageError}
               />
 
               <Stack direction="column">

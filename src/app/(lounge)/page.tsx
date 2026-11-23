@@ -67,6 +67,7 @@ type GalleryPost = {
   image_width: number | null;
   image_height: number | null;
   post_count: number | null;
+  ai_usage?: string | null;
 };
 
 type YoutubePost = {
@@ -91,6 +92,7 @@ type YoutubePost = {
   youtube_id: string;
   youtube_created_at: string | null;
   post_count: number | null;
+  ai_usage?: string | null;
 };
 
 type FeedPost = {
@@ -112,6 +114,7 @@ type FeedPost = {
   image_width: number | null;
   image_height: number | null;
   post_count: number | null;
+  ai_usage?: string | null;
 };
 
 type BasicOrBlogPost = {
@@ -133,6 +136,7 @@ type BasicOrBlogPost = {
   subject: string;
   content_html: string;
   post_count: number | null;
+  ai_usage?: string | null;
 };
 
 type PostItem = GalleryPost | YoutubePost | FeedPost | BasicOrBlogPost;

@@ -17,7 +17,7 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme, Tooltip } from '@mui/material';
+import { FormControl, type SelectChangeEvent, Stack, useMediaQuery, useTheme, Tooltip, Box } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import DonationButton from '@/components/buttons/DonationButton';
@@ -29,6 +29,7 @@ import type { SubscriptionStatusResponse } from '@/components/buttons/Subscripti
 import OptimizedImage from '@/components/OptimizedImage';
 import MenuItem from '@/components/SelectMenuItem';
 import Select from '@/components/SelectWithCheck';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
 import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
@@ -38,7 +39,6 @@ import TableList from '@/components/service/community/TableList';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import UserInfo from '@/components/service/community/UserInfo';
 import ScreenState from '@/components/service/ScreenState';
-import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
@@ -72,6 +72,7 @@ type PostImage = {
 
 type PostItem = {
   id: string;
+  ai_usage?: string | null;
   idx: number;
   series_idx: number | null;
   slug: string;
@@ -714,6 +715,9 @@ export default function Opt({
                     <li key={content.id}>
                       <Anchor href={getContentHref(content.slug)}>
                         <div className="subject">
+                          <Box sx={{ mb: 0.5 }}>
+                            <AiUsageChip value={content.ai_usage} />
+                          </Box>
                           <div className="board-subject">
                             {content.prefix_label ? (
                               <small className="prefix-name board-chip" aria-label="말머리">
@@ -776,6 +780,9 @@ export default function Opt({
                     {contents.map((content) => (
                       <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
                         <td className="long-cell">
+                          <Box sx={{ mb: 0.5 }}>
+                            <AiUsageChip value={content.ai_usage} />
+                          </Box>
                           <div className="board-subject">
                             {isCommunity ? (
                               <>
@@ -865,6 +872,9 @@ export default function Opt({
                       </div>
                       <div className={styles.info}>
                         <div className={styles.subject}>
+                          <Box sx={{ mb: 0.5 }}>
+                            <AiUsageChip value={content.ai_usage} />
+                          </Box>
                           <strong>
                             {content.prefix_label ? `[${content.prefix_label}] ` : null}
                             {content.subject}
@@ -902,6 +912,10 @@ export default function Opt({
                     </div>
                     <div className={styles.info}>
                       <div className={styles.subject}>
+                        <Box sx={{ mb: 0.5 }}>
+                          <AiUsageChip value={content.ai_usage} />
+                        </Box>
+
                         <strong>
                           {content.prefix_label ? `[${content.prefix_label}] ` : null}
                           {content.subject}
@@ -972,6 +986,9 @@ export default function Opt({
                     </div>
                     <div className={styles.info}>
                       <div className={styles.subject}>
+                        <Box sx={{ mb: 0.5 }}>
+                          <AiUsageChip value={content.ai_usage} />
+                        </Box>
                         <strong>
                           {content.series_label && !seriesNameParam ? `[${content.series_label}] ` : null}
                           {content.subject}
@@ -997,6 +1014,7 @@ export default function Opt({
                     <li key={content.id}>
                       <Anchor className={content.is_pin ? 'pinned' : undefined} href={getContentHref(content.slug)}>
                         <div className="subject">
+                          <AiUsageChip value={content.ai_usage} />
                           <div className="board-subject">
                             {content.is_pin ? (
                               <i className="pin-icon" aria-label="상단고정글">
@@ -1061,6 +1079,7 @@ export default function Opt({
                     {contents.map((content) => (
                       <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
                         <td className="long-cell">
+                          <AiUsageChip value={content.ai_usage} />
                           <div className="board-subject">
                             {content.is_pin ? (
                               <i className="pin-icon" aria-label="상단고정글">

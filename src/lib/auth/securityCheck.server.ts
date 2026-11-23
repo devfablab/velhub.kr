@@ -262,7 +262,10 @@ export async function getSecurityCheckMethods(userId: string, hasTotp: boolean):
     throw new Error('계정 정보를 확인하지 못했습니다.');
   }
 
-  const hasPassword = Boolean(authUserResult.data.user.identities?.some((identity) => identity.provider === 'email'));
+  const authUser = authUserResult.data.user;
+  const hasPassword =
+    !authUser.email?.endsWith('@auth.velhub.local') &&
+    Boolean(authUser.identities?.some((identity) => identity.provider === 'email'));
 
   return {
     password: hasPassword,

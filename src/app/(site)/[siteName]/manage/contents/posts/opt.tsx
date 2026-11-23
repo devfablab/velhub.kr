@@ -1023,11 +1023,11 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     />
                     <Stack direction="column" gap={0.5} sx={{ width: '100%' }}>
                       <div className={styles.title}>
-                        <p>
+                        <div>
                           {post.published_status === 'unknown' ? (
                             <Chip label={getUnknownPostChipLabel()} className="chip warning" size="small" />
                           ) : null}
-                        </p>
+                        </div>
                         <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}?ti=i`}>
                           {post.subject}
                         </Anchor>

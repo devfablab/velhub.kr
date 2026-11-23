@@ -1,5 +1,6 @@
 import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { normalizeAiUsage } from '@/lib/service/site/blog/aiUsage';
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/site/blog/blogAds/server';
 import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/site/blog/blogHashtags';
 import {
@@ -22,6 +23,7 @@ type RequestBody = {
   publishedAt?: string | null;
   isComment?: boolean | null;
   isRecommended?: boolean | null;
+  aiUsage?: string | null;
   promotion?: BlogPostPromotionInput | null;
   attachments?: unknown;
   blogHashtags?: unknown;
@@ -190,6 +192,16 @@ export async function POST(request: Request) {
     }
 
     const createdPost = post.data[0];
+
+    const aiUsageResult = await supabaseAdmin
+      .from('posts')
+      .update({ ai_usage: normalizeAiUsage(requestBody.aiUsage) })
+      .eq('id', createdPost.post_id);
+
+    if (aiUsageResult.error) {
+      await supabaseAdmin.from('posts').delete().eq('id', createdPost.post_id);
+      return Response.json({ error: 'AI 활용 정보를 저장하지 못했습니다.' }, { status: 500 });
+    }
 
     if (attachments.length > 0) {
       const attachmentResult = await supabaseAdmin.from('post_attachments').insert(

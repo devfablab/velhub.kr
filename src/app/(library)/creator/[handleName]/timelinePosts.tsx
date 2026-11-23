@@ -5,6 +5,7 @@ import { Avatar } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import OptimizedImage from '@/components/OptimizedImage';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import styles from '@/app/new.module.sass';
@@ -19,6 +20,7 @@ export type CreatorTimelinePost = {
   imageWidth: number | null;
   imageHeight: number | null;
   youtubeId: string | null;
+  aiUsage?: string | null;
   creator: {
     activityName: string;
     handleName: string;
@@ -67,6 +69,7 @@ function FeedContent({ content }: { content: string }) {
 function PostContent({ post }: { post: CreatorTimelinePost }) {
   return (
     <div className={styles['creator-following-content']}>
+      <AiUsageChip value={post.aiUsage} />
       {post.boardType === 'gallery' && post.image ? (
         <OptimizedImage
           src={post.image}

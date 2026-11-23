@@ -3,13 +3,13 @@
 import { type FocusEvent, useEffect, useRef } from 'react';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Chip, Tooltip } from '@mui/material';
+import { Box, Chip, Tooltip } from '@mui/material';
 import Slider from 'react-slick';
 import { formatDate, formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import { SlickProps } from '../page';
 import styles from '@/app/page.module.sass';
 
@@ -250,6 +250,9 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
                 }}
               >
                 {isHub ? null : <em>{post.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>}
+                <Box sx={{ mb: 1 }}>
+                  <AiUsageChip value={post.ai_usage} />
+                </Box>
                 {post.board_type === 'gallery' && (
                   <>
                     <strong>{post.subject}</strong>

@@ -6,6 +6,7 @@ import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import OptimizedImage from '@/components/OptimizedImage';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import styles from '@/app/hub.module.sass';
 
 type Props = {
@@ -65,6 +66,9 @@ export default function HubPostListItem({ post, date, dateLabel, description, on
     <>
       <div className={styles.description}>
         <div className={styles.info}>
+          <div>
+            <AiUsageChip value={post.aiUsage} />
+          </div>
           {post.boardType === 'feed' ? null : <strong>{post.subject}</strong>}
           {content ? <p>{content}</p> : null}
           {badges}

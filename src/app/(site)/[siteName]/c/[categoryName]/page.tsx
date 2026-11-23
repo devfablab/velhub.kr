@@ -11,6 +11,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import FabNew from '@/components/buttons/FabNew';
 import OptimizedImage from '@/components/OptimizedImage';
+import AiUsageChip from '@/components/service/blog/AiUsageChip';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
@@ -183,6 +184,7 @@ export default async function Page(context: RouteContext) {
                     </div>
                     <div className={styles.info}>
                       <div className={styles.subject}>
+                        <AiUsageChip value={content.ai_usage} />
                         <strong>{content.subject}</strong>
                       </div>
                     </div>

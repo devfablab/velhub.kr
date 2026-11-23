@@ -60,6 +60,7 @@ type PostRow = {
   user_id: string;
   series_idx: number | null;
   is_pin: boolean;
+  ai_usage?: string | null;
   board_id: string;
   site_id: string;
   series_id: string | null;
@@ -305,6 +306,7 @@ export default async function Page(context: RouteContext) {
         user_id,
         series_idx,
         is_pin,
+        ai_usage,
         board_id,
         site_id,
         series_id,
@@ -391,6 +393,7 @@ export default async function Page(context: RouteContext) {
     post_count: Number(post.post_count ?? 0),
     series_idx: post.series_idx,
     is_pin: post.is_pin === true,
+    ai_usage: post.ai_usage ?? null,
     is_closed: post.is_closed,
     author_name: authorMap.get(post.user_id) ?? '',
     comment_count: commentCountMap.get(post.id) ?? 0,

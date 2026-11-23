@@ -11,6 +11,7 @@ type RouteContext = {
 
 type BlogPostRow = {
   id: string;
+  ai_usage?: string | null;
   slug: string;
   subject: string;
   summary: string | null;
@@ -90,6 +91,7 @@ function toBlogPost(
     likeCount,
     authorName: author?.name ?? '',
     authorAvatarUrl: author?.avatarUrl ?? null,
+    aiUsage: post.ai_usage ?? null,
   };
 }
 
@@ -132,7 +134,7 @@ export async function GET(request: Request, context: RouteContext) {
     const siteId = siteResult.data.id;
     const boardId = boardResult.data.id;
     const postColumns =
-      'id, slug, subject, summary, content_html, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, published_at, post_count, user_id';
+      'id, slug, subject, summary, content_html, thumbnail_image, thumbnail_width, thumbnail_height, auto_og_image, published_at, post_count, user_id, ai_usage';
     const createVisibleBlogPostsQuery = () =>
       supabaseAdmin
         .from('posts')

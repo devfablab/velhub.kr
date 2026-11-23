@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { normalizeAiUsage } from '@/lib/service/site/blog/aiUsage';
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/site/blog/blogAds/server';
 import { parsePostHashtagLabels, resolvePostHashtagIds } from '@/lib/service/site/blog/blogHashtags';
 import {
@@ -84,6 +85,7 @@ type RequestBody = {
   isComment?: boolean | null;
   isPin?: boolean | null;
   isRecommended?: boolean | null;
+  aiUsage?: string | null;
   drawType?: 'first_come' | 'random' | null;
   drawLimit?: number | null;
   drawEndsAt?: string | null;
@@ -1099,6 +1101,7 @@ export async function POST(request: Request, context: RouteContext) {
         draw_limit: resolvedDrawLimit,
         draw_ends_at: resolvedDrawEndsAt,
         is_wording_blinded: isWordingBlinded,
+        ai_usage: rhizomeData.site_type === 'blog' ? normalizeAiUsage(requestBody.aiUsage) : null,
       })
       .select('id, slug')
       .maybeSingle();
