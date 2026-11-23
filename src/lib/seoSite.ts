@@ -285,44 +285,37 @@ export async function getPostPageMetadata({
   contentId,
   pagePath,
 }: PostPageMetadataParams): Promise<Metadata> {
-  const site = await getSiteSeoInfo(siteName);
+  const normalizedSiteName = normalizeText(siteName).toLowerCase();
+  const normalizedBoardName = normalizeText(boardName).toLowerCase();
+  const normalizedContentId = normalizeText(contentId);
+  const loadPost = async () => {
+    if (!normalizedSiteName || !normalizedBoardName || !normalizedContentId) {
+      return null;
+    }
+
+    let postQuery = getSupabaseAdmin()
+      .from('posts')
+      .select(
+        'subject, summary, thumbnail_image, hashtag_ids, auto_og_image, rhizomes!inner(site_key), boards!inner(board_key)',
+      )
+      .eq('rhizomes.site_key', normalizedSiteName)
+      .eq('boards.board_key', normalizedBoardName);
+
+    if (isNumericSlug(normalizedContentId)) {
+      postQuery = postQuery.eq('slug', normalizedContentId);
+    } else {
+      postQuery = postQuery.eq('id', normalizedContentId);
+    }
+
+    return await postQuery.maybeSingle();
+  };
+  const [site, postResult] = await Promise.all([getSiteSeoInfo(siteName), loadPost()]);
 
   if (!site) {
     return getFallbackMetadata(siteName, pagePath);
   }
 
-  const normalizedBoardName = normalizeText(boardName).toLowerCase();
-  const normalizedContentId = normalizeText(contentId);
-  const supabaseAdmin = getSupabaseAdmin();
-  const boardResult = await supabaseAdmin
-    .from('boards')
-    .select('id')
-    .eq('site_id', site.id)
-    .eq('board_key', normalizedBoardName)
-    .maybeSingle();
-
-  if (boardResult.error || !boardResult.data || !normalizedContentId) {
-    return getSitePageMetadata({
-      siteName: site.siteKey,
-      pagePath,
-    });
-  }
-
-  let postQuery = supabaseAdmin
-    .from('posts')
-    .select('subject, summary, thumbnail_image, hashtag_ids, auto_og_image')
-    .eq('site_id', site.id)
-    .eq('board_id', boardResult.data.id);
-
-  if (isNumericSlug(normalizedContentId)) {
-    postQuery = postQuery.eq('slug', normalizedContentId);
-  } else {
-    postQuery = postQuery.eq('id', normalizedContentId);
-  }
-
-  const postResult = await postQuery.maybeSingle();
-
-  if (postResult.error || !postResult.data) {
+  if (!postResult || postResult.error || !postResult.data) {
     return getSitePageMetadata({
       siteName: site.siteKey,
       pagePath,

@@ -1,4 +1,4 @@
-import { cookies, headers } from 'next/headers';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 
 export async function getHubApiData<T>(
   path: string,
@@ -6,17 +6,7 @@ export async function getHubApiData<T>(
   init?: RequestInit,
 ): Promise<{ data: T | null; error: string }> {
   try {
-    const cookieStore = await cookies();
-    const headerList = await headers();
-    const host = headerList.get('host');
-    const protocol = headerList.get('x-forwarded-proto') || 'http';
-    const requestHeaders = new Headers(init?.headers);
-    requestHeaders.set('cookie', cookieStore.toString());
-    const response = await fetch(`${protocol}://${host}${path}`, {
-      ...init,
-      headers: requestHeaders,
-      cache: 'no-store',
-    });
+    const response = await fetchApiRoute(path, init);
     const data = (await response.json()) as T & { error?: string };
 
     if (!response.ok) {

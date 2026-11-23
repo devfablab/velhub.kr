@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Container from '../menu';
 import Opt, { PostsResponse } from './opt';
 import styles from '@/app/hub.module.sass';
@@ -14,14 +14,7 @@ export default async function PostsPage() {
   let initialError = '';
 
   try {
-    const cookieStore = await cookies();
-    const headerList = await headers();
-    const host = headerList.get('host');
-    const protocol = headerList.get('x-forwarded-proto') || 'http';
-    const response = await fetch(`${protocol}://${host}/api/hub/posts?page=1`, {
-      headers: { cookie: cookieStore.toString() },
-      cache: 'no-store',
-    });
+    const response = await fetchApiRoute('/api/hub/posts?page=1');
     const result = (await response.json()) as PostsResponse;
     if (!response.ok) throw new Error(result.message ?? '포스트를 불러오지 못했습니다.');
     initialData = result;

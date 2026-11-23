@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { getHubApiData } from '@/lib/service/hub/getData';
 import { formatDateTimeDetail } from '@/lib/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
@@ -84,20 +84,7 @@ function formatDateTime(value: string | null) {
 }
 
 async function getPurchase() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = `${protocol}://${host}`;
-
-  const response = await fetch(`${baseUrl}/api/hub/purchase`, {
-    method: 'GET',
-    headers: {
-      cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
+  const response = await fetchApiRoute('/api/hub/purchase');
 
   const result = (await response.json()) as PurchaseResponse;
 

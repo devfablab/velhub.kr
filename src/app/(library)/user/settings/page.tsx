@@ -1,17 +1,12 @@
-import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Opt from './opt';
 
 export default async function Page() {
   let initialError = '';
   let existingHandleName = '';
   try {
-    const cookieStore = await cookies();
-    const headerList = await headers();
-    const response = await fetch(
-      `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/user/profile`,
-      { headers: { cookie: cookieStore.toString() }, cache: 'no-store' },
-    );
+    const response = await fetchApiRoute('/api/user/profile');
     const result = (await response.json()) as { user?: { handleName?: string }; message?: string };
     if (!response.ok) throw new Error(result.message ?? '독자 정보를 불러오지 못했습니다.');
     existingHandleName = result.user?.handleName ?? '';

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { getCurrentStigma } from '@/lib/session/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import Container from '../../menu';
@@ -12,26 +12,8 @@ export const metadata: Metadata = {
   description: '권리보호센터에서 신고하기',
 };
 
-async function getBaseUrl() {
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = headersList.get('x-forwarded-proto') ?? 'http';
-
-  if (!host) {
-    return null;
-  }
-
-  return `${protocol}://${host}`;
-}
-
-async function getSettlementStatus(baseUrl: string, cookieHeader: string) {
-  const response = await fetch(`${baseUrl}/api/settlement`, {
-    method: 'GET',
-    headers: {
-      Cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
+async function getSettlementStatus() {
+  const response = await fetchApiRoute('/api/settlement');
 
   if (!response.ok) {
     return null;
@@ -43,13 +25,10 @@ async function getSettlementStatus(baseUrl: string, cookieHeader: string) {
 }
 
 export default async function Page() {
-  const cookieStore = await cookies();
-  const baseUrl = await getBaseUrl();
-  const cookieHeader = cookieStore.toString();
   const current = await getCurrentStigma();
   let reporter: SettlementResponse | null = null;
-  if (current && baseUrl) {
-    reporter = await getSettlementStatus(baseUrl, cookieHeader);
+  if (current) {
+    reporter = await getSettlementStatus();
   }
 
   return (

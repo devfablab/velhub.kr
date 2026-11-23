@@ -422,6 +422,12 @@ async function getSeriesFilteredPostList({
   };
 }
 
+function startEarly<T>(value: T | PromiseLike<T>): Promise<T> {
+  const promise = Promise.resolve(value);
+  promise.catch(() => undefined);
+  return promise;
+}
+
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { boardName } = await context.params;
@@ -452,11 +458,28 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const authorIds = authorName ? await findUserIdsByDisplayName(rhizome.data.id, authorName) : null;
+    const siteId = rhizome.data.id;
+    const authorIdsPromise = startEarly(authorName ? findUserIdsByDisplayName(siteId, authorName) : null);
+    const sessionPromise = startEarly(verifySession({ siteId }));
+    const blogPromise = startEarly(
+      rhizome.data.site_type === 'blog'
+        ? supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteId).maybeSingle()
+        : null,
+    );
+    const boardPromise = startEarly(
+      supabaseAdmin
+        .from('boards')
+        .select(
+          'id, board_key, board_label, board_type, markdown_status, site_id, post_type, is_active, write_permission, post_per_page',
+        )
+        .eq('site_id', siteId)
+        .eq('board_key', normalizedBoardName)
+        .maybeSingle(),
+    );
 
-    const session = await verifySession({
-      siteId: rhizome.data.id,
-    });
+    const authorIds = await authorIdsPromise;
+
+    const session = await sessionPromise;
 
     const isAuth = session.case === 'admin' || session.case === 'staff' || session.case === 'member';
 
@@ -466,24 +489,10 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
-    let blogType = null;
-    if (rhizome.data.site_type === 'blog') {
-      const blogResult = await supabaseAdmin
-        .from('blogs')
-        .select('blog_type')
-        .eq('site_id', rhizome.data.id)
-        .maybeSingle();
-      blogType = blogResult.data?.blog_type ?? null;
-    }
+    const blogResult = await blogPromise;
+    const blogType = blogResult?.data?.blog_type ?? null;
 
-    const board = await supabaseAdmin
-      .from('boards')
-      .select(
-        'id, board_key, board_label, board_type, markdown_status, site_id, post_type, is_active, write_permission, post_per_page',
-      )
-      .eq('site_id', rhizome.data.id)
-      .eq('board_key', normalizedBoardName)
-      .maybeSingle();
+    const board = await boardPromise;
 
     if (board.error || !board.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });

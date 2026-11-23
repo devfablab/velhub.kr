@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
+import { getHubApiData } from '@/lib/service/hub/getData';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
@@ -25,20 +26,7 @@ export const metadata: Metadata = {
 };
 
 async function getUserJoinSites() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = `${protocol}://${host}`;
-
-  const response = await fetch(`${baseUrl}/api/hub/user-join-sites`, {
-    method: 'GET',
-    headers: {
-      cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
+  const response = await fetchApiRoute('/api/hub/user-join-sites');
 
   const result = (await response.json()) as UserResponse;
 
@@ -54,6 +42,15 @@ async function getUserJoinSites() {
 }
 
 export default async function SectionJoinSites() {
+  const listsPromise = Promise.all([
+    getHubApiData<LikedResponse>('/api/hub/liked?siteType=community', '좋아요 목록을 불러오지 못했습니다.'),
+    getHubApiData<PostsResponse>('/api/hub/saved-posts?siteType=community', '저장한 글을 불러오지 못했습니다.'),
+    getHubApiData<PostsResponse>('/api/hub/read-posts?siteType=community', '읽은 글을 불러오지 못했습니다.'),
+    getHubApiData<OwnedDonationPostsResponse>(
+      '/api/hub/owned-donation-posts?siteType=community',
+      '소장/후원글 목록을 불러오지 못했습니다.',
+    ),
+  ]);
   let result: UserResponse;
 
   try {
@@ -82,31 +79,7 @@ export default async function SectionJoinSites() {
   const joinSites = Array.isArray(result.joinSites) ? result.joinSites : [];
   const statusSites = Array.isArray(result.statusSites) ? result.statusSites : [];
   const hasCommunity = joinSites.some((site) => site.site_type === 'community');
-  const cookieStore = await cookies();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = `${protocol}://${host}`;
-  const requestHeaders = { cookie: cookieStore.toString() };
-  const load = async <T,>(path: string, fallback: string): Promise<{ data: T | null; error: string }> => {
-    try {
-      const response = await fetch(`${baseUrl}${path}`, { headers: requestHeaders, cache: 'no-store' });
-      const data = (await response.json()) as T & { error?: string };
-      if (!response.ok) throw new Error(data.error ?? fallback);
-      return { data, error: '' };
-    } catch (error) {
-      return { data: null, error: error instanceof Error ? error.message : fallback };
-    }
-  };
-  const [liked, saved, read, owned] = await Promise.all([
-    load<LikedResponse>('/api/hub/liked?siteType=community', '좋아요 목록을 불러오지 못했습니다.'),
-    load<PostsResponse>('/api/hub/saved-posts?siteType=community', '저장한 글을 불러오지 못했습니다.'),
-    load<PostsResponse>('/api/hub/read-posts?siteType=community', '읽은 글을 불러오지 못했습니다.'),
-    load<OwnedDonationPostsResponse>(
-      '/api/hub/owned-donation-posts?siteType=community',
-      '소장/후원글 목록을 불러오지 못했습니다.',
-    ),
-  ]);
+  const [liked, saved, read, owned] = await listsPromise;
 
   return (
     <Container pageTitle="커뮤니티 허브" pageBack="/hub">

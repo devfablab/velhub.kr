@@ -43,7 +43,23 @@ export async function getBlogCommunityContext(siteName: string): Promise<BlogCom
   if (siteResult.error) throw new Error('블로그 정보를 불러오지 못했습니다.');
   if (!siteResult.data || siteResult.data.site_type !== 'blog') return null;
 
-  const [blogResult, communityResult, seriesPostCountResult, session] = await Promise.all([
+  const siteId = siteResult.data.id;
+  const ownerId = siteResult.data.owner_id;
+  const loadViewer = async () => {
+    const session = await verifySession({ siteId });
+    const isOwner = session.case === 'admin' || session.stigmaId === ownerId;
+    const isSubscriber =
+      !isOwner && session.stigmaId
+        ? await hasValidBlogSubscription({
+            supabaseAdmin,
+            subscriberId: session.stigmaId,
+            siteId,
+          })
+        : false;
+
+    return { session, isOwner, isSubscriber };
+  };
+  const [blogResult, communityResult, seriesPostCountResult, viewer] = await Promise.all([
     supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteResult.data.id).maybeSingle(),
     supabaseAdmin.from('blog_communities').select('is_enabled').eq('site_id', siteResult.data.id).maybeSingle(),
     supabaseAdmin
@@ -53,7 +69,7 @@ export async function getBlogCommunityContext(siteName: string): Promise<BlogCom
       .eq('published_status', 'published')
       .eq('is_closed', false)
       .not('series_id', 'is', null),
-    verifySession({ siteId: siteResult.data.id }),
+    loadViewer(),
   ]);
 
   if (blogResult.error || communityResult.error || seriesPostCountResult.error) {
@@ -62,16 +78,8 @@ export async function getBlogCommunityContext(siteName: string): Promise<BlogCom
 
   // 기존 개인 블로그는 blog_type이 null일 수 있으며, team으로 명시된 경우만 팀 블로그입니다.
   const isPersonalBlog = blogResult.data?.blog_type !== 'team';
-  const isOwner = session.case === 'admin' || session.stigmaId === siteResult.data.owner_id;
+  const { session, isOwner, isSubscriber } = viewer;
   const isManager = session.case === 'staff';
-  const isSubscriber =
-    !isOwner && session.stigmaId
-      ? await hasValidBlogSubscription({
-          supabaseAdmin,
-          subscriberId: session.stigmaId,
-          siteId: siteResult.data.id,
-        })
-      : false;
   const hasBeenOpenFor15Days = hasBeenOpenForFifteenDays(String(siteResult.data.created_at));
   const seriesPostCount = seriesPostCountResult.count ?? 0;
   const isEligible = hasBeenOpenFor15Days && seriesPostCount >= 5;

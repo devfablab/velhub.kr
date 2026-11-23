@@ -75,6 +75,8 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   const page = Math.max(1, Number(new URL(_.url).searchParams.get('page') ?? '1') || 1);
   const from = (page - 1) * 50;
   const creator = creatorResult.data;
+  const followCountsPromise = getCreatorFollowCounts(creator.id, creator.user_id);
+  followCountsPromise.catch(() => undefined);
   const [currentStigma, linksResult, stigmaResult, seriesResult] = await Promise.all([
     getCurrentStigma(),
     supabaseAdmin
@@ -88,13 +90,18 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   if (linksResult.error || stigmaResult.error || seriesResult.error)
     return NextResponse.json({ message: '작가 정보를 불러오지 못했습니다.' }, { status: 500 });
 
-  const authorState = currentStigma ? await getAuthorState(currentStigma.stigmaId) : { isAuthor: false };
   const isOwner = currentStigma?.stigmaId === creator.user_id;
-  const viewerCreatorResult =
-    currentStigma && !isOwner && authorState.isAuthor
-      ? await supabaseAdmin.from('creators').select('handle_name').eq('user_id', currentStigma.stigmaId).maybeSingle()
-      : { data: null, error: null };
-  const followResult =
+  const loadViewerCreator = async () => {
+    const authorState = currentStigma ? await getAuthorState(currentStigma.stigmaId) : { isAuthor: false };
+
+    const viewerCreatorResult =
+      currentStigma && !isOwner && authorState.isAuthor
+        ? await supabaseAdmin.from('creators').select('handle_name').eq('user_id', currentStigma.stigmaId).maybeSingle()
+        : { data: null, error: null };
+
+    return { authorState, viewerCreatorResult };
+  };
+  const loadFollow = async () =>
     currentStigma && !isOwner
       ? await supabaseAdmin
           .from('creator_follows')
@@ -103,6 +110,17 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
           .eq('creator_id', creator.id)
           .maybeSingle()
       : { data: null, error: null };
+  const loadFeatures = async () => {
+    const { getMembershipFeatures } = await import('@/lib/memberships/features');
+
+    return Promise.all([
+      getMembershipFeatures(creator.user_id),
+      currentStigma && !isOwner ? getMembershipFeatures(currentStigma.stigmaId) : Promise.resolve(null),
+    ]);
+  };
+  const featuresPromise = loadFeatures();
+  featuresPromise.catch(() => undefined);
+  const [{ authorState, viewerCreatorResult }, followResult] = await Promise.all([loadViewerCreator(), loadFollow()]);
 
   if (viewerCreatorResult.error || followResult.error)
     return NextResponse.json({ message: '작가 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -110,11 +128,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   const series = seriesResult.data ?? [];
   const seriesIds = series.map((item) => item.id);
   const tab = new URL(_.url).searchParams.get('tab') || 'all';
-  const { getMembershipFeatures } = await import('@/lib/memberships/features');
-  const [features, viewerFeatures] = await Promise.all([
-    getMembershipFeatures(creator.user_id),
-    currentStigma && !isOwner ? getMembershipFeatures(currentStigma.stigmaId) : Promise.resolve(null),
-  ]);
+  const [features, viewerFeatures] = await featuresPromise;
   const hasBranding = features.has('creator_branding');
   const canUseSeriesPosts = features.has('creator_posts') || viewerFeatures?.has('creator_posts') === true;
   const selectedTab = canUseSeriesPosts && tab === 'series' ? 'series' : 'all';
@@ -164,7 +178,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   );
   const boardMap = new Map((boardsResult.data ?? []).map((board) => [board.id, board]));
   const seriesMap = new Map(series.map((item) => [item.id, item.series_label]));
-  const followCounts = await getCreatorFollowCounts(creator.id, creator.user_id);
+  const followCounts = await followCountsPromise;
 
   return NextResponse.json({
     creator: {

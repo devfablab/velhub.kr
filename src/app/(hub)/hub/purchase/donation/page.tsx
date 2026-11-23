@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { formatDateTimeDetail } from '@/lib/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
@@ -56,20 +56,7 @@ function formatDateTime(value: string | null) {
 }
 
 async function getDonationPurchase() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = `${protocol}://${host}`;
-
-  const response = await fetch(`${baseUrl}/api/hub/purchase/donation`, {
-    method: 'GET',
-    headers: {
-      cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
+  const response = await fetchApiRoute('/api/hub/purchase/donation');
 
   const result = (await response.json()) as DonationResponse;
 

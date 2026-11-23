@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { hasMembershipFeature } from '@/lib/memberships/features';
+import { readPublicCache } from '@/lib/publicCache';
 import { normalizeText } from '@/lib/utils';
 
 export type SiteRoutingInfo = {
@@ -35,6 +36,18 @@ export async function getSiteRoutingInfo({
     return null;
   }
 
+  return readPublicCache({
+    key: normalizedCustomDomain ? `site-routing:domain:${normalizedCustomDomain}` : `site-routing:site:${normalizedSiteName}`,
+    tags: normalizedCustomDomain ? ['sites'] : [`site:${normalizedSiteName}`],
+    ttlSeconds: 60,
+    load: () => loadSiteRoutingInfo(normalizedSiteName, normalizedCustomDomain),
+  });
+}
+
+async function loadSiteRoutingInfo(
+  normalizedSiteName: string,
+  normalizedCustomDomain: string,
+): Promise<SiteRoutingInfo | null> {
   const supabaseAdmin = getSupabaseAdmin();
   const rhizomeQuery = supabaseAdmin
     .from('rhizomes')

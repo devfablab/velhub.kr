@@ -1,11 +1,12 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session/server';
 import { normalizeText } from '@/lib/utils';
+import { getHubApiData } from '@/lib/service/hub/getData';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Container from './menu';
 import PendingInvite, { PendingInviteResponse } from './pendingInvite';
 import PendingJoin, { PendingJoinResponse } from './pendingJoin';
@@ -63,20 +64,7 @@ function getAvatarUrl(value: string | null | undefined) {
 
 async function getMemberStatusSites() {
   try {
-    const cookieStore = await cookies();
-    const headerList = await headers();
-    const host = headerList.get('host');
-
-    if (!host) {
-      return [];
-    }
-
-    const protocol = headerList.get('x-forwarded-proto') || 'http';
-    const response = await fetch(`${protocol}://${host}/api/hub/user-join-sites`, {
-      method: 'GET',
-      headers: { cookie: cookieStore.toString() },
-      cache: 'no-store',
-    });
+    const response = await fetchApiRoute('/api/hub/user-join-sites');
 
     if (!response.ok) {
       return [];
@@ -98,40 +86,18 @@ export default async function Page() {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const accountResult = await supabaseAdmin
-    .from('stigmas')
-    .select('email, user_name, bio, avatar')
-    .eq('user_id', sessionClaims.userId)
-    .maybeSingle();
+  const [accountResult, statusSites, pendingInvites, pendingJoins] = await Promise.all([
+    supabaseAdmin.from('stigmas').select('email, user_name, bio, avatar').eq('user_id', sessionClaims.userId).maybeSingle(),
+    getMemberStatusSites(),
+    getHubApiData<PendingInviteResponse>('/api/hub/pending-invites', '초대 정보를 불러오지 못했습니다.'),
+    getHubApiData<PendingJoinResponse>('/api/hub/pending-join', '가입 신청 정보를 불러오지 못했습니다.'),
+  ]);
 
   if (accountResult.error || !accountResult.data) {
     throw new Error('마이허브 정보를 불러오지 못했습니다.');
   }
 
   const account = accountResult.data as AccountRow;
-  const statusSites = await getMemberStatusSites();
-  const cookieStore = await cookies();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = `${protocol}://${host}`;
-  const load = async <T,>(path: string, fallback: string): Promise<{ data: T | null; error: string }> => {
-    try {
-      const response = await fetch(`${baseUrl}${path}`, {
-        headers: { cookie: cookieStore.toString() },
-        cache: 'no-store',
-      });
-      const data = (await response.json()) as T & { error?: string };
-      if (!response.ok) throw new Error(data.error ?? fallback);
-      return { data, error: '' };
-    } catch (error) {
-      return { data: null, error: error instanceof Error ? error.message : fallback };
-    }
-  };
-  const [pendingInvites, pendingJoins] = await Promise.all([
-    load<PendingInviteResponse>('/api/hub/pending-invites', '초대 정보를 불러오지 못했습니다.'),
-    load<PendingJoinResponse>('/api/hub/pending-join', '가입 신청 정보를 불러오지 못했습니다.'),
-  ]);
 
   return (
     <Container pageTitle="마이허브" pageBack="/">

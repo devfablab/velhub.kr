@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { Stack, Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Anchor from '@/components/Anchor';
 import Opt, { type Eligibility, type MembershipStatusResponse } from './opt';
 import styles from '@/app/memberships.module.sass';
@@ -56,23 +56,9 @@ export default async function Page() {
     );
   }
 
-  const cookieStore = await cookies();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = host ? `${protocol}://${host}` : '';
-  const requestHeaders = { cookie: cookieStore.toString() };
-
   async function load<T>(path: string, fallback: string): Promise<{ data: T | null; error: string }> {
-    if (!baseUrl) {
-      return { data: null, error: fallback };
-    }
-
     try {
-      const response = await fetch(`${baseUrl}${path}`, {
-        headers: requestHeaders,
-        cache: 'no-store',
-      });
+      const response = await fetchApiRoute(path);
       const data = (await response.json().catch(() => null)) as (T & { message?: string }) | null;
 
       if (!response.ok || !data) {

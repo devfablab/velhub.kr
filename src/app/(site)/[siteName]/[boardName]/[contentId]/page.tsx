@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getPostPageMetadata } from '@/lib/seoSite';
@@ -10,10 +11,6 @@ import type { BoardPostCountResponse } from '@/components/service/community/Boar
 import type { BoardRecentResponse } from '@/components/service/community/BoardRecentTableList';
 import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Opt, { type ContentResponse, type PollResponse } from './opt';
-
-type CountResponse = {
-  postCount?: number;
-};
 
 function extractUrls(value: string) {
   const matchedUrls = value.match(/https?:\/\/[^\s<>"']+/g) ?? [];
@@ -67,18 +64,6 @@ export default async function Page(context: SearchContext) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-
-  const rhizomeResult = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_type')
-    .eq('site_key', normalizedSiteName)
-    .maybeSingle();
-
-  if (rhizomeResult.error || !rhizomeResult.data) {
-    notFound();
-  }
-
-  const isCommunity = rhizomeResult.data.site_type === 'community';
   const queryParams = new URLSearchParams({ siteName: normalizedSiteName });
   if (typeof searchParams.categoryName === 'string' && searchParams.categoryName)
     queryParams.set('categoryName', searchParams.categoryName);
@@ -100,6 +85,17 @@ export default async function Page(context: SearchContext) {
     `/api/boards/${boardName.toLowerCase()}?siteName=${normalizedSiteName}&page=1&size=10&includePin=false`,
     '최신글을 불러오지 못했습니다.',
   );
+  const rhizomeResult = await supabaseAdmin
+    .from('rhizomes')
+    .select('id, site_type')
+    .eq('site_key', normalizedSiteName)
+    .maybeSingle();
+
+  if (rhizomeResult.error || !rhizomeResult.data) {
+    notFound();
+  }
+
+  const isCommunity = rhizomeResult.data.site_type === 'community';
   const guidelineDialogDataPromise = isCommunity
     ? supabaseAdmin
         .from('boards')
@@ -118,21 +114,14 @@ export default async function Page(context: SearchContext) {
         )
     : getSiteGuidelineDialogData({ siteName: normalizedSiteName, target: 'blog-post' });
   const initial = await initialPromise;
-  const countAndReadPromise =
-    initial.data?.content?.published_status === 'published'
-      ? Promise.all([
-          getSiteApiData<CountResponse>(
-            `/api/boards/${boardName.toLowerCase()}/${contentId}/count?siteName=${normalizedSiteName}`,
-            '조회수를 반영하지 못했습니다.',
-            { method: 'PATCH' },
-          ),
-          getSiteApiData(
-            `/api/boards/${boardName.toLowerCase()}/${contentId}/read?siteName=${normalizedSiteName}`,
-            '읽은 글을 기록하지 못했습니다.',
-            { method: 'PATCH' },
-          ),
-        ])
-      : Promise.resolve([null, null] as const);
+  if (initial.data?.content?.published_status === 'published') {
+    const readPromise = getSiteApiData(
+      `/api/boards/${boardName.toLowerCase()}/${contentId}/read?siteName=${normalizedSiteName}`,
+      '읽은 글을 기록하지 못했습니다.',
+      { method: 'PATCH' },
+    );
+    after(() => readPromise);
+  }
   const initialPollPromise = initial.data?.content?.poll
     ? getSiteApiData<PollResponse>(
         `/api/boards/${boardName.toLowerCase()}/${contentId}/poll?siteName=${normalizedSiteName}`,
@@ -151,7 +140,6 @@ export default async function Page(context: SearchContext) {
       )
     : Promise.resolve({ data: null, error: '' });
   const [
-    [countResult],
     initialComments,
     initialPopularPosts,
     initialRecentPosts,
@@ -160,7 +148,6 @@ export default async function Page(context: SearchContext) {
     initialLinkPreviews,
     guidelineDialogData,
   ] = await Promise.all([
-    countAndReadPromise,
     initialCommentsPromise,
     initialPopularPostsPromise,
     initialRecentPostsPromise,
@@ -169,10 +156,6 @@ export default async function Page(context: SearchContext) {
     getLinkPreviews(initial.data?.content?.content_simple),
     guidelineDialogDataPromise,
   ]);
-
-  if (typeof countResult?.data?.postCount === 'number' && initial.data?.content) {
-    initial.data.content.post_count = countResult.data.postCount;
-  }
 
   return (
     <Opt

@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getPostPageMetadata } from '@/lib/seoSite';
@@ -8,10 +9,6 @@ import type { SubscriptionStatusResponse } from '@/components/buttons/Subscripti
 import type { CommentsResponse } from '@/components/comments/CommentList';
 import { getSiteApiData } from '../../../../../lib/service/site/getSiteApiData';
 import Opt, { type ContentResponse, type PollResponse } from './opt';
-
-type CountResponse = {
-  postCount?: number;
-};
 
 function extractUrls(value: string) {
   const matchedUrls = value.match(/https?:\/\/[^\s<>"']+/g) ?? [];
@@ -106,21 +103,14 @@ export default async function Page(context: RouteContext) {
     '댓글 목록을 불러오지 못했습니다.',
   );
   const initial = await initialPromise;
-  const countAndReadPromise =
-    initial.data?.content?.published_status === 'published'
-      ? Promise.all([
-          getSiteApiData<CountResponse>(
-            `/api/boards/${normalizedBoardName}/${contentId}/count?siteName=${normalizedSiteName}`,
-            '조회수를 반영하지 못했습니다.',
-            { method: 'PATCH' },
-          ),
-          getSiteApiData(
-            `/api/boards/${normalizedBoardName}/${contentId}/read?siteName=${normalizedSiteName}`,
-            '읽은 글을 기록하지 못했습니다.',
-            { method: 'PATCH' },
-          ),
-        ])
-      : Promise.resolve([null, null] as const);
+  if (initial.data?.content?.published_status === 'published') {
+    const readPromise = getSiteApiData(
+      `/api/boards/${normalizedBoardName}/${contentId}/read?siteName=${normalizedSiteName}`,
+      '읽은 글을 기록하지 못했습니다.',
+      { method: 'PATCH' },
+    );
+    after(() => readPromise);
+  }
   const initialPollPromise = initial.data?.content?.poll
     ? getSiteApiData<PollResponse>(
         `/api/boards/${normalizedBoardName}/${contentId}/poll?siteName=${normalizedSiteName}`,
@@ -139,14 +129,12 @@ export default async function Page(context: RouteContext) {
       )
     : Promise.resolve({ data: null, error: '' });
   const [
-    [countResult],
     initialPoll,
     initialComments,
     initialSubscriptionStatus,
     initialLinkPreviews,
     guidelineDialogData,
   ] = await Promise.all([
-    countAndReadPromise,
     initialPollPromise,
     initialCommentsPromise,
     initialSubscriptionStatusPromise,
@@ -157,10 +145,6 @@ export default async function Page(context: RouteContext) {
       boardId: boardResult.data.id,
     }),
   ]);
-
-  if (typeof countResult?.data?.postCount === 'number' && initial.data?.content) {
-    initial.data.content.post_count = countResult.data.postCount;
-  }
 
   return (
     <Opt

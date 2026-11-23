@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Container from '../../../menu';
 import Opt, { PaymentRow } from './opt';
 import { Contact1, Contact2, Contact3, Contact4, Contact5, Contact6 } from './svgs';
@@ -16,13 +16,9 @@ export default async function Page() {
   let initialCancellationAvailableAt: string | null = null;
   let initialPaymentError = '';
   try {
-    const cookieStore = await cookies();
-    const headerList = await headers();
-    const baseUrl = `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}`;
-    const requestHeaders = { cookie: cookieStore.toString() };
     const [cancellationResponse, paymentResponse] = await Promise.all([
-      fetch(`${baseUrl}/api/concierge/contact/inquiries?payments=true`, { headers: requestHeaders, cache: 'no-store' }),
-      fetch(`${baseUrl}/api/concierge/contact/inquiries?payments=all`, { headers: requestHeaders, cache: 'no-store' }),
+      fetchApiRoute('/api/concierge/contact/inquiries?payments=true'),
+      fetchApiRoute('/api/concierge/contact/inquiries?payments=all'),
     ]);
     const cancellation = (await cancellationResponse.json()) as {
       payments?: PaymentRow[];

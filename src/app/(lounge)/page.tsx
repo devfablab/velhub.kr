@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
+import { NextRequest } from 'next/server';
 import { mainTitle, Seo } from '@/lib/seo';
 import type { CategoryRisingSiteGroup } from '@/lib/service/lounge/loungeMoments';
 import Aside from './lounge/aside';
@@ -9,7 +10,10 @@ import JoinedSites from './lounge/joinedSites';
 import List from './lounge/list';
 import Slick from './lounge/slick';
 import Container from './menu';
-import type { JoinedSite } from '@/app/api/home/joined-sites/route';
+import { GET as getCategorySites } from '@/app/api/home/category-sites/route';
+import { GET as getJoinedSites, type JoinedSite } from '@/app/api/home/joined-sites/route';
+import { GET as getNewSites } from '@/app/api/home/new-sites/route';
+import { GET as getHomePosts } from '@/app/api/home/posts/route';
 import styles from '../page.module.sass';
 
 type SiteItem = {
@@ -200,7 +204,6 @@ export default async function Home() {
   const host = headerList.get('host');
   const protocol = headerList.get('x-forwarded-proto') || 'http';
   const baseUrl = `${protocol}://${host}`;
-  const cookieStore = await cookies();
   let sitesCreatedData = null;
   let postsPublishedData = null;
   let joinedSites: JoinedSite[] = [];
@@ -208,10 +211,10 @@ export default async function Home() {
   try {
     const [sitesCreatedResponse, postsPublishedResponse, joinedSitesResponse, categorySitesResponse] =
       await Promise.all([
-        fetch(`${baseUrl}/api/home/new-sites`, { cache: 'no-store' }),
-        fetch(`${baseUrl}/api/home/posts?limit=20`, { cache: 'no-store' }),
-        fetch(`${baseUrl}/api/home/joined-sites`, { headers: { cookie: cookieStore.toString() }, cache: 'no-store' }),
-        fetch(`${baseUrl}/api/home/category-sites`, { cache: 'no-store' }),
+        getNewSites(),
+        getHomePosts(new NextRequest(`${baseUrl}/api/home/posts?limit=20`)),
+        getJoinedSites(),
+        getCategorySites(),
       ]);
 
     if (categorySitesResponse.ok) {

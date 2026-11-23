@@ -4,6 +4,7 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getUsersWithMembershipFeature } from '@/lib/memberships/features';
+import { readPublicCache } from '@/lib/publicCache';
 import { fetchPagedRows, getDateBefore, PERIOD_DAYS } from '@/lib/service/lounge/loungeMoments';
 import { getCoAuthorNamesByPostIds } from '@/lib/service/site/blog/coPosts';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
@@ -276,7 +277,7 @@ function extractYoutubeId(value: string | null | undefined) {
   return matched?.[1] ?? null;
 }
 
-export async function GET(request: NextRequest) {
+async function loadHomePosts(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const sortByParam = searchParams.get('sortBy');
@@ -549,6 +550,44 @@ export async function GET(request: NextRequest) {
     if (unknownError instanceof Error) {
       return Response.json({ error: unknownError.message }, { status: 500 });
     }
+    return Response.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 });
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+
+  if (normalizeText(searchParams.get('keyword'))) {
+    return loadHomePosts(request);
+  }
+
+  const cacheKey = ['sortBy', 'limit', 'siteType'].map((name) => `${name}=${searchParams.get(name) ?? ''}`).join('&');
+  let failedResponse: Response | null = null;
+
+  try {
+    const result = await readPublicCache({
+      key: `lounge:posts:${cacheKey}`,
+      tags: ['posts', 'sites', 'people'],
+      ttlSeconds: 60,
+      load: async () => {
+        const response = await loadHomePosts(request);
+
+        if (!response.ok) {
+          failedResponse = response;
+          throw new Error('home posts load failed');
+        }
+
+        return (await response.json()) as unknown;
+      },
+    });
+
+    return Response.json(result);
+  } catch (error) {
+    if (failedResponse) {
+      return failedResponse;
+    }
+
+    console.error('[API home/posts]', error);
     return Response.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 });
   }
 }

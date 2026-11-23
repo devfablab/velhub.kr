@@ -1,7 +1,7 @@
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Container from '../menu';
 import Opt, { type FavoriteResponse } from './opt';
@@ -126,24 +126,11 @@ export async function generateMetadata(context: RouteContext) {
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
-  const requestHeaders = await headers();
-  const host = requestHeaders.get('host') ?? '';
-  const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-  const cookie = requestHeaders.get('cookie') ?? '';
-
-  const response = await fetch(`${protocol}://${host}/api/team-blog?siteName=${normalizedSiteName}`, {
-    method: 'GET',
-    headers: {
-      cookie,
-    },
-    cache: 'no-store',
-  });
-
+  const [response, favorite] = await Promise.all([
+    fetchApiRoute(`/api/team-blog?siteName=${normalizedSiteName}`),
+    getSiteApiData<FavoriteResponse>(`/api/site/blog/${normalizedSiteName}/favorites`, '즐겨찾기 정보를 불러오지 못했습니다.'),
+  ]);
   const result = (await response.json()) as BlogInfoResponse;
-  const favorite = await getSiteApiData<FavoriteResponse>(
-    `/api/site/blog/${normalizedSiteName}/favorites`,
-    '즐겨찾기 정보를 불러오지 못했습니다.',
-  );
 
   if (!response.ok || !result.siteInfo) {
     return (

@@ -89,20 +89,6 @@ export default async function Page(context: RouteContext) {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const rhizome = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_key, site_label, site_type, visibility_type, is_shutdown')
-    .eq('site_key', normalizedSiteName)
-    .maybeSingle();
-
-  if (rhizome.error || !rhizome.data) {
-    notFound();
-  }
-
-  if (rhizome.data.site_type !== 'blog' || rhizome.data.is_shutdown !== false) {
-    notFound();
-  }
-
   const category = await supabaseAdmin
     .from('board_categories')
     .select(
@@ -118,10 +104,15 @@ export default async function Page(context: RouteContext) {
         boards (
           board_key,
           board_label
+        ),
+        rhizomes!inner (
+          id,
+          site_type,
+          is_shutdown
         )
       `,
     )
-    .eq('site_id', rhizome.data.id)
+    .eq('rhizomes.site_key', normalizedSiteName)
     .eq('category_key', normalizedCategoryName)
     .maybeSingle();
 
@@ -129,12 +120,19 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
+  const rhizome = category.data.rhizomes;
+
+  if (rhizome.site_type !== 'blog' || rhizome.is_shutdown !== false) {
+    notFound();
+  }
+
+  const sessionPromise = verifySession({ siteId: rhizome.id });
   const categoryData = category.data as CategoryRow;
 
   const postList = await getPostList({
-    siteId: rhizome.data.id,
+    siteId: rhizome.id,
     siteKey: normalizedSiteName,
-    siteType: rhizome.data.site_type,
+    siteType: rhizome.site_type,
     boardId: categoryData.board_id,
     page: currentPage,
     size: PAGE_SIZE,
@@ -145,7 +143,7 @@ export default async function Page(context: RouteContext) {
     includePin: false,
     categoryId: categoryData.id,
   });
-  const session = await verifySession({ siteId: rhizome.data.id });
+  const session = await sessionPromise;
   const canWritePost = session.case === 'member' || session.case === 'staff';
   const pageNumbers = getPageNumbers(currentPage, postList.totalPage);
   const getPageHref = (pageNumber: number) => `/${normalizedSiteName}/c/${normalizedCategoryName}?page=${pageNumber}`;

@@ -575,6 +575,39 @@ async function getPaidContentAccess({
   };
 }
 
+type CategoryInfo = {
+  id: string;
+  category_key: string;
+  category_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  sort_order: number;
+  board_id: string;
+  site_id: string;
+  created_at?: string;
+};
+
+type SeriesInfo = {
+  id: string;
+  created_at: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  board_id: string;
+  site_id: string;
+  last_published_at: string | null;
+  is_completed: boolean;
+  is_subscription: boolean | null;
+  user_id: string | null;
+};
+
+function startEarly<T>(promise: PromiseLike<T>): Promise<T> {
+  const startedPromise = Promise.resolve(promise);
+  startedPromise.catch(() => undefined);
+  return startedPromise;
+}
+
 async function hasPermanentPostPurchase({
   supabaseAdmin,
   stigmaId,
@@ -1276,35 +1309,269 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '아직 게시되지 않은 예약글입니다.' }, { status: 403 });
     }
 
-    const boardSeriesCountResult = await supabaseAdmin
-      .from('board_series')
-      .select('id', { count: 'exact', head: true })
-      .eq('site_id', rhizomeData.id)
-      .eq('board_id', boardData.id);
+    const isYoutubeCommunityBoard = rhizomeData.site_type === 'community' && boardData.board_type === 'youtube';
+    const drawType = normalizeDrawType(postData.draw_type);
+    const drawLimit = normalizeDrawLimit(postData.draw_limit);
+    const drawEndsAt = typeof postData.draw_ends_at === 'string' ? postData.draw_ends_at : null;
+    const canViewDraws = isAuthor || canManageContent;
+    const categoryIds = Array.isArray(postData.categories)
+      ? postData.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
+      : [];
+
+    const boardSeriesCountPromise = startEarly(
+      supabaseAdmin
+        .from('board_series')
+        .select('id', { count: 'exact', head: true })
+        .eq('site_id', rhizomeData.id)
+        .eq('board_id', boardData.id),
+    );
+    const paidContentAccessPromise: Promise<PaidContentAccess> = isYoutubeCommunityBoard
+      ? Promise.resolve({
+          is_purchase_required: false,
+          purchase_post_price: 0,
+          has_subscription_series: false,
+          has_purchase_post: false,
+          can_view_paid_content: true,
+        })
+      : startEarly(
+          getPaidContentAccess({
+            supabaseAdmin,
+            stigmaId: session.stigmaId,
+            siteId: rhizomeData.id,
+            boardId: boardData.id,
+            seriesId: postData.series_id,
+            postId: postData.id,
+          }),
+        );
+    const canViewSubscriptionCommentsPromise = startEarly(
+      canAccessSubscriptionSeriesComments({
+        supabaseAdmin,
+        siteId: rhizomeData.id,
+        boardId: boardData.id,
+        postId: postData.id,
+        stigmaId: session.stigmaId,
+        isPrivileged: canManageContent,
+      }),
+    );
+    const authorPromise = startEarly(getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id));
+    const closedByPromise = startEarly(getUserDisplayInfo(rhizomeData.id, boardData.id, postData.closed_by));
+    const drawPromise = startEarly(
+      (async () => {
+        await createRandomDrawIfNeeded({
+          siteId: rhizomeData.id,
+          boardId: boardData.id,
+          postId: postData.id,
+          drawType,
+          drawLimit,
+          drawEndsAt,
+        });
+
+        const drawCountResult = drawType
+          ? await supabaseAdmin
+              .from('post_draws')
+              .select('id', { count: 'exact', head: true })
+              .eq('site_id', rhizomeData.id)
+              .eq('board_id', boardData.id)
+              .eq('post_id', postData.id)
+          : { count: 0, error: null };
+
+        if (drawCountResult.error) {
+          return { drawCountResult, drawWinners: [] };
+        }
+
+        const drawWinners = drawType
+          ? await getDrawWinners({
+              siteId: rhizomeData.id,
+              boardId: boardData.id,
+              postId: postData.id,
+              canViewDraws,
+            })
+          : [];
+
+        return { drawCountResult, drawWinners };
+      })(),
+    );
+    const categoryPromise = startEarly(
+      categoryIds.length > 0
+        ? supabaseAdmin
+            .from('board_categories')
+            .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
+            .eq('site_id', rhizomeData.id)
+            .eq('board_id', boardData.id)
+            .in('id', categoryIds)
+            .order('sort_order', { ascending: true })
+        : Promise.resolve({ data: [], error: null }),
+    );
+    const seriesPromise = startEarly(
+      (async () => {
+        if (!postData.series_id || isYoutubeCommunityBoard) {
+          return { error: '', series: null, seriesContents: [] };
+        }
+
+        const seriesResult = await supabaseAdmin
+          .from('board_series')
+          .select(
+            'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, is_subscription, user_id',
+          )
+          .eq('site_id', rhizomeData.id)
+          .eq('board_id', boardData.id)
+          .eq('id', postData.series_id)
+          .maybeSingle();
+
+        if (seriesResult.error) {
+          return { error: '연재 정보를 불러오지 못했습니다.', series: null, seriesContents: [] };
+        }
+
+        const foundSeries = (seriesResult.data ?? null) as SeriesInfo | null;
+
+        if (!foundSeries) {
+          return { error: '', series: null, seriesContents: [] };
+        }
+
+        const seriesContentsResult = await supabaseAdmin
+          .from('posts')
+          .select('id, slug, subject, series_idx, is_closed')
+          .eq('site_id', rhizomeData.id)
+          .eq('board_id', boardData.id)
+          .eq('series_id', foundSeries.id)
+          .eq('published_status', 'published')
+          .order('series_idx', { ascending: true, nullsFirst: false });
+
+        if (seriesContentsResult.error) {
+          return { error: '연재 글 목록을 불러오지 못했습니다.', series: foundSeries, seriesContents: [] };
+        }
+
+        const allSeriesContents = seriesContentsResult.data ?? [];
+        const closedSeriesPostIds = allSeriesContents
+          .filter((seriesContent) => seriesContent.is_closed === true)
+          .map((seriesContent) => seriesContent.id);
+        const permanentPurchaseResult =
+          session.stigmaId && closedSeriesPostIds.length > 0
+            ? await supabaseAdmin
+                .from('payments')
+                .select('target_id')
+                .eq('buyer_user_id', session.stigmaId)
+                .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
+                .eq('target_type', PAYMENT_TARGET_TYPE.POST)
+                .eq('status', PAYMENT_STATUS.PAID)
+                .in('target_id', closedSeriesPostIds)
+            : { data: [], error: null };
+
+        if (permanentPurchaseResult.error) {
+          return { error: '포스팅 구매 내역을 확인하지 못했습니다.', series: foundSeries, seriesContents: [] };
+        }
+
+        const permanentlyOwnedSeriesPostIds = new Set(
+          (permanentPurchaseResult.data ?? []).map((payment) => normalizeText(payment.target_id)).filter(Boolean),
+        );
+
+        return {
+          error: '',
+          series: foundSeries,
+          seriesContents: allSeriesContents
+            .filter(
+              (seriesContent) =>
+                seriesContent.is_closed === false || permanentlyOwnedSeriesPostIds.has(seriesContent.id),
+            )
+            .map((seriesContent) => ({
+              id: seriesContent.id,
+              slug: String(seriesContent.slug),
+              subject: normalizeText(seriesContent.subject),
+              series_idx: typeof seriesContent.series_idx === 'number' ? seriesContent.series_idx : null,
+              is_closed: seriesContent.is_closed === true,
+              href: getPostHref(
+                siteName,
+                boardData.board_key,
+                seriesContent.slug,
+                '',
+                foundSeries.series_key === seriesName ? seriesName : '',
+              ),
+            })),
+        };
+      })(),
+    );
+    const prefixPromise = startEarly(
+      boardData.post_type === 'prefix' && !isYoutubeCommunityBoard
+        ? supabaseAdmin
+            .from('board_prefixes')
+            .select('id, prefix_label')
+            .eq('site_id', rhizomeData.id)
+            .eq('board_id', boardData.id)
+            .order('prefix_key', { ascending: true })
+        : Promise.resolve(null),
+    );
+    const blogPromise = startEarly(
+      rhizomeData.site_type === 'blog'
+        ? supabaseAdmin
+            .from('blogs')
+            .select('comment_provider, giscus_settings')
+            .eq('site_id', rhizomeData.id)
+            .maybeSingle()
+        : Promise.resolve(null),
+    );
+    const adjacentPostsPromise = startEarly(
+      seriesPromise.then((seriesData) =>
+        getAdjacentPosts({
+          siteId: rhizomeData.id,
+          siteName,
+          boardId: boardData.id,
+          boardKey: boardData.board_key,
+          currentIdx: postData.idx,
+          categoryName,
+          seriesId: seriesData.series?.series_key === seriesName ? seriesData.series.id : null,
+          seriesName: seriesData.series?.series_key === seriesName ? seriesName : '',
+          currentSeriesIdx: seriesData.series?.series_key === seriesName ? postData.series_idx : null,
+          isStaff,
+        }),
+      ),
+    );
+    const wordingViolationFieldsPromise = startEarly(
+      rhizomeData.site_type === 'community' && postData.is_wording_blinded === true && canEditContent
+        ? getWordingProfilerViolationFields(rhizomeData.id, {
+            subject: postData.subject,
+            summary: postData.summary,
+            contentHtml: postData.content_html,
+            contentMarkdown: postData.content_markdown,
+            contentSimple: postData.content_simple,
+            previewHtml: postData.preview_html,
+            previewMarkdown: postData.preview_markdown,
+            ...getStoredPollWordingFields(postData.poll),
+          })
+        : Promise.resolve([]),
+    );
+    const promotionPromise = startEarly(
+      rhizomeData.site_type === 'blog'
+        ? getVisibleBlogPostPromotion({
+            siteId: rhizomeData.id,
+            postId: postData.id,
+            seriesId: postData.series_id,
+          })
+        : Promise.resolve({ sponsorship: null, ads: [] }),
+    );
+    const attachmentPromise = startEarly(
+      ['basic', 'blog'].includes(boardData.board_type)
+        ? supabaseAdmin
+            .from('post_attachments')
+            .select('id, file_name, file_size, storage_path, sort_order')
+            .eq('post_id', postData.id)
+            .order('sort_order')
+        : Promise.resolve({ data: [], error: null }),
+    );
+    const blogHashtagsPromise = startEarly(
+      rhizomeData.site_type === 'blog'
+        ? getHashtagsByIds(post.data.hashtag_ids as string[] | null)
+        : Promise.resolve([]),
+    );
+    const coAuthorMapPromise = startEarly(activeCoPost ? getCoPostParticipants(activeCoPost) : Promise.resolve(null));
+
+    const boardSeriesCountResult = await boardSeriesCountPromise;
 
     if (boardSeriesCountResult.error) {
       return NextResponse.json({ error: '연재 개수를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     const boardSeriesCount = boardSeriesCountResult.count ?? 0;
-
-    const isYoutubeCommunityBoard = rhizomeData.site_type === 'community' && boardData.board_type === 'youtube';
-    const paidContentAccess: PaidContentAccess = isYoutubeCommunityBoard
-      ? {
-          is_purchase_required: false,
-          purchase_post_price: 0,
-          has_subscription_series: false,
-          has_purchase_post: false,
-          can_view_paid_content: true,
-        }
-      : await getPaidContentAccess({
-          supabaseAdmin,
-          stigmaId: session.stigmaId,
-          siteId: rhizomeData.id,
-          boardId: boardData.id,
-          seriesId: postData.series_id,
-          postId: postData.id,
-        });
+    const paidContentAccess = await paidContentAccessPromise;
 
     const registeredPaidPreview = getRegisteredPaidPreview({
       boardType: boardData.board_type,
@@ -1330,40 +1597,12 @@ export async function GET(request: Request, context: RouteContext) {
 
     const canViewPaidContent =
       isAuthor || canManageContent || paidContentAccess.can_view_paid_content || hasDeletedPostPermanentPurchase;
-    const canViewSubscriptionComments = await canAccessSubscriptionSeriesComments({
-      supabaseAdmin,
-      siteId: rhizomeData.id,
-      boardId: boardData.id,
-      postId: postData.id,
-      stigmaId: session.stigmaId,
-      isPrivileged: canManageContent,
-    });
+    const canViewSubscriptionComments = await canViewSubscriptionCommentsPromise;
     let isGallerySubscriptionPreview = boardData.board_type === 'gallery' && paidContentAccess.has_subscription_series;
 
-    const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
-    const closedBy = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.closed_by);
-
-    const drawType = normalizeDrawType(postData.draw_type);
-    const drawLimit = normalizeDrawLimit(postData.draw_limit);
-    const drawEndsAt = typeof postData.draw_ends_at === 'string' ? postData.draw_ends_at : null;
-
-    await createRandomDrawIfNeeded({
-      siteId: rhizomeData.id,
-      boardId: boardData.id,
-      postId: postData.id,
-      drawType,
-      drawLimit,
-      drawEndsAt,
-    });
-
-    const drawCountResult = drawType
-      ? await supabaseAdmin
-          .from('post_draws')
-          .select('id', { count: 'exact', head: true })
-          .eq('site_id', rhizomeData.id)
-          .eq('board_id', boardData.id)
-          .eq('post_id', postData.id)
-      : { count: 0, error: null };
+    const author = await authorPromise;
+    const closedBy = await closedByPromise;
+    const { drawCountResult, drawWinners } = await drawPromise;
 
     if (drawCountResult.error) {
       return NextResponse.json({ error: '추첨 정보를 확인하지 못했습니다.' }, { status: 500 });
@@ -1378,164 +1617,31 @@ export async function GET(request: Request, context: RouteContext) {
           ? Boolean(drawEndsAt && isPastDateTime(drawEndsAt) && drawCount > 0)
           : false;
 
-    const canViewDraws = isAuthor || canManageContent;
+    const categoryResult = await categoryPromise;
 
-    const drawWinners = drawType
-      ? await getDrawWinners({
-          siteId: rhizomeData.id,
-          boardId: boardData.id,
-          postId: postData.id,
-          canViewDraws,
-        })
-      : [];
-
-    const categoryIds = Array.isArray(postData.categories)
-      ? postData.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
-      : [];
-
-    let categories: Array<{
-      id: string;
-      category_key: string;
-      category_label: string;
-      summary: string | null;
-      thumbnail_image: string | null;
-      sort_order: number;
-      board_id: string;
-      site_id: string;
-      created_at?: string;
-    }> = [];
-
-    if (categoryIds.length > 0) {
-      const categoryResult = await supabaseAdmin
-        .from('board_categories')
-        .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
-        .eq('site_id', rhizomeData.id)
-        .eq('board_id', boardData.id)
-        .in('id', categoryIds)
-        .order('sort_order', { ascending: true });
-
-      if (categoryResult.error) {
-        return NextResponse.json({ error: '카테고리 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      categories = categoryResult.data ?? [];
+    if (categoryResult.error) {
+      return NextResponse.json({ error: '카테고리 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    let series: {
-      id: string;
-      created_at: string;
-      series_key: string;
-      series_label: string;
-      summary: string | null;
-      thumbnail_image: string | null;
-      board_id: string;
-      site_id: string;
-      last_published_at: string | null;
-      is_completed: boolean;
-      is_subscription: boolean | null;
-      user_id: string | null;
-    } | null = null;
+    const categories = (categoryResult.data ?? []) as CategoryInfo[];
+    const seriesData = await seriesPromise;
 
-    let seriesContents: Array<{
-      id: string;
-      slug: string;
-      subject: string;
-      series_idx: number | null;
-      is_closed: boolean;
-      href: string;
-    }> = [];
+    if (seriesData.error) {
+      return NextResponse.json({ error: seriesData.error }, { status: 500 });
+    }
 
-    if (postData.series_id && !isYoutubeCommunityBoard) {
-      const seriesResult = await supabaseAdmin
-        .from('board_series')
-        .select(
-          'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, is_subscription, user_id',
-        )
-        .eq('site_id', rhizomeData.id)
-        .eq('board_id', boardData.id)
-        .eq('id', postData.series_id)
-        .maybeSingle();
+    const series = seriesData.series;
+    const seriesContents = seriesData.seriesContents;
 
-      if (seriesResult.error) {
-        return NextResponse.json({ error: '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      series = seriesResult.data ?? null;
-
-      if (series?.is_subscription === true && boardData.board_type === 'gallery') {
-        isGallerySubscriptionPreview = true;
-      }
-
-      if (series) {
-        const seriesContentsResult = await supabaseAdmin
-          .from('posts')
-          .select('id, slug, subject, series_idx, is_closed')
-          .eq('site_id', rhizomeData.id)
-          .eq('board_id', boardData.id)
-          .eq('series_id', series.id)
-          .eq('published_status', 'published')
-          .order('series_idx', { ascending: true, nullsFirst: false });
-
-        if (seriesContentsResult.error) {
-          return NextResponse.json({ error: '연재 글 목록을 불러오지 못했습니다.' }, { status: 500 });
-        }
-
-        const allSeriesContents = seriesContentsResult.data ?? [];
-        const closedSeriesPostIds = allSeriesContents
-          .filter((seriesContent) => seriesContent.is_closed === true)
-          .map((seriesContent) => seriesContent.id);
-        const permanentPurchaseResult =
-          session.stigmaId && closedSeriesPostIds.length > 0
-            ? await supabaseAdmin
-                .from('payments')
-                .select('target_id')
-                .eq('buyer_user_id', session.stigmaId)
-                .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
-                .eq('target_type', PAYMENT_TARGET_TYPE.POST)
-                .eq('status', PAYMENT_STATUS.PAID)
-                .in('target_id', closedSeriesPostIds)
-            : { data: [], error: null };
-
-        if (permanentPurchaseResult.error) {
-          return NextResponse.json({ error: '포스팅 구매 내역을 확인하지 못했습니다.' }, { status: 500 });
-        }
-
-        const permanentlyOwnedSeriesPostIds = new Set(
-          (permanentPurchaseResult.data ?? []).map((payment) => normalizeText(payment.target_id)).filter(Boolean),
-        );
-
-        seriesContents = allSeriesContents
-          .filter(
-            (seriesContent) => seriesContent.is_closed === false || permanentlyOwnedSeriesPostIds.has(seriesContent.id),
-          )
-          .map((seriesContent) => ({
-            id: seriesContent.id,
-            slug: String(seriesContent.slug),
-            subject: normalizeText(seriesContent.subject),
-            series_idx: typeof seriesContent.series_idx === 'number' ? seriesContent.series_idx : null,
-            is_closed: seriesContent.is_closed === true,
-            href: getPostHref(
-              siteName,
-              boardData.board_key,
-              seriesContent.slug,
-              '',
-              series?.series_key === seriesName ? seriesName : '',
-            ),
-          }));
-      }
+    if (series?.is_subscription === true && boardData.board_type === 'gallery') {
+      isGallerySubscriptionPreview = true;
     }
 
     let prefixes: Array<{ id: string; prefix_label: string }> = [];
     let prefixLabel: string | null = null;
+    const prefixResult = await prefixPromise;
 
-    if (boardData.post_type === 'prefix' && !isYoutubeCommunityBoard) {
-      const prefixResult = await supabaseAdmin
-        .from('board_prefixes')
-        .select('id, prefix_label')
-        .eq('site_id', rhizomeData.id)
-        .eq('board_id', boardData.id)
-        .order('prefix_key', { ascending: true });
-
+    if (prefixResult) {
       if (prefixResult.error) {
         return NextResponse.json({ error: '말머리 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
@@ -1546,14 +1652,9 @@ export async function GET(request: Request, context: RouteContext) {
 
     let commentProvider: CommentProvider = 'velhub';
     let giscusSettings: GiscusSettings | null = null;
+    const blogResult = await blogPromise;
 
-    if (rhizomeData.site_type === 'blog') {
-      const blogResult = await supabaseAdmin
-        .from('blogs')
-        .select('comment_provider, giscus_settings')
-        .eq('site_id', rhizomeData.id)
-        .maybeSingle();
-
+    if (blogResult) {
       if (blogResult.error || !blogResult.data) {
         return NextResponse.json({ error: '댓글 설정을 불러오지 못했습니다.' }, { status: 500 });
       }
@@ -1568,18 +1669,7 @@ export async function GET(request: Request, context: RouteContext) {
       giscusSettings = normalizeGiscusSettings(blogResult.data.giscus_settings);
     }
 
-    const adjacentPosts = await getAdjacentPosts({
-      siteId: rhizomeData.id,
-      siteName,
-      boardId: boardData.id,
-      boardKey: boardData.board_key,
-      currentIdx: postData.idx,
-      categoryName,
-      seriesId: series?.series_key === seriesName ? series.id : null,
-      seriesName: series?.series_key === seriesName ? seriesName : '',
-      currentSeriesIdx: series?.series_key === seriesName ? postData.series_idx : null,
-      isStaff,
-    });
+    const adjacentPosts = await adjacentPostsPromise;
 
     const postCount = typeof postData.post_count === 'number' ? Number(postData.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(postData.thumbnail_image);
@@ -1591,42 +1681,16 @@ export async function GET(request: Request, context: RouteContext) {
       canViewPaidContent &&
       (paidContentAccess.has_subscription_series || paidContentAccess.has_purchase_post) &&
       !isAuthor;
-    const wordingViolationFields =
-      rhizomeData.site_type === 'community' && postData.is_wording_blinded === true && canEditContent
-        ? await getWordingProfilerViolationFields(rhizomeData.id, {
-            subject: postData.subject,
-            summary: postData.summary,
-            contentHtml: postData.content_html,
-            contentMarkdown: postData.content_markdown,
-            contentSimple: postData.content_simple,
-            previewHtml: postData.preview_html,
-            previewMarkdown: postData.preview_markdown,
-            ...getStoredPollWordingFields(postData.poll),
-          })
-        : [];
-    const promotion =
-      rhizomeData.site_type === 'blog'
-        ? await getVisibleBlogPostPromotion({
-            siteId: rhizomeData.id,
-            postId: postData.id,
-            seriesId: postData.series_id,
-          })
-        : { sponsorship: null, ads: [] };
-    const attachmentResult = ['basic', 'blog'].includes(boardData.board_type)
-      ? await supabaseAdmin
-          .from('post_attachments')
-          .select('id, file_name, file_size, storage_path, sort_order')
-          .eq('post_id', postData.id)
-          .order('sort_order')
-      : { data: [], error: null };
+    const wordingViolationFields = await wordingViolationFieldsPromise;
+    const promotion = await promotionPromise;
+    const attachmentResult = await attachmentPromise;
 
     if (attachmentResult.error) {
       return NextResponse.json({ error: '첨부 파일을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const blogHashtags =
-      rhizomeData.site_type === 'blog' ? await getHashtagsByIds(post.data.hashtag_ids as string[] | null) : [];
-    const coAuthorMap = activeCoPost ? await getCoPostParticipants(activeCoPost) : null;
+    const blogHashtags = await blogHashtagsPromise;
+    const coAuthorMap = await coAuthorMapPromise;
     const coAuthors =
       activeCoPost && coAuthorMap
         ? [activeCoPost.inviter_id, activeCoPost.partner_id].map((stigmaId) => ({

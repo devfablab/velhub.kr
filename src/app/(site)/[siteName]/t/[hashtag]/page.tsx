@@ -65,20 +65,10 @@ export default async function Page(context: RouteContext) {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const rhizome = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_type, is_shutdown')
-    .eq('site_key', normalizedSiteName)
-    .maybeSingle();
-
-  if (rhizome.error || !rhizome.data || rhizome.data.site_type !== 'blog' || rhizome.data.is_shutdown !== false) {
-    notFound();
-  }
-
   const hashtagRow = await supabaseAdmin
     .from('blog_hashtags')
-    .select('id, label')
-    .eq('site_id', rhizome.data.id)
+    .select('id, label, rhizomes!inner(id, site_type, is_shutdown)')
+    .eq('rhizomes.site_key', normalizedSiteName)
     .eq('label_key', getHashtagKey(hashtagLabel))
     .maybeSingle();
 
@@ -86,11 +76,17 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
+  const rhizome = hashtagRow.data.rhizomes;
+
+  if (rhizome.site_type !== 'blog' || rhizome.is_shutdown !== false) {
+    notFound();
+  }
+
   const hashtagPath = `/${normalizedSiteName}/t/${encodeURIComponent(hashtagRow.data.label)}`;
   const postList = await getPostList({
-    siteId: rhizome.data.id,
+    siteId: rhizome.id,
     siteKey: normalizedSiteName,
-    siteType: rhizome.data.site_type,
+    siteType: rhizome.site_type,
     page: currentPage,
     size: 10,
     filter: 'all',

@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
+import { GET as getCreatorLibrary } from '@/app/api/creator/[handleName]/route';
 import Opt, { Response } from './opt';
 
 type Props = { params: Promise<{ handleName: string }>; searchParams: Promise<{ tab?: string; fromUser?: string }> };
@@ -46,12 +46,9 @@ export default async function Page({ params, searchParams }: Props) {
   let initialData: Response | null = null;
   let initialError = '';
   try {
-    const headerList = await headers();
-    const cookieStore = await cookies();
-    const response = await fetch(
-      `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/creator/${handleName}?page=1&tab=${selectedTab}`,
-      { headers: { cookie: cookieStore.toString() }, cache: 'no-store' },
-    );
+    const response = await getCreatorLibrary(new Request(`http://localhost/api/creator/${encodeURIComponent(handleName)}?page=1&tab=${selectedTab}`), {
+      params: Promise.resolve({ handleName }),
+    });
     const result = (await response.json()) as Response & { message?: string };
     if (!response.ok) throw new Error(result.message ?? '작가 정보를 불러오지 못했습니다.');
     initialData = result;

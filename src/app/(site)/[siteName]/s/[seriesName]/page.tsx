@@ -255,17 +255,15 @@ export default async function Page(context: RouteContext) {
   }
 
   const seriesData = series.data as SeriesRow;
-  const seriesSubscriptionSetting = await supabaseAdmin
+  const seriesSubscriptionSettingPromise = supabaseAdmin
     .from('subscription_settings')
     .select('is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', seriesData.id)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .maybeSingle();
-  const isSeriesSubscriptionEnabled =
-    seriesData.is_subscription === true && seriesSubscriptionSetting.data?.is_enabled === true;
-  const initialSubscriptionStatus = seriesData.boards
-    ? await getSiteApiData<SubscriptionStatusResponse>(
+  const initialSubscriptionStatusPromise = seriesData.boards
+    ? getSiteApiData<SubscriptionStatusResponse>(
         `/api/payments/portone/subscriptions/status?${new URLSearchParams({
           siteName: normalizedSiteName,
           boardName: seriesData.boards.board_key,
@@ -274,9 +272,9 @@ export default async function Page(context: RouteContext) {
         }).toString()}`,
         '구독 상태를 확인하지 못했습니다.',
       )
-    : { data: null, error: '' };
-  const initialDonationStatus = seriesData.boards
-    ? await getSiteApiData<DonationStatusResponse>(
+    : Promise.resolve({ data: null, error: '' });
+  const initialDonationStatusPromise = seriesData.boards
+    ? getSiteApiData<DonationStatusResponse>(
         `/api/payments/portone/donation/status?${new URLSearchParams({
           siteName: normalizedSiteName,
           boardName: seriesData.boards.board_key,
@@ -285,8 +283,8 @@ export default async function Page(context: RouteContext) {
         }).toString()}`,
         '후원 상태를 확인하지 못했습니다.',
       )
-    : { data: null, error: '' };
-  const posts = await supabaseAdmin
+    : Promise.resolve({ data: null, error: '' });
+  const postsPromise = supabaseAdmin
     .from('posts')
     .select(
       `
@@ -324,12 +322,23 @@ export default async function Page(context: RouteContext) {
     .order('idx', { ascending: false })
     .overrideTypes<PostRow[], { merge: false }>();
 
+  const sessionPromise = verifySession({ siteId: rhizome.data.id });
+  const [seriesSubscriptionSetting, initialSubscriptionStatus, initialDonationStatus, posts, session] =
+    await Promise.all([
+      seriesSubscriptionSettingPromise,
+      initialSubscriptionStatusPromise,
+      initialDonationStatusPromise,
+      postsPromise,
+      sessionPromise,
+    ]);
+  const isSeriesSubscriptionEnabled =
+    seriesData.is_subscription === true && seriesSubscriptionSetting.data?.is_enabled === true;
+
   if (posts.error) {
     notFound();
   }
 
   const allPosts = (posts.data ?? []) as PostRow[];
-  const session = await verifySession({ siteId: rhizome.data.id });
   const closedPostIds = allPosts.filter((post) => post.is_closed === true).map((post) => post.id);
   const permanentPurchaseResult =
     session.stigmaId && closedPostIds.length > 0

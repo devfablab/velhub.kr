@@ -1,6 +1,7 @@
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { readPublicResponse } from '@/lib/publicCache';
 import { getCommunityManagerAccess } from '@/lib/service/site/community/communityManager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -113,6 +114,7 @@ async function checkAccess(siteName: string) {
       status: 200,
       rhizome: rhizome.data,
       supabaseAdmin,
+      isPublicRead: true,
     } as const;
   }
 
@@ -144,19 +146,30 @@ async function checkAccess(siteName: string) {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
+  const { siteName } = await context.params;
+  const normalizedSiteName = normalizeText(siteName).toLowerCase();
+
+  if (!normalizedSiteName) {
+    return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+  }
+
+  return readPublicResponse({
+    key: `site-general-info:${normalizedSiteName}`,
+    tags: [`site:${normalizedSiteName}`, 'people'],
+    ttlSeconds: 60,
+    load: () => loadGeneralSiteInfo(normalizedSiteName),
+  });
+}
+
+async function loadGeneralSiteInfo(normalizedSiteName: string) {
   try {
-    const { siteName } = await context.params;
-    const normalizedSiteName = normalizeText(siteName).toLowerCase();
-
-    if (!normalizedSiteName) {
-      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
-    }
-
     const access = await checkAccess(normalizedSiteName);
 
     if (!access.ok) {
-      return Response.json({ error: access.error }, { status: access.status });
+      return { response: Response.json({ error: access.error }, { status: access.status }), isPublic: false };
     }
+
+    const isPublic = 'isPublicRead' in access && access.isPublicRead === true;
 
     const [changeLogs, blogs, features] = await Promise.all([
       access.supabaseAdmin
@@ -173,7 +186,10 @@ export async function GET(_request: Request, context: RouteContext) {
     ]);
 
     if (changeLogs.error) {
-      return Response.json({ error: '수정내역을 불러오지 못했습니다.' }, { status: 500 });
+      return {
+        response: Response.json({ error: '수정내역을 불러오지 못했습니다.' }, { status: 500 }),
+        isPublic: false,
+      };
     }
 
     const changeLogRows = (changeLogs.data ?? []) as ChangeLogRow[];
@@ -222,7 +238,7 @@ export async function GET(_request: Request, context: RouteContext) {
       promotionImageUrl = publicUrl.data.publicUrl ?? '';
     }
 
-    return Response.json({
+    const response = Response.json({
       siteInfo: access.rhizome,
       profilePictureUrl,
       profileLogoUrl,
@@ -232,11 +248,16 @@ export async function GET(_request: Request, context: RouteContext) {
       hasOwnerDomainFeature: features.has('owner_domain'),
       logs,
     });
+
+    return { response, isPublic };
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return {
+        response: Response.json({ error: unknownError.message || '사이트 정보를 불러오지 못했습니다.' }, { status: 500 }),
+        isPublic: false,
+      };
     }
 
-    return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
+    return { response: Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 }), isPublic: false };
   }
 }

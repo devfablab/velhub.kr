@@ -445,31 +445,17 @@ export async function getNewMomentSites(limit = 20, audience: MomentAudience = '
 
   if (sites.length === 0) return [];
 
-  const sitePosts = await fetchPagedRows<{ site_id: string; published_at: string | null }>(
-    (from, to) =>
-      supabaseAdmin
-        .from('posts')
-        .select('site_id, published_at')
-        .in(
-          'site_id',
-          sites.map((site) => site.id),
-        )
-        .eq('published_status', 'published')
-        .eq('is_closed', false)
-        .eq('is_wording_blinded', false)
-        .not('published_at', 'is', null)
-        .order('published_at', { ascending: true })
-        .order('id', { ascending: true })
-        .range(from, to),
-    10000,
-  );
-
-  const firstPublishedAtBySiteId = new Map<string, string>();
-  sitePosts.forEach((post) => {
-    if (!firstPublishedAtBySiteId.has(post.site_id) && post.published_at) {
-      firstPublishedAtBySiteId.set(post.site_id, post.published_at);
-    }
+  const firstPublishedResult = await supabaseAdmin.rpc('lounge_site_first_published_at', {
+    site_ids: sites.map((site) => site.id),
   });
+
+  if (firstPublishedResult.error) throw firstPublishedResult.error;
+
+  const firstPublishedAtBySiteId = new Map<string, string>(
+    ((firstPublishedResult.data ?? []) as Array<{ site_id: string; first_published_at: string | null }>).flatMap(
+      (row) => (row.first_published_at ? [[row.site_id, row.first_published_at] as [string, string]] : []),
+    ),
+  );
 
   const ownerIdsWithDomainFeature = await getUsersWithMembershipFeature(
     sites.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)),
@@ -711,46 +697,25 @@ async function getPostScoreMap(
   postIds: string[],
   table: 'post_likes' | 'post_view_daily_stats',
 ): Promise<Map<string, Array<{ createdAt: string; score: number }>>> {
-  const supabaseAdmin = getSupabaseAdmin();
   const scoreMap = new Map<string, Array<{ createdAt: string; score: number }>>();
+
+  if (!postIds.length) return scoreMap;
+
+  const supabaseAdmin = getSupabaseAdmin();
   const start = getDateBefore(365);
+  const entries = await fetchPagedRows<{ post_id: string; created_at: string; score: number }>((from, to) =>
+    supabaseAdmin
+      .rpc('lounge_post_score_entries', { post_ids: postIds, score_table: table, start_at: start })
+      .order('post_id', { ascending: true })
+      .order('created_at', { ascending: true })
+      .range(from, to),
+  );
 
-  for (let index = 0; index < postIds.length; index += 500) {
-    const postIdChunk = postIds.slice(index, index + 500);
-    if (table === 'post_likes') {
-      const likes = await fetchPagedRows<{ post_id: string; created_at: string }>((from, to) =>
-        supabaseAdmin
-          .from('post_likes')
-          .select('post_id, created_at')
-          .in('post_id', postIdChunk)
-          .gte('created_at', start)
-          .order('id', { ascending: true })
-          .range(from, to),
-      );
-      likes.forEach((row) => {
-        const rows = scoreMap.get(row.post_id) ?? [];
-        rows.push({ createdAt: row.created_at, score: 1 });
-        scoreMap.set(row.post_id, rows);
-      });
-      continue;
-    }
-
-    const views = await fetchPagedRows<{ post_id: string; view_date: string; view_count: number | null }>((from, to) =>
-      supabaseAdmin
-        .from('post_view_daily_stats')
-        .select('post_id, view_date, view_count')
-        .in('post_id', postIdChunk)
-        .gte('view_date', start.slice(0, 10))
-        .order('post_id', { ascending: true })
-        .order('view_date', { ascending: true })
-        .range(from, to),
-    );
-    views.forEach((row) => {
-      const rows = scoreMap.get(row.post_id) ?? [];
-      rows.push({ createdAt: `${row.view_date}T00:00:00.000Z`, score: Number(row.view_count ?? 0) });
-      scoreMap.set(row.post_id, rows);
-    });
-  }
+  entries.forEach((row) => {
+    const rows = scoreMap.get(row.post_id) ?? [];
+    rows.push({ createdAt: row.created_at, score: Number(row.score) });
+    scoreMap.set(row.post_id, rows);
+  });
 
   return scoreMap;
 }
@@ -787,69 +752,30 @@ type RisingEntry = { createdAt: string; score: number };
 
 async function getSiteRisingEntries(sites: SiteRow[]): Promise<Map<string, RisingEntry[]>> {
   const entriesMap = new Map<string, RisingEntry[]>();
-  const pushEntry = (siteId: string, entry: RisingEntry) => {
-    const entries = entriesMap.get(siteId) ?? [];
-    entries.push(entry);
-    entriesMap.set(siteId, entries);
-  };
+  const blogSiteIds = sites.filter((site) => site.site_type === 'blog').map((site) => site.id);
+  const communitySiteIds = sites.filter((site) => site.site_type === 'community').map((site) => site.id);
+
+  if (!blogSiteIds.length && !communitySiteIds.length) return entriesMap;
+
   const supabaseAdmin = getSupabaseAdmin();
   const start = getDateBefore(365);
-  const blogSites = sites.filter((site) => site.site_type === 'blog');
-  const communitySites = sites.filter((site) => site.site_type === 'community');
+  const entries = await fetchPagedRows<{ site_id: string; created_at: string; score: number }>((from, to) =>
+    supabaseAdmin
+      .rpc('lounge_site_rising_entries', {
+        blog_site_ids: blogSiteIds,
+        community_site_ids: communitySiteIds,
+        start_at: start,
+      })
+      .order('site_id', { ascending: true })
+      .order('created_at', { ascending: true })
+      .range(from, to),
+  );
 
-  if (blogSites.length) {
-    const blogSiteIds = blogSites.map((site) => site.id);
-    const posts: Array<{ id: string; site_id: string }> = [];
-    for (let index = 0; index < blogSiteIds.length; index += 500) {
-      posts.push(
-        ...(await fetchPagedRows<{ id: string; site_id: string }>((from, to) =>
-          supabaseAdmin
-            .from('posts')
-            .select('id, site_id')
-            .in('site_id', blogSiteIds.slice(index, index + 500))
-            .eq('published_status', 'published')
-            .eq('is_closed', false)
-            .eq('is_wording_blinded', false)
-            .order('id', { ascending: true })
-            .range(from, to),
-        )),
-      );
-    }
-    const scoreMap = await getPostScoreMap(
-      posts.map((post) => post.id),
-      'post_likes',
-    );
-    posts.forEach((post) => (scoreMap.get(post.id) ?? []).forEach((entry) => pushEntry(post.site_id, entry)));
-
-    for (let index = 0; index < blogSiteIds.length; index += 500) {
-      const favorites = await fetchPagedRows<{ site_id: string; created_at: string }>((from, to) =>
-        supabaseAdmin
-          .from('blog_favorites')
-          .select('site_id, created_at')
-          .in('site_id', blogSiteIds.slice(index, index + 500))
-          .gte('created_at', start)
-          .order('id', { ascending: true })
-          .range(from, to),
-      );
-      favorites.forEach((row) => pushEntry(row.site_id, { createdAt: row.created_at, score: 1 }));
-    }
-  }
-
-  const communitySiteIds = communitySites.map((site) => site.id);
-  for (let index = 0; index < communitySiteIds.length; index += 500) {
-    const joins = await fetchPagedRows<{ site_id: string; approval_at: string }>((from, to) =>
-      supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('site_id, approval_at')
-        .in('site_id', communitySiteIds.slice(index, index + 500))
-        .eq('is_approval', true)
-        .neq('role', 'owner')
-        .gte('approval_at', start)
-        .order('id', { ascending: true })
-        .range(from, to),
-    );
-    joins.forEach((row) => pushEntry(row.site_id, { createdAt: row.approval_at, score: 1 }));
-  }
+  entries.forEach((row) => {
+    const siteEntries = entriesMap.get(row.site_id) ?? [];
+    siteEntries.push({ createdAt: row.created_at, score: Number(row.score) });
+    entriesMap.set(row.site_id, siteEntries);
+  });
 
   return entriesMap;
 }

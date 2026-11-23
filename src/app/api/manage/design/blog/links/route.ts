@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { readPublicResponse } from '@/lib/publicCache';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
@@ -62,6 +63,7 @@ async function checkAccess(siteName: string, allowPublicRead = false) {
       siteId: rhizome.data.id,
       blogId: blog.data?.id ?? null,
       supabaseAdmin,
+      isPublicRead: true,
     } as const;
   }
 
@@ -107,24 +109,38 @@ async function checkAccess(siteName: string, allowPublicRead = false) {
 }
 
 export async function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+
+  if (!siteName) {
+    return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+  }
+
+  return readPublicResponse({
+    key: `blog-links:${siteName}`,
+    tags: [`site:${siteName}`],
+    ttlSeconds: 300,
+    load: () => loadBlogLinks(siteName),
+  });
+}
+
+async function loadBlogLinks(siteName: string) {
   try {
-    const requestUrl = new URL(request.url);
-    const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
-
-    if (!siteName) {
-      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
-    }
-
     const access = await checkAccess(siteName, true);
 
     if (!access.ok) {
-      return Response.json({ error: access.error }, { status: access.status });
+      return { response: Response.json({ error: access.error }, { status: access.status }), isPublic: false };
     }
 
+    const isPublic = 'isPublicRead' in access && access.isPublicRead === true;
+
     if (!access.blogId) {
-      return Response.json({
-        links: [],
-      });
+      return {
+        response: Response.json({
+          links: [],
+        }),
+        isPublic,
+      };
     }
 
     const links = await access.supabaseAdmin
@@ -135,18 +151,27 @@ export async function GET(request: Request) {
 
     if (links.error) {
       console.error('소셜 링크 불러오기 실패:', links.error);
-      return Response.json({ error: '소셜 링크를 불러오지 못했습니다.' }, { status: 500 });
+      return {
+        response: Response.json({ error: '소셜 링크를 불러오지 못했습니다.' }, { status: 500 }),
+        isPublic: false,
+      };
     }
 
-    return Response.json({
-      links: links.data ?? [],
-    });
+    return {
+      response: Response.json({
+        links: links.data ?? [],
+      }),
+      isPublic,
+    };
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '소셜 링크를 불러오지 못했습니다.' }, { status: 500 });
+      return {
+        response: Response.json({ error: unknownError.message || '소셜 링크를 불러오지 못했습니다.' }, { status: 500 }),
+        isPublic: false,
+      };
     }
 
-    return Response.json({ error: '소셜 링크를 불러오지 못했습니다.' }, { status: 500 });
+    return { response: Response.json({ error: '소셜 링크를 불러오지 못했습니다.' }, { status: 500 }), isPublic: false };
   }
 }
 

@@ -1,4 +1,4 @@
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { NextRequest } from 'next/server';
 import { getSupabaseAuthHealth, isSupabaseAuthOutage } from '@/lib/auth/health.server';
 import { getSessionClaims } from '@/lib/session/server';
@@ -11,6 +11,43 @@ type SiteApiRoute = {
 };
 
 const SITE_API_ROUTES: SiteApiRoute[] = [
+  { pattern: '/api/hub/saved-posts', load: () => import('@/app/api/hub/saved-posts/route') },
+  { pattern: '/api/hub/read-posts', load: () => import('@/app/api/hub/read-posts/route') },
+  { pattern: '/api/hub/liked', load: () => import('@/app/api/hub/liked/route') },
+  { pattern: '/api/hub/user-join-sites', load: () => import('@/app/api/hub/user-join-sites/route') },
+  { pattern: '/api/hub/owned-donation-posts', load: () => import('@/app/api/hub/owned-donation-posts/route') },
+  { pattern: '/api/hub/blog-favorites', load: () => import('@/app/api/hub/blog-favorites/route') },
+  { pattern: '/api/hub/revenue/summary', load: () => import('@/app/api/hub/revenue/summary/route') },
+  { pattern: '/api/hub/revenue/sites', load: () => import('@/app/api/hub/revenue/sites/route') },
+  { pattern: '/api/hub/reports', load: () => import('@/app/api/hub/reports/route') },
+  { pattern: '/api/hub/purchase/subscriptions', load: () => import('@/app/api/hub/purchase/subscriptions/route') },
+  { pattern: '/api/hub/purchase/memberships', load: () => import('@/app/api/hub/purchase/memberships/route') },
+  { pattern: '/api/hub/purchase/donation', load: () => import('@/app/api/hub/purchase/donation/route') },
+  { pattern: '/api/hub/purchase', load: () => import('@/app/api/hub/purchase/route') },
+  { pattern: '/api/hub/posts', load: () => import('@/app/api/hub/posts/route') },
+  { pattern: '/api/hub/pending-join', load: () => import('@/app/api/hub/pending-join/route') },
+  { pattern: '/api/hub/pending-invites', load: () => import('@/app/api/hub/pending-invites/route') },
+  { pattern: '/api/concierge/contact/inquiries', load: () => import('@/app/api/concierge/contact/inquiries/route') },
+  {
+    pattern: '/api/concierge/contact/inquiries/[inquiryId]',
+    load: () => import('@/app/api/concierge/contact/inquiries/[inquiryId]/route'),
+  },
+  { pattern: '/api/concierge/inquiries', load: () => import('@/app/api/concierge/inquiries/route') },
+  {
+    pattern: '/api/concierge/inquiries/[inquiryId]',
+    load: () => import('@/app/api/concierge/inquiries/[inquiryId]/route'),
+  },
+  { pattern: '/api/memberships/eligibility', load: () => import('@/app/api/memberships/eligibility/route') },
+  { pattern: '/api/memberships/selectors', load: () => import('@/app/api/memberships/selectors/route') },
+  { pattern: '/api/memberships', load: () => import('@/app/api/memberships/route') },
+  { pattern: '/api/header/lounge', load: () => import('@/app/api/header/lounge/route') },
+  { pattern: '/api/header/settings', load: () => import('@/app/api/header/settings/route') },
+  { pattern: '/api/user/profile', load: () => import('@/app/api/user/profile/route') },
+  { pattern: '/api/creator/profile', load: () => import('@/app/api/creator/profile/route') },
+  { pattern: '/api/team-blog', load: () => import('@/app/api/team-blog/route') },
+  { pattern: '/api/payments/minor-control', load: () => import('@/app/api/payments/minor-control/route') },
+  { pattern: '/api/notifications', load: () => import('@/app/api/notifications/route') },
+  { pattern: '/api/home/sites', load: () => import('@/app/api/home/sites/route') },
   {
     pattern: '/api/manage/team/members/invite/[token]',
     load: () => import('@/app/api/manage/team/members/invite/[token]/route'),
@@ -251,4 +288,28 @@ export async function callSiteApiRoute(path: string, init?: RequestInit): Promis
   }
 
   return null;
+}
+
+export async function fetchApiRoute(path: string, init?: RequestInit): Promise<Response> {
+  const method = (init?.method ?? 'GET').toUpperCase();
+
+  if (method === 'GET') {
+    const routeResponse = await callSiteApiRoute(path, init);
+
+    if (routeResponse) {
+      return routeResponse;
+    }
+  }
+
+  const headerList = await headers();
+  const cookieStore = await cookies();
+  const host = headerList.get('host');
+  const protocol = headerList.get('x-forwarded-proto') || 'http';
+  const requestHeaders = new Headers(init?.headers);
+
+  if (!requestHeaders.has('cookie')) {
+    requestHeaders.set('cookie', cookieStore.toString());
+  }
+
+  return fetch(`${protocol}://${host}${path}`, { ...init, headers: requestHeaders, cache: 'no-store' });
 }

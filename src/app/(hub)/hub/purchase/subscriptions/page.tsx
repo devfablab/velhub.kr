@@ -1,6 +1,6 @@
-import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { formatDate } from '@/lib/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
@@ -95,20 +95,7 @@ function getPaymentTypeLabel(payment: SubscriptionPayment) {
 }
 
 async function getSubscriptionsPurchase() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = headerList.get('x-forwarded-proto') || 'http';
-  const baseUrl = `${protocol}://${host}`;
-
-  const response = await fetch(`${baseUrl}/api/hub/purchase/subscriptions`, {
-    method: 'GET',
-    headers: {
-      cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
+  const response = await fetchApiRoute('/api/hub/purchase/subscriptions');
 
   const result = (await response.json()) as SubscriptionsResponse;
 

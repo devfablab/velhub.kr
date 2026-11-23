@@ -1,4 +1,4 @@
-import { cookies, headers } from 'next/headers';
+import { GET as getUserLibrary } from '@/app/api/user/[handleName]/route';
 import Opt, { Response } from '../opt';
 
 type Props = { params: Promise<{ handleName: string }> };
@@ -9,12 +9,9 @@ export default async function Page({ params }: Props) {
   let initialError = '';
 
   try {
-    const headerList = await headers();
-    const cookieStore = await cookies();
-    const response = await fetch(
-      `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/user/${handleName}?page=1&tab=following`,
-      { headers: { cookie: cookieStore.toString() }, cache: 'no-store' },
-    );
+    const response = await getUserLibrary(new Request(`http://localhost/api/user/${encodeURIComponent(handleName)}?page=1&tab=following`), {
+      params: Promise.resolve({ handleName }),
+    });
     const result = (await response.json()) as Response & { message?: string };
     if (!response.ok) throw new Error(result.message ?? '유저 정보를 불러오지 못했습니다.');
     initialData = result;

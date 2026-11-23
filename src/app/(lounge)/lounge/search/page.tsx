@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { originTitle, Seo } from '@/lib/seo';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import Aside from '../aside';
@@ -30,23 +30,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sea
   let sitesData = null;
 
   if (isValidKeyword) {
-    const headerList = await headers();
-    const host = headerList.get('host');
-    const protocol = headerList.get('x-forwarded-proto') || 'http';
+    try {
+      const response = await fetchApiRoute(
+        `/api/home/sites?limit=10&sortBy=relevance&keyword=${encodeURIComponent(keyword)}`,
+      );
 
-    if (host) {
-      try {
-        const response = await fetch(
-          `${protocol}://${host}/api/home/sites?limit=10&sortBy=relevance&keyword=${encodeURIComponent(keyword)}`,
-          { cache: 'no-store' },
-        );
-
-        if (response.ok) {
-          sitesData = await response.json();
-        }
-      } catch {
-        sitesData = null;
+      if (response.ok) {
+        sitesData = await response.json();
       }
+    } catch {
+      sitesData = null;
     }
   }
 

@@ -140,6 +140,15 @@ export async function GET(request: Request) {
       siteType === 'blog'
         ? supabaseAdmin.from('notice_boards').select('board_label, is_enabled').eq('site_id', siteId).maybeSingle()
         : Promise.resolve(null);
+    const pagesPromise = Promise.resolve(
+      supabaseAdmin
+        .from('pages')
+        .select('board_id, subject, slug')
+        .eq('site_id', siteId)
+        .order('sort_order', { ascending: true }),
+    );
+    const sessionPromise = siteType === 'community' ? verifySession({ siteId }) : Promise.resolve(null);
+    sessionPromise.catch(() => undefined);
     const privateBoardPromise =
       siteType === 'community'
         ? (async () => {
@@ -207,7 +216,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const session = siteType === 'community' ? await verifySession({ siteId }) : null;
+    const session = await sessionPromise;
     const boardRows =
       siteType === 'community' && session
         ? await getVisibleCommunityBoards(siteName, session.case, (boardsRes?.data ?? []) as BoardRow[])
@@ -217,14 +226,11 @@ export async function GET(request: Request) {
     const pageSlugMap = new Map<string, string>();
 
     if (pageBoardIds.length > 0) {
-      const pages = await supabaseAdmin
-        .from('pages')
-        .select('board_id, subject, slug')
-        .in('board_id', pageBoardIds)
-        .order('sort_order', { ascending: true });
+      const pages = await pagesPromise;
+      const pageBoardIdSet = new Set(pageBoardIds);
 
       if (!pages.error) {
-        for (const page of pages.data ?? []) {
+        for (const page of (pages.data ?? []).filter((item) => pageBoardIdSet.has(item.board_id))) {
           if (!pageSubjectMap.has(page.board_id)) {
             pageSubjectMap.set(page.board_id, page.subject ?? '');
           }

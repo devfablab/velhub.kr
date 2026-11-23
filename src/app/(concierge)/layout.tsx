@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { cookies, headers } from 'next/headers';
 import ChannelWorks from '@/components/ChannelWorks';
 import Footer from '@/components/footers/Footer';
 import HeaderConcierge from '@/components/headers/Concierge';
 import { ConciergeHeaderProvider, type ConciergeHeaderData } from './ConciergeHeaderContext';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',
@@ -38,19 +38,7 @@ export const viewport: Viewport = {
 
 async function getHeaderData(): Promise<ConciergeHeaderData | null> {
   try {
-    const cookieStore = await cookies();
-    const headerList = await headers();
-    const host = headerList.get('host');
-    const protocol = headerList.get('x-forwarded-proto') || 'http';
-
-    if (!host) {
-      return null;
-    }
-
-    const response = await fetch(`${protocol}://${host}/api/header/lounge`, {
-      headers: { cookie: cookieStore.toString() },
-      cache: 'no-store',
-    });
+    const response = await fetchApiRoute('/api/header/lounge');
 
     if (!response.ok) {
       return null;

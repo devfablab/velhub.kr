@@ -54,24 +54,15 @@ export default async function Page(context: SearchContext) {
     notFound();
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
-
-  const rhizomeResult = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_type')
-    .eq('site_key', normalizedSiteName)
-    .maybeSingle();
-
-  if (rhizomeResult.error || !rhizomeResult.data) {
-    notFound();
-  }
-
-  const isCommunity = rhizomeResult.data.site_type === 'community';
   const normalizedBoardName = boardName.toLowerCase();
-  const boardResult = await supabaseAdmin
+  const popularPostsPromise = getSiteApiData<BoardPostCountResponse>(
+    `/api/boards/${normalizedBoardName}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
+    '인기글을 불러오지 못했습니다.',
+  );
+  const boardResult = await getSupabaseAdmin()
     .from('boards')
-    .select('board_type')
-    .eq('site_id', rhizomeResult.data.id)
+    .select('board_type, rhizomes!inner(id, site_type)')
+    .eq('rhizomes.site_key', normalizedSiteName)
     .eq('board_key', normalizedBoardName)
     .maybeSingle();
 
@@ -79,7 +70,10 @@ export default async function Page(context: SearchContext) {
     notFound();
   }
 
-  const usesMediaPageSizes = isMediaBoardPageSize(rhizomeResult.data.site_type, boardResult.data.board_type);
+  const siteType = boardResult.data.rhizomes.site_type;
+  const isCommunity = siteType === 'community';
+
+  const usesMediaPageSizes = isMediaBoardPageSize(siteType, boardResult.data.board_type);
   const pageSizeOptions = usesMediaPageSizes ? MEDIA_BOARD_PAGE_SIZES : LIST_BOARD_PAGE_SIZES;
   const defaultPageSize = usesMediaPageSizes ? DEFAULT_MEDIA_BOARD_PAGE_SIZE : DEFAULT_LIST_BOARD_PAGE_SIZE;
   const pageSize = normalizePageSize(searchParams.size, pageSizeOptions, defaultPageSize);
@@ -99,10 +93,7 @@ export default async function Page(context: SearchContext) {
       `/api/boards/${normalizedBoardName}?${queryParams.toString()}`,
       '전체 게시글을 불러오지 못했습니다.',
     ),
-    getSiteApiData<BoardPostCountResponse>(
-      `/api/boards/${normalizedBoardName}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
-      '인기글을 불러오지 못했습니다.',
-    ),
+    popularPostsPromise,
     isCommunity
       ? getSiteApiData<SeriesListResponse>(
           `/api/boards/${normalizedBoardName}/series?siteName=${normalizedSiteName}`,

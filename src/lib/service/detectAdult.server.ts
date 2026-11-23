@@ -1,78 +1,40 @@
-import { cookies, headers } from 'next/headers';
+import { getSiteApiData } from '@/lib/service/site/getSiteApiData';
 
-type IdentityStatusResponse = {
+export type IdentityStatusResponse = {
   exists: boolean;
   identity: {
     birth_date: string;
   } | null;
 };
 
-type SitePublicResponse = {
+export type SitePublicResponse = {
   siteInfo?: {
     purchase_available?: boolean;
   };
 };
 
-async function getBaseUrl() {
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = headersList.get('x-forwarded-proto') ?? 'http';
+type ApiResult<T> = { data: T | null; error: string };
 
-  if (!host) {
-    return process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null;
-  }
-
-  return `${protocol}://${host}`;
-}
-
-export async function detectAdult(siteName: string): Promise<boolean> {
-  const baseUrl = await getBaseUrl();
-
-  if (!baseUrl || !siteName) {
+export function isAdultForSite(
+  identityResult: ApiResult<IdentityStatusResponse>,
+  siteResult: ApiResult<SitePublicResponse>,
+): boolean {
+  if (identityResult.error || siteResult.error) {
     return false;
   }
 
-  const cookieStore = await cookies();
-
-  const [identityResponse, siteResponse] = await Promise.all([
-    fetch(`${baseUrl}/api/identity/portone/status`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        Cookie: cookieStore.toString(),
-      },
-      cache: 'no-store',
-    }),
-    fetch(`${baseUrl}/api/site/public?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-      },
-      cache: 'no-store',
-    }),
-  ]);
-
-  if (!identityResponse.ok || !siteResponse.ok) {
-    return false;
-  }
-
-  const [identityResult, siteResult] = await Promise.all([
-    identityResponse.json().catch(() => null) as Promise<IdentityStatusResponse | null>,
-    siteResponse.json().catch(() => null) as Promise<SitePublicResponse | null>,
-  ]);
+  const identity = identityResult.data;
 
   if (
-    !identityResult ||
-    !identityResult.exists ||
-    !identityResult.identity?.birth_date ||
-    siteResult?.siteInfo?.purchase_available !== true
+    !identity ||
+    !identity.exists ||
+    !identity.identity?.birth_date ||
+    siteResult.data?.siteInfo?.purchase_available !== true
   ) {
     return false;
   }
 
-  const birthDate = identityResult.identity.birth_date;
+  const birthDate = identity.identity.birth_date;
 
   if (!/^\d{8}$/.test(birthDate)) {
     return false;
@@ -86,4 +48,20 @@ export async function detectAdult(siteName: string): Promise<boolean> {
   const adultDate = new Date(birthYear + 19, birthMonth - 1, birthDay);
 
   return today >= adultDate;
+}
+
+export async function detectAdult(siteName: string): Promise<boolean> {
+  if (!siteName) {
+    return false;
+  }
+
+  const [identityResult, siteResult] = await Promise.all([
+    getSiteApiData<IdentityStatusResponse>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
+    getSiteApiData<SitePublicResponse>(
+      `/api/site/public?siteName=${siteName}`,
+      '사이트 정보를 불러오지 못했습니다.',
+    ),
+  ]);
+
+  return isAdultForSite(identityResult, siteResult);
 }

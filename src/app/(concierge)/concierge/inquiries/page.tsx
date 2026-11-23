@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { inquiryTypes, type InquiryStatus, type InquiryType } from '@/lib/service/concierge/conciergeInquiries';
 import verifySession from '@/lib/session/verifySession';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Container from '../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';
@@ -27,25 +27,17 @@ export default async function Page() {
     notFound();
   }
 
-  const headersList = await headers();
-  const host = headersList.get('x-forwarded-host') ?? headersList.get('host');
-  const protocol = headersList.get('x-forwarded-proto') ?? 'http';
   const initialType = inquiryTypes[0];
   let initialInquiries: InquiryRow[] = [];
   let initialError = '';
 
-  if (host) {
-    try {
-      const response = await fetch(`${protocol}://${host}/api/concierge/inquiries?type=${initialType}`, {
-        headers: { Cookie: (await cookies()).toString() },
-        cache: 'no-store',
-      });
-      const result = (await response.json().catch(() => null)) as { inquiries?: InquiryRow[]; error?: string } | null;
-      if (!response.ok) throw new Error(result?.error ?? '문의 내역을 불러오지 못했습니다.');
-      initialInquiries = result?.inquiries ?? [];
-    } catch (unknownError) {
-      initialError = unknownError instanceof Error ? unknownError.message : '문의 내역을 불러오지 못했습니다.';
-    }
+  try {
+    const response = await fetchApiRoute(`/api/concierge/inquiries?type=${initialType}`);
+    const result = (await response.json().catch(() => null)) as { inquiries?: InquiryRow[]; error?: string } | null;
+    if (!response.ok) throw new Error(result?.error ?? '문의 내역을 불러오지 못했습니다.');
+    initialInquiries = result?.inquiries ?? [];
+  } catch (unknownError) {
+    initialError = unknownError instanceof Error ? unknownError.message : '문의 내역을 불러오지 못했습니다.';
   }
 
   return (

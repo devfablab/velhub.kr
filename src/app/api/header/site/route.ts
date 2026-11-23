@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -378,7 +379,9 @@ export async function GET(request: Request) {
     let blogType: string | null = null;
     let blogFontSettings = null;
 
-    const [blogRes, _, session] = await Promise.all([
+    after(() => processVisit(site.id, request));
+
+    const [blogRes, session] = await Promise.all([
       siteType === 'blog'
         ? supabaseAdmin
             .from('blogs')
@@ -388,7 +391,6 @@ export async function GET(request: Request) {
             .eq('site_id', site.id)
             .maybeSingle()
         : Promise.resolve(null),
-      processVisit(site.id, request),
       verifySession({ siteId: site.id }),
     ]);
 

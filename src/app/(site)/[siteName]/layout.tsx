@@ -1,7 +1,8 @@
 import { cache, type ReactNode, Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
-import { detectAdult } from '@/lib/service/detectAdult.server';
+import { isAdultForSite, type IdentityStatusResponse } from '@/lib/service/detectAdult.server';
+import { getSiteRoutingInfo } from '@/lib/site/siteState.server';
 import { normalizeText } from '@/lib/utils';
 import FooterSite from '@/components/footers/Site';
 import HeaderSite from '@/components/headers/Site';
@@ -90,14 +91,16 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     `/api/header/site?siteName=${siteName}`,
     '사이트 정보를 불러오지 못했습니다.',
   );
+  const siteTypePromise = getSiteRoutingInfo({ siteName })
+    .then((siteRoutingInfo) => siteRoutingInfo?.site_type ?? null)
+    .catch(() => headerPromise.then((result) => result.data?.siteType ?? null));
   const whenSiteType = <T,>(siteType: 'blog' | 'community', load: () => Promise<{ data: T | null }>) =>
-    headerPromise.then((result): Promise<{ data: T | null }> =>
-      result.data?.siteType === siteType ? load() : Promise.resolve({ data: null }),
+    siteTypePromise.then((currentSiteType): Promise<{ data: T | null }> =>
+      currentSiteType === siteType ? load() : Promise.resolve({ data: null }),
     );
   const [
     settings,
     header,
-    isAdult,
     boards,
     writeBoards,
     postCounts,
@@ -117,7 +120,6 @@ export default async function SiteLayout({ children, params }: RouteContext) {
   ] = await Promise.all([
     getSiteAdvancedSettings(siteName),
     headerPromise,
-    detectAdult(siteName),
     getSiteApiData<{
       boards?: Array<{
         id: string;
@@ -181,7 +183,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     whenSiteType('blog', () =>
       getSiteApiData<unknown>(`/api/info/general/site/${siteName}`, '사이트 정보를 불러오지 못했습니다.'),
     ),
-    getSiteApiData<unknown>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
+    getSiteApiData<IdentityStatusResponse>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
     whenSiteType('blog', () =>
       getSiteApiData<unknown>(
         `/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`,
@@ -229,6 +231,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
       ),
     ),
   ]);
+  const isAdult = isAdultForSite(blogIdentity, siteMenu);
 
   return (
     <>

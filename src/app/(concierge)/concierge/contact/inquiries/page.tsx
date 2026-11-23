@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import type { InquiryStatus, InquiryType } from '@/lib/service/concierge/conciergeInquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Container from '../../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';
@@ -21,19 +21,13 @@ type InquiryRow = {
 };
 
 export default async function Page() {
-  const headersList = await headers();
-  const host = headersList.get('x-forwarded-host') ?? headersList.get('host');
-  const protocol = headersList.get('x-forwarded-proto') ?? 'http';
   let initialInquiries: InquiryRow[] = [];
   let initialError = '';
   const current = await getCurrentStigma();
 
-  if (current && host) {
+  if (current) {
     try {
-      const response = await fetch(`${protocol}://${host}/api/concierge/contact/inquiries`, {
-        headers: { Cookie: (await cookies()).toString() },
-        cache: 'no-store',
-      });
+      const response = await fetchApiRoute('/api/concierge/contact/inquiries');
       const result = (await response.json().catch(() => null)) as { inquiries?: InquiryRow[]; error?: string } | null;
       if (!response.ok) throw new Error(result?.error ?? '문의 내역을 불러오지 못했습니다.');
       initialInquiries = result?.inquiries ?? [];

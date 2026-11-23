@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -490,6 +490,29 @@ export default function Opt({
   const [selectedCategory] = useState<SelectedCategory | null>(initialData?.selectedCategory ?? null);
   const [draw] = useState<DrawInfo | null>(initialData?.draw ?? null);
 
+  const [postCount, setPostCount] = useState(content?.post_count ?? 0);
+  const contentPublishedStatus = content?.published_status;
+
+  useEffect(() => {
+    if (contentPublishedStatus !== 'published' || !boardName || !contentId) {
+      return;
+    }
+
+    let isActive = true;
+
+    fetch(`/api/boards/${boardName}/${contentId}/count?siteName=${siteName}`, { method: 'PATCH' })
+      .then((response) => (response.ok ? (response.json() as Promise<{ postCount?: number }>) : null))
+      .then((result) => {
+        if (isActive && typeof result?.postCount === 'number') {
+          setPostCount(result.postCount);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isActive = false;
+    };
+  }, [boardName, contentId, contentPublishedStatus, siteName]);
   const [isLiked, setIsLiked] = useState(initialData?.postActions?.isLiked === true);
   const [isSaved, setIsSaved] = useState(initialData?.postActions?.isSaved === true);
   const [likeCount, setLikeCount] = useState(initialData?.postActions?.likeCount ?? 0);
@@ -1272,7 +1295,7 @@ export default function Opt({
                         </span>
                         {content.edited_at ? <span>{`(수정됨)`}</span> : null}
                         <span aria-label="조회수">
-                          <VisibilityOutlinedIcon /> {content.post_count}
+                          <VisibilityOutlinedIcon /> {postCount}
                         </span>
                       </div>
                     </div>
@@ -1756,7 +1779,7 @@ export default function Opt({
                         </span>
                         {content.edited_at ? <span>{`(수정됨)`}</span> : null}
                         <span aria-label="조회수">
-                          <VisibilityOutlinedIcon /> {content.post_count}
+                          <VisibilityOutlinedIcon /> {postCount}
                         </span>
                       </div>
                     </div>

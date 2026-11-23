@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
+import { readPublicResponse } from '@/lib/publicCache';
 
 type LinkPreviewResponse = {
   siteName: string | null;
@@ -144,6 +145,15 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  return readPublicResponse({
+    key: `link-preview:${targetUrl.href}`,
+    tags: ['link-previews'],
+    ttlSeconds: 60 * 60,
+    load: async () => ({ response: await fetchLinkPreview(targetUrl), isPublic: true }),
+  });
+}
+
+async function fetchLinkPreview(targetUrl: URL) {
   let response: Response;
 
   try {

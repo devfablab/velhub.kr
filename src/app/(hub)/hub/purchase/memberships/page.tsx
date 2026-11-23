@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
-import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { getHubApiData } from '@/lib/service/hub/getData';
 import { formatDate } from '@/lib/utils';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import type { MinorPaymentControlResponse } from '@/components/MinorPaymentControl';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
@@ -49,13 +49,7 @@ function formatServicePeriod(startValue: string | null | undefined, endValue?: s
 }
 
 async function getMemberships() {
-  const cookieHeader = (await cookies()).toString();
-  const headerList = await headers();
-  const baseUrl = `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}`;
-  const response = await fetch(`${baseUrl}/api/hub/purchase/memberships`, {
-    headers: { cookie: cookieHeader },
-    cache: 'no-store',
-  });
+  const response = await fetchApiRoute('/api/hub/purchase/memberships');
   const result = (await response.json()) as Result & { error?: string };
   if (!response.ok) throw new Error(result.error || '멤버십 결제내역을 불러오지 못했습니다.');
   return result;

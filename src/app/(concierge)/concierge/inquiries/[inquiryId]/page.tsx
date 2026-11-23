@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import verifySession from '@/lib/session/verifySession';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import Container from '../../menu';
 import Opt, { InquiryDetailResponse } from './opt';
 import styles from '@/app/concierge.module.sass';
@@ -20,15 +20,7 @@ export default async function Page({ params }: PageProps) {
   let initialData: InquiryDetailResponse | null = null;
   let initialError = '';
   try {
-    const cookieStore = await cookies();
-    const headerList = await headers();
-    const response = await fetch(
-      `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/concierge/inquiries/${inquiryId}`,
-      {
-        headers: { cookie: cookieStore.toString() },
-        cache: 'no-store',
-      },
-    );
+    const response = await fetchApiRoute(`/api/concierge/inquiries/${encodeURIComponent(inquiryId)}`);
     const result = (await response.json()) as InquiryDetailResponse;
     if (!response.ok || !result.inquiry) throw new Error(result.error ?? '문의를 불러오지 못했습니다.');
     initialData = result;

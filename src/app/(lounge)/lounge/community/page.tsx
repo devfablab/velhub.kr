@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { NextRequest } from 'next/server';
 import { originTitle, Seo } from '@/lib/seo';
+import { GET as getHomePosts } from '@/app/api/home/posts/route';
 import Container from '../../menu';
 import Aside from '../aside';
 import AuthSection from '../auth';
@@ -28,9 +30,9 @@ export default async function Page() {
   let postsHitsData = null;
 
   try {
-    const postsHitsResponse = await fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=community`, {
-      cache: 'no-store',
-    });
+    const postsHitsResponse = await getHomePosts(
+      new NextRequest(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=community`),
+    );
 
     if (!postsHitsResponse.ok) {
       console.error('Posts API Error:', postsHitsResponse.status, await postsHitsResponse.text());

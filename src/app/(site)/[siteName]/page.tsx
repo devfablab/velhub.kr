@@ -1,13 +1,14 @@
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
 import { getImageWithAutoOg } from '@/lib/board/postThumbnail';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { readPublicCache } from '@/lib/publicCache';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getVisibleBlogHomeAds } from '@/lib/service/site/blog/blogAds/server';
 import { getVisibleCommunityBoards } from '@/lib/service/site/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
+import { GET as getBlogHome } from '@/app/api/site/[siteName]/blog-home/route';
 import Blog, { type BlogHomeData } from './blog';
 import Community from './community';
 
@@ -76,23 +77,27 @@ function getBoardContentSize(boardType: BoardType) {
 }
 
 async function getBlogHomeData(siteName: string): Promise<BlogHomeData | null> {
-  const requestHeaders = await headers();
-  const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host');
+  try {
+    return await readPublicCache({
+      key: `blog-home:${siteName}`,
+      tags: [`site:${siteName}`, 'people'],
+      ttlSeconds: 60,
+      load: async () => {
+        const response = await getBlogHome(
+          new Request(`http://localhost/api/site/${encodeURIComponent(siteName)}/blog-home`),
+          { params: Promise.resolve({ siteName }) },
+        );
 
-  if (!host) {
+        if (!response.ok) {
+          throw new Error(`blog home ${response.status}`);
+        }
+
+        return (await response.json()) as BlogHomeData;
+      },
+    });
+  } catch {
     return null;
   }
-
-  const protocol = requestHeaders.get('x-forwarded-proto') ?? 'http';
-  const response = await fetch(`${protocol}://${host}/api/site/${encodeURIComponent(siteName)}/blog-home`, {
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  return response.json() as Promise<BlogHomeData>;
 }
 
 function getBlogHomeImageUrl(bucket: 'category' | 'series', path: string | null) {
