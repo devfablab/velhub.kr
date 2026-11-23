@@ -1,5 +1,5 @@
-import { after } from 'next/server';
 import { notFound } from 'next/navigation';
+import { after } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';
@@ -128,23 +128,18 @@ export default async function Page(context: RouteContext) {
         '구독 상태를 확인하지 못했습니다.',
       )
     : Promise.resolve({ data: null, error: '' });
-  const [
-    initialPoll,
-    initialComments,
-    initialSubscriptionStatus,
-    initialLinkPreviews,
-    guidelineDialogData,
-  ] = await Promise.all([
-    initialPollPromise,
-    initialCommentsPromise,
-    initialSubscriptionStatusPromise,
-    getLinkPreviews(initial.data?.content?.content_simple),
-    getSiteGuidelineDialogData({
-      siteName: normalizedSiteName,
-      target: 'board',
-      boardId: boardResult.data.id,
-    }),
-  ]);
+  const [initialPoll, initialComments, initialSubscriptionStatus, initialLinkPreviews, guidelineDialogData] =
+    await Promise.all([
+      initialPollPromise,
+      initialCommentsPromise,
+      initialSubscriptionStatusPromise,
+      getLinkPreviews(initial.data?.content?.content_simple),
+      getSiteGuidelineDialogData({
+        siteName: normalizedSiteName,
+        target: 'board',
+        boardId: boardResult.data.id,
+      }),
+    ]);
 
   return (
     <Opt

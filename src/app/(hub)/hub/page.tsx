@@ -3,10 +3,10 @@ import { redirect } from 'next/navigation';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSessionClaims } from '@/lib/session/server';
-import { normalizeText } from '@/lib/utils';
 import { getHubApiData } from '@/lib/service/hub/getData';
 import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
+import { getSessionClaims } from '@/lib/session/server';
+import { normalizeText } from '@/lib/utils';
 import Container from './menu';
 import PendingInvite, { PendingInviteResponse } from './pendingInvite';
 import PendingJoin, { PendingJoinResponse } from './pendingJoin';
@@ -87,7 +87,11 @@ export default async function Page() {
   const supabaseAdmin = getSupabaseAdmin();
 
   const [accountResult, statusSites, pendingInvites, pendingJoins] = await Promise.all([
-    supabaseAdmin.from('stigmas').select('email, user_name, bio, avatar').eq('user_id', sessionClaims.userId).maybeSingle(),
+    supabaseAdmin
+      .from('stigmas')
+      .select('email, user_name, bio, avatar')
+      .eq('user_id', sessionClaims.userId)
+      .maybeSingle(),
     getMemberStatusSites(),
     getHubApiData<PendingInviteResponse>('/api/hub/pending-invites', '초대 정보를 불러오지 못했습니다.'),
     getHubApiData<PendingJoinResponse>('/api/hub/pending-join', '가입 신청 정보를 불러오지 못했습니다.'),

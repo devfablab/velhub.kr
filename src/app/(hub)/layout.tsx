@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { redirect } from 'next/navigation';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import ChannelWorks from '@/components/ChannelWorks';
 import Footer from '@/components/footers/Footer';
 import HeaderHub from '@/components/headers/Hub';
 import { HubHeaderProvider, type HubHeaderData } from './hub/shared/headerContext';
-import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',

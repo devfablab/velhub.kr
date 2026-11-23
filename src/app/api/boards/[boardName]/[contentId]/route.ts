@@ -602,8 +602,8 @@ type SeriesInfo = {
   user_id: string | null;
 };
 
-function startEarly<T>(promise: PromiseLike<T>): Promise<T> {
-  const startedPromise = Promise.resolve(promise);
+function startEarly<T>(promise: T): Promise<Awaited<T>> {
+  const startedPromise = Promise.resolve(promise) as Promise<Awaited<T>>;
   startedPromise.catch(() => undefined);
   return startedPromise;
 }
@@ -1395,7 +1395,9 @@ export async function GET(request: Request, context: RouteContext) {
       categoryIds.length > 0
         ? supabaseAdmin
             .from('board_categories')
-            .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
+            .select(
+              'id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at',
+            )
             .eq('site_id', rhizomeData.id)
             .eq('board_id', boardData.id)
             .in('id', categoryIds)

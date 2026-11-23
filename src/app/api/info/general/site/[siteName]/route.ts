@@ -253,11 +253,17 @@ async function loadGeneralSiteInfo(normalizedSiteName: string) {
   } catch (unknownError) {
     if (unknownError instanceof Error) {
       return {
-        response: Response.json({ error: unknownError.message || '사이트 정보를 불러오지 못했습니다.' }, { status: 500 }),
+        response: Response.json(
+          { error: unknownError.message || '사이트 정보를 불러오지 못했습니다.' },
+          { status: 500 },
+        ),
         isPublic: false,
       };
     }
 
-    return { response: Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 }), isPublic: false };
+    return {
+      response: Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 }),
+      isPublic: false,
+    };
   }
 }

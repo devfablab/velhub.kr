@@ -76,7 +76,7 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  const rhizome = hashtagRow.data.rhizomes;
+  const rhizome = hashtagRow.data.rhizomes as unknown as { id: string; site_type: string; is_shutdown: boolean | null };
 
   if (rhizome.site_type !== 'blog' || rhizome.is_shutdown !== false) {
     notFound();

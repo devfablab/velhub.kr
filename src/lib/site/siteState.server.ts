@@ -37,7 +37,9 @@ export async function getSiteRoutingInfo({
   }
 
   return readPublicCache({
-    key: normalizedCustomDomain ? `site-routing:domain:${normalizedCustomDomain}` : `site-routing:site:${normalizedSiteName}`,
+    key: normalizedCustomDomain
+      ? `site-routing:domain:${normalizedCustomDomain}`
+      : `site-routing:site:${normalizedSiteName}`,
     tags: normalizedCustomDomain ? ['sites'] : [`site:${normalizedSiteName}`],
     ttlSeconds: 60,
     load: () => loadSiteRoutingInfo(normalizedSiteName, normalizedCustomDomain),

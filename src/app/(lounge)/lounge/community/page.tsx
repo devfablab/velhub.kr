@@ -2,12 +2,12 @@ import { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { NextRequest } from 'next/server';
 import { originTitle, Seo } from '@/lib/seo';
-import { GET as getHomePosts } from '@/app/api/home/posts/route';
 import Container from '../../menu';
 import Aside from '../aside';
 import AuthSection from '../auth';
 import List from '../list';
 import Slick from '../slick';
+import { GET as getHomePosts } from '@/app/api/home/posts/route';
 import styles from '@/app/page.module.sass';
 
 export async function generateMetadata(): Promise<Metadata> {

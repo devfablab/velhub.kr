@@ -41,10 +41,7 @@ const MEMORY_CACHE_MAX_ENTRIES = 1000;
 const memoryCache = new Map<string, MemoryCacheEntry>();
 
 async function getTagVersions(tags: PublicCacheTag[]) {
-  const versionsResult = await getSupabaseAdmin()
-    .from('public_cache_versions')
-    .select('tag, version')
-    .in('tag', tags);
+  const versionsResult = await getSupabaseAdmin().from('public_cache_versions').select('tag, version').in('tag', tags);
 
   if (versionsResult.error) {
     throw versionsResult.error;

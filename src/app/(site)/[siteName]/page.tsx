@@ -8,9 +8,9 @@ import { getSitePageMetadata } from '@/lib/seoSite';
 import { getVisibleBlogHomeAds } from '@/lib/service/site/blog/blogAds/server';
 import { getVisibleCommunityBoards } from '@/lib/service/site/community/managerOnlyBoards';
 import verifySession from '@/lib/session/verifySession';
-import { GET as getBlogHome } from '@/app/api/site/[siteName]/blog-home/route';
 import Blog, { type BlogHomeData } from './blog';
 import Community from './community';
+import { GET as getBlogHome } from '@/app/api/site/[siteName]/blog-home/route';
 
 type RouteContext = {
   params: Promise<{

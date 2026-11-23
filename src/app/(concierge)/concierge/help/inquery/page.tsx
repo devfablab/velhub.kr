@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import { getCurrentStigma } from '@/lib/session/utils';
 import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
+import { getCurrentStigma } from '@/lib/session/utils';
 import IdentityVerificationButton from '@/components/buttons/IdentityVerificationButton';
 import LoginRequiredScreen from '@/components/service/LoginRequiredScreen';
 import Container from '../../menu';

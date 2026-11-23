@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import type { InquiryStatus, InquiryType } from '@/lib/service/concierge/conciergeInquiries';
-import { getCurrentStigma } from '@/lib/session/utils';
 import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
+import { getCurrentStigma } from '@/lib/session/utils';
 import Container from '../../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';

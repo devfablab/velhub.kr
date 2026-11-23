@@ -70,7 +70,7 @@ export default async function Page(context: SearchContext) {
     notFound();
   }
 
-  const siteType = boardResult.data.rhizomes.site_type;
+  const siteType = (boardResult.data.rhizomes as unknown as { site_type: string }).site_type;
   const isCommunity = siteType === 'community';
 
   const usesMediaPageSizes = isMediaBoardPageSize(siteType, boardResult.data.board_type);

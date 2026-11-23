@@ -57,10 +57,7 @@ export async function detectAdult(siteName: string): Promise<boolean> {
 
   const [identityResult, siteResult] = await Promise.all([
     getSiteApiData<IdentityStatusResponse>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
-    getSiteApiData<SitePublicResponse>(
-      `/api/site/public?siteName=${siteName}`,
-      '사이트 정보를 불러오지 못했습니다.',
-    ),
+    getSiteApiData<SitePublicResponse>(`/api/site/public?siteName=${siteName}`, '사이트 정보를 불러오지 못했습니다.'),
   ]);
 
   return isAdultForSite(identityResult, siteResult);

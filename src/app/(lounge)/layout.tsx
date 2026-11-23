@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next';
+import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import ChannelWorks from '@/components/ChannelWorks';
 import Footer from '@/components/footers/Footer';
 import HeaderLounge from '@/components/headers/Lounge';
 import { LoungeHeaderProvider, type LoungeHeaderData } from './lounge/shared/LoungeHeaderContext';
-import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',

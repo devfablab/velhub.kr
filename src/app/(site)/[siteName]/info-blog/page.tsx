@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSitePageMetadata } from '@/lib/seoSite';
-import { normalizeText } from '@/lib/utils';
 import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
+import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../../lib/service/site/getSiteApiData';
 import Container from '../menu';
 import Opt, { type FavoriteResponse } from './opt';
@@ -128,7 +128,10 @@ export default async function Page(context: RouteContext) {
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
   const [response, favorite] = await Promise.all([
     fetchApiRoute(`/api/team-blog?siteName=${normalizedSiteName}`),
-    getSiteApiData<FavoriteResponse>(`/api/site/blog/${normalizedSiteName}/favorites`, '즐겨찾기 정보를 불러오지 못했습니다.'),
+    getSiteApiData<FavoriteResponse>(
+      `/api/site/blog/${normalizedSiteName}/favorites`,
+      '즐겨찾기 정보를 불러오지 못했습니다.',
+    ),
   ]);
   const result = (await response.json()) as BlogInfoResponse;
 

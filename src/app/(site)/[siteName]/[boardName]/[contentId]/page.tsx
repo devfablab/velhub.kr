@@ -1,5 +1,5 @@
-import { after } from 'next/server';
 import { notFound } from 'next/navigation';
+import { after } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import type { LinkPreviewData } from '@/lib/service/getLinkPreview';

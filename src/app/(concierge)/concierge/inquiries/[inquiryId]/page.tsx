@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import verifySession from '@/lib/session/verifySession';
 import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
+import verifySession from '@/lib/session/verifySession';
 import Container from '../../menu';
 import Opt, { InquiryDetailResponse } from './opt';
 import styles from '@/app/concierge.module.sass';

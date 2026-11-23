@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import type { FavoriteBlogsResponse } from '@/lib/service/hubFavoriteFolder.shared';
 import { getHubApiData } from '@/lib/service/hub/getData';
+import type { FavoriteBlogsResponse } from '@/lib/service/hubFavoriteFolder.shared';
 import { fetchApiRoute } from '@/lib/service/site/siteApiRoutes';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceNoDataIcon } from '@/components/Svgs';

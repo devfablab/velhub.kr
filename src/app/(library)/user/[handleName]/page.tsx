@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
-import { GET as getUserLibrary } from '@/app/api/user/[handleName]/route';
 import Opt, { Response } from './opt';
+import { GET as getUserLibrary } from '@/app/api/user/[handleName]/route';
 
 type Props = { params: Promise<{ handleName: string }>; searchParams: Promise<{ tab?: string }> };
 
@@ -46,9 +46,12 @@ export default async function Page({ params, searchParams }: Props) {
   let initialData: Response | null = null;
   let initialError = '';
   try {
-    const response = await getUserLibrary(new Request(`http://localhost/api/user/${encodeURIComponent(handleName)}?page=1`), {
-      params: Promise.resolve({ handleName }),
-    });
+    const response = await getUserLibrary(
+      new Request(`http://localhost/api/user/${encodeURIComponent(handleName)}?page=1`),
+      {
+        params: Promise.resolve({ handleName }),
+      },
+    );
     const result = (await response.json()) as Response & { message?: string };
     if (!response.ok) throw new Error(result.message ?? '유저 정보를 불러오지 못했습니다.');
     initialData = result;
