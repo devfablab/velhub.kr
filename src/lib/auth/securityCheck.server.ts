@@ -15,6 +15,7 @@ type HeaderReader = {
 type SessionSecurityRecord = {
   verifiedContextKeys: string[];
   settingsVerifiedUntil: number;
+  lastLoggedContextKey?: string;
 };
 
 type KnownAccessContexts = {
@@ -45,6 +46,7 @@ const EMAIL_CODE_SECONDS = 60 * 5;
 const REVOKED_SECONDS = 60 * 60 * 2;
 const FRESH_PASSWORD_SIGN_IN_MS = 10 * 60 * 1000;
 const MAX_VERIFIED_CONTEXT_KEYS = 20;
+const MAX_ACCESS_LOGS = 100;
 
 const EMPTY_SECURITY_STATE: SecurityState = {
   revoked: false,
@@ -70,6 +72,69 @@ function getEmailCodeKey(sessionId: string) {
 
 function getRevokedKey(userId: string) {
   return `security:revoked:${userId}`;
+}
+
+function getRequestIpAddress(headerList: HeaderReader) {
+  const forwardedIp = (headerList.get('x-forwarded-for') ?? '').split(',')[0]?.trim();
+  return forwardedIp || (headerList.get('x-real-ip') ?? '').trim() || null;
+}
+
+async function writeAccessLog(userId: string, headerList: HeaderReader, context: AccessContext) {
+  const country = (headerList.get('x-vercel-ip-country') ?? '').trim().toUpperCase() || null;
+  const region = (headerList.get('x-vercel-ip-country-region') ?? '').trim().toUpperCase() || null;
+  const insertResult = await getSupabaseAdmin()
+    .from('stigma_access_logs')
+    .insert({
+      user_id: userId,
+      ip_address: getRequestIpAddress(headerList),
+      country,
+      region: country === 'KR' ? region : null,
+      device_key: context.deviceKey,
+    });
+
+  if (insertResult.error) {
+    console.error('[security-check] access log error', insertResult.error);
+    return;
+  }
+
+  const oldLogResult = await getSupabaseAdmin()
+    .from('stigma_access_logs')
+    .select('id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .range(MAX_ACCESS_LOGS, MAX_ACCESS_LOGS + 99);
+
+  const oldLogIds = (oldLogResult.data ?? []).map((log) => log.id as string);
+
+  if (oldLogResult.error || !oldLogIds.length) {
+    return;
+  }
+
+  const deleteResult = await getSupabaseAdmin().from('stigma_access_logs').delete().in('id', oldLogIds);
+
+  if (deleteResult.error) {
+    console.error('[security-check] access log cleanup error', deleteResult.error);
+  }
+}
+
+async function logAccessContextChange(sessionClaims: SessionClaims, headerList: HeaderReader, context: AccessContext) {
+  if (!sessionClaims.sessionId) {
+    return;
+  }
+
+  const contextKey = getAccessContextKey(context);
+  const record = await getSessionSecurityRecord(sessionClaims.sessionId);
+
+  if (record?.lastLoggedContextKey === contextKey) {
+    return;
+  }
+
+  await saveSessionSecurityRecord(sessionClaims.sessionId, {
+    verifiedContextKeys: record?.verifiedContextKeys ?? [],
+    settingsVerifiedUntil: record?.settingsVerifiedUntil ?? 0,
+    lastLoggedContextKey: contextKey,
+  });
+  await writeAccessLog(sessionClaims.userId, headerList, context);
 }
 
 function getEmailCodeHash(sessionId: string, code: string) {
@@ -145,6 +210,7 @@ async function trustSessionContext(sessionId: string, record: SessionSecurityRec
   await saveSessionSecurityRecord(sessionId, {
     verifiedContextKeys: [...verifiedContextKeys, contextKey].slice(-MAX_VERIFIED_CONTEXT_KEYS),
     settingsVerifiedUntil: record?.settingsVerifiedUntil ?? 0,
+    lastLoggedContextKey: record?.lastLoggedContextKey,
   });
 }
 
@@ -197,6 +263,10 @@ export async function getSecurityState(
   const now = Date.now();
 
   if (record?.verifiedContextKeys.includes(contextKey)) {
+    if (record.lastLoggedContextKey !== contextKey) {
+      await logAccessContextChange(sessionClaims, headerList, context);
+    }
+
     return { ...EMPTY_SECURITY_STATE, isSettingsVerified: record.settingsVerifiedUntil > now };
   }
 
@@ -215,12 +285,17 @@ export async function getSecurityState(
     }
 
     await trustSessionContext(sessionClaims.sessionId, record, contextKey);
+    await logAccessContextChange(sessionClaims, headerList, context);
 
     return { ...EMPTY_SECURITY_STATE, isSettingsVerified: (record?.settingsVerifiedUntil ?? 0) > now };
   }
 
   if (record?.settingsVerifiedUntil) {
     await saveSessionSecurityRecord(sessionClaims.sessionId, { ...record, settingsVerifiedUntil: 0 });
+  }
+
+  if (record?.lastLoggedContextKey !== contextKey) {
+    await logAccessContextChange(sessionClaims, headerList, context);
   }
 
   return { ...EMPTY_SECURITY_STATE, needsAccessCheck: true };
@@ -248,6 +323,7 @@ export async function completeSettingsCheck(sessionClaims: SessionClaims, header
   const verifiedContextKeys = record?.verifiedContextKeys ?? [];
 
   await saveSessionSecurityRecord(sessionClaims.sessionId, {
+    lastLoggedContextKey: record?.lastLoggedContextKey,
     verifiedContextKeys: verifiedContextKeys.includes(contextKey)
       ? verifiedContextKeys
       : [...verifiedContextKeys, contextKey].slice(-MAX_VERIFIED_CONTEXT_KEYS),

@@ -67,6 +67,7 @@ const SETTINGS_API_PATHS = [
   '/api/auth/default-login-method',
   '/api/auth/mfa/recovery-code',
   '/api/auth/password/change',
+  '/api/auth/access-logs',
   '/api/auth/security-pin',
   '/api/notifications/email/password-reset',
 ];

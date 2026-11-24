@@ -33,7 +33,7 @@ export default function SecurityPinFields({
   return (
     <Stack gap={1.5} className="security-pin-fields">
       {showWarning ? (
-        <p className={`alert error ${styles.alert}`}>
+        <div className={`alert error ${styles.alert}`}>
           <WarningAmberRoundedIcon />
           <div>
             <p>
@@ -45,7 +45,7 @@ export default function SecurityPinFields({
             </p>
             <p>생일이나 전화번호처럼 남이 짐작할 수 있는 번호는 피해 주세요.</p>
           </div>
-        </p>
+        </div>
       ) : null}
 
       <Stack gap={0.75}>

@@ -1,11 +1,11 @@
 # PLAN.md
 
-> 마지막 갱신: 2026-11-23 / 작성: Claude
+> 마지막 갱신: 2026-11-24 / 작성: Claude
 > 기준 브랜치: main / 이 작업은 아직 미커밋 상태
 
 ## 4. 현재 상태
 
-- 지금 작업 중인 단계: 무거운 조회 개선과 DB 색인 추가 완료
+- 지금 작업 중인 단계: 접속 기록 (설정 화면)
 - 테스트 상태: 로컬 측정만 함 (라운지 첫 화면 4~5초 → 0.3초 안팎)
 - 미커밋 변경 요약: 공개 데이터 Redis 저장본, DB 변경 번호 장치, 라운지 적용
 
@@ -66,6 +66,18 @@
 - [x] 전후 비교 같음 (새 사이트 API 2건, 주제별 사이트 API, 모먼트 화면)
 - [x] 모먼트 인기글, 많이 읽은 글: 좋아요, 조회수를 DB에서 한 번에 모아 받음 (`lounge_post_score_entries`, `20261123170000_lounge_post_scores.sql`, 예전 조회와 합계, 날짜 형식 같음 확인)
 
+## 접속 기록 (2026-11-24)
+
+- 같은 자리에서 본인 확인 창이 반복해서 떠서, 판정된 나라와 지역을 남겨 보기 위함
+- 남기는 때: 지역, 기기, 운영체제, 브라우저 중 하나라도 직전 기록과 다를 때, 새로 로그인했을 때
+- 남기는 것: 일시, IP, 판정 나라, 한국이면 지역, 기기
+- 사람마다 최근 100건까지 보관, 넘으면 오래된 것부터 지움
+- 설정 화면에서 접속 기록 칸을 처음 펼칠 때 불러오고, 닫았다 다시 열어도 다시 불러오지 않음
+
+- [x] 1. 표 `stigma_access_logs` 추가, linked DB 적용
+- [x] 2. `securityCheck.server.ts`에서 기록 남기기
+- [x] 3. `/settings`에 접속 기록 표시 (`api/auth/access-logs`, 설정 본인 확인 대상 목록에 추가)
+
 ## 남은 단계
 
 
@@ -94,6 +106,9 @@
 | `supabase/migrations/20261123170000_lounge_post_scores.sql` | 글 점수 집계 함수 | 완료 |
 | `src/lib/service/site/siteApiRoutes.ts`, `src/lib/service/hub/getData.ts` | 직접 호출 목록 추가, `fetchApiRoute` | 완료 |
 | `(hub)`, `(concierge)`, `(library)/creator/page.tsx`, `creator/settings`, `user/settings`, `(new)/memberships/creator`, `(lounge)/layout.tsx`, `lounge/search`, `[siteName]/info-blog` | 서버 자기 요청을 직접 호출로 | 완료 |
+| `supabase/migrations/20261124100000_stigma_access_logs.sql` | 접속 기록 표 | 완료 |
+| `src/lib/auth/securityCheck.server.ts` | 접속 기록 남기기 | 완료 |
+| `src/app/(settings)/settings/accessLogs.tsx`, `page.tsx`, `src/app/api/auth/access-logs/route.ts`, `src/proxy.ts` | 설정 화면에 접속 기록 표시 | 완료 |
 | `src/app/(library)/creator/[handleName]/page.tsx`, `user/[handleName]/page.tsx`, `user/[handleName]/following/page.tsx`, `src/app/api/creator/[handleName]/route.ts` | 직접 호출, 동시 시작 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)

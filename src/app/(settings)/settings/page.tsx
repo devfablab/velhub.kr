@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers';
 import { Grid } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims } from '@/lib/session/server';
+import AccessLogs from './accessLogs';
 import Headline from './headline';
 import UserInfo from './info';
 import LoginMethod from './loginMethod';
@@ -128,6 +129,7 @@ export default async function Page() {
             <LoginMethod initialData={loginMethod} initialError={loginMethodError} />
             <TotpSetup initialFactors={totpFactors} initialError={totpError} />
             <SecurityPin initialHasSecurityPin={hasSecurityPin} initialError={securityPinError} />
+            <AccessLogs />
             <LogoutActions />
             <WithdrawalActions />
           </Grid>
