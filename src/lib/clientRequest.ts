@@ -46,7 +46,7 @@ function parseIpv4(address: string) {
     return null;
   }
 
-  return parts.reduce((total, part) => total * 256n + BigInt(part), 0n);
+  return parts.reduce((total, part) => total * BigInt(256) + BigInt(part), BigInt(0));
 }
 
 function parseIpv6(address: string) {
@@ -74,7 +74,7 @@ function parseIpv6(address: string) {
     return null;
   }
 
-  return groups.reduce((total, group) => total * 65536n + BigInt(Number.parseInt(group, 16)), 0n);
+  return groups.reduce((total, group) => total * BigInt(65536) + BigInt(Number.parseInt(group, 16)), BigInt(0));
 }
 
 function isInRanges(address: string, ranges: string[], parse: (value: string) => bigint | null, bitLength: bigint) {
@@ -100,8 +100,8 @@ function isInRanges(address: string, ranges: string[], parse: (value: string) =>
 
 function isCloudflareAddress(address: string) {
   return (
-    isInRanges(address, CLOUDFLARE_IPV4_RANGES, parseIpv4, 32n) ||
-    isInRanges(address, CLOUDFLARE_IPV6_RANGES, parseIpv6, 128n)
+    isInRanges(address, CLOUDFLARE_IPV4_RANGES, parseIpv4, BigInt(32)) ||
+    isInRanges(address, CLOUDFLARE_IPV6_RANGES, parseIpv6, BigInt(128))
   );
 }
 
