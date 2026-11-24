@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { type AccessContext, getAccessContext, getAccessContextKey } from '@/lib/auth/accessContext';
 import { createSecurityPinHash } from '@/lib/auth/securityPin.server';
 import { getRecoveryRecipient } from '@/lib/auth/totpRecovery.server';
+import { getClientIpAddress, getClientLocation } from '@/lib/clientRequest';
 import { redis } from '@/lib/clients/redis';
 import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
@@ -74,19 +75,13 @@ function getRevokedKey(userId: string) {
   return `security:revoked:${userId}`;
 }
 
-function getRequestIpAddress(headerList: HeaderReader) {
-  const forwardedIp = (headerList.get('x-forwarded-for') ?? '').split(',')[0]?.trim();
-  return forwardedIp || (headerList.get('x-real-ip') ?? '').trim() || null;
-}
-
 async function writeAccessLog(userId: string, headerList: HeaderReader, context: AccessContext) {
-  const country = (headerList.get('x-vercel-ip-country') ?? '').trim().toUpperCase() || null;
-  const region = (headerList.get('x-vercel-ip-country-region') ?? '').trim().toUpperCase() || null;
+  const { country, region } = getClientLocation(headerList);
   const insertResult = await getSupabaseAdmin()
     .from('stigma_access_logs')
     .insert({
       user_id: userId,
-      ip_address: getRequestIpAddress(headerList),
+      ip_address: getClientIpAddress(headerList),
       country,
       region: country === 'KR' ? region : null,
       device_key: context.deviceKey,

@@ -1,4 +1,5 @@
 import { after } from 'next/server';
+import { getClientIpAddress } from '@/lib/clientRequest';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -176,31 +177,11 @@ function getSiteRoleLabel(role: string, boardLabel: string | null = null) {
   return role;
 }
 
-function getForwardedIp(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  return normalizeText(value.split(',')[0]);
-}
-
 function getRequestIp(request: Request) {
-  const forwardedForIp = getForwardedIp(request.headers.get('x-forwarded-for'));
+  const clientIpAddress = getClientIpAddress(request.headers);
 
-  if (forwardedForIp) {
-    return forwardedForIp;
-  }
-
-  const realIp = normalizeText(request.headers.get('x-real-ip'));
-
-  if (realIp) {
-    return realIp;
-  }
-
-  const cfConnectingIp = normalizeText(request.headers.get('cf-connecting-ip'));
-
-  if (cfConnectingIp) {
-    return cfConnectingIp;
+  if (clientIpAddress) {
+    return clientIpAddress;
   }
 
   if (process.env.NODE_ENV === 'development') {

@@ -11,6 +11,7 @@ type SecurityPinInputProps = {
   disabled?: boolean;
   error?: boolean;
   autoFocus?: boolean;
+  onComplete?: () => void;
 };
 
 export default function SecurityPinInput({
@@ -20,6 +21,7 @@ export default function SecurityPinInput({
   disabled,
   error,
   autoFocus,
+  onComplete,
 }: SecurityPinInputProps) {
   const inputReferences = useRef<(HTMLInputElement | null)[]>([]);
   const digits = Array.from({ length: SECURITY_PIN_LENGTH }, (_, index) => value[index] ?? '');
@@ -40,8 +42,16 @@ export default function SecurityPinInput({
       }
     });
 
-    onChange(nextDigits.join('').slice(0, SECURITY_PIN_LENGTH));
-    return insertedDigits.length;
+    const nextValue = nextDigits.join('').slice(0, SECURITY_PIN_LENGTH);
+    onChange(nextValue);
+
+    return {
+      insertedCount: insertedDigits.length,
+      isCompleted:
+        insertedDigits.length > 0 &&
+        startIndex + insertedDigits.length >= SECURITY_PIN_LENGTH &&
+        nextValue.length === SECURITY_PIN_LENGTH,
+    };
   }
 
   function handleChange(index: number, nextValue: string) {
@@ -52,10 +62,14 @@ export default function SecurityPinInput({
       return;
     }
 
-    const insertedCount = updateDigits(index, nextValue.replace(digits[index], '') || nextValue);
+    const { insertedCount, isCompleted } = updateDigits(index, nextValue.replace(digits[index], '') || nextValue);
 
     if (insertedCount > 0) {
       focusInput(index + insertedCount);
+    }
+
+    if (isCompleted) {
+      onComplete?.();
     }
   }
 
@@ -83,8 +97,12 @@ export default function SecurityPinInput({
 
   function handlePaste(index: number, event: ClipboardEvent<HTMLInputElement>) {
     event.preventDefault();
-    const insertedCount = updateDigits(index, event.clipboardData.getData('text'));
+    const { insertedCount, isCompleted } = updateDigits(index, event.clipboardData.getData('text'));
     focusInput(index + insertedCount);
+
+    if (isCompleted) {
+      onComplete?.();
+    }
   }
 
   return (

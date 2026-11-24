@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, type ReactNode, useEffect, useState } from 'react';
+import { type JSX, type ReactNode, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
@@ -73,6 +73,8 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
   const [methods, setMethods] = useState<SecurityCheckMethods | null>(null);
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
+  const pinFieldReference = useRef<HTMLDivElement>(null);
+  const submitButtonReference = useRef<HTMLButtonElement>(null);
   const [emailCode, setEmailCode] = useState('');
   const [pin, setPin] = useState('');
   const [emailCodeExpiresAt, setEmailCodeExpiresAt] = useState<number | null>(null);
@@ -321,13 +323,25 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
                 <Typography variant="subtitle2" component="span">
                   인증 번호
                 </Typography>
-                <SecurityPinInput label="인증 번호" value={emailCode} onChange={setEmailCode} disabled={isBusy} />
+                <SecurityPinInput
+                  label="인증 번호"
+                  value={emailCode}
+                  onChange={setEmailCode}
+                  onComplete={() => pinFieldReference.current?.querySelector('input')?.focus()}
+                  disabled={isBusy}
+                />
               </Stack>
-              <Stack gap={0.75}>
+              <Stack ref={pinFieldReference} gap={0.75}>
                 <Typography variant="subtitle2" component="span">
                   보안 비밀번호
                 </Typography>
-                <SecurityPinInput label="보안 비밀번호" value={pin} onChange={setPin} disabled={isBusy} />
+                <SecurityPinInput
+                  label="보안 비밀번호"
+                  value={pin}
+                  onChange={setPin}
+                  onComplete={() => submitButtonReference.current?.focus()}
+                  disabled={isBusy}
+                />
               </Stack>
             </>
           ) : null}
@@ -375,7 +389,13 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
               {closeLabel}
             </button>
           ) : null}
-          <button type="submit" form={formId} className="button medium submit" disabled={isBusy || !methods}>
+          <button
+            ref={submitButtonReference}
+            type="submit"
+            form={formId}
+            className="button medium submit"
+            disabled={isBusy || !methods}
+          >
             {isBusy ? <LoadingIndicator size={20} /> : null}
             확인
           </button>
@@ -405,7 +425,7 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
             {closeLabel}
           </button>
         ) : null}
-        <button type="submit" form={formId} disabled={isBusy || !methods}>
+        <button ref={submitButtonReference} type="submit" form={formId} disabled={isBusy || !methods}>
           {isBusy ? <LoadingIndicator size={20} /> : null}
           확인
         </button>

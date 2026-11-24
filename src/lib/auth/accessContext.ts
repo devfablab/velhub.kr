@@ -1,3 +1,5 @@
+import { getClientLocation } from '@/lib/clientRequest';
+
 export const SECURITY_CHECK_REQUIRED_CODE = 'security_check_required';
 export const SETTINGS_CHECK_REQUIRED_CODE = 'settings_check_required';
 
@@ -40,8 +42,9 @@ function getDeviceType(userAgent: string) {
 }
 
 export function getAccessContext(headerList: HeaderReader): AccessContext {
-  const country = (headerList.get('x-vercel-ip-country') ?? '').trim().toUpperCase() || 'LOCAL';
-  const countryRegion = (headerList.get('x-vercel-ip-country-region') ?? '').trim().toUpperCase();
+  const location = getClientLocation(headerList);
+  const country = location.country || 'LOCAL';
+  const countryRegion = location.region ?? '';
   const userAgent = headerList.get('user-agent') ?? '';
 
   return {

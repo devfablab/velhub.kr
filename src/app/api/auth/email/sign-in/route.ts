@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { getClientIpAddress } from '@/lib/clientRequest';
 import { redis } from '@/lib/clients/redis';
 import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
@@ -31,26 +32,6 @@ function getSupabasePublic() {
       autoRefreshToken: false,
     },
   });
-}
-
-function getClientIpAddress(request: Request) {
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  const cfConnectingIp = request.headers.get('cf-connecting-ip');
-
-  if (cfConnectingIp) {
-    return cfConnectingIp.trim();
-  }
-
-  if (realIp) {
-    return realIp.trim();
-  }
-
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0]?.trim() ?? 'unknown';
-  }
-
-  return 'unknown';
 }
 
 function getFailureRedisKey(email: string, clientIpAddress: string) {
@@ -189,7 +170,7 @@ export async function POST(request: Request) {
     const email = requestBody.email?.trim().toLowerCase() ?? '';
     const password = requestBody.password ?? '';
     const captchaToken = requestBody.captchaToken?.trim() ?? '';
-    const clientIpAddress = getClientIpAddress(request);
+    const clientIpAddress = getClientIpAddress(request.headers) ?? 'unknown';
     const requestOrigin = new URL(request.url).origin;
 
     if (!email) {
