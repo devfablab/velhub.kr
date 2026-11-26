@@ -51,7 +51,7 @@ const FIVE_FAILURES_GUIDE = '5번 틀리면 모든 기기에서 로그아웃됩�
 const METHOD_GUIDES: Record<keyof SecurityCheckMethods, string> = {
   password: '계정 비밀번호를 입력해 주세요.',
   totp: '2단계 인증 앱에 표시된 6자리 코드를 입력해 주세요.',
-  emailPin: '이메일로 우선 인증번호를 받으세요.',
+  emailPin: '보안 비밀번호 복구용 이메일로 우선 인증번호를 받으세요.',
 };
 
 const EMAIL_CODE_VALID_MILLISECONDS = 5 * 60 * 1000;
@@ -181,7 +181,7 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
     ) {
       setErrorMessage(
         methods.emailPin && !emailCodeExpiresAt
-          ? '먼저 이메일로 인증 번호를 받아 주세요.'
+          ? '먼저 복구용 이메일로 인증 번호를 받아 주세요.'
           : '본인 확인 정보를 모두 입력해 주세요.',
       );
       return;
@@ -309,7 +309,7 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
             disabled={isBusy || isSendingEmailCode}
           >
             {isSendingEmailCode ? <LoadingIndicator size={20} /> : null}
-            {emailCodeExpiresAt ? '인증 번호 다시 받기' : '이메일로 인증 번호 받기'}
+            {emailCodeExpiresAt ? '인증 번호 다시 받기' : '복구용 이메일로 인증 번호 받기'}
           </button>
 
           {emailCodeExpiresAt ? (
@@ -317,7 +317,7 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
               <Typography variant="body2" component="p" role="status" sx={{ whiteSpace: 'pre-line' }}>
                 {isEmailCodeExpired
                   ? '입력 시간이 지났습니다.\n인증 번호를 다시 받아 주세요.'
-                  : `이메일로 인증 번호가 전송되었습니다.\n전송된 인증 번호를 입력해 주세요. ${formatRemainingTime(remainingSeconds)} 이내에 입력하세요.`}
+                  : `복구용 이메일로 인증 번호가 전송되었습니다.\n전송된 인증 번호를 입력해 주세요. ${formatRemainingTime(remainingSeconds)} 이내에 입력하세요.`}
               </Typography>
               <Stack gap={0.75}>
                 <Typography variant="subtitle2" component="span">

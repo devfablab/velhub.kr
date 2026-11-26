@@ -74,7 +74,7 @@ const SETTINGS_API_PATHS = [
 
 const SECURITY_CHECK_EXEMPT_API_PATHS = ['/api/auth/security-check', '/api/auth/health'];
 
-const SIGN_IN_FLOW_API_PATHS = ['/api/auth/social', '/api/auth/social/check'];
+const SIGN_IN_FLOW_API_PATHS = ['/api/auth/social', '/api/auth/social/check', '/api/auth/recovery-email'];
 
 function isSettingsApiRequest(pathname: string, method: string) {
   if (pathname === '/api/account/withdrawal') {

@@ -42,11 +42,29 @@ export async function POST(request: Request) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const lockResult = await supabaseAdmin
+      .from('stigmas')
+      .select('payment_email_verified_at')
+      .eq('id', session.stigmaId)
+      .maybeSingle();
+
+    if (lockResult.error) {
+      return Response.json({ error: '결제 이메일을 저장하지 못했습니다.' }, { status: 500 });
+    }
+
+    const canChangePaymentEmail = !lockResult.data?.payment_email_verified_at;
+
+    if (!canChangePaymentEmail && !paymentPhone) {
+      return Response.json(
+        { error: '이메일은 개인 설정의 보안 비밀번호 복구용 이메일에서 바꿔 주세요.' },
+        { status: 400 },
+      );
+    }
 
     const updateResult = await supabaseAdmin
       .from('stigmas')
       .update({
-        ...(paymentEmail ? { payment_email: encrypt(paymentEmail) } : {}),
+        ...(paymentEmail && canChangePaymentEmail ? { payment_email: encrypt(paymentEmail) } : {}),
         ...(paymentPhone ? { payment_phone: encrypt(paymentPhone) } : {}),
       })
       .eq('id', session.stigmaId)

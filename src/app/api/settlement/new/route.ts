@@ -7,6 +7,7 @@ import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
+import { isRecoveryEmailLocked } from '@/lib/auth/recoveryEmail.server';
 
 const BUSINESS_LICENSE_BUCKET = 'business-license';
 const FAMILY_RELATION_CERTIFICATE_BUCKET = 'family-relation-certificates';
@@ -165,8 +166,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const settlementType = getString(formData, 'settlement_type');
     const paymentEmail = normalizePaymentEmail(getString(formData, 'payment_email'));
+    const isPaymentEmailLocked = await isRecoveryEmailLocked(sessionClaims.userId);
 
-    if (!isValidPaymentEmail(paymentEmail)) {
+    if (!isPaymentEmailLocked && !isValidPaymentEmail(paymentEmail)) {
       return NextResponse.json({ message: '이메일 주소 형식이 올바르지 않습니다.' }, { status: 400 });
     }
     const businessLicenseFile = getFile(formData, 'business_license');
@@ -269,12 +271,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { error: paymentEmailError } = await supabaseAdmin
-      .from('stigmas')
-      .update({
-        payment_email: encrypt(paymentEmail),
-      })
-      .eq('user_id', sessionClaims.userId);
+    const { error: paymentEmailError } = isPaymentEmailLocked
+      ? { error: null }
+      : await supabaseAdmin
+          .from('stigmas')
+          .update({
+            payment_email: encrypt(paymentEmail),
+          })
+          .eq('user_id', sessionClaims.userId);
 
     if (paymentEmailError) {
       return NextResponse.json({ message: '정산 이메일 등록에 실패했습니다.' }, { status: 500 });

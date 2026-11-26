@@ -10,6 +10,7 @@ import { getChannelWorksMember } from '@/lib/channelWorks/member.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims, hasCurrentAuthSessionCookie } from '@/lib/session/server';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
+import RecoveryEmailReminder from '@/components/auth/RecoveryEmailReminder';
 import SecurityCheckGuard from '@/components/auth/SecurityCheck';
 import TotpGuard from '@/components/auth/TotpGuard';
 import WithdrawalGuard from '@/components/auth/WithdrawalGuard';
@@ -126,6 +127,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   <WithdrawalGuard initialStatus={withdrawalStatus} initialRequestedAt={withdrawalRequestedAt}>
                     <TotpGuard needsTotp={needsTotp}>
                       <SecurityCheckGuard needsCheck={securityState?.needsAccessCheck === true} purpose="access">
+                        {sessionClaims?.userId && !needsTotp ? <RecoveryEmailReminder /> : null}
                         {children}
                       </SecurityCheckGuard>
                     </TotpGuard>

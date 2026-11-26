@@ -1,8 +1,10 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Grid } from '@mui/material';
+import { getRecoveryEmailState } from '@/lib/auth/recoveryEmail.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSessionClaims } from '@/lib/session/server';
+import { maskEmail } from '@/lib/utils';
 import AccessLogs from './accessLogs';
 import Headline from './headline';
 import UserInfo from './info';
@@ -10,6 +12,7 @@ import LoginMethod from './loginMethod';
 import LogoutActions from './logoutActions';
 import PasswordChange from './passwordChange';
 import PasswordSetup from './passwordSetup';
+import RecoveryEmail from './recoveryEmail';
 import SecurityPin from './securityPin';
 import TotpSetup from './totpSetup';
 import WithdrawalActions from './withdrawalActions';
@@ -20,7 +23,8 @@ export const metadata: Metadata = {
   description: '개인 설정 페이지',
 };
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ recoveryEmail?: string }> }) {
+  const { recoveryEmail: recoveryEmailParam } = await searchParams;
   let userInfo: { userName?: string; avatar?: string; avatarUrl?: string; bio?: string } | null = null;
   let userInfoError = '';
   let loginMethod: {
@@ -36,6 +40,8 @@ export default async function Page() {
   let totpError = '';
   let hasSecurityPin = false;
   let securityPinError = '';
+  let recoveryEmailState: { needsRecoveryEmail: boolean; maskedEmail: string; accountEmail: string } | null = null;
+  let recoveryEmailError = '';
   try {
     const cookieStore = await cookies();
     const headerList = await headers();
@@ -113,6 +119,18 @@ export default async function Page() {
   } catch (error) {
     securityPinError = error instanceof Error ? error.message : '보안 비밀번호 상태를 확인하지 못했습니다.';
   }
+  try {
+    const session = await getSessionClaims();
+    if (!session?.userId) throw new Error('보안 비밀번호 복구용 이메일을 불러오지 못했습니다.');
+    const state = await getRecoveryEmailState(session.userId);
+    recoveryEmailState = {
+      needsRecoveryEmail: state.needsRecoveryEmail,
+      maskedEmail: state.isVerified ? maskEmail(state.recoveryEmail) : '',
+      accountEmail: state.accountEmail,
+    };
+  } catch (error) {
+    recoveryEmailError = error instanceof Error ? error.message : '보안 비밀번호 복구용 이메일을 불러오지 못했습니다.';
+  }
   return (
     <main>
       <div className={`container ${styles.container}`}>
@@ -129,6 +147,14 @@ export default async function Page() {
             <LoginMethod initialData={loginMethod} initialError={loginMethodError} />
             <TotpSetup initialFactors={totpFactors} initialError={totpError} />
             <SecurityPin initialHasSecurityPin={hasSecurityPin} initialError={securityPinError} />
+            {recoveryEmailState?.needsRecoveryEmail || recoveryEmailError ? (
+              <RecoveryEmail
+                initialMaskedEmail={recoveryEmailState?.maskedEmail ?? ''}
+                accountEmail={recoveryEmailState?.accountEmail ?? ''}
+                isRequired={recoveryEmailParam === 'required'}
+                initialError={recoveryEmailError}
+              />
+            ) : null}
             <AccessLogs />
             <LogoutActions />
             <WithdrawalActions />

@@ -54,6 +54,7 @@ export type SettlementResponse = {
   identity: Identity | null;
   settlement: Settlement | null;
   paymentEmail: string | null;
+  isPaymentEmailLocked?: boolean;
 };
 
 const VisuallyHiddenInput = styled('input')({
@@ -191,6 +192,7 @@ export default function SettlementForm({
   const [identity, setIdentity] = useState<Identity | null>(initialData?.identity ?? null);
   const [settlement, setSettlement] = useState<Settlement | null>(initialData?.settlement ?? null);
   const [paymentEmail, setPaymentEmail] = useState(initialData?.paymentEmail ?? '');
+  const [isPaymentEmailLocked, setIsPaymentEmailLocked] = useState(Boolean(initialData?.isPaymentEmailLocked));
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
@@ -231,6 +233,7 @@ export default function SettlementForm({
       setIdentity(data.identity);
       setSettlement(data.settlement);
       setPaymentEmail(data.paymentEmail ?? '');
+      setIsPaymentEmailLocked(Boolean(data.isPaymentEmailLocked));
       setIsFormOpen(Boolean(data.identity && !data.settlement));
     } catch (error) {
       setErrorMessage(getMessage(error));
@@ -351,7 +354,7 @@ export default function SettlementForm({
     setErrorMessage('');
 
     try {
-      if (!paymentEmail.trim()) {
+      if (!isPaymentEmailLocked && !paymentEmail.trim()) {
         throw new Error('연락할 수 있는 이메일 주소를 입력해 주세요.');
       }
 
@@ -359,7 +362,7 @@ export default function SettlementForm({
         throw new Error('정산정보 수집 · 이용에 동의해 주세요.');
       }
 
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail.trim())) {
+      if (!isPaymentEmailLocked && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail.trim())) {
         throw new Error('이메일 주소 형식이 올바르지 않습니다.');
       }
 
@@ -715,15 +718,24 @@ export default function SettlementForm({
 
               <Stack gap={1}>
                 <Typography variant="subtitle2">정산 안내 이메일</Typography>
-                <TextField
-                  disabled={isApproved}
-                  fullWidth
-                  size="small"
-                  type="email"
-                  placeholder="정산 안내 이메일"
-                  value={paymentEmail}
-                  onChange={(event) => setPaymentEmail(event.target.value)}
-                />
+                {isPaymentEmailLocked ? (
+                  <>
+                    <Typography variant="body2">{maskEmail(paymentEmail)}</Typography>
+                    <Typography variant="body2">
+                      보안 비밀번호 복구용 이메일로 안내합니다. 바꾸려면 개인 설정에서 바꿔 주세요.
+                    </Typography>
+                  </>
+                ) : (
+                  <TextField
+                    disabled={isApproved}
+                    fullWidth
+                    size="small"
+                    type="email"
+                    placeholder="정산 안내 이메일"
+                    value={paymentEmail}
+                    onChange={(event) => setPaymentEmail(event.target.value)}
+                  />
+                )}
               </Stack>
               <Stack gap={1}>
                 <Typography id="components-settlement-form-field-label-2" variant="subtitle2">

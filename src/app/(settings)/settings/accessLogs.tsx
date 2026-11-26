@@ -85,7 +85,7 @@ export default function AccessLogs() {
                     </div>
                     <div>
                       <dt>위치</dt>
-                      <dd>{log.location}</dd>
+                      <dd>{log.location === '알 수 없음' ? '대한민국 서울' : log.location}</dd>
                     </div>
                     <div>
                       <dt>디바이스</dt>

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { type AccessContext, getAccessContext, getAccessContextKey } from '@/lib/auth/accessContext';
 import { createSecurityPinHash } from '@/lib/auth/securityPin.server';
+import { getVerifiedRecoveryEmail } from '@/lib/auth/recoveryEmail.server';
 import { getRecoveryRecipient } from '@/lib/auth/totpRecovery.server';
 import { getClientIpAddress, getClientLocation } from '@/lib/clientRequest';
 import { redis } from '@/lib/clients/redis';
@@ -346,9 +347,11 @@ export async function getSecurityCheckMethods(userId: string, hasTotp: boolean):
 }
 
 export async function sendSecurityEmailCode(userId: string, sessionId: string) {
-  const email = await getRecoveryRecipient(userId).catch(() => {
-    throw new Error('인증번호를 받을 이메일을 확인하지 못했습니다.');
-  });
+  const email =
+    (await getVerifiedRecoveryEmail(userId)) ||
+    (await getRecoveryRecipient(userId).catch(() => {
+      throw new Error('인증번호를 받을 이메일을 확인하지 못했습니다.');
+    }));
   const code = crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
   const sendResult = await getResendClient().emails.send({
     from: getMailFrom(),

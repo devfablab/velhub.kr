@@ -18,7 +18,8 @@ import {
   useTheme,
   Tooltip,
 } from '@mui/material';
-import { EMAIL_PATTERN, getActivityNameErrorMessage } from '@/lib/auth/emailSignUp';
+import { getActivityNameErrorMessage } from '@/lib/auth/emailSignUp';
+import { getUsableAccountEmail } from '@/lib/auth/recoveryEmail';
 import { getSecurityPinErrorMessage, SECURITY_PIN_ACKNOWLEDGE_MESSAGE } from '@/lib/auth/securityPin';
 import {
   EMPTY_SOCIAL_SIGN_UP_FIELD_ERRORS,
@@ -31,6 +32,7 @@ import { getSupabaseBrowser } from '@/lib/clients/supabase';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
 import { limitDisplayNameInput } from '@/lib/users/displayName';
 import { ACTIVITY_NAME_CHECK_REQUIRED_MESSAGE, useActivityNameCheck } from '@/lib/users/useActivityNameCheck';
+import RecoveryEmailFields from '@/components/auth/RecoveryEmailFields';
 import SecurityPinFields from '@/components/auth/SecurityPinFields';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -86,7 +88,8 @@ export default function Opt() {
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [userName, setUserName] = useState('');
   const activityNameCheck = useActivityNameCheck();
-  const [paymentEmail, setPaymentEmail] = useState('');
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryEmailCode, setRecoveryEmailCode] = useState('');
   const [securityPin, setSecurityPin] = useState('');
   const [securityPinConfirm, setSecurityPinConfirm] = useState('');
   const [isSecurityPinAcknowledged, setIsSecurityPinAcknowledged] = useState(false);
@@ -241,9 +244,10 @@ export default function Opt() {
     if (!profile || isSubmitting || activityNameCheck.isChecking) return;
 
     const validation = validateSocialSignUpFields({
-      provider: profile.provider,
+      accountEmail: getUsableAccountEmail(profile.email),
       userName,
-      paymentEmail,
+      recoveryEmail,
+      recoveryEmailCode,
       isAgreeTerm,
       isAgreeChild,
       isAgreePrivacy,
@@ -285,7 +289,8 @@ export default function Opt() {
           userName: validation.userName,
           securityPin,
           securityPinConfirm,
-          paymentEmail: profile.provider === 'naver' ? validation.paymentEmail : undefined,
+          recoveryEmail: validation.recoveryEmail,
+          recoveryEmailCode: validation.recoveryEmailCode,
           isAgreeTerm,
           isAgreeChild,
           isAgreePrivacy,
@@ -317,34 +322,6 @@ export default function Opt() {
     <Box component="form" onSubmit={handleSubmit}>
       <Stack gap={1}>
         {isLoading ? <p>소셜 로그인 정보를 확인하고 있습니다.</p> : null}
-        {profile?.provider === 'naver' ? (
-          <TextField
-            name="paymentEmail"
-            placeholder="이메일"
-            autoComplete="email"
-            type="email"
-            required
-            slotProps={{ htmlInput: { pattern: EMAIL_PATTERN.source } }}
-            value={paymentEmail}
-            onChange={(event: InputChangeEvent) => {
-              setPaymentEmail(event.currentTarget.value);
-              clearFieldError('paymentEmail');
-            }}
-            onInvalid={(event) => {
-              event.preventDefault();
-              const input = event.currentTarget as HTMLInputElement;
-              showNativeValidationError(
-                'paymentEmail',
-                input.validity.valueMissing ? '이메일을 입력해 주세요.' : '올바른 이메일 형식으로 입력해 주세요.',
-              );
-            }}
-            error={Boolean(fieldErrors.paymentEmail)}
-            helperText={fieldErrors.paymentEmail}
-            fullWidth
-            size="small"
-            disabled={isLoading || isSubmitting}
-          />
-        ) : null}
         <TextField
           name="userName"
           placeholder="활동명"
@@ -407,6 +384,26 @@ export default function Opt() {
             }}
             showWarning
             errorMessage={securityPinError}
+            disabled={isSubmitting}
+          />
+        )}
+        {isLoading || !profile ? null : (
+          <RecoveryEmailFields
+            email={recoveryEmail}
+            code={recoveryEmailCode}
+            accountEmail={getUsableAccountEmail(profile.email)}
+            onEmailChange={(value) => {
+              setRecoveryEmail(value);
+              clearFieldError('recoveryEmail');
+              clearFieldError('recoveryEmailCode');
+            }}
+            onCodeChange={(value) => {
+              setRecoveryEmailCode(value);
+              clearFieldError('recoveryEmailCode');
+            }}
+            emailError={fieldErrors.recoveryEmail}
+            codeError={fieldErrors.recoveryEmailCode}
+            onError={(message) => showPopup('', [message])}
             disabled={isSubmitting}
           />
         )}

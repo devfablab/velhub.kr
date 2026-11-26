@@ -25,7 +25,11 @@ export async function GET() {
       .select('id, name, birth_date, birth_date_dummy, gender, identity_verified_at')
       .eq('user_id', currentStigma.stigmaId)
       .maybeSingle(),
-    supabaseAdmin.from('stigmas').select('payment_email').eq('user_id', sessionClaims.userId).maybeSingle(),
+    supabaseAdmin
+      .from('stigmas')
+      .select('payment_email, payment_email_verified_at')
+      .eq('user_id', sessionClaims.userId)
+      .maybeSingle(),
   ]);
 
   if (identityResult.error || paymentEmailResult.error) {
@@ -74,5 +78,6 @@ export async function GET() {
   return NextResponse.json({
     ...serializeSettlementProfile(identityProfile, settlementProfile),
     paymentEmail,
+    isPaymentEmailLocked: Boolean(paymentEmailResult.data?.payment_email_verified_at),
   });
 }

@@ -1,5 +1,7 @@
 import crypto from 'crypto';
-import { EMAIL_PATTERN, isValidActivityName } from '@/lib/auth/emailSignUp';
+import { isValidActivityName } from '@/lib/auth/emailSignUp';
+import { getUsableAccountEmail } from '@/lib/auth/recoveryEmail';
+import { verifyRecoveryEmailCode } from '@/lib/auth/recoveryEmail.server';
 import { getSecurityPinErrorMessage, normalizeSecurityPin } from '@/lib/auth/securityPin';
 import { createSecurityPinHash } from '@/lib/auth/securityPin.server';
 import { type SocialSignUpFieldErrors, validateSocialSignUpFields } from '@/lib/auth/socialSignUp';
@@ -27,7 +29,8 @@ type SocialRequestBody = {
   isAgreeTerm?: boolean | null;
   isAgreeChild?: boolean | null;
   isAgreePrivacy?: boolean | null;
-  paymentEmail?: string | null;
+  recoveryEmail?: string | null;
+  recoveryEmailCode?: string | null;
 };
 
 const SUPPORTED_PROVIDERS = new Set(['google', 'github', 'kakao', 'naver']);
@@ -115,15 +118,16 @@ export async function POST(request: Request) {
     );
     const isSignUpRequest = !hasCompletedSignUp;
     let userName = requestBody.userName?.trim() ?? '';
-    let paymentEmail = requestBody.paymentEmail?.trim().toLowerCase() ?? '';
+    let recoveryEmail = '';
     const securityPin = normalizeSecurityPin(requestBody.securityPin);
     const securityPinConfirm = normalizeSecurityPin(requestBody.securityPinConfirm);
 
     if (isSignUpRequest) {
       const validation = validateSocialSignUpFields({
-        provider,
+        accountEmail: getUsableAccountEmail(email),
         userName,
-        paymentEmail,
+        recoveryEmail: requestBody.recoveryEmail ?? '',
+        recoveryEmailCode: requestBody.recoveryEmailCode ?? '',
         isAgreeTerm: requestBody.isAgreeTerm === true,
         isAgreeChild: requestBody.isAgreeChild === true,
         isAgreePrivacy: requestBody.isAgreePrivacy === true,
@@ -144,11 +148,20 @@ export async function POST(request: Request) {
         );
       }
 
+      const recoveryEmailCheck = await verifyRecoveryEmailCode(
+        sessionClaims.userId,
+        validation.recoveryEmail,
+        validation.recoveryEmailCode,
+      );
+
+      if (!recoveryEmailCheck.ok) {
+        return validationError({ ...validation.fieldErrors, recoveryEmailCode: recoveryEmailCheck.error });
+      }
+
       userName = validation.userName;
-      paymentEmail = validation.paymentEmail;
+      recoveryEmail = validation.recoveryEmail;
     } else {
       if (userName && !isValidActivityName(userName)) userName = '';
-      if (paymentEmail && !EMAIL_PATTERN.test(paymentEmail)) paymentEmail = '';
     }
 
     const providerAccountId =
@@ -182,7 +195,8 @@ export async function POST(request: Request) {
           user_name_lookup_hash: createActivityNameLookupHash(userName),
           security_pin_hash: createSecurityPinHash(sessionClaims.userId, securityPin),
           email: encrypt(email),
-          payment_email: provider === 'naver' ? encrypt(paymentEmail) : null,
+          payment_email: encrypt(recoveryEmail),
+          payment_email_verified_at: new Date().toISOString(),
           avatar,
           avatar_width: null,
           avatar_height: null,
@@ -219,7 +233,8 @@ export async function POST(request: Request) {
         avatar,
         role: 'user',
         email: encrypt(email),
-        payment_email: provider === 'naver' && paymentEmail ? encrypt(paymentEmail) : null,
+        payment_email: encrypt(recoveryEmail),
+        payment_email_verified_at: new Date().toISOString(),
         is_agree_term: true,
         is_agree_child: true,
         is_agree_privacy: true,
