@@ -25,12 +25,12 @@ import { ko } from 'date-fns/locale/ko';
 import { AI_USAGE_REQUIRED_MESSAGE, type AiUsage, normalizeAiUsage } from '@/lib/service/site/blog/aiUsage';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import Captcha from '@/components/Captcha';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import SpellCheckDialog, {
   type SpellCheckDialogHandle,
   type SpellCheckSection,
 } from '@/components/editor/SpellCheckDialog';
-import Captcha from '@/components/Captcha';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';

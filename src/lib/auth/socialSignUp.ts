@@ -1,4 +1,8 @@
-import { ACTIVITY_NAME_MAX_LENGTH, ACTIVITY_NAME_MIN_LENGTH, getActivityNameErrorMessage } from '@/lib/auth/emailSignUp';
+import {
+  ACTIVITY_NAME_MAX_LENGTH,
+  ACTIVITY_NAME_MIN_LENGTH,
+  getActivityNameErrorMessage,
+} from '@/lib/auth/emailSignUp';
 import {
   getRecoveryEmailErrorMessage,
   normalizeRecoveryEmail,

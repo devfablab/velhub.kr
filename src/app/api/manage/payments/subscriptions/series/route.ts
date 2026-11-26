@@ -1,3 +1,4 @@
+import { canBeSeriesAuthor } from '@/lib/board/seriesAuthor';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import {
   getMaxAllowedSeriesSubscriptionPrice,
@@ -11,7 +12,6 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
-import { canBeSeriesAuthor } from '@/lib/board/seriesAuthor';
 import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';

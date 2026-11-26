@@ -139,7 +139,9 @@ export default function RecoveryEmail({
           <Box component="form" noValidate onSubmit={handleSubmit}>
             <Stack gap={2.5}>
               {maskedEmail ? (
-                <Typography variant="body2">현재 {RECOVERY_EMAIL_LABEL}: {maskedEmail}</Typography>
+                <Typography variant="body2">
+                  현재 {RECOVERY_EMAIL_LABEL}: {maskedEmail}
+                </Typography>
               ) : (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />

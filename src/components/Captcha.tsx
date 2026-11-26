@@ -115,9 +115,7 @@ export default function Captcha({ purpose, theme = 'light', resetKey = 0, onPass
     let widgetId = '';
     let isActive = true;
     const siteKey =
-      provider === 'fcaptcha'
-        ? process.env.NEXT_PUBLIC_FCAPTCHA_SITE_KEY
-        : process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+      provider === 'fcaptcha' ? process.env.NEXT_PUBLIC_FCAPTCHA_SITE_KEY : process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
     function resetWidget() {
       if (!widgetId) return;

@@ -1,6 +1,7 @@
 import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
+import { CAPTCHA_REQUIRED_MESSAGE, isCaptchaPassed } from '@/lib/captcha.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isValidBlogSubscription } from '@/lib/payments/blogDonation';
@@ -18,7 +19,6 @@ import {
   assertCommunityPostWritePolicy,
 } from '@/lib/service/site/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/site/community/refreshMemberLevel';
-import { CAPTCHA_REQUIRED_MESSAGE, isCaptchaPassed } from '@/lib/captcha.server';
 import verifySession from '@/lib/session/verifySession';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isRecoveryEmailLocked } from '@/lib/auth/recoveryEmail.server';
 import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -7,7 +8,6 @@ import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSessionClaims } from '@/lib/session/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
-import { isRecoveryEmailLocked } from '@/lib/auth/recoveryEmail.server';
 
 const BUSINESS_LICENSE_BUCKET = 'business-license';
 const FAMILY_RELATION_CERTIFICATE_BUCKET = 'family-relation-certificates';

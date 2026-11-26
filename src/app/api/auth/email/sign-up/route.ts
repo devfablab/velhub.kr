@@ -3,11 +3,11 @@ import { type EmailSignUpFieldErrors, validateEmailSignUpFields } from '@/lib/au
 import { verifyInviteEmailProof } from '@/lib/auth/inviteEmailProof';
 import { getSecurityPinErrorMessage, normalizeSecurityPin } from '@/lib/auth/securityPin';
 import { createSecurityPinHash } from '@/lib/auth/securityPin.server';
+import { isCaptchaPassed } from '@/lib/captcha.server';
 import { getClientIpAddress } from '@/lib/clientRequest';
 import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
-import { isCaptchaPassed } from '@/lib/captcha.server';
 import {
   createActivityNameLookupHash,
   DUPLICATE_ACTIVITY_NAME_MESSAGE,

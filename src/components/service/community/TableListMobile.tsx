@@ -352,7 +352,10 @@ export default function TableListMobile({
                 })}
               </Menu>
             </div>
-            {boardName && board && selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
+            {boardName &&
+            board &&
+            selectedSeries &&
+            (board.board_type === 'basic' || board.board_type === 'gallery') ? (
               <>
                 <SubscriptionButton
                   siteName={siteName}

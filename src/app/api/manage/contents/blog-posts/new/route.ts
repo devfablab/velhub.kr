@@ -1,4 +1,5 @@
 import { normalizePostAttachmentInputs, resolvePostAttachments } from '@/lib/attachments/postFiles.server';
+import { CAPTCHA_REQUIRED_MESSAGE, isCaptchaPassed } from '@/lib/captcha.server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { normalizeAiUsage } from '@/lib/service/site/blog/aiUsage';
 import { createBlogPostPromotion, type BlogPostPromotionInput } from '@/lib/service/site/blog/blogAds/server';
@@ -7,7 +8,6 @@ import {
   addRecommendedBlogPost,
   getBlogRecommendationContext,
 } from '@/lib/service/site/blog/blogRecommendations.server';
-import { CAPTCHA_REQUIRED_MESSAGE, isCaptchaPassed } from '@/lib/captcha.server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 

@@ -75,10 +75,7 @@ export async function GET(request: Request) {
         siteId: rhizome.data.id,
       }),
       rhizome.data.site_type === 'community'
-        ? supabaseAdmin
-            .from('boards')
-            .select('id, write_permission, is_active')
-            .eq('site_id', rhizome.data.id)
+        ? supabaseAdmin.from('boards').select('id, write_permission, is_active').eq('site_id', rhizome.data.id)
         : Promise.resolve(null),
     ]);
 

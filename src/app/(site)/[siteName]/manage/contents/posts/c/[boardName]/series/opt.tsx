@@ -1162,7 +1162,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         {dialogMode === 'new' && (
                           <Stack gap={1}>
                             <FormControlLabel
-                              control={<Checkbox checked={isSubscriptionChecked} onChange={handleIsSubscriptionChange} />}
+                              control={
+                                <Checkbox checked={isSubscriptionChecked} onChange={handleIsSubscriptionChange} />
+                              }
                               label="구독 연재"
                             />
                             {isSubscriptionChecked ? (
@@ -1178,9 +1180,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                                   size="small"
                                   fullWidth
                                   slotProps={{
-                                htmlInput: { inputMode: 'numeric', 'aria-label': '월 구독 가격', style: { textAlign: 'right' } },
-                                input: { endAdornment: <InputAdornment position="end">원</InputAdornment> },
-                              }}
+                                    htmlInput: {
+                                      inputMode: 'numeric',
+                                      'aria-label': '월 구독 가격',
+                                      style: { textAlign: 'right' },
+                                    },
+                                    input: { endAdornment: <InputAdornment position="end">원</InputAdornment> },
+                                  }}
                                   error={Boolean(subscriptionPriceError)}
                                   helperText={
                                     subscriptionPriceError || '7,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.'
@@ -1463,7 +1469,9 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         {dialogMode === 'new' && (
                           <Stack gap={1}>
                             <FormControlLabel
-                              control={<Checkbox checked={isSubscriptionChecked} onChange={handleIsSubscriptionChange} />}
+                              control={
+                                <Checkbox checked={isSubscriptionChecked} onChange={handleIsSubscriptionChange} />
+                              }
                               label="구독 연재"
                             />
                             {isSubscriptionChecked ? (

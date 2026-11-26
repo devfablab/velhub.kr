@@ -899,11 +899,7 @@ export default function Opt() {
         <button type="button" className="button medium close" onClick={openCancelDialog}>
           개설 취소
         </button>
-        <button
-          type="submit"
-          className="button medium submit"
-          disabled={isSubmitting || isCheckingSiteKey}
-        >
+        <button type="submit" className="button medium submit" disabled={isSubmitting || isCheckingSiteKey}>
           {isSubmitting || isCheckingSiteKey ? <LoadingIndicator size={20} /> : null}
           커뮤니티 개설
         </button>

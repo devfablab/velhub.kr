@@ -2,8 +2,8 @@ import { r2Storage } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
-import { normalizeText } from '@/lib/utils';
 import { getPublicActiveMemberships } from '@/lib/users/utils';
+import { normalizeText } from '@/lib/utils';
 
 type SiteRow = {
   id: string;

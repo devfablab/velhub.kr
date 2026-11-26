@@ -39,7 +39,9 @@ export async function POST(request: Request) {
       const isAvailable = await checkFCaptchaAvailability();
 
       return Response.json(
-        isAvailable ? { error: '보안 확인을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.' } : { fallback: true },
+        isAvailable
+          ? { error: '보안 확인을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.' }
+          : { fallback: true },
         { status: isAvailable ? 503 : 200, headers: NO_STORE_HEADERS },
       );
     }
