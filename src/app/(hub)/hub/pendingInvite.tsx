@@ -51,9 +51,9 @@ export default function PendingInvite({
   return (
     <section className={`paper ${styles.paper} ${styles.pending}`}>
       <h2>초대장이 날라왔어요 😎</h2>
-      <div className={`paper ${styles['pending-sites']}`}>
+      <div className={styles['pending-sites']}>
         {invites.map((invite) => (
-          <div key={invite.id} className={styles['pending-site']}>
+          <div key={invite.id} className={`paper ${styles['pending-site']}`}>
             <div className={styles['pending-header']}>
               <div className={styles['site-name']}>
                 {invite.profileLogoUrl ? (
