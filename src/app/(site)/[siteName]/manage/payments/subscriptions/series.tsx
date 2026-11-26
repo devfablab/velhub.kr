@@ -726,7 +726,6 @@ export default function SeriesSubscriptions({
             onClick={handleAddRow}
             disabled={isSaving || Boolean(editingRow) || availableSeriesRows.length === 0}
           >
-            {isSaving ? <LoadingIndicator size={20} /> : null}
             <span>연재 구독 추가</span>
             <AddRoundedIcon />
           </button>

@@ -75,7 +75,7 @@ function ConfirmPopup({
           <p style={{ whiteSpace: 'pre-wrap' }}>{confirm?.content}</p>
         </div>
         <div className="drawer-dialog-actions">
-          <button type="button" className="button medium close" onClick={onClose}>
+          <button type="button" className="cancel-button" onClick={onClose}>
             취소
           </button>
           <button
@@ -185,7 +185,8 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
 
       try {
         const payload = JSON.parse(String(event.data)) as
-          { type: 'message'; message: CommunityChatMessage } | { type: 'delete'; id: string };
+          | { type: 'message'; message: CommunityChatMessage }
+          | { type: 'delete'; id: string };
 
         if (payload.type === 'message') {
           setMessages((current) => mergeMessages(current, [{ ...payload.message, state: 'sent' }]));

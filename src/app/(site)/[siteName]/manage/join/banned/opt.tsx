@@ -272,7 +272,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={handleOpenDialog}
                   disabled={isSubmitting || selectedUserIds.length === 0}
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입불가 해제
                 </button>
               </Stack>

@@ -157,7 +157,6 @@ export default function LogoutActions() {
               onClick={handleOpenConfirm}
               disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
             >
-              {isLoggingOutAllDevices ? <LoadingIndicator size={20} /> : null}
               모든 디바이스 로그아웃
             </button>
 
@@ -191,7 +190,7 @@ export default function LogoutActions() {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseConfirm}
               disabled={isLoggingOutAllDevices}
             >

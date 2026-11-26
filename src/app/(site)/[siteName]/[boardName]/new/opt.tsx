@@ -2456,7 +2456,7 @@ export default function Opt({
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" onClick={closeThumbnailDialog} className="button medium close">
+                <button type="button" onClick={closeThumbnailDialog} className="cancel-button">
                   취소
                 </button>
                 <button
@@ -2616,7 +2616,7 @@ export default function Opt({
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" onClick={closeGalleryDialog} className="button medium close">
+                <button type="button" onClick={closeGalleryDialog} className="cancel-button">
                   취소
                 </button>
                 <button type="button" onClick={applyGalleryDialogImages} className="button medium submit">
@@ -2957,7 +2957,7 @@ export default function Opt({
                     투표 삭제
                   </button>
                 ) : null}
-                <button type="button" onClick={closePollDialog} className="button medium close">
+                <button type="button" onClick={closePollDialog} className="cancel-button">
                   취소
                 </button>
                 <button type="button" onClick={applyPollDialog} className="button medium submit">
@@ -3300,7 +3300,7 @@ export default function Opt({
                       추첨 이벤트 삭제
                     </button>
                     <div className="complex-button">
-                      <button type="button" onClick={closeDrawDialog} className="button medium close">
+                      <button type="button" onClick={closeDrawDialog} className="cancel-button">
                         취소
                       </button>
                       <button type="button" onClick={applyDrawDialog} className="button medium submit">
@@ -3446,7 +3446,7 @@ export default function Opt({
               </div>
               <div className="drawer-dialog-actions">
                 {accessDialog.cancelLabel ? (
-                  <button type="button" onClick={accessDialog.onCancel} className="button medium close">
+                  <button type="button" onClick={accessDialog.onCancel} className="cancel-button">
                     {accessDialog.cancelLabel}
                   </button>
                 ) : null}

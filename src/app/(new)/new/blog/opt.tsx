@@ -783,7 +783,7 @@ export default function Opt() {
           className="button medium submit"
           disabled={isSubmitting || isCheckingSiteKey || isCheckingSiteLabel}
         >
-          {isSubmitting || isCheckingSiteKey || isCheckingSiteLabel ? <LoadingIndicator size={20} /> : null}
+          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           블로그 개설
         </button>
       </div>
@@ -808,7 +808,7 @@ export default function Opt() {
             <Typography>정말로 개설을 취소하시겠어요?</Typography>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={closeCancelDialog}>
+            <button type="button" className="cancel-button" onClick={closeCancelDialog}>
               닫기
             </button>
             <button type="button" className="button medium danger" onClick={handleConfirmCancel}>

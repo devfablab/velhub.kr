@@ -112,7 +112,12 @@ type PostImage = {
 };
 
 type AuthorRole =
-  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
+  | 'owner'
+  | 'community-manager'
+  | 'board-manager'
+  | 'board-general-manager'
+  | 'board-assistant-manager'
+  | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;
@@ -979,7 +984,7 @@ export default function Opt({
               ) : null}
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
@@ -1974,7 +1979,7 @@ export default function Opt({
                 )}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button medium close" onClick={() => setIsPostMoveDialogOpen(false)}>
+                <button type="button" className="cancel-button" onClick={() => setIsPostMoveDialogOpen(false)}>
                   취소
                 </button>
                 <button

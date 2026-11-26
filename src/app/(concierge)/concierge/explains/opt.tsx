@@ -511,6 +511,7 @@ export default function Opt({
   const [loading, setLoading] = useState(false);
   const [isLoginRequired, setIsLoginRequired] = useState(initialLoginRequired);
   const [actionLoading, setActionLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState('');
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [opinionFieldErrors, setOpinionFieldErrors] = useState<FieldErrors>({});
   const [errorDialog, setErrorDialog] = useState<{ title: string | null; messages: string[] } | null>(null);
@@ -651,6 +652,7 @@ export default function Opt({
 
     try {
       setActionLoading(true);
+      setLoadingAction('opinion');
       const formData = new FormData();
       formData.set('opinionPosition', opinionPosition);
       formData.set('disputedParts', disputedParts.trim());
@@ -735,6 +737,7 @@ export default function Opt({
 
     try {
       setActionLoading(true);
+      setLoadingAction('content');
       const response = await fetch(`/api/concierge/appeals/content/${contentItem.reportType}/${contentItem.reportId}`, {
         method: 'PATCH',
         credentials: 'include',
@@ -763,6 +766,7 @@ export default function Opt({
   async function requestEditReview(item: AppealCenterItem) {
     try {
       setActionLoading(true);
+      setLoadingAction('editReview');
       const response = await fetch(`/api/concierge/appeals/content/${item.reportType}/${item.reportId}`, {
         method: 'POST',
         credentials: 'include',
@@ -875,7 +879,6 @@ export default function Opt({
                           disabled={actionLoading}
                           onClick={() => setEditReviewDialogItem(item)}
                         >
-                          {actionLoading ? <LoadingIndicator size={20} /> : null}
                           수정 확인 요청
                         </button>
                       ) : null}
@@ -1101,7 +1104,7 @@ export default function Opt({
             ) : null}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" disabled={actionLoading} onClick={closeOpinion}>
+            <button type="button" className="cancel-button" disabled={actionLoading} onClick={closeOpinion}>
               취소
             </button>
             <button
@@ -1110,7 +1113,7 @@ export default function Opt({
               disabled={actionLoading || opinionFileUploading}
               onClick={submitOpinion}
             >
-              {actionLoading || opinionFileUploading ? <LoadingIndicator size={20} /> : null}
+              {actionLoading && loadingAction === 'opinion' ? <LoadingIndicator size={20} /> : null}
               제출
             </button>
           </div>
@@ -1332,7 +1335,7 @@ export default function Opt({
               취소
             </button>
             <button type="button" disabled={actionLoading || opinionFileUploading} onClick={submitOpinion}>
-              {actionLoading || opinionFileUploading ? <LoadingIndicator size={20} /> : null}
+              {actionLoading && loadingAction === 'opinion' ? <LoadingIndicator size={20} /> : null}
               제출
             </button>
           </DialogActions>

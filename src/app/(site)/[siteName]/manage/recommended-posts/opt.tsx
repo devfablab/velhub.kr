@@ -369,7 +369,6 @@ export default function Opt({
                   onClick={() => setIsSearchOpen(true)}
                   disabled={posts.length >= maxPosts || isSaving}
                 >
-                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   <AddRoundedIcon />
                   추천 포스팅 추가
                 </button>

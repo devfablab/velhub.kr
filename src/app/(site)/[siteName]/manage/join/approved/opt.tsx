@@ -319,7 +319,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenConfirmAction('approve')}
                   disabled={isSubmitting || selectedUserIds.length === 0}
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입 승인
                 </button>
                 <button
@@ -328,7 +327,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenConfirmAction('reject')}
                   disabled={isSubmitting || selectedUserIds.length === 0}
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입 거절
                 </button>
               </Stack>

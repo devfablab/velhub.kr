@@ -231,7 +231,6 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
                   disabled={!newLabel.trim() || isSaving}
                   onClick={addHashtag}
                 >
-                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   추가
                 </button>
               </InputAdornment>

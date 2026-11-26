@@ -653,7 +653,6 @@ export default function SubscriptionButton({
           onClick={handleOpenCancelDialog}
           disabled={isProcessing}
         >
-          {isProcessing ? <LoadingIndicator size={20} /> : null}
           {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
           <strong>{isRefundableCancellation ? '연재 구독 환불' : '연재 구독 취소'}</strong>
         </button>

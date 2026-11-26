@@ -376,7 +376,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void loadHomeOrders()}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     다시 불러오기
                   </button>
                   {isMobile ? (

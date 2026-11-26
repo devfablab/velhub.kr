@@ -80,6 +80,7 @@ export default function FooterSite() {
     pathname.startsWith(`/${siteName}/invite-blog/`) || pathname.startsWith(`/${siteName}/invite-community/`);
   const [isInvitePromptOpen, setIsInvitePromptOpen] = useState(Boolean(inviteHref && !isInvitePage));
   const [isResponding, setIsResponding] = useState(false);
+  const [respondingDecision, setRespondingDecision] = useState('');
   const [ownerTransferError, setOwnerTransferError] = useState('');
   const [ownerTransferErrorPopup, setOwnerTransferErrorPopup] = useState<ErrorPopup | null>(null);
 
@@ -92,6 +93,7 @@ export default function FooterSite() {
       setOwnerTransferError('');
       setOwnerTransferErrorPopup(null);
       setIsResponding(true);
+      setRespondingDecision(decision);
 
       const response = await fetch('/api/site/owner-transfer', {
         method: 'PATCH',
@@ -281,7 +283,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('rejected')}
                 disabled={isResponding}
               >
-                {isResponding ? <LoadingIndicator size={20} /> : null}
+                {isResponding && respondingDecision === 'rejected' ? <LoadingIndicator size={20} /> : null}
                 거절
               </button>
               <button
@@ -290,7 +292,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('accepted')}
                 disabled={isResponding}
               >
-                {isResponding ? <LoadingIndicator size={20} /> : null}
+                {isResponding && respondingDecision === 'accepted' ? <LoadingIndicator size={20} /> : null}
                 수락
               </button>
             </div>
@@ -330,7 +332,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('rejected')}
                 disabled={isResponding}
               >
-                {isResponding ? <LoadingIndicator size={20} /> : null}
+                {isResponding && respondingDecision === 'rejected' ? <LoadingIndicator size={20} /> : null}
                 거절
               </button>
               <button
@@ -338,7 +340,7 @@ export default function FooterSite() {
                 onClick={() => void handleOwnerTransferDecision('accepted')}
                 disabled={isResponding}
               >
-                {isResponding ? <LoadingIndicator size={20} /> : null}
+                {isResponding && respondingDecision === 'accepted' ? <LoadingIndicator size={20} /> : null}
                 수락
               </button>
             </DialogActions>
@@ -398,7 +400,7 @@ export default function FooterSite() {
               <Typography variant="body2">초대에 응하시겠어요?</Typography>
             </DialogContent>
             <DialogActions>
-              <button type="button" onClick={() => setIsInvitePromptOpen(false)}>
+              <button className="cancel-button" type="button" onClick={() => setIsInvitePromptOpen(false)}>
                 둘러보기
               </button>
               {inviteHref ? <Anchor href={inviteHref}>가입하기</Anchor> : null}

@@ -34,6 +34,7 @@ type RejoinResponse = {
 export default function Opt({ siteName }: Props) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rejoinMode, setRejoinMode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const theme = useTheme();
@@ -44,6 +45,7 @@ export default function Opt({ siteName }: Props) {
 
     try {
       setIsSubmitting(true);
+      setRejoinMode(mode);
       setErrorMessage('');
 
       const response = await fetch(`/api/users/${siteName}/me/rejoin`, {
@@ -102,7 +104,7 @@ export default function Opt({ siteName }: Props) {
           onClick={() => void handleRejoin('restore')}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingIndicator size={20} /> : null}
+          {isSubmitting && rejoinMode === 'restore' ? <LoadingIndicator size={20} /> : null}
           복구 후 재가입하기
         </button>
         <button
@@ -111,7 +113,6 @@ export default function Opt({ siteName }: Props) {
           onClick={() => setIsResetConfirmOpen(true)}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           초기화 후 재가입하기
         </button>
       </Stack>
@@ -156,7 +157,7 @@ export default function Opt({ siteName }: Props) {
               onClick={() => void handleRejoin('reset')}
               disabled={isSubmitting}
             >
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting && rejoinMode === 'reset' ? <LoadingIndicator size={20} /> : null}
               초기화 후 재가입
             </button>
           </div>
@@ -191,7 +192,7 @@ export default function Opt({ siteName }: Props) {
               onClick={() => void handleRejoin('reset')}
               disabled={isSubmitting}
             >
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting && rejoinMode === 'reset' ? <LoadingIndicator size={20} /> : null}
               초기화 후 재가입
             </button>
           </DialogActions>

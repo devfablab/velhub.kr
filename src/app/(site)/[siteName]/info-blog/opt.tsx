@@ -375,6 +375,7 @@ export default function Opt({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNicknameSubmitting, setIsNicknameSubmitting] = useState(false);
   const [isItemSubmitting, setIsItemSubmitting] = useState(false);
+  const [itemSubmittingAction, setItemSubmittingAction] = useState('');
 
   const [isFavoriteLoaded] = useState(true);
   const [isFavoriteLoggedIn, setIsFavoriteLoggedIn] = useState(initialFavorite?.isLoggedIn === true);
@@ -866,6 +867,7 @@ export default function Opt({
     }
 
     setIsItemSubmitting(true);
+    setItemSubmittingAction('submit');
     setItemErrorMessage('');
 
     try {
@@ -955,6 +957,7 @@ export default function Opt({
 
     try {
       setIsItemSubmitting(true);
+      setItemSubmittingAction('delete');
       setItemErrorMessage('');
 
       const response = await fetch(`/api/team-blog/delete/${itemManageDialogType}`, {
@@ -1837,7 +1840,7 @@ export default function Opt({
             onClick={() => void handleDeleteItem()}
             disabled={isItemSubmitting}
           >
-            {isItemSubmitting ? <LoadingIndicator size={20} /> : null}
+            {isItemSubmitting && itemSubmittingAction === 'delete' ? <LoadingIndicator size={20} /> : null}
             삭제
           </button>
         </DialogActions>
@@ -2155,7 +2158,7 @@ export default function Opt({
               className="button medium submit"
               disabled={isItemSubmitDisabled}
             >
-              {isItemSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isItemSubmitting && itemSubmittingAction === 'submit' ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </div>
@@ -2213,7 +2216,7 @@ export default function Opt({
               취소
             </button>
             <button type="submit" form="desktop-info-item-form" disabled={isItemSubmitDisabled}>
-              {isItemSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isItemSubmitting && itemSubmittingAction === 'submit' ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
           </DialogActions>

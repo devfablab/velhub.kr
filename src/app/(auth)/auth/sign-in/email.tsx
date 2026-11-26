@@ -114,6 +114,7 @@ export default function EmailSignIn() {
   const [decisionMessage, setDecisionMessage] = useState('');
   const [decisionState, setDecisionState] = useState<SignInDecision>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState('');
 
   const [returnPath, setReturnPath] = useState<string | null>(null);
 
@@ -369,6 +370,7 @@ export default function EmailSignIn() {
     setDecisionMessage('');
     setDecisionState('idle');
     setIsSubmitting(true);
+    setSubmittingAction('submit');
 
     try {
       const checkResponse = await fetch('/api/auth/email/sign-in/check', {
@@ -427,6 +429,7 @@ export default function EmailSignIn() {
     }
 
     setIsSubmitting(true);
+    setSubmittingAction('enable');
 
     try {
       const resetPasswordResponse = await fetch('/api/notifications/email/password-reset', {
@@ -472,6 +475,7 @@ export default function EmailSignIn() {
     }
 
     setIsSubmitting(true);
+    setSubmittingAction('login');
 
     try {
       await runSignIn(trimmedEmail);
@@ -570,7 +574,7 @@ export default function EmailSignIn() {
 
           <div className={styles.actions}>
             <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting && submittingAction === 'submit' ? <LoadingIndicator size={20} /> : null}
               이메일로 계속하기
             </button>
           </div>
@@ -659,12 +663,7 @@ export default function EmailSignIn() {
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </div>
             <div className="drawer-dialog-actions">
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCancelDecision}
-                disabled={isSubmitting}
-              >
+              <button type="button" className="cancel-button" onClick={handleCancelDecision} disabled={isSubmitting}>
                 취소
               </button>
               <button
@@ -673,7 +672,7 @@ export default function EmailSignIn() {
                 onClick={handleConfirmEnableEmailLogin}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                {isSubmitting && submittingAction === 'enable' ? <LoadingIndicator size={20} /> : null}
                 비밀번호 설정 메일 보내기
               </button>
             </div>
@@ -700,7 +699,7 @@ export default function EmailSignIn() {
                 취소
               </button>
               <button type="button" onClick={handleConfirmEnableEmailLogin} disabled={isSubmitting}>
-                {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                {isSubmitting && submittingAction === 'enable' ? <LoadingIndicator size={20} /> : null}
                 비밀번호 설정 메일 보내기
               </button>
             </DialogActions>
@@ -725,12 +724,7 @@ export default function EmailSignIn() {
               <Typography variant="subtitle2">{decisionMessage}</Typography>
             </div>
             <div className="drawer-dialog-actions">
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCancelDecision}
-                disabled={isSubmitting}
-              >
+              <button type="button" className="cancel-button" onClick={handleCancelDecision} disabled={isSubmitting}>
                 취소
               </button>
               <button
@@ -739,7 +733,7 @@ export default function EmailSignIn() {
                 onClick={handleConfirmEmailLogin}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                {isSubmitting && submittingAction === 'login' ? <LoadingIndicator size={20} /> : null}
                 이메일 로그인
               </button>
             </div>
@@ -766,7 +760,7 @@ export default function EmailSignIn() {
                 취소
               </button>
               <button type="button" onClick={handleConfirmEmailLogin} disabled={isSubmitting}>
-                {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                {isSubmitting && submittingAction === 'login' ? <LoadingIndicator size={20} /> : null}
                 이메일 로그인
               </button>
             </DialogActions>

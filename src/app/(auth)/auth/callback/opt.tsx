@@ -541,7 +541,7 @@ export default function Opt() {
             <Typography variant="subtitle2">{confirmMessage}</Typography>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>
+            <button type="button" className="cancel-button" onClick={handleCancelSocialLogin}>
               연결하지 않음
             </button>
             <button type="button" className="button medium action" onClick={handleConfirmSocialLogin}>
@@ -567,7 +567,7 @@ export default function Opt() {
             <Typography variant="subtitle2">{confirmMessage}</Typography>
           </DialogContent>
           <DialogActions>
-            <button type="button" onClick={handleCancelSocialLogin}>
+            <button className="cancel-button" type="button" onClick={handleCancelSocialLogin}>
               연결하지 않음
             </button>
             <button type="button" onClick={handleConfirmSocialLogin}>
@@ -606,7 +606,7 @@ export default function Opt() {
             )}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={() => setIsErrorPopupOpen(false)}>
+            <button type="button" className="button medium submit" onClick={() => setIsErrorPopupOpen(false)}>
               확인
             </button>
           </div>

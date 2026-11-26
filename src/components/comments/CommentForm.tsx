@@ -236,7 +236,6 @@ export default function CommentForm({
                 className={styles['submit-button']}
                 onClick={handleTimestampAdd}
               >
-                {isSubmitting ? <LoadingIndicator size={20} /> : null}
                 타임스탬프 추가
               </button>
             ) : null}
@@ -255,7 +254,6 @@ export default function CommentForm({
                   className={styles['submit-button']}
                   onClick={() => imageInputReference.current?.click()}
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   {shownImageUrl ? '이미지 변경' : '이미지 추가'}
                 </button>
               </>
@@ -273,7 +271,6 @@ export default function CommentForm({
           <div className={styles['comment-image-preview']}>
             <img src={shownImageUrl} alt="댓글에 첨부할 이미지" />
             <button type="button" disabled={isSubmitting} onClick={handleImageRemove}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               이미지 삭제
             </button>
           </div>

@@ -71,6 +71,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [acceptState, setAcceptState] = useState<AcceptState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const coPosts = initialData?.coPosts ?? [];
@@ -79,6 +80,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
 
   async function respond(coPostId: string, body: Record<string, unknown>) {
     setIsSubmitting(true);
+    setSubmittingAction(`${coPostId}:${String(body.action)}`);
 
     try {
       const response = await fetch(`/api/co-posts/${coPostId}`, {
@@ -224,7 +226,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
                   disabled={isSubmitting}
                   onClick={() => void respond(coPost.id, { action: 'decline' })}
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                  {isSubmitting && submittingAction === `${coPost.id}:decline` ? <LoadingIndicator size={20} /> : null}
                   거절
                 </button>
                 <button
@@ -233,7 +235,6 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
                   disabled={isSubmitting}
                   onClick={() => void openAccept(coPost)}
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   수락
                 </button>
               </>,
@@ -254,7 +255,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
                 disabled={isSubmitting}
                 onClick={() => void respond(coPost.id, { action: 'cancel' })}
               >
-                {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                {isSubmitting && submittingAction === `${coPost.id}:cancel` ? <LoadingIndicator size={20} /> : null}
                 초대 취소
               </button>,
             ),
@@ -289,7 +290,9 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
               취소
             </button>
             <button type="button" className="button medium submit" disabled={isSubmitting} onClick={submitAccept}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting && submittingAction === `${acceptState?.coPost.id}:accept` ? (
+                <LoadingIndicator size={20} />
+              ) : null}
               수락
             </button>
           </div>
@@ -314,7 +317,9 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
               취소
             </button>
             <button type="button" className="button medium submit" disabled={isSubmitting} onClick={submitAccept}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting && submittingAction === `${acceptState?.coPost.id}:accept` ? (
+                <LoadingIndicator size={20} />
+              ) : null}
               수락
             </button>
           </DialogActions>

@@ -350,7 +350,6 @@ export default function Opt({
                 ])
               }
             >
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               상품 추가{' '}
               <span>
                 <AddRoundedIcon fontSize="small" />

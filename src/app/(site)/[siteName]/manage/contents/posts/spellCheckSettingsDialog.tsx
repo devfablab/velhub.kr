@@ -214,7 +214,6 @@ export default function SpellCheckSettingsDialog({ siteName }: { siteName: strin
                   disabled={!newWord.trim() || isSaving}
                   onClick={addWord}
                 >
-                  {isSaving ? <LoadingIndicator size={20} /> : null}
                   추가
                 </button>
               ),

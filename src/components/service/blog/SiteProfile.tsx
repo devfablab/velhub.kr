@@ -610,7 +610,6 @@ export default function SiteProfile() {
               onClick={hasIdentity ? handleBlogSubscriptionButtonClick : handleOpenIdentityDialog}
               disabled={isDonationProcessing || isBlogSubscriptionProcessing}
             >
-              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               {getBlogSubscriptionButtonLabel(blogSubscriptionStatus, isBlogSubscriptionRefundable)}
             </button>
           ) : null}
@@ -701,7 +700,6 @@ export default function SiteProfile() {
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
-              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               계속 이용하기
             </button>
             <button
@@ -768,7 +766,6 @@ export default function SiteProfile() {
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
-              {isBlogSubscriptionProcessing ? <LoadingIndicator size={20} /> : null}
               계속 이용하기
             </button>
             <button

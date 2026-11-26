@@ -50,6 +50,7 @@ export default function TotpSetup({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSetting, setIsSetting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyingAction, setVerifyingAction] = useState('');
 
   const [totpFactors, setTotpFactors] = useState<TotpFactor[]>(initialFactors);
   const [pendingSetup, setPendingSetup] = useState<PendingSetup | null>(null);
@@ -214,6 +215,7 @@ export default function TotpSetup({
     }
 
     setIsVerifying(true);
+    setVerifyingAction('reset');
     setErrorMessage('');
     setResetVerifyCodeError('');
 
@@ -264,6 +266,7 @@ export default function TotpSetup({
     setVerifyCodeError('');
     setSuccessMessage('');
     setIsVerifying(true);
+    setVerifyingAction('verify');
 
     try {
       const challengeResult = await supabase.auth.mfa.challenge({
@@ -394,7 +397,7 @@ export default function TotpSetup({
                       취소
                     </button>
                     <button type="submit" className="button medium warning" disabled={isVerifying}>
-                      {isVerifying ? <LoadingIndicator size={20} /> : null}
+                      {isVerifying && verifyingAction === 'reset' ? <LoadingIndicator size={20} /> : null}
                       인증 후 재설정
                     </button>
                   </Stack>
@@ -455,7 +458,7 @@ export default function TotpSetup({
                     </Stack>
 
                     <button type="submit" className="button medium submit" disabled={isVerifying}>
-                      {isVerifying ? <LoadingIndicator size={20} /> : null}
+                      {isVerifying && verifyingAction === 'verify' ? <LoadingIndicator size={20} /> : null}
                       인증 코드 확인
                     </button>
                   </Stack>

@@ -91,7 +91,12 @@ type PostImage = {
 };
 
 type AuthorRole =
-  'owner' | 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager' | 'member';
+  | 'owner'
+  | 'community-manager'
+  | 'board-manager'
+  | 'board-general-manager'
+  | 'board-assistant-manager'
+  | 'member';
 
 type AuthorManageRole = {
   role: Exclude<AuthorRole, 'owner' | 'member'>;

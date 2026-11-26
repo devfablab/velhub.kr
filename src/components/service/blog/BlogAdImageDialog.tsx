@@ -116,7 +116,6 @@ export default function BlogAdImageDialog({
           onClick={() => inputReference.current?.click()}
           className={styles['thumbnail-upload-button']}
         >
-          {isUploading ? <LoadingIndicator size={20} /> : null}
           <span>이미지를 선택해주세요</span>
           <CropOriginalOutlinedIcon />
         </button>

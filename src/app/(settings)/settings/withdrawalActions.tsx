@@ -143,7 +143,7 @@ export default function WithdrawalActions() {
             <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
           </form>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isSubmitting}>
+            <button type="button" className="cancel-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
             <button

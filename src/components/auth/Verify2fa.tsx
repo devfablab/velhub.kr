@@ -275,7 +275,6 @@ export default function Verify2fa() {
           </div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleSignOut} disabled={isSubmitting}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               로그아웃
             </button>
             <button
@@ -284,7 +283,7 @@ export default function Verify2fa() {
               className="button medium submit"
               disabled={isLoading || isSubmitting || !factorId}
             >
-              {isLoading || isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </div>
@@ -304,11 +303,10 @@ export default function Verify2fa() {
           </DialogContent>
           <DialogActions>
             <button type="button" className="cancel-button" onClick={handleSignOut} disabled={isSubmitting}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               로그아웃
             </button>
             <button type="submit" form="verify-2fa-dialog-form" disabled={isLoading || isSubmitting || !factorId}>
-              {isLoading || isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
           </DialogActions>

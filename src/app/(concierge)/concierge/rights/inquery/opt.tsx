@@ -1479,7 +1479,7 @@ export default function Opt({
             className="button medium submit"
             disabled={submitting || reporterLoading || Object.values(uploadingFields).some(Boolean)}
           >
-            {submitting || reporterLoading ? <LoadingIndicator size={20} /> : null}
+            {submitting ? <LoadingIndicator size={20} /> : null}
             {submitting ? '접수 중' : '신고 접수'}
           </button>
         </Stack>

@@ -510,14 +510,12 @@ export default function CommentItem({
 
           {depth === 0 && !comment.is_deleted && !comment.is_blinded ? (
             <button type="button" onClick={() => onReplyClick(comment)} disabled={isSubmitting}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               답글 달기
             </button>
           ) : null}
 
           {comment.can_edit ? (
             <button type="button" onClick={() => setIsEditing(true)} disabled={isSubmitting || isEditing}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               수정
             </button>
           ) : null}
@@ -528,14 +526,12 @@ export default function CommentItem({
               onClick={() => setConfirmAction(comment.is_pinned ? 'unpin' : 'pin')}
               disabled={isSubmitting}
             >
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {comment.is_pinned ? '댓글 고정취소' : '댓글 고정'}
             </button>
           ) : null}
 
           {comment.can_delete || isStaff ? (
             <button type="button" onClick={() => setConfirmAction('delete')} disabled={isSubmitting}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               삭제
             </button>
           ) : null}

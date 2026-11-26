@@ -1320,7 +1320,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
-                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button
@@ -1362,7 +1361,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
-                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button

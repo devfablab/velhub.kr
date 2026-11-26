@@ -41,6 +41,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
   const [errorMessage, setErrorMessage] = useState('');
   const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingProvider, setSubmittingProvider] = useState('');
 
   const actionText = pathname === '/auth/sign-up' ? '시작하기' : '계속하기';
   const naverAuth = pathname === '/auth/sign-up' || pathname === '/auth/sign-in';
@@ -57,6 +58,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
 
     setErrorMessage('');
     setIsSubmitting(true);
+    setSubmittingProvider('google');
     rememberSelectedProvider('google');
 
     try {
@@ -101,6 +103,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
 
     setErrorMessage('');
     setIsSubmitting(true);
+    setSubmittingProvider('github');
     rememberSelectedProvider('github');
 
     try {
@@ -145,6 +148,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
 
     setErrorMessage('');
     setIsSubmitting(true);
+    setSubmittingProvider('kakao');
     rememberSelectedProvider('kakao');
 
     try {
@@ -189,6 +193,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
 
     setErrorMessage('');
     setIsSubmitting(true);
+    setSubmittingProvider('naver');
     const naverLoginUrl = new URL('/api/auth/naver/start', window.location.origin);
 
     if (inviteToken) {
@@ -215,7 +220,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleNaverLogin}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingIndicator size={20} /> : null}
+          {isSubmitting && submittingProvider === 'naver' ? <LoadingIndicator size={20} /> : null}
           <VhiNaver />
           <span>네이버 아이디로 {actionText}</span>
         </button>
@@ -228,7 +233,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleKakaoLogin}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingIndicator size={20} /> : null}
+          {isSubmitting && submittingProvider === 'kakao' ? <LoadingIndicator size={20} /> : null}
           <VhiKakao />
           <span>카카오 아이디로 {actionText}</span>
         </button>
@@ -241,7 +246,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleGoogleLogin}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingIndicator size={20} /> : null}
+          {isSubmitting && submittingProvider === 'google' ? <LoadingIndicator size={20} /> : null}
           <GoogleIcon />
           <span>Google 아이디로 {actionText}</span>
         </button>
@@ -254,7 +259,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
           onClick={handleGithubLogin}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingIndicator size={20} /> : null}
+          {isSubmitting && submittingProvider === 'github' ? <LoadingIndicator size={20} /> : null}
           <GitHubIcon />
           <span>GitHub 아이디로 {actionText}</span>
         </button>

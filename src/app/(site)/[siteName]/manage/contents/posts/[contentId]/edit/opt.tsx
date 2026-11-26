@@ -1088,7 +1088,7 @@ export default function Opt({
                       className={`button ${styles.button}`}
                       disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                     >
-                      {isSubmitting || isUploadingThumbnail ? <LoadingIndicator size={20} /> : null}
+                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
                       저장
                     </button>
                   </div>
@@ -1098,7 +1098,7 @@ export default function Opt({
                     className="button medium submit"
                     disabled={isSubmitting || isUploadingThumbnail || hasIncompleteAttachmentUpload}
                   >
-                    {isSubmitting || isUploadingThumbnail ? <LoadingIndicator size={20} /> : null}
+                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
                     저장
                   </button>
                 )}

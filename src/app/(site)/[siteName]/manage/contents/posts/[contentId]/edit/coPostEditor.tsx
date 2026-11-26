@@ -59,6 +59,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
   const [isDirty, setIsDirty] = useState(false);
   const [changesReloadKey, setChangesReloadKey] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [savingAction, setSavingAction] = useState('');
   const [noticeMessage, setNoticeMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const blobImagesRef = useRef<BlobImage[]>([]);
@@ -164,8 +165,9 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
     return { contentHtml: nextHtml, contentMarkdown: nextMarkdown };
   }
 
-  async function save(options: { silent?: boolean } = {}) {
+  async function save(options: { silent?: boolean; action?: string } = {}) {
     setIsSaving(true);
+    setSavingAction(options.action ?? 'save');
     setErrorMessage('');
 
     try {
@@ -291,7 +293,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
   }
 
   async function finishEditing() {
-    if (isDirty && !(await save({ silent: true }))) return;
+    if (isDirty && !(await save({ silent: true, action: 'finish' }))) return;
 
     await callLock('release').catch(() => undefined);
     router.push(listHref);
@@ -431,7 +433,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
                   disabled={isSaving}
                   onClick={() => void finishEditing()}
                 >
-                  {isSaving ? <LoadingIndicator size={20} /> : null}
+                  {isSaving && savingAction === 'finish' ? <LoadingIndicator size={20} /> : null}
                   수정 마치기
                 </button>
                 <button
@@ -440,7 +442,7 @@ export default function CoPostEditor({ siteName, coPost }: { siteName: string; c
                   disabled={isSaving || !isDirty}
                   onClick={() => void save()}
                 >
-                  {isSaving ? <LoadingIndicator size={20} /> : null}
+                  {isSaving && savingAction === 'save' ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </Stack>

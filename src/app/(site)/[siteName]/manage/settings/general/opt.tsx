@@ -196,10 +196,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isTeamMemberBlogTypeDialogOpen, setIsTeamMemberBlogTypeDialogOpen] = useState(false);
   const [isTeamConversionConfirmOpen, setIsTeamConversionConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingField, setSubmittingField] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingSiteOg, setIsUploadingSiteOg] = useState(false);
+  const [siteOgAction, setSiteOgAction] = useState('');
   const [isUploadingPromotion, setIsUploadingPromotion] = useState(false);
+  const [promotionAction, setPromotionAction] = useState('');
   const baseUrl = useSyncExternalStore(
     () => () => undefined,
     () => window.location.origin,
@@ -580,6 +583,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setErrorMessage('');
     setSuccessMessage('');
     setIsSubmitting(true);
+    setSubmittingField(field);
 
     try {
       const response = await fetch(`/api/info/general/site/${siteName}/edit`, {
@@ -908,6 +912,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setErrorMessage('');
     setSuccessMessage('');
     setIsUploadingPromotion(true);
+    setPromotionAction('upload');
 
     try {
       const formData = new FormData();
@@ -966,6 +971,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setErrorMessage('');
     setSuccessMessage('');
     setIsUploadingPromotion(true);
+    setPromotionAction('remove');
 
     try {
       const isSaved = await saveField('promotion_image', '');
@@ -1015,6 +1021,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setErrorMessage('');
     setSuccessMessage('');
     setIsUploadingSiteOg(true);
+    setSiteOgAction('upload');
 
     try {
       const formData = new FormData();
@@ -1073,6 +1080,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
     setErrorMessage('');
     setSuccessMessage('');
     setIsUploadingSiteOg(true);
+    setSiteOgAction('remove');
 
     try {
       const isSaved = await saveField('og_image', '');
@@ -1267,7 +1275,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       onClick={() => void saveField('site_key')}
                       disabled={isSubmitting || isCheckingSiteKey}
                     >
-                      {isSubmitting || isCheckingSiteKey ? <LoadingIndicator size={20} /> : null}
+                      {isSubmitting && submittingField === 'site_key' ? <LoadingIndicator size={20} /> : null}
                       수정 완료
                     </button>
                   </Stack>
@@ -1364,7 +1372,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('custom_domain')}
                     disabled={isSubmitting || !hasOwnerDomainFeature}
                   >
-                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                    {isSubmitting && submittingField === 'custom_domain' ? <LoadingIndicator size={20} /> : null}
                     수정 완료
                   </button>
                 </Stack>
@@ -1471,7 +1479,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       onClick={handleBlogTypeSave}
                       disabled={isSubmitting || draftValue === (blogType === 'team' ? 'team' : 'personal')}
                     >
-                      {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                      {isSubmitting && submittingField === 'blog_type' ? <LoadingIndicator size={20} /> : null}
                       수정 완료
                     </button>
                   </Stack>
@@ -1536,7 +1544,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       onClick={() => void saveField('site_label')}
                       disabled={isSubmitting || isCheckingSiteLabel}
                     >
-                      {isSubmitting || isCheckingSiteLabel ? <LoadingIndicator size={20} /> : null}
+                      {isSubmitting && submittingField === 'site_label' ? <LoadingIndicator size={20} /> : null}
                       수정 완료
                     </button>
                   </Stack>
@@ -1593,7 +1601,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('summary')}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                    {isSubmitting && submittingField === 'summary' ? <LoadingIndicator size={20} /> : null}
                     수정 완료
                   </button>
                 </Stack>
@@ -1664,7 +1672,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => void handleRemoveSiteOgImage()}
                   disabled={isUploadingSiteOg}
                 >
-                  {isUploadingSiteOg ? <LoadingIndicator size={20} /> : null}
+                  {isUploadingSiteOg && siteOgAction === 'remove' ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               ) : null}
@@ -1674,7 +1682,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={handleClickSiteOgUpload}
                 disabled={isUploadingSiteOg}
               >
-                {isUploadingSiteOg ? <LoadingIndicator size={20} /> : null}
+                {isUploadingSiteOg && siteOgAction === 'upload' ? <LoadingIndicator size={20} /> : null}
                 {siteOgImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
@@ -1731,7 +1739,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => void handleRemovePromotionImage()}
                   disabled={isUploadingPromotion}
                 >
-                  {isUploadingPromotion ? <LoadingIndicator size={20} /> : null}
+                  {isUploadingPromotion && promotionAction === 'remove' ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
               ) : null}
@@ -1741,7 +1749,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 onClick={handleClickPromotionUpload}
                 disabled={isUploadingPromotion}
               >
-                {isUploadingPromotion ? <LoadingIndicator size={20} /> : null}
+                {isUploadingPromotion && promotionAction === 'upload' ? <LoadingIndicator size={20} /> : null}
                 {promotionImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
@@ -1788,7 +1796,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('theme_type')}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                    {isSubmitting && submittingField === 'theme_type' ? <LoadingIndicator size={20} /> : null}
                     변경 완료
                   </button>
                 </Stack>
@@ -1849,7 +1857,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     onClick={() => void saveField('visibility_type')}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                    {isSubmitting && submittingField === 'visibility_type' ? <LoadingIndicator size={20} /> : null}
                     변경 완료
                   </button>
                 </Stack>

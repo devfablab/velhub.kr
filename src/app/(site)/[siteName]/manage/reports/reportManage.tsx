@@ -440,6 +440,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
   const [nextStatus, setNextStatus] = useState<ReportStatus | ''>('');
   const [statusError, setStatusError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [savingAction, setSavingAction] = useState('');
   const [messageReport, setMessageReport] = useState<ReportItem | null>(null);
   const [messageData, setMessageData] = useState<AppealMessagesResponse | null>(null);
   const [messageText, setMessageText] = useState('');
@@ -449,6 +450,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
   const [messageSaving, setMessageSaving] = useState(false);
   const [finalReport, setFinalReport] = useState<ReportItem | null>(null);
   const [finalSaving, setFinalSaving] = useState(false);
+  const [finalSavingAction, setFinalSavingAction] = useState('');
   const [isCompletionConfirmOpen, setIsCompletionConfirmOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -660,11 +662,13 @@ export default function ReportManage({ targetType, initialData, initialError }: 
       return;
     }
 
+    setSavingAction('save');
     void saveStatus();
   }
 
   function handleConfirmCompletion() {
     setIsCompletionConfirmOpen(false);
+    setSavingAction('complete');
     void saveStatus();
   }
 
@@ -687,6 +691,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
     }
 
     setFinalSaving(true);
+    setFinalSavingAction(decision);
     setErrorMessage('');
 
     const response = await fetch(`/api/manage/reports/${finalReport.id}/finalize`, {
@@ -1098,7 +1103,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   onClick={handleSave}
                   disabled={saving || !nextStatus}
                 >
-                  {saving ? <LoadingIndicator size={20} /> : null}
+                  {saving && savingAction === 'save' ? <LoadingIndicator size={20} /> : null}
                   {getSubmitLabel(targetType, nextStatus)}
                 </button>
               ) : null}
@@ -1144,7 +1149,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   onClick={handleSave}
                   disabled={saving || !nextStatus}
                 >
-                  {saving ? <LoadingIndicator size={20} /> : null}
+                  {saving && savingAction === 'save' ? <LoadingIndicator size={20} /> : null}
                   {getSubmitLabel(targetType, nextStatus)}
                 </button>
               ) : null}
@@ -1176,7 +1181,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={handleConfirmCompletion}
                 disabled={saving}
               >
-                {saving ? <LoadingIndicator size={20} /> : null}
+                {saving && savingAction === 'complete' ? <LoadingIndicator size={20} /> : null}
                 변경
               </button>
             </div>
@@ -1200,7 +1205,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 취소
               </button>
               <button type="button" onClick={handleConfirmCompletion} disabled={saving}>
-                {saving ? <LoadingIndicator size={20} /> : null}
+                {saving && savingAction === 'complete' ? <LoadingIndicator size={20} /> : null}
                 변경
               </button>
             </DialogActions>
@@ -1243,7 +1248,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   messageReport?.status === 'dismissed'
                 }
               >
-                {messageSaving || messageLoading ? <LoadingIndicator size={20} /> : null}
+                {messageSaving ? <LoadingIndicator size={20} /> : null}
                 보내기
               </button>
             </div>
@@ -1278,7 +1283,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                   messageReport?.status === 'dismissed'
                 }
               >
-                {messageSaving || messageLoading ? <LoadingIndicator size={20} /> : null}
+                {messageSaving ? <LoadingIndicator size={20} /> : null}
                 보내기
               </button>
             </DialogActions>
@@ -1312,7 +1317,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={() => void handleFinalize('keep_deleted')}
                 disabled={finalSaving}
               >
-                {finalSaving ? <LoadingIndicator size={20} /> : null}
+                {finalSaving && finalSavingAction === 'keep_deleted' ? <LoadingIndicator size={20} /> : null}
                 삭제상태 유지
               </button>
               <button
@@ -1321,7 +1326,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={() => void handleFinalize('restore')}
                 disabled={finalSaving}
               >
-                {finalSaving ? <LoadingIndicator size={20} /> : null}
+                {finalSaving && finalSavingAction === 'restore' ? <LoadingIndicator size={20} /> : null}
                 복구하기
               </button>
             </div>
@@ -1353,11 +1358,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
                 onClick={() => void handleFinalize('keep_deleted')}
                 disabled={finalSaving}
               >
-                {finalSaving ? <LoadingIndicator size={20} /> : null}
+                {finalSaving && finalSavingAction === 'keep_deleted' ? <LoadingIndicator size={20} /> : null}
                 삭제상태 유지
               </button>
               <button type="button" onClick={() => void handleFinalize('restore')} disabled={finalSaving}>
-                {finalSaving ? <LoadingIndicator size={20} /> : null}
+                {finalSaving && finalSavingAction === 'restore' ? <LoadingIndicator size={20} /> : null}
                 복구하기
               </button>
             </DialogActions>

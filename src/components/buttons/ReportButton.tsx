@@ -365,7 +365,6 @@ export default function ReportButton({
           <div className="VhiDrawer-bottom-content">{renderContent('mobile-report-form')}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={handleClose} disabled={submitting}>
-              {submitting ? <LoadingIndicator size={20} /> : null}
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}
@@ -383,8 +382,7 @@ export default function ReportButton({
           <DialogContent>{renderContent('desktop-report-form')}</DialogContent>
 
           <DialogActions>
-            <button type="button" onClick={handleClose} disabled={submitting}>
-              {submitting ? <LoadingIndicator size={20} /> : null}
+            <button className="cancel-button" type="button" onClick={handleClose} disabled={submitting}>
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}

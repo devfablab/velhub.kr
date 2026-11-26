@@ -388,7 +388,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenActionDialog('kick')}
                   disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
-                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   강제 탈퇴
                 </button>
                 <button
@@ -397,7 +396,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenActionDialog('ban')}
                   disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
-                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   가입 불가
                 </button>
                 <button
@@ -406,7 +404,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={() => handleOpenActionDialog('unblock')}
                   disabled={isActionSubmitting || selectedUserIds.length === 0}
                 >
-                  {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   활동 정지 해제
                 </button>
               </Stack>

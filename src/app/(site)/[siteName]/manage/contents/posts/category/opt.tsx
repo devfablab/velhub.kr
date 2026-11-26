@@ -1119,7 +1119,7 @@ export default function Opt({
                   className="button medium submit"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
-                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -1301,7 +1301,7 @@ export default function Opt({
                   form="desktop-category-form"
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
-                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>

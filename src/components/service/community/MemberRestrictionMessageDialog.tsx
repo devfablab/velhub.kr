@@ -245,7 +245,7 @@ export default function MemberRestrictionMessageDialog({
               onClick={() => void sendMessage()}
               disabled={saving || loading || !messageText.trim()}
             >
-              {saving || loading ? <LoadingIndicator size={20} /> : null}
+              {saving ? <LoadingIndicator size={20} /> : null}
               보내기
             </button>
           </DialogActions>
@@ -278,7 +278,7 @@ export default function MemberRestrictionMessageDialog({
               onClick={() => void sendMessage()}
               disabled={saving || loading || !messageText.trim()}
             >
-              {saving || loading ? <LoadingIndicator size={20} /> : null}
+              {saving ? <LoadingIndicator size={20} /> : null}
               보내기
             </button>
           </div>

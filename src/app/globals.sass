@@ -1310,16 +1310,21 @@ html[data-site-type='blog']
       border-radius: ds.rem(7)
       @include ds.fw(pre, 700)
       font-size: ds.rem(16)
-      background-color: ds.$hex-accent
       white-space: nowrap
-      color: ds.$hex-bright
       background-color: rgba(ds.$rgb-accent, .1)
       color: ds.$hex-accent
+      transition: all .4s cubic-bezier(.4,0,.2,1)
+
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
       &.delete-button
         background-color: transparent!important
         border: 1px solid ds.$hex-warning!important
         color: ds.$hex-warning!important
+
+        &:hover, &:focus-visible
+          box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
 
       &.cancel-button
         background-color: transparent!important
@@ -1332,10 +1337,16 @@ html[data-site-type='blog']
         background-color: ds.$hex-warning
         color: ds.$hex-white
 
+        &:hover, &:focus-visible
+          box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
+
       &.danger-button
         background-color: transparent!important
         border: 1px solid ds.$hex-warning!important
         color: ds.$hex-warning!important
+
+        &:hover, &:focus-visible
+          box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
 
       &.action-button
         background-color: transparent!important
@@ -1453,7 +1464,7 @@ html[data-site-type='blog']
     .MuiDialogActions-root
       padding: ds.rem(7) ds.rem(27) ds.rem(27)
 
-      button
+      button, a
         display: flex
         justify-content: center
         align-items: center
@@ -1464,10 +1475,13 @@ html[data-site-type='blog']
         font-size: ds.rem(20)
         background-color: ds.$hex-accent
         color: ds.$hex-bright
+        transition: all .4s cubic-bezier(.4,0,.2,1)
 
         &:disabled
-          background-color: ds.$hex-tertiary
-          color: rgba(ds.$rgb-bright, .7)
+          opacity: .5
+
+        &:hover, &:focus-visible
+          box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
   &.vh-alert-dialog
     .MuiDialog-paper
@@ -1488,7 +1502,7 @@ html[data-site-type='blog']
           button
             margin-left: 0
 
-        button
+        button, a
           display: flex
           justify-content: center
           align-items: center
@@ -1504,14 +1518,16 @@ html[data-site-type='blog']
           background-color: rgba(ds.$rgb-accent, .1)
           color: ds.$hex-accent
 
+          &:hover, &:focus-visible
+            box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
+
           &.delete-button
             background-color: transparent!important
             border: 1px solid ds.$hex-warning!important
             color: ds.$hex-warning!important
 
-            &:disabled
-              border-color: rgba(ds.$rgb-warning, .5)!important
-              color: rgba(ds.$rgb-warning, .5)!important
+            &:hover, &:focus-visible
+              box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
 
           &.cancel-button
             background-color: transparent!important
@@ -1524,13 +1540,8 @@ html[data-site-type='blog']
             background-color: ds.$hex-warning
             color: ds.$hex-white
 
-            &:disabled
-              background-color: rgba(ds.$rgb-warning, .1)!important
-              color: rgba(ds.$rgb-white, .5)!important
-
-          &:disabled
-            color: rgba(ds.$rgb-accent, .5)!important
-            background-color: rgba(ds.$rgb-accent, .1)!important
+            &:hover, &:focus-visible
+              box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
 
         &.complex-buttons
           gap: 0

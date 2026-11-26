@@ -424,7 +424,7 @@ export default function Opt() {
             className={`button medium submit ${styles.submit}`}
             disabled={isLoading || isSubmitting || !profile}
           >
-            {isLoading || isSubmitting ? <LoadingIndicator size={20} /> : null}
+            {isSubmitting ? <LoadingIndicator size={20} /> : null}
             회원가입 완료
           </button>
         </div>
@@ -463,7 +463,7 @@ export default function Opt() {
             )}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handlePopupClose}>
+            <button type="button" className="button medium submit" onClick={handlePopupClose}>
               확인
             </button>
           </div>

@@ -1265,7 +1265,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     !isSubscriptionReady
                   }
                 >
-                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </div>
@@ -1554,7 +1554,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                     !isSubscriptionReady
                   }
                 >
-                  {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
+                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
               </DialogActions>

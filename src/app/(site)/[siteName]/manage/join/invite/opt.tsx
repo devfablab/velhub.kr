@@ -467,7 +467,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
-                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button
@@ -514,7 +513,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
-                  {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 유지
                 </button>
                 <button type="button" onClick={handleSubmitCancelInvite} disabled={isCancelSubmitting}>

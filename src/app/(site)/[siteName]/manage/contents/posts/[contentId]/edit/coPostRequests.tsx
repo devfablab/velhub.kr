@@ -54,6 +54,7 @@ export default function CoPostRequests({
   const [data, setData] = useState<RequestsResponse | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [localReloadKey, setLocalReloadKey] = useState(0);
   const [agreedMessage, setAgreedMessage] = useState('');
@@ -92,6 +93,7 @@ export default function CoPostRequests({
     agreedPublishAt: string | null = null,
   ) {
     setIsSubmitting(true);
+    setSubmittingAction(`${url}:${String(body.type ?? body.action)}`);
     setErrorMessage('');
 
     try {
@@ -165,7 +167,9 @@ export default function CoPostRequests({
               void send(requestsApi, 'POST', { type: timeRequestType, publishAt: selectedTime?.toISOString() })
             }
           >
-            {isSubmitting ? <LoadingIndicator size={20} /> : null}
+            {isSubmitting && submittingAction === `${requestsApi}:${timeRequestType}` ? (
+              <LoadingIndicator size={20} />
+            ) : null}
             {timeRequestType === 'publish' ? '공개 협의 요청' : '일시 변경 요청'}
           </button>
         </Stack>
@@ -180,7 +184,9 @@ export default function CoPostRequests({
               disabled={isSubmitting}
               onClick={() => void send(requestsApi, 'POST', { type: 'apply_revision' })}
             >
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting && submittingAction === `${requestsApi}:apply_revision` ? (
+                <LoadingIndicator size={20} />
+              ) : null}
               수정본 반영 요청
             </button>
           ) : null}
@@ -191,7 +197,7 @@ export default function CoPostRequests({
               disabled={isSubmitting}
               onClick={() => void send(requestsApi, 'POST', { type: 'unpublish' })}
             >
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+              {isSubmitting && submittingAction === `${requestsApi}:unpublish` ? <LoadingIndicator size={20} /> : null}
               삭제 요청
             </button>
           )}
@@ -219,7 +225,9 @@ export default function CoPostRequests({
                 disabled={isSubmitting}
                 onClick={() => void send(`${requestsApi}/${item.id}`, 'PATCH', { action: 'cancel' })}
               >
-                {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                {isSubmitting && submittingAction === `${requestsApi}/${item.id}:cancel` ? (
+                  <LoadingIndicator size={20} />
+                ) : null}
                 요청 취소
               </button>
             ) : (
@@ -230,7 +238,9 @@ export default function CoPostRequests({
                   disabled={isSubmitting}
                   onClick={() => void send(`${requestsApi}/${item.id}`, 'PATCH', { action: 'decline' })}
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                  {isSubmitting && submittingAction === `${requestsApi}/${item.id}:decline` ? (
+                    <LoadingIndicator size={20} />
+                  ) : null}
                   거절
                 </button>
                 <button
@@ -246,7 +256,9 @@ export default function CoPostRequests({
                     )
                   }
                 >
-                  {isSubmitting ? <LoadingIndicator size={20} /> : null}
+                  {isSubmitting && submittingAction === `${requestsApi}/${item.id}:accept` ? (
+                    <LoadingIndicator size={20} />
+                  ) : null}
                   동의
                 </button>
               </>

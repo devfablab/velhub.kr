@@ -340,7 +340,6 @@ export default function Opt({
             onClick={handleRemoveImage}
             disabled={isSubmitting}
           >
-            {isSubmitting ? <LoadingIndicator size={20} /> : null}
             이미지 삭제
           </Button>
         </Stack>
@@ -352,7 +351,6 @@ export default function Opt({
           startIcon={<AddPhotoAlternateOutlinedIcon />}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingIndicator size={20} /> : null}
           이미지 추가 (1MB 미만의 JPG/PNG/WEBP)
           <VisuallyHiddenInput
             type="file"

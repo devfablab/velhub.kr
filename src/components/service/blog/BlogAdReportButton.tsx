@@ -266,7 +266,6 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
           <div className="VhiDrawer-bottom-content">{renderContent()}</div>
           <div className="drawer-dialog-actions">
             <button type="button" className="button medium close" onClick={closeReport} disabled={isSubmitting}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}
@@ -282,8 +281,7 @@ export default function BlogAdReportButton({ siteName, adId, targetType }: Props
           </Tooltip>
           <DialogContent>{renderContent()}</DialogContent>
           <DialogActions>
-            <button type="button" onClick={closeReport} disabled={isSubmitting}>
-              {isSubmitting ? <LoadingIndicator size={20} /> : null}
+            <button className="cancel-button" type="button" onClick={closeReport} disabled={isSubmitting}>
               {completed ? '닫기' : '취소'}
             </button>
             {renderSubmitButton()}
