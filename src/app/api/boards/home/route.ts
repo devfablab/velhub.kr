@@ -128,6 +128,7 @@ export async function GET(request: Request) {
             stigmaId: session.stigmaId ?? null,
             sort: 'latest',
             includePin: false,
+            excludeClosed: true,
           });
 
           return {

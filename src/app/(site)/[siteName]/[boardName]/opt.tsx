@@ -87,6 +87,7 @@ type PostItem = {
   board_label: string;
   prefix_label: string | null;
   series_key: string | null;
+  is_closed: boolean;
   series_label: string | null;
   is_poll: boolean;
   published_at: string | null;
@@ -734,6 +735,7 @@ export default function Opt({
                                 <HowToVoteIcon />
                               </i>
                             ) : null}
+                            {content.is_closed ? <em>(삭제글)</em> : null}
                             <span>
                               {renderHighlightedText(
                                 content.subject,
@@ -816,6 +818,7 @@ export default function Opt({
                                 <HowToVoteIcon />
                               </i>
                             ) : null}
+                            {content.is_closed ? <em>(삭제글)</em> : null}
                             <Anchor href={getContentHref(content.slug)}>
                               {renderHighlightedText(
                                 content.subject,
@@ -876,6 +879,7 @@ export default function Opt({
                             <AiUsageChip value={content.ai_usage} />
                           </Box>
                           <strong>
+                            {content.is_closed ? '(삭제글) ' : null}
                             {content.prefix_label ? `[${content.prefix_label}] ` : null}
                             {content.subject}
                           </strong>
@@ -917,6 +921,7 @@ export default function Opt({
                         </Box>
 
                         <strong>
+                          {content.is_closed ? '(삭제글) ' : null}
                           {content.prefix_label ? `[${content.prefix_label}] ` : null}
                           {content.subject}
                         </strong>
@@ -990,6 +995,7 @@ export default function Opt({
                           <AiUsageChip value={content.ai_usage} />
                         </Box>
                         <strong>
+                          {content.is_closed ? '(삭제글) ' : null}
                           {content.series_label && !seriesNameParam ? `[${content.series_label}] ` : null}
                           {content.subject}
                         </strong>
@@ -1037,6 +1043,7 @@ export default function Opt({
                               </i>
                             ) : null}
                             {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                            {content.is_closed ? <em>(삭제글)</em> : null}
                             <span>{content.subject}</span>
                             {content.comment_count > 0 ? (
                               <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
@@ -1110,6 +1117,7 @@ export default function Opt({
                               </i>
                             ) : null}
                             {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                            {content.is_closed ? <em>(삭제글)</em> : null}
                             <Anchor href={getContentHref(content.slug)}>{content.subject}</Anchor>
                             {content.comment_count > 0 ? (
                               <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>

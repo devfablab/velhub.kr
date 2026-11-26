@@ -21,12 +21,15 @@ export default async function Page({ params }: Props) {
       '말머리를 불러오지 못했습니다.',
     ),
   ]);
+  const postType = contentData?.data?.board?.post_type;
+  const seriesError = postType === 'series' ? seriesData?.error : undefined;
+  const prefixError = postType === 'prefix' ? prefixData?.error : undefined;
   return (
     <Opt
       initialContent={contentData?.data}
       initialSeries={seriesData?.data}
       initialPrefix={prefixData?.data}
-      initialError={contentData?.error || seriesData?.error || prefixData?.error}
+      initialError={contentData?.error || seriesError || prefixError || ''}
     />
   );
 }

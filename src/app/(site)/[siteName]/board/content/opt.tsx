@@ -990,6 +990,13 @@ export default function Opt({
                       <PushPinRoundedIcon />
                     </i>
                   ) : null}
+                  {content.is_closed ? (
+                    content.closed_message === '정산 정보 오류로 인한 임시 잠금' ? (
+                      <small className={styles.error}>정산 오류 </small>
+                    ) : (
+                      <small className={styles.error}>(삭제글) </small>
+                    )
+                  ) : null}
                   {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
                   {series ? (
                     <small>

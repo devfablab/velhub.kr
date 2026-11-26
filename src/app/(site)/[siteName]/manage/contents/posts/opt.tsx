@@ -806,14 +806,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
             </Typography>
           )}
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pt: 0, pb: 0 }}>
-            <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%', p: 1, pt: 0, pb: 2 }}>
-              {communityManageContents?.canCreateBoard ? (
-                <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/c/new`}>
-                  게시판 만들기
-                </Anchor>
-              ) : null}
-            </Stack>
+          <Stack direction="row" justifyContent="flex-end" gap={1} sx={{ width: '100%', p: 1, pt: 0, pb: 2 }}>
+            {communityManageContents?.canCreateBoard ? (
+              <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/c/new`}>
+                게시판 만들기
+              </Anchor>
+            ) : null}
 
             {communityManageContents?.canOrderBoards && isBoardOrderChanged ? (
               <button

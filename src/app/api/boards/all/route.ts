@@ -8,6 +8,7 @@ import { normalizeText } from '@/lib/utils';
 type BoardPermissionRow = {
   id: string;
   write_permission: string | null;
+  is_active: boolean;
 };
 
 function parsePositiveInt(value: string | null, fallbackValue: number) {
@@ -76,9 +77,8 @@ export async function GET(request: Request) {
       rhizome.data.site_type === 'community'
         ? supabaseAdmin
             .from('boards')
-            .select('id, write_permission')
+            .select('id, write_permission, is_active')
             .eq('site_id', rhizome.data.id)
-            .eq('write_permission', 'manager')
         : Promise.resolve(null),
     ]);
 
@@ -100,10 +100,14 @@ export async function GET(request: Request) {
         return Response.json({ error: '게시판 목록을 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const managerOnlyBoards = (boardsResult.data ?? []) as BoardPermissionRow[];
+      const boardRows = (boardsResult.data ?? []) as BoardPermissionRow[];
+      const managerOnlyBoards = boardRows.filter(isManagerOnlyBoard);
+      const inactiveBoardIds = boardRows.filter((board) => board.is_active !== true).map((board) => board.id);
 
-      if (managerOnlyBoards.some(isManagerOnlyBoard) && !(await canAccessManagerOnlyBoards(siteName, session.case))) {
-        excludedBoardIds = managerOnlyBoards.map((board) => board.id);
+      excludedBoardIds = [...inactiveBoardIds];
+
+      if (managerOnlyBoards.length > 0 && !(await canAccessManagerOnlyBoards(siteName, session.case))) {
+        excludedBoardIds = [...excludedBoardIds, ...managerOnlyBoards.map((board) => board.id)];
       }
     }
 

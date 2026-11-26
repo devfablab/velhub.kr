@@ -50,6 +50,7 @@ type PostItem = {
   prefix_label: string | null;
   series_label: string | null;
   is_poll: boolean;
+  is_closed: boolean;
   published_at: string | null;
   published_status: 'draft' | 'published';
   comment_count: number;
@@ -360,6 +361,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                               <HowToVoteIcon />
                             </i>
                           ) : null}
+                          {content.is_closed ? <em>(삭제글)</em> : null}
                           <span>
                             {renderHighlightedText(content.subject, content.search_title_matched ? searchKeyword : '')}
                           </span>
@@ -425,6 +427,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                               <HowToVoteIcon />
                             </i>
                           ) : null}
+                          {content.is_closed ? <em>(삭제글)</em> : null}
                           <Anchor
                             href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
                           >
@@ -484,6 +487,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                             </i>
                           ) : null}
                           {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                          {content.is_closed ? <em>(삭제글)</em> : null}
                           <span>{content.subject}</span>
                           {content.comment_count > 0 ? (
                             <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
@@ -553,6 +557,7 @@ export default function Opt({ isCommunity, initialData, initialError, pageSizeOp
                             </i>
                           ) : null}
                           {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                          {content.is_closed ? <em>(삭제글)</em> : null}
                           <Anchor
                             href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
                           >

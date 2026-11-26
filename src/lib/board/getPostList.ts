@@ -24,6 +24,7 @@ type GetPostListOptions = {
   hashtagId?: string | null;
   authorIds?: string[] | null;
   excludedBoardIds?: string[] | null;
+  excludeClosed?: boolean;
 };
 
 type SharedCoPost = {
@@ -285,6 +286,7 @@ export async function getPostList({
   hashtagId = null,
   authorIds = null,
   excludedBoardIds = null,
+  excludeClosed = false,
 }: GetPostListOptions): Promise<GetPostListResult> {
   const supabaseAdmin = getSupabaseAdmin();
   const isStaff = sessionCase === 'staff';
@@ -409,7 +411,7 @@ export async function getPostList({
       postsQuery = postsQuery.eq('is_pin', false);
     }
 
-    if (!isStaff) {
+    if (!isStaff || excludeClosed) {
       postsQuery = postsQuery.eq('is_closed', false);
     } else if (stigmaId) {
       postsQuery = postsQuery.or(`is_closed.eq.false,user_id.neq.${stigmaId}`);

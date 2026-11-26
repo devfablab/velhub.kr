@@ -341,6 +341,7 @@ export default async function Page(context: RouteContext) {
               stigmaId: session.stigmaId,
               sort: 'latest',
               includePin: false,
+              excludeClosed: true,
             });
 
             return {

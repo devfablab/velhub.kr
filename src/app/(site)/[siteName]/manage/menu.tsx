@@ -47,6 +47,7 @@ import DrawerManage from '@/components/header-groups/site/DrawerManage';
 import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
 import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
 import { useSiteHeader } from '../SiteHeaderContext';
+import { useSiteInitialData } from '../SiteInitialDataContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
@@ -110,7 +111,7 @@ type BreadcrumbItem = {
   href?: string;
 };
 
-function createBreadcrumbItems(pathname: string): BreadcrumbItem[] {
+function createBreadcrumbItems(pathname: string, boardLabels: Map<string, string>): BreadcrumbItem[] {
   const segments = pathname.split('/').filter(Boolean);
 
   const siteName = segments[0];
@@ -227,7 +228,7 @@ function createBreadcrumbItems(pathname: string): BreadcrumbItem[] {
       }
 
       items.push({
-        label: boardName,
+        label: boardLabels.get(boardName) || boardName,
         href: `${basePath}/posts/c/${boardName}`,
       });
 
@@ -484,7 +485,14 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-  const breadcrumbs = createBreadcrumbItems(pathname);
+  const siteInitialData = useSiteInitialData();
+  const boardLabels = new Map(
+    (siteInitialData?.boards ?? []).map((board) => [
+      board.board_key,
+      board.is_active ? board.board_label : `${board.board_label} (비활성 게시판)`,
+    ]),
+  );
+  const breadcrumbs = createBreadcrumbItems(pathname, boardLabels);
 
   const { themeMode, setThemeMode } = useThemeMode();
   const initialHeader = useSiteHeader();

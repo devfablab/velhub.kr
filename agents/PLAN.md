@@ -5,7 +5,7 @@
 
 ## 4. 현재 상태
 
-- 지금 작업 중인 단계: 접속 기록 (설정 화면)
+- 지금 작업 중인 단계: 보안 비밀번호 복구용 이메일
 - 테스트 상태: 로컬 측정만 함 (라운지 첫 화면 4~5초 → 0.3초 안팎)
 - 미커밋 변경 요약: 공개 데이터 Redis 저장본, DB 변경 번호 장치, 라운지 적용
 
@@ -78,6 +78,24 @@
 - [x] 2. `securityCheck.server.ts`에서 기록 남기기
 - [x] 3. `/settings`에 접속 기록 표시 (`api/auth/access-logs`, 설정 본인 확인 대상 목록에 추가)
 
+## 보안 비밀번호 복구용 이메일 (2026-11-24)
+
+- 결제용 이메일(`stigmas.payment_email`)을 소셜 계정의 보안 비밀번호 복구용 이메일로 씀 (이름만 바꿈)
+- 소셜 가입은 모든 로그인 방식에서 필수, 소셜 계정 이메일과 같으면 안 됨, 다른 계정끼리 같은 주소는 허용
+- 입력하면 확인 번호로 인증해야 등록 (가입, 변경 모두), 바꾸면 이전 주소로 알림
+- 본인 확인 창 이메일 인증번호는 인증된 복구용 이메일로 보냄 (아직 없는 기존 회원만 예전 주소로)
+- 기존 소셜 회원 중 인증된 복구용 이메일이 없으면 로그인 뒤 개인 설정으로 보내 등록하게 함
+- 인증된 복구용 이메일은 결제, 정산 화면에서 바꾸지 못하게 함 (개인 설정에서만)
+- velman 회원 상세에 임시 보안 비밀번호 보내기 버튼 (주소는 화면에 안 보임)
+
+- [x] 1. DB `stigmas.payment_email_verified_at`
+- [x] 2. 확인 번호 보내기, 확인, 저장 (`src/lib/auth/recoveryEmail*.ts`, `api/auth/recovery-email`)
+- [x] 3. 소셜 가입 화면과 API
+- [x] 4. 본인 확인 창 인증번호 받는 곳과 문구
+- [x] 5. 개인 설정 복구용 이메일 칸, 로그인 뒤 미등록 안내
+- [x] 6. 결제, 정산에서 인증된 주소 덮어쓰기 막기
+- [x] 7. velman 임시 보안 비밀번호 보내기
+
 ## 남은 단계
 
 
@@ -107,6 +125,14 @@
 | `src/lib/service/site/siteApiRoutes.ts`, `src/lib/service/hub/getData.ts` | 직접 호출 목록 추가, `fetchApiRoute` | 완료 |
 | `(hub)`, `(concierge)`, `(library)/creator/page.tsx`, `creator/settings`, `user/settings`, `(new)/memberships/creator`, `(lounge)/layout.tsx`, `lounge/search`, `[siteName]/info-blog` | 서버 자기 요청을 직접 호출로 | 완료 |
 | `supabase/migrations/20261124100000_stigma_access_logs.sql` | 접속 기록 표 | 완료 |
+| `supabase/migrations/20261124110000_recovery_email_verified.sql` | 복구용 이메일 인증 시각 | 완료 |
+| `src/lib/auth/recoveryEmail.ts`, `recoveryEmail.server.ts`, `src/app/api/auth/recovery-email/route.ts` | 확인 번호, 저장, 변경 알림 | 완료 |
+| `src/components/auth/RecoveryEmailFields.tsx`, `RecoveryEmailReminder.tsx`, `src/app/layout.tsx` | 입력 칸, 미등록 안내 | 완료 |
+| `src/app/(auth)/auth/social-sign-up/opt.tsx`, `src/lib/auth/socialSignUp.ts`, `src/app/api/auth/social/route.ts` | 소셜 가입 필수 입력 | 완료 |
+| `src/lib/auth/securityCheck.server.ts`, `src/components/auth/SecurityCheck.tsx` | 인증번호 받는 곳, 문구 | 완료 |
+| `src/app/(settings)/settings/recoveryEmail.tsx`, `page.tsx` | 개인 설정 칸 | 완료 |
+| `src/app/api/settlement/*`, `src/components/SettlementForm.tsx`, `src/app/api/payments/portone/payment-email/route.ts` | 인증된 주소 덮어쓰기 막기 | 완료 |
+| velman `src/lib/encrypt.ts`, `src/lib/types.ts`, `src/app/api/members/[id]/route.ts`, `src/app/api/members/[id]/security-pin/route.ts`, `src/app/members/page.tsx` | 임시 보안 비밀번호 보내기 | 완료 |
 | `src/lib/auth/securityCheck.server.ts` | 접속 기록 남기기 | 완료 |
 | `src/app/(settings)/settings/accessLogs.tsx`, `page.tsx`, `src/app/api/auth/access-logs/route.ts`, `src/proxy.ts` | 설정 화면에 접속 기록 표시 | 완료 |
 | `src/app/(library)/creator/[handleName]/page.tsx`, `user/[handleName]/page.tsx`, `user/[handleName]/following/page.tsx`, `src/app/api/creator/[handleName]/route.ts` | 직접 호출, 동시 시작 | 완료 |
