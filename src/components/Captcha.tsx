@@ -50,8 +50,9 @@ type Provider = 'fcaptcha' | 'turnstile';
 type CaptchaResponse = { passToken?: string; fallback?: boolean; error?: string } | null;
 
 type Props = {
-  purpose: 'sign-up';
+  purpose: 'sign-up' | 'site-new' | 'blog-post';
   theme?: CaptchaTheme;
+  resetKey?: number;
   onPass: (passToken: string) => void;
 };
 
@@ -100,7 +101,7 @@ async function postCaptcha(body: Record<string, string>) {
   return { ok: response.ok, result: (await response.json().catch(() => null)) as CaptchaResponse };
 }
 
-export default function Captcha({ purpose, theme = 'light', onPass }: Props) {
+export default function Captcha({ purpose, theme = 'light', resetKey = 0, onPass }: Props) {
   const containerReference = useRef<HTMLDivElement>(null);
   const onPassReference = useRef(onPass);
   const [provider, setProvider] = useState<Provider>('fcaptcha');
@@ -222,11 +223,11 @@ export default function Captcha({ purpose, theme = 'light', onPass }: Props) {
       if (provider === 'fcaptcha') window.FCaptcha?.destroy(widgetId);
       else window.turnstile?.remove(widgetId);
     };
-  }, [provider, purpose, theme]);
+  }, [provider, purpose, theme, resetKey]);
 
   return (
     <div>
-      <div ref={containerReference} key={provider} />
+      <div ref={containerReference} key={`${provider}-${resetKey}`} />
       {errorMessage ? (
         <p className="alert error" role="alert">
           <ErrorOutlineRoundedIcon />

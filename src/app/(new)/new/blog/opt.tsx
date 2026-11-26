@@ -35,11 +35,11 @@ import {
   SiteCreateFieldErrors,
   validateSiteCreateFields,
 } from '@/lib/site/createValidation.shared';
+import Captcha from '@/components/Captcha';
 import AppIconAvatar from '@/components/customUI/AppIconAvatar';
 import { IOSSwitch } from '@/components/customUI/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
-import SiteCaptcha from '@/app/(new)/new/siteCaptcha';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -136,7 +136,13 @@ export default function Opt() {
   const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaPassToken, setCaptchaPassToken] = useState('');
-  const [isCaptchaBlocked, setIsCaptchaBlocked] = useState(false);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const [isCaptchaUnlocked, setIsCaptchaUnlocked] = useState(false);
+
+  function handleCaptchaPass(passToken: string) {
+    setCaptchaPassToken(passToken);
+    setIsCaptchaUnlocked(true);
+  }
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -475,12 +481,8 @@ export default function Opt() {
       return;
     }
 
-    if (isCaptchaBlocked) {
-      return;
-    }
-
     if (!captchaPassToken) {
-      openErrorDialog('보안 문자를 입력하고 확인을 눌러 주세요.', { title: '입력 내용 확인' });
+      openErrorDialog('보안 확인을 완료해 주세요.', { title: '입력 내용 확인' });
       return;
     }
 
@@ -518,6 +520,11 @@ export default function Opt() {
             ? (result as { fieldErrors: SiteCreateFieldErrors }).fieldErrors
             : EMPTY_SITE_CREATE_FIELD_ERRORS;
 
+        if (result && typeof result === 'object' && (result as { code?: unknown }).code === 'captcha_required') {
+          setCaptchaPassToken('');
+          setCaptchaResetKey((previousValue) => previousValue + 1);
+        }
+
         if (response.status >= 500 || !message) {
           openUnknownErrorDialog();
         } else {
@@ -543,6 +550,14 @@ export default function Opt() {
       return;
     }
   }, [isMounted]);
+
+  if (!isCaptchaUnlocked) {
+    return (
+      <div className={`paper ${styles.paper}`}>
+        <Captcha purpose="site-new" onPass={handleCaptchaPass} />
+      </div>
+    );
+  }
 
   return (
     <Box component="form" noValidate onSubmit={handleSubmit}>
@@ -747,7 +762,9 @@ export default function Opt() {
             </div>
           </Stack>
 
-          <SiteCaptcha onPassTokenChange={setCaptchaPassToken} onBlockedChange={setIsCaptchaBlocked} />
+          {captchaPassToken ? null : (
+            <Captcha purpose="site-new" resetKey={captchaResetKey} onPass={setCaptchaPassToken} />
+          )}
 
           {errorMessage ? (
             <p className="alert error" role="alert">
@@ -764,7 +781,7 @@ export default function Opt() {
         <button
           type="submit"
           className="button medium submit"
-          disabled={isSubmitting || isCheckingSiteKey || isCheckingSiteLabel || isCaptchaBlocked}
+          disabled={isSubmitting || isCheckingSiteKey || isCheckingSiteLabel}
         >
           {isSubmitting || isCheckingSiteKey || isCheckingSiteLabel ? <LoadingIndicator size={20} /> : null}
           블로그 개설

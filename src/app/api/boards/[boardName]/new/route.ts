@@ -18,6 +18,7 @@ import {
   assertCommunityPostWritePolicy,
 } from '@/lib/service/site/community/policies';
 import { refreshCommunityMemberLevel } from '@/lib/service/site/community/refreshMemberLevel';
+import { CAPTCHA_REQUIRED_MESSAGE, isCaptchaPassed } from '@/lib/captcha.server';
 import verifySession from '@/lib/session/verifySession';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';
@@ -61,6 +62,7 @@ type ImageRow = {
 
 type RequestBody = {
   siteName: string | null;
+  captchaPassToken?: string | null;
   action?: 'draft' | 'publish' | 'unknown' | null;
   subject?: string | null;
   summary?: string | null;
@@ -667,6 +669,13 @@ export async function POST(request: Request, context: RouteContext) {
       (session.case !== 'admin' && session.case !== 'staff' && session.case !== 'member')
     ) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (
+      rhizomeData.site_type === 'blog' &&
+      !isCaptchaPassed(normalizeText(requestBody.captchaPassToken), 'blog-post', session.authUserId)
+    ) {
+      return Response.json({ error: CAPTCHA_REQUIRED_MESSAGE, code: 'captcha_required' }, { status: 400 });
     }
 
     let coPostPartner: CoPostPartnerCandidate | null = null;

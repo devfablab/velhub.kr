@@ -1,13 +1,19 @@
 import crypto from 'crypto';
 import { redis } from '@/lib/clients/redis';
 
-export const CAPTCHA_PURPOSES = ['sign-up'] as const;
+export const CAPTCHA_PURPOSES = ['sign-up', 'site-new', 'blog-post'] as const;
 
 export type CaptchaPurpose = (typeof CAPTCHA_PURPOSES)[number];
 
 export type FCaptchaResult = 'passed' | 'rejected' | 'unavailable';
 
-const PASS_LIFETIME_MS = 30 * 60 * 1000;
+const PASS_LIFETIME_MS: Record<CaptchaPurpose, number> = {
+  'sign-up': 30 * 60 * 1000,
+  'site-new': 30 * 60 * 1000,
+  'blog-post': 12 * 60 * 60 * 1000,
+};
+
+export const CAPTCHA_REQUIRED_MESSAGE = '보안 확인 시간이 지났습니다. 보안 확인을 다시 완료해 주세요.';
 const FCAPTCHA_SERVER_URL = 'https://fcaptcha.webdecoy.com';
 const FCAPTCHA_UNAVAILABLE_KEY = 'captcha:fcaptcha-unavailable';
 const FCAPTCHA_UNAVAILABLE_SECONDS = 10 * 60;
@@ -25,6 +31,10 @@ type SiteVerifyResult = {
   hostname?: string;
   'error-codes'?: string[];
 };
+
+export function isLoginCaptchaPurpose(purpose: CaptchaPurpose) {
+  return purpose !== 'sign-up';
+}
 
 export function isCaptchaPurpose(value: unknown): value is CaptchaPurpose {
   return typeof value === 'string' && (CAPTCHA_PURPOSES as readonly string[]).includes(value);
@@ -163,7 +173,7 @@ export function createCaptchaPassToken(purpose: CaptchaPurpose, subject: string)
     kind: 'captcha-pass',
     purpose,
     subject,
-    expiresAt: Date.now() + PASS_LIFETIME_MS,
+    expiresAt: Date.now() + PASS_LIFETIME_MS[purpose],
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
 

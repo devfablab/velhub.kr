@@ -7,11 +7,13 @@ import {
   addRecommendedBlogPost,
   getBlogRecommendationContext,
 } from '@/lib/service/site/blog/blogRecommendations.server';
+import { CAPTCHA_REQUIRED_MESSAGE, isCaptchaPassed } from '@/lib/captcha.server';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
   siteName: string | null;
+  captchaPassToken?: string | null;
   action?: 'draft' | 'publish' | 'unknown' | null;
   subject: string | null;
   summary: string | null;
@@ -124,6 +126,10 @@ export async function POST(request: Request) {
 
     if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!isCaptchaPassed(normalizeText(requestBody.captchaPassToken), 'blog-post', session.authUserId)) {
+      return Response.json({ error: CAPTCHA_REQUIRED_MESSAGE, code: 'captcha_required' }, { status: 400 });
     }
 
     const parsedHashtags = parsePostHashtagLabels(requestBody.blogHashtags);

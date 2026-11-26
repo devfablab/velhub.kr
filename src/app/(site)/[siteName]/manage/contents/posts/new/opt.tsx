@@ -30,6 +30,7 @@ import SpellCheckDialog, {
   type SpellCheckDialogHandle,
   type SpellCheckSection,
 } from '@/components/editor/SpellCheckDialog';
+import Captcha from '@/components/Captcha';
 import ToastEditor from '@/components/editor/ToastEditor';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -66,6 +67,7 @@ type CreateResponse = {
   ok?: boolean;
   slug?: string;
   error?: string;
+  code?: string;
 };
 
 type UploadResponse = {
@@ -275,6 +277,14 @@ export default function Opt({
     initialError ? { title: null, messages: [initialError] } : null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaPassToken, setCaptchaPassToken] = useState('');
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const [isCaptchaUnlocked, setIsCaptchaUnlocked] = useState(false);
+
+  function handleCaptchaPass(passToken: string) {
+    setCaptchaPassToken(passToken);
+    setIsCaptchaUnlocked(true);
+  }
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
   const [isComment, setIsComment] = useState(initialStatus?.commentProvider !== 'none');
@@ -679,6 +689,11 @@ export default function Opt({
       return;
     }
 
+    if (!captchaPassToken) {
+      setFormErrorDialog({ title: '글쓰기', messages: ['보안 확인을 완료해 주세요.'] });
+      return;
+    }
+
     const isSpellCheckConfirmed = isSpellCheckConfirmedReference.current;
     isSpellCheckConfirmedReference.current = false;
 
@@ -728,12 +743,18 @@ export default function Opt({
           isRecommended: !isCoPost && publishTimeMode === 'now' ? isRecommended : false,
           aiUsage,
           attachments,
+          captchaPassToken,
         }),
       });
 
       const createResult = (await createResponse.json()) as CreateResponse;
 
       if (!createResponse.ok) {
+        if (createResult.code === 'captcha_required') {
+          setCaptchaPassToken('');
+          setCaptchaResetKey((current) => current + 1);
+        }
+
         if (thumbnailImage) {
           await fetch('/api/attachment/delete/og-image', {
             method: 'POST',
@@ -796,6 +817,20 @@ export default function Opt({
                 목록으로 이동
               </Anchor>
             </Box>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (!isCaptchaUnlocked) {
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
+            <div className={`paper ${styles.paper}`}>
+              <Captcha purpose="blog-post" onPass={handleCaptchaPass} />
+            </div>
           </div>
         </div>
       </Container>
@@ -1095,6 +1130,10 @@ export default function Opt({
                 onApplySection={handleApplySpellCheckSection}
                 onConfirmSave={handleConfirmSpellCheckSave}
               />
+
+              {captchaPassToken ? null : (
+                <Captcha purpose="blog-post" resetKey={captchaResetKey} onPass={setCaptchaPassToken} />
+              )}
 
               <Stack direction="row" gap={1.5} justifyContent="space-between">
                 <Anchor href={`/${siteName}/manage/contents/posts`} className="button medium cancel">

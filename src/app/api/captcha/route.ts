@@ -3,10 +3,12 @@ import {
   createCaptchaPassToken,
   isCaptchaPurpose,
   isFCaptchaUnavailable,
+  isLoginCaptchaPurpose,
   verifyFCaptchaToken,
   verifyTurnstileToken,
 } from '@/lib/captcha.server';
 import { getClientIpAddress } from '@/lib/clientRequest';
+import { getSessionClaims } from '@/lib/session/server';
 
 type RequestBody = {
   action?: unknown;
@@ -49,7 +51,17 @@ export async function POST(request: Request) {
     }
 
     const clientIpAddress = getClientIpAddress(request.headers);
-    const subject = clientIpAddress ?? '';
+    let subject = clientIpAddress ?? '';
+
+    if (isLoginCaptchaPurpose(purpose)) {
+      const sessionClaims = await getSessionClaims();
+
+      if (!sessionClaims) {
+        return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+      }
+
+      subject = sessionClaims.userId;
+    }
 
     if (requestBody?.provider === 'turnstile') {
       if (!(await isFCaptchaUnavailable()) || !(await verifyTurnstileToken(token, clientIpAddress))) {

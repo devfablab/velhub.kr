@@ -8,7 +8,7 @@ import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session/server';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { EMPTY_SITE_CREATE_FIELD_ERRORS, validateSiteCreateFields } from '@/lib/site/createValidation.shared';
-import { isSiteCaptchaPassed } from '@/lib/site/siteCaptcha.server';
+import { CAPTCHA_REQUIRED_MESSAGE, isCaptchaPassed } from '@/lib/captcha.server';
 import { normalizeText } from '@/lib/utils';
 
 type VisibilityType = 'public' | 'private';
@@ -158,8 +158,8 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
 
-    if (!isSiteCaptchaPassed(sessionClaims.userId, getFormText(formData, 'captchaPassToken'))) {
-      return Response.json({ error: '보안 문자 확인을 완료해 주세요.' }, { status: 400 });
+    if (!isCaptchaPassed(getFormText(formData, 'captchaPassToken'), 'site-new', sessionClaims.userId)) {
+      return Response.json({ error: CAPTCHA_REQUIRED_MESSAGE, code: 'captcha_required' }, { status: 400 });
     }
 
     const profilePictureFile = formData.get('profilePicture');

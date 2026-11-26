@@ -115,13 +115,17 @@
 - 기본은 WebDecoy 관리형 FCaptcha. 한도 초과(capacity-exceeded)나 장애일 때만 Turnstile로 전환 (서버가 10분간 장애 표시를 Redis에 저장, 그동안만 Turnstile 통과 인정)
 - 봇으로 거절된 경우는 Turnstile로 넘기지 않음
 - 통과하면 서버가 30분짜리 통과 표시를 주고, 이메일 가입 API가 확인
-- WebDecoy는 지금 observe 모드라 모든 검증이 통과로 옴. 확인 뒤 Enforce로 전환 필요
-- 다음: 사이트 만들기 캡차 교체, 글 쓰는 곳 전체 적용
+- WebDecoy Enforce 모드
+- 적용 범위: 회원가입, 사이트 개설, 블로그 글쓰기 (사용량 때문에 이 셋만)
+- 사이트 개설은 30분, 블로그 글쓰기는 12시간짜리 통과 표시 (로그인한 계정 기준)
+- 세 곳 모두 통과 전에는 보안 확인만 보이고, 통과하면 화면이 열림. 저장할 때 시간이 지났으면 버튼 위에 보안 확인이 다시 나옴 (쓰던 내용 유지)
 
 - [x] 1. Turnstile 회원가입 적용
 - [x] 2. FCaptcha 기본 + Turnstile 예비로 변경 (`captcha.server.ts`, `/api/captcha`, `components/Captcha.tsx`)
 - [x] 3. 타입 검사, API 우회 시험
-- [ ] 4. 화면 확인 후 WebDecoy Enforce 전환
+- [x] 4. 사이트 개설 캡차를 FCaptcha로 교체 (`new/blog/opt.tsx`, `new/community/opt.tsx`, 두 개설 API)
+- [x] 5. 블로그 글쓰기 캡차 적용 (`manage/contents/posts/new/opt.tsx`, `/api/boards/[boardName]/new`(블로그만), `/api/manage/contents/blog-posts/new`)
+- [x] 6. WebDecoy Enforce 전환
 
 ## 남은 단계
 
@@ -165,6 +169,7 @@
 | `src/app/(library)/creator/[handleName]/page.tsx`, `user/[handleName]/page.tsx`, `user/[handleName]/following/page.tsx`, `src/app/api/creator/[handleName]/route.ts` | 직접 호출, 동시 시작 | 완료 |
 | `src/lib/board/seriesAuthor.ts`, `src/app/api/boards/[boardName]/series/new/route.ts`, `[seriesName]/edit/route.ts`, `src/app/api/manage/payments/subscriptions/series/route.ts`, `src/app/(site)/[siteName]/manage/contents/posts/c/[boardName]/series/opt.tsx` | 연재 담당자 규칙, 연재 추가 때 구독 설정 | 완료 |
 | `src/lib/captcha.server.ts`, `src/app/api/captcha/route.ts`, `src/components/Captcha.tsx`, `src/app/(auth)/auth/container.tsx`, `sign-up/email.tsx`, `src/app/api/auth/email/sign-up/route.ts` | 회원가입 캡차 (FCaptcha, Turnstile 예비) | 완료 |
+| `src/app/(new)/new/blog/opt.tsx`, `src/app/(new)/new/community/opt.tsx`, `src/app/api/site/blog/new/route.ts`, `src/app/api/site/community/new/route.ts`, `src/app/(site)/[siteName]/manage/contents/posts/new/opt.tsx`, `src/app/api/boards/[boardName]/new/route.ts`, `src/app/api/manage/contents/blog-posts/new/route.ts` | 사이트 개설, 블로그 글쓰기 캡차 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 
