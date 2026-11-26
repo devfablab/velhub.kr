@@ -31,8 +31,9 @@ import {
   Tooltip,
 } from '@mui/material';
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
+import { validateSeriesSubscriptionPrice } from '@/lib/payments/subscriptionPrice';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
-import { formatDateTimeDetail, maskEmail, normalizeText } from '@/lib/utils';
+import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
@@ -71,6 +72,7 @@ type SeriesRow = {
   site_id: string;
   last_published_at: string | null;
   is_completed: boolean;
+  is_subscription?: boolean;
   user_id: string | null;
 };
 
@@ -79,6 +81,7 @@ type SeriesUserSearchRow = {
   email: string;
   userName: string;
   nickname: string;
+  isAuthor: boolean;
 };
 
 export type SeriesListResponse = {
@@ -231,6 +234,8 @@ export default function Opt({
   });
   const [selectedUser, setSelectedUser] = useState<SeriesUserSearchRow | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isSubscriptionChecked, setIsSubscriptionChecked] = useState(false);
+  const [subscriptionPrice, setSubscriptionPrice] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -241,13 +246,17 @@ export default function Opt({
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [userSearchKeyword, setUserSearchKeyword] = useState('');
   const [searchedUsers, setSearchedUsers] = useState<SeriesUserSearchRow[]>([]);
-  const isUserEmailSearch = normalizeText(userSearchKeyword).includes('@');
   const [isUserSearching, setIsUserSearching] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState(initialError ?? '');
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
+  const seriesKeyErrorMessage = dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : '';
+  const seriesLabelErrorMessage = dialogErrorMessage.includes('연재명') ? dialogErrorMessage : '';
+  const dialogAlertMessage = seriesKeyErrorMessage || seriesLabelErrorMessage ? '' : dialogErrorMessage;
   const [dialogHelperMessage, setDialogHelperMessage] = useState('');
+  const seriesLabelHelperMessage = dialogHelperMessage.includes('연재명') ? dialogHelperMessage : '';
+  const seriesKeyHelperMessage = seriesLabelHelperMessage ? '' : dialogHelperMessage;
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const [isKeyChecked, setIsKeyChecked] = useState(false);
@@ -277,6 +286,8 @@ export default function Opt({
     setThumbnailImageSize({ width: null, height: null });
     setSelectedUser(null);
     setIsCompleted(false);
+    setIsSubscriptionChecked(false);
+    setSubscriptionPrice('');
     setDialogErrorMessage('');
     setDialogHelperMessage('');
     setIsKeyChecked(false);
@@ -433,7 +444,42 @@ export default function Opt({
     setIsUserDialogOpen(false);
   }
 
+  const isAuthorRequired =
+    (dialogMode === 'edit' && selectedSeries?.is_subscription === true) ||
+    (dialogMode === 'new' && isSubscriptionChecked);
+  const subscriptionPriceNumber = Number(subscriptionPrice.replace(/[^0-9]/g, ''));
+  const subscriptionPriceError =
+    dialogMode === 'new' && isSubscriptionChecked && subscriptionPrice
+      ? validateSeriesSubscriptionPrice(subscriptionPriceNumber).message
+      : '';
+  const isSubscriptionReady =
+    dialogMode !== 'new' || !isSubscriptionChecked || (Boolean(subscriptionPrice) && !subscriptionPriceError);
+
+  function handleIsSubscriptionChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextIsSubscription = event.target.checked;
+
+    setIsSubscriptionChecked(nextIsSubscription);
+    setDialogErrorMessage('');
+    setDialogHelperMessage('');
+
+    if (nextIsSubscription && selectedUser && !selectedUser.isAuthor) {
+      setSelectedUser(null);
+      setSnackbarMessage('구독 연재는 작가만 담당자로 지정할 수 있어 담당자 지정을 취소했습니다.');
+    }
+  }
+
+  function handleSubscriptionPriceChange(event: ChangeEvent<HTMLInputElement>) {
+    setSubscriptionPrice(event.target.value.replace(/[^0-9]/g, '').slice(0, 6));
+    setDialogErrorMessage('');
+    setDialogHelperMessage('');
+  }
+
   function handleSelectUser(user: SeriesUserSearchRow) {
+    if (isAuthorRequired && !user.isAuthor) {
+      setSnackbarMessage('구독 연재는 작가만 담당자로 지정할 수 있습니다.');
+      return;
+    }
+
     setSelectedUser(user);
     setIsUserDialogOpen(false);
   }
@@ -762,6 +808,8 @@ export default function Opt({
         thumbnailImage,
         userId: selectedUser?.stigmaId || null,
         isCompleted,
+        isSubscription: dialogMode === 'new' ? isSubscriptionChecked : undefined,
+        subscriptionPrice: dialogMode === 'new' && isSubscriptionChecked ? subscriptionPriceNumber : undefined,
       };
 
       if (dialogMode === 'new') {
@@ -981,6 +1029,8 @@ export default function Opt({
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
                         fullWidth
                         required
+                        error={Boolean(seriesKeyErrorMessage)}
+                        helperText={seriesKeyErrorMessage || seriesKeyHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재 식별자' },
@@ -1010,6 +1060,8 @@ export default function Opt({
                         onChange={handleSeriesLabelChange}
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
                         fullWidth
+                        error={Boolean(seriesLabelErrorMessage)}
+                        helperText={seriesLabelErrorMessage || seriesLabelHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재명' },
@@ -1091,12 +1143,6 @@ export default function Opt({
                       <Stack gap={1}>
                         {selectedUser ? (
                           <Stack gap={0.5}>
-                            <Box>
-                              <Typography variant="subtitle2">이메일</Typography>
-                              <Typography variant="body2">
-                                {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
-                              </Typography>
-                            </Box>
                             {selectedUser.userName ? (
                               <Box>
                                 <Typography variant="subtitle2">활동명</Typography>
@@ -1115,6 +1161,43 @@ export default function Opt({
                             <WarningAmberRoundedIcon />
                             <span>연재 담당 작가가 지정되지 않았습니다.</span>
                           </p>
+                        )}
+                        {dialogMode === 'new' && (
+                          <Stack gap={1}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox checked={isSubscriptionChecked} onChange={handleIsSubscriptionChange} />
+                              }
+                              label="구독 연재"
+                            />
+                            {isSubscriptionChecked ? (
+                              <>
+                                <p className="alert info">
+                                  <InfoOutlineRoundedIcon />
+                                  <span>구독 연재는 작가로 승인된 구성원만 담당자로 지정할 수 있습니다.</span>
+                                </p>
+                                <Typography variant="subtitle2">월 구독 가격 *</Typography>
+                                <TextField
+                                  value={subscriptionPrice ? Number(subscriptionPrice).toLocaleString('ko-KR') : ''}
+                                  onChange={handleSubscriptionPriceChange}
+                                  size="small"
+                                  fullWidth
+                                  slotProps={{
+                                    htmlInput: {
+                                      inputMode: 'numeric',
+                                      'aria-label': '월 구독 가격',
+                                      style: { textAlign: 'right' },
+                                    },
+                                    input: { endAdornment: <InputAdornment position="end">원</InputAdornment> },
+                                  }}
+                                  error={Boolean(subscriptionPriceError)}
+                                  helperText={
+                                    subscriptionPriceError || '7,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.'
+                                  }
+                                />
+                              </>
+                            ) : null}
+                          </Stack>
                         )}
                         <Stack direction="column" gap={1}>
                           {selectedUser ? (
@@ -1151,17 +1234,10 @@ export default function Opt({
                       )}
                     </div>
 
-                    {dialogHelperMessage ? (
-                      <p className="alert info">
-                        <InfoOutlineRoundedIcon />
-                        <span>{dialogHelperMessage}</span>
-                      </p>
-                    ) : null}
-
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1180,7 +1256,7 @@ export default function Opt({
                   type="submit"
                   form="mobile-series-form"
                   className="button medium submit"
-                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage || !isSubscriptionReady}
                 >
                   {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
                   저장
@@ -1223,6 +1299,8 @@ export default function Opt({
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
                         fullWidth
                         required
+                        error={Boolean(seriesKeyErrorMessage)}
+                        helperText={seriesKeyErrorMessage || seriesKeyHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재 식별자' },
@@ -1252,6 +1330,8 @@ export default function Opt({
                         onChange={handleSeriesLabelChange}
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
                         fullWidth
+                        error={Boolean(seriesLabelErrorMessage)}
+                        helperText={seriesLabelErrorMessage || seriesLabelHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재명' },
@@ -1333,12 +1413,6 @@ export default function Opt({
                       <Stack gap={1}>
                         {selectedUser ? (
                           <Stack gap={0.5}>
-                            <Box>
-                              <Typography variant="subtitle2">이메일</Typography>
-                              <Typography variant="body2">
-                                {selectedUser.email ? maskEmail(selectedUser.email) : selectedUser.stigmaId}
-                              </Typography>
-                            </Box>
                             {selectedUser.userName ? (
                               <Box>
                                 <Typography variant="subtitle2">활동명</Typography>
@@ -1357,6 +1431,43 @@ export default function Opt({
                             <WarningAmberRoundedIcon />
                             <span>연재 담당 작가가 지정되지 않았습니다.</span>
                           </p>
+                        )}
+                        {dialogMode === 'new' && (
+                          <Stack gap={1}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox checked={isSubscriptionChecked} onChange={handleIsSubscriptionChange} />
+                              }
+                              label="구독 연재"
+                            />
+                            {isSubscriptionChecked ? (
+                              <>
+                                <p className="alert info">
+                                  <InfoOutlineRoundedIcon />
+                                  <span>구독 연재는 작가로 승인된 구성원만 담당자로 지정할 수 있습니다.</span>
+                                </p>
+                                <Typography variant="subtitle2">월 구독 가격 *</Typography>
+                                <TextField
+                                  value={subscriptionPrice ? Number(subscriptionPrice).toLocaleString('ko-KR') : ''}
+                                  onChange={handleSubscriptionPriceChange}
+                                  size="small"
+                                  fullWidth
+                                  slotProps={{
+                                    htmlInput: {
+                                      inputMode: 'numeric',
+                                      'aria-label': '월 구독 가격',
+                                      style: { textAlign: 'right' },
+                                    },
+                                    input: { endAdornment: <InputAdornment position="end">원</InputAdornment> },
+                                  }}
+                                  error={Boolean(subscriptionPriceError)}
+                                  helperText={
+                                    subscriptionPriceError || '7,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.'
+                                  }
+                                />
+                              </>
+                            ) : null}
+                          </Stack>
                         )}
                         <Stack direction="column" gap={1}>
                           {selectedUser ? (
@@ -1393,17 +1504,10 @@ export default function Opt({
                       )}
                     </div>
 
-                    {dialogHelperMessage ? (
-                      <p className="alert info">
-                        <InfoOutlineRoundedIcon />
-                        <span>{dialogHelperMessage}</span>
-                      </p>
-                    ) : null}
-
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1421,7 +1525,7 @@ export default function Opt({
                 <button
                   type="submit"
                   form="desktop-series-form"
-                  disabled={isSubmitting || isUploadingImage || isDeletingImage}
+                  disabled={isSubmitting || isUploadingImage || isDeletingImage || !isSubscriptionReady}
                 >
                   {isSubmitting || isUploadingImage || isDeletingImage ? <LoadingIndicator size={20} /> : null}
                   저장
@@ -1455,10 +1559,10 @@ export default function Opt({
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1509,10 +1613,10 @@ export default function Opt({
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1580,18 +1684,24 @@ export default function Opt({
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell>이메일</TableCell>
                             <TableCell>활동명</TableCell>
                             <TableCell>닉네임</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>작가 여부</TableCell>
                             <TableCell align="right">선택</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {searchedUsers.map((user) => (
                             <TableRow key={user.stigmaId}>
-                              <TableCell>{isUserEmailSearch ? user.email : maskEmail(user.email)}</TableCell>
                               <TableCell>{user.userName}</TableCell>
                               <TableCell>{user.nickname}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {user.isAuthor ? (
+                                  <span style={{ color: 'var(--color-green)' }}>O</span>
+                                ) : (
+                                  <span style={{ color: 'var(--color-red)' }}>X</span>
+                                )}
+                              </TableCell>
                               <TableCell align="right">
                                 <button
                                   type="button"
@@ -1673,18 +1783,24 @@ export default function Opt({
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell>이메일</TableCell>
                             <TableCell>활동명</TableCell>
                             <TableCell>닉네임</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>작가 여부</TableCell>
                             <TableCell align="right">선택</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {searchedUsers.map((user) => (
                             <TableRow key={user.stigmaId}>
-                              <TableCell>{isUserEmailSearch ? user.email : maskEmail(user.email)}</TableCell>
                               <TableCell>{user.userName}</TableCell>
                               <TableCell>{user.nickname}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {user.isAuthor ? (
+                                  <span style={{ color: 'var(--color-green)' }}>O</span>
+                                ) : (
+                                  <span style={{ color: 'var(--color-red)' }}>X</span>
+                                )}
+                              </TableCell>
                               <TableCell align="right">
                                 <button
                                   type="button"

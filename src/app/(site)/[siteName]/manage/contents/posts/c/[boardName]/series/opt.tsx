@@ -33,7 +33,7 @@ import {
 import { getR2PublicUrl } from '@/lib/clients/r2Public';
 import { validateSeriesSubscriptionPrice } from '@/lib/payments/subscriptionPrice';
 import { runInputAdornmentAction } from '@/lib/runInputAdornmentAction';
-import { formatDateTimeDetail, maskEmail, normalizeText } from '@/lib/utils';
+import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import FormErrorDialog from '@/components/FormErrorDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import OptimizedImage from '@/components/OptimizedImage';
@@ -235,12 +235,16 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [userSearchKeyword, setUserSearchKeyword] = useState('');
   const [searchedUsers, setSearchedUsers] = useState<SeriesUserSearchRow[]>([]);
-  const isUserEmailSearch = normalizeText(userSearchKeyword).includes('@');
   const [isUserSearching, setIsUserSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(Boolean(initialError));
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
+  const seriesKeyErrorMessage = dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : '';
+  const seriesLabelErrorMessage = dialogErrorMessage.includes('연재명') ? dialogErrorMessage : '';
+  const dialogAlertMessage = seriesKeyErrorMessage || seriesLabelErrorMessage ? '' : dialogErrorMessage;
   const [dialogHelperMessage, setDialogHelperMessage] = useState('');
+  const seriesLabelHelperMessage = dialogHelperMessage.includes('연재명') ? dialogHelperMessage : '';
+  const seriesKeyHelperMessage = seriesLabelHelperMessage ? '' : dialogHelperMessage;
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarKind, setSnackbarKind] = useState<'info' | 'error'>('info');
   const [isKeyChecked, setIsKeyChecked] = useState(false);
@@ -1024,8 +1028,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
                         fullWidth
                         required
-                        error={dialogErrorMessage.includes('연재 식별자')}
-                        helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
+                        error={Boolean(seriesKeyErrorMessage)}
+                        helperText={seriesKeyErrorMessage || seriesKeyHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재 식별자' },
@@ -1056,8 +1060,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onChange={handleSeriesLabelChange}
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
                         fullWidth
-                        error={dialogErrorMessage.includes('연재명')}
-                        helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
+                        error={Boolean(seriesLabelErrorMessage)}
+                        helperText={seriesLabelErrorMessage || seriesLabelHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재명' },
@@ -1231,17 +1235,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       )}
                     </div>
 
-                    {dialogHelperMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogHelperMessage}</span>
-                      </p>
-                    ) : null}
-
-                    {dialogErrorMessage ? (
-                      <p className="alert error" role="alert">
-                        <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1301,17 +1298,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   }}
                 >
                   <Stack gap={2} sx={{ pt: 1 }}>
-                    {dialogHelperMessage ? (
-                      <p className="alert info">
-                        <InfoOutlineRoundedIcon />
-                        <span>{dialogHelperMessage}</span>
-                      </p>
-                    ) : null}
-
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
 
@@ -1323,8 +1313,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
                         fullWidth
                         required
-                        error={dialogErrorMessage.includes('연재 식별자')}
-                        helperText={dialogErrorMessage.includes('연재 식별자') ? dialogErrorMessage : undefined}
+                        error={Boolean(seriesKeyErrorMessage)}
+                        helperText={seriesKeyErrorMessage || seriesKeyHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재 식별자' },
@@ -1354,8 +1344,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         onChange={handleSeriesLabelChange}
                         onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
                         fullWidth
-                        error={dialogErrorMessage.includes('연재명')}
-                        helperText={dialogErrorMessage.includes('연재명') ? dialogErrorMessage : undefined}
+                        error={Boolean(seriesLabelErrorMessage)}
+                        helperText={seriesLabelErrorMessage || seriesLabelHelperMessage || undefined}
                         size="small"
                         slotProps={{
                           htmlInput: { 'aria-label': '연재명' },
@@ -1535,17 +1525,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       )}
                     </div>
 
-                    {dialogHelperMessage ? (
-                      <p className="alert info">
-                        <InfoOutlineRoundedIcon />
-                        <span>{dialogHelperMessage}</span>
-                      </p>
-                    ) : null}
-
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1603,10 +1586,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1657,10 +1640,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                   <Stack gap={2} sx={{ pt: 1 }}>
                     <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
-                    {dialogErrorMessage ? (
+                    {dialogAlertMessage ? (
                       <p className="alert error" role="alert">
                         <ErrorOutlineRoundedIcon />
-                        <span>{dialogErrorMessage}</span>
+                        <span>{dialogAlertMessage}</span>
                       </p>
                     ) : null}
                   </Stack>
@@ -1728,7 +1711,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>이메일</TableCell>
                             <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>활동명</TableCell>
                             <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>닉네임</TableCell>
                             <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>선택</TableCell>
@@ -1737,9 +1719,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                         <TableBody>
                           {searchedUsers.map((user) => (
                             <TableRow key={user.stigmaId}>
-                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
-                                {isUserEmailSearch ? user.email : maskEmail(user.email)}
-                              </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.userName}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.nickname}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>

@@ -7,6 +7,7 @@ import {
   canManageCommunityBoardSettings,
   getCommunityManagerAccess,
 } from '@/lib/service/site/community/communityManager/utils';
+import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { scheduleAutoOgImage } from '@/lib/site/autoOgImage.server';
 import { normalizeText } from '@/lib/utils';
@@ -128,7 +129,11 @@ export async function POST(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin
+      .from('rhizomes')
+      .select('id, site_type, owner_id')
+      .eq('site_key', siteName)
+      .maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -213,15 +218,52 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (isSubscription) {
-      if (rhizome.data.site_type !== 'community') {
-        return Response.json({ error: '연재 추가에서 구독은 커뮤니티에서만 설정할 수 있습니다.' }, { status: 400 });
-      }
+      const isBlog = rhizome.data.site_type === 'blog';
 
       if (session.case !== 'admin' && session.case !== 'staff') {
-        return Response.json({ error: '구독 연재는 커뮤니티 운영자만 만들 수 있습니다.' }, { status: 403 });
+        return Response.json(
+          {
+            error: isBlog
+              ? '구독 연재는 블로그 운영자만 만들 수 있습니다.'
+              : '구독 연재는 커뮤니티 운영자만 만들 수 있습니다.',
+          },
+          { status: 403 },
+        );
       }
 
-      const priceValidation = validateSeriesPriceAgainstParentPrice(subscriptionPrice, 0);
+      let parentPrice = 0;
+
+      if (isBlog) {
+        if (board.data.board_key !== 'b') {
+          return Response.json({ error: '블로그 연재 구독 정보가 올바르지 않습니다.' }, { status: 400 });
+        }
+
+        const authorState = rhizome.data.owner_id ? await getAuthorState(rhizome.data.owner_id) : { isAuthor: false };
+
+        if (!authorState.isAuthor) {
+          return Response.json(
+            { error: '연재 구독을 열려면 블로그 운영자가 작가로 승인되어 있어야 합니다.' },
+            { status: 403 },
+          );
+        }
+
+        const blogSubscription = await supabaseAdmin
+          .from('subscription_settings')
+          .select('price')
+          .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
+          .eq('target_id', rhizome.data.id)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
+          .eq('is_enabled', true)
+          .maybeSingle();
+
+        if (blogSubscription.error) {
+          return Response.json({ error: '블로그 구독 설정을 확인하지 못했습니다.' }, { status: 500 });
+        }
+
+        parentPrice = blogSubscription.data?.price ?? 0;
+      }
+
+      const priceValidation = validateSeriesPriceAgainstParentPrice(subscriptionPrice, parentPrice);
 
       if (!priceValidation.ok) {
         return Response.json({ error: priceValidation.message }, { status: 400 });

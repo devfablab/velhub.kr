@@ -127,6 +127,13 @@
 - [x] 5. 블로그 글쓰기 캡차 적용 (`manage/contents/posts/new/opt.tsx`, `/api/boards/[boardName]/new`(블로그만), `/api/manage/contents/blog-posts/new`)
 - [x] 6. WebDecoy Enforce 전환
 
+## 블로그 연재 추가 때 구독 설정 (2026-11-27)
+
+- 커뮤니티 연재와 같은 구조: 연재 추가 창에 구독 연재 체크, 월 구독 가격, 작가만 담당자 지정, 검색 목록에 작가 여부
+- 서버(`/api/boards/[boardName]/series/new`): 블로그도 허용. 운영자 작가 승인 필요, 블로그 구독이 열려 있으면 그 금액의 70% 이하
+- [x] 1. 화면 (`manage/contents/posts/series/opt.tsx`)
+- [x] 2. 서버, 타입 검사
+
 ## 남은 단계
 
 
