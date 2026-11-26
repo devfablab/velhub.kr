@@ -3,9 +3,11 @@ import { type EmailSignUpFieldErrors, validateEmailSignUpFields } from '@/lib/au
 import { verifyInviteEmailProof } from '@/lib/auth/inviteEmailProof';
 import { getSecurityPinErrorMessage, normalizeSecurityPin } from '@/lib/auth/securityPin';
 import { createSecurityPinHash } from '@/lib/auth/securityPin.server';
+import { getClientIpAddress } from '@/lib/clientRequest';
 import { getMailFrom, getResendClient } from '@/lib/clients/resend';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { isCaptchaPassed } from '@/lib/captcha.server';
 import {
   createActivityNameLookupHash,
   DUPLICATE_ACTIVITY_NAME_MESSAGE,
@@ -27,6 +29,7 @@ type EmailSignUpRequestBody = {
   inviteSiteName?: string | null;
   inviteType?: string | null;
   inviteProof?: string | null;
+  captchaPassToken?: string | null;
 };
 
 type InviteVerification = {
@@ -192,6 +195,16 @@ async function cleanupCreatedUser(authUserId: string) {
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as EmailSignUpRequestBody;
+
+    if (!isCaptchaPassed(requestBody.captchaPassToken ?? '', 'sign-up', getClientIpAddress(request.headers) ?? '')) {
+      return knownErrorResponse({
+        status: 403,
+        code: 'captcha_required',
+        title: '보안 확인 필요',
+        errors: ['보안 확인 시간이 지났습니다. 새로고침 후 다시 시도해 주세요.'],
+      });
+    }
+
     const email = requestBody.email?.trim().toLowerCase() ?? '';
     const userName = requestBody.userName?.trim() ?? '';
     const password = requestBody.password ?? '';

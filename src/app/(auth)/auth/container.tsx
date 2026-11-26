@@ -1,15 +1,22 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useMediaQuery, useTheme } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { SignupAgreementsProvider } from '@/components/auth/SignupAgreements';
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
+import Captcha from '@/components/Captcha';
 import { ThemeMode } from '@/app/themeProvider';
 import styles from '@/app/auth.module.sass';
+
+const SignUpPassTokenContext = createContext('');
+
+export function useSignUpPassToken() {
+  return useContext(SignUpPassTokenContext);
+}
 
 type ContainerProps = {
   children: React.ReactNode;
@@ -26,6 +33,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 export default function Container({ children }: ContainerProps) {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
+  const [signUpPassToken, setSignUpPassToken] = useState('');
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -38,6 +46,8 @@ export default function Container({ children }: ContainerProps) {
   if (!isMounted) {
     return null;
   }
+
+  const isSignUpLocked = pathname === '/auth/sign-up' && !signUpPassToken;
 
   const content = (
     <>
@@ -89,8 +99,14 @@ export default function Container({ children }: ContainerProps) {
                     </p>
                   ) : null}
                 </div>
-                {children}
-                {pathname === '/auth/sign-in' || pathname === '/auth/sign-up' ? <SocialLoginButtons /> : null}
+                {isSignUpLocked ? (
+                  <Captcha purpose="sign-up" theme="dark" onPass={setSignUpPassToken} />
+                ) : (
+                  <>
+                    {children}
+                    {pathname === '/auth/sign-in' || pathname === '/auth/sign-up' ? <SocialLoginButtons /> : null}
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -99,5 +115,9 @@ export default function Container({ children }: ContainerProps) {
     </>
   );
 
-  return <SignupAgreementsProvider>{content}</SignupAgreementsProvider>;
+  return (
+    <SignUpPassTokenContext.Provider value={signUpPassToken}>
+      <SignupAgreementsProvider>{content}</SignupAgreementsProvider>
+    </SignUpPassTokenContext.Provider>
+  );
 }

@@ -38,6 +38,7 @@ import Anchor from '@/components/Anchor';
 import SecurityPinFields from '@/components/auth/SecurityPinFields';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { useSignUpPassToken } from '../container';
 import DarkThemeProvider from '../DarkThemeProvider';
 import styles from '@/app/auth.module.sass';
 
@@ -89,6 +90,7 @@ export default function EmailSignUp({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { isAgreeTerm, isAgreeChild, isAgreePrivacy } = useSignupAgreements();
+  const signUpPassToken = useSignUpPassToken();
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
   const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
@@ -250,6 +252,7 @@ export default function EmailSignUp({
           inviteSiteName,
           inviteType,
           inviteProof,
+          captchaPassToken: signUpPassToken,
         }),
       });
       const result = (await response.json().catch(() => null)) as SignUpResponse | null;

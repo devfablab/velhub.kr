@@ -108,6 +108,21 @@
 - [x] 3. 연재 추가 창에 구독 체크, 가격 입력
 - [x] 4. 타입 검사
 
+## 회원가입 캡차: FCaptcha 기본, Turnstile 예비 (2026-11-26~27)
+
+- 목적: AI, 봇 차단. 이메일 로그인 hCaptcha는 목적이 달라 유지
+- 회원가입 화면은 캡차 통과 전에는 캡차만 보이고, 통과하면 이메일 가입 칸과 소셜 버튼이 나옴
+- 기본은 WebDecoy 관리형 FCaptcha. 한도 초과(capacity-exceeded)나 장애일 때만 Turnstile로 전환 (서버가 10분간 장애 표시를 Redis에 저장, 그동안만 Turnstile 통과 인정)
+- 봇으로 거절된 경우는 Turnstile로 넘기지 않음
+- 통과하면 서버가 30분짜리 통과 표시를 주고, 이메일 가입 API가 확인
+- WebDecoy는 지금 observe 모드라 모든 검증이 통과로 옴. 확인 뒤 Enforce로 전환 필요
+- 다음: 사이트 만들기 캡차 교체, 글 쓰는 곳 전체 적용
+
+- [x] 1. Turnstile 회원가입 적용
+- [x] 2. FCaptcha 기본 + Turnstile 예비로 변경 (`captcha.server.ts`, `/api/captcha`, `components/Captcha.tsx`)
+- [x] 3. 타입 검사, API 우회 시험
+- [ ] 4. 화면 확인 후 WebDecoy Enforce 전환
+
 ## 남은 단계
 
 
@@ -149,6 +164,7 @@
 | `src/app/(settings)/settings/accessLogs.tsx`, `page.tsx`, `src/app/api/auth/access-logs/route.ts`, `src/proxy.ts` | 설정 화면에 접속 기록 표시 | 완료 |
 | `src/app/(library)/creator/[handleName]/page.tsx`, `user/[handleName]/page.tsx`, `user/[handleName]/following/page.tsx`, `src/app/api/creator/[handleName]/route.ts` | 직접 호출, 동시 시작 | 완료 |
 | `src/lib/board/seriesAuthor.ts`, `src/app/api/boards/[boardName]/series/new/route.ts`, `[seriesName]/edit/route.ts`, `src/app/api/manage/payments/subscriptions/series/route.ts`, `src/app/(site)/[siteName]/manage/contents/posts/c/[boardName]/series/opt.tsx` | 연재 담당자 규칙, 연재 추가 때 구독 설정 | 완료 |
+| `src/lib/captcha.server.ts`, `src/app/api/captcha/route.ts`, `src/components/Captcha.tsx`, `src/app/(auth)/auth/container.tsx`, `sign-up/email.tsx`, `src/app/api/auth/email/sign-up/route.ts` | 회원가입 캡차 (FCaptcha, Turnstile 예비) | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 
