@@ -242,29 +242,6 @@ export default function TableListMobile({
               })}
             </Menu>
           </div>
-          {boardName && board ? (
-            <>
-              {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
-                <>
-                  <SubscriptionButton
-                    siteName={siteName}
-                    boardName={boardName}
-                    board={board}
-                    selectedSeries={selectedSeries}
-                    selectedBoard={true}
-                    initialStatus={initialSubscriptionStatus}
-                  />
-                  <DonationButton
-                    siteName={siteName}
-                    targetType="series"
-                    boardName={boardName}
-                    seriesName={selectedSeries.series_key}
-                    initialStatus={initialDonationStatus}
-                  />
-                </>
-              ) : null}
-            </>
-          ) : null}
         </div>
         {shouldRenderWriteLink ? (
           <div className={styles['board-post']}>
@@ -375,6 +352,25 @@ export default function TableListMobile({
                 })}
               </Menu>
             </div>
+            {boardName && board && selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
+              <>
+                <SubscriptionButton
+                  siteName={siteName}
+                  boardName={boardName}
+                  board={board}
+                  selectedSeries={selectedSeries}
+                  selectedBoard={true}
+                  initialStatus={initialSubscriptionStatus}
+                />
+                <DonationButton
+                  siteName={siteName}
+                  targetType="series"
+                  boardName={boardName}
+                  seriesName={selectedSeries.series_key}
+                  initialStatus={initialDonationStatus}
+                />
+              </>
+            ) : null}
           </div>
         </div>
       ) : null}

@@ -849,30 +849,31 @@ export default function Opt({
                 {contents.map((content) => {
                   const thumbnail = getGalleryThumbnail(content);
                   const imageCount = getImageCount(content);
-
                   return (
-                    <Anchor href={getContentHref(content.slug)} key={content.id}>
-                      <div className={styles.thumbnail}>
-                        <span>
-                          {content.is_pin ? (
-                            <i className={styles['pin-icon']} aria-label="상단고정글">
-                              <PushPinRoundedIcon />
-                            </i>
-                          ) : (
-                            <i className={styles.number}>{getDisplayIdx(content)}</i>
-                          )}
-                          {content.published_status === 'draft' ? <em>(임시글)</em> : null}
-                        </span>
-                        <small>{`${imageCount}개 이미지`}</small>
-                        {thumbnail ? (
-                          <OptimizedImage
-                            src={thumbnail.url}
-                            width={thumbnail.width}
-                            height={thumbnail.height}
-                            sizes="(max-width: 575px) 100vw, 270px"
-                          />
-                        ) : null}
-                      </div>
+                    <div className={styles['gallery-card']} key={content.id}>
+                      <Anchor href={getContentHref(content.slug)}>
+                        <div className={styles.thumbnail}>
+                          <span>
+                            {content.is_pin ? (
+                              <i className={styles['pin-icon']} aria-label="상단고정글">
+                                <PushPinRoundedIcon />
+                              </i>
+                            ) : (
+                              <i className={styles.number}>{getDisplayIdx(content)}</i>
+                            )}
+                            {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                          </span>
+                          <small>{`${imageCount}개 이미지`}</small>
+                          {thumbnail ? (
+                            <OptimizedImage
+                              src={thumbnail.url}
+                              width={thumbnail.width}
+                              height={thumbnail.height}
+                              sizes="(max-width: 575px) 100vw, 270px"
+                            />
+                          ) : null}
+                        </div>
+                      </Anchor>
                       <div className={styles.info}>
                         <div className={styles.subject}>
                           <Box sx={{ mb: 0.5 }}>
@@ -881,7 +882,18 @@ export default function Opt({
                           <strong>
                             {content.is_closed ? '(삭제글) ' : null}
                             {content.prefix_label ? `[${content.prefix_label}] ` : null}
-                            {content.subject}
+                            {!seriesNameParam && content.series_label ? (
+                              <Tooltip title="연재명">
+                                <button
+                                  type="button"
+                                  className="series-name board-chip"
+                                  onClick={() => handleSeriesClick(content.series_key)}
+                                >
+                                  {content.series_label}
+                                </button>
+                              </Tooltip>
+                            ) : null}
+                            <Anchor href={getContentHref(content.slug)}>{content.subject}</Anchor>
                           </strong>
                         </div>
                         <div className={styles.author}>{renderAuthorName(content)}</div>
@@ -891,7 +903,7 @@ export default function Opt({
                           <span>조회 {content.post_count}</span>
                         </div>
                       </div>
-                    </Anchor>
+                    </div>
                   );
                 })}
               </div>

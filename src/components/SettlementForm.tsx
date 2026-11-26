@@ -452,6 +452,16 @@ export default function SettlementForm({
           throw new Error('법인 예금주는 단체/회사명과 일치해야 합니다.');
         }
 
+        if (settlementType === 'individual_business') {
+          const holder = normalizeComparableText(accountHolder);
+          const name = normalizeComparableText(identity.name);
+          const company = normalizeComparableText(companyName);
+
+          if (![name, `${company}${name}`, `${name}${company}`].includes(holder)) {
+            throw new Error('개인사업자 예금주는 본인 성명, 회사명 + 성명, 성명 + 회사명 중 하나여야 합니다.');
+          }
+        }
+
         if (!businessLicenseFile && !settlement?.business_license) {
           throw new Error('사업자등록증 PDF를 등록해 주세요.');
         }
@@ -771,7 +781,7 @@ export default function SettlementForm({
                         ? '본인인증한 성명과 동일하게 입력해 주세요.'
                         : settlementType === 'corporation'
                           ? '단체/회사명과 동일하게 입력해 주세요.'
-                          : '개인사업자 계좌 또는 본인 개인 계좌를 사용할 수 있습니다.'
+                          : '본인 성명, 회사명 + 성명, 성명 + 회사명 중 하나로 입력해 주세요. 예: 홍길동, 데브허브 홍길동, 홍길동 데브허브'
                     }
                   />
                   <TextField

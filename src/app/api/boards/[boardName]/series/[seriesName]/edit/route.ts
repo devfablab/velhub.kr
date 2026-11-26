@@ -198,24 +198,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '연재 담당 작가를 선택해주세요.' }, { status: 400 });
     }
 
-    if (
-      !soloBlog &&
-      !(await canBeSeriesAuthor({
-        supabaseAdmin,
-        siteId: rhizome.data.id,
-        stigmaId: userId,
-      }))
-    ) {
-      return Response.json(
-        { error: '작가로 승인된 활성 구성원만 연재 담당 작가로 지정할 수 있습니다.' },
-        { status: 400 },
-      );
-    }
-
     const currentSeries = await supabaseAdmin
       .from('board_series')
       .select(
-        'id, created_at, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, board_id, site_id, last_published_at, is_completed, user_id',
+        'id, created_at, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, board_id, site_id, last_published_at, is_completed, user_id, is_subscription',
       )
       .eq('site_id', rhizome.data.id)
       .eq('board_id', board.data.id)
@@ -224,6 +210,27 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (currentSeries.error || !currentSeries.data) {
       return Response.json({ error: '연재를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const isSubscriptionSeries = currentSeries.data.is_subscription === true;
+
+    if (
+      !soloBlog &&
+      !(await canBeSeriesAuthor({
+        supabaseAdmin,
+        siteId: rhizome.data.id,
+        stigmaId: userId,
+        requireAuthor: isSubscriptionSeries,
+      }))
+    ) {
+      return Response.json(
+        {
+          error: isSubscriptionSeries
+            ? '구독 연재는 작가로 승인된 구성원만 담당자로 지정할 수 있습니다.'
+            : '활동 중인 구성원만 연재 담당자로 지정할 수 있습니다.',
+        },
+        { status: 400 },
+      );
     }
 
     const duplicatedSeriesKey = await supabaseAdmin

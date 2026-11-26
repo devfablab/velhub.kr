@@ -11,6 +11,7 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
+import { canBeSeriesAuthor } from '@/lib/board/seriesAuthor';
 import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -38,6 +39,7 @@ type BoardSeriesRow = {
   board_id: string;
   series_key: string;
   series_label: string;
+  user_id: string | null;
 };
 
 type SubscriptionSettingRow = {
@@ -563,7 +565,7 @@ export async function PATCH(request: Request) {
 
     const seriesResult = await supabaseAdmin
       .from('board_series')
-      .select('id, site_id, board_id, series_key, series_label')
+      .select('id, site_id, board_id, series_key, series_label, user_id')
       .eq('id', seriesId)
       .eq('site_id', site.id)
       .maybeSingle();
@@ -611,6 +613,24 @@ export async function PATCH(request: Request) {
       supabaseAdmin,
       site,
     });
+
+    if (
+      body.isEnabled &&
+      site.site_type === 'community' &&
+      !(
+        series.user_id &&
+        (await canBeSeriesAuthor({
+          supabaseAdmin,
+          siteId: site.id,
+          stigmaId: series.user_id,
+        }))
+      )
+    ) {
+      return Response.json(
+        { error: '구독 연재는 작가로 승인된 구성원을 담당자로 지정한 뒤 열 수 있습니다.' },
+        { status: 400 },
+      );
+    }
 
     if (body.isEnabled) {
       const priceValidation = validateSeriesPriceAgainstParentPrice(body.price, parentPrice);

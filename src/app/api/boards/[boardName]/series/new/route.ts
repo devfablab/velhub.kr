@@ -1,6 +1,8 @@
 import { canBeSeriesAuthor, isSoloBlog } from '@/lib/board/seriesAuthor';
 import { getStoredImageSize } from '@/lib/clients/r2Storage';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
+import { validateSeriesPriceAgainstParentPrice } from '@/lib/payments/subscriptionPrice';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import {
   canManageCommunityBoardSettings,
   getCommunityManagerAccess,
@@ -22,6 +24,8 @@ type RequestBody = {
   summary?: string | null;
   thumbnailImage?: string | null;
   userId?: string | null;
+  isSubscription?: boolean;
+  subscriptionPrice?: number | null;
 };
 
 function isValidSeriesKey(value: string) {
@@ -101,6 +105,8 @@ export async function POST(request: Request, context: RouteContext) {
     const summary = normalizeText(requestBody.summary);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
     let userId = normalizeText(requestBody.userId) || null;
+    const isSubscription = requestBody.isSubscription === true;
+    const subscriptionPrice = Number(requestBody.subscriptionPrice);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -193,12 +199,33 @@ export async function POST(request: Request, context: RouteContext) {
         supabaseAdmin,
         siteId: rhizome.data.id,
         stigmaId: userId,
+        requireAuthor: isSubscription,
       }))
     ) {
       return Response.json(
-        { error: '작가로 승인된 활성 구성원만 연재 담당 작가로 지정할 수 있습니다.' },
+        {
+          error: isSubscription
+            ? '구독 연재는 작가로 승인된 구성원만 담당자로 지정할 수 있습니다.'
+            : '활동 중인 구성원만 연재 담당자로 지정할 수 있습니다.',
+        },
         { status: 400 },
       );
+    }
+
+    if (isSubscription) {
+      if (rhizome.data.site_type !== 'community') {
+        return Response.json({ error: '연재 추가에서 구독은 커뮤니티에서만 설정할 수 있습니다.' }, { status: 400 });
+      }
+
+      if (session.case !== 'admin' && session.case !== 'staff') {
+        return Response.json({ error: '구독 연재는 커뮤니티 운영자만 만들 수 있습니다.' }, { status: 403 });
+      }
+
+      const priceValidation = validateSeriesPriceAgainstParentPrice(subscriptionPrice, 0);
+
+      if (!priceValidation.ok) {
+        return Response.json({ error: priceValidation.message }, { status: 400 });
+      }
     }
 
     const duplicatedSeriesKey = await supabaseAdmin
@@ -238,15 +265,33 @@ export async function POST(request: Request, context: RouteContext) {
         site_id: rhizome.data.id,
         last_published_at: null,
         is_completed: false,
+        is_subscription: isSubscription,
         user_id: userId,
       })
       .select(
-        'id, created_at, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, board_id, site_id, last_published_at, is_completed, user_id',
+        'id, created_at, series_key, series_label, summary, thumbnail_image, thumbnail_width, thumbnail_height, board_id, site_id, last_published_at, is_completed, is_subscription, user_id',
       )
       .maybeSingle();
 
     if (insertSeries.error || !insertSeries.data) {
       return Response.json({ error: '연재 추가에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (isSubscription) {
+      const settingResult = await supabaseAdmin.from('subscription_settings').insert({
+        target_type: PAYMENT_TARGET_TYPE.SERIES,
+        target_id: insertSeries.data.id,
+        subscription_type: SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES,
+        is_enabled: true,
+        price: subscriptionPrice,
+      });
+
+      if (settingResult.error) {
+        console.error(settingResult.error);
+        await supabaseAdmin.from('board_series').delete().eq('id', insertSeries.data.id);
+
+        return Response.json({ error: '연재 구독 설정을 저장하지 못했습니다.' }, { status: 500 });
+      }
     }
 
     scheduleAutoOgImage({ type: 'series', seriesId: insertSeries.data.id });

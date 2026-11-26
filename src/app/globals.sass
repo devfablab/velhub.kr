@@ -601,32 +601,32 @@ a, button, select, input
       width: ds.rem(16)
       height: ds.rem(16)
 
-    .board-chip
-      overflow: hidden
-      text-overflow: ellipsis
-      white-space: nowrap
-      max-width: ds.rem(120)
-      padding: ds.rem(4) ds.rem(5) ds.rem(3)
-      border-radius: ds.rem(6)
-      line-height: 1
-      font-size: ds.rem(12)
-      background-color: rgba(ds.$rgb-tertiary, .2)
-      color: rgba(ds.$rgb-primary, .7)
+  .board-chip
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+    max-width: ds.rem(120)
+    padding: ds.rem(4) ds.rem(5) ds.rem(3)
+    border-radius: ds.rem(6)
+    line-height: 1
+    font-size: ds.rem(12)
+    background-color: rgba(ds.$rgb-tertiary, .2)
+    color: rgba(ds.$rgb-primary, .7)
+
+    html[data-theme="yellow-dark"] &
+      background-color: rgba(ds.$rgb-tertiary, .5)
+      color: rgba(ds.$rgb-bright, .7)
+
+    &.prefix-name
+      border: 1px solid ds.$hex-accent
+      background-color: ds.$hex-white
 
       html[data-theme="yellow-dark"] &
-        background-color: rgba(ds.$rgb-tertiary, .5)
-        color: rgba(ds.$rgb-bright, .7)
+        background-color: ds.$hex-black
 
-      &.prefix-name
-        border: 1px solid ds.$hex-accent
-        background-color: ds.$hex-white
-
-        html[data-theme="yellow-dark"] &
-          background-color: ds.$hex-black
-
-      &.series-name
-        background-color: transparent!important
-        border: 1px solid ds.$hex-action
+    &.series-name
+      background-color: transparent!important
+      border: 1px solid ds.$hex-action
 
   .board-content
     margin-bottom: ds.rem(3)

@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
+import { getPublicActiveMemberships } from '@/lib/users/utils';
 
 type SiteRow = {
   id: string;
@@ -105,13 +106,9 @@ export async function GET(request: Request) {
       ownerName = decryptValue(ownerAccount?.user_name);
     }
 
-    const memberCountResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('*', { count: 'exact', head: true })
-      .eq('site_id', site.id)
-      .eq('is_approval', true);
+    const membershipsResult = await getPublicActiveMemberships(site.id);
 
-    if (memberCountResult.error) {
+    if (!membershipsResult.ok) {
       return Response.json({ error: '통계 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -134,7 +131,7 @@ export async function GET(request: Request) {
         ownerName,
       },
       stats: {
-        memberCount: memberCountResult.count ?? 0,
+        memberCount: membershipsResult.memberships.length,
         postCount: postCountResult.count ?? 0,
       },
     });

@@ -2313,7 +2313,7 @@
   @include ds.mq(minSmall)
     grid-template-columns: repeat(3, 1fr)
 
-  a
+  > a, > .gallery-card
     display: flex
     flex-direction: column
     gap: ds.rem(12)
@@ -2414,8 +2414,17 @@
           font-weight: 600
           font-variation-settings: "wght" 600
 
+        a
+          color: ds.$hex-secondary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
         strong
           @include ds.line-abbr(2, 36, 1.25)
+
+          button
+            margin-right: ds.rem(5)
 
       .author
         margin-top: ds.rem(7)
@@ -2445,6 +2454,9 @@
             border-radius: ds.rem(2)
 
 .gallery-items
+  .gallery-card > a
+    display: block
+
   a
     .thumbnail
       aspect-ratio: 1 / 1

@@ -27,11 +27,29 @@ export async function canBeSeriesAuthor({
   supabaseAdmin,
   siteId,
   stigmaId,
+  requireAuthor = true,
 }: {
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   siteId: string;
   stigmaId: string;
+  requireAuthor?: boolean;
 }) {
+  if (!requireAuthor) {
+    const memberResult = await supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('id')
+      .eq('site_id', siteId)
+      .eq('user_id', stigmaId)
+      .eq('is_approval', true)
+      .neq('role', 'observer')
+      .is('kicked_at', null)
+      .is('banned_at', null)
+      .is('withdrawn_at', null)
+      .maybeSingle();
+
+    return !memberResult.error && Boolean(memberResult.data);
+  }
+
   const [memberResult, identityResult] = await Promise.all([
     supabaseAdmin
       .from('rhizome_stigmas')

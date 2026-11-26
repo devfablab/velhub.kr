@@ -304,6 +304,19 @@ export function validateSettlementProfileInput(
     };
   }
 
+  if (settlementType === 'individual_business') {
+    const holder = normalizeComparableText(accountHolder);
+    const name = normalizeComparableText(identityName);
+    const company = normalizeComparableText(companyName);
+
+    if (!name || ![name, `${company}${name}`, `${name}${company}`].includes(holder)) {
+      return {
+        ok: false as const,
+        message: '개인사업자 예금주는 본인 성명, 회사명 + 성명, 성명 + 회사명 중 하나여야 합니다.',
+      };
+    }
+  }
+
   return {
     ok: true as const,
     data: {

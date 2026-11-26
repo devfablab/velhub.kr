@@ -96,6 +96,18 @@
 - [x] 6. 결제, 정산에서 인증된 주소 덮어쓰기 막기
 - [x] 7. velman 임시 보안 비밀번호 보내기
 
+## 커뮤니티 연재 추가 때 구독 설정 (2026-11-26)
+
+- 연재 담당자: 일반 연재는 활동 중인 멤버 누구나, 구독 연재는 작가만 (화면, API 모두)
+- 구독을 켤 때 담당자가 작가가 아니면 막음
+- 커뮤니티 연재 추가 창에서 "구독 연재" 체크와 가격(7,000~100,000원, 1,000원 단위) 같이 설정
+- 구독 체크하면 작가만 선택 가능, 가격 없으면 저장 불가
+
+- [x] 1. 담당자 규칙 (구독 연재만 작가)
+- [x] 2. 연재 추가 API에 구독 여부, 가격 저장
+- [x] 3. 연재 추가 창에 구독 체크, 가격 입력
+- [x] 4. 타입 검사
+
 ## 남은 단계
 
 
@@ -136,6 +148,7 @@
 | `src/lib/auth/securityCheck.server.ts` | 접속 기록 남기기 | 완료 |
 | `src/app/(settings)/settings/accessLogs.tsx`, `page.tsx`, `src/app/api/auth/access-logs/route.ts`, `src/proxy.ts` | 설정 화면에 접속 기록 표시 | 완료 |
 | `src/app/(library)/creator/[handleName]/page.tsx`, `user/[handleName]/page.tsx`, `user/[handleName]/following/page.tsx`, `src/app/api/creator/[handleName]/route.ts` | 직접 호출, 동시 시작 | 완료 |
+| `src/lib/board/seriesAuthor.ts`, `src/app/api/boards/[boardName]/series/new/route.ts`, `[seriesName]/edit/route.ts`, `src/app/api/manage/payments/subscriptions/series/route.ts`, `src/app/(site)/[siteName]/manage/contents/posts/c/[boardName]/series/opt.tsx` | 연재 담당자 규칙, 연재 추가 때 구독 설정 | 완료 |
 
 ## 13. 인수인계 메모 (전환 시에만 작성)
 

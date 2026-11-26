@@ -145,7 +145,7 @@ function hasInvalidCharacters(value: string) {
 }
 
 function getCustomDomainHostName(value: string | null) {
-  return normalizeCustomDomain(value).split('.')[0] || '-';
+  return normalizeCustomDomain(value).split('.')[0] || '(도메인 등록 전)';
 }
 
 function isThemeType(value: string): value is ThemeType {

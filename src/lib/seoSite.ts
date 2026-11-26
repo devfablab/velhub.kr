@@ -28,8 +28,8 @@ type SeoProps = {
   pageDescription?: string | null;
   pageImg?: string | null;
   pageTwt?: string | null;
-  pageImgWidth?: number;
-  pageImgHeight?: number;
+  pageImgWidth?: number | null;
+  pageImgHeight?: number | null;
   pageOgType?: OgType;
   pagePath: string;
 };
@@ -71,6 +71,7 @@ type SiteSeoInfo = {
   siteKey: string;
   siteLabel: string;
   description: string;
+  siteType: string;
   imageUrl: string;
   autoImageUrl: string;
 };
@@ -110,6 +111,79 @@ function getAutoOgImageUrl(path: string | null | undefined) {
   return getPublicImageUrl('og-image', path);
 }
 
+type CommunityPostImage = {
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
+function getBoardType(boards: unknown) {
+  const board = Array.isArray(boards) ? boards[0] : boards;
+
+  return board && typeof board === 'object' && 'board_type' in board ? normalizeText(String(board.board_type)) : '';
+}
+
+function getFirstGalleryImage(images: unknown): CommunityPostImage | null {
+  if (!Array.isArray(images)) {
+    return null;
+  }
+
+  const firstImage = images[0] as { path?: unknown; width?: unknown; height?: unknown } | undefined;
+  const url = getPublicImageUrl('post', typeof firstImage?.path === 'string' ? firstImage.path : '');
+
+  if (!url) {
+    return null;
+  }
+
+  const width = typeof firstImage?.width === 'number' ? firstImage.width : null;
+  const height = typeof firstImage?.height === 'number' ? firstImage.height : null;
+
+  return { url, width: width && height ? width : null, height: width && height ? height : null };
+}
+
+function getFirstStoredHtmlImage(html: string | null | undefined): CommunityPostImage | null {
+  const normalizedHtml = normalizeText(html);
+
+  if (!normalizedHtml) {
+    return null;
+  }
+
+  const postStoragePrefix = getPublicImageUrl('post', 'editor/');
+  const sourcePattern = /<img\b[^>]*?\bsrc\s*=\s*["']([^"']+)["']/gi;
+
+  for (const match of normalizedHtml.matchAll(sourcePattern)) {
+    const source = match[1].replace(/&amp;/g, '&');
+
+    if (postStoragePrefix && source.startsWith(postStoragePrefix)) {
+      return { url: source, width: null, height: null };
+    }
+  }
+
+  return null;
+}
+
+function getCommunityPostImage({
+  boardType,
+  images,
+  previewHtml,
+  contentHtml,
+}: {
+  boardType: string;
+  images: unknown;
+  previewHtml: string | null;
+  contentHtml: string | null;
+}) {
+  if (boardType === 'gallery') {
+    return getFirstGalleryImage(images);
+  }
+
+  if (boardType !== 'basic') {
+    return null;
+  }
+
+  return getFirstStoredHtmlImage(previewHtml) || getFirstStoredHtmlImage(contentHtml);
+}
+
 function isNumericSlug(value: string) {
   return /^\d+$/.test(value);
 }
@@ -124,7 +198,7 @@ async function getSiteSeoInfo(siteName: string): Promise<SiteSeoInfo | null> {
   const supabaseAdmin = getSupabaseAdmin();
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, summary, og_image, auto_og_image')
+    .select('id, site_key, site_label, site_type, summary, og_image, auto_og_image')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -140,6 +214,7 @@ async function getSiteSeoInfo(siteName: string): Promise<SiteSeoInfo | null> {
     siteKey: normalizeText(siteResult.data.site_key),
     siteLabel,
     description,
+    siteType: normalizeText(siteResult.data.site_type),
     imageUrl: getPublicImageUrl('site-og', siteResult.data.og_image),
     autoImageUrl: getAutoOgImageUrl(siteResult.data.auto_og_image),
   };
@@ -185,6 +260,7 @@ export function Seo({
   const url = `${baseUrl}${normalizedPagePath}`;
   const imageUrl = normalizeText(pageImg) || getDefaultImageUrl();
   const twitterImageUrl = normalizeText(pageTwt) || imageUrl;
+  const hasUnknownImageSize = pageImgWidth === null || pageImgHeight === null;
   const imageWidth = pageImgWidth || 1200;
   const imageHeight = pageImgHeight || 630;
   const ogType: OgType = pageOgType || 'website';
@@ -205,13 +281,7 @@ export function Seo({
       siteName: originTitle,
       locale: 'ko_KR',
       type: ogType,
-      images: [
-        {
-          url: imageUrl,
-          width: imageWidth,
-          height: imageHeight,
-        },
-      ],
+      images: [hasUnknownImageSize ? { url: imageUrl } : { url: imageUrl, width: imageWidth, height: imageHeight }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -296,7 +366,7 @@ export async function getPostPageMetadata({
     let postQuery = getSupabaseAdmin()
       .from('posts')
       .select(
-        'subject, summary, thumbnail_image, hashtag_ids, auto_og_image, rhizomes!inner(site_key), boards!inner(board_key)',
+        'subject, summary, thumbnail_image, hashtag_ids, auto_og_image, content_html, preview_html, images, rhizomes!inner(site_key), boards!inner(board_key, board_type)',
       )
       .eq('rhizomes.site_key', normalizedSiteName)
       .eq('boards.board_key', normalizedBoardName);
@@ -325,6 +395,15 @@ export async function getPostPageMetadata({
   const subject = normalizeText(postResult.data.subject);
   const description = normalizeText(postResult.data.summary) || subject;
   const postImageUrl = getPostImageUrl(postResult.data.thumbnail_image);
+  const communityImage =
+    !postImageUrl && site.siteType === 'community'
+      ? getCommunityPostImage({
+          boardType: getBoardType(postResult.data.boards),
+          images: postResult.data.images,
+          previewHtml: postResult.data.preview_html,
+          contentHtml: postResult.data.content_html,
+        })
+      : null;
   const hashtags = await getHashtagsByIds(postResult.data.hashtag_ids as string[] | null);
   const metadata = Seo({
     siteName: site.siteKey,
@@ -332,7 +411,14 @@ export async function getPostPageMetadata({
     siteDescription: site.description,
     pageTitle: subject,
     pageDescription: description,
-    pageImg: postImageUrl || getAutoOgImageUrl(postResult.data.auto_og_image) || site.imageUrl || getDefaultImageUrl(),
+    pageImg:
+      postImageUrl ||
+      communityImage?.url ||
+      getAutoOgImageUrl(postResult.data.auto_og_image) ||
+      site.imageUrl ||
+      getDefaultImageUrl(),
+    pageImgWidth: communityImage ? communityImage.width : undefined,
+    pageImgHeight: communityImage ? communityImage.height : undefined,
     pageOgType: 'article',
     pagePath,
   });
