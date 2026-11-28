@@ -125,15 +125,10 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
       </Tooltip>
       <div className="VhiDrawer-bottom-content">{content('mobile-dev-identity-bypass-form')}</div>
       <div className="drawer-dialog-actions">
-        <button type="button" className="button medium close" onClick={onClose}>
+        <button type="button" className="cancel-button" onClick={onClose}>
           취소
         </button>
-        <button
-          type="submit"
-          form="mobile-dev-identity-bypass-form"
-          className="button medium action"
-          disabled={bypass && !selectedTxId}
-        >
+        <button type="submit" form="mobile-dev-identity-bypass-form" disabled={bypass && !selectedTxId}>
           {bypass ? '가짜 데이터로 인증하기' : '원래대로 진행'}
         </button>
       </div>

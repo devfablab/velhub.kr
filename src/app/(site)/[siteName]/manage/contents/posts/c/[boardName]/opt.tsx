@@ -738,18 +738,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Stack>
               </form>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDeleteDialog}
-                  disabled={isDeleting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                   취소
                 </button>
                 <button
                   type="submit"
                   form="mobile-community-post-list-delete-form"
-                  className="button medium danger"
+                  className="danger-button"
                   disabled={isDeleting}
                 >
                   {isDeleting ? <LoadingIndicator size={20} /> : null}
@@ -859,20 +854,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </Stack>
               </form>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDeleteDialog}
-                  disabled={isDeleting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="mobile-community-post-list-restore-form"
-                  className="button medium submit"
-                  disabled={isDeleting}
-                >
+                <button type="submit" form="mobile-community-post-list-restore-form" disabled={isDeleting}>
                   {isDeleting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>

@@ -492,7 +492,7 @@ export default function Opt({
             <p>{detailPost ? <ContentWithInlineLinks content={detailPost.content} /> : null}</p>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium submit" onClick={() => setDetailPost(null)}>
+            <button type="button" onClick={() => setDetailPost(null)}>
               확인
             </button>
           </div>
@@ -533,15 +533,10 @@ export default function Opt({
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{editorFields}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={closeEditor} disabled={isSubmitting}>
+            <button type="button" className="cancel-button" onClick={closeEditor} disabled={isSubmitting}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => void handleSubmit()}
-              disabled={isSubmitting}
-            >
+            <button type="button" onClick={() => void handleSubmit()} disabled={isSubmitting}>
               {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {editor?.post ? '수정' : '등록'}
             </button>

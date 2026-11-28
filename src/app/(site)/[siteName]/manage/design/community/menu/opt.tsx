@@ -402,20 +402,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 />
               </div>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseRenameDialog}
-                  disabled={isRenaming}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseRenameDialog} disabled={isRenaming}>
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleRename()}
-                  disabled={isRenaming}
-                >
+                <button type="button" onClick={() => void handleRename()} disabled={isRenaming}>
                   {isRenaming ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>

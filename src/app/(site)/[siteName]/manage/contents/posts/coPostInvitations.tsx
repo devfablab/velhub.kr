@@ -286,7 +286,7 @@ export default function CoPostInvitations({ initialData }: { initialData: CoPost
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{acceptContent}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={() => setAcceptState(null)}>
+            <button type="button" className="button medium cancel" onClick={() => setAcceptState(null)}>
               취소
             </button>
             <button type="button" className="button medium submit" disabled={isSubmitting} onClick={submitAccept}>

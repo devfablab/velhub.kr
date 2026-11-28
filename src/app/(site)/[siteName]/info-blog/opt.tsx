@@ -1681,20 +1681,10 @@ export default function Opt({
             </form>
           </div>
           <div className="drawer-dialog-actions">
-            <button
-              type="button"
-              className="button medium close"
-              onClick={handleCloseGeneralDialog}
-              disabled={isSubmitting}
-            >
+            <button type="button" className="cancel-button" onClick={handleCloseGeneralDialog} disabled={isSubmitting}>
               취소
             </button>
-            <button
-              type="submit"
-              form="mobile-info-general-form"
-              className="button medium submit"
-              disabled={isGeneralSubmitDisabled}
-            >
+            <button type="submit" form="mobile-info-general-form" disabled={isGeneralSubmitDisabled}>
               {isSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
@@ -1901,18 +1891,13 @@ export default function Opt({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseNicknameDialog}
               disabled={isNicknameSubmitting}
             >
               취소
             </button>
-            <button
-              type="submit"
-              form="mobile-info-nickname-form"
-              className="button medium submit"
-              disabled={isNicknameSubmitDisabled}
-            >
+            <button type="submit" form="mobile-info-nickname-form" disabled={isNicknameSubmitDisabled}>
               {isNicknameSubmitting ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
@@ -2035,7 +2020,7 @@ export default function Opt({
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleCloseItemManageDialog}>
+            <button type="button" className="button medium cancel" onClick={handleCloseItemManageDialog}>
               닫기
             </button>
           </div>
@@ -2146,18 +2131,13 @@ export default function Opt({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button medium close"
+              className="cancel-button"
               onClick={handleCloseItemFormDialog}
               disabled={isItemSubmitting}
             >
               취소
             </button>
-            <button
-              type="submit"
-              form="mobile-info-item-form"
-              className="button medium submit"
-              disabled={isItemSubmitDisabled}
-            >
+            <button type="submit" form="mobile-info-item-form" disabled={isItemSubmitDisabled}>
               {isItemSubmitting && itemSubmittingAction === 'submit' ? <LoadingIndicator size={20} /> : null}
               저장
             </button>
@@ -2248,7 +2228,7 @@ export default function Opt({
             </div>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium submit" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
+            <button type="button" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
               확인
             </button>
           </div>

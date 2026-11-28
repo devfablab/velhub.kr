@@ -1916,12 +1916,12 @@ export default function Opt({ initialData, initialError }: OptProps) {
             팀 블로그로 변경하면 현재 사이트 구독이 취소되고 결제 금액이 환불됩니다. 변경하시겠어요?
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={() => setIsTeamConversionConfirmOpen(false)}>
+            <button type="button" className="cancel-button" onClick={() => setIsTeamConversionConfirmOpen(false)}>
               취소
             </button>
             <button
               type="button"
-              className="button medium danger"
+              className="danger-button"
               onClick={() => {
                 setIsTeamConversionConfirmOpen(false);
                 void saveField('blog_type', undefined, true);
@@ -1976,11 +1976,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
           </Tooltip>
           <div className="VhiDrawer-bottom-content">팀원 존재시 1인 블로그로 전환하실 수 없어요.</div>
           <div className="drawer-dialog-actions">
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
-            >
+            <button type="button" onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}>
               확인
             </button>
           </div>

@@ -195,32 +195,7 @@ export default function DrawEventFields({
             </button>
           </Tooltip>
           <div className={`VhiDrawer-bottom-content ${classes['draw-dialog-content']}`}>{settings}</div>
-          <div className="drawer-dialog-actions">
-            {enabled ? (
-              <>
-                <button type="button" onClick={remove} className="button medium danger">
-                  추첨 이벤트 삭제
-                </button>
-                <div className="complex-button">
-                  <button type="button" onClick={closeDialog} className="button medium close">
-                    취소
-                  </button>
-                  <button type="button" onClick={apply} className="button medium submit">
-                    추첨 이벤트 설정
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={closeDialog} className="button medium close">
-                  취소
-                </button>
-                <button type="button" onClick={apply} className="button medium submit">
-                  추첨 이벤트 설정
-                </button>
-              </>
-            )}
-          </div>
+          <div className="drawer-dialog-actions">{desktopActions}</div>
         </Drawer>
       ) : (
         <Dialog

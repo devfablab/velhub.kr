@@ -755,7 +755,7 @@ export default function SubscriptionButton({
             </form>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
+            <button type="button" className="button medium cancel" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
             <button
@@ -892,7 +892,7 @@ export default function SubscriptionButton({
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button medium close"
+              className="button medium cancel"
               onClick={handleCloseCancelDialog}
               disabled={isProcessing}
             >
@@ -994,7 +994,7 @@ export default function SubscriptionButton({
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+            <button type="button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </div>

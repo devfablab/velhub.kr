@@ -385,17 +385,11 @@ function SecurityCheckDialog({ purpose, onFinish }: { purpose: SecurityCheckPurp
         </div>
         <div className="drawer-dialog-actions">
           {canClose ? (
-            <button type="button" className="button medium close" onClick={handleClose} disabled={isSubmitting}>
+            <button type="button" className="cancel-button" onClick={handleClose} disabled={isSubmitting}>
               {closeLabel}
             </button>
           ) : null}
-          <button
-            ref={submitButtonReference}
-            type="submit"
-            form={formId}
-            className="button medium submit"
-            disabled={isBusy || !methods}
-          >
+          <button ref={submitButtonReference} type="submit" form={formId} disabled={isBusy || !methods}>
             {isBusy ? <LoadingIndicator size={20} /> : null}
             확인
           </button>

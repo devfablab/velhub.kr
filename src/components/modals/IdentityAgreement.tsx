@@ -199,7 +199,7 @@ export default function IdentityAgreement({
         <div className="drawer-dialog-actions">
           {showAgreementCheck ? (
             <>
-              <button type="button" className="button medium close" onClick={onClose}>
+              <button type="button" className="button medium cancel" onClick={onClose}>
                 취소
               </button>
               <button type="button" className="button medium submit" disabled={!isAgreed} onClick={onConfirm}>

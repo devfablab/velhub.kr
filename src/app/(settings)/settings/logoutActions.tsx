@@ -198,7 +198,7 @@ export default function LogoutActions() {
             </button>
             <button
               type="button"
-              className="button medium danger"
+              className="danger-button"
               onClick={handleLogoutAllDevices}
               disabled={isLoggingOutAllDevices}
             >

@@ -354,18 +354,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <button
                   type="submit"
                   form="community-invite-form"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="community-invite-form"
-                  className="button medium submit"
-                  disabled={isInviteSubmitting}
-                >
+                <button type="submit" form="community-invite-form" disabled={isInviteSubmitting}>
                   {isInviteSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대하기
                 </button>
@@ -463,18 +458,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
                   초대 유지
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSubmitCancelInvite}
-                  disabled={isCancelSubmitting}
-                >
+                <button type="button" onClick={handleSubmitCancelInvite} disabled={isCancelSubmitting}>
                   {isCancelSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대 취소
                 </button>
@@ -562,7 +552,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
                   onClick={() => {
                     setInviteEmailError(pendingInviteEmailError);
                     setErrorMessage('');

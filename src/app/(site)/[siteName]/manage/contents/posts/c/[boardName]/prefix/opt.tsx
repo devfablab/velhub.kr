@@ -409,20 +409,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </form>
               </div>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="mobile-prefix-form"
-                  className="button medium submit"
-                  disabled={isSubmitting}
-                >
+                <button type="submit" form="mobile-prefix-form" disabled={isSubmitting}>
                   {isSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
@@ -518,18 +508,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </form>
               </div>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
                 <button
                   type="submit"
                   form="mobile-prefix-delete-form"
-                  className="button medium danger"
+                  className="danger-button"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? <LoadingIndicator size={20} /> : null}

@@ -610,7 +610,7 @@ export default function EmailSignIn() {
               </ul>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button medium close" onClick={handleErrorPopupClose}>
+              <button type="button" onClick={handleErrorPopupClose}>
                 확인
               </button>
             </div>
@@ -666,12 +666,7 @@ export default function EmailSignIn() {
               <button type="button" className="cancel-button" onClick={handleCancelDecision} disabled={isSubmitting}>
                 취소
               </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleConfirmEnableEmailLogin}
-                disabled={isSubmitting}
-              >
+              <button type="button" onClick={handleConfirmEnableEmailLogin} disabled={isSubmitting}>
                 {isSubmitting && submittingAction === 'enable' ? <LoadingIndicator size={20} /> : null}
                 비밀번호 설정 메일 보내기
               </button>
@@ -727,12 +722,7 @@ export default function EmailSignIn() {
               <button type="button" className="cancel-button" onClick={handleCancelDecision} disabled={isSubmitting}>
                 취소
               </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleConfirmEmailLogin}
-                disabled={isSubmitting}
-              >
+              <button type="button" onClick={handleConfirmEmailLogin} disabled={isSubmitting}>
                 {isSubmitting && submittingAction === 'login' ? <LoadingIndicator size={20} /> : null}
                 이메일 로그인
               </button>

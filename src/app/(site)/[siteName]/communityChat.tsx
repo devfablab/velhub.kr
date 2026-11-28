@@ -80,7 +80,7 @@ function ConfirmPopup({
           </button>
           <button
             type="button"
-            className={confirm?.isDanger ? 'button medium danger' : 'button medium submit'}
+            className={confirm?.isDanger ? 'danger-button' : undefined}
             disabled={isSubmitting}
             onClick={() => void confirm?.onConfirm()}
           >

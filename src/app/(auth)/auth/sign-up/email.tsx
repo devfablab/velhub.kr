@@ -502,7 +502,7 @@ export default function EmailSignUp({
               </ul>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button medium submit" onClick={handlePopupClose}>
+              <button type="button" onClick={handlePopupClose}>
                 확인
               </button>
             </div>

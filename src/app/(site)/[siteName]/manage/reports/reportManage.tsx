@@ -1087,9 +1087,13 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               <button
                 type="button"
                 className={
-                  !showPast && selectedReport && !canFinalize(selectedReport)
-                    ? 'button medium close'
-                    : 'button medium submit'
+                  isDetailContentPopup
+                    ? !showPast && selectedReport && !canFinalize(selectedReport)
+                      ? 'button medium cancel'
+                      : 'button medium submit'
+                    : !showPast && selectedReport && !canFinalize(selectedReport)
+                      ? 'cancel-button'
+                      : undefined
                 }
                 onClick={handleClose}
                 disabled={saving}
@@ -1099,7 +1103,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               {!showPast && selectedReport && !canFinalize(selectedReport) ? (
                 <button
                   type="button"
-                  className="button medium submit"
+                  className={isDetailContentPopup ? 'button medium submit' : undefined}
                   onClick={handleSave}
                   disabled={saving || !nextStatus}
                 >
@@ -1172,15 +1176,10 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               </Typography>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button medium close" onClick={() => setIsCompletionConfirmOpen(false)}>
+              <button type="button" className="cancel-button" onClick={() => setIsCompletionConfirmOpen(false)}>
                 취소
               </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleConfirmCompletion}
-                disabled={saving}
-              >
+              <button type="button" onClick={handleConfirmCompletion} disabled={saving}>
                 {saving && savingAction === 'complete' ? <LoadingIndicator size={20} /> : null}
                 변경
               </button>
@@ -1228,17 +1227,11 @@ export default function ReportManage({ targetType, initialData, initialError }: 
             </Tooltip>
             <div className="VhiDrawer-bottom-content">{messageContent}</div>
             <div className="drawer-dialog-actions">
-              <button
-                type="button"
-                className="button medium close"
-                onClick={handleCloseMessages}
-                disabled={messageSaving}
-              >
+              <button type="button" className="cancel-button" onClick={handleCloseMessages} disabled={messageSaving}>
                 닫기
               </button>
               <button
                 type="button"
-                className="button medium submit"
                 onClick={() => void handleSendReply()}
                 disabled={
                   messageSaving ||
@@ -1308,24 +1301,19 @@ export default function ReportManage({ targetType, initialData, initialError }: 
               <Typography variant="body2">선택하세요.</Typography>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button medium close" onClick={handleCloseFinal} disabled={finalSaving}>
+              <button type="button" className="cancel-button" onClick={handleCloseFinal} disabled={finalSaving}>
                 닫기
               </button>
               <button
                 type="button"
-                className="button medium danger"
+                className="danger-button"
                 onClick={() => void handleFinalize('keep_deleted')}
                 disabled={finalSaving}
               >
                 {finalSaving && finalSavingAction === 'keep_deleted' ? <LoadingIndicator size={20} /> : null}
                 삭제상태 유지
               </button>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={() => void handleFinalize('restore')}
-                disabled={finalSaving}
-              >
+              <button type="button" onClick={() => void handleFinalize('restore')} disabled={finalSaving}>
                 {finalSaving && finalSavingAction === 'restore' ? <LoadingIndicator size={20} /> : null}
                 복구하기
               </button>

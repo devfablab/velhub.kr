@@ -544,7 +544,7 @@ export default function Opt() {
             <button type="button" className="cancel-button" onClick={handleCancelSocialLogin}>
               연결하지 않음
             </button>
-            <button type="button" className="button medium action" onClick={handleConfirmSocialLogin}>
+            <button type="button" onClick={handleConfirmSocialLogin}>
               연결 허용
             </button>
           </div>
@@ -606,7 +606,7 @@ export default function Opt() {
             )}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium submit" onClick={() => setIsErrorPopupOpen(false)}>
+            <button type="button" onClick={() => setIsErrorPopupOpen(false)}>
               확인
             </button>
           </div>

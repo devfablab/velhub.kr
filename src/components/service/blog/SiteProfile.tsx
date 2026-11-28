@@ -696,7 +696,7 @@ export default function SiteProfile() {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button medium close"
+              className="button medium cancel"
               onClick={handleCloseBlogSubscriptionCancelDialog}
               disabled={isBlogSubscriptionProcessing}
             >
@@ -803,7 +803,7 @@ export default function SiteProfile() {
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+            <button type="button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </div>
@@ -901,7 +901,7 @@ export default function SiteProfile() {
           <div className="drawer-dialog-actions">
             <button
               type="button"
-              className="button medium close"
+              className="button medium cancel"
               onClick={handleCloseBlogSubscriptionDialog}
               disabled={isBlogSubscriptionProcessing}
             >

@@ -538,10 +538,10 @@ export default function DonationButton(props: Props) {
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{renderDonationForm('mobile-donation-form')}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
+            <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
-            <button type="submit" form="mobile-donation-form" className="button medium submit" disabled={isProcessing}>
+            <button type="submit" form="mobile-donation-form" disabled={isProcessing}>
               {isProcessing ? <LoadingIndicator size={20} /> : null}
               {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
             </button>
@@ -595,7 +595,7 @@ export default function DonationButton(props: Props) {
             </Stack>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium submit" onClick={handleCloseIdentityDialog}>
+            <button type="button" onClick={handleCloseIdentityDialog}>
               닫기
             </button>
           </div>

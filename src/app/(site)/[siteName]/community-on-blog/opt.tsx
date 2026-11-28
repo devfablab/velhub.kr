@@ -380,20 +380,10 @@ export default function Opt({
             <p>정말로 글을 삭제하시겠습니까?</p>
           </div>
           <div className="drawer-dialog-actions">
-            <button
-              type="button"
-              className="button medium close"
-              onClick={() => setDeleteTarget(null)}
-              disabled={isDeleting}
-            >
+            <button type="button" className="cancel-button" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium danger"
-              onClick={() => void deletePost()}
-              disabled={isDeleting}
-            >
+            <button type="button" className="danger-button" onClick={() => void deletePost()} disabled={isDeleting}>
               {isDeleting ? <LoadingIndicator size={20} /> : null}
               삭제
             </button>

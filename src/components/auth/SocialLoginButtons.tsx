@@ -283,7 +283,7 @@ export default function SocialLoginButtons({ excludeProviders = [] }: SocialLogi
             <p style={{ whiteSpace: 'pre-line' }}>{errorMessage}</p>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={() => setIsErrorPopupOpen(false)}>
+            <button type="button" onClick={() => setIsErrorPopupOpen(false)}>
               확인
             </button>
           </div>

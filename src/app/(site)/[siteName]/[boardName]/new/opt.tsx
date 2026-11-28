@@ -2459,12 +2459,7 @@ export default function Opt({
                 <button type="button" onClick={closeThumbnailDialog} className="cancel-button">
                   취소
                 </button>
-                <button
-                  type="button"
-                  onClick={applyThumbnailDialogImage}
-                  disabled={!thumbnailDialogFile}
-                  className="button medium submit"
-                >
+                <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
                   이미지 업로드
                 </button>
               </div>
@@ -2619,7 +2614,7 @@ export default function Opt({
                 <button type="button" onClick={closeGalleryDialog} className="cancel-button">
                   취소
                 </button>
-                <button type="button" onClick={applyGalleryDialogImages} className="button medium submit">
+                <button type="button" onClick={applyGalleryDialogImages}>
                   이미지 업로드
                 </button>
               </div>
@@ -2953,14 +2948,14 @@ export default function Opt({
               </div>
               <div className="drawer-dialog-actions">
                 {isPollEnabled ? (
-                  <button type="button" onClick={removePoll} className="button medium danger">
+                  <button type="button" onClick={removePoll} className="danger-button">
                     투표 삭제
                   </button>
                 ) : null}
                 <button type="button" onClick={closePollDialog} className="cancel-button">
                   취소
                 </button>
-                <button type="button" onClick={applyPollDialog} className="button medium submit">
+                <button type="button" onClick={applyPollDialog}>
                   이미지 업로드
                 </button>
               </div>
@@ -3296,24 +3291,24 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 {isDrawEnabled ? (
                   <>
-                    <button type="button" onClick={removeDraw} className="button medium danger">
+                    <button type="button" onClick={removeDraw} className="danger-button">
                       추첨 이벤트 삭제
                     </button>
                     <div className="complex-button">
                       <button type="button" onClick={closeDrawDialog} className="cancel-button">
                         취소
                       </button>
-                      <button type="button" onClick={applyDrawDialog} className="button medium submit">
+                      <button type="button" onClick={applyDrawDialog}>
                         추첨 이벤트 설정
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <button type="button" onClick={closeDrawDialog} className="button medium close">
+                    <button type="button" onClick={closeDrawDialog} className="cancel-button">
                       취소
                     </button>
-                    <button type="button" onClick={applyDrawDialog} className="button medium submit">
+                    <button type="button" onClick={applyDrawDialog}>
                       추첨 이벤트 설정
                     </button>
                   </>
@@ -3451,7 +3446,7 @@ export default function Opt({
                   </button>
                 ) : null}
 
-                <button type="button" onClick={accessDialog.onConfirm} className="button medium submit">
+                <button type="button" onClick={accessDialog.onConfirm}>
                   {accessDialog.confirmLabel}
                 </button>
               </div>

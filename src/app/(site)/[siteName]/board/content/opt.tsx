@@ -812,14 +812,14 @@ export default function Opt({
               ) : null}
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
                 type="button"
                 onClick={() => void deletePost()}
                 disabled={isDeletingPost}
-                className="button medium danger"
+                className="danger-button"
               >
                 {isDeletingPost ? <LoadingIndicator size={20} /> : null}
                 {isDeletingPost ? '삭제 중' : '삭제'}

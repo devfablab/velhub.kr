@@ -1247,7 +1247,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseDialog}
                   disabled={isSubmitting || isUploadingImage || isDeletingImage}
                 >
@@ -1256,7 +1256,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <button
                   type="submit"
                   form="mobile-community-series-form"
-                  className="button medium submit"
                   disabled={
                     isSubmitting ||
                     isUploadingImage ||
@@ -1596,18 +1595,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </form>
               </div>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDialog}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDialog} disabled={isSubmitting}>
                   취소
                 </button>
                 <button
                   type="submit"
                   form="mobile-community-series-delete-form"
-                  className="button medium danger"
+                  className="danger-button"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? <LoadingIndicator size={20} /> : null}
@@ -1748,12 +1742,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </form>
               </div>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseUserDialog}
-                  disabled={isUserSearching}
-                >
+                <button type="button" onClick={handleCloseUserDialog} disabled={isUserSearching}>
                   닫기
                 </button>
               </div>

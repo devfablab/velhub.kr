@@ -269,12 +269,11 @@ export default function MemberRestrictionMessageDialog({
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{content}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={closeDialog} disabled={saving}>
+            <button type="button" className="cancel-button" onClick={closeDialog} disabled={saving}>
               닫기
             </button>
             <button
               type="button"
-              className="button medium submit"
               onClick={() => void sendMessage()}
               disabled={saving || loading || !messageText.trim()}
             >

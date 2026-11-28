@@ -191,3 +191,11 @@
 - 이어서 할 첫 행동:
 - 시작 전 확인할 것: 이 문서를 읽고 `git status`와 `git diff`로 실제 변경을 확인한 뒤, 문서와 코드가 일치하는지 요약해서 보여줄 것
 - 임시 코드 / 디버깅용 코드 위치:
+
+## 모바일 팝업 액션 버튼 클래스를 PC와 맞추기
+
+- [x] PC 팝업 버튼에 button 클래스가 없거나 cancel-button, delete-button, danger-button 등이 있으면 모바일 버튼 클래스를 PC와 같게 바꿈 (PC가 button 클래스면 모바일 그대로)
+- [x] 모바일 액션 영역의 링크 버튼도 버튼 모양이 나오게 globals.sass에 a 추가
+- [x] 컨시어지 공용 팝업, 소명 화면도 같은 규칙 적용
+- [x] tsc 통과
+- [x] PC가 button 클래스를 쓰는 팝업은 모바일의 button medium close만 button medium cancel로 변경 (PC는 그대로)

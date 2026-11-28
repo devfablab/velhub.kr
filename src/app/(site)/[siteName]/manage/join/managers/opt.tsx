@@ -1130,12 +1130,7 @@ export default function Opt({
                 </Stack>
               </div>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={closeIconDialog}
-                  disabled={isUploadingIcon || Boolean(deletingIconId)}
-                >
+                <button type="button" onClick={closeIconDialog} disabled={isUploadingIcon || Boolean(deletingIconId)}>
                   닫기
                 </button>
               </div>
@@ -1489,7 +1484,6 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
                   onClick={closeSearchDialog}
                   disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
                 >
@@ -1848,12 +1842,7 @@ export default function Opt({
                   </Tooltip>
                   <div className="VhiDrawer-bottom-content">{managerEditContent}</div>
                   <div className="drawer-dialog-actions">
-                    <button
-                      type="button"
-                      className="button medium close"
-                      onClick={closeManagerEdit}
-                      disabled={isSubmittingDelete || isSubmittingMove}
-                    >
+                    <button type="button" onClick={closeManagerEdit} disabled={isSubmittingDelete || isSubmittingMove}>
                       닫기
                     </button>
                   </div>

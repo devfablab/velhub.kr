@@ -205,7 +205,7 @@ export default function TableList({ writeHref }: Props) {
             <DialogContentText>{alertMessage}</DialogContentText>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={() => setAlertMessage('')} className="button medium submit">
+            <button type="button" onClick={() => setAlertMessage('')}>
               확인
             </button>
           </div>

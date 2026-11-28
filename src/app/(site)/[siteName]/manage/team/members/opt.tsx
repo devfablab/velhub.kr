@@ -656,7 +656,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseOwnerTransfer}
                   disabled={isOwnerTransferSubmitting}
                 >
@@ -664,7 +664,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="button medium submit"
                   onClick={handleSubmitOwnerTransfer}
                   disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
                 >
@@ -790,7 +789,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
                   onClick={() => {
                     setInviteEmailError(pendingInviteEmailError);
                     setInviteErrorMessage('');
@@ -895,18 +893,13 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseRoleDialog}
                   disabled={isRoleSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSubmitRole}
-                  disabled={isRoleSubmitting}
-                >
+                <button type="button" onClick={handleSubmitRole} disabled={isRoleSubmitting}>
                   {isRoleSubmitting ? <LoadingIndicator size={20} /> : null}
                   {nextRole === 'observer' ? '차단' : targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                 </button>
@@ -1059,18 +1052,13 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 <button
                   type="submit"
                   form="team-invite-form"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseInviteDialog}
                   disabled={isInviteSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="team-invite-form"
-                  className="button medium submit"
-                  disabled={isInviteSubmitting}
-                >
+                <button type="submit" form="team-invite-form" disabled={isInviteSubmitting}>
                   {isInviteSubmitting ? <LoadingIndicator size={20} /> : null}
                   초대하기
                 </button>
@@ -1224,7 +1212,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </div>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button medium close" onClick={handleCloseInviteListDialog}>
+                <button type="button" className="button medium cancel" onClick={handleCloseInviteListDialog}>
                   닫기
                 </button>
               </div>
@@ -1316,7 +1304,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseCancelDialog}
                   disabled={isCancelSubmitting}
                 >
@@ -1324,7 +1312,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
                 </button>
                 <button
                   type="button"
-                  className="button medium danger"
+                  className="danger-button"
                   onClick={handleSubmitCancelInvite}
                   disabled={isCancelSubmitting}
                 >

@@ -611,16 +611,14 @@ export default function CommentItem({
             <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmDialog.content}</p>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={() => setConfirmAction(null)} className="button medium close">
+            <button type="button" onClick={() => setConfirmAction(null)} className="cancel-button">
               {confirmDialog.cancelLabel}
             </button>
             <button
               type="button"
               onClick={() => void confirmDialog.onConfirm()}
               disabled={isSubmitting}
-              className={
-                confirmDialog.confirmClassName === 'delete-button' ? 'button medium danger' : 'button medium submit'
-              }
+              className={confirmDialog.confirmClassName || undefined}
             >
               {isSubmitting ? <LoadingIndicator size={20} /> : null}
               {confirmDialog.confirmLabel}

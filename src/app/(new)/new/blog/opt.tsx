@@ -811,7 +811,7 @@ export default function Opt() {
             <button type="button" className="cancel-button" onClick={closeCancelDialog}>
               닫기
             </button>
-            <button type="button" className="button medium danger" onClick={handleConfirmCancel}>
+            <button type="button" className="danger-button" onClick={handleConfirmCancel}>
               개설 취소
             </button>
           </div>
@@ -873,7 +873,7 @@ export default function Opt() {
             )}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium submit" onClick={closeErrorDialog}>
+            <button type="button" onClick={closeErrorDialog}>
               확인
             </button>
           </div>

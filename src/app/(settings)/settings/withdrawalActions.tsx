@@ -146,12 +146,7 @@ export default function WithdrawalActions() {
             <button type="button" className="cancel-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
               취소
             </button>
-            <button
-              type="submit"
-              form="mobile-withdrawal-form"
-              className="button medium danger"
-              disabled={isSubmitting}
-            >
+            <button type="submit" form="mobile-withdrawal-form" className="danger-button" disabled={isSubmitting}>
               {isSubmitting ? <LoadingIndicator size={20} /> : null}
               탈퇴 신청
             </button>

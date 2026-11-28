@@ -105,10 +105,10 @@ export default function RecoveryEmailReminder() {
           </Typography>
         </div>
         <div className="drawer-dialog-actions">
-          <button type="button" className="button medium close" onClick={handleClose}>
+          <button type="button" className="cancel-button" onClick={handleClose}>
             나중에
           </button>
-          <button type="button" className="button medium submit" onClick={handleMove}>
+          <button type="button" onClick={handleMove}>
             등록하러 가기
           </button>
         </div>

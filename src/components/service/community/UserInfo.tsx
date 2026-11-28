@@ -461,15 +461,10 @@ export default function UserInfo() {
             </form>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button medium close">
+            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="cancel-button">
               취소
             </button>
-            <button
-              type="submit"
-              form="community-profile-form-mobile"
-              disabled={!canSubmit || isSubmitting}
-              className="button medium submit"
-            >
+            <button type="submit" form="community-profile-form-mobile" disabled={!canSubmit || isSubmitting}>
               {isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>
@@ -590,14 +585,14 @@ export default function UserInfo() {
 
           <div className="drawer-dialog-actions">
             {isWithdrawBlocked ? (
-              <button type="button" className="button medium submit" onClick={handleCloseWithdrawDialog}>
+              <button type="button" onClick={handleCloseWithdrawDialog}>
                 {withdrawBlockedButtonText}
               </button>
             ) : (
               <>
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseWithdrawDialog}
                   disabled={isWithdrawSubmitting}
                 >
@@ -606,7 +601,7 @@ export default function UserInfo() {
                 <button
                   type="submit"
                   form="mobile-community-withdraw-form"
-                  className="button medium danger"
+                  className="danger-button"
                   disabled={isWithdrawSubmitting}
                 >
                   {isWithdrawSubmitting ? <LoadingIndicator size={20} /> : null}

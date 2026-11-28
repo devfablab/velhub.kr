@@ -939,7 +939,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 </Tooltip>
                 <div className="VhiDrawer-bottom-content">{searchContent}</div>
                 <div className="drawer-dialog-actions">
-                  <button type="button" className="button medium close" onClick={() => setIsSearchOpen(false)}>
+                  <button type="button" onClick={() => setIsSearchOpen(false)}>
                     닫기
                   </button>
                 </div>
@@ -1086,18 +1086,13 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                       <div className="drawer-dialog-actions">
                         <button
                           type="button"
-                          className="button medium close"
+                          className="cancel-button"
                           onClick={() => setIsLevelChangeDialogOpen(false)}
                           disabled={isLevelChanging}
                         >
                           취소
                         </button>
-                        <button
-                          type="submit"
-                          form="mobile-member-level-form"
-                          className="button medium submit"
-                          disabled={isLevelChanging}
-                        >
+                        <button type="submit" form="mobile-member-level-form" disabled={isLevelChanging}>
                           {isLevelChanging ? <LoadingIndicator size={20} /> : null}
                           변경
                         </button>
@@ -1323,18 +1318,13 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
                 <div className="drawer-dialog-actions">
                   <button
                     type="button"
-                    className="button medium close"
+                    className="cancel-button"
                     onClick={handleCloseActionDialog}
                     disabled={isActionSubmitting}
                   >
                     취소
                   </button>
-                  <button
-                    type="submit"
-                    form="mobile-members-action-form"
-                    className="button medium submit"
-                    disabled={isActionSubmitting}
-                  >
+                  <button type="submit" form="mobile-members-action-form" disabled={isActionSubmitting}>
                     {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                     확인
                   </button>

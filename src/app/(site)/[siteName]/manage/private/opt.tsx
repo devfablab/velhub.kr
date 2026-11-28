@@ -329,7 +329,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
             <Typography variant="subtitle2">{notice?.message}</Typography>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium submit" onClick={() => setNotice(null)}>
+            <button type="button" onClick={() => setNotice(null)}>
               확인
             </button>
           </div>
@@ -373,10 +373,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
             </Typography>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={() => setPendingCategoryIndex(null)}>
+            <button type="button" className="cancel-button" onClick={() => setPendingCategoryIndex(null)}>
               취소
             </button>
-            <button type="button" className="button medium danger" onClick={handleConfirmCategoryDelete}>
+            <button type="button" className="danger-button" onClick={handleConfirmCategoryDelete}>
               삭제
             </button>
           </div>

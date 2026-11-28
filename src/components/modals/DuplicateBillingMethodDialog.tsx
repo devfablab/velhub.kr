@@ -42,7 +42,7 @@ export default function DuplicateBillingMethodDialog({ open, title, onClose, onC
           <p>이전 결제 수단과 동일한 결제 수단입니다.</p>
         </div>
         <div className="drawer-dialog-actions">
-          <button type="button" className="button medium submit" onClick={onConfirm}>
+          <button type="button" onClick={onConfirm}>
             확인
           </button>
         </div>

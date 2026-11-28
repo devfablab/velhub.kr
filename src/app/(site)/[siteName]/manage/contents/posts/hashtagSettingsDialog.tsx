@@ -263,7 +263,7 @@ export default function HashtagSettingsDialog({ siteName }: { siteName: string }
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{content}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={closeDialog} disabled={isSaving}>
+            <button type="button" className="button medium cancel" onClick={closeDialog} disabled={isSaving}>
               취소
             </button>
             <button

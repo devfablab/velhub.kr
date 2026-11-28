@@ -235,15 +235,10 @@ export default function ManagePostActions({
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{content}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={close} disabled={busy}>
+            <button type="button" className="cancel-button" onClick={close} disabled={busy}>
               취소
             </button>
-            <button
-              type="button"
-              className={`button medium ${mode === 'close' ? 'danger' : 'submit'}`}
-              disabled={submitDisabled}
-              onClick={() => void save()}
-            >
+            <button type="button" disabled={submitDisabled} onClick={() => void save()}>
               {busy ? <LoadingIndicator size={20} /> : null}
               {submitLabel}
             </button>

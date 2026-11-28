@@ -329,7 +329,7 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
             {detailContent}
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={() => setIsDialogOpen(false)}>
+            <button type="button" className="button medium cancel" onClick={() => setIsDialogOpen(false)}>
               닫기
             </button>
           </div>
@@ -377,20 +377,10 @@ export default function CommunityMemberMenu({ siteName, name, boardName, boardLa
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{blockContent}</div>
           <div className="drawer-dialog-actions">
-            <button
-              type="button"
-              className="button medium close"
-              disabled={isBlockSubmitting}
-              onClick={closeBlockDialog}
-            >
+            <button type="button" className="cancel-button" disabled={isBlockSubmitting} onClick={closeBlockDialog}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              disabled={isBlockSubmitting}
-              onClick={() => void submitBlock()}
-            >
+            <button type="button" disabled={isBlockSubmitting} onClick={() => void submitBlock()}>
               {isBlockSubmitting ? <LoadingIndicator size={20} /> : null}
               승인
             </button>

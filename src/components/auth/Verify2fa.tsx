@@ -274,15 +274,10 @@ export default function Verify2fa() {
             </Box>
           </div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={handleSignOut} disabled={isSubmitting}>
+            <button type="button" className="cancel-button" onClick={handleSignOut} disabled={isSubmitting}>
               로그아웃
             </button>
-            <button
-              type="submit"
-              form="verify-2fa-form"
-              className="button medium submit"
-              disabled={isLoading || isSubmitting || !factorId}
-            >
+            <button type="submit" form="verify-2fa-form" disabled={isLoading || isSubmitting || !factorId}>
               {isSubmitting ? <LoadingIndicator size={20} /> : null}
               확인
             </button>

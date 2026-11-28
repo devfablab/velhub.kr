@@ -1107,12 +1107,7 @@ export default function Opt({
             <button type="button" className="cancel-button" disabled={actionLoading} onClick={closeOpinion}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              disabled={actionLoading || opinionFileUploading}
-              onClick={submitOpinion}
-            >
+            <button type="button" disabled={actionLoading || opinionFileUploading} onClick={submitOpinion}>
               {actionLoading && loadingAction === 'opinion' ? <LoadingIndicator size={20} /> : null}
               제출
             </button>

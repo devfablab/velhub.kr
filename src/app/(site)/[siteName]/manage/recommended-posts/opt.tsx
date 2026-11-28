@@ -403,15 +403,10 @@ export default function Opt({
           </Tooltip>
           <div className="VhiDrawer-bottom-content">{searchContent}</div>
           <div className="drawer-dialog-actions">
-            <button type="button" className="button medium close" onClick={closeSearchDialog} disabled={isSearching}>
+            <button type="button" className="cancel-button" onClick={closeSearchDialog} disabled={isSearching}>
               취소
             </button>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={handleAddPost}
-              disabled={!selectedPostId || posts.length >= maxPosts}
-            >
+            <button type="button" onClick={handleAddPost} disabled={!selectedPostId || posts.length >= maxPosts}>
               추가
             </button>
           </div>

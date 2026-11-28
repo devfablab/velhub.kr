@@ -629,20 +629,10 @@ export default function Opt({
                 </Stack>
               </form>
               <div className="drawer-dialog-actions">
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseDeleteDialog}
-                  disabled={isDeleting}
-                >
+                <button type="button" className="cancel-button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="mobile-post-delete-form"
-                  className="button medium danger"
-                  disabled={isDeleting}
-                >
+                <button type="submit" form="mobile-post-delete-form" className="danger-button" disabled={isDeleting}>
                   {isDeleting ? <LoadingIndicator size={20} /> : null}
                   삭제
                 </button>
@@ -751,18 +741,13 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseRestoreDialog}
                   disabled={isRestoring}
                 >
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="mobile-post-restore-form"
-                  className="button medium submit"
-                  disabled={isRestoring}
-                >
+                <button type="submit" form="mobile-post-restore-form" disabled={isRestoring}>
                   {isRestoring ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>
@@ -883,18 +868,13 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseCategoryDialog}
                   disabled={isCategorySubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="mobile-post-category-form"
-                  className="button medium submit"
-                  disabled={isCategorySubmitting}
-                >
+                <button type="submit" form="mobile-post-category-form" disabled={isCategorySubmitting}>
                   {isCategorySubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>
@@ -1043,18 +1023,13 @@ export default function Opt({
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseSeriesDialog}
                   disabled={isSeriesSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="mobile-post-series-form"
-                  className="button medium submit"
-                  disabled={isSeriesSubmitting}
-                >
+                <button type="submit" form="mobile-post-series-form" disabled={isSeriesSubmitting}>
                   {isSeriesSubmitting ? <LoadingIndicator size={20} /> : null}
                   저장
                 </button>

@@ -546,18 +546,13 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseActionDialog}
                   disabled={isActionSubmitting}
                 >
                   취소
                 </button>
-                <button
-                  type="submit"
-                  form="mobile-blocked-members-action-form"
-                  className="button medium submit"
-                  disabled={isActionSubmitting}
-                >
+                <button type="submit" form="mobile-blocked-members-action-form" disabled={isActionSubmitting}>
                   {isActionSubmitting ? <LoadingIndicator size={20} /> : null}
                   확인
                 </button>

@@ -2,6 +2,7 @@
 
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import Anchor from '@/components/Anchor';
 
 type Props = {
   open: boolean;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export default function FormErrorDialog({ open, title, messages, onClose }: Props) {
+  const loginHref = messages.includes('로그인이 필요합니다.') ? '/auth/sign-in' : '';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const messageContent = title ? (
@@ -37,9 +39,14 @@ export default function FormErrorDialog({ open, title, messages, onClose }: Prop
       {title ? <h2 id="form-error-drawer-title">{title}</h2> : null}
       <div className="VhiDrawer-bottom-content">{messageContent}</div>
       <div className="drawer-dialog-actions">
-        <button type="button" className="button medium submit" onClick={onClose}>
+        <button type="button" className={loginHref ? 'cancel-button' : undefined} onClick={onClose}>
           확인
         </button>
+        {loginHref ? (
+          <Anchor href={loginHref} onClick={onClose}>
+            로그인
+          </Anchor>
+        ) : null}
       </div>
     </Drawer>
   ) : (
@@ -47,9 +54,14 @@ export default function FormErrorDialog({ open, title, messages, onClose }: Prop
       {title ? <DialogTitle>{title}</DialogTitle> : null}
       <DialogContent>{messageContent}</DialogContent>
       <DialogActions>
-        <button type="button" onClick={onClose}>
+        <button type="button" className={loginHref ? 'cancel-button' : undefined} onClick={onClose}>
           확인
         </button>
+        {loginHref ? (
+          <Anchor href={loginHref} onClick={onClose}>
+            로그인
+          </Anchor>
+        ) : null}
       </DialogActions>
     </Dialog>
   );

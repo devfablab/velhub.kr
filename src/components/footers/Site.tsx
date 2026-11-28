@@ -279,7 +279,7 @@ export default function FooterSite() {
             <div className="drawer-dialog-actions">
               <button
                 type="button"
-                className="button medium close"
+                className="cancel-button"
                 onClick={() => void handleOwnerTransferDecision('rejected')}
                 disabled={isResponding}
               >
@@ -288,7 +288,6 @@ export default function FooterSite() {
               </button>
               <button
                 type="button"
-                className="button medium submit"
                 onClick={() => void handleOwnerTransferDecision('accepted')}
                 disabled={isResponding}
               >
@@ -372,11 +371,11 @@ export default function FooterSite() {
               <Typography variant="body2">초대에 응하시겠어요?</Typography>
             </div>
             <div className="drawer-dialog-actions">
-              <button type="button" className="button medium close" onClick={() => setIsInvitePromptOpen(false)}>
+              <button type="button" className="cancel-button" onClick={() => setIsInvitePromptOpen(false)}>
                 둘러보기
               </button>
               {inviteHref ? (
-                <Anchor className="button medium submit" href={inviteHref} onClick={() => setIsInvitePromptOpen(false)}>
+                <Anchor href={inviteHref} onClick={() => setIsInvitePromptOpen(false)}>
                   가입하기
                 </Anchor>
               ) : null}

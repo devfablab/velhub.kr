@@ -43,10 +43,10 @@ function getDialogActionClass(intent: ResponsivePopupAction['intent'], isSingleA
   return undefined;
 }
 
-function getContentActionClass(intent: ResponsivePopupAction['intent'], isSingleAction: boolean) {
+function getContentActionClass(intent: ResponsivePopupAction['intent'], isSingleAction: boolean, isMobile = false) {
   if (intent === 'danger' || intent === 'warning') return 'button medium danger';
   if (isSingleAction) return 'button medium submit';
-  if (intent === 'cancel') return 'button medium close';
+  if (intent === 'cancel') return isMobile ? 'button medium cancel' : 'button medium close';
   if (intent === 'action') return 'button medium action';
   return 'button medium submit';
 }
@@ -102,7 +102,11 @@ export default function ResponsivePopup({
             key={index}
             type={formId && action.intent === 'submit' ? 'submit' : 'button'}
             form={formId && action.intent === 'submit' ? formId : undefined}
-            className={getContentActionClass(action.intent, actions.length === 1)}
+            className={
+              variant === 'content'
+                ? getContentActionClass(action.intent, actions.length === 1, true)
+                : getDialogActionClass(action.intent, actions.length === 1)
+            }
             onClick={formId && action.intent === 'submit' ? undefined : action.onClick}
             disabled={action.disabled}
           >

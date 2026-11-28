@@ -439,7 +439,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 </div>
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" className="button medium close" onClick={() => setSelectedUser(null)}>
+                <button type="button" className="button medium cancel" onClick={() => setSelectedUser(null)}>
                   닫기
                 </button>
               </div>
@@ -559,7 +559,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
               <div className="drawer-dialog-actions">
                 <button
                   type="button"
-                  className="button medium close"
+                  className="cancel-button"
                   onClick={handleCloseConfirmAction}
                   disabled={isSubmitting}
                 >
@@ -568,7 +568,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
                 <button
                   type="submit"
                   form="mobile-join-approved-action-form"
-                  className={confirmActionType === 'approve' ? 'button medium submit' : 'button medium danger'}
+                  className={confirmActionType === 'approve' ? undefined : 'danger-button'}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? <LoadingIndicator size={20} /> : null}
