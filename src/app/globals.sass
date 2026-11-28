@@ -1644,6 +1644,11 @@ html[data-site-type='blog']
   &.another
     border-radius: ds.rem(3)!important
     @include ds.fw(pre, 500)
+    font-size: ds.rem(12)
+    height: ds.rem(20)
+
+    span
+      padding: 0 ds.rem(5)
 
   &.outlined
     background-color: transparent!important
@@ -1660,6 +1665,12 @@ html[data-site-type='blog']
       background-color: rgba(ds.$rgb-tertiary, .5)
       color: ds.$hex-light
 
+    &.another
+      border: 1px solid ds.$hex-tertiary
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid ds.$hex-tertiary
+
     &.outlined
       border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
@@ -1673,12 +1684,28 @@ html[data-site-type='blog']
     html[data-theme="yellow-dark"] &
       color: ds.$hex-black
 
+    &.another
+      border: 1px solid ds.$hex-accent
+      background-color: rgba(ds.$rgb-accent, .2)
+      color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
     &.outlined
       border: 1px solid ds.$hex-accent
 
   &.warning
     background-color: ds.$hex-warning
     color: ds.$hex-white
+
+    &.another
+      border: 1px solid ds.$hex-warning
+      background-color: rgba(ds.$rgb-warning, .2)
+      color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
 
     &.outlined
       border: 1px solid ds.$hex-warning

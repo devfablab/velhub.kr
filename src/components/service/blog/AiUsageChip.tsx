@@ -12,7 +12,7 @@ export default function AiUsageChip({ value, className }: { value: unknown; clas
     <Chip
       size="small"
       label={label}
-      className={['chip', normalizeAiUsage(value) === 'partial' ? 'normal' : 'success', className]
+      className={['chip another', normalizeAiUsage(value) === 'partial' ? 'normal' : 'success', className]
         .filter(Boolean)
         .join(' ')}
       sx={{ position: 'relative', top: 2 }}

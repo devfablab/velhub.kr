@@ -185,8 +185,7 @@ export default function CommunityChat({ siteName }: { siteName: string }) {
 
       try {
         const payload = JSON.parse(String(event.data)) as
-          | { type: 'message'; message: CommunityChatMessage }
-          | { type: 'delete'; id: string };
+          { type: 'message'; message: CommunityChatMessage } | { type: 'delete'; id: string };
 
         if (payload.type === 'message') {
           setMessages((current) => mergeMessages(current, [{ ...payload.message, state: 'sent' }]));

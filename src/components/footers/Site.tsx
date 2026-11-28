@@ -357,7 +357,7 @@ export default function FooterSite() {
         {isMobile ? (
           <Drawer
             anchor="bottom"
-            open={isInvitePromptOpen && !ownerTransfer}
+            open={isInvitePromptOpen && !ownerTransfer && !isInvitePage}
             onClose={() => setIsInvitePromptOpen(false)}
             className="VhiDrawer-bottom VhiDrawer-bottom-service"
             slotProps={{ paper: { 'aria-labelledby': 'components-footers-site-drawer-title-2' } }}
@@ -376,7 +376,7 @@ export default function FooterSite() {
                 둘러보기
               </button>
               {inviteHref ? (
-                <Anchor className="button medium submit" href={inviteHref}>
+                <Anchor className="button medium submit" href={inviteHref} onClick={() => setIsInvitePromptOpen(false)}>
                   가입하기
                 </Anchor>
               ) : null}
@@ -384,7 +384,7 @@ export default function FooterSite() {
           </Drawer>
         ) : (
           <Dialog
-            open={isInvitePromptOpen && !ownerTransfer}
+            open={isInvitePromptOpen && !ownerTransfer && !isInvitePage}
             onClose={() => setIsInvitePromptOpen(false)}
             fullWidth
             maxWidth="xs"
@@ -403,7 +403,11 @@ export default function FooterSite() {
               <button className="cancel-button" type="button" onClick={() => setIsInvitePromptOpen(false)}>
                 둘러보기
               </button>
-              {inviteHref ? <Anchor href={inviteHref}>가입하기</Anchor> : null}
+              {inviteHref ? (
+                <Anchor href={inviteHref} onClick={() => setIsInvitePromptOpen(false)}>
+                  가입하기
+                </Anchor>
+              ) : null}
             </DialogActions>
           </Dialog>
         )}
