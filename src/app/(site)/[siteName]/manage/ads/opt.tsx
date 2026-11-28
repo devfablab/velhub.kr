@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
-import { FormControlLabel, IconButton, Stack, TextField, Typography, Tooltip } from '@mui/material';
+import { FormControlLabel, IconButton, InputAdornment, Stack, TextField, Typography, Tooltip } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { hasMultipleBlogAdLinkDomains } from '@/lib/service/site/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
@@ -41,6 +41,7 @@ type AdReport = { status: 'pending' | 'issue'; reasonDescription: string; isImme
 type AdItem = {
   id?: string;
   productName: string;
+  price: string;
   thumbnailImage: string;
   thumbnailUrl: string;
   thumbnailWidth: number | null;
@@ -114,6 +115,7 @@ export default function Opt({
         ads?: {
           id: string;
           product_name: string;
+          price: number | null;
           shop_name: string | null;
           thumbnail_image: string;
           thumbnail_url: string;
@@ -129,6 +131,7 @@ export default function Opt({
         (data.ads ?? []).map((item) => ({
           id: item.id,
           productName: item.product_name,
+          price: item.price ? String(item.price) : '',
           thumbnailImage: item.thumbnail_image,
           thumbnailUrl: item.thumbnail_url,
           thumbnailWidth: item.thumbnail_width ?? null,
@@ -163,6 +166,7 @@ export default function Opt({
       const itemName = `기본 광고 ${index + 1}`;
       if (!item.productName.trim()) return [`${itemName}의 상품명을 입력해주세요.`];
       if (item.productName.trim().length > 50) return [`${itemName}의 상품명은 50자 이하로 입력해주세요.`];
+      if (!item.price || Number(item.price) <= 0) return [`${itemName}의 가격을 입력해주세요.`];
       if (!item.thumbnailImage) return [`${itemName}의 상품 썸네일을 등록해주세요.`];
       if (!item.linkUrl.trim().startsWith('https://')) return [`${itemName}의 링크는 HTTPS 주소로 입력해주세요.`];
       if (item.linkUrl.trim().length > 100) return [`${itemName}의 링크는 100자 이하로 입력해주세요.`];
@@ -183,7 +187,11 @@ export default function Opt({
       const response = await fetch('/api/manage/blog-ads/common', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteName, shopName, items }),
+        body: JSON.stringify({
+          siteName,
+          shopName,
+          items: items.map((item) => ({ ...item, price: Number(item.price) })),
+        }),
       });
       const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) throw new Error(data.error || '기본 광고를 저장하지 못했습니다.');
@@ -298,6 +306,27 @@ export default function Opt({
                       }}
                     />
                     <TextField
+                      placeholder="가격"
+                      value={item.price ? Number(item.price).toLocaleString('ko-KR') : ''}
+                      onChange={(event) =>
+                        updateItem(index, {
+                          price: event.target.value
+                            .replace(/[^0-9]/g, '')
+                            .replace(/^0+/, '')
+                            .slice(0, 9),
+                        })
+                      }
+                      required
+                      size="small"
+                      disabled={isSubmitting || item.report?.isImmediatelyStopped}
+                      error={Boolean(item.report)}
+                      sx={reportedFieldSx(Boolean(item.report))}
+                      slotProps={{
+                        htmlInput: { inputMode: 'numeric', 'aria-label': '가격', style: { textAlign: 'right' } },
+                        input: { endAdornment: <InputAdornment position="end">원</InputAdornment> },
+                      }}
+                    />
+                    <TextField
                       placeholder="링크"
                       value={item.linkUrl}
                       onChange={(event) => updateItem(index, { linkUrl: event.target.value })}
@@ -340,6 +369,7 @@ export default function Opt({
                   ...current,
                   {
                     productName: '',
+                    price: '',
                     thumbnailImage: '',
                     thumbnailUrl: '',
                     thumbnailWidth: null,

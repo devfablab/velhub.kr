@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getVisibleBlogHomeAds } from '@/lib/service/site/blog/blogAds/server';
@@ -76,6 +75,7 @@ export default async function Page({ params }: RouteContext) {
                     />
                     <span className={styles['shopping-info']}>
                       <strong>{ad.productName}</strong>
+                      {ad.price ? <span>{ad.price.toLocaleString('ko-KR')}원</span> : null}
                     </span>
                   </Anchor>
                   <BlogAdReportButton siteName={siteName} adId={ad.id} targetType="ad" />

@@ -327,6 +327,7 @@ export async function createBlogPostPromotion({
 type PromotionTarget = {
   id: string;
   product_name?: string | null;
+  price?: number | null;
   sponsor_name?: string | null;
   shop_name?: string | null;
   thumbnail_image?: string | null;
@@ -382,7 +383,9 @@ export async function getVisibleBlogHomeAds(siteId: string) {
 
   const adsResult = await supabaseAdmin
     .from('blog_ads')
-    .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
+    .select(
+      'id, product_name, price, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order',
+    )
     .eq('site_id', siteId)
     .is('post_id', null)
     .is('deleted_at', null)
@@ -397,6 +400,7 @@ export async function getVisibleBlogHomeAds(siteId: string) {
   return visibleAds.map((ad) => ({
     id: ad.id,
     productName: ad.product_name ?? '',
+    price: ad.price ?? null,
     shopName: ad.shop_name ?? '',
     thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
     thumbnailWidth: ad.thumbnail_width ?? null,
@@ -435,7 +439,9 @@ export async function getVisibleBlogPostPromotion({
       .maybeSingle(),
     supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
+      .select(
+        'id, product_name, price, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order',
+      )
       .eq('post_id', postId)
       .is('deleted_at', null)
       .order('sort_order'),
@@ -465,6 +471,7 @@ export async function getVisibleBlogPostPromotion({
       ads: visible.map((ad) => ({
         id: ad.id,
         productName: ad.product_name ?? '',
+        price: ad.price ?? null,
         shopName: ad.shop_name ?? '',
         thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
         thumbnailWidth: ad.thumbnail_width ?? null,
@@ -483,6 +490,7 @@ export async function getVisibleBlogPostPromotion({
       ads: visible.map((ad) => ({
         id: ad.id,
         productName: ad.product_name ?? '',
+        price: ad.price ?? null,
         shopName: ad.shop_name ?? '',
         thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
         thumbnailWidth: ad.thumbnail_width ?? null,
@@ -499,7 +507,9 @@ export async function getVisibleBlogPostPromotion({
 
   const commonAds = await supabaseAdmin
     .from('blog_ads')
-    .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
+    .select(
+      'id, product_name, price, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order',
+    )
     .eq('site_id', siteId)
     .is('post_id', null)
     .is('deleted_at', null)
@@ -512,6 +522,7 @@ export async function getVisibleBlogPostPromotion({
     ads: visible.map((ad) => ({
       id: ad.id,
       productName: ad.product_name ?? '',
+      price: ad.price ?? null,
       shopName: ad.shop_name ?? '',
       thumbnailUrl: getRequiredBlogAdImageUrl(ad.thumbnail_image),
       thumbnailWidth: ad.thumbnail_width ?? null,

@@ -271,6 +271,7 @@ type PostContent = {
     ads: {
       id: string;
       productName: string;
+      price: number | null;
       shopName: string;
       thumbnailUrl: string;
       thumbnailWidth: number | null;
@@ -1814,7 +1815,9 @@ export default function Opt({
             {isBlogBoard && promotion.ads.length > 0 ? (
               <div className={`paper ${styles['blog-ads']}`}>
                 {promotion.ads[0]?.shopName ? (
-                  <Typography variant="subtitle2">{promotion.ads[0].shopName} 제공</Typography>
+                  <Typography variant="subtitle2">
+                    {promotion.ads[0].shopName} ({promotion.ads[0].domain}) 제공
+                  </Typography>
                 ) : null}
                 <div className={styles['blog-ad-items']}>
                   {promotion.ads.map((ad) => (
@@ -1828,7 +1831,7 @@ export default function Opt({
                         />
                         <span>
                           <strong>{ad.productName}</strong>
-                          <em>{ad.domain}</em>
+                          {ad.price ? <em>{ad.price.toLocaleString('ko-KR')}원</em> : null}
                         </span>
                       </Anchor>
                       <BlogAdReportButton siteName={siteName} adId={ad.id} targetType={ad.targetType} />

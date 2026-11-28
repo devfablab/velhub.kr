@@ -22,7 +22,7 @@ export default async function Page({ params }: Props) {
       ? context.supabaseAdmin
           .from('blog_ads')
           .select(
-            'id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order',
+            'id, product_name, price, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order',
           )
           .eq('site_id', context.siteId)
           .is('post_id', null)
@@ -62,6 +62,7 @@ export default async function Page({ params }: Props) {
   const initialItems = (commonAdsResult.data ?? []).map((item) => ({
     id: item.id,
     productName: item.product_name,
+    price: item.price ? String(item.price) : '',
     thumbnailImage: item.thumbnail_image,
     thumbnailUrl: getBlogAdPublicImageUrl(item.thumbnail_image) ?? '',
     thumbnailWidth: item.thumbnail_width ?? null,

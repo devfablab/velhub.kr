@@ -12,12 +12,15 @@ import {
 import { hasMultipleBlogAdLinkDomains } from '@/lib/service/site/blog/blogAds/validation';
 import { normalizeText } from '@/lib/utils';
 
-type Item = { id?: unknown; productName?: unknown; thumbnailImage?: unknown; linkUrl?: unknown };
+type Item = { id?: unknown; productName?: unknown; price?: unknown; thumbnailImage?: unknown; linkUrl?: unknown };
+
+const MAX_BLOG_AD_PRICE = 999999999;
 
 function normalizeItem(value: Item) {
   return {
     id: normalizeText(typeof value.id === 'string' ? value.id : ''),
     productName: normalizeText(typeof value.productName === 'string' ? value.productName : ''),
+    price: typeof value.price === 'number' && Number.isInteger(value.price) ? value.price : 0,
     thumbnailImage: normalizeText(typeof value.thumbnailImage === 'string' ? value.thumbnailImage : ''),
     linkUrl: normalizeText(typeof value.linkUrl === 'string' ? value.linkUrl : ''),
   };
@@ -36,7 +39,9 @@ export async function GET(request: Request) {
     const context = await getOwnerContext(siteName);
     const result = await context.supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order')
+      .select(
+        'id, product_name, price, shop_name, thumbnail_image, thumbnail_width, thumbnail_height, link_url, sort_order',
+      )
       .eq('site_id', context.siteId)
       .is('post_id', null)
       .is('deleted_at', null)
@@ -119,13 +124,16 @@ export async function PUT(request: Request) {
     ) {
       return Response.json({ error: '상품명, 상품 썸네일, HTTPS 링크를 확인해주세요.' }, { status: 400 });
     }
+    if (items.some((item) => item.price <= 0 || item.price > MAX_BLOG_AD_PRICE)) {
+      return Response.json({ error: '상품 가격을 확인해주세요.' }, { status: 400 });
+    }
     if (hasMultipleBlogAdLinkDomains(items)) {
       return Response.json({ error: '여러개의 쇼핑몰 링크를 사용하시면 안됩니다.' }, { status: 400 });
     }
 
     const currentResult = await context.supabaseAdmin
       .from('blog_ads')
-      .select('id, product_name, shop_name, thumbnail_image, link_url')
+      .select('id, product_name, price, shop_name, thumbnail_image, link_url')
       .eq('site_id', context.siteId)
       .is('post_id', null)
       .is('deleted_at', null);
@@ -153,6 +161,7 @@ export async function PUT(request: Request) {
       if (
         current &&
         (current.product_name !== item.productName ||
+          current.price !== item.price ||
           current.link_url !== item.linkUrl ||
           current.thumbnail_image !== item.thumbnailImage ||
           (current.shop_name ?? '') !== shopName)
@@ -224,6 +233,7 @@ export async function PUT(request: Request) {
           .from('blog_ads')
           .update({
             product_name: item.productName,
+            price: item.price,
             shop_name: shopName,
             thumbnail_image: item.thumbnailImage,
             ...(await getBlogAdImageSize(item.thumbnailImage)),
@@ -238,6 +248,7 @@ export async function PUT(request: Request) {
           site_id: context.siteId,
           post_id: null,
           product_name: item.productName,
+          price: item.price,
           shop_name: shopName,
           thumbnail_image: item.thumbnailImage,
           ...(await getBlogAdImageSize(item.thumbnailImage)),

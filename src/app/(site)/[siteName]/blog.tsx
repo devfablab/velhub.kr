@@ -108,6 +108,7 @@ export type BlogHomeSeries = {
 export type BlogHomeAd = {
   id: string;
   productName: string;
+  price: number | null;
   shopName: string;
   thumbnailUrl: string;
   thumbnailWidth: number | null;
@@ -581,7 +582,9 @@ export default function Blog(props: Props) {
           {props.ads?.length ? (
             <div className={`paper ${styles['blog-ads']}`}>
               {props.ads[0]?.shopName ? (
-                <Typography variant="subtitle2">{props.ads[0].shopName} 제공</Typography>
+                <Typography variant="subtitle2">
+                  {props.ads[0].shopName} ({props.ads[0].domain}) 제공
+                </Typography>
               ) : null}
               <div className={styles['blog-ad-items']}>
                 {props.ads.map((ad) => (
@@ -595,7 +598,7 @@ export default function Blog(props: Props) {
                       />
                       <span>
                         <strong>{ad.productName}</strong>
-                        <em>{ad.domain}</em>
+                        {ad.price ? <em>{ad.price.toLocaleString('ko-KR')}원</em> : null}
                       </span>
                     </Anchor>
                     <BlogAdReportButton siteName={props.siteName} adId={ad.id} targetType="ad" />
