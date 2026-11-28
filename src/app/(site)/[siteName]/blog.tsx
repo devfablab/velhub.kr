@@ -7,7 +7,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
-import { Avatar, Typography, useMediaQuery, useTheme, Tooltip, Box } from '@mui/material';
+import { Avatar, Typography, useMediaQuery, useTheme, Tooltip, Box, Chip } from '@mui/material';
 import Slider from 'react-slick';
 import type { PostListItem } from '@/lib/board/getPostList';
 import { formatTimeAgo } from '@/lib/utils';
@@ -662,8 +662,12 @@ export default function Blog(props: Props) {
                         )}
                       </div>
                       <div className={styles.info}>
+                        {series.isCompleted ? (
+                          <div>
+                            <Chip size="small" className="chip another warning" label="완결" />
+                          </div>
+                        ) : null}
                         <strong>{series.label}</strong>
-                        {series.isCompleted ? <em>완결</em> : null}
                         {series.summary ? <p>{series.summary}</p> : null}
                         {series.publishedAt ? <time>{formatTimeAgo(series.publishedAt)}</time> : null}
                       </div>

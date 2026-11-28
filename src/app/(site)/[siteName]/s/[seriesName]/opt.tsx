@@ -333,7 +333,7 @@ export default function Opt({
             <LibraryBooksOutlinedIcon fontSize="small" />
             {isCommunity ? <Chip label={boardLabel} size="small" className="chip success" /> : null}
             <span>{seriesLabel}</span>
-            {isCompleted ? <Chip label="완결" size="small" className={styles.em} /> : null}
+            {isCompleted ? <Chip size="small" className="chip another warning" label="완결" /> : null}
           </h2>
         ) : (
           <SiteProfile />
@@ -342,7 +342,7 @@ export default function Opt({
           {isCommunity ? null : (
             <div className={styles['series-info']}>
               <h2>{seriesLabel}</h2>
-              {isCompleted ? <Chip label="완결" size="small" className={styles.em} /> : null}
+              {isCompleted ? <Chip size="small" className="chip another warning" label="완결" /> : null}
             </div>
           )}
           {summary ? <p>{summary}</p> : null}
