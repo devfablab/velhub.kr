@@ -250,9 +250,11 @@ export default function Slick({ sitesCreatedData, sitesHitsData, creatorLibrarie
                 }}
               >
                 {isHub ? null : <em>{post.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>}
-                <Box sx={{ mb: 1 }}>
-                  <AiUsageChip value={post.ai_usage} />
-                </Box>
+                {post.ai_usage === 'most' || 'partial' ? (
+                  <Box sx={{ mb: 1 }}>
+                    <AiUsageChip value={post.ai_usage} />
+                  </Box>
+                ) : null}
                 {post.board_type === 'gallery' && (
                   <>
                     <strong>{post.subject}</strong>

@@ -305,9 +305,6 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                         className="chip success"
                       />
                     </Box>
-                    <Box sx={{ mb: 1 }}>
-                      <AiUsageChip value={post.ai_usage} />
-                    </Box>
                     {post.board_type === 'gallery' && (
                       <div className={styles.info}>
                         <strong>{post.subject}</strong>
@@ -327,6 +324,11 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                     )}
                     {(post.board_type === 'basic' || post.board_type === 'blog') && (
                       <div className={styles.info}>
+                        {post.ai_usage === 'most' || 'partial' ? (
+                          <Box sx={{ mb: 0 }}>
+                            <AiUsageChip value={post.ai_usage} />
+                          </Box>
+                        ) : null}
                         <strong>{post.subject}</strong>
                         <p>{getDescriptionFromHTML(post.content_html)}</p>
                       </div>
@@ -404,9 +406,6 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                           className="chip success"
                         />
                       </Box>
-                      <Box sx={{ mb: 1 }}>
-                        <AiUsageChip value={post.ai_usage} />
-                      </Box>
                       {post.board_type === 'gallery' && (
                         <div className={styles.info}>
                           <strong>{post.subject}</strong>
@@ -426,6 +425,11 @@ export default function List({ orderType, postsApiPath, initialData, onPostsLoad
                       )}
                       {(post.board_type === 'basic' || post.board_type === 'blog') && (
                         <div className={styles.info}>
+                          {post.ai_usage === 'most' || 'partial' ? (
+                            <Box sx={{ mb: 0 }}>
+                              <AiUsageChip value={post.ai_usage} />
+                            </Box>
+                          ) : null}
                           <strong>{post.subject}</strong>
                           <p>{getDescriptionFromHTML(post.content_html)}</p>
                         </div>
